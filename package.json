@@ -1,0 +1,32 @@
+{
+  "name": "pooltogether-contracts",
+  "version": "0.1.0",
+  "description": "PoolTogether Lossless Lottery Smart Contracts",
+  "main": "index.js",
+  "repository": "git@github.com:DeltaCamp/pooltogether-contracts.git",
+  "author": "Brendan Asselstine brendan@delta.camp",
+  "scripts": {
+    "test": "truffle test --network local",
+    "start": "./scripts/ganache.sh",
+    "migrate": "truffle migrate --network local",
+    "migrate-ropsten": "truffle migrate --network ropsten",
+    "session": "zos session --from $ADMIN_ADDRESS --network local --expires 7200",
+    "session-ropsten": "zos session --from $ADMIN_ADDRESS --network ropsten --expires 7200",
+    "push": "zos push",
+    "update-all": "zos update --all",
+    "push-and-update": "yarn push && yarn update-all && zos-truffle-merge -n 1234 zos.dev-1234.json",
+    "console": "truffle console --network local",
+    "version": "truffle version"
+  },
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "ganache-cli": "^6.2.5",
+    "openzeppelin-eth": "2.0.2",
+    "shelljs": "^0.8.3",
+    "truffle": "^5.0.1",
+    "truffle-deploy-registry": "^0.5.0",
+    "truffle-hdwallet-provider": "^1.0.0-web3one.5",
+    "zos": "^2.1.0",
+    "zos-truffle-merge": "^0.0.3"
+  }
+}

@@ -1,0 +1,3 @@
+export HDWALLET_MNEMONIC="front ski wolf horse woman mushroom frown fold vacuum alert total sugar"
+export INFURA_PROVIDER_URL=https://ropsten.infura.io/v3/< your api key >
+export ADMIN_ADDRESS=0x51f595ef681c3b3b6b6949fbbb36b7d98daa15bf
