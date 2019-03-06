@@ -6,7 +6,8 @@
   "repository": "git@github.com:DeltaCamp/pooltogether-contracts.git",
   "author": "Brendan Asselstine brendan@delta.camp",
   "scripts": {
-    "test": "truffle test --network local",
+    "test": "truffle test --migrations_directory ./migrations/empty",
+    "compile": "truffle compile",
     "start": "./scripts/ganache.sh",
     "migrate": "truffle migrate --network local",
     "migrate-ropsten": "truffle migrate --network ropsten",
@@ -21,12 +22,13 @@
   "dependencies": {
     "chalk": "^2.4.2",
     "ganache-cli": "^6.2.5",
-    "openzeppelin-eth": "2.0.2",
+    "openzeppelin-eth": "^2.1.3",
     "shelljs": "^0.8.3",
     "truffle": "^5.0.1",
     "truffle-deploy-registry": "^0.5.0",
     "truffle-hdwallet-provider": "^1.0.0-web3one.5",
     "zos": "^2.1.0",
+    "zos-lib": "^2.2.1",
     "zos-truffle-merge": "^0.0.3"
   }
 }
