@@ -33,8 +33,8 @@ contract Lottery {
   address[] private entryAddresses;
   mapping (address => Entry) private entries;
   mapping (address => uint256) private entryAddressIndices;
-  IMoneyMarket private moneyMarket;
-  IERC20 private token;
+  IMoneyMarket public moneyMarket;
+  IERC20 public token;
 
   constructor (
     IMoneyMarket _moneyMarket,

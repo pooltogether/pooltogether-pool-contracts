@@ -12,7 +12,7 @@ contract LotteryManager is Initializable {
   uint256 public openDuration;
   uint256 public bondDuration;
 
-  function initialize (address _token, address _moneyMarket, uint256 _openDuration, uint256 _bondDuration) public initializer {
+  function initialize (address _moneyMarket, address _token, uint256 _openDuration, uint256 _bondDuration) public initializer {
     require(_token != address(0), "token address is zero");
     token = IERC20(_token);
     require(_moneyMarket != address(0), "money market address is zero");

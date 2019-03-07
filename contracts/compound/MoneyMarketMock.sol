@@ -1,13 +1,14 @@
 pragma solidity ^0.5.0;
 
 import "./IMoneyMarket.sol";
+import "zos-lib/contracts/Initializable.sol";
 import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
 
-contract MoneyMarketMock is IMoneyMarket {
+contract MoneyMarketMock is Initializable, IMoneyMarket {
   IERC20 token;
   mapping(address => mapping(address => uint256)) ownerTokenAmounts;
 
-  constructor (address _token) public {
+  function initialize (address _token) initializer public {
     require(_token != address(0), "token is not defined");
     token = IERC20(_token);
   }

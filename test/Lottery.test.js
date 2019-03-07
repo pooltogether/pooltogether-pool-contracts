@@ -13,8 +13,10 @@ contract('Lottery', (accounts) => {
 
   beforeEach(async () => {
     token = await Token.new({ from: admin })
-    moneyMarket = await MoneyMarketMock.new(token.address)
     await token.initialize(owner)
+
+    moneyMarket = await MoneyMarketMock.new({ from: admin })
+    await moneyMarket.initialize(token.address)
 
     await token.mint(moneyMarket.address, web3.utils.toWei('10000000', 'ether'))
     await token.mint(user1, web3.utils.toWei('100000', 'ether'))
