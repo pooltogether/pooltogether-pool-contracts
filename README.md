@@ -1,4 +1,4 @@
-# PoolTogether Contracts
+# LotteryManager Contracts
 
 # Local Usage
 
