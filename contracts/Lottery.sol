@@ -152,7 +152,6 @@ contract Lottery {
     address addr,
     uint256 amount
   ) {
-    require(_hasEntry(_addr), "address has no entry");
     Entry storage entry = entries[_addr];
     return (
       entry.addr,

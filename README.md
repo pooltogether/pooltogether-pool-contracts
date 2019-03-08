@@ -50,3 +50,11 @@ To see what data is bootstrapped, have a look at the migrations.
 zos push --network ropsten --from <admin address>
 yarn migrate-ropsten
 ```
+
+# Notes
+
+Current interest rate can be pulled from the MoneyMarket using:
+
+MoneyMarket.markets(<asset>) and you should get back a tuple that contains, amoung other things, a supplyRateMantissa. This is the current per-block interest rate (scaled up by 1e18).
+
+MoneyMarket on Rinkeby: 0x61bbd7bd5ee2a202d7e62519750170a52a8dfd45
