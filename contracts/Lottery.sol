@@ -10,6 +10,7 @@ contract Lottery {
   uint public constant MAX_UINT = 2**256 - 1;
 
   event Deposited(address indexed sender, uint256 amount);
+  event Withdrawn(address indexed sender);
   event LotteryLocked();
   event LotteryUnlocked();
 
@@ -99,6 +100,9 @@ contract Lottery {
     require(entry.amount > 0, "entrant has already withdrawn");
     uint256 winningTotal = winnings(msg.sender);
     delete entry.amount;
+
+    emit Withdrawn(msg.sender);
+
     require(token.transfer(msg.sender, winningTotal), "could not transfer winnings");
   }
 
