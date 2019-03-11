@@ -61,6 +61,13 @@ contract('Lottery', (accounts) => {
       })
     })
 
+    describe('getEntry()', () => {
+      it('should return zero when there are no entries', async () => {
+        let entry = await lottery.getEntry('0x0000000000000000000000000000000000000000')
+        assert.equal(entry.amount, '0')
+      })
+    })
+
     describe('lock()', () => {
       it('should transfer tokens to the money market', async () => {
         const depositAmount = web3.utils.toWei('20', 'ether')
