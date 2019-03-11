@@ -88,7 +88,11 @@ contract Lottery {
     uint256 balance = moneyMarket.getSupplyBalance(address(this), address(token));
     require(moneyMarket.withdraw(address(token), balance) == 0, "could not withdraw balance");
     finalAmount = balance;
-    winnerIndex = _selectRandom(entryAddresses.length);
+    if (entryAddresses.length == 0) {
+      winnerIndex = 0;
+    } else {
+      winnerIndex = _selectRandom(entryAddresses.length);
+    }
 
     emit LotteryUnlocked();
   }

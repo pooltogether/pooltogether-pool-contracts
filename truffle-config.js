@@ -20,8 +20,8 @@ module.exports = {
         8 // notice that we unlock eight: which will be address[0] and address[1]
       ),
       network_id: 4,
-      gas: 7000000,
-      gasPrice: 1 * 1000000000
+      gas: 5000000,
+      gasPrice: 10 * 1000000000
     }
   }
 };

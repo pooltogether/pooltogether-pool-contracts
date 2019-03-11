@@ -81,6 +81,11 @@ contract('Lottery', (accounts) => {
         assert.equal(info.supplyBalanceTotal, web3.utils.toWei('24', 'ether'))
         assert.equal(info.winner, user1)
       })
+
+      it('should succeed even without a balance', async () => {
+        await lottery.lock()
+        await lottery.unlock()
+      })
     })
 
     describe('withdraw()', () => {

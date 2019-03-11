@@ -1,11 +1,11 @@
 {
   "contracts": {
     "LotteryManager": {
-      "address": "0x3a949F3179addd4c2F92DF62fB4E680937c3Beb5",
-      "constructorCode": "608060405234801561001057600080fd5b50612dd0806100206000396000f3fe",
-      "bodyBytecodeHash": "812b472f581cfcf6ebcd3cb0190effbc6786e5cf654b28999fcbd35828542780",
-      "localBytecodeHash": "9e632d8215004616eb43c07ae91e46f8a8e78331b06ae2173b6c7a0841f6ea3d",
-      "deployedBytecodeHash": "9e632d8215004616eb43c07ae91e46f8a8e78331b06ae2173b6c7a0841f6ea3d",
+      "address": "0xD123B34efBe479C18655E1235Dd483F560247E2C",
+      "constructorCode": "608060405234801561001057600080fd5b50612e89806100206000396000f3fe",
+      "bodyBytecodeHash": "2859a7760565b95cf8aefe42a91f3f6863ee797e14b23a748091b377abac8d2f",
+      "localBytecodeHash": "3e04551a40cb98ca1babb9d19e031b64131b285218209ccc958576486b2b1671",
+      "deployedBytecodeHash": "3e04551a40cb98ca1babb9d19e031b64131b285218209ccc958576486b2b1671",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -35,7 +35,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 2056,
+          "astId": 2087,
           "type": "t_bool",
           "src": "757:24:13"
         },
@@ -43,7 +43,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 2058,
+          "astId": 2089,
           "type": "t_bool",
           "src": "876:25:13"
         },
@@ -51,7 +51,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 2107,
+          "astId": 2138,
           "type": "t_array:50<t_uint256>",
           "src": "1891:29:13"
         },
@@ -59,7 +59,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "_owner",
-          "astId": 1383,
+          "astId": 1414,
           "type": "t_address",
           "src": "302:22:9"
         },
@@ -67,7 +67,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "______gap",
-          "astId": 1494,
+          "astId": 1525,
           "type": "t_array:50<t_uint256>",
           "src": "2186:29:9"
         },
@@ -75,7 +75,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "moneyMarket",
-          "astId": 614,
+          "astId": 645,
           "type": "t_address",
           "src": "286:31:1"
         },
@@ -83,7 +83,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "token",
-          "astId": 616,
+          "astId": 647,
           "type": "t_address",
           "src": "321:19:1"
         },
@@ -91,7 +91,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "currentLottery",
-          "astId": 618,
+          "astId": 649,
           "type": "t_address",
           "src": "344:29:1"
         },
@@ -99,7 +99,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "openDuration",
-          "astId": 620,
+          "astId": 651,
           "type": "t_uint256",
           "src": "377:27:1"
         },
@@ -107,7 +107,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "bondDuration",
-          "astId": 622,
+          "astId": 653,
           "type": "t_uint256",
           "src": "408:27:1"
         }
@@ -117,7 +117,9 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "Migrations": {
@@ -222,7 +224,7 @@
       {
         "address": "0x4d72fac8cFa35089c1A7501BeAA3c6f66d1cc234",
         "version": "0.1.0",
-        "implementation": "0x3a949F3179addd4c2F92DF62fB4E680937c3Beb5"
+        "implementation": "0xD123B34efBe479C18655E1235Dd483F560247E2C"
       }
     ]
   },
