@@ -2,5 +2,7 @@
   "zosversion": "2.2",
   "name": "pooltogether",
   "version": "0.1.0",
-  "contracts": {}
+  "contracts": {
+    "LotteryManager": "LotteryManager"
+  }
 }

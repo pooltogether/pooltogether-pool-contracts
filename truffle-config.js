@@ -13,14 +13,14 @@ module.exports = {
       network_id: '*'
     },
 
-    ropsten: {
+    rinkeby: {
       provider: () => new HDWalletProvider(
         process.env.HDWALLET_MNEMONIC,
         process.env.INFURA_PROVIDER_URL,
         0, // we start with address[0]
         8 // notice that we unlock eight: which will be address[0] and address[1]
       ),
-      network_id: 3,
+      network_id: 4,
       gas: 1000000,
       gasPrice: 10 * 1000000000
     }

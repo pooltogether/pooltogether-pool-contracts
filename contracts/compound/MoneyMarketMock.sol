@@ -22,11 +22,11 @@ contract MoneyMarketMock is Initializable, IMoneyMarket {
     require(token.transfer(msg.sender, requestedAmount), "could not transfer tokens");
   }
 
-  function getSupplyBalance(address account, address asset) view external returns (uint) {
+  function getSupplyBalance(address account, address asset) external view returns (uint) {
     return (ownerTokenAmounts[account][asset] * 120) / 100;
   }
 
-  function markets(address) external returns (
+  function markets(address) external view returns (
     bool isSupported,
     uint blockNumber,
     address interestRateModel,

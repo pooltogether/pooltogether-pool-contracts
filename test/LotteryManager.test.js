@@ -20,7 +20,7 @@ contract('LotteryManager', (accounts) => {
     await moneyMarket.initialize(token.address)
 
     lotteryManager = await LotteryManager.new({ from: admin })
-    await lotteryManager.initialize(moneyMarket.address, token.address, openDuration, bondDuration)
+    await lotteryManager.init(owner, moneyMarket.address, token.address, openDuration, bondDuration)
 
     await token.mint(moneyMarket.address, web3.utils.toWei('10000000', 'ether'))
     await token.mint(user1, web3.utils.toWei('100000', 'ether'))
@@ -42,6 +42,14 @@ contract('LotteryManager', (accounts) => {
       let info = await lottery.getInfo()
       let diff = info.endTime.sub(info.startTime)
       assert.equal(diff.toString(), bondDuration)
+    })
+  })
+
+  describe('setBondDuration()', () => {
+    it('should update the bond duration', async () => {
+      let newBondDuration = 333333
+      await lotteryManager.setBondDuration(newBondDuration)
+      assert.equal(await lotteryManager.bondDuration(), newBondDuration)
     })
   })
 })

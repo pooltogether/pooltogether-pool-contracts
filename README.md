@@ -44,11 +44,11 @@ $ yarn migrate
 To see what data is bootstrapped, have a look at the migrations.
 
 
-# Deploying to Ropsten
+# Deploying to Rinkeby
 
 ```
-zos push --network ropsten --from <admin address>
-yarn migrate-ropsten
+zos push --network rinkeby --from <admin address>
+yarn migrate-rinkeby
 ```
 
 # Notes
