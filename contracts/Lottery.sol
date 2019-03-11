@@ -107,7 +107,6 @@ contract Lottery {
   }
 
   function winnings(address _addr) public view returns (uint256) {
-    require(_hasEntry(_addr), "entrant exists");
     Entry storage entry = entries[_addr];
     if (entry.amount == 0) {
       return 0;
