@@ -82,7 +82,7 @@ contract Lottery {
     emit LotteryLocked();
   }
 
-  function unlock() public {
+  function unlock() requireLocked public {
     require(bondEndTime < now, "lottery cannot be unlocked yet");
     state = State.COMPLETE;
     uint256 balance = moneyMarket.getSupplyBalance(address(this), address(token));
@@ -93,8 +93,7 @@ contract Lottery {
     emit LotteryUnlocked();
   }
 
-  function withdraw() public {
-    require(state == State.COMPLETE, "lottery has completed");
+  function withdraw() public requireComplete {
     require(_hasEntry(msg.sender), "entrant exists");
     Entry storage entry = entries[msg.sender];
     require(entry.amount > 0, "entrant has already withdrawn");
@@ -169,6 +168,16 @@ contract Lottery {
 
   modifier requireOpen() {
     require(state == State.OPEN, "state is not open");
+    _;
+  }
+
+  modifier requireLocked() {
+    require(state == State.LOCKED, "state is not locked");
+    _;
+  }
+
+  modifier requireComplete() {
+    require(state == State.COMPLETE, "lottery is not complete");
     _;
   }
 }

@@ -5,6 +5,8 @@ import "./Lottery.sol";
 
 contract LotteryManager is Ownable {
   event LotteryCreated(address lottery);
+  event OpenDurationChanged(uint256 _duration);
+  event BondDurationChanged(uint256 _duration);
 
   IMoneyMarket public moneyMarket;
   IERC20 public token;
@@ -37,9 +39,13 @@ contract LotteryManager is Ownable {
 
   function setOpenDuration(uint256 _openDuration) external onlyOwner {
     openDuration = _openDuration;
+
+    emit OpenDurationChanged(_openDuration);
   }
 
   function setBondDuration(uint256 _bondDuration) external onlyOwner {
     bondDuration = _bondDuration;
+
+    emit BondDurationChanged(_bondDuration);
   }
 }

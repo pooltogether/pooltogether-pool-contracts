@@ -3,13 +3,12 @@
 var HDWalletProvider = require("truffle-hdwallet-provider")
 
 module.exports = {
-  migrations_directory: './migrations/empty',
   networks: {
     local: {
       host: 'localhost',
       port: 8545,
-      gas: 5000000,
-      gasPrice: 5e9,
+      gas: 8000000,
+      gasPrice: 1 * 1000000000,
       network_id: '*'
     },
 
@@ -21,8 +20,8 @@ module.exports = {
         8 // notice that we unlock eight: which will be address[0] and address[1]
       ),
       network_id: 4,
-      gas: 1000000,
-      gasPrice: 10 * 1000000000
+      gas: 7000000,
+      gasPrice: 1 * 1000000000
     }
   }
 };

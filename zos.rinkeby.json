@@ -1,0 +1,234 @@
+{
+  "contracts": {
+    "LotteryManager": {
+      "address": "0x3a949F3179addd4c2F92DF62fB4E680937c3Beb5",
+      "constructorCode": "608060405234801561001057600080fd5b50612dd0806100206000396000f3fe",
+      "bodyBytecodeHash": "812b472f581cfcf6ebcd3cb0190effbc6786e5cf654b28999fcbd35828542780",
+      "localBytecodeHash": "9e632d8215004616eb43c07ae91e46f8a8e78331b06ae2173b6c7a0841f6ea3d",
+      "deployedBytecodeHash": "9e632d8215004616eb43c07ae91e46f8a8e78331b06ae2173b6c7a0841f6ea3d",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "zos-lib/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 2056,
+          "type": "t_bool",
+          "src": "757:24:13"
+        },
+        {
+          "contract": "Initializable",
+          "path": "zos-lib/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 2058,
+          "type": "t_bool",
+          "src": "876:25:13"
+        },
+        {
+          "contract": "Initializable",
+          "path": "zos-lib/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 2107,
+          "type": "t_array:50<t_uint256>",
+          "src": "1891:29:13"
+        },
+        {
+          "contract": "Ownable",
+          "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
+          "label": "_owner",
+          "astId": 1383,
+          "type": "t_address",
+          "src": "302:22:9"
+        },
+        {
+          "contract": "Ownable",
+          "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
+          "label": "______gap",
+          "astId": 1494,
+          "type": "t_array:50<t_uint256>",
+          "src": "2186:29:9"
+        },
+        {
+          "contract": "LotteryManager",
+          "path": "contracts/LotteryManager.sol",
+          "label": "moneyMarket",
+          "astId": 614,
+          "type": "t_address",
+          "src": "286:31:1"
+        },
+        {
+          "contract": "LotteryManager",
+          "path": "contracts/LotteryManager.sol",
+          "label": "token",
+          "astId": 616,
+          "type": "t_address",
+          "src": "321:19:1"
+        },
+        {
+          "contract": "LotteryManager",
+          "path": "contracts/LotteryManager.sol",
+          "label": "currentLottery",
+          "astId": 618,
+          "type": "t_address",
+          "src": "344:29:1"
+        },
+        {
+          "contract": "LotteryManager",
+          "path": "contracts/LotteryManager.sol",
+          "label": "openDuration",
+          "astId": 620,
+          "type": "t_uint256",
+          "src": "377:27:1"
+        },
+        {
+          "contract": "LotteryManager",
+          "path": "contracts/LotteryManager.sol",
+          "label": "bondDuration",
+          "astId": 622,
+          "type": "t_uint256",
+          "src": "408:27:1"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
+    "Migrations": {
+      "address": "0x696861497710839BcbA0F56676407B2bEC0CE843",
+      "constructorCode": "608060405234801561001057600080fd5b506107f3806100206000396000f3fe",
+      "bodyBytecodeHash": "8ce686c386ee2d839e68907c6b00213a250b2b71d5d385788b2504694017187e",
+      "localBytecodeHash": "21f928ef4a96eca9359c862565a8aa1ac7e81ce8c2d6c248ce3c76b54e033140",
+      "deployedBytecodeHash": "21f928ef4a96eca9359c862565a8aa1ac7e81ce8c2d6c248ce3c76b54e033140",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "zos-lib/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 2056,
+          "type": "t_bool",
+          "src": "757:24:13"
+        },
+        {
+          "contract": "Initializable",
+          "path": "zos-lib/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 2058,
+          "type": "t_bool",
+          "src": "876:25:13"
+        },
+        {
+          "contract": "Initializable",
+          "path": "zos-lib/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 2107,
+          "type": "t_array:50<t_uint256>",
+          "src": "1891:29:13"
+        },
+        {
+          "contract": "Ownable",
+          "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
+          "label": "_owner",
+          "astId": 1383,
+          "type": "t_address",
+          "src": "302:22:9"
+        },
+        {
+          "contract": "Ownable",
+          "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
+          "label": "______gap",
+          "astId": 1494,
+          "type": "t_array:50<t_uint256>",
+          "src": "2186:29:9"
+        },
+        {
+          "contract": "Migrations",
+          "path": "contracts/Migrations.sol",
+          "label": "last_completed_migration",
+          "astId": 771,
+          "type": "t_uint256",
+          "src": "139:36:2"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    }
+  },
+  "solidityLibs": {},
+  "proxies": {
+    "pooltogether/Migrations": [
+      {
+        "address": "0xE8B771EB09F11D2F96a0aee48E31E98dC2E74d45",
+        "version": "0.1.0",
+        "implementation": "0x696861497710839BcbA0F56676407B2bEC0CE843"
+      }
+    ],
+    "pooltogether/LotteryManager": [
+      {
+        "address": "0x4d72fac8cFa35089c1A7501BeAA3c6f66d1cc234",
+        "version": "0.1.0",
+        "implementation": "0x3a949F3179addd4c2F92DF62fB4E680937c3Beb5"
+      }
+    ]
+  },
+  "zosversion": "2.2",
+  "version": "0.1.0",
+  "proxyAdmin": {
+    "address": "0x15DAC396C365907AC6CeCCb7959Fd28b0Ff0B301"
+  }
+}
