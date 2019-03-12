@@ -8,9 +8,6 @@ contract('Lottery', (accounts) => {
 
   let [owner, admin, user1, user2] = accounts
 
-  let bondStartTime = 0
-  let bondEndTime = 0
-
   beforeEach(async () => {
     token = await Token.new({ from: admin })
     await token.initialize(owner)
@@ -23,12 +20,13 @@ contract('Lottery', (accounts) => {
     await token.mint(user2, web3.utils.toWei('100000', 'ether'))
   })
 
-  async function createLottery() {
-    return await Lottery.new(moneyMarket.address, token.address, bondStartTime, bondEndTime)
+  async function createLottery(bondStartTime = 0, bondEndTime = 0) {
+    const lottery = await Lottery.new(moneyMarket.address, token.address, bondStartTime, bondEndTime)
+    lottery.initialize(owner)
+    return lottery
   }
 
   describe('lottery with zero open and bond durations', () => {
-
     beforeEach(async () => {
       lottery = await createLottery()
     })
@@ -149,7 +147,7 @@ contract('Lottery', (accounts) => {
       // one thousand seconds into future
       let bondStartTimeS = parseInt((new Date().getTime() / 1000) + 1000, 10)
       let bondEndTimeS = parseInt(bondStartTimeS + 1000, 10)
-      lottery = await Lottery.new(moneyMarket.address, token.address, bondStartTimeS, bondEndTimeS)
+      lottery = await createLottery(bondStartTimeS, bondEndTimeS)
     })
 
     describe('lock()', () => {
@@ -178,27 +176,30 @@ contract('Lottery', (accounts) => {
       // 985 seconds into the future
       let bondEndTimeS = parseInt(bondStartTimeS + 1000000, 10)
 
-      lottery = await Lottery.new(
-        moneyMarket.address, token.address, bondStartTimeS, bondEndTimeS
-      )
+      lottery = await createLottery(bondStartTimeS, bondEndTimeS)
     })
 
     describe('unlock()', () => {
-      it('should not work', async () => {
-        const depositAmount = web3.utils.toWei('20', 'ether')
+      beforeEach(async () => {
+        const depositAmount = '1111000000000000000000' // web3.utils.toWei('20', 'ether')
         await token.approve(lottery.address, depositAmount, { from: user1 })
         await lottery.deposit(depositAmount, { from: user1 })
         await lottery.lock()
+      })
 
+      it('should still work for the owner', async () => {
+        await lottery.unlock()
+      })
+
+      it('should not work for anyone else', async () => {
         let failed
         try {
-          await lottery.unlock()
+          await lottery.unlock({ from: user1 })
           failed = false
         } catch (error) {
           failed = true
         }
-
-        assert.ok(failed, "lottery should not have been unlocked")
+        assert.ok(failed, "call did not fail")
       })
     })
   })

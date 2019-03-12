@@ -16,10 +16,12 @@ contract MoneyMarketMock is Initializable, IMoneyMarket {
   function supply(address asset, uint amount) external returns (uint) {
     ownerTokenAmounts[msg.sender][asset] = amount;
     require(token.transferFrom(msg.sender, address(this), amount), "could not transfer tokens");
+    return 0;
   }
 
   function withdraw(address, uint requestedAmount) external returns (uint) {
     require(token.transfer(msg.sender, requestedAmount), "could not transfer tokens");
+    return 0;
   }
 
   function getSupplyBalance(address account, address asset) external view returns (uint) {
