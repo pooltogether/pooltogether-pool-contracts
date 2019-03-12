@@ -152,7 +152,7 @@ contract Lottery is Ownable {
     }
     uint256 entryIndex = entryAddressIndices[_addr];
     uint256 winningTotal = entry.amount;
-    if (entryIndex == winnerIndex) {
+    if (state == State.COMPLETE && entryIndex == winnerIndex) {
       winningTotal = winningTotal.add(finalAmount.sub(totalAmount));
     }
     return winningTotal;

@@ -101,11 +101,15 @@ contract('Lottery', (accounts) => {
         await lottery.lock()
         await lottery.unlock()
 
+        let winnings = await lottery.winnings(user1)
+        let winningBalance = new BN(web3.utils.toWei('24', 'ether'))
+        assert.equal(winnings.toString(), winningBalance.toString())
+
         const balanceBefore = await token.balanceOf(user1)
         await lottery.withdraw({ from: user1 })
         const balanceAfter = await token.balanceOf(user1)
 
-        assert.equal(balanceAfter.toString(), (new BN(balanceBefore).add(new BN(web3.utils.toWei('24', 'ether')))).toString())
+        assert.equal(balanceAfter.toString(), (new BN(balanceBefore).add(winningBalance)).toString())
       })
 
       it('should work for two participants', async () => {
@@ -138,6 +142,19 @@ contract('Lottery', (accounts) => {
         } else {
           throw new Error(`Unknown winner: ${info.winner}`)
         }
+      })
+    })
+
+    describe('winnings()', () => {
+      it('should return the entrants total to withdraw', async () => {
+        const depositAmount = web3.utils.toWei('20', 'ether')
+
+        await token.approve(lottery.address, depositAmount, { from: user1 })
+        await lottery.deposit(depositAmount, { from: user1 })
+
+        let winnings = await lottery.winnings(user1)
+
+        assert.equal(winnings, depositAmount)
       })
     })
   })
