@@ -1,11 +1,11 @@
 {
   "contracts": {
     "LotteryManager": {
-      "address": "0xD123B34efBe479C18655E1235Dd483F560247E2C",
-      "constructorCode": "608060405234801561001057600080fd5b50612e89806100206000396000f3fe",
-      "bodyBytecodeHash": "2859a7760565b95cf8aefe42a91f3f6863ee797e14b23a748091b377abac8d2f",
-      "localBytecodeHash": "3e04551a40cb98ca1babb9d19e031b64131b285218209ccc958576486b2b1671",
-      "deployedBytecodeHash": "3e04551a40cb98ca1babb9d19e031b64131b285218209ccc958576486b2b1671",
+      "address": "0x6794a2d37edB9eAaCDfF66B8F498f9DA8c336A7d",
+      "constructorCode": "608060405234801561001057600080fd5b5061358e806100206000396000f3fe",
+      "bodyBytecodeHash": "08a5ecc1340aa64e529220e15c8cb43422d66979c86e048ee1879c1d39b3c3c4",
+      "localBytecodeHash": "849bc16be38271a29f655505995dce681f1dad665fa5778585c058f73fe80891",
+      "deployedBytecodeHash": "849bc16be38271a29f655505995dce681f1dad665fa5778585c058f73fe80891",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -35,7 +35,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 2087,
+          "astId": 2104,
           "type": "t_bool",
           "src": "757:24:13"
         },
@@ -43,7 +43,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 2089,
+          "astId": 2106,
           "type": "t_bool",
           "src": "876:25:13"
         },
@@ -51,7 +51,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 2138,
+          "astId": 2155,
           "type": "t_array:50<t_uint256>",
           "src": "1891:29:13"
         },
@@ -59,7 +59,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "_owner",
-          "astId": 1414,
+          "astId": 1431,
           "type": "t_address",
           "src": "302:22:9"
         },
@@ -67,7 +67,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "______gap",
-          "astId": 1525,
+          "astId": 1542,
           "type": "t_array:50<t_uint256>",
           "src": "2186:29:9"
         },
@@ -75,41 +75,41 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "moneyMarket",
-          "astId": 645,
+          "astId": 655,
           "type": "t_address",
-          "src": "286:31:1"
+          "src": "471:31:1"
         },
         {
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "token",
-          "astId": 647,
+          "astId": 657,
           "type": "t_address",
-          "src": "321:19:1"
+          "src": "506:19:1"
         },
         {
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "currentLottery",
-          "astId": 649,
+          "astId": 659,
           "type": "t_address",
-          "src": "344:29:1"
+          "src": "529:29:1"
         },
         {
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "openDuration",
-          "astId": 651,
+          "astId": 661,
           "type": "t_uint256",
-          "src": "377:27:1"
+          "src": "562:27:1"
         },
         {
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "bondDuration",
-          "astId": 653,
+          "astId": 663,
           "type": "t_uint256",
-          "src": "408:27:1"
+          "src": "593:27:1"
         }
       ],
       "warnings": {
@@ -224,7 +224,7 @@
       {
         "address": "0x4d72fac8cFa35089c1A7501BeAA3c6f66d1cc234",
         "version": "0.1.0",
-        "implementation": "0xD123B34efBe479C18655E1235Dd483F560247E2C"
+        "implementation": "0x6794a2d37edB9eAaCDfF66B8F498f9DA8c336A7d"
       }
     ]
   },
