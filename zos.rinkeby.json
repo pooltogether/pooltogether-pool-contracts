@@ -1,11 +1,11 @@
 {
   "contracts": {
     "LotteryManager": {
-      "address": "0x4947bd344e7F0C3Be0A0952eF8648e4B365F81e5",
-      "constructorCode": "608060405234801561001057600080fd5b506135be806100206000396000f3fe",
-      "bodyBytecodeHash": "be3e393dd0d0ced67c4757e3751e518778f5b0eeecd544f5818b3734232c4d79",
-      "localBytecodeHash": "646febba5ed1975567a0b66f4ef6c6746f460c0234068e5499c16286353c0508",
-      "deployedBytecodeHash": "646febba5ed1975567a0b66f4ef6c6746f460c0234068e5499c16286353c0508",
+      "address": "0xCa03043283846ce21C0419c32e9f0dAF1cf7cff1",
+      "constructorCode": "608060405234801561001057600080fd5b506135c8806100206000396000f3fe",
+      "bodyBytecodeHash": "844bb36b6b01c0713e72dfb3d37a9625d31984c28996de68c1298b0200713569",
+      "localBytecodeHash": "f26989691d1e53a4eb62a3299706b48771fe6af5098d095a7f102195005accfa",
+      "deployedBytecodeHash": "f26989691d1e53a4eb62a3299706b48771fe6af5098d095a7f102195005accfa",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -35,7 +35,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 2113,
+          "astId": 2130,
           "type": "t_bool",
           "src": "757:24:13"
         },
@@ -43,7 +43,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 2115,
+          "astId": 2132,
           "type": "t_bool",
           "src": "876:25:13"
         },
@@ -51,7 +51,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 2164,
+          "astId": 2181,
           "type": "t_array:50<t_uint256>",
           "src": "1891:29:13"
         },
@@ -59,7 +59,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "_owner",
-          "astId": 1440,
+          "astId": 1457,
           "type": "t_address",
           "src": "302:22:9"
         },
@@ -67,7 +67,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "______gap",
-          "astId": 1551,
+          "astId": 1568,
           "type": "t_array:50<t_uint256>",
           "src": "2186:29:9"
         },
@@ -75,7 +75,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "moneyMarket",
-          "astId": 660,
+          "astId": 665,
           "type": "t_address",
           "src": "471:31:1"
         },
@@ -83,7 +83,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "token",
-          "astId": 662,
+          "astId": 667,
           "type": "t_address",
           "src": "506:19:1"
         },
@@ -91,7 +91,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "currentLottery",
-          "astId": 664,
+          "astId": 669,
           "type": "t_address",
           "src": "529:29:1"
         },
@@ -99,7 +99,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "openDuration",
-          "astId": 666,
+          "astId": 671,
           "type": "t_uint256",
           "src": "562:27:1"
         },
@@ -107,7 +107,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "bondDuration",
-          "astId": 668,
+          "astId": 673,
           "type": "t_uint256",
           "src": "593:27:1"
         }
@@ -117,13 +117,11 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": [],
-        "storageUncheckedVars": [],
-        "storageDiff": []
+        "uninitializedBaseContracts": []
       }
     },
     "Migrations": {
-      "address": "0x696861497710839BcbA0F56676407B2bEC0CE843",
+      "address": "0xCBc7b5A94c388d2179d85eD34fea06aB35B2085a",
       "constructorCode": "608060405234801561001057600080fd5b506107f3806100206000396000f3fe",
       "bodyBytecodeHash": "8ce686c386ee2d839e68907c6b00213a250b2b71d5d385788b2504694017187e",
       "localBytecodeHash": "21f928ef4a96eca9359c862565a8aa1ac7e81ce8c2d6c248ce3c76b54e033140",
@@ -157,7 +155,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 2056,
+          "astId": 2130,
           "type": "t_bool",
           "src": "757:24:13"
         },
@@ -165,7 +163,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 2058,
+          "astId": 2132,
           "type": "t_bool",
           "src": "876:25:13"
         },
@@ -173,7 +171,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 2107,
+          "astId": 2181,
           "type": "t_array:50<t_uint256>",
           "src": "1891:29:13"
         },
@@ -181,7 +179,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "_owner",
-          "astId": 1383,
+          "astId": 1457,
           "type": "t_address",
           "src": "302:22:9"
         },
@@ -189,7 +187,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "______gap",
-          "astId": 1494,
+          "astId": 1568,
           "type": "t_array:50<t_uint256>",
           "src": "2186:29:9"
         },
@@ -197,7 +195,7 @@
           "contract": "Migrations",
           "path": "contracts/Migrations.sol",
           "label": "last_completed_migration",
-          "astId": 771,
+          "astId": 829,
           "type": "t_uint256",
           "src": "139:36:2"
         }
@@ -215,22 +213,22 @@
   "proxies": {
     "pooltogether/Migrations": [
       {
-        "address": "0xE8B771EB09F11D2F96a0aee48E31E98dC2E74d45",
+        "address": "0x64D24dFB4b060D8802C65d1e1077Eb65F9e8f047",
         "version": "0.1.0",
-        "implementation": "0x696861497710839BcbA0F56676407B2bEC0CE843"
+        "implementation": "0xCBc7b5A94c388d2179d85eD34fea06aB35B2085a"
       }
     ],
     "pooltogether/LotteryManager": [
       {
-        "address": "0x4d72fac8cFa35089c1A7501BeAA3c6f66d1cc234",
+        "address": "0xeB4eb23426dC7aE0Bc25Cc7296bDB326830880dD",
         "version": "0.1.0",
-        "implementation": "0x4947bd344e7F0C3Be0A0952eF8648e4B365F81e5"
+        "implementation": "0xCa03043283846ce21C0419c32e9f0dAF1cf7cff1"
       }
     ]
   },
   "zosversion": "2.2",
   "version": "0.1.0",
   "proxyAdmin": {
-    "address": "0x15DAC396C365907AC6CeCCb7959Fd28b0Ff0B301"
+    "address": "0x9e5D92d7D513A17D53718095b67A5F7C1a15aD90"
   }
 }

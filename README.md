@@ -1,6 +1,8 @@
-# LotteryManager Contracts
+# PoolTogether Contracts
 
-# Local Usage
+The PoolTogether contracts allow users to deposit into a pool of tokens.  The pool is then supplied to the [Compound MoneyMarket](https://compound.finance/developers).  After the bonding period is over, the supply plus interest is withdrawn.  The winner of a lottery receives the interest earned.
+
+# Setup
 
 Clone the repo and then install deps:
 
@@ -15,13 +17,15 @@ $ cp .envrc.example .envrc
 $ direnv allow
 ```
 
+# Deploying Locally
+
+If you changed the mnemonic, you should update the ADMIN_ADDRESS variable in `.envrc` with another address (I use the second address listed when `ganache-cli` starts).
+
 Start `ganache-cli`:
 
 ```
 $ yarn start
 ```
-
-If you changed the mnemonic, you should update the ADMIN_ADDRESS variable in `.envrc` with another address (I use the second address listed when `ganache-cli` starts).
 
 Now start a new zos session:
 
@@ -41,17 +45,15 @@ Migrate the contracts and bootstrap the data:
 $ yarn migrate
 ```
 
-To see what data is bootstrapped, have a look at the migrations.
-
-
 # Deploying to Rinkeby
 
 ```
-zos push --network rinkeby --from <admin address>
+yarn session-rinkeby
+zos push
 yarn migrate-rinkeby
 ```
 
-# Notes
+## Notes
 
 Current interest rate can be pulled from the MoneyMarket using:
 
