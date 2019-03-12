@@ -1,7 +1,7 @@
 {
   "contracts": {
     "LotteryManager": {
-      "address": "0xCa03043283846ce21C0419c32e9f0dAF1cf7cff1",
+      "address": "0x4804b8bc5112FD4216824C2673eE792F180a1c1e",
       "constructorCode": "608060405234801561001057600080fd5b506135c8806100206000396000f3fe",
       "bodyBytecodeHash": "844bb36b6b01c0713e72dfb3d37a9625d31984c28996de68c1298b0200713569",
       "localBytecodeHash": "f26989691d1e53a4eb62a3299706b48771fe6af5098d095a7f102195005accfa",
@@ -121,7 +121,7 @@
       }
     },
     "Migrations": {
-      "address": "0xCBc7b5A94c388d2179d85eD34fea06aB35B2085a",
+      "address": "0xe48cc097C45339c94E272e04Ca55790EE63d16F1",
       "constructorCode": "608060405234801561001057600080fd5b506107f3806100206000396000f3fe",
       "bodyBytecodeHash": "8ce686c386ee2d839e68907c6b00213a250b2b71d5d385788b2504694017187e",
       "localBytecodeHash": "21f928ef4a96eca9359c862565a8aa1ac7e81ce8c2d6c248ce3c76b54e033140",
@@ -213,22 +213,22 @@
   "proxies": {
     "pooltogether/Migrations": [
       {
-        "address": "0x64D24dFB4b060D8802C65d1e1077Eb65F9e8f047",
+        "address": "0xE61ea13c25CaE9f1472A2cEC156b495914193552",
         "version": "0.1.0",
-        "implementation": "0xCBc7b5A94c388d2179d85eD34fea06aB35B2085a"
+        "implementation": "0xe48cc097C45339c94E272e04Ca55790EE63d16F1"
       }
     ],
     "pooltogether/LotteryManager": [
       {
-        "address": "0xeB4eb23426dC7aE0Bc25Cc7296bDB326830880dD",
+        "address": "0x962A72ce1B8314d9cc9dF92eE75d2cA3A1F056bA",
         "version": "0.1.0",
-        "implementation": "0xCa03043283846ce21C0419c32e9f0dAF1cf7cff1"
+        "implementation": "0x4804b8bc5112FD4216824C2673eE792F180a1c1e"
       }
     ]
   },
   "zosversion": "2.2",
   "version": "0.1.0",
   "proxyAdmin": {
-    "address": "0x9e5D92d7D513A17D53718095b67A5F7C1a15aD90"
+    "address": "0xb09e09B309273B07516Fe6Ab3437dBB500FE2B12"
   }
 }
