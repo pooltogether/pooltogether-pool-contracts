@@ -8,6 +8,8 @@ contract('Lottery', (accounts) => {
 
   let [owner, admin, user1, user2] = accounts
 
+  let minimumDeposit = web3.utils.toWei('10', 'ether')
+
   beforeEach(async () => {
     token = await Token.new({ from: admin })
     await token.initialize(owner)
@@ -21,7 +23,7 @@ contract('Lottery', (accounts) => {
   })
 
   async function createLottery(bondStartTime = 0, bondEndTime = 0) {
-    const lottery = await Lottery.new(moneyMarket.address, token.address, bondStartTime, bondEndTime)
+    const lottery = await Lottery.new(moneyMarket.address, token.address, bondStartTime, bondEndTime, minimumDeposit)
     lottery.initialize(owner)
     return lottery
   }
@@ -32,6 +34,20 @@ contract('Lottery', (accounts) => {
     })
 
     describe('deposit', () => {
+      it('should require more than the minimum', async () => {
+        const depositAmount = web3.utils.toWei('9', 'ether')
+        await token.approve(lottery.address, depositAmount, { from: user1 })
+
+        let failed
+        try {
+          await lottery.deposit(depositAmount, { from: user1 })
+          failed = false
+        } catch (error) {
+          failed = true
+        }
+        assert.ok(failed, "was able to deposit less than the minimum")
+      })
+
       it('should deposit some tokens into the lottery', async () => {
         const depositAmount = web3.utils.toWei('20', 'ether')
         await token.approve(lottery.address, depositAmount, { from: user1 })

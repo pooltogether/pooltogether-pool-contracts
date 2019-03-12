@@ -10,14 +10,16 @@ import "./Lottery.sol";
  */
 contract LotteryManager is Ownable {
   event LotteryCreated(address lottery);
-  event OpenDurationChanged(uint256 _duration);
-  event BondDurationChanged(uint256 _duration);
+  event OpenDurationChanged(uint256 duration);
+  event BondDurationChanged(uint256 duration);
+  event MinimumDepositChanged(uint256 minimumDeposit);
 
   IMoneyMarket public moneyMarket;
   IERC20 public token;
   Lottery public currentLottery;
   uint256 public openDuration;
   uint256 public bondDuration;
+  uint256 public minimumDeposit;
 
   /**
    * @notice Initializes a new LotteryManager contract.  Generally called through ZeppelinOS
@@ -47,7 +49,8 @@ contract LotteryManager is Ownable {
       moneyMarket,
       token,
       now + openDuration,
-      now + openDuration + bondDuration
+      now + openDuration + bondDuration,
+      minimumDeposit
     );
     emit LotteryCreated(address(currentLottery));
 
@@ -70,5 +73,11 @@ contract LotteryManager is Ownable {
     bondDuration = _bondDuration;
 
     emit BondDurationChanged(_bondDuration);
+  }
+
+  function setMinimumDeposit(uint256 _minimumDeposit) external onlyOwner {
+    minimumDeposit = _minimumDeposit;
+
+    emit MinimumDepositChanged(_minimumDeposit);
   }
 }

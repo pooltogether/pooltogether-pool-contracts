@@ -43,6 +43,7 @@ contract Lottery is Ownable {
   mapping (address => uint256) private entryAddressIndices;
   IMoneyMarket public moneyMarket;
   IERC20 public token;
+  uint256 private minimumDeposit;
 
   /**
    * @notice Creates a new Lottery.
@@ -55,7 +56,8 @@ contract Lottery is Ownable {
     IMoneyMarket _moneyMarket,
     IERC20 _token,
     uint256 _bondStartTime,
-    uint256 _bondEndTime
+    uint256 _bondEndTime,
+    uint256 _minimumDeposit
   ) public {
     require(address(_moneyMarket) != address(0), "money market address cannot be zero");
     require(address(_token) != address(0), "token address cannot be zero");
@@ -63,6 +65,7 @@ contract Lottery is Ownable {
     token = _token;
     bondStartTime = _bondStartTime;
     bondEndTime = _bondEndTime;
+    minimumDeposit = _minimumDeposit;
   }
 
   /**
@@ -71,7 +74,7 @@ contract Lottery is Ownable {
    * @param _amount The amount of the configured token to deposit.
    */
   function deposit (uint256 _amount) requireOpen external {
-    require(_amount > 0, "amount is zero");
+    require(_amount > minimumDeposit, "you must deposit more than the minimum");
     require(address(token) != address(0), "token is zeroooo");
     require(token.transferFrom(msg.sender, address(this), _amount), "token transfer failed");
 
@@ -175,7 +178,7 @@ contract Lottery is Ownable {
    * @return A tuple containing: entryTotal (the total of all deposits), startTime (the timestamp after which
    * the lottery can be locked), endTime (the time after which the lottery can be unlocked), lotteryState
    * (either OPEN, LOCKED, COMPLETE), winner (the address of the winner), supplyBalanceTotal (the total
-   * deposits plus any interest from Compound).
+   * deposits plus any interest from Compound), minDeposit (the minimum deposit required).
    */
   function getInfo() public view returns (
     uint256 entryTotal,
@@ -183,7 +186,8 @@ contract Lottery is Ownable {
     uint256 endTime,
     State lotteryState,
     address winner,
-    uint256 supplyBalanceTotal
+    uint256 supplyBalanceTotal,
+    uint256 minDeposit
   ) {
     address winAddr = address(0);
     if (finalAmount != 0 && entryAddresses.length > 0) {
@@ -195,7 +199,8 @@ contract Lottery is Ownable {
       bondEndTime,
       state,
       winAddr,
-      finalAmount
+      finalAmount,
+      minimumDeposit
     );
   }
 
