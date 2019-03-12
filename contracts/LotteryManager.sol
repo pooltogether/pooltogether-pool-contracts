@@ -49,8 +49,9 @@ contract LotteryManager is Ownable {
       now + openDuration,
       now + openDuration + bondDuration
     );
-
     emit LotteryCreated(address(currentLottery));
+
+    currentLottery.initialize(owner());
   }
 
   /**

@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
 import "./compound/IMoneyMarket.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
+import "openzeppelin-eth/contracts/ownership/Ownable.sol";
 
 /**
  * @title The Lottery contract for PoolTogether
@@ -10,7 +11,7 @@ import "openzeppelin-eth/contracts/math/SafeMath.sol";
  * @notice This contract will accept deposits, use the pool the deposits together to supply the Compound
  * contract, then withdraw the amount plus interest and pay the interest to the lottery winner.
  */
-contract Lottery {
+contract Lottery is Ownable {
   using SafeMath for uint256;
 
   uint public constant MAX_UINT = 2**256 - 1;
@@ -108,7 +109,9 @@ contract Lottery {
    * @notice Withdraws the deposit from Compound and selects a winner.  Fires the LotteryUnlocked event.
    */
   function unlock() requireLocked public {
-    require(bondEndTime < now, "lottery cannot be unlocked yet");
+    if (msg.sender != owner()) {
+      require(bondEndTime < now, "lottery cannot be unlocked yet");
+    }
     state = State.COMPLETE;
     uint256 balance = moneyMarket.getSupplyBalance(address(this), address(token));
     require(moneyMarket.withdraw(address(token), balance) == 0, "could not withdraw balance");
