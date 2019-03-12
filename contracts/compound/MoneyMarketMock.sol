@@ -19,7 +19,8 @@ contract MoneyMarketMock is Initializable, IMoneyMarket {
     return 0;
   }
 
-  function withdraw(address, uint requestedAmount) external returns (uint) {
+  function withdraw(address asset, uint requestedAmount) external returns (uint) {
+    require(ownerTokenAmounts[msg.sender][asset] > 0, "you must have supplied tokens");
     require(token.transfer(msg.sender, requestedAmount), "could not transfer tokens");
     return 0;
   }

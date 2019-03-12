@@ -114,7 +114,9 @@ contract Lottery is Ownable {
     }
     state = State.COMPLETE;
     uint256 balance = moneyMarket.getSupplyBalance(address(this), address(token));
-    require(moneyMarket.withdraw(address(token), balance) == 0, "could not withdraw balance");
+    if (balance > 0) {
+      require(moneyMarket.withdraw(address(token), balance) == 0, "could not withdraw balance");
+    }
     finalAmount = balance;
     if (entryAddresses.length == 0) {
       winnerIndex = 0;
