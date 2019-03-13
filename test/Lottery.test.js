@@ -49,7 +49,7 @@ contract('Lottery', (accounts) => {
       })
 
       it('should deposit some tokens into the lottery', async () => {
-        const depositAmount = web3.utils.toWei('20', 'ether')
+        const depositAmount = web3.utils.toWei('10', 'ether')
         await token.approve(lottery.address, depositAmount, { from: user1 })
 
         const response = await lottery.deposit(depositAmount, { from: user1 })
@@ -184,19 +184,26 @@ contract('Lottery', (accounts) => {
     })
 
     describe('lock()', () => {
-      it('should not work', async () => {
+      beforeEach(async () => {
         const depositAmount = web3.utils.toWei('20', 'ether')
         await token.approve(lottery.address, depositAmount, { from: user1 })
         await lottery.deposit(depositAmount, { from: user1 })
+      })
+
+      it('should not work for regular users', async () => {
         let failed
         try {
-          await lottery.lock()
+          await lottery.lock({ from: user1 })
           failed = false
         } catch (error) {
           failed = true
         }
 
         assert.ok(failed, "lottery should not have locked")
+      })
+
+      it('should support early locking by the owner', async () => {
+        await lottery.lock({ from: owner })
       })
     })
   })

@@ -74,7 +74,7 @@ contract Lottery is Ownable {
    * @param _amount The amount of the configured token to deposit.
    */
   function deposit (uint256 _amount) requireOpen external {
-    require(_amount > minimumDeposit, "you must deposit more than the minimum");
+    require(_amount >= minimumDeposit, "you must deposit more than the minimum");
     require(address(token) != address(0), "token is zeroooo");
     require(token.transferFrom(msg.sender, address(this), _amount), "token transfer failed");
 
@@ -100,7 +100,9 @@ contract Lottery is Ownable {
    * Fires the LotteryLocked event.
    */
   function lock() requireOpen external {
-    require(bondStartTime <= now, "lottery cannot be locked yet");
+    if (msg.sender != owner()) {
+      require(bondStartTime <= now, "lottery cannot be locked yet");
+    }
     state = State.LOCKED;
     require(token.approve(address(moneyMarket), totalAmount), "could not approve money market spend");
     require(moneyMarket.supply(address(token), totalAmount) == 0, "could not supply money market");
