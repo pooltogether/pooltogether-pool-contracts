@@ -1,11 +1,11 @@
 {
   "contracts": {
     "LotteryManager": {
-      "address": "0x0Fe67707aAD3BE35c4De13a7e5C63eb59CA33bA0",
-      "constructorCode": "608060405234801561001057600080fd5b506136f1806100206000396000f3fe",
-      "bodyBytecodeHash": "415694832176d9df19d095f6418c3d70266e830e72cca0cc19329ce7c78fe3b4",
-      "localBytecodeHash": "10b0c9ec5ce1feef08774b3815d0258dc108da301df897cf0d2410f1bd7c845d",
-      "deployedBytecodeHash": "10b0c9ec5ce1feef08774b3815d0258dc108da301df897cf0d2410f1bd7c845d",
+      "address": "0x730e829757430Eca801cB757Eb8eF0A85441bF83",
+      "constructorCode": "608060405234801561001057600080fd5b5061372f806100206000396000f3fe",
+      "bodyBytecodeHash": "145732d6dfe719efd75a93dcae3c745befa402441f47519d6847bba5cea41517",
+      "localBytecodeHash": "a09b5bbbf501a86a7535da323ff5640f6d8621e84dfa2bfbe330cd713472e69e",
+      "deployedBytecodeHash": "a09b5bbbf501a86a7535da323ff5640f6d8621e84dfa2bfbe330cd713472e69e",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -35,7 +35,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 2164,
+          "astId": 2171,
           "type": "t_bool",
           "src": "757:24:13"
         },
@@ -43,7 +43,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 2166,
+          "astId": 2173,
           "type": "t_bool",
           "src": "876:25:13"
         },
@@ -51,7 +51,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 2215,
+          "astId": 2222,
           "type": "t_array:50<t_uint256>",
           "src": "1891:29:13"
         },
@@ -59,7 +59,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "_owner",
-          "astId": 1491,
+          "astId": 1498,
           "type": "t_address",
           "src": "302:22:9"
         },
@@ -67,7 +67,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "______gap",
-          "astId": 1602,
+          "astId": 1609,
           "type": "t_array:50<t_uint256>",
           "src": "2186:29:9"
         },
@@ -75,7 +75,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "moneyMarket",
-          "astId": 680,
+          "astId": 687,
           "type": "t_address",
           "src": "524:31:1"
         },
@@ -83,7 +83,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "token",
-          "astId": 682,
+          "astId": 689,
           "type": "t_address",
           "src": "559:19:1"
         },
@@ -91,7 +91,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "currentLottery",
-          "astId": 684,
+          "astId": 691,
           "type": "t_address",
           "src": "582:29:1"
         },
@@ -99,7 +99,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "openDuration",
-          "astId": 686,
+          "astId": 693,
           "type": "t_uint256",
           "src": "615:27:1"
         },
@@ -107,7 +107,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "bondDuration",
-          "astId": 688,
+          "astId": 695,
           "type": "t_uint256",
           "src": "646:27:1"
         },
@@ -115,7 +115,7 @@
           "contract": "LotteryManager",
           "path": "contracts/LotteryManager.sol",
           "label": "minimumDeposit",
-          "astId": 690,
+          "astId": 697,
           "type": "t_uint256",
           "src": "677:29:1"
         }
@@ -127,20 +127,7 @@
         "hasInitialValuesInDeclarations": false,
         "uninitializedBaseContracts": [],
         "storageUncheckedVars": [],
-        "storageDiff": [
-          {
-            "action": "append",
-            "updated": {
-              "index": 10,
-              "contract": "LotteryManager",
-              "path": "contracts/LotteryManager.sol",
-              "label": "minimumDeposit",
-              "astId": 690,
-              "type": "t_uint256",
-              "src": "677:29:1"
-            }
-          }
-        ]
+        "storageDiff": []
       }
     },
     "Migrations": {
@@ -245,7 +232,7 @@
       {
         "address": "0x962A72ce1B8314d9cc9dF92eE75d2cA3A1F056bA",
         "version": "0.1.0",
-        "implementation": "0x0Fe67707aAD3BE35c4De13a7e5C63eb59CA33bA0"
+        "implementation": "0x730e829757430Eca801cB757Eb8eF0A85441bF83"
       }
     ]
   },
