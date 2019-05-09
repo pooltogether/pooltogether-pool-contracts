@@ -29,7 +29,7 @@ contract('LotteryManager', (accounts) => {
 
   async function createLottery() {
     let response = await lotteryManager.createLottery()
-    let lotteryCreatedEvent = response.receipt.logs[0]
+    let lotteryCreatedEvent = response.receipt.logs[1]
     assert.equal(lotteryCreatedEvent.event, 'LotteryCreated')
     return lotteryCreatedEvent.args[0].toString()
   }

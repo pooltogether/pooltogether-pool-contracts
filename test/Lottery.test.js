@@ -8,7 +8,10 @@ contract('Lottery', (accounts) => {
 
   let [owner, admin, user1, user2] = accounts
 
-  let minimumDeposit = web3.utils.toWei('10', 'ether')
+  let ticketPrice = new BN(web3.utils.toWei('10', 'ether'))
+
+  let secret = '0x1234123412341234123412341234123412341234123412341234123412341234'
+  let secretHash = web3.utils.soliditySha3(secret)
 
   beforeEach(async () => {
     token = await Token.new({ from: admin })
@@ -23,7 +26,7 @@ contract('Lottery', (accounts) => {
   })
 
   async function createLottery(bondStartTime = 0, bondEndTime = 0) {
-    const lottery = await Lottery.new(moneyMarket.address, token.address, bondStartTime, bondEndTime, minimumDeposit)
+    const lottery = await Lottery.new(moneyMarket.address, token.address, bondStartTime, bondEndTime, ticketPrice)
     lottery.initialize(owner)
     return lottery
   }
@@ -34,13 +37,12 @@ contract('Lottery', (accounts) => {
     })
 
     describe('deposit', () => {
-      it('should require more than the minimum', async () => {
-        const depositAmount = web3.utils.toWei('9', 'ether')
-        await token.approve(lottery.address, depositAmount, { from: user1 })
+      it('should fail if not enough tokens approved', async () => {
+        await token.approve(lottery.address, ticketPrice.div(new BN(2)), { from: user1 })
 
         let failed
         try {
-          await lottery.deposit(depositAmount, { from: user1 })
+          await lottery.buyTicket({ from: user1 })
           failed = false
         } catch (error) {
           failed = true
@@ -49,29 +51,28 @@ contract('Lottery', (accounts) => {
       })
 
       it('should deposit some tokens into the lottery', async () => {
-        const depositAmount = web3.utils.toWei('10', 'ether')
-        await token.approve(lottery.address, depositAmount, { from: user1 })
+        await token.approve(lottery.address, ticketPrice, { from: user1 })
 
-        const response = await lottery.deposit(depositAmount, { from: user1 })
+        const response = await lottery.buyTicket({ from: user1 })
         const depositedEvent = response.receipt.logs[0]
-        assert.equal(depositedEvent.event, 'Deposited')
+        assert.equal(depositedEvent.event, 'BoughtTicket')
         assert.equal(depositedEvent.address, lottery.address)
         assert.equal(depositedEvent.args[0], user1)
-        assert.equal(depositedEvent.args[1], depositAmount)
+        assert.equal(depositedEvent.args[1], ticketPrice.toString())
       })
 
       it('should allow multiple deposits', async () => {
-        const depositAmount = web3.utils.toWei('20', 'ether')
-        await token.approve(lottery.address, depositAmount, { from: user1 })
+        await token.approve(lottery.address, ticketPrice, { from: user1 })
 
-        await lottery.deposit(depositAmount, { from: user1 })
+        await lottery.buyTicket({ from: user1 })
 
-        await token.approve(lottery.address, depositAmount, { from: user1 })
-        await lottery.deposit(depositAmount, { from: user1 })
+        await token.approve(lottery.address, ticketPrice, { from: user1 })
+        await lottery.buyTicket({ from: user1 })
 
         const response = await lottery.getEntry(user1)
         assert.equal(response.addr, user1)
-        assert.equal(response.amount.toString(), web3.utils.toWei('40', 'ether'))
+        assert.equal(response.amount.toString(), ticketPrice.mul(new BN(2)).toString())
+        assert.equal(response.ticketCount.toString(), '2')
       })
     })
 
@@ -84,41 +85,38 @@ contract('Lottery', (accounts) => {
 
     describe('lock()', () => {
       it('should transfer tokens to the money market', async () => {
-        const depositAmount = web3.utils.toWei('20', 'ether')
-        await token.approve(lottery.address, depositAmount, { from: user1 })
-        await lottery.deposit(depositAmount, { from: user1 })
-        await lottery.lock()
+        await token.approve(lottery.address, ticketPrice, { from: user1 })
+        await lottery.buyTicket({ from: user1 })
+        await lottery.lock(secretHash)
       })
     })
 
     describe('unlock()', () => {
       it('should transfer tokens from money market back', async () => {
-        const depositAmount = web3.utils.toWei('20', 'ether')
-        await token.approve(lottery.address, depositAmount, { from: user1 })
-        await lottery.deposit(depositAmount, { from: user1 })
-        await lottery.lock()
-        await lottery.unlock()
+        await token.approve(lottery.address, ticketPrice, { from: user1 })
+        await lottery.buyTicket({ from: user1 })
+        await lottery.lock(secretHash)
+        await lottery.unlock(secret)
         const info = await lottery.getInfo()
-        assert.equal(info.supplyBalanceTotal, web3.utils.toWei('24', 'ether'))
+        assert.equal(info.supplyBalanceTotal.toString(), web3.utils.toWei('12', 'ether'))
         assert.equal(info.winner, user1)
       })
 
       it('should succeed even without a balance', async () => {
-        await lottery.lock()
-        await lottery.unlock()
+        await lottery.lock(secretHash)
+        await lottery.unlock(secret)
       })
     })
 
     describe('withdraw()', () => {
       it('should work for one participant', async () => {
-        const depositAmount = web3.utils.toWei('20', 'ether')
-        await token.approve(lottery.address, depositAmount, { from: user1 })
-        await lottery.deposit(depositAmount, { from: user1 })
-        await lottery.lock()
-        await lottery.unlock()
+        await token.approve(lottery.address, ticketPrice, { from: user1 })
+        await lottery.buyTicket({ from: user1 })
+        await lottery.lock(secretHash)
+        await lottery.unlock(secret)
 
         let winnings = await lottery.winnings(user1)
-        let winningBalance = new BN(web3.utils.toWei('24', 'ether'))
+        let winningBalance = new BN(web3.utils.toWei('12', 'ether'))
         assert.equal(winnings.toString(), winningBalance.toString())
 
         const balanceBefore = await token.balanceOf(user1)
@@ -129,16 +127,14 @@ contract('Lottery', (accounts) => {
       })
 
       it('should work for two participants', async () => {
-        const depositAmount = web3.utils.toWei('20', 'ether')
+        await token.approve(lottery.address, ticketPrice, { from: user1 })
+        await lottery.buyTicket({ from: user1 })
 
-        await token.approve(lottery.address, depositAmount, { from: user1 })
-        await lottery.deposit(depositAmount, { from: user1 })
+        await token.approve(lottery.address, ticketPrice, { from: user2 })
+        await lottery.buyTicket({ from: user2 })
 
-        await token.approve(lottery.address, depositAmount, { from: user2 })
-        await lottery.deposit(depositAmount, { from: user2 })
-
-        await lottery.lock()
-        await lottery.unlock()
+        await lottery.lock(secretHash)
+        await lottery.unlock(secret)
         const info = await lottery.getInfo()
 
         const user1BalanceBefore = await token.balanceOf(user1)
@@ -150,11 +146,11 @@ contract('Lottery', (accounts) => {
         const user2BalanceAfter = await token.balanceOf(user2)
 
         if (info.winner === user1) {
-          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(new BN(web3.utils.toWei('28', 'ether')))).toString())
-          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(new BN(web3.utils.toWei('20', 'ether')))).toString())
+          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(new BN(web3.utils.toWei('10', 'ether')))).toString())
+          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(new BN(web3.utils.toWei('14', 'ether')))).toString())
         } else if (info.winner === user2) {
-          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(new BN(web3.utils.toWei('20', 'ether')))).toString())
-          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(new BN(web3.utils.toWei('28', 'ether')))).toString())
+          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(new BN(web3.utils.toWei('10', 'ether')))).toString())
+          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(new BN(web3.utils.toWei('14', 'ether')))).toString())
         } else {
           throw new Error(`Unknown winner: ${info.winner}`)
         }
@@ -163,14 +159,12 @@ contract('Lottery', (accounts) => {
 
     describe('winnings()', () => {
       it('should return the entrants total to withdraw', async () => {
-        const depositAmount = web3.utils.toWei('20', 'ether')
-
-        await token.approve(lottery.address, depositAmount, { from: user1 })
-        await lottery.deposit(depositAmount, { from: user1 })
+        await token.approve(lottery.address, ticketPrice, { from: user1 })
+        await lottery.buyTicket({ from: user1 })
 
         let winnings = await lottery.winnings(user1)
 
-        assert.equal(winnings, depositAmount)
+        assert.equal(winnings, ticketPrice.toString())
       })
     })
   })
@@ -185,9 +179,8 @@ contract('Lottery', (accounts) => {
 
     describe('lock()', () => {
       beforeEach(async () => {
-        const depositAmount = web3.utils.toWei('20', 'ether')
-        await token.approve(lottery.address, depositAmount, { from: user1 })
-        await lottery.deposit(depositAmount, { from: user1 })
+        await token.approve(lottery.address, ticketPrice, { from: user1 })
+        await lottery.buyTicket({ from: user1 })
       })
 
       it('should not work for regular users', async () => {
@@ -203,7 +196,7 @@ contract('Lottery', (accounts) => {
       })
 
       it('should support early locking by the owner', async () => {
-        await lottery.lock({ from: owner })
+        await lottery.lock(secretHash, { from: owner })
       })
     })
   })
@@ -221,14 +214,13 @@ contract('Lottery', (accounts) => {
 
     describe('unlock()', () => {
       beforeEach(async () => {
-        const depositAmount = '1111000000000000000000' // web3.utils.toWei('20', 'ether')
-        await token.approve(lottery.address, depositAmount, { from: user1 })
-        await lottery.deposit(depositAmount, { from: user1 })
-        await lottery.lock()
+        await token.approve(lottery.address, ticketPrice, { from: user1 })
+        await lottery.buyTicket({ from: user1 })
+        await lottery.lock(secretHash)
       })
 
       it('should still work for the owner', async () => {
-        await lottery.unlock()
+        await lottery.unlock(secret)
       })
 
       it('should not work for anyone else', async () => {

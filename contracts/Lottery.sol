@@ -4,11 +4,12 @@ import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
 import "./compound/IMoneyMarket.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
+import "./UniformRandomNumber.sol";
 
 /**
  * @title The Lottery contract for PoolTogether
  * @author Brendan Asselstine
- * @notice This contract will accept deposits, use the pool the deposits together to supply the Compound
+ * @notice This contract pools deposits together  accept deposits, use the pool the deposits together to supply the Compound
  * contract, then withdraw the amount plus interest and pay the interest to the lottery winner.
  */
 contract Lottery is Ownable {
@@ -16,7 +17,8 @@ contract Lottery is Ownable {
 
   uint public constant MAX_UINT = 2**256 - 1;
 
-  event Deposited(address indexed sender, uint256 amount);
+  event BoughtTicket(address indexed sender, uint256 amount);
+  event BoughtTickets(address indexed sender, uint256 count);
   event Withdrawn(address indexed sender);
   event LotteryLocked();
   event LotteryUnlocked();
@@ -30,79 +32,92 @@ contract Lottery is Ownable {
   struct Entry {
     address addr;
     uint256 amount;
+    uint256 ticketCount;
   }
 
   uint256 private totalAmount;
-  uint256 private bondStartTime;
-  uint256 private bondEndTime;
+  uint256 private bondStartBlock;
+  uint256 private bondEndBlock;
+  bytes32 private secretHash;
+  bytes32 private secret;
   State public state;
-  uint256 private winnerIndex;
   uint256 private finalAmount;
-  address[] private entryAddresses;
+  address[] private ticketAddresses;
   mapping (address => Entry) private entries;
-  mapping (address => uint256) private entryAddressIndices;
   IMoneyMarket public moneyMarket;
   IERC20 public token;
-  uint256 private minimumDeposit;
+  uint256 private ticketPrice;
 
   /**
    * @notice Creates a new Lottery.
    * @param _moneyMarket The Compound money market to supply tokens to.
    * @param _token The ERC20 token to be used.
-   * @param _bondStartTime The timestamp after which the deposit can be made to Compound
-   * @param _bondEndTime The timestamp after which the Compound supply can be withdrawn
+   * @param _bondStartBlock The block number on or after which the deposit can be made to Compound
+   * @param _bondEndBlock The block number on or after which the Compound supply can be withdrawn
    */
   constructor (
     IMoneyMarket _moneyMarket,
     IERC20 _token,
-    uint256 _bondStartTime,
-    uint256 _bondEndTime,
-    uint256 _minimumDeposit
+    uint256 _bondStartBlock,
+    uint256 _bondEndBlock,
+    uint256 _ticketPrice
   ) public {
     require(address(_moneyMarket) != address(0), "money market address cannot be zero");
     require(address(_token) != address(0), "token address cannot be zero");
     moneyMarket = _moneyMarket;
     token = _token;
-    bondStartTime = _bondStartTime;
-    bondEndTime = _bondEndTime;
-    minimumDeposit = _minimumDeposit;
+    bondStartBlock = _bondStartBlock;
+    bondEndBlock = _bondEndBlock;
+    ticketPrice = _ticketPrice;
+  }
+
+  function buyTickets (uint256 _count) external {
+    uint256 remaining = _count;
+    while (remaining > 0) {
+      buyTicket();
+      remaining -= 1;
+    }
+
+    emit BoughtTickets(msg.sender, _count);
   }
 
   /**
    * @notice Deposits tokens into the Lottery.  Only possible before the Lottery deposits into Compound.  The
    * user can deposit any number of times, but they will always have the same chance of winning.
-   * @param _amount The amount of the configured token to deposit.
    */
-  function deposit (uint256 _amount) requireOpen external {
-    require(_amount >= minimumDeposit, "you must deposit more than the minimum");
-    require(address(token) != address(0), "token is zeroooo");
-    require(token.transferFrom(msg.sender, address(this), _amount), "token transfer failed");
+  function buyTicket () public requireOpen {
+    require(token.transferFrom(msg.sender, address(this), ticketPrice), "token transfer failed");
 
     if (_hasEntry(msg.sender)) {
-      entries[msg.sender].amount = entries[msg.sender].amount.add(_amount);
+      entries[msg.sender].amount = entries[msg.sender].amount.add(ticketPrice);
+      entries[msg.sender].ticketCount = entries[msg.sender].ticketCount.add(1);
     } else {
-      uint256 index = entryAddresses.length;
-      entryAddresses.push(msg.sender);
-      entryAddressIndices[msg.sender] = index;
       entries[msg.sender] = Entry(
         msg.sender,
-        _amount
+        ticketPrice,
+        1
       );
     }
 
-    totalAmount = totalAmount.add(_amount);
+    ticketAddresses.push(msg.sender);
 
-    emit Deposited(msg.sender, _amount);
+    totalAmount = totalAmount.add(ticketPrice);
+
+    emit BoughtTicket(msg.sender, ticketPrice);
   }
 
   /**
    * @notice Pools the deposits and supplies them to Compound.  Can only be called after the bond start time.
    * Fires the LotteryLocked event.
    */
-  function lock() requireOpen external {
+  function lock(bytes32 _secretHash) external requireOpen {
     if (msg.sender != owner()) {
-      require(bondStartTime <= now, "lottery cannot be locked yet");
+      require(bondStartBlock < block.number, "lottery cannot be locked yet");
+    } else if (block.number != bondStartBlock) {
+      bondStartBlock = block.number;
     }
+    require(_secretHash != 0, "secret hash must be defined");
+    secretHash = _secretHash;
     state = State.LOCKED;
     require(token.approve(address(moneyMarket), totalAmount), "could not approve money market spend");
     require(moneyMarket.supply(address(token), totalAmount) == 0, "could not supply money market");
@@ -113,21 +128,20 @@ contract Lottery is Ownable {
   /**
    * @notice Withdraws the deposit from Compound and selects a winner.  Fires the LotteryUnlocked event.
    */
-  function unlock() requireLocked public {
+  function unlock(bytes32 _secret) public requireLocked {
     if (msg.sender != owner()) {
-      require(bondEndTime < now, "lottery cannot be unlocked yet");
+      require(bondEndBlock < block.number, "lottery cannot be unlocked yet");
+    } else if (block.number != bondEndBlock) {
+      bondEndBlock = block.number;
     }
+    require(keccak256(abi.encodePacked(_secret)) == secretHash, "secret does not match");
+    secret = _secret;
     state = State.COMPLETE;
     uint256 balance = moneyMarket.getSupplyBalance(address(this), address(token));
     if (balance > 0) {
       require(moneyMarket.withdraw(address(token), balance) == 0, "could not withdraw balance");
     }
     finalAmount = balance;
-    if (entryAddresses.length == 0) {
-      winnerIndex = 0;
-    } else {
-      winnerIndex = _selectRandom(entryAddresses.length);
-    }
 
     emit LotteryUnlocked();
   }
@@ -157,22 +171,28 @@ contract Lottery is Ownable {
     if (entry.amount == 0) {
       return 0;
     }
-    uint256 entryIndex = entryAddressIndices[_addr];
     uint256 winningTotal = entry.amount;
-    if (state == State.COMPLETE && entryIndex == winnerIndex) {
+    address winnerAddress = ticketAddresses[winnerIndex()];
+    if (state == State.COMPLETE && _addr == winnerAddress) {
       winningTotal = winningTotal.add(finalAmount.sub(totalAmount));
     }
     return winningTotal;
   }
 
-  function _selectRandom(uint256 total) internal view returns (uint256) {
-    uint256 bucketSize = MAX_UINT / total;
-    uint256 randomUint = uint256(_entropy());
-    return randomUint / bucketSize;
+  function winnerIndex() internal view returns (uint256) {
+    if (ticketAddresses.length == 0) {
+      return 0;
+    } else {
+      return _selectRandom(ticketAddresses.length);
+    }
   }
 
-  function _entropy() internal view returns (bytes32) {
-    return blockhash(block.number - 1) ^ blockhash(block.number - 2) ^ blockhash(block.number - 3) ^ blockhash(block.number - 4);
+  function _selectRandom(uint256 total) internal view returns (uint256) {
+    return UniformRandomNumber.uniform(_entropy(), total);
+  }
+
+  function _entropy() internal view returns (uint256) {
+    return uint256(blockhash(bondEndBlock) ^ secret);
   }
 
   /**
@@ -192,17 +212,17 @@ contract Lottery is Ownable {
     uint256 minDeposit
   ) {
     address winAddr = address(0);
-    if (finalAmount != 0 && entryAddresses.length > 0) {
-      winAddr = entryAddresses[winnerIndex];
+    if (state == State.COMPLETE && ticketAddresses.length > 0) {
+      winAddr = ticketAddresses[winnerIndex()];
     }
     return (
       totalAmount,
-      bondStartTime,
-      bondEndTime,
+      bondStartBlock,
+      bondEndBlock,
       state,
       winAddr,
       finalAmount,
-      minimumDeposit
+      ticketPrice
     );
   }
 
@@ -212,18 +232,19 @@ contract Lottery is Ownable {
    */
   function getEntry(address _addr) public view returns (
     address addr,
-    uint256 amount
+    uint256 amount,
+    uint256 ticketCount
   ) {
     Entry storage entry = entries[_addr];
     return (
       entry.addr,
-      entry.amount
+      entry.amount,
+      entry.ticketCount
     );
   }
 
   function _hasEntry(address _addr) internal view returns (bool) {
-    uint256 entryAddressIndex = entryAddressIndices[_addr];
-    return entryAddresses.length > entryAddressIndex && entryAddresses[entryAddressIndex] == _addr;
+    return entries[_addr].addr == _addr;
   }
 
   modifier requireOpen() {
