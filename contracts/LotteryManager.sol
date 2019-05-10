@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
 import "./Lottery.sol";
+import "./Fixidity.sol";
 
 /**
  * @title The Lottery Manager contract for PoolTogether.
@@ -12,14 +13,17 @@ contract LotteryManager is Ownable {
   event LotteryCreated(address lottery);
   event OpenDurationChanged(uint256 duration);
   event BondDurationChanged(uint256 duration);
-  event TicketPriceChanged(uint256 ticketPrice);
+  event TicketPriceChanged(int256 ticketPrice);
+  event FeeFractionChanged(int256 feeFractionFixedPoint18);
 
   IMoneyMarket public moneyMarket;
   IERC20 public token;
   Lottery public currentLottery;
   uint256 public openDuration;
   uint256 public bondDuration;
-  uint256 public ticketPrice;
+  int256 public ticketPrice;
+  int256 private feeFractionFixedPoint18;
+  Fixidity public fixidity;
 
   /**
    * @notice Initializes a new LotteryManager contract.  Generally called through ZeppelinOS
@@ -29,18 +33,29 @@ contract LotteryManager is Ownable {
    * @param _openDuration The duration between a Lottery's creation and when it can be locked.
    * @param _bondDuration The duration that a Lottery must be locked for.
    */
-  function init (address _owner, address _moneyMarket, address _token, uint256 _openDuration, uint256 _bondDuration) public initializer {
+  function init (
+    address _owner,
+    address _moneyMarket,
+    address _token,
+    uint256 _openDuration,
+    uint256 _bondDuration,
+    int256 _ticketPrice,
+    int256 _feeFractionFixedPoint18,
+    Fixidity _fixidity
+  ) public initializer {
     require(_owner != address(0), "owner cannot be the null address");
     require(_moneyMarket != address(0), "money market address is zero");
     require(_token != address(0), "token address is zero");
-    require(_openDuration > 0, "open duration must be greater than zero");
-    require(_bondDuration > 0, "bond duration must be greater than zero");
-
+    require(address(_fixidity) != address(0), "fixidity cannot be the null address");
     Ownable.initialize(_owner);
     token = IERC20(_token);
     moneyMarket = IMoneyMarket(_moneyMarket);
-    openDuration = _openDuration;
-    bondDuration = _bondDuration;
+    fixidity = _fixidity;
+
+    setFeeFraction(_feeFractionFixedPoint18);
+    setBondDuration(_bondDuration);
+    setOpenDuration(_openDuration);
+    setTicketPrice(_ticketPrice);
   }
 
   /**
@@ -54,7 +69,9 @@ contract LotteryManager is Ownable {
       token,
       block.number + openDuration,
       block.number + openDuration + bondDuration,
-      ticketPrice
+      ticketPrice,
+      feeFractionFixedPoint18,
+      fixidity
     );
     currentLottery.initialize(owner());
 
@@ -64,7 +81,7 @@ contract LotteryManager is Ownable {
   /**
    * @notice Sets the open duration in blocks for new Lotteries.  Can only be set by the owner.  Fires the OpenDurationChanged event.
    */
-  function setOpenDuration(uint256 _openDuration) external onlyOwner {
+  function setOpenDuration(uint256 _openDuration) public onlyOwner {
     require(_openDuration > 0, "open duration must be greater than zero");
     openDuration = _openDuration;
 
@@ -74,16 +91,25 @@ contract LotteryManager is Ownable {
   /**
    * @notice Sets the lock duration in blocks for new Lotteries.  Can only be set by the owner.  Fires the BondDurationChanged event.
    */
-  function setBondDuration(uint256 _bondDuration) external onlyOwner {
+  function setBondDuration(uint256 _bondDuration) public onlyOwner {
     require(_bondDuration > 0, "bond duration must be greater than zero");
     bondDuration = _bondDuration;
 
     emit BondDurationChanged(_bondDuration);
   }
 
-  function setticketPrice(uint256 _ticketPrice) external onlyOwner {
+  function setTicketPrice(int256 _ticketPrice) public onlyOwner {
+    require(_ticketPrice > 0, "ticket price must be greater than zero");
     ticketPrice = _ticketPrice;
 
     emit TicketPriceChanged(_ticketPrice);
+  }
+
+  function setFeeFraction(int256 _feeFractionFixedPoint18) public onlyOwner {
+    require(_feeFractionFixedPoint18 >= 0, "fee must be zero or greater");
+    require(_feeFractionFixedPoint18 <= 1000000000000000000, "fee fraction must be 1 or less");
+    feeFractionFixedPoint18 = _feeFractionFixedPoint18;
+
+    emit FeeFractionChanged(_feeFractionFixedPoint18);
   }
 }

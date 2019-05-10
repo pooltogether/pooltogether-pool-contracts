@@ -2,6 +2,9 @@ const BN = require('bn.js')
 const Token = artifacts.require('Token.sol')
 const Lottery = artifacts.require('Lottery.sol')
 const MoneyMarketMock = artifacts.require('MoneyMarketMock.sol')
+const Fixidity = artifacts.require('Fixidity.sol')
+
+const zero_22 = '0000000000000000000000'
 
 contract('Lottery', (accounts) => {
   let lottery, token, moneyMarket
@@ -11,11 +14,15 @@ contract('Lottery', (accounts) => {
   let [owner, admin, user1, user2] = accounts
 
   let ticketPrice = new BN(web3.utils.toWei('10', 'ether'))
+  // let feeFraction = new BN('5' + zero_22) // equal to 0.05
+  let feeFraction = new BN('0')
 
   let secret = '0x1234123412341234123412341234123412341234123412341234123412341234'
   let secretHash = web3.utils.soliditySha3(secret)
 
   beforeEach(async () => {
+    fixidity = await Fixidity.new({ from: admin })
+
     token = await Token.new({ from: admin })
     await token.initialize(owner)
 
@@ -27,9 +34,28 @@ contract('Lottery', (accounts) => {
     await token.mint(user2, web3.utils.toWei('100000', 'ether'))
   })
 
-  async function createLottery(bondStartBlock = 0, bondEndBlock = 0) {
+  async function createLottery(bondStartBlock = -1, bondEndBlock = 0) {
     const block = await blockNumber()
-    const lottery = await Lottery.new(moneyMarket.address, token.address, block + bondStartBlock, block + bondEndBlock, ticketPrice)
+
+    // console.log(
+    //   moneyMarket.address.toString(),
+    //   token.address.toString(),
+    //   (block + bondStartBlock),
+    //   (block + bondEndBlock),
+    //   ticketPrice.toString(),
+    //   feeFraction.toString(),
+    //   fixidity.address.toString()
+    // )
+
+    const lottery = await Lottery.new(
+      moneyMarket.address,
+      token.address,
+      block + bondStartBlock,
+      block + bondEndBlock,
+      ticketPrice,
+      feeFraction,
+      fixidity.address
+    )
     lottery.initialize(owner)
     return lottery
   }
@@ -65,7 +91,7 @@ contract('Lottery', (accounts) => {
         assert.equal(depositedEvent.event, 'BoughtTicket')
         assert.equal(depositedEvent.address, lottery.address)
         assert.equal(depositedEvent.args[0], user1)
-        assert.equal(depositedEvent.args[1], ticketPrice.toString())
+        assert.equal(depositedEvent.args[1].toString(), ticketPrice.toString())
       })
 
       it('should allow multiple deposits', async () => {
@@ -173,7 +199,7 @@ contract('Lottery', (accounts) => {
 
         let winnings = await lottery.winnings(user1)
 
-        assert.equal(winnings, ticketPrice.toString())
+        assert.equal(winnings.toString(), ticketPrice.toString())
       })
     })
   })
