@@ -5,6 +5,8 @@ const MoneyMarketMock = artifacts.require('MoneyMarketMock.sol')
 
 contract('Lottery', (accounts) => {
   let lottery, token, moneyMarket
+  
+  const blocksPerMinute = 5
 
   let [owner, admin, user1, user2] = accounts
 
@@ -25,10 +27,15 @@ contract('Lottery', (accounts) => {
     await token.mint(user2, web3.utils.toWei('100000', 'ether'))
   })
 
-  async function createLottery(bondStartTime = 0, bondEndTime = 0) {
-    const lottery = await Lottery.new(moneyMarket.address, token.address, bondStartTime, bondEndTime, ticketPrice)
+  async function createLottery(bondStartBlock = 0, bondEndBlock = 0) {
+    const block = await blockNumber()
+    const lottery = await Lottery.new(moneyMarket.address, token.address, block + bondStartBlock, block + bondEndBlock, ticketPrice)
     lottery.initialize(owner)
     return lottery
+  }
+
+  async function blockNumber() {
+    return await web3.eth.getBlockNumber()
   }
 
   describe('lottery with zero open and bond durations', () => {
@@ -36,7 +43,7 @@ contract('Lottery', (accounts) => {
       lottery = await createLottery()
     })
 
-    describe('deposit', () => {
+    describe('buyTicket()', () => {
       it('should fail if not enough tokens approved', async () => {
         await token.approve(lottery.address, ticketPrice.div(new BN(2)), { from: user1 })
 
@@ -145,12 +152,14 @@ contract('Lottery', (accounts) => {
         await lottery.withdraw({ from: user2 })
         const user2BalanceAfter = await token.balanceOf(user2)
 
+        const earnedInterest = new BN(web3.utils.toWei('4', 'ether'))
+
         if (info.winner === user1) {
-          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(new BN(web3.utils.toWei('10', 'ether')))).toString())
-          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(new BN(web3.utils.toWei('14', 'ether')))).toString())
+          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(ticketPrice)).toString())
+          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(ticketPrice.add(earnedInterest))).toString())
         } else if (info.winner === user2) {
-          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(new BN(web3.utils.toWei('10', 'ether')))).toString())
-          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(new BN(web3.utils.toWei('14', 'ether')))).toString())
+          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(ticketPrice.add(earnedInterest))).toString())
+          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(ticketPrice)).toString())
         } else {
           throw new Error(`Unknown winner: ${info.winner}`)
         }
@@ -172,9 +181,9 @@ contract('Lottery', (accounts) => {
   describe('when lottery cannot be bonded yet', () => {
     beforeEach(async () => {
       // one thousand seconds into future
-      let bondStartTimeS = parseInt((new Date().getTime() / 1000) + 1000, 10)
-      let bondEndTimeS = parseInt(bondStartTimeS + 1000, 10)
-      lottery = await createLottery(bondStartTimeS, bondEndTimeS)
+      const bondStartBlock = 15 * blocksPerMinute
+      const bondEndBlock = bondStartBlock + 15 * blocksPerMinute
+      lottery = await createLottery(bondStartBlock, bondEndBlock)
     })
 
     describe('lock()', () => {
@@ -203,13 +212,14 @@ contract('Lottery', (accounts) => {
 
   describe('when lottery cannot be unlocked yet', () => {
     beforeEach(async () => {
-      // 15 seconds into the past
-      let bondStartTimeS = parseInt((new Date().getTime() / 1000) - 15, 10)
 
-      // 985 seconds into the future
-      let bondEndTimeS = parseInt(bondStartTimeS + 1000000, 10)
+      // in the past
+      let bondStartBlock = -10
 
-      lottery = await createLottery(bondStartTimeS, bondEndTimeS)
+      // in the future
+      let bondEndBlock = 15 * blocksPerMinute
+
+      lottery = await createLottery(bondStartBlock, bondEndBlock)
     })
 
     describe('unlock()', () => {

@@ -20,6 +20,7 @@
     "version": "truffle version"
   },
   "dependencies": {
+    "@kleros/kleros": "^0.0.7",
     "chalk": "^2.4.2",
     "ganache-cli": "^6.4.1",
     "openzeppelin-eth": "^2.1.3",

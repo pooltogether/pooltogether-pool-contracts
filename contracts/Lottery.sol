@@ -82,8 +82,8 @@ contract Lottery is Ownable {
   }
 
   /**
-   * @notice Deposits tokens into the Lottery.  Only possible before the Lottery deposits into Compound.  The
-   * user can deposit any number of times, but they will always have the same chance of winning.
+   * @notice Buys a lottery ticket.  Only possible while the Lottery is in the "open" state.  The
+   * user can buy any number of tickets.  Each ticket is a chance at winning.
    */
   function buyTicket () public requireOpen {
     require(token.transferFrom(msg.sender, address(this), ticketPrice), "token transfer failed");
