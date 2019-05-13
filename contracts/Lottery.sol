@@ -4,23 +4,24 @@ import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 import "./compound/IMoneyMarket.sol";
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
+import "kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
 import "./UniformRandomNumber.sol";
-import "./Fixidity.sol";
-
-// to get APR divide 
+import "fixidity/contracts/FixidityLib.sol";
 
 /**
  * @title The Lottery contract for PoolTogether
  * @author Brendan Asselstine
- * @notice This contract pools deposits together  accept deposits, use the pool the deposits together to supply the Compound
- * contract, then withdraw the amount plus interest and pay the interest to the lottery winner.
- * @dev All monetary values are stored internally as fixed point 24
+ * @notice This contract implements a "lossless lottery".  The lottery exists in three states: open, locked, and complete.
+ * The lottery begins in the open state during which users can buy any number of tickets.  The more tickets they purchase, the greater their chances of winning.
+ * After the bondStartBlock the owner may lock the lottery.  The lottery transfers the pool of ticket money into the Compound Finance MoneyMarket and no more tickets are sold.
+ * After the bondEndBlock the owner may unlock the lottery.  The lottery will withdraw the ticket money from the MoneyMarket, plus earned interest, back into the contract.  The fee will be sent to
+ * the owner, and users will be able to withdraw their ticket money and winnings, if any.
+ * @dev All monetary values are stored internally as fixed point 24.
  */
 contract Lottery is Ownable {
   using SafeMath for uint256;
 
-  event BoughtTicket(address indexed sender, int256 amount);
-  event BoughtTickets(address indexed sender, uint256 count);
+  event BoughtTickets(address indexed sender, int256 count, uint256 totalPrice);
   event Withdrawn(address indexed sender, int256 amount);
   event OwnerWithdrawn(address indexed sender, int256 amount);
   event LotteryLocked();
@@ -38,6 +39,8 @@ contract Lottery is Ownable {
     uint256 ticketCount;
   }
 
+  bytes32 public constant SUM_TREE_KEY = "PoolLottery";
+
   int256 private totalAmount; // fixed point 24
   uint256 private bondStartBlock;
   uint256 private bondEndBlock;
@@ -45,14 +48,15 @@ contract Lottery is Ownable {
   bytes32 private secret;
   State public state;
   int256 private finalAmount; //fixed point 24
-  address[] private ticketAddresses;
   mapping (address => Entry) private entries;
   IMoneyMarket public moneyMarket;
   IERC20 public token;
   int256 private ticketPrice; //fixed point 24
   int256 private feeFraction; //fixed point 24
-  Fixidity fixidity;
   bool private ownerHasWithdrawn;
+
+  using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
+  SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
 
   /**
    * @notice Creates a new Lottery.
@@ -69,19 +73,17 @@ contract Lottery is Ownable {
     uint256 _bondStartBlock,
     uint256 _bondEndBlock,
     int256 _ticketPrice,
-    int256 _feeFractionFixedPoint18,
-    Fixidity _fixidity
+    int256 _feeFractionFixedPoint18
   ) public {
     require(_bondEndBlock > _bondStartBlock, "bond end block is not after start block");
     require(address(_moneyMarket) != address(0), "money market address cannot be zero");
     require(address(_token) != address(0), "token address cannot be zero");
-    require(address(_fixidity) != address(0), "fixidity must be defined");
     require(_ticketPrice > 0, "ticket price must be greater than zero");
     require(_feeFractionFixedPoint18 >= 0, "fee must be zero or greater");
     require(_feeFractionFixedPoint18 <= 1000000000000000000, "fee fraction must be less than 1");
-    fixidity = _fixidity;
-    feeFraction = fixidity.newFixed(_feeFractionFixedPoint18, uint8(18));
-    ticketPrice = fixidity.newFixed(_ticketPrice);
+    feeFraction = FixidityLib.newFixed(_feeFractionFixedPoint18, uint8(18));
+    ticketPrice = FixidityLib.newFixed(_ticketPrice);
+    sortitionSumTrees.createTree(SUM_TREE_KEY, 4);
 
     moneyMarket = _moneyMarket;
     token = _token;
@@ -89,43 +91,36 @@ contract Lottery is Ownable {
     bondEndBlock = _bondEndBlock;
   }
 
-  function buyTickets (uint256 _count) external {
-    uint256 remaining = _count;
-    while (remaining > 0) {
-      buyTicket();
-      remaining -= 1;
-    }
-
-    emit BoughtTickets(msg.sender, _count);
-  }
-
   /**
    * @notice Buys a lottery ticket.  Only possible while the Lottery is in the "open" state.  The
    * user can buy any number of tickets.  Each ticket is a chance at winning.
    */
-  function buyTicket () public requireOpen {
-    int256 nonFixedTicketPrice = fixidity.fromFixed(ticketPrice);
-    require(token.transferFrom(msg.sender, address(this), uint256(nonFixedTicketPrice)), "token transfer failed");
+  function buyTickets (int256 _count) public requireOpen {
+    require(_count > 0, "number of tickets is less than or equal to zero");
+    int256 countFixed = FixidityLib.newFixed(_count);
+    int256 totalDeposit = FixidityLib.multiply(ticketPrice, countFixed);
+    uint256 totalDepositNonFixed = uint256(FixidityLib.fromFixed(totalDeposit));
+    require(token.transferFrom(msg.sender, address(this), totalDepositNonFixed), "token transfer failed");
 
     if (_hasEntry(msg.sender)) {
-      entries[msg.sender].amount = fixidity.add(entries[msg.sender].amount, ticketPrice);
-      entries[msg.sender].ticketCount = entries[msg.sender].ticketCount.add(1);
+      entries[msg.sender].amount = FixidityLib.add(entries[msg.sender].amount, totalDeposit);
+      entries[msg.sender].ticketCount = entries[msg.sender].ticketCount.add(uint256(_count));
     } else {
       entries[msg.sender] = Entry(
         msg.sender,
-        ticketPrice,
-        1
+        totalDeposit,
+        uint256(_count)
       );
     }
 
-    ticketAddresses.push(msg.sender);
+    sortitionSumTrees.set(SUM_TREE_KEY, totalDepositNonFixed, bytes32(uint256(msg.sender)));
 
-    totalAmount = fixidity.add(totalAmount, ticketPrice);
+    totalAmount = FixidityLib.add(totalAmount, totalDeposit);
 
     // the total amount cannot exceed the max lottery size
-    require(totalAmount < maxLotterySize(fixidity.maxFixedDiv()), "lottery size exceeds maximum");
+    require(totalAmount < maxLotterySize(FixidityLib.maxFixedDiv()), "lottery size exceeds maximum");
 
-    emit BoughtTicket(msg.sender, nonFixedTicketPrice);
+    emit BoughtTickets(msg.sender, _count, totalDepositNonFixed);
   }
 
   /**
@@ -141,7 +136,7 @@ contract Lottery is Ownable {
     require(_secretHash != 0, "secret hash must be defined");
     secretHash = _secretHash;
     state = State.LOCKED;
-    int256 totalAmountNonFixed = fixidity.fromFixed(totalAmount);
+    int256 totalAmountNonFixed = FixidityLib.fromFixed(totalAmount);
     require(token.approve(address(moneyMarket), uint256(totalAmountNonFixed)), "could not approve money market spend");
     require(moneyMarket.supply(address(token), uint256(totalAmountNonFixed)) == 0, "could not supply money market");
 
@@ -164,7 +159,7 @@ contract Lottery is Ownable {
     if (balance > 0) {
       require(moneyMarket.withdraw(address(token), balance) == 0, "could not withdraw balance");
     }
-    finalAmount = fixidity.newFixed(int256(balance));
+    finalAmount = FixidityLib.newFixed(int256(balance));
 
     require(token.transfer(owner(), feeAmount()), "could not transfer winnings");
 
@@ -197,11 +192,18 @@ contract Lottery is Ownable {
       return 0;
     }
     int256 winningTotal = entry.amount;
-    address winnerAddress = ticketAddresses[winnerIndex()];
-    if (state == State.COMPLETE && _addr == winnerAddress) {
-      winningTotal = fixidity.add(winningTotal, netWinningsFixedPoint24());
+    if (state == State.COMPLETE && _addr == winnerAddress()) {
+      winningTotal = FixidityLib.add(winningTotal, netWinningsFixedPoint24());
     }
-    return fixidity.fromFixed(winningTotal);
+    return FixidityLib.fromFixed(winningTotal);
+  }
+
+  /**
+   * @notice Selects and returns the winner's address
+   * @return The winner's address
+   */
+  function winnerAddress() public view returns (address) {
+    return address(uint256(sortitionSumTrees.draw(SUM_TREE_KEY, randomToken())));
   }
 
   function netWinningsFixedPoint24() internal view returns (int256) {
@@ -210,25 +212,29 @@ contract Lottery is Ownable {
 
   function grossWinningsFixedPoint24() internal view returns (int256) {
     if (state == State.COMPLETE) {
-      return fixidity.subtract(finalAmount, totalAmount);
+      return FixidityLib.subtract(finalAmount, totalAmount);
     } else {
       return 0;
     }
   }
 
+  /**
+   * @notice Calculates the size of the fee based on the gross winnings
+   * @return The fee for the lottery to be transferred to the owner
+   */
   function feeAmount() public view returns (uint256) {
-    return uint256(fixidity.fromFixed(feeAmountFixedPoint24()));
+    return uint256(FixidityLib.fromFixed(feeAmountFixedPoint24()));
   }
 
   function feeAmountFixedPoint24() internal view returns (int256) {
-    return fixidity.multiply(grossWinningsFixedPoint24(), feeFraction);
+    return FixidityLib.multiply(grossWinningsFixedPoint24(), feeFraction);
   }
 
-  function winnerIndex() internal view returns (uint256) {
-    if (ticketAddresses.length == 0) {
+  function randomToken() internal view returns (uint256) {
+    if (block.number > bondEndBlock) {
       return 0;
     } else {
-      return _selectRandom(ticketAddresses.length);
+      return _selectRandom(uint256(FixidityLib.fromFixed(totalAmount)));
     }
   }
 
@@ -257,17 +263,17 @@ contract Lottery is Ownable {
     int256 ticketCost
   ) {
     address winAddr = address(0);
-    if (state == State.COMPLETE && ticketAddresses.length > 0) {
-      winAddr = ticketAddresses[winnerIndex()];
+    if (state == State.COMPLETE) {
+      winAddr = winnerAddress();
     }
     return (
-      fixidity.fromFixed(totalAmount),
+      FixidityLib.fromFixed(totalAmount),
       bondStartBlock,
       bondEndBlock,
       state,
       winAddr,
-      fixidity.fromFixed(finalAmount),
-      fixidity.fromFixed(ticketPrice)
+      FixidityLib.fromFixed(finalAmount),
+      FixidityLib.fromFixed(ticketPrice)
     );
   }
 
@@ -283,7 +289,7 @@ contract Lottery is Ownable {
     Entry storage entry = entries[_addr];
     return (
       entry.addr,
-      fixidity.fromFixed(entry.amount),
+      FixidityLib.fromFixed(entry.amount),
       entry.ticketCount
     );
   }
@@ -291,27 +297,31 @@ contract Lottery is Ownable {
   /**
    * @notice Calculates the maximum lottery size so that it doesn't overflow after earning interest
    * @dev lotterySize = totalDeposits + totalDeposits * interest => totalDeposits = lotterySize / (1 + interest)
-   * @return The maximum size of the lottery before interest earned (in fixed point 24)
+   * @return The maximum size of the lottery to be deposited into the MoneyMarket
    */
   function maxLotterySize(int256 _maxValueFixedPoint24) public view returns (int256) {
     /// Double the interest rate in case it increases over the bond period.  Somewhat arbitrarily.
-    int256 interestFraction = fixidity.multiply(currentInterestFractionFixedPoint24(), fixidity.newFixed(2));
-    return fixidity.divide(_maxValueFixedPoint24, fixidity.add(interestFraction, fixidity.newFixed(1)));
+    int256 interestFraction = FixidityLib.multiply(currentInterestFractionFixedPoint24(), FixidityLib.newFixed(2));
+    return FixidityLib.divide(_maxValueFixedPoint24, FixidityLib.add(interestFraction, FixidityLib.newFixed(1)));
   }
 
+  /**
+   * @notice Estimates the current effective interest rate using the MoneyMarket's current supplyRateMantissa and the lock duration in blocks.
+   * @return The current estimated effective interest rate
+   */
   function currentInterestFractionFixedPoint24() public view returns (int256) {
     int256 blockDuration = int256(bondEndBlock - bondStartBlock);
-    int256 supplyRateMantissaFixedPoint24 = fixidity.newFixed(int256(supplyRateMantissa()), uint8(18));
-    return fixidity.multiply(supplyRateMantissaFixedPoint24, fixidity.newFixed(blockDuration));
+    int256 supplyRateMantissaFixedPoint24 = FixidityLib.newFixed(int256(supplyRateMantissa()), uint8(18));
+    return FixidityLib.multiply(supplyRateMantissaFixedPoint24, FixidityLib.newFixed(blockDuration));
   }
 
+  /**
+   * @notice Extracts the supplyRateMantissa value from the MoneyMarket contract
+   * @return The MoneyMarket supply rate per block
+   */
   function supplyRateMantissa() public view returns (uint256) {
     (,,,,uint __supplyRateMantissa,,,,) = moneyMarket.markets(address(token));
     return __supplyRateMantissa;
-  }
-
-  function toFixed(int256 _value) public view returns (int256) {
-    return fixidity.newFixed(_value, uint8(18));
   }
 
   function _hasEntry(address _addr) internal view returns (bool) {

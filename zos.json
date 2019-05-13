@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "contracts": {
     "LotteryManager": "LotteryManager",
-    "Migrations": "Migrations",
-    "Fixidity": "Fixidity"
+    "Migrations": "Migrations"
   }
 }

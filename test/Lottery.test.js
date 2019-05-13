@@ -2,12 +2,13 @@ const BN = require('bn.js')
 const Token = artifacts.require('Token.sol')
 const Lottery = artifacts.require('Lottery.sol')
 const MoneyMarketMock = artifacts.require('MoneyMarketMock.sol')
-const Fixidity = artifacts.require('Fixidity.sol')
+const FixidityLib = artifacts.require('FixidityLib.sol')
+const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
 
 const zero_22 = '0000000000000000000000'
 
 contract('Lottery', (accounts) => {
-  let lottery, token, moneyMarket
+  let lottery, token, moneyMarket, sumTree
   
   const blocksPerMinute = 5
 
@@ -22,7 +23,8 @@ contract('Lottery', (accounts) => {
   let supplyRateMantissa = '100000000000000000' // 0.1 per block
 
   beforeEach(async () => {
-    fixidity = await Fixidity.new({ from: admin })
+    sumTree = await SortitionSumTreeFactory.new()
+    fixidity = await FixidityLib.new({ from: admin })
 
     token = await Token.new({ from: admin })
     await token.initialize(owner)
@@ -48,14 +50,16 @@ contract('Lottery', (accounts) => {
     //   fixidity.address.toString()
     // )
 
+    await Lottery.link("SortitionSumTreeFactory", sumTree.address)
+    await Lottery.link("FixidityLib", fixidity.address)
+
     const lottery = await Lottery.new(
       moneyMarket.address,
       token.address,
       block + bondStartBlock,
       block + bondEndBlock,
       ticketPrice,
-      feeFraction,
-      fixidity.address
+      feeFraction
     )
     lottery.initialize(owner)
     return lottery
@@ -101,7 +105,7 @@ contract('Lottery', (accounts) => {
 
         let failed
         try {
-          await lottery.buyTicket({ from: user1 })
+          await lottery.buyTickets(1, { from: user1 })
           failed = false
         } catch (error) {
           failed = true
@@ -112,21 +116,22 @@ contract('Lottery', (accounts) => {
       it('should deposit some tokens into the lottery', async () => {
         await token.approve(lottery.address, ticketPrice, { from: user1 })
 
-        const response = await lottery.buyTicket({ from: user1 })
-        const depositedEvent = response.receipt.logs[0]
-        assert.equal(depositedEvent.event, 'BoughtTicket')
-        assert.equal(depositedEvent.address, lottery.address)
-        assert.equal(depositedEvent.args[0], user1)
-        assert.equal(depositedEvent.args[1].toString(), ticketPrice.toString())
+        const response = await lottery.buyTickets(1, { from: user1 })
+        const boughtTicketsEvent = response.receipt.logs[0]
+        assert.equal(boughtTicketsEvent.event, 'BoughtTickets')
+        assert.equal(boughtTicketsEvent.address, lottery.address)
+        assert.equal(boughtTicketsEvent.args[0], user1)
+        assert.equal(boughtTicketsEvent.args[1].toString(), '1')
+        assert.equal(boughtTicketsEvent.args[2].toString(), ticketPrice.toString())
       })
 
       it('should allow multiple deposits', async () => {
         await token.approve(lottery.address, ticketPrice, { from: user1 })
 
-        await lottery.buyTicket({ from: user1 })
+        await lottery.buyTickets(1, { from: user1 })
 
         await token.approve(lottery.address, ticketPrice, { from: user1 })
-        await lottery.buyTicket({ from: user1 })
+        await lottery.buyTickets(1, { from: user1 })
 
         const response = await lottery.getEntry(user1)
         assert.equal(response.addr, user1)
@@ -145,7 +150,7 @@ contract('Lottery', (accounts) => {
     describe('lock()', () => {
       it('should transfer tokens to the money market', async () => {
         await token.approve(lottery.address, ticketPrice, { from: user1 })
-        await lottery.buyTicket({ from: user1 })
+        await lottery.buyTickets(1, { from: user1 })
         await lottery.lock(secretHash)
       })
     })
@@ -153,7 +158,7 @@ contract('Lottery', (accounts) => {
     describe('unlock()', () => {
       it('should transfer tokens from money market back', async () => {
         await token.approve(lottery.address, ticketPrice, { from: user1 })
-        await lottery.buyTicket({ from: user1 })
+        await lottery.buyTickets(1, { from: user1 })
         await lottery.lock(secretHash)
         await lottery.unlock(secret)
         const info = await lottery.getInfo()
@@ -170,7 +175,7 @@ contract('Lottery', (accounts) => {
     describe('withdraw()', () => {
       it('should work for one participant', async () => {
         await token.approve(lottery.address, ticketPrice, { from: user1 })
-        await lottery.buyTicket({ from: user1 })
+        await lottery.buyTickets(1, { from: user1 })
         await lottery.lock(secretHash)
         await lottery.unlock(secret)
 
@@ -186,11 +191,13 @@ contract('Lottery', (accounts) => {
       })
 
       it('should work for two participants', async () => {
-        await token.approve(lottery.address, ticketPrice, { from: user1 })
-        await lottery.buyTicket({ from: user1 })
+        const priceForTenTickets = ticketPrice.mul(new BN(10))
 
-        await token.approve(lottery.address, ticketPrice, { from: user2 })
-        await lottery.buyTicket({ from: user2 })
+        await token.approve(lottery.address, priceForTenTickets, { from: user1 })
+        await lottery.buyTickets(10, { from: user1 })
+
+        await token.approve(lottery.address, priceForTenTickets, { from: user2 })
+        await lottery.buyTickets(10, { from: user2 })
 
         await lottery.lock(secretHash)
         await lottery.unlock(secret)
@@ -204,14 +211,14 @@ contract('Lottery', (accounts) => {
         await lottery.withdraw({ from: user2 })
         const user2BalanceAfter = await token.balanceOf(user2)
 
-        const earnedInterest = new BN(web3.utils.toWei('4', 'ether'))
+        const earnedInterest = priceForTenTickets.mul(new BN(2)).mul(new BN(20)).div(new BN(100))
 
         if (info.winner === user1) {
-          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(ticketPrice)).toString())
-          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(ticketPrice.add(earnedInterest))).toString())
+          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(priceForTenTickets)).toString())
+          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(priceForTenTickets.add(earnedInterest))).toString())
         } else if (info.winner === user2) {
-          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(ticketPrice.add(earnedInterest))).toString())
-          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(ticketPrice)).toString())
+          assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(priceForTenTickets.add(earnedInterest))).toString())
+          assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(priceForTenTickets)).toString())
         } else {
           throw new Error(`Unknown winner: ${info.winner}`)
         }
@@ -221,7 +228,7 @@ contract('Lottery', (accounts) => {
     describe('winnings()', () => {
       it('should return the entrants total to withdraw', async () => {
         await token.approve(lottery.address, ticketPrice, { from: user1 })
-        await lottery.buyTicket({ from: user1 })
+        await lottery.buyTickets(1, { from: user1 })
 
         let winnings = await lottery.winnings(user1)
 
@@ -241,7 +248,7 @@ contract('Lottery', (accounts) => {
     describe('lock()', () => {
       beforeEach(async () => {
         await token.approve(lottery.address, ticketPrice, { from: user1 })
-        await lottery.buyTicket({ from: user1 })
+        await lottery.buyTickets(1, { from: user1 })
       })
 
       it('should not work for regular users', async () => {
@@ -277,7 +284,7 @@ contract('Lottery', (accounts) => {
     describe('unlock()', () => {
       beforeEach(async () => {
         await token.approve(lottery.address, ticketPrice, { from: user1 })
-        await lottery.buyTicket({ from: user1 })
+        await lottery.buyTickets(1, { from: user1 })
         await lottery.lock(secretHash)
       })
 
@@ -308,19 +315,23 @@ contract('Lottery', (accounts) => {
 
       const lottery = await createLottery(0, 1)
 
-      await token.approve(lottery.address, ticketPrice, { from: user1 })
-      lottery.buyTicket({ from: user1 })
+      const user1Tickets = ticketPrice.mul(new BN(100))
+      await token.approve(lottery.address, user1Tickets, { from: user1 })
+      await lottery.buyTickets(100, { from: user1 })
 
       const ownerBalance = await token.balanceOf(owner)
-      lottery.lock(secretHash, { from: owner })
+      await lottery.lock(secretHash, { from: owner })
 
       /// MoneyMarketMock awards 20% regardless of duration.
-      const totalDeposit = ticketPrice
+      const totalDeposit = user1Tickets
       const interestEarned = totalDeposit.mul(new BN(20)).div(new BN(100))
       const fee = interestEarned.mul(new BN(10)).div(new BN(100))
 
       // we expect unlocking to transfer the fee to the owner
-      lottery.unlock(secret, { from: owner })
+      await lottery.unlock(secret, { from: owner })
+
+      assert.equal((await lottery.feeAmount()).toString(), fee.toString())
+
       const newOwnerBalance = await token.balanceOf(owner)
       assert.equal(newOwnerBalance.toString(), ownerBalance.add(fee).toString())
 
@@ -328,7 +339,7 @@ contract('Lottery', (accounts) => {
       const user1Balance = await token.balanceOf(user1)
       await lottery.withdraw({ from: user1 })
       const newUser1Balance = await token.balanceOf(user1)
-      assert.equal(newUser1Balance.toString(), user1Balance.add(ticketPrice).add(interestEarned).sub(fee).toString())
+      assert.equal(newUser1Balance.toString(), user1Balance.add(user1Tickets).add(interestEarned).sub(fee).toString())
     })
   })
 
