@@ -21,7 +21,8 @@ contract Lottery is Ownable {
 
   event BoughtTicket(address indexed sender, int256 amount);
   event BoughtTickets(address indexed sender, uint256 count);
-  event Withdrawn(address indexed sender);
+  event Withdrawn(address indexed sender, int256 amount);
+  event OwnerWithdrawn(address indexed sender, int256 amount);
   event LotteryLocked();
   event LotteryUnlocked();
 
@@ -51,6 +52,7 @@ contract Lottery is Ownable {
   int256 private ticketPrice; //fixed point 24
   int256 private feeFraction; //fixed point 24
   Fixidity fixidity;
+  bool private ownerHasWithdrawn;
 
   /**
    * @notice Creates a new Lottery.
@@ -121,7 +123,7 @@ contract Lottery is Ownable {
     totalAmount = fixidity.add(totalAmount, ticketPrice);
 
     // the total amount cannot exceed the max lottery size
-    require(totalAmount < maxLotterySize(), "lottery size exceeds maximum");
+    require(totalAmount < maxLotterySize(fixidity.maxFixedDiv()), "lottery size exceeds maximum");
 
     emit BoughtTicket(msg.sender, nonFixedTicketPrice);
   }
@@ -164,6 +166,8 @@ contract Lottery is Ownable {
     }
     finalAmount = fixidity.newFixed(int256(balance));
 
+    require(token.transfer(owner(), feeAmount()), "could not transfer winnings");
+
     emit LotteryUnlocked();
   }
 
@@ -178,7 +182,7 @@ contract Lottery is Ownable {
     int256 winningTotal = winnings(msg.sender);
     delete entry.amount;
 
-    emit Withdrawn(msg.sender);
+    emit Withdrawn(msg.sender, winningTotal);
 
     require(token.transfer(msg.sender, uint256(winningTotal)), "could not transfer winnings");
   }
@@ -189,18 +193,22 @@ contract Lottery is Ownable {
    */
   function winnings(address _addr) public view returns (int256) {
     Entry storage entry = entries[_addr];
-    if (entry.amount == 0) {
+    if (entry.addr == address(0)) { //if does not have an entry
       return 0;
     }
     int256 winningTotal = entry.amount;
     address winnerAddress = ticketAddresses[winnerIndex()];
     if (state == State.COMPLETE && _addr == winnerAddress) {
-      winningTotal = fixidity.subtract(fixidity.add(winningTotal, finalAmount), totalAmount);
+      winningTotal = fixidity.add(winningTotal, netWinningsFixedPoint24());
     }
     return fixidity.fromFixed(winningTotal);
   }
 
-  function interestEarned() public view returns (int256) {
+  function netWinningsFixedPoint24() internal view returns (int256) {
+    return grossWinningsFixedPoint24() - feeAmountFixedPoint24();
+  }
+
+  function grossWinningsFixedPoint24() internal view returns (int256) {
     if (state == State.COMPLETE) {
       return fixidity.subtract(finalAmount, totalAmount);
     } else {
@@ -209,8 +217,11 @@ contract Lottery is Ownable {
   }
 
   function feeAmount() public view returns (uint256) {
-    // int256 interestEarnedFixedPoint24 = fixidity.newFixed(interestEarned(), uint8(0));
-    // fixidity.multiply(feeFractionFixedPoint24, interestEarnedFixedPoint24);
+    return uint256(fixidity.fromFixed(feeAmountFixedPoint24()));
+  }
+
+  function feeAmountFixedPoint24() internal view returns (int256) {
+    return fixidity.multiply(grossWinningsFixedPoint24(), feeFraction);
   }
 
   function winnerIndex() internal view returns (uint256) {
@@ -277,20 +288,26 @@ contract Lottery is Ownable {
     );
   }
 
-  /// @notice Calculates the maximum lottery size so that it won't overflow.  Based on block duration and moneyMarket rate.
-  function maxLotterySize() public view returns (int256) {
-    return maxLotterySize(fixidity.maxFixedDiv());
-  }
-
-  function maxLotterySize(int256 _maxFixedDiv) public view returns (int256) {
-    return fixidity.divide(_maxFixedDiv, fixidity.add(currentInterestFractionFixedPoint24(), fixidity.newFixed(1)));
+  /**
+   * @notice Calculates the maximum lottery size so that it doesn't overflow after earning interest
+   * @dev lotterySize = totalDeposits + totalDeposits * interest => totalDeposits = lotterySize / (1 + interest)
+   * @return The maximum size of the lottery before interest earned (in fixed point 24)
+   */
+  function maxLotterySize(int256 _maxValueFixedPoint24) public view returns (int256) {
+    /// Double the interest rate in case it increases over the bond period.  Somewhat arbitrarily.
+    int256 interestFraction = fixidity.multiply(currentInterestFractionFixedPoint24(), fixidity.newFixed(2));
+    return fixidity.divide(_maxValueFixedPoint24, fixidity.add(interestFraction, fixidity.newFixed(1)));
   }
 
   function currentInterestFractionFixedPoint24() public view returns (int256) {
     int256 blockDuration = int256(bondEndBlock - bondStartBlock);
-    (,,,,uint supplyRateMantissa,,,,) = moneyMarket.markets(address(token));
-    int256 supplyRateMantissaFixedPoint24 = fixidity.newFixed(int256(supplyRateMantissa), uint8(18));
-    return fixidity.multiply(supplyRateMantissaFixedPoint24, blockDuration);
+    int256 supplyRateMantissaFixedPoint24 = fixidity.newFixed(int256(supplyRateMantissa()), uint8(18));
+    return fixidity.multiply(supplyRateMantissaFixedPoint24, fixidity.newFixed(blockDuration));
+  }
+
+  function supplyRateMantissa() public view returns (uint256) {
+    (,,,,uint __supplyRateMantissa,,,,) = moneyMarket.markets(address(token));
+    return __supplyRateMantissa;
   }
 
   function toFixed(int256 _value) public view returns (int256) {

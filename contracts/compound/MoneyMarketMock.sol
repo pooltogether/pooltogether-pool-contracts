@@ -10,10 +10,6 @@ contract MoneyMarketMock is Initializable, IMoneyMarket {
 
   uint __supplyRateMantissa;
 
-  function initialize (address _token) public initializer {
-    initialize(_token, uint256(12748939898));
-  }
-
   function initialize (address _token, uint256 _supplyRateMantissa) public initializer {
     require(_token != address(0), "token is not defined");
     token = IERC20(_token);

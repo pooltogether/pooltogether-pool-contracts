@@ -19,6 +19,7 @@ contract('Lottery', (accounts) => {
 
   let secret = '0x1234123412341234123412341234123412341234123412341234123412341234'
   let secretHash = web3.utils.soliditySha3(secret)
+  let supplyRateMantissa = '100000000000000000' // 0.1 per block
 
   beforeEach(async () => {
     fixidity = await Fixidity.new({ from: admin })
@@ -27,7 +28,7 @@ contract('Lottery', (accounts) => {
     await token.initialize(owner)
 
     moneyMarket = await MoneyMarketMock.new({ from: admin })
-    await moneyMarket.initialize(token.address)
+    await moneyMarket.initialize(token.address, new BN(supplyRateMantissa))
 
     await token.mint(moneyMarket.address, web3.utils.toWei('10000000', 'ether'))
     await token.mint(user1, web3.utils.toWei('100000', 'ether'))
@@ -63,6 +64,31 @@ contract('Lottery', (accounts) => {
   async function blockNumber() {
     return await web3.eth.getBlockNumber()
   }
+
+  describe('supplyRateMantissa()', () => {
+    it('should work', async () => {
+      lottery = await createLottery(0, 10) // ten blocks long
+      assert.equal(await lottery.supplyRateMantissa(), web3.utils.toWei('0.1', 'ether'))
+    })
+  })
+
+  describe('currentInterestFractionFixedPoint24()', () => {
+    it('should return the right value', async () => {
+      lottery = await createLottery(0, 10) // ten blocks long
+      const interestFraction = await lottery.currentInterestFractionFixedPoint24()
+      assert.equal(interestFraction.toString(), web3.utils.toWei('1000000', 'ether'))
+    })
+  })
+
+  describe('maxLotterySize()', () => {
+    it('should set an appropriate limit based on max integers', async () => {
+      lottery = await createLottery(0, 10) // ten blocks long
+      const limit = await fixidity.newFixed(new BN('1000'))
+      const maxSize = await lottery.maxLotterySize(limit);
+      const lotteryLimit = new BN('333333333333333333333333000')
+      assert.equal(maxSize.toString(), lotteryLimit.toString())
+    })
+  })
 
   describe('lottery with zero open and bond durations', () => {
     beforeEach(async () => {
@@ -271,4 +297,39 @@ contract('Lottery', (accounts) => {
       })
     })
   })
+
+  describe('when fee fraction is greater than zero', () => {
+    beforeEach(() => {
+      /// Fee fraction is 10%
+      feeFraction = web3.utils.toWei('0.1', 'ether')
+    })
+
+    it('should reward the owner the fee', async () => {
+
+      const lottery = await createLottery(0, 1)
+
+      await token.approve(lottery.address, ticketPrice, { from: user1 })
+      lottery.buyTicket({ from: user1 })
+
+      const ownerBalance = await token.balanceOf(owner)
+      lottery.lock(secretHash, { from: owner })
+
+      /// MoneyMarketMock awards 20% regardless of duration.
+      const totalDeposit = ticketPrice
+      const interestEarned = totalDeposit.mul(new BN(20)).div(new BN(100))
+      const fee = interestEarned.mul(new BN(10)).div(new BN(100))
+
+      // we expect unlocking to transfer the fee to the owner
+      lottery.unlock(secret, { from: owner })
+      const newOwnerBalance = await token.balanceOf(owner)
+      assert.equal(newOwnerBalance.toString(), ownerBalance.add(fee).toString())
+
+      // we expect the lottery winner to receive the interest less the fee
+      const user1Balance = await token.balanceOf(user1)
+      await lottery.withdraw({ from: user1 })
+      const newUser1Balance = await token.balanceOf(user1)
+      assert.equal(newUser1Balance.toString(), user1Balance.add(ticketPrice).add(interestEarned).sub(fee).toString())
+    })
+  })
+
 })
