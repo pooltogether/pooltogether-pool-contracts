@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
+import "openzeppelin-eth/contracts/math/SafeMath.sol";
 import "./Lottery.sol";
 
 /**
@@ -9,11 +10,15 @@ import "./Lottery.sol";
  * @notice Creates Lotteries and ensures that there is only one active Lottery at a time.
  */
 contract LotteryManager is Ownable {
-  event LotteryCreated(address lottery);
+  using SafeMath for uint256;
+
+  event LotteryCreated(address indexed lottery, uint256 indexed number, uint256 indexed page);
   event OpenDurationChanged(uint256 duration);
   event BondDurationChanged(uint256 duration);
   event TicketPriceChanged(int256 ticketPrice);
   event FeeFractionChanged(int256 feeFractionFixedPoint18);
+
+  uint256 public constant PAGE_SIZE = 10;
 
   IMoneyMarket public moneyMarket;
   IERC20 public token;
@@ -22,6 +27,7 @@ contract LotteryManager is Ownable {
   uint256 public bondDuration;
   int256 public ticketPrice;
   int256 private feeFractionFixedPoint18;
+  uint256 lotteryCount;
 
   /**
    * @notice Initializes a new LotteryManager contract.  Generally called through ZeppelinOS
@@ -68,8 +74,9 @@ contract LotteryManager is Ownable {
       feeFractionFixedPoint18
     );
     currentLottery.initialize(owner());
+    lotteryCount = lotteryCount.add(1);
 
-    emit LotteryCreated(address(currentLottery));
+    emit LotteryCreated(address(currentLottery), lotteryCount, lotteryCount.div(PAGE_SIZE));
   }
 
   /**
