@@ -49,6 +49,7 @@ contract Lottery is Ownable {
   State public state;
   int256 private finalAmount; //fixed point 24
   mapping (address => Entry) private entries;
+  uint256 public entryCount;
   IMoneyMarket public moneyMarket;
   IERC20 public token;
   int256 private ticketPrice; //fixed point 24
@@ -111,6 +112,7 @@ contract Lottery is Ownable {
         totalDeposit,
         uint256(_count)
       );
+      entryCount = entryCount.add(1);
     }
 
     sortitionSumTrees.set(SUM_TREE_KEY, totalDepositNonFixed, bytes32(uint256(msg.sender)));

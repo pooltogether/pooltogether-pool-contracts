@@ -27,7 +27,7 @@ contract LotteryManager is Ownable {
   uint256 public bondDuration;
   int256 public ticketPrice;
   int256 private feeFractionFixedPoint18;
-  uint256 lotteryCount;
+  uint256 public lotteryCount;
 
   /**
    * @notice Initializes a new LotteryManager contract.  Generally called through ZeppelinOS
