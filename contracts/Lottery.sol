@@ -265,7 +265,7 @@ contract Lottery is Ownable {
     int256 ticketCost,
     uint256 participantCount,
     int256 maxLotterySize,
-    int256 estimatedInterest
+    int256 estimatedInterestFixedPoint18
   ) {
     address winAddr = address(0);
     if (state == State.COMPLETE) {
@@ -281,7 +281,7 @@ contract Lottery is Ownable {
       FixidityLib.fromFixed(ticketPrice),
       entryCount,
       FixidityLib.fromFixed(maxLotterySizeFixedPoint24(FixidityLib.maxFixedDiv())),
-      FixidityLib.fromFixed(currentInterestFractionFixedPoint24())
+      FixidityLib.fromFixed(currentInterestFractionFixedPoint24(), uint8(18))
     );
   }
 
