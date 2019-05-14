@@ -88,7 +88,7 @@ contract('Lottery', (accounts) => {
     it('should set an appropriate limit based on max integers', async () => {
       lottery = await createLottery(0, 10) // ten blocks long
       const limit = await fixidity.newFixed(new BN('1000'))
-      const maxSize = await lottery.maxLotterySize(limit);
+      const maxSize = await lottery.maxLotterySizeFixedPoint24(limit);
       const lotteryLimit = new BN('333333333333333333333333000')
       assert.equal(maxSize.toString(), lotteryLimit.toString())
     })

@@ -120,7 +120,7 @@ contract Lottery is Ownable {
     totalAmount = FixidityLib.add(totalAmount, totalDeposit);
 
     // the total amount cannot exceed the max lottery size
-    require(totalAmount < maxLotterySize(FixidityLib.maxFixedDiv()), "lottery size exceeds maximum");
+    require(totalAmount < maxLotterySizeFixedPoint24(FixidityLib.maxFixedDiv()), "lottery size exceeds maximum");
 
     emit BoughtTickets(msg.sender, _count, totalDepositNonFixed);
   }
@@ -262,7 +262,10 @@ contract Lottery is Ownable {
     State lotteryState,
     address winner,
     int256 supplyBalanceTotal,
-    int256 ticketCost
+    int256 ticketCost,
+    uint256 participantCount,
+    int256 maxLotterySize,
+    int256 estimatedInterest
   ) {
     address winAddr = address(0);
     if (state == State.COMPLETE) {
@@ -275,7 +278,10 @@ contract Lottery is Ownable {
       state,
       winAddr,
       FixidityLib.fromFixed(finalAmount),
-      FixidityLib.fromFixed(ticketPrice)
+      FixidityLib.fromFixed(ticketPrice),
+      entryCount,
+      FixidityLib.fromFixed(maxLotterySizeFixedPoint24(FixidityLib.maxFixedDiv())),
+      FixidityLib.fromFixed(currentInterestFractionFixedPoint24())
     );
   }
 
@@ -301,7 +307,7 @@ contract Lottery is Ownable {
    * @dev lotterySize = totalDeposits + totalDeposits * interest => totalDeposits = lotterySize / (1 + interest)
    * @return The maximum size of the lottery to be deposited into the MoneyMarket
    */
-  function maxLotterySize(int256 _maxValueFixedPoint24) public view returns (int256) {
+  function maxLotterySizeFixedPoint24(int256 _maxValueFixedPoint24) public view returns (int256) {
     /// Double the interest rate in case it increases over the bond period.  Somewhat arbitrarily.
     int256 interestFraction = FixidityLib.multiply(currentInterestFractionFixedPoint24(), FixidityLib.newFixed(2));
     return FixidityLib.divide(_maxValueFixedPoint24, FixidityLib.add(interestFraction, FixidityLib.newFixed(1)));
