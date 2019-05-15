@@ -63,9 +63,18 @@ contract('LotteryManager', (accounts) => {
       let address = await createLottery()
       let lottery = await Lottery.at(address)
       assert.equal(await lottery.token(), token.address)
-      let info = await lottery.getInfo()
-      let diff = info.endTime.sub(info.startTime)
+      let lotteryInfo = await lottery.getInfo()
+      let diff = lotteryInfo.endTime.sub(lotteryInfo.startTime)
       assert.equal(diff.toString(), bondDuration)
+
+      let lotteryManagerInfo = await lotteryManager.getInfo()
+
+      assert.equal(lotteryManagerInfo._currentLottery, address)
+      assert.equal(lotteryManagerInfo._openDuration.toString(), ''+ openDuration)
+      assert.equal(lotteryManagerInfo._bondDuration.toString(), '' + bondDuration)
+      assert.equal(lotteryManagerInfo._ticketPrice.toString(), ticketPrice)
+      assert.equal(lotteryManagerInfo._feeFractionFixedPoint18.toString(), feeFraction) 
+      assert.equal(lotteryManagerInfo._lotteryCount.toString(), 1)
     })
 
     it('should allow multiple lottery creation', async () => {

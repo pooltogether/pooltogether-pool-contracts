@@ -59,6 +59,24 @@ contract LotteryManager is Ownable {
     _setTicketPrice(_ticketPrice);
   }
 
+  function getInfo() public view returns (
+    address _currentLottery,
+    uint256 _openDuration,
+    uint256 _bondDuration,
+    int256 _ticketPrice,
+    int256 _feeFractionFixedPoint18,
+    uint256 _lotteryCount
+  ) {
+    return (
+      address(currentLottery),
+      openDuration,
+      bondDuration,
+      ticketPrice,
+      feeFractionFixedPoint18,
+      lotteryCount
+    );
+  }
+
   /**
    * @notice Creates a new Lottery.  There can be no currently active Lottery.  Fires the LotteryCreated event.
    */
