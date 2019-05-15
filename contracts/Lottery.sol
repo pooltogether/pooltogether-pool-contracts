@@ -232,7 +232,7 @@ contract Lottery is Ownable {
     return FixidityLib.multiply(grossWinningsFixedPoint24(), feeFraction);
   }
 
-  function randomToken() internal view returns (uint256) {
+  function randomToken() public view returns (uint256) {
     if (block.number > bondEndBlock) {
       return 0;
     } else {
