@@ -205,7 +205,11 @@ contract Lottery is Ownable {
    * @return The winner's address
    */
   function winnerAddress() public view returns (address) {
-    return address(uint256(sortitionSumTrees.draw(SUM_TREE_KEY, randomToken())));
+    if (totalAmount > 0) {
+      return address(uint256(sortitionSumTrees.draw(SUM_TREE_KEY, randomToken())));
+    } else {
+      return address(0);
+    }
   }
 
   function netWinningsFixedPoint24() internal view returns (int256) {

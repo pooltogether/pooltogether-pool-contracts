@@ -169,6 +169,8 @@ contract('Lottery', (accounts) => {
       it('should succeed even without a balance', async () => {
         await lottery.lock(secretHash)
         await lottery.unlock(secret)
+        const info = await lottery.getInfo()
+        assert.equal(info.winner, '0x0000000000000000000000000000000000000000')
       })
     })
 
