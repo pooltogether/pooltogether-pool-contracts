@@ -67,6 +67,24 @@ contract('LotteryManager', (accounts) => {
       let diff = info.endTime.sub(info.startTime)
       assert.equal(diff.toString(), bondDuration)
     })
+
+    it('should allow multiple lottery creation', async () => {
+      let secret = '0x1234123412341234123412341234123412341234123412341234123412341234'
+      let secretHash = web3.utils.soliditySha3(secret)
+    
+      let address = await createLottery()
+      let lottery = await Lottery.at(address)
+
+      await lottery.lock(secretHash)
+      await lottery.unlock(secret)
+
+      let address2 = await createLottery()
+      let lottery2 = await Lottery.at(address2)
+
+      await lottery2.lock(secretHash)
+      await lottery2.unlock(secret)
+
+    })
   })
 
   describe('setBondDuration()', () => {

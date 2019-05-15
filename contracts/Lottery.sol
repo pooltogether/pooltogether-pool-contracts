@@ -138,9 +138,12 @@ contract Lottery is Ownable {
     require(_secretHash != 0, "secret hash must be defined");
     secretHash = _secretHash;
     state = State.LOCKED;
-    int256 totalAmountNonFixed = FixidityLib.fromFixed(totalAmount);
-    require(token.approve(address(moneyMarket), uint256(totalAmountNonFixed)), "could not approve money market spend");
-    require(moneyMarket.supply(address(token), uint256(totalAmountNonFixed)) == 0, "could not supply money market");
+
+    if (totalAmount > 0) {
+      uint256 totalAmountNonFixed = uint256(FixidityLib.fromFixed(totalAmount));
+      require(token.approve(address(moneyMarket), totalAmountNonFixed), "could not approve money market spend");
+      require(moneyMarket.supply(address(token), totalAmountNonFixed) == 0, "could not supply money market");
+    }
 
     emit LotteryLocked();
   }
@@ -160,10 +163,13 @@ contract Lottery is Ownable {
     uint256 balance = moneyMarket.getSupplyBalance(address(this), address(token));
     if (balance > 0) {
       require(moneyMarket.withdraw(address(token), balance) == 0, "could not withdraw balance");
+      finalAmount = FixidityLib.newFixed(int256(balance));
     }
-    finalAmount = FixidityLib.newFixed(int256(balance));
 
-    require(token.transfer(owner(), feeAmount()), "could not transfer winnings");
+    uint256 fee = feeAmount();
+    if (fee > 0) {
+      require(token.transfer(owner(), fee), "could not transfer winnings");
+    }
 
     emit LotteryUnlocked();
   }
