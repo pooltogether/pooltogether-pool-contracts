@@ -187,6 +187,7 @@ contract('Lottery', (accounts) => {
 
         const balanceBefore = await token.balanceOf(user1)
         await lottery.withdraw({ from: user1 })
+        assert.equal((await lottery.winnings(user1)).toString(), '0')
         const balanceAfter = await token.balanceOf(user1)
 
         assert.equal(balanceAfter.toString(), (new BN(balanceBefore).add(winningBalance)).toString())

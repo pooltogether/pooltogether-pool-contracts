@@ -199,6 +199,9 @@ contract Lottery is Ownable {
     if (entry.addr == address(0)) { //if does not have an entry
       return 0;
     }
+    if (entry.amount == 0) { // if entry has already withdrawn
+      return 0;
+    }
     int256 winningTotal = entry.amount;
     if (state == State.COMPLETE && _addr == winnerAddress()) {
       winningTotal = FixidityLib.add(winningTotal, netWinningsFixedPoint24());
