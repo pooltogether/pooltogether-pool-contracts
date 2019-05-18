@@ -17,6 +17,7 @@
     "update-all": "zos update --all",
     "push-and-update": "yarn push && yarn update-all && zos-truffle-merge -n 1234 zos.dev-1234.json",
     "console": "truffle console --network local",
+    "console-rinkeby": "truffle console --network rinkeby",
     "version": "truffle version"
   },
   "dependencies": {

@@ -263,15 +263,15 @@ contract Lottery is Ownable {
 
   /**
    * @notice Retrieves information about the lottery.
-   * @return A tuple containing: entryTotal (the total of all deposits), startTime (the timestamp after which
-   * the lottery can be locked), endTime (the time after which the lottery can be unlocked), lotteryState
+   * @return A tuple containing: entryTotal (the total of all deposits), startBlock (the block after which
+   * the lottery can be locked), endBlock (the block after which the lottery can be unlocked), lotteryState
    * (either OPEN, LOCKED, COMPLETE), winner (the address of the winner), supplyBalanceTotal (the total
    * deposits plus any interest from Compound), minDeposit (the minimum deposit required).
    */
   function getInfo() public view returns (
     int256 entryTotal,
-    uint256 startTime,
-    uint256 endTime,
+    uint256 startBlock,
+    uint256 endBlock,
     State lotteryState,
     address winner,
     int256 supplyBalanceTotal,
