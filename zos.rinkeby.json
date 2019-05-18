@@ -260,11 +260,21 @@
         "address": "0x642297311685eA7bf3A43a1258e23d224dc926F9",
         "version": "0.1.0",
         "implementation": "0x7578a059a14e548654B8c0Ef49EC7F0863af6a13"
+      },
+      {
+        "address": "0xbB6365Bf44C63971a948d95d80F77bA3e76489Df",
+        "version": "0.1.0",
+        "implementation": "0x7578a059a14e548654B8c0Ef49EC7F0863af6a13"
       }
     ],
     "pooltogether/LotteryManager": [
       {
         "address": "0xC45Cdee8B21db3A82e73cB4233B3061B7656D75b",
+        "version": "0.1.0",
+        "implementation": "0x4f16a42109849c793edf466d993da16B075B2947"
+      },
+      {
+        "address": "0x8695d52e53f8faC9a91071f0a9585beA04b9decf",
         "version": "0.1.0",
         "implementation": "0x4f16a42109849c793edf466d993da16B075B2947"
       }
