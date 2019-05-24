@@ -19,7 +19,7 @@ module.exports = function(deployer, networkName, accounts) {
     const ticketPrice = web3.utils.toWei('20', 'ether')
     const feeFraction = web3.utils.toWei('0.05', 'ether')
 
-    if (shell.exec(`zos create PoolManager --init init --args ${accounts[0]},${cDAI},${tokenAddress},${openDuration},${lockDuration},${ticketPrice},${feeFraction},false --network ${networkName} --from ${process.env.ADMIN_ADDRESS}`).code !== 0) {
+    if (shell.exec(`zos create PoolManager --init init --args ${accounts[0]},${cDAI},${tokenAddress},${openDuration},${lockDuration},${ticketPrice},${feeFraction},true --network ${networkName} --from ${process.env.ADMIN_ADDRESS}`).code !== 0) {
       throw new Error('Migration failed')
     }
   })
