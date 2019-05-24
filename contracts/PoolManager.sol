@@ -178,4 +178,8 @@ contract PoolManager is Ownable {
 
     emit FeeFractionChanged(_feeFractionFixedPoint18);
   }
+
+  function setAllowLockAnytime(bool _allowLockAnytime) public onlyOwner {
+    allowLockAnytime = _allowLockAnytime;
+  }
 }
