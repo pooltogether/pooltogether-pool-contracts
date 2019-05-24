@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 import "./Pool.sol";
+import "./compound/ICErc20.sol";
 
 /**
  * @title The Pool Manager contract for PoolTogether.
@@ -20,7 +21,7 @@ contract PoolManager is Ownable {
 
   uint256 public constant PAGE_SIZE = 10;
 
-  IMoneyMarket public moneyMarket;
+  ICErc20 public moneyMarket;
   IERC20 public token;
   Pool public currentPool;
   uint256 public openDuration;
@@ -53,7 +54,7 @@ contract PoolManager is Ownable {
     require(_token != address(0), "token address is zero");
     Ownable.initialize(_owner);
     token = IERC20(_token);
-    moneyMarket = IMoneyMarket(_moneyMarket);
+    moneyMarket = ICErc20(_moneyMarket);
     allowLockAnytime = _allowLockAnytime;
 
     _setFeeFraction(_feeFractionFixedPoint18);
@@ -159,8 +160,8 @@ contract PoolManager is Ownable {
   }
 
   /**
-   * @notice Sets the fee fraction paid out to the pool owner. 
-   * @param _feeFractionFixedPoint18 The fraction to pay out. 
+   * @notice Sets the fee fraction paid out to the pool owner.
+   * @param _feeFractionFixedPoint18 The fraction to pay out.
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
    * Can only be called by the PoolManager owner.
    */

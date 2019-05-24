@@ -2,7 +2,7 @@ const BN = require('bn.js')
 const Token = artifacts.require('Token.sol')
 const Pool = artifacts.require('Pool.sol')
 const PoolManager = artifacts.require('PoolManager.sol')
-const MoneyMarketMock = artifacts.require('MoneyMarketMock.sol')
+const CErc20Mock = artifacts.require('CErc20Mock.sol')
 const FixidityLib = artifacts.require('FixidityLib.sol')
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
 
@@ -26,7 +26,7 @@ contract('PoolManager', (accounts) => {
     token = await Token.new({ from: admin })
     await token.initialize(owner)
 
-    moneyMarket = await MoneyMarketMock.new({ from: admin })
+    moneyMarket = await CErc20Mock.new({ from: admin })
     await moneyMarket.initialize(token.address, new BN(supplyRateMantissa))
 
     await Pool.link("FixidityLib", fixidity.address)    

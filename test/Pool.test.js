@@ -1,7 +1,7 @@
 const BN = require('bn.js')
 const Token = artifacts.require('Token.sol')
 const Pool = artifacts.require('Pool.sol')
-const MoneyMarketMock = artifacts.require('MoneyMarketMock.sol')
+const CErc20Mock = artifacts.require('CErc20Mock.sol')
 const FixidityLib = artifacts.require('FixidityLib.sol')
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
 
@@ -29,7 +29,7 @@ contract('Pool', (accounts) => {
     token = await Token.new({ from: admin })
     await token.initialize(owner)
 
-    moneyMarket = await MoneyMarketMock.new({ from: admin })
+    moneyMarket = await CErc20Mock.new({ from: admin })
     await moneyMarket.initialize(token.address, new BN(supplyRateMantissa))
 
     await token.mint(moneyMarket.address, web3.utils.toWei('10000000', 'ether'))
@@ -363,7 +363,7 @@ contract('Pool', (accounts) => {
       const ownerBalance = await token.balanceOf(owner)
       await pool.lock(secretHash, { from: owner })
 
-      /// MoneyMarketMock awards 20% regardless of duration.
+      /// CErc20Mock awards 20% regardless of duration.
       const totalDeposit = user1Tickets
       const interestEarned = totalDeposit.mul(new BN(20)).div(new BN(100))
       const fee = interestEarned.mul(new BN(10)).div(new BN(100))

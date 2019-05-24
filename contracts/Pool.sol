@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
-import "./compound/IMoneyMarket.sol";
+import "./compound/ICErc20.sol";
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
 import "kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
 import "./UniformRandomNumber.sol";
@@ -13,8 +13,8 @@ import "fixidity/contracts/FixidityLib.sol";
  * @author Brendan Asselstine
  * @notice This contract implements a "lossless pool".  The pool exists in three states: open, locked, and complete.
  * The pool begins in the open state during which users can buy any number of tickets.  The more tickets they purchase, the greater their chances of winning.
- * After the lockStartBlock the owner may lock the pool.  The pool transfers the pool of ticket money into the Compound Finance MoneyMarket and no more tickets are sold.
- * After the lockEndBlock the owner may unlock the pool.  The pool will withdraw the ticket money from the MoneyMarket, plus earned interest, back into the contract.  The fee will be sent to
+ * After the lockStartBlock the owner may lock the pool.  The pool transfers the pool of ticket money into the Compound Finance money market and no more tickets are sold.
+ * After the lockEndBlock the owner may unlock the pool.  The pool will withdraw the ticket money from the money market, plus earned interest, back into the contract.  The fee will be sent to
  * the owner, and users will be able to withdraw their ticket money and winnings, if any.
  * @dev All monetary values are stored internally as fixed point 24.
  */
@@ -50,7 +50,7 @@ contract Pool is Ownable {
   int256 private finalAmount; //fixed point 24
   mapping (address => Entry) private entries;
   uint256 public entryCount;
-  IMoneyMarket public moneyMarket;
+  ICErc20 public moneyMarket;
   IERC20 public token;
   int256 private ticketPrice; //fixed point 24
   int256 private feeFraction; //fixed point 24
@@ -70,7 +70,7 @@ contract Pool is Ownable {
    * @param _feeFractionFixedPoint18 The fraction of the winnings going to the owner (fixed point 18)
    */
   constructor (
-    IMoneyMarket _moneyMarket,
+    ICErc20 _moneyMarket,
     IERC20 _token,
     uint256 _lockStartBlock,
     uint256 _lockEndBlock,
@@ -146,7 +146,7 @@ contract Pool is Ownable {
     if (totalAmount > 0) {
       uint256 totalAmountNonFixed = uint256(FixidityLib.fromFixed(totalAmount));
       require(token.approve(address(moneyMarket), totalAmountNonFixed), "could not approve money market spend");
-      require(moneyMarket.supply(address(token), totalAmountNonFixed) == 0, "could not supply money market");
+      require(moneyMarket.mint(totalAmountNonFixed) == 0, "could not supply money market");
     }
 
     emit PoolLocked();
@@ -164,13 +164,19 @@ contract Pool is Ownable {
       require(lockEndBlock < block.number, "pool cannot be unlocked yet");
     }
     require(keccak256(abi.encodePacked(_secret)) == secretHash, "secret does not match");
+
     secret = _secret;
+
     state = State.COMPLETE;
-    uint256 balance = moneyMarket.getSupplyBalance(address(this), address(token));
+
+    uint256 balance = moneyMarket.balanceOfUnderlying(address(this));
+
     if (balance > 0) {
-      require(moneyMarket.withdraw(address(token), balance) == 0, "could not withdraw balance");
+      require(moneyMarket.redeemUnderlying(balance) == 0, "could not redeem from compound");
       finalAmount = FixidityLib.newFixed(int256(balance));
     }
+
+    state = State.COMPLETE;
 
     uint256 fee = feeAmount();
     if (fee > 0) {
@@ -334,7 +340,7 @@ contract Pool is Ownable {
   /**
    * @notice Calculates the maximum pool size so that it doesn't overflow after earning interest
    * @dev poolSize = totalDeposits + totalDeposits * interest => totalDeposits = poolSize / (1 + interest)
-   * @return The maximum size of the pool to be deposited into the MoneyMarket
+   * @return The maximum size of the pool to be deposited into the money market
    */
   function maxPoolSizeFixedPoint24(int256 _maxValueFixedPoint24) public view returns (int256) {
     /// Double the interest rate in case it increases over the lock period.  Somewhat arbitrarily.
@@ -343,7 +349,7 @@ contract Pool is Ownable {
   }
 
   /**
-   * @notice Estimates the current effective interest rate using the MoneyMarket's current supplyRateMantissa and the lock duration in blocks.
+   * @notice Estimates the current effective interest rate using the money market's current supplyRateMantissa and the lock duration in blocks.
    * @return The current estimated effective interest rate
    */
   function currentInterestFractionFixedPoint24() public view returns (int256) {
@@ -353,12 +359,11 @@ contract Pool is Ownable {
   }
 
   /**
-   * @notice Extracts the supplyRateMantissa value from the MoneyMarket contract
-   * @return The MoneyMarket supply rate per block
+   * @notice Extracts the supplyRateMantissa value from the money market contract
+   * @return The money market supply rate per block
    */
   function supplyRateMantissa() public view returns (uint256) {
-    (,,,,uint __supplyRateMantissa,,,,) = moneyMarket.markets(address(token));
-    return __supplyRateMantissa;
+    return moneyMarket.supplyRatePerBlock();
   }
 
   function _hasEntry(address _addr) internal view returns (bool) {

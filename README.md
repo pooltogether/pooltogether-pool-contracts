@@ -1,6 +1,6 @@
 # PoolTogether Contracts
 
-The PoolTogether contracts allow users to deposit into a pool of tokens.  The pool is then supplied to the [Compound MoneyMarket](https://compound.finance/developers).  After the bonding period is over, the supply plus interest is withdrawn.  The winner of a pool receives the interest earned.
+The PoolTogether contracts allow users to deposit into a pool of tokens.  The pool is then supplied to the [Compound CErc20](https://compound.finance/developers).  After the bonding period is over, the supply plus interest is withdrawn.  The winner of a pool receives the interest earned.
 
 # Setup
 
@@ -55,8 +55,8 @@ yarn migrate-rinkeby
 
 ## Notes
 
-Current interest rate can be pulled from the MoneyMarket using:
+Current interest rate can be pulled from the CErc20 using:
 
-MoneyMarket.markets(<asset>) and you should get back a tuple that contains, amoung other things, a supplyRateMantissa. This is the current per-block interest rate (scaled up by 1e18).
+CErc20.markets(<asset>) and you should get back a tuple that contains, amoung other things, a supplyRateMantissa. This is the current per-block interest rate (scaled up by 1e18).
 
-MoneyMarket on Rinkeby: 0x61bbd7bd5ee2a202d7e62519750170a52a8dfd45
+CErc20 on Rinkeby: 0x61bbd7bd5ee2a202d7e62519750170a52a8dfd45
