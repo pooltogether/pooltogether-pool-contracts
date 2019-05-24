@@ -63,7 +63,7 @@ contract PoolManager is Ownable {
   }
 
   /**
-   * @notice Returns information about the LotteryManager
+   * @notice Returns information about the PoolManager
    * @return A tuple containing:
    *    _currentPool (the address of the current pool),
    *    _openDuration (the open duration in blocks to use for the next pool),
