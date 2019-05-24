@@ -57,6 +57,8 @@ contract PoolManager is Ownable {
     moneyMarket = ICErc20(_moneyMarket);
     allowLockAnytime = _allowLockAnytime;
 
+    require(_token == moneyMarket.underlying(), "token does not match the underlying money market token");
+
     _setFeeFraction(_feeFractionFixedPoint18);
     _setLockDuration(_lockDuration);
     _setOpenDuration(_openDuration);
