@@ -1,6 +1,6 @@
 # PoolTogether Contracts
 
-The PoolTogether contracts allow users to deposit into a pool of tokens.  The pool is then supplied to the [Compound MoneyMarket](https://compound.finance/developers).  After the bonding period is over, the supply plus interest is withdrawn.  The winner of a lottery receives the interest earned.
+The PoolTogether contracts allow users to deposit into a pool of tokens.  The pool is then supplied to the [Compound MoneyMarket](https://compound.finance/developers).  After the bonding period is over, the supply plus interest is withdrawn.  The winner of a pool receives the interest earned.
 
 # Setup
 

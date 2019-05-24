@@ -1,11 +1,11 @@
 {
   "contracts": {
-    "LotteryManager": {
-      "address": "0x4f16a42109849c793edf466d993da16B075B2947",
+    "PoolManager": {
+      "address": "0xDcC9Cea56aC15396F1BE486648a8bAE390DcAbf9",
       "constructorCode": "608060405234801561001057600080fd5b50613c85806100206000396000f3fe",
-      "bodyBytecodeHash": "3ba5e7a6a0d9fd8bf9761c0809eaea6b795c3a486e4309a0a7b66ac9d0c23c09",
+      "bodyBytecodeHash": "8706027b4bd33668be6970dc547ff3bdb6a0a1aaebfedcfb1bf371703abb41e5",
       "localBytecodeHash": "5c07c9316ab4fe6757a32f5c457cb9df99c3107dd64d5a238096f65bd572db6b",
-      "deployedBytecodeHash": "a08dea9393ab93ac0b998c5db8d775f9ce3ca2076027cb6896c016b503155b6e",
+      "deployedBytecodeHash": "d555a3532f3954a7a27a05ab02be54f890843742136085eb2597d6451a688119",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -77,65 +77,65 @@
           "src": "2186:29:12"
         },
         {
-          "contract": "LotteryManager",
-          "path": "contracts/LotteryManager.sol",
+          "contract": "PoolManager",
+          "path": "contracts/PoolManager.sol",
           "label": "moneyMarket",
           "astId": 1097,
           "type": "t_address",
           "src": "760:31:1"
         },
         {
-          "contract": "LotteryManager",
-          "path": "contracts/LotteryManager.sol",
+          "contract": "PoolManager",
+          "path": "contracts/PoolManager.sol",
           "label": "token",
           "astId": 1099,
           "type": "t_address",
           "src": "795:19:1"
         },
         {
-          "contract": "LotteryManager",
-          "path": "contracts/LotteryManager.sol",
-          "label": "currentLottery",
+          "contract": "PoolManager",
+          "path": "contracts/PoolManager.sol",
+          "label": "currentPool",
           "astId": 1101,
           "type": "t_address",
           "src": "818:29:1"
         },
         {
-          "contract": "LotteryManager",
-          "path": "contracts/LotteryManager.sol",
+          "contract": "PoolManager",
+          "path": "contracts/PoolManager.sol",
           "label": "openDuration",
           "astId": 1103,
           "type": "t_uint256",
           "src": "851:27:1"
         },
         {
-          "contract": "LotteryManager",
-          "path": "contracts/LotteryManager.sol",
+          "contract": "PoolManager",
+          "path": "contracts/PoolManager.sol",
           "label": "bondDuration",
           "astId": 1105,
           "type": "t_uint256",
           "src": "882:27:1"
         },
         {
-          "contract": "LotteryManager",
-          "path": "contracts/LotteryManager.sol",
+          "contract": "PoolManager",
+          "path": "contracts/PoolManager.sol",
           "label": "ticketPrice",
           "astId": 1107,
           "type": "t_int256",
           "src": "913:25:1"
         },
         {
-          "contract": "LotteryManager",
-          "path": "contracts/LotteryManager.sol",
+          "contract": "PoolManager",
+          "path": "contracts/PoolManager.sol",
           "label": "feeFractionFixedPoint18",
           "astId": 1109,
           "type": "t_int256",
           "src": "942:38:1"
         },
         {
-          "contract": "LotteryManager",
-          "path": "contracts/LotteryManager.sol",
-          "label": "lotteryCount",
+          "contract": "PoolManager",
+          "path": "contracts/PoolManager.sol",
+          "label": "poolCount",
           "astId": 1111,
           "type": "t_uint256",
           "src": "984:27:1"
@@ -150,7 +150,7 @@
       }
     },
     "Migrations": {
-      "address": "0x7578a059a14e548654B8c0Ef49EC7F0863af6a13",
+      "address": "0xba1c338a9D8cB2AD75baBC70B7765F4c566bFeA6",
       "constructorCode": "608060405234801561001057600080fd5b506104bc806100206000396000f3fe",
       "bodyBytecodeHash": "aa26121ac95242940ad46c03bba7b655d86b3f8b2fedba7d7022f2b5d8677517",
       "localBytecodeHash": "d81b1b7036cd18a0d761e850620212feaf7933607476112d4c7476878961878d",
@@ -239,50 +239,40 @@
     }
   },
   "solidityLibs": {
-    "SortitionSumTreeFactory": {
-      "address": "0xfC04C21a55cffAA1F030b50aF91008DeF1EA06Af",
-      "constructorCode": "6108f1610030600b82828239805160001a6073146000811461002057610022565bfe5b5030600052607381538281f3fe",
-      "bodyBytecodeHash": "486e3727c956e8ea828fba35ee8eee0d4c08ac1abf2d36fca5af6a78565e10e4",
-      "localBytecodeHash": "25fc4e99f81bc8e74d08f11848787b67c51f49814ec7d6ea0a0b4996e04db39a",
-      "deployedBytecodeHash": "25fc4e99f81bc8e74d08f11848787b67c51f49814ec7d6ea0a0b4996e04db39a"
-    },
     "FixidityLib": {
-      "address": "0xA5D9Eb06174324b1eD31cA44678d6a0fBDA7cbDD",
+      "address": "0x9202fA3B3F364BCc12A9a0f21D2bd4F65070859F",
       "constructorCode": "610921610030600b82828239805160001a6073146000811461002057610022565bfe5b5030600052607381538281f3fe",
       "bodyBytecodeHash": "f616fe2fd3de59f41faee2d11df49ec91d8becebb69a841001fec5806cc060a5",
       "localBytecodeHash": "f7be48353be5c1a9d60847357f8d98f3550588353562dd92b197d2d1310d91c1",
       "deployedBytecodeHash": "f7be48353be5c1a9d60847357f8d98f3550588353562dd92b197d2d1310d91c1"
+    },
+    "SortitionSumTreeFactory": {
+      "address": "0xE5Db9849C794Ea3e466Efb2c0E698f321E7e9a84",
+      "constructorCode": "6108f1610030600b82828239805160001a6073146000811461002057610022565bfe5b5030600052607381538281f3fe",
+      "bodyBytecodeHash": "486e3727c956e8ea828fba35ee8eee0d4c08ac1abf2d36fca5af6a78565e10e4",
+      "localBytecodeHash": "25fc4e99f81bc8e74d08f11848787b67c51f49814ec7d6ea0a0b4996e04db39a",
+      "deployedBytecodeHash": "25fc4e99f81bc8e74d08f11848787b67c51f49814ec7d6ea0a0b4996e04db39a"
     }
   },
   "proxies": {
     "pooltogether/Migrations": [
       {
-        "address": "0x642297311685eA7bf3A43a1258e23d224dc926F9",
+        "address": "0x48282fA40C7d41AbD50F0dB611e639081B0c763e",
         "version": "0.1.0",
-        "implementation": "0x7578a059a14e548654B8c0Ef49EC7F0863af6a13"
-      },
-      {
-        "address": "0xbB6365Bf44C63971a948d95d80F77bA3e76489Df",
-        "version": "0.1.0",
-        "implementation": "0x7578a059a14e548654B8c0Ef49EC7F0863af6a13"
+        "implementation": "0xba1c338a9D8cB2AD75baBC70B7765F4c566bFeA6"
       }
     ],
-    "pooltogether/LotteryManager": [
+    "pooltogether/PoolManager": [
       {
-        "address": "0xC45Cdee8B21db3A82e73cB4233B3061B7656D75b",
+        "address": "0xECD234dC44547E1E97dbD42AfCEcD708b3614d58",
         "version": "0.1.0",
-        "implementation": "0x4f16a42109849c793edf466d993da16B075B2947"
-      },
-      {
-        "address": "0x8695d52e53f8faC9a91071f0a9585beA04b9decf",
-        "version": "0.1.0",
-        "implementation": "0x4f16a42109849c793edf466d993da16B075B2947"
+        "implementation": "0xDcC9Cea56aC15396F1BE486648a8bAE390DcAbf9"
       }
     ]
   },
   "zosversion": "2.2",
   "version": "0.1.0",
   "proxyAdmin": {
-    "address": "0x87c30Ad4faA84D71E50D2a13Cbe93E937c733B1C"
+    "address": "0x7f46c95B209c7942D24Ea853b97171190e2D842F"
   }
 }

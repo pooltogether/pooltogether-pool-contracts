@@ -1,7 +1,7 @@
 {
   "name": "pooltogether-contracts",
   "version": "0.1.0",
-  "description": "LotteryManager Lossless Lottery Smart Contracts",
+  "description": "PoolManager Lossless Pool Smart Contracts",
   "main": "index.js",
   "repository": "git@github.com:DeltaCamp/pooltogether-contracts.git",
   "author": "Brendan Asselstine brendan@delta.camp",

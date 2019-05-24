@@ -9,23 +9,23 @@ import "./UniformRandomNumber.sol";
 import "fixidity/contracts/FixidityLib.sol";
 
 /**
- * @title The Lottery contract for PoolTogether
+ * @title The Pool contract for PoolTogether
  * @author Brendan Asselstine
- * @notice This contract implements a "lossless lottery".  The lottery exists in three states: open, locked, and complete.
- * The lottery begins in the open state during which users can buy any number of tickets.  The more tickets they purchase, the greater their chances of winning.
- * After the bondStartBlock the owner may lock the lottery.  The lottery transfers the pool of ticket money into the Compound Finance MoneyMarket and no more tickets are sold.
- * After the bondEndBlock the owner may unlock the lottery.  The lottery will withdraw the ticket money from the MoneyMarket, plus earned interest, back into the contract.  The fee will be sent to
+ * @notice This contract implements a "lossless pool".  The pool exists in three states: open, locked, and complete.
+ * The pool begins in the open state during which users can buy any number of tickets.  The more tickets they purchase, the greater their chances of winning.
+ * After the lockStartBlock the owner may lock the pool.  The pool transfers the pool of ticket money into the Compound Finance MoneyMarket and no more tickets are sold.
+ * After the lockEndBlock the owner may unlock the pool.  The pool will withdraw the ticket money from the MoneyMarket, plus earned interest, back into the contract.  The fee will be sent to
  * the owner, and users will be able to withdraw their ticket money and winnings, if any.
  * @dev All monetary values are stored internally as fixed point 24.
  */
-contract Lottery is Ownable {
+contract Pool is Ownable {
   using SafeMath for uint256;
 
   event BoughtTickets(address indexed sender, int256 count, uint256 totalPrice);
   event Withdrawn(address indexed sender, int256 amount);
   event OwnerWithdrawn(address indexed sender, int256 amount);
-  event LotteryLocked();
-  event LotteryUnlocked();
+  event PoolLocked();
+  event PoolUnlocked();
 
   enum State {
     OPEN,
@@ -39,11 +39,11 @@ contract Lottery is Ownable {
     uint256 ticketCount;
   }
 
-  bytes32 public constant SUM_TREE_KEY = "PoolLottery";
+  bytes32 public constant SUM_TREE_KEY = "PoolPool";
 
   int256 private totalAmount; // fixed point 24
-  uint256 private bondStartBlock;
-  uint256 private bondEndBlock;
+  uint256 private lockStartBlock;
+  uint256 private lockEndBlock;
   bytes32 private secretHash;
   bytes32 private secret;
   State public state;
@@ -55,28 +55,30 @@ contract Lottery is Ownable {
   int256 private ticketPrice; //fixed point 24
   int256 private feeFraction; //fixed point 24
   bool private ownerHasWithdrawn;
+  bool public allowLockAnytime;
 
   using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
   SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
 
   /**
-   * @notice Creates a new Lottery.
+   * @notice Creates a new Pool.
    * @param _moneyMarket The Compound money market to supply tokens to.
    * @param _token The ERC20 token to be used.
-   * @param _bondStartBlock The block number on or after which the deposit can be made to Compound
-   * @param _bondEndBlock The block number on or after which the Compound supply can be withdrawn
+   * @param _lockStartBlock The block number on or after which the deposit can be made to Compound
+   * @param _lockEndBlock The block number on or after which the Compound supply can be withdrawn
    * @param _ticketPrice The price of each ticket (fixed point 18)
    * @param _feeFractionFixedPoint18 The fraction of the winnings going to the owner (fixed point 18)
    */
   constructor (
     IMoneyMarket _moneyMarket,
     IERC20 _token,
-    uint256 _bondStartBlock,
-    uint256 _bondEndBlock,
+    uint256 _lockStartBlock,
+    uint256 _lockEndBlock,
     int256 _ticketPrice,
-    int256 _feeFractionFixedPoint18
+    int256 _feeFractionFixedPoint18,
+    bool _allowLockAnytime
   ) public {
-    require(_bondEndBlock > _bondStartBlock, "bond end block is not after start block");
+    require(_lockEndBlock > _lockStartBlock, "lock end block is not after start block");
     require(address(_moneyMarket) != address(0), "money market address cannot be zero");
     require(address(_token) != address(0), "token address cannot be zero");
     require(_ticketPrice > 0, "ticket price must be greater than zero");
@@ -88,12 +90,13 @@ contract Lottery is Ownable {
 
     moneyMarket = _moneyMarket;
     token = _token;
-    bondStartBlock = _bondStartBlock;
-    bondEndBlock = _bondEndBlock;
+    lockStartBlock = _lockStartBlock;
+    lockEndBlock = _lockEndBlock;
+    allowLockAnytime = _allowLockAnytime;
   }
 
   /**
-   * @notice Buys a lottery ticket.  Only possible while the Lottery is in the "open" state.  The
+   * @notice Buys a pool ticket.  Only possible while the Pool is in the "open" state.  The
    * user can buy any number of tickets.  Each ticket is a chance at winning.
    */
   function buyTickets (int256 _count) public requireOpen {
@@ -119,21 +122,22 @@ contract Lottery is Ownable {
 
     totalAmount = FixidityLib.add(totalAmount, totalDeposit);
 
-    // the total amount cannot exceed the max lottery size
-    require(totalAmount < maxLotterySizeFixedPoint24(FixidityLib.maxFixedDiv()), "lottery size exceeds maximum");
+    // the total amount cannot exceed the max pool size
+    require(totalAmount < maxPoolSizeFixedPoint24(FixidityLib.maxFixedDiv()), "pool size exceeds maximum");
 
     emit BoughtTickets(msg.sender, _count, totalDepositNonFixed);
   }
 
   /**
-   * @notice Pools the deposits and supplies them to Compound.  Can only be called after the bond start time.
-   * Fires the LotteryLocked event.
+   * @notice Pools the deposits and supplies them to Compound.
+   * Can only be called by the owner when the pool is open.
+   * Fires the PoolLocked event.
    */
-  function lock(bytes32 _secretHash) external requireOpen {
-    if (msg.sender != owner()) {
-      require(bondStartBlock < block.number, "lottery cannot be locked yet");
-    } else if (block.number != bondStartBlock) {
-      bondStartBlock = block.number;
+  function lock(bytes32 _secretHash) external requireOpen onlyOwner {
+    if (allowLockAnytime) {
+      lockStartBlock = block.number;
+    } else {
+      require(block.number >= lockStartBlock, "pool can only be locked on or after lock start block");
     }
     require(_secretHash != 0, "secret hash must be defined");
     secretHash = _secretHash;
@@ -145,17 +149,19 @@ contract Lottery is Ownable {
       require(moneyMarket.supply(address(token), totalAmountNonFixed) == 0, "could not supply money market");
     }
 
-    emit LotteryLocked();
+    emit PoolLocked();
   }
 
   /**
-   * @notice Withdraws the deposit from Compound and selects a winner.  Fires the LotteryUnlocked event.
+   * @notice Withdraws the deposit from Compound and selects a winner.
+   * Can only be called by the owner after the lock end block.
+   * Fires the PoolUnlocked event.
    */
-  function unlock(bytes32 _secret) public requireLocked {
-    if (msg.sender != owner()) {
-      require(bondEndBlock < block.number, "lottery cannot be unlocked yet");
-    } else if (block.number != bondEndBlock) {
-      bondEndBlock = block.number;
+  function unlock(bytes32 _secret) public requireLocked onlyOwner {
+    if (allowLockAnytime) {
+      lockEndBlock = block.number;
+    } else {
+      require(lockEndBlock < block.number, "pool cannot be unlocked yet");
     }
     require(keccak256(abi.encodePacked(_secret)) == secretHash, "secret does not match");
     secret = _secret;
@@ -171,11 +177,12 @@ contract Lottery is Ownable {
       require(token.transfer(owner(), fee), "could not transfer winnings");
     }
 
-    emit LotteryUnlocked();
+    emit PoolUnlocked();
   }
 
   /**
-   * @notice Transfers a users deposit, and potential winnings, back to them.  The Lottery must be unlocked.
+   * @notice Transfers a users deposit, and potential winnings, back to them.
+   * The Pool must be unlocked.
    * The user must have deposited funds.  Fires the Withdrawn event.
    */
   function withdraw() public requireComplete {
@@ -235,7 +242,7 @@ contract Lottery is Ownable {
 
   /**
    * @notice Calculates the size of the fee based on the gross winnings
-   * @return The fee for the lottery to be transferred to the owner
+   * @return The fee for the pool to be transferred to the owner
    */
   function feeAmount() public view returns (uint256) {
     return uint256(FixidityLib.fromFixed(feeAmountFixedPoint24()));
@@ -246,7 +253,7 @@ contract Lottery is Ownable {
   }
 
   function randomToken() public view returns (uint256) {
-    if (block.number > bondEndBlock) {
+    if (block.number > lockEndBlock) {
       return 0;
     } else {
       return _selectRandom(uint256(FixidityLib.fromFixed(totalAmount)));
@@ -258,26 +265,30 @@ contract Lottery is Ownable {
   }
 
   function _entropy() internal view returns (uint256) {
-    return uint256(blockhash(bondEndBlock) ^ secret);
+    return uint256(blockhash(lockEndBlock) ^ secret);
   }
 
   /**
-   * @notice Retrieves information about the lottery.
-   * @return A tuple containing: entryTotal (the total of all deposits), startBlock (the block after which
-   * the lottery can be locked), endBlock (the block after which the lottery can be unlocked), lotteryState
-   * (either OPEN, LOCKED, COMPLETE), winner (the address of the winner), supplyBalanceTotal (the total
-   * deposits plus any interest from Compound), minDeposit (the minimum deposit required).
+   * @notice Retrieves information about the pool.
+   * @return A tuple containing:
+   *    entryTotal (the total of all deposits)
+   *    startBlock (the block after which the pool can be locked)
+   *    endBlock (the block after which the pool can be unlocked)
+   *    poolState (either OPEN, LOCKED, COMPLETE)
+   *    winner (the address of the winner)
+   *    supplyBalanceTotal (the total deposits plus any interest from Compound)
+   *    minDeposit (the minimum deposit required)
    */
   function getInfo() public view returns (
     int256 entryTotal,
     uint256 startBlock,
     uint256 endBlock,
-    State lotteryState,
+    State poolState,
     address winner,
     int256 supplyBalanceTotal,
     int256 ticketCost,
     uint256 participantCount,
-    int256 maxLotterySize,
+    int256 maxPoolSize,
     int256 estimatedInterestFixedPoint18,
     bytes32 hashOfSecret
   ) {
@@ -287,22 +298,25 @@ contract Lottery is Ownable {
     }
     return (
       FixidityLib.fromFixed(totalAmount),
-      bondStartBlock,
-      bondEndBlock,
+      lockStartBlock,
+      lockEndBlock,
       state,
       winAddr,
       FixidityLib.fromFixed(finalAmount),
       FixidityLib.fromFixed(ticketPrice),
       entryCount,
-      FixidityLib.fromFixed(maxLotterySizeFixedPoint24(FixidityLib.maxFixedDiv())),
+      FixidityLib.fromFixed(maxPoolSizeFixedPoint24(FixidityLib.maxFixedDiv())),
       FixidityLib.fromFixed(currentInterestFractionFixedPoint24(), uint8(18)),
       secretHash
     );
   }
 
   /**
-   * @notice Retrieves information about a user's entry in the Lottery.
-   * @return addr (the address of the user), amount (the amount they deposited)
+   * @notice Retrieves information about a user's entry in the Pool.
+   * @return Returns a tuple containing:
+   *    addr (the address of the user)
+   *    amount (the amount they deposited)
+   *    ticketCount (the number of tickets they have bought)
    */
   function getEntry(address _addr) public view returns (
     address addr,
@@ -318,12 +332,12 @@ contract Lottery is Ownable {
   }
 
   /**
-   * @notice Calculates the maximum lottery size so that it doesn't overflow after earning interest
-   * @dev lotterySize = totalDeposits + totalDeposits * interest => totalDeposits = lotterySize / (1 + interest)
-   * @return The maximum size of the lottery to be deposited into the MoneyMarket
+   * @notice Calculates the maximum pool size so that it doesn't overflow after earning interest
+   * @dev poolSize = totalDeposits + totalDeposits * interest => totalDeposits = poolSize / (1 + interest)
+   * @return The maximum size of the pool to be deposited into the MoneyMarket
    */
-  function maxLotterySizeFixedPoint24(int256 _maxValueFixedPoint24) public view returns (int256) {
-    /// Double the interest rate in case it increases over the bond period.  Somewhat arbitrarily.
+  function maxPoolSizeFixedPoint24(int256 _maxValueFixedPoint24) public view returns (int256) {
+    /// Double the interest rate in case it increases over the lock period.  Somewhat arbitrarily.
     int256 interestFraction = FixidityLib.multiply(currentInterestFractionFixedPoint24(), FixidityLib.newFixed(2));
     return FixidityLib.divide(_maxValueFixedPoint24, FixidityLib.add(interestFraction, FixidityLib.newFixed(1)));
   }
@@ -333,7 +347,7 @@ contract Lottery is Ownable {
    * @return The current estimated effective interest rate
    */
   function currentInterestFractionFixedPoint24() public view returns (int256) {
-    int256 blockDuration = int256(bondEndBlock - bondStartBlock);
+    int256 blockDuration = int256(lockEndBlock - lockStartBlock);
     int256 supplyRateMantissaFixedPoint24 = FixidityLib.newFixed(int256(supplyRateMantissa()), uint8(18));
     return FixidityLib.multiply(supplyRateMantissaFixedPoint24, FixidityLib.newFixed(blockDuration));
   }
@@ -362,7 +376,7 @@ contract Lottery is Ownable {
   }
 
   modifier requireComplete() {
-    require(state == State.COMPLETE, "lottery is not complete");
+    require(state == State.COMPLETE, "pool is not complete");
     _;
   }
 }

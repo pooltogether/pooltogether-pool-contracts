@@ -3,7 +3,7 @@
   "name": "pooltogether",
   "version": "0.1.0",
   "contracts": {
-    "LotteryManager": "LotteryManager",
+    "PoolManager": "PoolManager",
     "Migrations": "Migrations"
   }
 }
