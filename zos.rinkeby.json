@@ -1,11 +1,11 @@
 {
   "contracts": {
     "PoolManager": {
-      "address": "0xA2cf44cBeE520Df25Bd8f8e521D575f35fd601DE",
-      "constructorCode": "608060405234801561001057600080fd5b50613d2f806100206000396000f3fe",
-      "bodyBytecodeHash": "befdb64e41a4a19fc922010c9e4f86f8a1b22bb74c5118fda26d8fb7f8b0cf3a",
-      "localBytecodeHash": "76c7a69ce3c7ec9a62a891fffb5997efdbde5fc1c3700609c6dbfe91c4c13f37",
-      "deployedBytecodeHash": "bf804df21f2114468f07c0a871310f0843fd768e02e49c878df62b698c1ce762",
+      "address": "0x9c9246445B70E010917848De81Af554C0a868346",
+      "constructorCode": "608060405234801561001057600080fd5b50613dd8806100206000396000f3fe",
+      "bodyBytecodeHash": "ab2efbeacd5e306e78c0435322187c54ae994ff5eddafa328de4c31215a30287",
+      "localBytecodeHash": "737b6ca743b2d408bd2b25d629e1e83dc498a9bc286775a945f207ac38f4cd89",
+      "deployedBytecodeHash": "c2a3ed115174e7eef472ca0497ddd5e42ea2d073413c3c6d018d679fb09cb802",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -40,7 +40,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 4202,
+          "astId": 4146,
           "type": "t_bool",
           "src": "757:24:16"
         },
@@ -48,7 +48,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 4204,
+          "astId": 4148,
           "type": "t_bool",
           "src": "876:25:16"
         },
@@ -56,7 +56,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 4253,
+          "astId": 4197,
           "type": "t_array:50<t_uint256>",
           "src": "1891:29:16"
         },
@@ -64,7 +64,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "_owner",
-          "astId": 3529,
+          "astId": 3473,
           "type": "t_address",
           "src": "302:22:12"
         },
@@ -72,7 +72,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "______gap",
-          "astId": 3640,
+          "astId": 3584,
           "type": "t_array:50<t_uint256>",
           "src": "2186:29:12"
         },
@@ -80,73 +80,73 @@
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "moneyMarket",
-          "astId": 1131,
+          "astId": 1121,
           "type": "t_address",
-          "src": "738:31:2"
+          "src": "771:26:2"
         },
         {
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "token",
-          "astId": 1133,
+          "astId": 1123,
           "type": "t_address",
-          "src": "773:19:2"
+          "src": "801:19:2"
         },
         {
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "currentPool",
-          "astId": 1135,
+          "astId": 1125,
           "type": "t_address",
-          "src": "796:23:2"
+          "src": "824:23:2"
         },
         {
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "openDuration",
-          "astId": 1137,
+          "astId": 1127,
           "type": "t_uint256",
-          "src": "823:27:2"
+          "src": "851:27:2"
         },
         {
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "lockDuration",
-          "astId": 1139,
+          "astId": 1129,
           "type": "t_uint256",
-          "src": "854:27:2"
+          "src": "882:27:2"
         },
         {
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "ticketPrice",
-          "astId": 1141,
+          "astId": 1131,
           "type": "t_int256",
-          "src": "885:25:2"
+          "src": "913:25:2"
         },
         {
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "feeFractionFixedPoint18",
-          "astId": 1143,
+          "astId": 1133,
           "type": "t_int256",
-          "src": "914:38:2"
+          "src": "942:38:2"
         },
         {
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "poolCount",
-          "astId": 1145,
+          "astId": 1135,
           "type": "t_uint256",
-          "src": "956:24:2"
+          "src": "984:24:2"
         },
         {
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "allowLockAnytime",
-          "astId": 1147,
+          "astId": 1137,
           "type": "t_bool",
-          "src": "984:28:2"
+          "src": "1012:28:2"
         }
       ],
       "warnings": {
@@ -154,7 +154,9 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "Migrations": {
@@ -268,6 +270,11 @@
         "address": "0xA321E6bD1d0e937D2862BF05E64976a83E76FD41",
         "version": "0.1.0",
         "implementation": "0x3Cc18f7371BE76057d3Db677c8bfB1D7e926ae23"
+      },
+      {
+        "address": "0x9473F53996F6DE773A4550e68A1576d0e0Be1988",
+        "version": "0.1.0",
+        "implementation": "0x3Cc18f7371BE76057d3Db677c8bfB1D7e926ae23"
       }
     ],
     "pooltogether/PoolManager": [
@@ -275,6 +282,11 @@
         "address": "0xD2e207E5976A78456BC35c8ABa189fFdDaF30fbB",
         "version": "0.1.0",
         "implementation": "0xA2cf44cBeE520Df25Bd8f8e521D575f35fd601DE"
+      },
+      {
+        "address": "0x86794901dB6C43256Cc92b5DCBec2342d17D1C86",
+        "version": "0.1.0",
+        "implementation": "0x9c9246445B70E010917848De81Af554C0a868346"
       }
     ]
   },
