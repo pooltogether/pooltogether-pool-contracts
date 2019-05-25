@@ -283,7 +283,11 @@ contract Pool is Ownable {
    *    poolState (either OPEN, LOCKED, COMPLETE)
    *    winner (the address of the winner)
    *    supplyBalanceTotal (the total deposits plus any interest from Compound)
-   *    minDeposit (the minimum deposit required)
+   *    ticketCost (the cost of each ticket in DAI)
+   *    participantCount (the number of unique purchasers of tickets)
+   *    maxPoolSize (the maximum theoretical size of the pool to prevent overflow)
+   *    estimatedInterestFixedPoint18 (the estimated total interest percent for this pool)
+   *    hashOfSecret (the hash of the secret the owner submitted upon locking)
    */
   function getInfo() public view returns (
     int256 entryTotal,
