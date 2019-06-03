@@ -259,7 +259,7 @@ contract Pool is Ownable {
   }
 
   function randomToken() public view returns (uint256) {
-    if (block.number > lockEndBlock) {
+    if (block.number <= lockEndBlock) {
       return 0;
     } else {
       return _selectRandom(uint256(FixidityLib.fromFixed(totalAmount)));
@@ -386,6 +386,7 @@ contract Pool is Ownable {
 
   modifier requireComplete() {
     require(state == State.COMPLETE, "pool is not complete");
+    require(block.number > lockEndBlock, "block is before lock end period");
     _;
   }
 }
