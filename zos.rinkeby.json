@@ -1,11 +1,11 @@
 {
   "contracts": {
     "PoolManager": {
-      "address": "0xC19ea6752EAb6dB05400D42D04793d50268E16Da",
-      "constructorCode": "608060405234801561001057600080fd5b50613e3d806100206000396000f3fe",
-      "bodyBytecodeHash": "44787c8826c4bc065a39a881c909734b4224aed0015a0c52ae5e461e7edec605",
-      "localBytecodeHash": "923cdd43cfa6e781d99fa85a31883432735b3d9bb3fee73a6c6f3e705d21f734",
-      "deployedBytecodeHash": "965ac9292dbba1c5acfab3a4718a3122732dcf8b89409ecfe36fe9ce704ab521",
+      "address": "0x12e9BB96d23Ad4503A956d071D0377a2a7f9af58",
+      "constructorCode": "608060405234801561001057600080fd5b50613e96806100206000396000f3fe",
+      "bodyBytecodeHash": "a6a55b69fa98cf18bba31063d24703d4d7d0dec61af4b27344b364fc95ccd14b",
+      "localBytecodeHash": "63a35ee68d414d02dd209367dc8eb08c4d48e6e3c223db261cb7f944ffc7bac3",
+      "deployedBytecodeHash": "54b6f3fc28d9a26d5d650590be57096c87b3074537b3e60aabf6ad3169736ce8",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -40,7 +40,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 4158,
+          "astId": 4166,
           "type": "t_bool",
           "src": "757:24:16"
         },
@@ -48,7 +48,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 4160,
+          "astId": 4168,
           "type": "t_bool",
           "src": "876:25:16"
         },
@@ -56,7 +56,7 @@
           "contract": "Initializable",
           "path": "zos-lib/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 4209,
+          "astId": 4217,
           "type": "t_array:50<t_uint256>",
           "src": "1891:29:16"
         },
@@ -64,7 +64,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "_owner",
-          "astId": 3485,
+          "astId": 3493,
           "type": "t_address",
           "src": "302:22:12"
         },
@@ -72,7 +72,7 @@
           "contract": "Ownable",
           "path": "openzeppelin-eth/contracts/ownership/Ownable.sol",
           "label": "______gap",
-          "astId": 3596,
+          "astId": 3604,
           "type": "t_array:50<t_uint256>",
           "src": "2186:29:12"
         },
@@ -80,7 +80,7 @@
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "moneyMarket",
-          "astId": 1121,
+          "astId": 1129,
           "type": "t_address",
           "src": "771:26:2"
         },
@@ -88,7 +88,7 @@
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "token",
-          "astId": 1123,
+          "astId": 1131,
           "type": "t_address",
           "src": "801:19:2"
         },
@@ -96,7 +96,7 @@
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "currentPool",
-          "astId": 1125,
+          "astId": 1133,
           "type": "t_address",
           "src": "824:23:2"
         },
@@ -104,7 +104,7 @@
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "openDuration",
-          "astId": 1127,
+          "astId": 1135,
           "type": "t_uint256",
           "src": "851:27:2"
         },
@@ -112,7 +112,7 @@
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "lockDuration",
-          "astId": 1129,
+          "astId": 1137,
           "type": "t_uint256",
           "src": "882:27:2"
         },
@@ -120,7 +120,7 @@
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "ticketPrice",
-          "astId": 1131,
+          "astId": 1139,
           "type": "t_int256",
           "src": "913:25:2"
         },
@@ -128,7 +128,7 @@
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "feeFractionFixedPoint18",
-          "astId": 1133,
+          "astId": 1141,
           "type": "t_int256",
           "src": "942:38:2"
         },
@@ -136,7 +136,7 @@
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "poolCount",
-          "astId": 1135,
+          "astId": 1143,
           "type": "t_uint256",
           "src": "984:24:2"
         },
@@ -144,7 +144,7 @@
           "contract": "PoolManager",
           "path": "contracts/PoolManager.sol",
           "label": "allowLockAnytime",
-          "astId": 1137,
+          "astId": 1145,
           "type": "t_bool",
           "src": "1012:28:2"
         }
@@ -154,7 +154,9 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "Migrations": {
@@ -274,7 +276,7 @@
       {
         "address": "0xeC39766aaD77B2e473af7F3752c82A7379C838EE",
         "version": "0.1.0",
-        "implementation": "0xC19ea6752EAb6dB05400D42D04793d50268E16Da"
+        "implementation": "0x12e9BB96d23Ad4503A956d071D0377a2a7f9af58"
       }
     ]
   },
