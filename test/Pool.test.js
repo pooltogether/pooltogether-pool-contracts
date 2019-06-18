@@ -37,14 +37,14 @@ contract('Pool', (accounts) => {
     await token.mint(user2, web3.utils.toWei('100000', 'ether'))
   })
 
-  async function createPool(bondStartBlock = -1, bondEndBlock = 0, allowLockAnytime = true) {
+  async function createPool(lockStartBlock = -1, lockEndBlock = 0, allowLockAnytime = true) {
     const block = await blockNumber()
 
     // console.log(
     //   moneyMarket.address.toString(),
     //   token.address.toString(),
-    //   (block + bondStartBlock),
-    //   (block + bondEndBlock),
+    //   (block + lockStartBlock),
+    //   (block + lockEndBlock),
     //   ticketPrice.toString(),
     //   feeFraction.toString(),
     //   fixidity.address.toString()
@@ -56,8 +56,8 @@ contract('Pool', (accounts) => {
     const pool = await Pool.new(
       moneyMarket.address,
       token.address,
-      block + bondStartBlock,
-      block + bondEndBlock,
+      block + lockStartBlock,
+      block + lockEndBlock,
       ticketPrice,
       feeFraction,
       allowLockAnytime
@@ -118,12 +118,12 @@ contract('Pool', (accounts) => {
       pool = await createPool(-10, 10, false)
     })
 
-    describe('unlock()', () => {
+    describe('complete(secret)', () => {
       it('cannot be unlocked before the lock duration ends', async () => {
         await pool.lock(secretHash)
         let failed = false
         try {
-          await pool.unlock(secret)
+          await pool.complete(secret)
         } catch (error) {
           failed = true
         }
@@ -132,7 +132,7 @@ contract('Pool', (accounts) => {
     })
   })
 
-  describe('pool with zero open and bond durations', () => {
+  describe('pool with zero open and lock durations', () => {
     beforeEach(async () => {
       pool = await createPool()
     })
@@ -194,11 +194,49 @@ contract('Pool', (accounts) => {
     })
 
     describe('unlock()', () => {
+      beforeEach(async () => {
+        await token.approve(pool.address, ticketPrice, { from: user1 })
+        await pool.buyTickets(1, { from: user1 })
+        await pool.lock(secretHash)
+      })
+
+      it('should allow anyone to unlock the pool', async () => {
+        await pool.unlock({ from: user1 })
+      })
+
+      it('should allow the owner to unlock the pool', async () => {
+        await pool.unlock()
+      })
+
+      describe('withdraw() after unlock', () => {
+        beforeEach(async () => {
+          await pool.unlock({ from: user1 })
+        })
+
+        it('should allow users to withdraw after the pool is unlocked', async () => {
+          let balanceBefore = await token.balanceOf(user1)
+          await pool.withdraw({ from: user1 })
+          let balanceAfter = await token.balanceOf(user1)
+          let balanceDifference = new BN(balanceAfter).sub(new BN(balanceBefore))
+          assert.equal(balanceDifference.toString(), ticketPrice.toString())
+
+          await pool.complete(secret)
+
+          balanceBefore = await token.balanceOf(user1)
+          await pool.withdraw({ from: user1 })
+          balanceAfter = await token.balanceOf(user1)
+          balanceDifference = new BN(balanceAfter).sub(new BN(balanceBefore))
+          assert.equal(balanceDifference.toString(), (await pool.netWinnings()).toString())
+        })
+      })
+    })
+
+    describe('complete(secret)', () => {
       it('should transfer tokens from money market back', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
         await pool.buyTickets(1, { from: user1 })
         await pool.lock(secretHash)
-        await pool.unlock(secret)
+        await pool.complete(secret)
         const info = await pool.getInfo()
         assert.equal(info.supplyBalanceTotal.toString(), web3.utils.toWei('12', 'ether'))
         assert.equal(info.winner, user1)
@@ -206,7 +244,7 @@ contract('Pool', (accounts) => {
 
       it('should succeed even without a balance', async () => {
         await pool.lock(secretHash)
-        await pool.unlock(secret)
+        await pool.complete(secret)
         const info = await pool.getInfo()
         assert.equal(info.winner, '0x0000000000000000000000000000000000000000')
       })
@@ -217,7 +255,7 @@ contract('Pool', (accounts) => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
         await pool.buyTickets(1, { from: user1 })
         await pool.lock(secretHash)
-        await pool.unlock(secret)
+        await pool.complete(secret)
 
         let winnings = await pool.winnings(user1)
         let winningBalance = new BN(web3.utils.toWei('12', 'ether'))
@@ -225,7 +263,6 @@ contract('Pool', (accounts) => {
 
         const balanceBefore = await token.balanceOf(user1)
         await pool.withdraw({ from: user1 })
-        assert.equal((await pool.winnings(user1)).toString(), '0')
         const balanceAfter = await token.balanceOf(user1)
 
         assert.equal(balanceAfter.toString(), (new BN(balanceBefore).add(winningBalance)).toString())
@@ -241,7 +278,7 @@ contract('Pool', (accounts) => {
         await pool.buyTickets(10, { from: user2 })
 
         await pool.lock(secretHash)
-        await pool.unlock(secret)
+        await pool.complete(secret)
         const info = await pool.getInfo()
 
         const user1BalanceBefore = await token.balanceOf(user1)
@@ -278,12 +315,12 @@ contract('Pool', (accounts) => {
     })
   })
 
-  describe('when pool cannot be bonded yet', () => {
+  describe('when pool cannot be locked yet', () => {
     beforeEach(async () => {
       // one thousand seconds into future
-      const bondStartBlock = 15 * blocksPerMinute
-      const bondEndBlock = bondStartBlock + 15 * blocksPerMinute
-      pool = await createPool(bondStartBlock, bondEndBlock)
+      const lockStartBlock = 15 * blocksPerMinute
+      const lockEndBlock = lockStartBlock + 15 * blocksPerMinute
+      pool = await createPool(lockStartBlock, lockEndBlock)
     })
 
     describe('lock()', () => {
@@ -314,15 +351,15 @@ contract('Pool', (accounts) => {
     beforeEach(async () => {
 
       // in the past
-      let bondStartBlock = -10
+      let lockStartBlock = -10
 
       // in the future
-      let bondEndBlock = 15 * blocksPerMinute
+      let lockEndBlock = 15 * blocksPerMinute
 
-      pool = await createPool(bondStartBlock, bondEndBlock)
+      pool = await createPool(lockStartBlock, lockEndBlock)
     })
 
-    describe('unlock()', () => {
+    describe('complete(secret)', () => {
       beforeEach(async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
         await pool.buyTickets(1, { from: user1 })
@@ -330,13 +367,13 @@ contract('Pool', (accounts) => {
       })
 
       it('should still work for the owner', async () => {
-        await pool.unlock(secret)
+        await pool.complete(secret)
       })
 
       it('should not work for anyone else', async () => {
         let failed
         try {
-          await pool.unlock({ from: user1 })
+          await pool.complete({ from: user1 })
           failed = false
         } catch (error) {
           failed = true
@@ -369,7 +406,7 @@ contract('Pool', (accounts) => {
       const fee = interestEarned.mul(new BN(10)).div(new BN(100))
 
       // we expect unlocking to transfer the fee to the owner
-      await pool.unlock(secret, { from: owner })
+      await pool.complete(secret, { from: owner })
 
       assert.equal((await pool.feeAmount()).toString(), fee.toString())
 

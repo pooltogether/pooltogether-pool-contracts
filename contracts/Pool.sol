@@ -46,9 +46,15 @@ contract Pool is Ownable {
    */
   event PoolUnlocked();
 
+  /**
+   * Emitted when the pool is complete
+   */
+  event PoolComplete(address indexed winner);
+
   enum State {
     OPEN,
     LOCKED,
+    UNLOCKED,
     COMPLETE
   }
 
@@ -56,6 +62,7 @@ contract Pool is Ownable {
     address addr;
     int256 amount;
     uint256 ticketCount;
+    int256 withdrawnNonFixed;
   }
 
   bytes32 public constant SUM_TREE_KEY = "PoolPool";
@@ -134,7 +141,8 @@ contract Pool is Ownable {
       entries[msg.sender] = Entry(
         msg.sender,
         totalDeposit,
-        uint256(_countNonFixed)
+        uint256(_countNonFixed),
+        0
       );
       entryCount = entryCount.add(1);
     }
@@ -174,22 +182,12 @@ contract Pool is Ownable {
     emit PoolLocked();
   }
 
-  /**
-   * @notice Withdraws the deposit from Compound and selects a winner.
-   * Can only be called by the owner after the lock end block.
-   * Fires the PoolUnlocked event.
-   */
-  function unlock(bytes32 _secret) public requireLocked onlyOwner {
-    if (allowLockAnytime) {
+  function unlock() public requireLocked {
+    if (allowLockAnytime && msg.sender == owner()) {
       lockEndBlock = block.number;
     } else {
       require(lockEndBlock < block.number, "pool cannot be unlocked yet");
     }
-    require(keccak256(abi.encodePacked(_secret)) == secretHash, "secret does not match");
-
-    secret = _secret;
-
-    state = State.COMPLETE;
 
     uint256 balance = moneyMarket.balanceOfUnderlying(address(this));
 
@@ -198,7 +196,7 @@ contract Pool is Ownable {
       finalAmount = FixidityLib.newFixed(int256(balance));
     }
 
-    state = State.COMPLETE;
+    state = State.UNLOCKED;
 
     uint256 fee = feeAmount();
     if (fee > 0) {
@@ -209,20 +207,39 @@ contract Pool is Ownable {
   }
 
   /**
+   * @notice Withdraws the deposit from Compound and selects a winner.
+   * Can only be called by the owner after the lock end block.
+   * Fires the PoolUnlocked event.
+   */
+  function complete(bytes32 _secret) public onlyOwner {
+    if (state == State.LOCKED) {
+      unlock();
+    }
+    require(state == State.UNLOCKED, "state must be unlocked");
+    require(keccak256(abi.encodePacked(_secret)) == secretHash, "secret does not match");
+    secret = _secret;
+    state = State.COMPLETE;
+
+    emit PoolComplete(winnerAddress());
+  }
+
+  /**
    * @notice Transfers a users deposit, and potential winnings, back to them.
    * The Pool must be unlocked.
    * The user must have deposited funds.  Fires the Withdrawn event.
    */
-  function withdraw() public requireComplete {
+  function withdraw() public {
     require(_hasEntry(msg.sender), "entrant exists");
+    require(state == State.UNLOCKED || state == State.COMPLETE, "pool has not been unlocked");
     Entry storage entry = entries[msg.sender];
-    require(entry.amount > 0, "entrant has already withdrawn");
-    int256 winningTotal = winnings(msg.sender);
-    delete entry.amount;
+    int256 winningTotalNonFixed = winnings(msg.sender);
+    int256 remainingToWithdrawNonFixed = winningTotalNonFixed - entry.withdrawnNonFixed;
+    require(remainingToWithdrawNonFixed > 0, "entrant has already withdrawn");
+    entry.withdrawnNonFixed = entry.withdrawnNonFixed + remainingToWithdrawNonFixed;
 
-    emit Withdrawn(msg.sender, winningTotal);
+    emit Withdrawn(msg.sender, winningTotalNonFixed);
 
-    require(token.transfer(msg.sender, uint256(winningTotal)), "could not transfer winnings");
+    require(token.transfer(msg.sender, uint256(remainingToWithdrawNonFixed)), "could not transfer winnings");
   }
 
   /**
@@ -232,9 +249,6 @@ contract Pool is Ownable {
   function winnings(address _addr) public view returns (int256) {
     Entry storage entry = entries[_addr];
     if (entry.addr == address(0)) { //if does not have an entry
-      return 0;
-    }
-    if (entry.amount == 0) { // if entry has already withdrawn
       return 0;
     }
     int256 winningTotal = entry.amount;
@@ -257,6 +271,14 @@ contract Pool is Ownable {
   }
 
   /**
+   * @notice Returns the total interest on the pool less the fee as a whole number
+   * @return The total interest on the pool less the fee as a whole number
+   */
+  function netWinnings() public view returns (int256) {
+    return FixidityLib.fromFixed(netWinningsFixedPoint24());
+  }
+
+  /**
    * @notice Computes the total interest earned on the pool less the fee as a fixed point 24.
    * @return The total interest earned on the pool less the fee as a fixed point 24.
    */
@@ -270,11 +292,7 @@ contract Pool is Ownable {
    * @return The total interest earned on the pool as a fixed point 24.
    */
   function grossWinningsFixedPoint24() internal view returns (int256) {
-    if (state == State.COMPLETE) {
-      return FixidityLib.subtract(finalAmount, totalAmount);
-    } else {
-      return 0;
-    }
+    return FixidityLib.subtract(finalAmount, totalAmount);
   }
 
   /**
@@ -376,17 +394,20 @@ contract Pool is Ownable {
    *    addr (the address of the user)
    *    amount (the amount they deposited)
    *    ticketCount (the number of tickets they have bought)
+   *    withdrawn (the amount they have withdrawn)
    */
   function getEntry(address _addr) public view returns (
     address addr,
     int256 amount,
-    uint256 ticketCount
+    uint256 ticketCount,
+    int256 withdrawn
   ) {
     Entry storage entry = entries[_addr];
     return (
       entry.addr,
       FixidityLib.fromFixed(entry.amount),
-      entry.ticketCount
+      entry.ticketCount,
+      entry.withdrawnNonFixed
     );
   }
 

@@ -86,13 +86,13 @@ contract('PoolManager', (accounts) => {
       let pool = await Pool.at(address)
 
       await pool.lock(secretHash)
-      await pool.unlock(secret)
+      await pool.complete(secret)
 
       let address2 = await createPool()
       let pool2 = await Pool.at(address2)
 
       await pool2.lock(secretHash)
-      await pool2.unlock(secret)
+      await pool2.complete(secret)
 
     })
   })
