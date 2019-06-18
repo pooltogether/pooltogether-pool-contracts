@@ -214,19 +214,29 @@ contract('Pool', (accounts) => {
         })
 
         it('should allow users to withdraw after the pool is unlocked', async () => {
+          let poolBalance = await pool.balanceOf(user1)
+          assert.equal(poolBalance.toString(), ticketPrice.toString())
+
           let balanceBefore = await token.balanceOf(user1)
           await pool.withdraw({ from: user1 })
           let balanceAfter = await token.balanceOf(user1)
           let balanceDifference = new BN(balanceAfter).sub(new BN(balanceBefore))
           assert.equal(balanceDifference.toString(), ticketPrice.toString())
 
+          poolBalance = await pool.balanceOf(user1)
+          assert.equal(poolBalance.toString(), '0')
+
           await pool.complete(secret)
+          let netWinnings = await pool.netWinnings()
+
+          poolBalance = await pool.balanceOf(user1)
+          assert.equal(poolBalance.toString(), netWinnings.toString())
 
           balanceBefore = await token.balanceOf(user1)
           await pool.withdraw({ from: user1 })
           balanceAfter = await token.balanceOf(user1)
           balanceDifference = new BN(balanceAfter).sub(new BN(balanceBefore))
-          assert.equal(balanceDifference.toString(), (await pool.netWinnings()).toString())
+          assert.equal(balanceDifference.toString(), netWinnings.toString())
         })
       })
     })

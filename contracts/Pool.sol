@@ -232,14 +232,13 @@ contract Pool is Ownable {
     require(_hasEntry(msg.sender), "entrant exists");
     require(state == State.UNLOCKED || state == State.COMPLETE, "pool has not been unlocked");
     Entry storage entry = entries[msg.sender];
-    int256 winningTotalNonFixed = winnings(msg.sender);
-    int256 remainingToWithdrawNonFixed = winningTotalNonFixed - entry.withdrawnNonFixed;
-    require(remainingToWithdrawNonFixed > 0, "entrant has already withdrawn");
-    entry.withdrawnNonFixed = entry.withdrawnNonFixed + remainingToWithdrawNonFixed;
+    int256 remainingBalanceNonFixed = balanceOf(msg.sender);
+    require(remainingBalanceNonFixed > 0, "entrant has already withdrawn");
+    entry.withdrawnNonFixed = entry.withdrawnNonFixed + remainingBalanceNonFixed;
 
-    emit Withdrawn(msg.sender, winningTotalNonFixed);
+    emit Withdrawn(msg.sender, remainingBalanceNonFixed);
 
-    require(token.transfer(msg.sender, uint256(remainingToWithdrawNonFixed)), "could not transfer winnings");
+    require(token.transfer(msg.sender, uint256(remainingBalanceNonFixed)), "could not transfer winnings");
   }
 
   /**
@@ -256,6 +255,16 @@ contract Pool is Ownable {
       winningTotal = FixidityLib.add(winningTotal, netWinningsFixedPoint24());
     }
     return FixidityLib.fromFixed(winningTotal);
+  }
+
+  /**
+   * @notice Calculates a user's remaining balance.  This is their winnings less how much they've withdrawn.
+   * @return The users's current balance.
+   */
+  function balanceOf(address _addr) public view returns (int256) {
+    Entry storage entry = entries[_addr];
+    int256 winningTotalNonFixed = winnings(_addr);
+    return winningTotalNonFixed - entry.withdrawnNonFixed;
   }
 
   /**
