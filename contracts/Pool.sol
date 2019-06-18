@@ -118,12 +118,13 @@ contract Pool is Ownable {
       entryCount = entryCount.add(1);
     }
 
-    sortitionSumTrees.set(SUM_TREE_KEY, totalDepositNonFixed, bytes32(uint256(msg.sender)));
+    int256 amountNonFixed = FixidityLib.fromFixed(entries[msg.sender].amount);
+    sortitionSumTrees.set(SUM_TREE_KEY, uint256(amountNonFixed), bytes32(uint256(msg.sender)));
 
     totalAmount = FixidityLib.add(totalAmount, totalDeposit);
 
     // the total amount cannot exceed the max pool size
-    require(totalAmount < maxPoolSizeFixedPoint24(FixidityLib.maxFixedDiv()), "pool size exceeds maximum");
+    require(totalAmount <= maxPoolSizeFixedPoint24(FixidityLib.maxFixedDiv()), "pool size exceeds maximum");
 
     emit BoughtTickets(msg.sender, _count, totalDepositNonFixed);
   }
