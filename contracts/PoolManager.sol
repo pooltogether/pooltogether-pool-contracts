@@ -22,15 +22,15 @@ contract PoolManager is Ownable {
 
   /**
    * Emitted when the open duration is changed.
-   * @param duration The new duration in blocks
+   * @param durationInBlocks The new duration in blocks
    */
-  event OpenDurationChanged(uint256 duration);
+  event OpenDurationChanged(uint256 durationInBlocks);
 
   /**
    * Emitted when the lock duration is changed.
-   * @param duration The new duration in blocks
+   * @param durationInBlocks The new duration in blocks
    */
-  event LockDurationChanged(uint256 duration);
+  event LockDurationChanged(uint256 durationInBlocks);
 
   /**
    * Emitted when the ticket price is changed
@@ -68,12 +68,12 @@ contract PoolManager is Ownable {
   /**
    * The open duration in blocks to use for the next Pool
    */
-  uint256 public openDuration;
+  uint256 public openDurationInBlocks;
 
   /**
    * The lock duration in blocks to use for the next Pool
    */
-  uint256 public lockDuration;
+  uint256 public lockDurationInBlocks;
 
   /**
    * The ticket price in tokens to use for the next Pool
@@ -100,8 +100,8 @@ contract PoolManager is Ownable {
    * @param _owner The owner of the PoolManager.  They are able to change settings and are set as the owner of new lotteries.
    * @param _moneyMarket The Compound Finance MoneyMarket contract to supply and withdraw tokens.
    * @param _token The token to use for the Pools
-   * @param _openDuration The duration between a Pool's creation and when it can be locked.
-   * @param _lockDuration The duration that a Pool must be locked for.
+   * @param _openDurationInBlocks The duration between a Pool's creation and when it can be locked.
+   * @param _lockDurationInBlocks The duration that a Pool must be locked for.
    * @param _ticketPrice The price that tickets should sell for
    * @param _feeFractionFixedPoint18 The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
    * @param _allowLockAnytime Whether the owner can lock and unlock the pools at any time.
@@ -110,8 +110,8 @@ contract PoolManager is Ownable {
     address _owner,
     address _moneyMarket,
     address _token,
-    uint256 _openDuration,
-    uint256 _lockDuration,
+    uint256 _openDurationInBlocks,
+    uint256 _lockDurationInBlocks,
     int256 _ticketPrice,
     int256 _feeFractionFixedPoint18,
     bool _allowLockAnytime
@@ -126,8 +126,8 @@ contract PoolManager is Ownable {
     require(_token == moneyMarket.underlying(), "token does not match the underlying money market token");
 
     _setFeeFraction(_feeFractionFixedPoint18);
-    _setLockDuration(_lockDuration);
-    _setOpenDuration(_openDuration);
+    _setLockDuration(_lockDurationInBlocks);
+    _setOpenDuration(_openDurationInBlocks);
     _setTicketPrice(_ticketPrice);
     _setAllowLockAnytime(_allowLockAnytime);
   }
@@ -136,24 +136,24 @@ contract PoolManager is Ownable {
    * @notice Returns information about the PoolManager
    * @return A tuple containing:
    *    _currentPool (the address of the current pool),
-   *    _openDuration (the open duration in blocks to use for the next pool),
-   *    _lockDuration (the lock duration in blocks to use for the next pool),
+   *    _openDurationInBlocks (the open duration in blocks to use for the next pool),
+   *    _lockDurationInBlocks (the lock duration in blocks to use for the next pool),
    *    _ticketPrice (the ticket price in DAI for the next pool),
    *    _feeFractionFixedPoint18 (the fee fraction for the next pool),
    *    _poolCount (the number of pools that have been created)
    */
   function getInfo() public view returns (
     address _currentPool,
-    uint256 _openDuration,
-    uint256 _lockDuration,
+    uint256 _openDurationInBlocks,
+    uint256 _lockDurationInBlocks,
     int256 _ticketPrice,
     int256 _feeFractionFixedPoint18,
     uint256 _poolCount
   ) {
     return (
       address(currentPool),
-      openDuration,
-      lockDuration,
+      openDurationInBlocks,
+      lockDurationInBlocks,
       ticketPrice,
       feeFractionFixedPoint18,
       poolCount
@@ -172,8 +172,8 @@ contract PoolManager is Ownable {
     currentPool = new Pool(
       moneyMarket,
       token,
-      block.number + openDuration,
-      block.number + openDuration + lockDuration,
+      block.number + openDurationInBlocks,
+      block.number + openDurationInBlocks + lockDurationInBlocks,
       ticketPrice,
       feeFractionFixedPoint18,
       allowLockAnytime
@@ -190,34 +190,34 @@ contract PoolManager is Ownable {
    * @notice Sets the open duration in blocks for new Pools.
    * Fires the OpenDurationChanged event.
    * Can only be set by the owner.  Fires the OpenDurationChanged event.
-   * @param _openDuration The duration, in blocks, that a pool must be open for after it is created.
+   * @param _openDurationInBlocks The duration, in blocks, that a pool must be open for after it is created.
    */
-  function setOpenDuration(uint256 _openDuration) public onlyOwner {
-    _setOpenDuration(_openDuration);
+  function setOpenDuration(uint256 _openDurationInBlocks) public onlyOwner {
+    _setOpenDuration(_openDurationInBlocks);
   }
 
-  function _setOpenDuration(uint256 _openDuration) internal {
-    require(_openDuration > 0, "open duration must be greater than zero");
-    openDuration = _openDuration;
+  function _setOpenDuration(uint256 _openDurationInBlocks) internal {
+    require(_openDurationInBlocks > 0, "open duration must be greater than zero");
+    openDurationInBlocks = _openDurationInBlocks;
 
-    emit OpenDurationChanged(_openDuration);
+    emit OpenDurationChanged(_openDurationInBlocks);
   }
 
   /**
    * @notice Sets the lock duration in blocks for new Pools.
    * Fires the LockDurationChanged event.
    * Can only be set by the owner.  Only applies to subsequent Pools.
-   * @param _lockDuration The duration, in blocks, that new pools must be locked for.
+   * @param _lockDurationInBlocks The duration, in blocks, that new pools must be locked for.
    */
-  function setLockDuration(uint256 _lockDuration) public onlyOwner {
-    _setLockDuration(_lockDuration);
+  function setLockDuration(uint256 _lockDurationInBlocks) public onlyOwner {
+    _setLockDuration(_lockDurationInBlocks);
   }
 
-  function _setLockDuration(uint256 _lockDuration) internal {
-    require(_lockDuration > 0, "bond duration must be greater than zero");
-    lockDuration = _lockDuration;
+  function _setLockDuration(uint256 _lockDurationInBlocks) internal {
+    require(_lockDurationInBlocks > 0, "bond duration must be greater than zero");
+    lockDurationInBlocks = _lockDurationInBlocks;
 
-    emit LockDurationChanged(_lockDuration);
+    emit LockDurationChanged(_lockDurationInBlocks);
   }
 
   /**

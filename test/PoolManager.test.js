@@ -71,8 +71,8 @@ contract('PoolManager', (accounts) => {
       let poolManagerInfo = await poolManager.getInfo()
 
       assert.equal(poolManagerInfo._currentPool, address)
-      assert.equal(poolManagerInfo._openDuration.toString(), ''+ openDuration)
-      assert.equal(poolManagerInfo._lockDuration.toString(), '' + lockDuration)
+      assert.equal(poolManagerInfo._openDurationInBlocks.toString(), ''+ openDuration)
+      assert.equal(poolManagerInfo._lockDurationInBlocks.toString(), '' + lockDuration)
       assert.equal(poolManagerInfo._ticketPrice.toString(), ticketPrice)
       assert.equal(poolManagerInfo._feeFractionFixedPoint18.toString(), feeFraction) 
       assert.equal(poolManagerInfo._poolCount.toString(), 1)
@@ -101,7 +101,7 @@ contract('PoolManager', (accounts) => {
     it('should update the lock duration', async () => {
       let newLockDuration = 333333
       await poolManager.setLockDuration(newLockDuration)
-      assert.equal(await poolManager.lockDuration(), newLockDuration)
+      assert.equal(await poolManager.lockDurationInBlocks(), newLockDuration)
     })
   })
 })

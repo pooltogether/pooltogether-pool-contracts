@@ -107,6 +107,7 @@ contract Pool is Ownable {
     ticketPrice = FixidityLib.newFixed(_ticketPrice);
     sortitionSumTrees.createTree(SUM_TREE_KEY, 4);
 
+    state = State.OPEN;
     moneyMarket = _moneyMarket;
     token = _token;
     lockStartBlock = _lockStartBlock;
@@ -117,22 +118,23 @@ contract Pool is Ownable {
   /**
    * @notice Buys a pool ticket.  Only possible while the Pool is in the "open" state.  The
    * user can buy any number of tickets.  Each ticket is a chance at winning.
+   * @param _countNonFixed The number of tickets the user wishes to buy.
    */
-  function buyTickets (int256 _count) public requireOpen {
-    require(_count > 0, "number of tickets is less than or equal to zero");
-    int256 countFixed = FixidityLib.newFixed(_count);
-    int256 totalDeposit = FixidityLib.multiply(ticketPrice, countFixed);
+  function buyTickets (int256 _countNonFixed) public requireOpen {
+    require(_countNonFixed > 0, "number of tickets is less than or equal to zero");
+    int256 count = FixidityLib.newFixed(_countNonFixed);
+    int256 totalDeposit = FixidityLib.multiply(ticketPrice, count);
     uint256 totalDepositNonFixed = uint256(FixidityLib.fromFixed(totalDeposit));
     require(token.transferFrom(msg.sender, address(this), totalDepositNonFixed), "token transfer failed");
 
     if (_hasEntry(msg.sender)) {
       entries[msg.sender].amount = FixidityLib.add(entries[msg.sender].amount, totalDeposit);
-      entries[msg.sender].ticketCount = entries[msg.sender].ticketCount.add(uint256(_count));
+      entries[msg.sender].ticketCount = entries[msg.sender].ticketCount.add(uint256(_countNonFixed));
     } else {
       entries[msg.sender] = Entry(
         msg.sender,
         totalDeposit,
-        uint256(_count)
+        uint256(_countNonFixed)
       );
       entryCount = entryCount.add(1);
     }
@@ -145,7 +147,7 @@ contract Pool is Ownable {
     // the total amount cannot exceed the max pool size
     require(totalAmount <= maxPoolSizeFixedPoint24(FixidityLib.maxFixedDiv()), "pool size exceeds maximum");
 
-    emit BoughtTickets(msg.sender, _count, totalDepositNonFixed);
+    emit BoughtTickets(msg.sender, _countNonFixed, totalDepositNonFixed);
   }
 
   /**
