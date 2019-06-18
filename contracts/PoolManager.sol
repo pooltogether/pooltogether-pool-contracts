@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.0;
 
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
@@ -13,22 +13,86 @@ import "./compound/ICErc20.sol";
 contract PoolManager is Ownable {
   using SafeMath for uint256;
 
-  event PoolCreated(address indexed pool, uint256 indexed number, uint256 indexed page);
+  /**
+   * Emitted when a new Pool is created.
+   * @param pool The address of the new Pool contract
+   * @param number The index of the pool
+   */
+  event PoolCreated(address indexed pool, uint256 indexed number);
+
+  /**
+   * Emitted when the open duration is changed.
+   * @param duration The new duration in blocks
+   */
   event OpenDurationChanged(uint256 duration);
+
+  /**
+   * Emitted when the lock duration is changed.
+   * @param duration The new duration in blocks
+   */
   event LockDurationChanged(uint256 duration);
+
+  /**
+   * Emitted when the ticket price is changed
+   * @param ticketPrice The ticket price
+   */
   event TicketPriceChanged(int256 ticketPrice);
+
+  /**
+   * Emitted when the fee fraction is changed
+   * @param feeFractionFixedPoint18 The new fee fraction encoded as a fixed point 18 decimal
+   */
   event FeeFractionChanged(int256 feeFractionFixedPoint18);
 
-  uint256 public constant PAGE_SIZE = 10;
+  /**
+   * Emitted when the allow lock anytime is changed
+   * @param allowLockAnytime The value of allow lock anytime
+   */
+  event AllowLockAnytimeChanged(bool allowLockAnytime);
 
+  /**
+   * The Compound cToken to supply and withdraw from
+   */
   ICErc20 public moneyMarket;
+
+  /**
+   * The token to use for the moneyMarket
+   */
   IERC20 public token;
+
+  /**
+   * The currently active Pool
+   */
   Pool public currentPool;
+
+  /**
+   * The open duration in blocks to use for the next Pool
+   */
   uint256 public openDuration;
+
+  /**
+   * The lock duration in blocks to use for the next Pool
+   */
   uint256 public lockDuration;
+
+  /**
+   * The ticket price in tokens to use for the next Pool
+   */
   int256 public ticketPrice;
+
+  /**
+   * The owner fee fraction to use for the next Pool
+   */
   int256 private feeFractionFixedPoint18;
+
+  /**
+   * The number of Pools that have been created
+   */
   uint256 public poolCount;
+
+  /**
+   * Whether to allow the owner of the next Pool to lock and unlock at anytime.
+   */
   bool public allowLockAnytime;
 
   /**
@@ -38,6 +102,9 @@ contract PoolManager is Ownable {
    * @param _token The token to use for the Pools
    * @param _openDuration The duration between a Pool's creation and when it can be locked.
    * @param _lockDuration The duration that a Pool must be locked for.
+   * @param _ticketPrice The price that tickets should sell for
+   * @param _feeFractionFixedPoint18 The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
+   * @param _allowLockAnytime Whether the owner can lock and unlock the pools at any time.
    */
   function init (
     address _owner,
@@ -55,7 +122,6 @@ contract PoolManager is Ownable {
     Ownable.initialize(_owner);
     token = IERC20(_token);
     moneyMarket = ICErc20(_moneyMarket);
-    allowLockAnytime = _allowLockAnytime;
 
     require(_token == moneyMarket.underlying(), "token does not match the underlying money market token");
 
@@ -63,6 +129,7 @@ contract PoolManager is Ownable {
     _setLockDuration(_lockDuration);
     _setOpenDuration(_openDuration);
     _setTicketPrice(_ticketPrice);
+    _setAllowLockAnytime(_allowLockAnytime);
   }
 
   /**
@@ -95,9 +162,11 @@ contract PoolManager is Ownable {
 
   /**
    * @notice Creates a new Pool.  There can be no current pool, or the current pool must be complete.
+   * Can only be called by the owner.
    * Fires the PoolCreated event.
+   * @return The address of the new pool
    */
-  function createPool() external onlyOwner {
+  function createPool() external onlyOwner returns (address) {
     bool canCreatePool = address(currentPool) == address(0) || currentPool.state() == Pool.State.COMPLETE;
     require(canCreatePool, "the last pool has not completed");
     currentPool = new Pool(
@@ -112,11 +181,14 @@ contract PoolManager is Ownable {
     currentPool.initialize(owner());
     poolCount = poolCount.add(1);
 
-    emit PoolCreated(address(currentPool), poolCount, poolCount.div(PAGE_SIZE));
+    emit PoolCreated(address(currentPool), poolCount);
+
+    return address(currentPool);
   }
 
   /**
    * @notice Sets the open duration in blocks for new Pools.
+   * Fires the OpenDurationChanged event.
    * Can only be set by the owner.  Fires the OpenDurationChanged event.
    * @param _openDuration The duration, in blocks, that a pool must be open for after it is created.
    */
@@ -133,7 +205,8 @@ contract PoolManager is Ownable {
 
   /**
    * @notice Sets the lock duration in blocks for new Pools.
-   * Can only be set by the owner.  Fires the LockDurationChanged event.
+   * Fires the LockDurationChanged event.
+   * Can only be set by the owner.  Only applies to subsequent Pools.
    * @param _lockDuration The duration, in blocks, that new pools must be locked for.
    */
   function setLockDuration(uint256 _lockDuration) public onlyOwner {
@@ -148,7 +221,10 @@ contract PoolManager is Ownable {
   }
 
   /**
-   * @notice Sets the ticket price in DAI.  Can only be called by the PoolManager owner.
+   * @notice Sets the ticket price in DAI.
+   * Fires the TicketPriceChanged event.
+   * Can only be called by the owner.  Only applies to subsequent Pools.
+   * @param _ticketPrice The new price for tickets.
    */
   function setTicketPrice(int256 _ticketPrice) public onlyOwner {
     _setTicketPrice(_ticketPrice);
@@ -162,10 +238,11 @@ contract PoolManager is Ownable {
   }
 
   /**
-   * @notice Sets the fee fraction paid out to the pool owner.
+   * @notice Sets the fee fraction paid out to the Pool owner.
+   * Fires the FeeFractionChanged event.
+   * Can only be called by the owner. Only applies to subsequent Pools.
    * @param _feeFractionFixedPoint18 The fraction to pay out.
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
-   * Can only be called by the PoolManager owner.
    */
   function setFeeFraction(int256 _feeFractionFixedPoint18) public onlyOwner {
     _setFeeFraction(_feeFractionFixedPoint18);
@@ -179,7 +256,19 @@ contract PoolManager is Ownable {
     emit FeeFractionChanged(_feeFractionFixedPoint18);
   }
 
+  /**
+   * @notice Allows the owner to set whether a Pool can be locked and unlocked at any time.
+   * Fires the AllowLockAnytimeChanged event.
+   * Can only be set by the owner.  Only applies to subsequent Pools.
+   * @param _allowLockAnytime True if the Pool can be locked and unlocked anytime, false otherwise.
+   */
   function setAllowLockAnytime(bool _allowLockAnytime) public onlyOwner {
+    _setAllowLockAnytime(_allowLockAnytime);
+  }
+
+  function _setAllowLockAnytime(bool _allowLockAnytime) internal {
     allowLockAnytime = _allowLockAnytime;
+
+    emit AllowLockAnytimeChanged(_allowLockAnytime);
   }
 }

@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.0;
 
 import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
@@ -21,10 +21,29 @@ import "fixidity/contracts/FixidityLib.sol";
 contract Pool is Ownable {
   using SafeMath for uint256;
 
+  /**
+   * Emitted when "tickets" have been purchased.
+   * @param sender The purchaser of the tickets
+   * @param count The number of tickets purchased
+   * @param totalPrice The total cost of the tickets
+   */
   event BoughtTickets(address indexed sender, int256 count, uint256 totalPrice);
+
+  /**
+   * Emitted when a user withdraws from the pool.
+   * @param sender The user that is withdrawing from the pool
+   * @param amount The amount that the user withdrew
+   */
   event Withdrawn(address indexed sender, int256 amount);
-  event OwnerWithdrawn(address indexed sender, int256 amount);
+
+  /**
+   * Emitted when the pool is locked.
+   */
   event PoolLocked();
+
+  /**
+   * Emitted when the pool is unlocked.
+   */
   event PoolUnlocked();
 
   enum State {
@@ -235,10 +254,19 @@ contract Pool is Ownable {
     }
   }
 
+  /**
+   * @notice Computes the total interest earned on the pool less the fee as a fixed point 24.
+   * @return The total interest earned on the pool less the fee as a fixed point 24.
+   */
   function netWinningsFixedPoint24() internal view returns (int256) {
     return grossWinningsFixedPoint24() - feeAmountFixedPoint24();
   }
 
+  /**
+   * @notice Computes the total interest earned on the pool as a fixed point 24.
+   * This is what the winner will earn once the pool is unlocked.
+   * @return The total interest earned on the pool as a fixed point 24.
+   */
   function grossWinningsFixedPoint24() internal view returns (int256) {
     if (state == State.COMPLETE) {
       return FixidityLib.subtract(finalAmount, totalAmount);
@@ -255,10 +283,18 @@ contract Pool is Ownable {
     return uint256(FixidityLib.fromFixed(feeAmountFixedPoint24()));
   }
 
+  /**
+   * @notice Calculates the fee for the pool by multiplying the gross winnings by the fee fraction.
+   * @return The fee for the pool as a fixed point 24
+   */
   function feeAmountFixedPoint24() internal view returns (int256) {
     return FixidityLib.multiply(grossWinningsFixedPoint24(), feeFraction);
   }
 
+  /**
+   * @notice Selects a random number in the range from [0, total tokens deposited)
+   * @return If the current block is before the end it returns 0, otherwise it returns the random number.
+   */
   function randomToken() public view returns (uint256) {
     if (block.number <= lockEndBlock) {
       return 0;
@@ -267,10 +303,20 @@ contract Pool is Ownable {
     }
   }
 
+  /**
+   * @notice Selects a random number in the range [0, total)
+   * @param total The upper bound for the random number
+   * @return The random number
+   */
   function _selectRandom(uint256 total) internal view returns (uint256) {
     return UniformRandomNumber.uniform(_entropy(), total);
   }
 
+  /**
+   * @notice Computes the entropy used to generate the random number.
+   * The blockhash of the lock end block is XOR'd with the secret revealed by the owner.
+   * @return The computed entropy value
+   */
   function _entropy() internal view returns (uint256) {
     return uint256(blockhash(lockEndBlock) ^ secret);
   }
@@ -371,6 +417,11 @@ contract Pool is Ownable {
     return moneyMarket.supplyRatePerBlock();
   }
 
+  /**
+   * @notice Determines whether a given address has bought tickets
+   * @param _addr The given address
+   * @return Returns true if the given address bought tickets, false otherwise.
+   */
   function _hasEntry(address _addr) internal view returns (bool) {
     return entries[_addr].addr == _addr;
   }
