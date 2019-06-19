@@ -1,11 +1,11 @@
 {
   "contracts": {
     "PoolManager": {
-      "address": "0x7502fB6A6274ec89E16cCD53bbCDc4293D5Dcc8A",
+      "address": "0xf11973F315d45D8d40464E48b78d33666295470E",
       "constructorCode": "608060405234801561001057600080fd5b5061408e806100206000396000f3fe",
-      "bodyBytecodeHash": "ba93694491fae3871dff30448f660c785f336c3f3a6bff6c44896f02ca8c74d2",
+      "bodyBytecodeHash": "c5dd51bbfcb20644a3866100d082fcbb5e50fd88683dc9c89d18baa042a33e77",
       "localBytecodeHash": "029674cd8aebe7f16f4e04875d72c30b8b10b4b086f87a6b916cdb0d42207d47",
-      "deployedBytecodeHash": "f0504a1ebe46acf6054bbec265dea7fac64933e176cd1bc69d2df0ef8a8db8b9",
+      "deployedBytecodeHash": "bff8be32123628bdb51dc57298d4e7be4d8a9e38a021fb3bbae4aa9fa3b1e613",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -158,7 +158,7 @@
       }
     },
     "Migrations": {
-      "address": "0x6739D171564570E63609fFeCF37e0E787a3e6722",
+      "address": "0x9701686d24EfC0546eF4786a045ef086380c295A",
       "constructorCode": "608060405234801561001057600080fd5b506104bc806100206000396000f3fe",
       "bodyBytecodeHash": "aa26121ac95242940ad46c03bba7b655d86b3f8b2fedba7d7022f2b5d8677517",
       "localBytecodeHash": "d81b1b7036cd18a0d761e850620212feaf7933607476112d4c7476878961878d",
@@ -248,14 +248,14 @@
   },
   "solidityLibs": {
     "FixidityLib": {
-      "address": "0xB0B59c690C886f4563521b8d119037347410d6ba",
+      "address": "0x5CCDe7ACe9cf9c9c0b51066712FBF535136545eA",
       "constructorCode": "610942610030600b82828239805160001a6073146000811461002057610022565bfe5b5030600052607381538281f3fe",
       "bodyBytecodeHash": "edacb6dd90895742a12d146248228683c91e800a9611f43124c18880a0440cea",
       "localBytecodeHash": "fd56c1b677d676b860520f59847d213b8754719c776b0aab2a0b2cb0877063cc",
       "deployedBytecodeHash": "fd56c1b677d676b860520f59847d213b8754719c776b0aab2a0b2cb0877063cc"
     },
     "SortitionSumTreeFactory": {
-      "address": "0xda52c00cF66774617adE9d367AE627312249F2F3",
+      "address": "0xD082C395F4FA24A49bda974ba353c12893AB00e2",
       "constructorCode": "6108f1610030600b82828239805160001a6073146000811461002057610022565bfe5b5030600052607381538281f3fe",
       "bodyBytecodeHash": "486e3727c956e8ea828fba35ee8eee0d4c08ac1abf2d36fca5af6a78565e10e4",
       "localBytecodeHash": "25fc4e99f81bc8e74d08f11848787b67c51f49814ec7d6ea0a0b4996e04db39a",
@@ -265,22 +265,22 @@
   "proxies": {
     "pooltogether/Migrations": [
       {
-        "address": "0x185eC05863EEEC6d2c050b0F982E81d488e3114a",
-        "version": "0.1.0",
-        "implementation": "0x6739D171564570E63609fFeCF37e0E787a3e6722"
+        "address": "0x34B1979A9118dC74478df7048A62d990B597147b",
+        "version": "0.1.1",
+        "implementation": "0x9701686d24EfC0546eF4786a045ef086380c295A"
       }
     ],
     "pooltogether/PoolManager": [
       {
-        "address": "0x8666333b5BBBCc021f5363701c67743A5EFe390c",
-        "version": "0.1.0",
-        "implementation": "0x7502fB6A6274ec89E16cCD53bbCDc4293D5Dcc8A"
+        "address": "0x6637243Fe91a93CE0f1984E009467540Ee0132AE",
+        "version": "0.1.1",
+        "implementation": "0xf11973F315d45D8d40464E48b78d33666295470E"
       }
     ]
   },
   "zosversion": "2.2",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "proxyAdmin": {
-    "address": "0x4c5BB7B01FD6252dCd493B6633A326dF33ACD530"
+    "address": "0x57cf0B7Cc7dbba4173C6d8A91B511Ab8F0bF8d10"
   }
 }
