@@ -198,11 +198,6 @@ contract Pool is Ownable {
 
     state = State.UNLOCKED;
 
-    uint256 fee = feeAmount();
-    if (fee > 0) {
-      require(token.transfer(owner(), fee), "could not transfer winnings");
-    }
-
     emit PoolUnlocked();
   }
 
@@ -219,6 +214,11 @@ contract Pool is Ownable {
     require(keccak256(abi.encodePacked(_secret)) == secretHash, "secret does not match");
     secret = _secret;
     state = State.COMPLETE;
+
+    uint256 fee = feeAmount();
+    if (fee > 0) {
+      require(token.transfer(owner(), fee), "could not transfer winnings");
+    }
 
     emit PoolComplete(winnerAddress());
   }
