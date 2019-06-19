@@ -11,13 +11,16 @@
     "start": "./scripts/ganache.sh",
     "migrate": "truffle migrate --network local",
     "migrate-rinkeby": "truffle migrate --network rinkeby",
+    "migrate-mainnet": "truffle migrate --network mainnet",
     "session": "zos session --from $ADMIN_ADDRESS --network local --expires 7200",
     "session-rinkeby": "zos session --from $ADMIN_ADDRESS --network rinkeby --expires 7200",
+    "session-mainnet": "zos session --from $ADMIN_ADDRESS --network mainnet --expires 7200",
     "push": "zos push",
     "update-all": "zos update --all",
     "push-and-update": "yarn push && yarn update-all && zos-truffle-merge -n 1234 zos.dev-1234.json",
     "console": "truffle console --network local",
     "console-rinkeby": "truffle console --network rinkeby",
+    "console-mainnet": "truffle console --network mainnet",
     "version": "truffle version"
   },
   "dependencies": {
