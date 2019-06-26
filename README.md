@@ -2,6 +2,8 @@
 
 The PoolTogether contracts allow users to deposit into a pool of tokens.  The pool is then supplied to the [Compound CErc20](https://compound.finance/developers).  After the bonding period is over, the supply plus interest is withdrawn.  The winner of a pool receives the interest earned.
 
+The contracts have been audited by Quantstamp.  Their audit is [available here](https://certificate.quantstamp.com/view/pool-together-contracts)
+
 # Setup
 
 Clone the repo and then install deps:
