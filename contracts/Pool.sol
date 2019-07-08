@@ -82,6 +82,7 @@ contract Pool is Ownable {
   int256 private feeFraction; //fixed point 24
   bool private ownerHasWithdrawn;
   bool public allowLockAnytime;
+  address private winningAddress;
 
   using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
   SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
@@ -214,13 +215,14 @@ contract Pool is Ownable {
     require(keccak256(abi.encodePacked(_secret)) == secretHash, "secret does not match");
     secret = _secret;
     state = State.COMPLETE;
+    winningAddress = calculateWinner();
 
     uint256 fee = feeAmount();
     if (fee > 0) {
       require(token.transfer(owner(), fee), "could not transfer winnings");
     }
 
-    emit PoolComplete(winnerAddress());
+    emit PoolComplete(winningAddress);
   }
 
   /**
@@ -251,7 +253,7 @@ contract Pool is Ownable {
       return 0;
     }
     int256 winningTotal = entry.amount;
-    if (state == State.COMPLETE && _addr == winnerAddress()) {
+    if (state == State.COMPLETE && _addr == winningAddress) {
       winningTotal = FixidityLib.add(winningTotal, netWinningsFixedPoint24());
     }
     return FixidityLib.fromFixed(winningTotal);
@@ -267,16 +269,20 @@ contract Pool is Ownable {
     return winningTotalNonFixed - entry.withdrawnNonFixed;
   }
 
-  /**
-   * @notice Selects and returns the winner's address
-   * @return The winner's address
-   */
-  function winnerAddress() public view returns (address) {
+  function calculateWinner() private view returns (address) {
     if (totalAmount > 0) {
       return address(uint256(sortitionSumTrees.draw(SUM_TREE_KEY, randomToken())));
     } else {
       return address(0);
     }
+  }
+
+  /**
+   * @notice Selects and returns the winner's address
+   * @return The winner's address
+   */
+  function winnerAddress() public view returns (address) {
+    return winningAddress;
   }
 
   /**
@@ -347,7 +353,7 @@ contract Pool is Ownable {
    * @return The computed entropy value
    */
   function _entropy() internal view returns (uint256) {
-    return uint256(blockhash(lockEndBlock) ^ secret);
+    return uint256(blockhash(block.number - 1) ^ secret);
   }
 
   /**
@@ -378,16 +384,12 @@ contract Pool is Ownable {
     int256 estimatedInterestFixedPoint18,
     bytes32 hashOfSecret
   ) {
-    address winAddr = address(0);
-    if (state == State.COMPLETE) {
-      winAddr = winnerAddress();
-    }
     return (
       FixidityLib.fromFixed(totalAmount),
       lockStartBlock,
       lockEndBlock,
       state,
-      winAddr,
+      winningAddress,
       FixidityLib.fromFixed(finalAmount),
       FixidityLib.fromFixed(ticketPrice),
       entryCount,
