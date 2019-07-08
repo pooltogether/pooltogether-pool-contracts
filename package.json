@@ -6,7 +6,7 @@
   "repository": "git@github.com:DeltaCamp/pooltogether-contracts.git",
   "author": "Brendan Asselstine brendan@delta.camp",
   "scripts": {
-    "test": "truffle test --migrations_directory ./migrations/empty --network local",
+    "test": "truffle test --migrations_directory ./migrations/empty",
     "compile": "truffle compile",
     "start": "./scripts/ganache.sh",
     "migrate": "truffle migrate --network local",

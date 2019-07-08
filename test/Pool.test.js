@@ -4,6 +4,7 @@ const Pool = artifacts.require('Pool.sol')
 const CErc20Mock = artifacts.require('CErc20Mock.sol')
 const FixidityLib = artifacts.require('FixidityLib.sol')
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
+const mineBlocks = require('./helpers/mineBlocks')
 
 const zero_22 = '0000000000000000000000'
 
@@ -17,6 +18,8 @@ contract('Pool', (accounts) => {
   let ticketPrice = new BN(web3.utils.toWei('10', 'ether'))
   // let feeFraction = new BN('5' + zero_22) // equal to 0.05
   let feeFraction = new BN('0')
+
+  const priceForTenTickets = ticketPrice.mul(new BN(10))
 
   let secret = '0x1234123412341234123412341234123412341234123412341234123412341234'
   let secretHash = web3.utils.soliditySha3(secret)
@@ -200,6 +203,10 @@ contract('Pool', (accounts) => {
         await pool.lock(secretHash)
       })
 
+      it('should not have a winner until the Pool is complete', async () => {
+        assert.equal(await pool.winnerAddress(), '0x0000000000000000000000000000000000000000')
+      })
+
       it('should allow anyone to unlock the pool', async () => {
         await pool.unlock({ from: user1 })
       })
@@ -242,14 +249,44 @@ contract('Pool', (accounts) => {
     })
 
     describe('complete(secret)', () => {
-      it('should transfer tokens from money market back', async () => {
-        await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.buyTickets(1, { from: user1 })
-        await pool.lock(secretHash)
-        await pool.complete(secret)
-        const info = await pool.getInfo()
-        assert.equal(info.supplyBalanceTotal.toString(), web3.utils.toWei('12', 'ether'))
-        assert.equal(info.winner, user1)
+      describe('with one user', () => {
+        beforeEach(async () => {
+          await token.approve(pool.address, ticketPrice, { from: user1 })
+          await pool.buyTickets(1, { from: user1 })
+          await pool.lock(secretHash)
+          await pool.complete(secret)
+        })
+
+        it('should select a winner and transfer tokens from money market back', async () => {
+          const info = await pool.getInfo()
+          assert.equal(info.supplyBalanceTotal.toString(), web3.utils.toWei('12', 'ether'))
+          assert.equal(info.winner, user1)
+        })
+      })
+
+      describe('with two users', () => {
+        beforeEach(async () => {
+          await token.approve(pool.address, priceForTenTickets, { from: user1 })
+          await pool.buyTickets(10, { from: user1 })
+
+          await token.approve(pool.address, priceForTenTickets, { from: user2 })
+          await pool.buyTickets(10, { from: user2 })
+
+          await pool.lock(secretHash)
+          await pool.complete(secret)
+        })
+
+        it('should not change the winner if time moves forward', async () => {
+          const originalWinner = await pool.winnerAddress()
+
+          await mineBlocks(256)
+
+          for (let i = 0; i < 10; i++) {
+            await mineBlocks(1)
+            const newWinner = await pool.winnerAddress()
+            assert.equal(newWinner.toString(), originalWinner.toString(), `Comparison failed at iteration ${i}`)
+          }
+        })
       })
 
       it('should succeed even without a balance', async () => {
@@ -279,7 +316,6 @@ contract('Pool', (accounts) => {
       })
 
       it('should work for two participants', async () => {
-        const priceForTenTickets = ticketPrice.mul(new BN(10))
 
         await token.approve(pool.address, priceForTenTickets, { from: user1 })
         await pool.buyTickets(10, { from: user1 })
