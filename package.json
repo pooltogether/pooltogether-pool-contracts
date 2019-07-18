@@ -8,6 +8,7 @@
   "scripts": {
     "test": "truffle test --migrations_directory ./migrations/empty",
     "compile": "truffle compile",
+    "compile-and-merge": "yarn compile && zos-truffle-merge -n 1 zos.mainnet.json && zos-truffle-merge -n 4 zos.rinkeby.json",
     "start": "./scripts/ganache.sh",
     "migrate": "truffle migrate --network local",
     "migrate-rinkeby": "truffle migrate --network rinkeby",
@@ -21,7 +22,7 @@
     "console": "truffle console --network local",
     "console-rinkeby": "truffle console --network rinkeby",
     "console-mainnet": "truffle console --network mainnet",
-    "version": "truffle version"
+    "version": "truffle version"    
   },
   "dependencies": {
     "chalk": "2.4.2",
