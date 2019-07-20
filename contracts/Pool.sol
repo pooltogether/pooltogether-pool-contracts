@@ -1,11 +1,11 @@
-pragma solidity 0.5.0;
+pragma solidity ^0.5.0;
 
 import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 import "./compound/ICErc20.sol";
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
-import "kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
 import "./UniformRandomNumber.sol";
+import "./DrawManager.sol";
 import "fixidity/contracts/FixidityLib.sol";
 
 /**
@@ -19,6 +19,7 @@ import "fixidity/contracts/FixidityLib.sol";
  * @dev All monetary values are stored internally as fixed point 24.
  */
 contract Pool is Ownable {
+  using DrawManager for DrawManager.DrawState;
   using SafeMath for uint256;
 
   /**
@@ -65,8 +66,6 @@ contract Pool is Ownable {
     int256 withdrawnNonFixed;
   }
 
-  bytes32 public constant SUM_TREE_KEY = "PoolPool";
-
   int256 private totalAmount; // fixed point 24
   uint256 private lockStartBlock;
   uint256 private lockEndBlock;
@@ -84,8 +83,7 @@ contract Pool is Ownable {
   bool public allowLockAnytime;
   address private winningAddress;
 
-  using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
-  SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
+  DrawManager.DrawState drawState;
 
   /**
    * @notice Creates a new Pool.
@@ -113,8 +111,7 @@ contract Pool is Ownable {
     require(_feeFractionFixedPoint18 <= 1000000000000000000, "fee fraction must be less than 1");
     feeFraction = FixidityLib.newFixed(_feeFractionFixedPoint18, uint8(18));
     ticketPrice = FixidityLib.newFixed(_ticketPrice);
-    sortitionSumTrees.createTree(SUM_TREE_KEY, 4);
-
+    drawState.openNextDraw();
     state = State.OPEN;
     moneyMarket = _moneyMarket;
     token = _token;
@@ -148,8 +145,7 @@ contract Pool is Ownable {
       entryCount = entryCount.add(1);
     }
 
-    int256 amountNonFixed = FixidityLib.fromFixed(entries[msg.sender].amount);
-    sortitionSumTrees.set(SUM_TREE_KEY, uint256(amountNonFixed), bytes32(uint256(msg.sender)));
+    drawState.deposit(msg.sender, totalDepositNonFixed);
 
     totalAmount = FixidityLib.add(totalAmount, totalDeposit);
 
@@ -173,6 +169,8 @@ contract Pool is Ownable {
     require(_secretHash != 0, "secret hash must be defined");
     secretHash = _secretHash;
     state = State.LOCKED;
+
+    drawState.openNextDraw();
 
     if (totalAmount > 0) {
       uint256 totalAmountNonFixed = uint256(FixidityLib.fromFixed(totalAmount));
@@ -271,7 +269,7 @@ contract Pool is Ownable {
 
   function calculateWinner() private view returns (address) {
     if (totalAmount > 0) {
-      return address(uint256(sortitionSumTrees.draw(SUM_TREE_KEY, randomToken())));
+      return drawState.draw(randomToken());
     } else {
       return address(0);
     }

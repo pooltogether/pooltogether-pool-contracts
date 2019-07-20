@@ -4,12 +4,11 @@ const Pool = artifacts.require('Pool.sol')
 const CErc20Mock = artifacts.require('CErc20Mock.sol')
 const FixidityLib = artifacts.require('FixidityLib.sol')
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
+const DrawManager = artifacts.require('DrawManager.sol')
 const mineBlocks = require('./helpers/mineBlocks')
 
-const zero_22 = '0000000000000000000000'
-
 contract('Pool', (accounts) => {
-  let pool, token, moneyMarket, sumTree
+  let pool, token, moneyMarket, sumTree, drawManager
   
   const blocksPerMinute = 5
 
@@ -27,6 +26,9 @@ contract('Pool', (accounts) => {
 
   beforeEach(async () => {
     sumTree = await SortitionSumTreeFactory.new()
+    await DrawManager.link("SortitionSumTreeFactory", sumTree.address)
+    drawManager = await DrawManager.new()
+    await Pool.link('DrawManager', drawManager.address)
     fixidity = await FixidityLib.new({ from: admin })
 
     token = await Token.new({ from: admin })
@@ -43,17 +45,7 @@ contract('Pool', (accounts) => {
   async function createPool(lockStartBlock = -1, lockEndBlock = 0, allowLockAnytime = true) {
     const block = await blockNumber()
 
-    // console.log(
-    //   moneyMarket.address.toString(),
-    //   token.address.toString(),
-    //   (block + lockStartBlock),
-    //   (block + lockEndBlock),
-    //   ticketPrice.toString(),
-    //   feeFraction.toString(),
-    //   fixidity.address.toString()
-    // )
-
-    await Pool.link("SortitionSumTreeFactory", sumTree.address)
+    await Pool.link("DrawManager", drawManager.address)
     await Pool.link("FixidityLib", fixidity.address)
 
     const pool = await Pool.new(

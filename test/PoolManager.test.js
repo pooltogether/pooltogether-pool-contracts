@@ -5,6 +5,7 @@ const PoolManager = artifacts.require('PoolManager.sol')
 const CErc20Mock = artifacts.require('CErc20Mock.sol')
 const FixidityLib = artifacts.require('FixidityLib.sol')
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
+const DrawManager = artifacts.require('DrawManager.sol')
 
 const zero_16 = '0000000000000000'
 
@@ -30,7 +31,9 @@ contract('PoolManager', (accounts) => {
     await moneyMarket.initialize(token.address, new BN(supplyRateMantissa))
 
     await Pool.link("FixidityLib", fixidity.address)    
-    await Pool.link("SortitionSumTreeFactory", sumTree.address)    
+    await DrawManager.link("SortitionSumTreeFactory", sumTree.address)    
+    const dm = await DrawManager.new()
+    await PoolManager.link('DrawManager', dm.address)
     await PoolManager.link("FixidityLib", fixidity.address)
     await PoolManager.link("SortitionSumTreeFactory", sumTree.address)
 
