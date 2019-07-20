@@ -3,7 +3,7 @@ pragma solidity ^0.5.0;
 import "kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 
-contract DrawManager {
+library DrawManager {
     using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
     using SafeMath for uint256;
 
@@ -23,12 +23,10 @@ contract DrawManager {
         uint256 eligibleSupply;
     }
 
-    DrawState drawState;
-
     /**
      * @dev Creates the next draw.  Does not add it to the sortition sum trees (yet)
      */
-    function openNextDraw() public {
+    function openNextDraw(DrawState storage drawState) public {
         // If there is no previous draw, we must initialize
         if (drawState.currentDrawIndex == 0) {
             drawState.sortitionSumTrees.createTree(TREE_OF_DRAWS, 4);
@@ -47,14 +45,14 @@ contract DrawManager {
         );
     }
 
-    function deposit(address user, uint256 amount) public requireOpenDraw {
+    function deposit(DrawState storage drawState, address user, uint256 amount) public requireOpenDraw(drawState) {
         bytes32 userId = bytes32(uint256(user));
         uint256 currentDrawIndex = drawState.currentDrawIndex;
 
         // update the current draw
         uint256 currentAmount = drawState.sortitionSumTrees.stakeOf(bytes32(currentDrawIndex), userId);
         currentAmount = currentAmount.add(amount);
-        drawSet(currentDrawIndex, currentAmount, user);
+        drawSet(drawState, currentDrawIndex, currentAmount, user);
 
         uint256 firstDrawIndex = drawState.usersFirstDrawIndex[user];
         uint256 secondDrawIndex = drawState.usersSecondDrawIndex[user];
@@ -73,14 +71,14 @@ contract DrawManager {
                 // merge it into the first draw, and update the second draw index to this one
                 uint256 firstAmount = drawState.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
                 uint256 secondAmount = drawState.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
-                drawSet(firstDrawIndex, firstAmount.add(secondAmount), user);
-                drawSet(secondDrawIndex, 0, user);
+                drawSet(drawState, firstDrawIndex, firstAmount.add(secondAmount), user);
+                drawSet(drawState, secondDrawIndex, 0, user);
                 drawState.usersSecondDrawIndex[user] = currentDrawIndex;
             }
         }
     }
 
-    function withdraw(address user, uint256 amount) public requireOpenDraw {
+    function withdraw(DrawState storage drawState, address user, uint256 amount) public requireOpenDraw(drawState) {
         bytes32 userId = bytes32(uint256(user));
         uint256 firstDrawIndex = drawState.usersFirstDrawIndex[user];
         uint256 secondDrawIndex = drawState.usersSecondDrawIndex[user];
@@ -96,21 +94,21 @@ contract DrawManager {
 
         // if we can simply eliminate the second amount
         if (remaining < firstAmount) {
-            drawSet(firstDrawIndex, remaining, user);
+            drawSet(drawState, firstDrawIndex, remaining, user);
             if (secondDrawIndex != 0) {
-                drawSet(secondDrawIndex, 0, user);
+                drawSet(drawState, secondDrawIndex, 0, user);
             }
         } else {
             uint256 secondRemaining = remaining.sub(firstAmount);
-            drawSet(secondDrawIndex, secondRemaining, user);
+            drawSet(drawState, secondDrawIndex, secondRemaining, user);
         }
     }
 
-    function balanceOf(address user) public view returns (uint256) {
-        return eligibleBalanceOf(user).add(openBalanceOf(user));
+    function balanceOf(DrawState storage drawState, address user) public view returns (uint256) {
+        return eligibleBalanceOf(drawState, user).add(openBalanceOf(drawState, user));
     }
 
-    function eligibleBalanceOf(address user) public view returns (uint256) {
+    function eligibleBalanceOf(DrawState storage drawState, address user) public view returns (uint256) {
         uint256 balance = 0;
 
         uint256 firstDrawIndex = drawState.usersFirstDrawIndex[user];
@@ -127,7 +125,7 @@ contract DrawManager {
         return balance;
     }
 
-    function openBalanceOf(address user) public view returns (uint256) {
+    function openBalanceOf(DrawState storage drawState, address user) public view returns (uint256) {
         if (drawState.currentDrawIndex == 0) {
             return 0;
         } else {
@@ -135,11 +133,7 @@ contract DrawManager {
         }
     }
 
-    function eligibleSupply() public view returns (uint256) {
-        return drawState.eligibleSupply;
-    }
-
-    function openSupply() public view returns (uint256) {
+    function openSupply(DrawState storage drawState) public view returns (uint256) {
         if (drawState.currentDrawIndex > 0) {
             return drawState.draws[drawState.currentDrawIndex].total;
         } else {
@@ -147,18 +141,14 @@ contract DrawManager {
         }
     }
 
-    function currentDrawIndex() public view returns (uint256) {
-        return drawState.currentDrawIndex;
-    }
-
     /**
      * Draws a winner from the previous draws
      */
-    function getDraw(uint256 index) public view returns (uint256) {
+    function getDraw(DrawState storage drawState, uint256 index) public view returns (uint256) {
         return drawState.draws[index].total;
     }
 
-    function drawSet(uint256 drawIndex, uint256 amount, address user) internal {
+    function drawSet(DrawState storage drawState, uint256 drawIndex, uint256 amount, address user) internal {
         bytes32 drawId = bytes32(drawIndex);
         bytes32 userId = bytes32(uint256(user));
         uint256 oldAmount = drawState.sortitionSumTrees.stakeOf(drawId, userId);
@@ -183,23 +173,15 @@ contract DrawManager {
         }
     }
 
-    function draw(uint256 token) public view returns (address) {
+    function draw(DrawState storage drawState, uint256 token) public view returns (address) {
         require(token < drawState.eligibleSupply, "token is beyond the eligible supply");
         uint256 drawIndex = uint256(drawState.sortitionSumTrees.draw(TREE_OF_DRAWS, token));
         uint256 drawToken = token % drawState.draws[drawIndex].total;
         return address(uint256(drawState.sortitionSumTrees.draw(bytes32(drawIndex), drawToken)));
     }
 
-    modifier requireOpenDraw() {
+    modifier requireOpenDraw(DrawState storage drawState) {
         require(drawState.currentDrawIndex > 0, "there is no open draw");
         _;
-    }
-
-    function firstDrawIndex(address user) public view returns (uint256) {
-        return drawState.usersFirstDrawIndex[user];
-    }
-
-    function secondDrawIndex(address user) public view returns (uint256) {
-        return drawState.usersSecondDrawIndex[user];
     }
 }

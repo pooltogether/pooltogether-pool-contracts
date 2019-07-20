@@ -1,5 +1,6 @@
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
 const DrawManager = artifacts.require('DrawManager.sol')
+const ExposedDrawManager = artifacts.require('ExposedDrawManager.sol')
 const toWei = require('./helpers/toWei')
 
 contract('DrawManager', (accounts) => {
@@ -14,7 +15,9 @@ contract('DrawManager', (accounts) => {
         [owner, admin, user1, user2, user3, user4, user5, user6] = accounts
         sumTree = await SortitionSumTreeFactory.new()
         await DrawManager.link("SortitionSumTreeFactory", sumTree.address)
-        drawManager = await DrawManager.new()
+        const dm = await DrawManager.new()
+        await ExposedDrawManager.link("DrawManager", dm.address)
+        drawManager = await ExposedDrawManager.new()
     })
 
     describe('openNextDraw()', () => {
