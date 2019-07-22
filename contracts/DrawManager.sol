@@ -1,5 +1,6 @@
 pragma solidity ^0.5.0;
 
+import "./UniformRandomNumber.sol";
 import "kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 
@@ -83,22 +84,31 @@ library DrawManager {
         uint256 firstDrawIndex = drawState.usersFirstDrawIndex[user];
         uint256 secondDrawIndex = drawState.usersSecondDrawIndex[user];
 
-        uint256 firstAmount = drawState.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
-        uint256 secondAmount = drawState.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
+        uint256 firstAmount;
+        uint256 secondAmount;
+        uint256 total;
 
-        uint256 total = firstAmount.add(secondAmount);
+        if (firstDrawIndex != 0) {
+            firstAmount = drawState.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
+            total = total.add(firstAmount);
+        }
+
+        if (secondDrawIndex != 0) {
+            secondAmount = drawState.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
+            total = total.add(secondAmount);
+        }
 
         require(amount <= total, "cannot withdraw more than available");
 
         uint256 remaining = total.sub(amount);
 
-        // if we can simply eliminate the second amount
+        // if we can eliminate the second amount
         if (remaining < firstAmount) {
             drawSet(drawState, firstDrawIndex, remaining, user);
             if (secondDrawIndex != 0) {
                 drawSet(drawState, secondDrawIndex, 0, user);
             }
-        } else {
+        } else if (remaining != total) { // else if there is a change
             uint256 secondRemaining = remaining.sub(firstAmount);
             drawSet(drawState, secondDrawIndex, secondRemaining, user);
         }
@@ -174,10 +184,21 @@ library DrawManager {
     }
 
     function draw(DrawState storage drawState, uint256 token) public view returns (address) {
+        // If there is no one to select, just return the zero address
+        if (drawState.eligibleSupply == 0) {
+            return address(0);
+        }
         require(token < drawState.eligibleSupply, "token is beyond the eligible supply");
         uint256 drawIndex = uint256(drawState.sortitionSumTrees.draw(TREE_OF_DRAWS, token));
+        require(drawIndex != 0, "unknown draw");
+        uint256 drawSupply = drawState.draws[drawIndex].total;
+        require(drawSupply > 0, "draw has no entrants");
         uint256 drawToken = token % drawState.draws[drawIndex].total;
         return address(uint256(drawState.sortitionSumTrees.draw(bytes32(drawIndex), drawToken)));
+    }
+
+    function drawWithEntropy(DrawState storage drawState, uint256 entropy) public view returns (address) {
+        return draw(drawState, UniformRandomNumber.uniform(entropy, drawState.eligibleSupply));
     }
 
     modifier requireOpenDraw(DrawState storage drawState) {

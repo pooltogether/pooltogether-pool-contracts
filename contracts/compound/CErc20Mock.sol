@@ -16,7 +16,7 @@ contract CErc20Mock is Initializable, ICErc20 {
   }
 
   function mint(uint amount) external returns (uint) {
-    ownerTokenAmounts[msg.sender] = amount;
+    ownerTokenAmounts[msg.sender] = ownerTokenAmounts[msg.sender] + amount;
     require(IERC20(underlying).transferFrom(msg.sender, address(this), amount), "could not transfer tokens");
     return 0;
   }

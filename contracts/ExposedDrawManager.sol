@@ -61,4 +61,8 @@ contract ExposedDrawManager {
     function secondDrawIndex(address user) public view returns (uint256) {
         return drawState.usersSecondDrawIndex[user];
     }
+
+    function drawWithEntropy(uint256 entropy) public view returns (address) {
+        return drawState.drawWithEntropy(entropy);
+    }
 }

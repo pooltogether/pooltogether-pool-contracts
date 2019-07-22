@@ -4,7 +4,6 @@ import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 import "./compound/ICErc20.sol";
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
-import "./UniformRandomNumber.sol";
 import "./DrawManager.sol";
 import "fixidity/contracts/FixidityLib.sol";
 
@@ -62,13 +61,14 @@ contract Pool is Ownable {
   mapping (address => uint256) balances;
 
   int256 private totalAmount; // fixed point 24
+
+
   uint256 private lockStartBlock;
   uint256 private lockEndBlock;
   bytes32 private secretHash;
   bytes32 private secret;
   State public state;
   int256 private finalAmount; //fixed point 24
-  uint256 public entryCount;
   ICErc20 public moneyMarket;
   IERC20 public token;
   int256 private ticketPrice; //fixed point 24
@@ -114,27 +114,38 @@ contract Pool is Ownable {
     allowLockAnytime = _allowLockAnytime;
   }
 
+  function open() public onlyOwner {}
+
   /**
-   * @notice Buys a pool ticket.  Only possible while the Pool is in the "open" state.  The
-   * user can buy any number of tickets.  Each ticket is a chance at winning.
+   * @notice Buys a pool ticket.  Each ticket is a chance of winning.  Tickets purchased will become eligible in the next pool.
    * @param _countNonFixed The number of tickets the user wishes to buy.
    */
-  function buyTickets (int256 _countNonFixed) public requireOpen {
+  function buyTickets (int256 _countNonFixed) public {
     require(_countNonFixed > 0, "number of tickets is less than or equal to zero");
+
+    // Calculate the values
     int256 count = FixidityLib.newFixed(_countNonFixed);
     int256 totalDeposit = FixidityLib.multiply(ticketPrice, count);
     uint256 totalDepositNonFixed = uint256(FixidityLib.fromFixed(totalDeposit));
+
+    // Transfer the tokens into this contract
     require(token.transferFrom(msg.sender, address(this), totalDepositNonFixed), "token transfer failed");
 
-    if (balances[msg.sender] == 0) {
-      entryCount = entryCount.add(1);
-    }
+    // Update the user's balance
     balances[msg.sender] = balances[msg.sender].add(totalDepositNonFixed);
+
+    // Update the user's eligibility
     drawState.deposit(msg.sender, totalDepositNonFixed);
+
+    // Update the total of this contract
     totalAmount = FixidityLib.add(totalAmount, totalDeposit);
 
-    // the total amount cannot exceed the max pool size
+    // Require that the the total of this contract does not exceed the max pool size
     require(totalAmount <= maxPoolSizeFixedPoint24(FixidityLib.maxFixedDiv()), "pool size exceeds maximum");
+
+    // Deposit into Compound
+    require(token.approve(address(moneyMarket), totalDepositNonFixed), "could not approve money market spend");
+    require(moneyMarket.mint(totalDepositNonFixed) == 0, "could not supply money market");
 
     emit BoughtTickets(msg.sender, _countNonFixed, totalDepositNonFixed);
   }
@@ -153,14 +164,7 @@ contract Pool is Ownable {
     require(_secretHash != 0, "secret hash must be defined");
     secretHash = _secretHash;
     state = State.LOCKED;
-
     drawState.openNextDraw();
-
-    if (totalAmount > 0) {
-      uint256 totalAmountNonFixed = uint256(FixidityLib.fromFixed(totalAmount));
-      require(token.approve(address(moneyMarket), totalAmountNonFixed), "could not approve money market spend");
-      require(moneyMarket.mint(totalAmountNonFixed) == 0, "could not supply money market");
-    }
 
     emit PoolLocked();
   }
@@ -173,9 +177,7 @@ contract Pool is Ownable {
     }
 
     uint256 balance = moneyMarket.balanceOfUnderlying(address(this));
-
     if (balance > 0) {
-      require(moneyMarket.redeemUnderlying(balance) == 0, "could not redeem from compound");
       finalAmount = FixidityLib.newFixed(int256(balance));
     }
 
@@ -197,12 +199,13 @@ contract Pool is Ownable {
     require(keccak256(abi.encodePacked(_secret)) == secretHash, "secret does not match");
     secret = _secret;
     state = State.COMPLETE;
-    winningAddress = calculateWinner();
+    winningAddress = calculateWinner(entropy());
     balances[winningAddress] = balances[winningAddress].add(netWinnings());
 
     uint256 fee = feeAmount();
+    address owner_ = owner();
     if (fee > 0) {
-      require(token.transfer(owner(), fee), "could not transfer winnings");
+      balances[owner_] = balances[owner_].add(fee);
     }
 
     emit PoolComplete(winningAddress);
@@ -215,13 +218,23 @@ contract Pool is Ownable {
    */
   function withdraw() public {
     require(balances[msg.sender] > 0, "entrant has already withdrawn");
-    require(state == State.UNLOCKED || state == State.COMPLETE, "pool has not been unlocked");
+
+    // Update the user's balance
     uint balance = balances[msg.sender];
     balances[msg.sender] = 0;
 
-    emit Withdrawn(msg.sender, balance);
+    // Update their chances of winning
+    uint256 drawBalance = drawState.balanceOf(msg.sender);
+    drawState.withdraw(msg.sender, drawBalance);
 
+    // Update the total of this contract
+    totalAmount = FixidityLib.subtract(totalAmount, FixidityLib.newFixed(int256(balance)));
+
+    // Withdraw from Compound and transfer
+    require(moneyMarket.redeemUnderlying(balance) == 0, "could not redeem from compound");
     require(token.transfer(msg.sender, balance), "could not transfer winnings");
+
+    emit Withdrawn(msg.sender, balance);
   }
 
   /**
@@ -240,12 +253,21 @@ contract Pool is Ownable {
     return balances[_addr];
   }
 
-  function calculateWinner() private view returns (address) {
-    if (totalAmount > 0) {
-      return drawState.draw(randomToken());
-    } else {
-      return address(0);
-    }
+  function calculateWinner(uint256 entropy) public view returns (address) {
+    return drawState.drawWithEntropy(entropy);
+  }
+
+  function eligibleSupply() public view returns (uint256) {
+    return drawState.eligibleSupply;
+  }
+
+  /**
+   * @notice Computes the entropy used to generate the random number.
+   * The blockhash of the lock end block is XOR'd with the secret revealed by the owner.
+   * @return The computed entropy value
+   */
+  function entropy() public view returns (uint256) {
+    return uint256(blockhash(block.number - 1) ^ secret);
   }
 
   /**
@@ -298,36 +320,6 @@ contract Pool is Ownable {
   }
 
   /**
-   * @notice Selects a random number in the range from [0, total tokens deposited)
-   * @return If the current block is before the end it returns 0, otherwise it returns the random number.
-   */
-  function randomToken() public view returns (uint256) {
-    if (block.number <= lockEndBlock) {
-      return 0;
-    } else {
-      return _selectRandom(uint256(FixidityLib.fromFixed(totalAmount)));
-    }
-  }
-
-  /**
-   * @notice Selects a random number in the range [0, total)
-   * @param total The upper bound for the random number
-   * @return The random number
-   */
-  function _selectRandom(uint256 total) internal view returns (uint256) {
-    return UniformRandomNumber.uniform(_entropy(), total);
-  }
-
-  /**
-   * @notice Computes the entropy used to generate the random number.
-   * The blockhash of the lock end block is XOR'd with the secret revealed by the owner.
-   * @return The computed entropy value
-   */
-  function _entropy() internal view returns (uint256) {
-    return uint256(blockhash(block.number - 1) ^ secret);
-  }
-
-  /**
    * @notice Retrieves information about the pool.
    * @return A tuple containing:
    *    entryTotal (the total of all deposits)
@@ -350,7 +342,6 @@ contract Pool is Ownable {
     address winner,
     int256 supplyBalanceTotal,
     int256 ticketCost,
-    uint256 participantCount,
     int256 maxPoolSize,
     int256 estimatedInterestFixedPoint18,
     bytes32 hashOfSecret
@@ -363,7 +354,6 @@ contract Pool is Ownable {
       winningAddress,
       FixidityLib.fromFixed(finalAmount),
       FixidityLib.fromFixed(ticketPrice),
-      entryCount,
       FixidityLib.fromFixed(maxPoolSizeFixedPoint24(FixidityLib.maxFixedDiv())),
       FixidityLib.fromFixed(currentInterestFractionFixedPoint24(), uint8(18)),
       secretHash

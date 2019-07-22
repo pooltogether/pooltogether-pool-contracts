@@ -3,6 +3,8 @@ const DrawManager = artifacts.require('DrawManager.sol')
 const ExposedDrawManager = artifacts.require('ExposedDrawManager.sol')
 const toWei = require('./helpers/toWei')
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
 contract('DrawManager', (accounts) => {
 
     let drawManager
@@ -157,13 +159,8 @@ contract('DrawManager', (accounts) => {
 
 
     describe('draw', () => {
-        it('should fail if no eligible deposits', async () => {
-            let fail = true
-            try {
-                await drawManager.draw(0)
-                fail = false
-            } catch (e) {}
-            assert.ok(fail)
+        it('should return address(0) if no eligible deposits', async () => {
+            assert.equal(await drawManager.draw(0), ZERO_ADDRESS)
         })
 
         describe('with open deposits', () => {
@@ -174,13 +171,8 @@ contract('DrawManager', (accounts) => {
                 await drawManager.deposit(user3, toWei('10'))
             })
 
-            it('should fail', async () => {
-                let fail = true
-                try {
-                    await drawManager.draw(0)
-                    fail = false
-                } catch (e) {}
-                assert.ok(fail)
+            it('should return 0', async () => {
+                assert.equal(await drawManager.draw(0), ZERO_ADDRESS)
             })
 
             describe('and they become eligible', async () => {
@@ -192,6 +184,13 @@ contract('DrawManager', (accounts) => {
                     assert.equal(await drawManager.draw(toWei('1')), user1)
                     assert.equal(await drawManager.draw(toWei('11')), user2)
                     assert.equal(await drawManager.draw(toWei('21')), user3)
+                })
+
+                describe('drawWithEntropy()', () => {
+                    it('should work', async () => {
+                        const address = await drawManager.drawWithEntropy('12431')
+                        assert.ok([user1, user2, user3].indexOf(address) != -1)
+                    })
                 })
 
                 describe('and one withdraws', async () => { 

@@ -1,3 +1,4 @@
+const toWei = require('./helpers/toWei')
 const BN = require('bn.js')
 const Token = artifacts.require('Token.sol')
 const Pool = artifacts.require('Pool.sol')
@@ -213,29 +214,16 @@ contract('Pool', (accounts) => {
         })
 
         it('should allow users to withdraw after the pool is unlocked', async () => {
+          console.log('chkpnt 1')
           let poolBalance = await pool.balanceOf(user1)
           assert.equal(poolBalance.toString(), ticketPrice.toString())
 
           let balanceBefore = await token.balanceOf(user1)
           await pool.withdraw({ from: user1 })
+          console.log('chkpnt 2')
           let balanceAfter = await token.balanceOf(user1)
           let balanceDifference = new BN(balanceAfter).sub(new BN(balanceBefore))
           assert.equal(balanceDifference.toString(), ticketPrice.toString())
-
-          poolBalance = await pool.balanceOf(user1)
-          assert.equal(poolBalance.toString(), '0')
-
-          await pool.complete(secret)
-          let netWinnings = await pool.netWinnings()
-
-          poolBalance = await pool.balanceOf(user1)
-          assert.equal(poolBalance.toString(), netWinnings.toString())
-
-          balanceBefore = await token.balanceOf(user1)
-          await pool.withdraw({ from: user1 })
-          balanceAfter = await token.balanceOf(user1)
-          balanceDifference = new BN(balanceAfter).sub(new BN(balanceBefore))
-          assert.equal(balanceDifference.toString(), netWinnings.toString())
         })
       })
     })
@@ -309,21 +297,39 @@ contract('Pool', (accounts) => {
 
       it('should work for two participants', async () => {
 
+        console.log('chkpnt 1')
         await token.approve(pool.address, priceForTenTickets, { from: user1 })
+
+        console.log('chkpnt 2')
         await pool.buyTickets(10, { from: user1 })
 
+        console.log('chkpnt 3')
         await token.approve(pool.address, priceForTenTickets, { from: user2 })
+
+        console.log('chkpnt 4')
         await pool.buyTickets(10, { from: user2 })
 
+        console.log('chkpnt 5')
         await pool.lock(secretHash)
+
+        assert.equal((await pool.eligibleSupply()).toString(), toWei('200'))
+
+        console.log('chkpnt 6')
         await pool.complete(secret)
+
+        console.log('chkpnt 7')
         const info = await pool.getInfo()
 
+        console.log('chkpnt 8')
         const user1BalanceBefore = await token.balanceOf(user1)
+        console.log('chkpnt 9')
         await pool.withdraw({ from: user1 })
+        console.log('chkpnt 10')
         const user1BalanceAfter = await token.balanceOf(user1)
 
-        const user2BalanceBefore = await token.balanceOf(user2)
+        console.log('chkpnt 11')
+        const user2BalanceBefore = await token.balanceOf(user2)        
+        console.log('chkpnt 12')
         await pool.withdraw({ from: user2 })
         const user2BalanceAfter = await token.balanceOf(user2)
 
@@ -448,8 +454,7 @@ contract('Pool', (accounts) => {
 
       assert.equal((await pool.feeAmount()).toString(), fee.toString())
 
-      const newOwnerBalance = await token.balanceOf(owner)
-      assert.equal(newOwnerBalance.toString(), ownerBalance.add(fee).toString())
+      assert.equal((await pool.balanceOf(owner)).toString(), fee.toString())
 
       // we expect the pool winner to receive the interest less the fee
       const user1Balance = await token.balanceOf(user1)
