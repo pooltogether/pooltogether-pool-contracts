@@ -35,7 +35,7 @@ contract Pool is Ownable {
    * @param sender The user that is withdrawing from the pool
    * @param amount The amount that the user withdrew
    */
-  event Withdrawn(address indexed sender, int256 amount);
+  event Withdrawn(address indexed sender, uint256 amount);
 
   /**
    * Emitted when the pool is locked.
@@ -59,12 +59,7 @@ contract Pool is Ownable {
     COMPLETE
   }
 
-  struct Entry {
-    address addr;
-    int256 amount;
-    uint256 ticketCount;
-    int256 withdrawnNonFixed;
-  }
+  mapping (address => uint256) balances;
 
   int256 private totalAmount; // fixed point 24
   uint256 private lockStartBlock;
@@ -73,7 +68,6 @@ contract Pool is Ownable {
   bytes32 private secret;
   State public state;
   int256 private finalAmount; //fixed point 24
-  mapping (address => Entry) private entries;
   uint256 public entryCount;
   ICErc20 public moneyMarket;
   IERC20 public token;
@@ -132,21 +126,11 @@ contract Pool is Ownable {
     uint256 totalDepositNonFixed = uint256(FixidityLib.fromFixed(totalDeposit));
     require(token.transferFrom(msg.sender, address(this), totalDepositNonFixed), "token transfer failed");
 
-    if (_hasEntry(msg.sender)) {
-      entries[msg.sender].amount = FixidityLib.add(entries[msg.sender].amount, totalDeposit);
-      entries[msg.sender].ticketCount = entries[msg.sender].ticketCount.add(uint256(_countNonFixed));
-    } else {
-      entries[msg.sender] = Entry(
-        msg.sender,
-        totalDeposit,
-        uint256(_countNonFixed),
-        0
-      );
+    if (balances[msg.sender] == 0) {
       entryCount = entryCount.add(1);
     }
-
+    balances[msg.sender] = balances[msg.sender].add(totalDepositNonFixed);
     drawState.deposit(msg.sender, totalDepositNonFixed);
-
     totalAmount = FixidityLib.add(totalAmount, totalDeposit);
 
     // the total amount cannot exceed the max pool size
@@ -214,6 +198,7 @@ contract Pool is Ownable {
     secret = _secret;
     state = State.COMPLETE;
     winningAddress = calculateWinner();
+    balances[winningAddress] = balances[winningAddress].add(netWinnings());
 
     uint256 fee = feeAmount();
     if (fee > 0) {
@@ -229,42 +214,30 @@ contract Pool is Ownable {
    * The user must have deposited funds.  Fires the Withdrawn event.
    */
   function withdraw() public {
-    require(_hasEntry(msg.sender), "entrant exists");
+    require(balances[msg.sender] > 0, "entrant has already withdrawn");
     require(state == State.UNLOCKED || state == State.COMPLETE, "pool has not been unlocked");
-    Entry storage entry = entries[msg.sender];
-    int256 remainingBalanceNonFixed = balanceOf(msg.sender);
-    require(remainingBalanceNonFixed > 0, "entrant has already withdrawn");
-    entry.withdrawnNonFixed = entry.withdrawnNonFixed + remainingBalanceNonFixed;
+    uint balance = balances[msg.sender];
+    balances[msg.sender] = 0;
 
-    emit Withdrawn(msg.sender, remainingBalanceNonFixed);
+    emit Withdrawn(msg.sender, balance);
 
-    require(token.transfer(msg.sender, uint256(remainingBalanceNonFixed)), "could not transfer winnings");
+    require(token.transfer(msg.sender, balance), "could not transfer winnings");
   }
 
   /**
    * @notice Calculates a user's winnings.  This is their deposit plus their winnings, if any.
    * @param _addr The address of the user
    */
-  function winnings(address _addr) public view returns (int256) {
-    Entry storage entry = entries[_addr];
-    if (entry.addr == address(0)) { //if does not have an entry
-      return 0;
-    }
-    int256 winningTotal = entry.amount;
-    if (state == State.COMPLETE && _addr == winningAddress) {
-      winningTotal = FixidityLib.add(winningTotal, netWinningsFixedPoint24());
-    }
-    return FixidityLib.fromFixed(winningTotal);
+  function winnings(address _addr) public view returns (uint256) {
+    return balances[_addr];
   }
 
   /**
    * @notice Calculates a user's remaining balance.  This is their winnings less how much they've withdrawn.
    * @return The users's current balance.
    */
-  function balanceOf(address _addr) public view returns (int256) {
-    Entry storage entry = entries[_addr];
-    int256 winningTotalNonFixed = winnings(_addr);
-    return winningTotalNonFixed - entry.withdrawnNonFixed;
+  function balanceOf(address _addr) public view returns (uint256) {
+    return balances[_addr];
   }
 
   function calculateWinner() private view returns (address) {
@@ -287,8 +260,8 @@ contract Pool is Ownable {
    * @notice Returns the total interest on the pool less the fee as a whole number
    * @return The total interest on the pool less the fee as a whole number
    */
-  function netWinnings() public view returns (int256) {
-    return FixidityLib.fromFixed(netWinningsFixedPoint24());
+  function netWinnings() public view returns (uint256) {
+    return uint256(FixidityLib.fromFixed(netWinningsFixedPoint24()));
   }
 
   /**
@@ -407,16 +380,15 @@ contract Pool is Ownable {
    */
   function getEntry(address _addr) public view returns (
     address addr,
-    int256 amount,
+    uint256 amount,
     uint256 ticketCount,
-    int256 withdrawn
+    uint256 withdrawn
   ) {
-    Entry storage entry = entries[_addr];
     return (
-      entry.addr,
-      FixidityLib.fromFixed(entry.amount),
-      entry.ticketCount,
-      entry.withdrawnNonFixed
+      _addr,
+      balances[_addr],
+      balances[_addr] / uint256(FixidityLib.fromFixed(ticketPrice)),
+      0
     );
   }
 
@@ -455,7 +427,7 @@ contract Pool is Ownable {
    * @return Returns true if the given address bought tickets, false otherwise.
    */
   function _hasEntry(address _addr) internal view returns (bool) {
-    return entries[_addr].addr == _addr;
+    return balances[_addr] > 0;
   }
 
   modifier requireOpen() {
