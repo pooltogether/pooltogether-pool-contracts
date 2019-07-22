@@ -174,7 +174,6 @@ contract PoolManager is Ownable {
       token,
       block.number + openDurationInBlocks,
       block.number + openDurationInBlocks + lockDurationInBlocks,
-      ticketPrice,
       feeFractionFixedPoint18,
       allowLockAnytime
     );

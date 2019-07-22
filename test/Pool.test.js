@@ -54,7 +54,6 @@ contract('Pool', (accounts) => {
       token.address,
       block + lockStartBlock,
       block + lockEndBlock,
-      ticketPrice,
       feeFraction,
       allowLockAnytime
     )
@@ -133,13 +132,13 @@ contract('Pool', (accounts) => {
       pool = await createPool()
     })
 
-    describe('buyTicket()', () => {
+    describe('deposit()', () => {
       it('should fail if not enough tokens approved', async () => {
         await token.approve(pool.address, ticketPrice.div(new BN(2)), { from: user1 })
 
         let failed
         try {
-          await pool.buyTickets(1, { from: user1 })
+          await pool.deposit(ticketPrice, { from: user1 })
           failed = false
         } catch (error) {
           failed = true
@@ -150,41 +149,31 @@ contract('Pool', (accounts) => {
       it('should deposit some tokens into the pool', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
 
-        const response = await pool.buyTickets(1, { from: user1 })
-        const boughtTicketsEvent = response.receipt.logs[0]
-        assert.equal(boughtTicketsEvent.event, 'BoughtTickets')
-        assert.equal(boughtTicketsEvent.address, pool.address)
-        assert.equal(boughtTicketsEvent.args[0], user1)
-        assert.equal(boughtTicketsEvent.args[1].toString(), '1')
-        assert.equal(boughtTicketsEvent.args[2].toString(), ticketPrice.toString())
+        const response = await pool.deposit(ticketPrice, { from: user1 })
+        const deposited = response.receipt.logs[0]
+        assert.equal(deposited.event, 'Deposited')
+        assert.equal(deposited.address, pool.address)
+        assert.equal(deposited.args[0], user1)
+        assert.equal(deposited.args[1].toString(), toWei('10'))
       })
 
       it('should allow multiple deposits', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
 
-        await pool.buyTickets(1, { from: user1 })
+        await pool.deposit(ticketPrice, { from: user1 })
 
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.buyTickets(1, { from: user1 })
+        await pool.deposit(ticketPrice, { from: user1 })
 
-        const response = await pool.getEntry(user1)
-        assert.equal(response.addr, user1)
-        assert.equal(response.amount.toString(), ticketPrice.mul(new BN(2)).toString())
-        assert.equal(response.ticketCount.toString(), '2')
-      })
-    })
-
-    describe('getEntry()', () => {
-      it('should return zero when there are no entries', async () => {
-        let entry = await pool.getEntry('0x0000000000000000000000000000000000000000')
-        assert.equal(entry.amount, '0')
+        const amount = await pool.balanceOf(user1)
+        assert.equal(amount.toString(), ticketPrice.mul(new BN(2)).toString())
       })
     })
 
     describe('lock()', () => {
       it('should transfer tokens to the money market', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.buyTickets(1, { from: user1 })
+        await pool.deposit(ticketPrice, { from: user1 })
         await pool.lock(secretHash)
       })
     })
@@ -192,7 +181,7 @@ contract('Pool', (accounts) => {
     describe('unlock()', () => {
       beforeEach(async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.buyTickets(1, { from: user1 })
+        await pool.deposit(ticketPrice, { from: user1 })
         await pool.lock(secretHash)
       })
 
@@ -214,13 +203,11 @@ contract('Pool', (accounts) => {
         })
 
         it('should allow users to withdraw after the pool is unlocked', async () => {
-          console.log('chkpnt 1')
           let poolBalance = await pool.balanceOf(user1)
           assert.equal(poolBalance.toString(), ticketPrice.toString())
 
           let balanceBefore = await token.balanceOf(user1)
           await pool.withdraw({ from: user1 })
-          console.log('chkpnt 2')
           let balanceAfter = await token.balanceOf(user1)
           let balanceDifference = new BN(balanceAfter).sub(new BN(balanceBefore))
           assert.equal(balanceDifference.toString(), ticketPrice.toString())
@@ -232,7 +219,7 @@ contract('Pool', (accounts) => {
       describe('with one user', () => {
         beforeEach(async () => {
           await token.approve(pool.address, ticketPrice, { from: user1 })
-          await pool.buyTickets(1, { from: user1 })
+          await pool.deposit(ticketPrice, { from: user1 })
           await pool.lock(secretHash)
           await pool.complete(secret)
         })
@@ -247,10 +234,10 @@ contract('Pool', (accounts) => {
       describe('with two users', () => {
         beforeEach(async () => {
           await token.approve(pool.address, priceForTenTickets, { from: user1 })
-          await pool.buyTickets(10, { from: user1 })
+          await pool.deposit(priceForTenTickets, { from: user1 })
 
           await token.approve(pool.address, priceForTenTickets, { from: user2 })
-          await pool.buyTickets(10, { from: user2 })
+          await pool.deposit(priceForTenTickets, { from: user2 })
 
           await pool.lock(secretHash)
           await pool.complete(secret)
@@ -280,7 +267,7 @@ contract('Pool', (accounts) => {
     describe('withdraw()', () => {
       it('should work for one participant', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.buyTickets(1, { from: user1 })
+        await pool.deposit(ticketPrice, { from: user1 })
         await pool.lock(secretHash)
         await pool.complete(secret)
 
@@ -297,39 +284,27 @@ contract('Pool', (accounts) => {
 
       it('should work for two participants', async () => {
 
-        console.log('chkpnt 1')
         await token.approve(pool.address, priceForTenTickets, { from: user1 })
 
-        console.log('chkpnt 2')
-        await pool.buyTickets(10, { from: user1 })
+        await pool.deposit(priceForTenTickets, { from: user1 })
 
-        console.log('chkpnt 3')
         await token.approve(pool.address, priceForTenTickets, { from: user2 })
 
-        console.log('chkpnt 4')
-        await pool.buyTickets(10, { from: user2 })
+        await pool.deposit(priceForTenTickets, { from: user2 })
 
-        console.log('chkpnt 5')
         await pool.lock(secretHash)
 
         assert.equal((await pool.eligibleSupply()).toString(), toWei('200'))
 
-        console.log('chkpnt 6')
         await pool.complete(secret)
 
-        console.log('chkpnt 7')
         const info = await pool.getInfo()
 
-        console.log('chkpnt 8')
         const user1BalanceBefore = await token.balanceOf(user1)
-        console.log('chkpnt 9')
         await pool.withdraw({ from: user1 })
-        console.log('chkpnt 10')
         const user1BalanceAfter = await token.balanceOf(user1)
 
-        console.log('chkpnt 11')
         const user2BalanceBefore = await token.balanceOf(user2)        
-        console.log('chkpnt 12')
         await pool.withdraw({ from: user2 })
         const user2BalanceAfter = await token.balanceOf(user2)
 
@@ -350,7 +325,7 @@ contract('Pool', (accounts) => {
     describe('winnings()', () => {
       it('should return the entrants total to withdraw', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.buyTickets(1, { from: user1 })
+        await pool.deposit(ticketPrice, { from: user1 })
 
         let winnings = await pool.winnings(user1)
 
@@ -370,7 +345,7 @@ contract('Pool', (accounts) => {
     describe('lock()', () => {
       beforeEach(async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.buyTickets(1, { from: user1 })
+        await pool.deposit(ticketPrice, { from: user1 })
       })
 
       it('should not work for regular users', async () => {
@@ -406,7 +381,7 @@ contract('Pool', (accounts) => {
     describe('complete(secret)', () => {
       beforeEach(async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.buyTickets(1, { from: user1 })
+        await pool.deposit(ticketPrice, { from: user1 })
         await pool.lock(secretHash)
       })
 
@@ -439,7 +414,7 @@ contract('Pool', (accounts) => {
 
       const user1Tickets = ticketPrice.mul(new BN(100))
       await token.approve(pool.address, user1Tickets, { from: user1 })
-      await pool.buyTickets(100, { from: user1 })
+      await pool.deposit(user1Tickets, { from: user1 })
 
       const ownerBalance = await token.balanceOf(owner)
       await pool.lock(secretHash, { from: owner })

@@ -24,10 +24,9 @@ contract Pool is Ownable {
   /**
    * Emitted when "tickets" have been purchased.
    * @param sender The purchaser of the tickets
-   * @param count The number of tickets purchased
-   * @param totalPrice The total cost of the tickets
+   * @param amount The size of the deposit
    */
-  event BoughtTickets(address indexed sender, int256 count, uint256 totalPrice);
+  event Deposited(address indexed sender, uint256 amount);
 
   /**
    * Emitted when a user withdraws from the pool.
@@ -71,7 +70,6 @@ contract Pool is Ownable {
   int256 private finalAmount; //fixed point 24
   ICErc20 public moneyMarket;
   IERC20 public token;
-  int256 private ticketPrice; //fixed point 24
   int256 private feeFraction; //fixed point 24
   bool private ownerHasWithdrawn;
   bool public allowLockAnytime;
@@ -85,7 +83,6 @@ contract Pool is Ownable {
    * @param _token The ERC20 token to be used.
    * @param _lockStartBlock The block number on or after which the deposit can be made to Compound
    * @param _lockEndBlock The block number on or after which the Compound supply can be withdrawn
-   * @param _ticketPrice The price of each ticket (fixed point 18)
    * @param _feeFractionFixedPoint18 The fraction of the winnings going to the owner (fixed point 18)
    */
   constructor (
@@ -93,18 +90,15 @@ contract Pool is Ownable {
     IERC20 _token,
     uint256 _lockStartBlock,
     uint256 _lockEndBlock,
-    int256 _ticketPrice,
     int256 _feeFractionFixedPoint18,
     bool _allowLockAnytime
   ) public {
     require(_lockEndBlock > _lockStartBlock, "lock end block is not after start block");
     require(address(_moneyMarket) != address(0), "money market address cannot be zero");
     require(address(_token) != address(0), "token address cannot be zero");
-    require(_ticketPrice > 0, "ticket price must be greater than zero");
     require(_feeFractionFixedPoint18 >= 0, "fee must be zero or greater");
     require(_feeFractionFixedPoint18 <= 1000000000000000000, "fee fraction must be less than 1");
     feeFraction = FixidityLib.newFixed(_feeFractionFixedPoint18, uint8(18));
-    ticketPrice = FixidityLib.newFixed(_ticketPrice);
     drawState.openNextDraw();
     state = State.OPEN;
     moneyMarket = _moneyMarket;
@@ -118,15 +112,9 @@ contract Pool is Ownable {
 
   /**
    * @notice Buys a pool ticket.  Each ticket is a chance of winning.  Tickets purchased will become eligible in the next pool.
-   * @param _countNonFixed The number of tickets the user wishes to buy.
    */
-  function buyTickets (int256 _countNonFixed) public {
-    require(_countNonFixed > 0, "number of tickets is less than or equal to zero");
-
-    // Calculate the values
-    int256 count = FixidityLib.newFixed(_countNonFixed);
-    int256 totalDeposit = FixidityLib.multiply(ticketPrice, count);
-    uint256 totalDepositNonFixed = uint256(FixidityLib.fromFixed(totalDeposit));
+  function deposit (uint256 totalDepositNonFixed) public {
+    require(totalDepositNonFixed > 0, "deposit is greater than zero");
 
     // Transfer the tokens into this contract
     require(token.transferFrom(msg.sender, address(this), totalDepositNonFixed), "token transfer failed");
@@ -138,6 +126,7 @@ contract Pool is Ownable {
     drawState.deposit(msg.sender, totalDepositNonFixed);
 
     // Update the total of this contract
+    int256 totalDeposit = FixidityLib.newFixed(int256(totalDepositNonFixed));
     totalAmount = FixidityLib.add(totalAmount, totalDeposit);
 
     // Require that the the total of this contract does not exceed the max pool size
@@ -147,7 +136,7 @@ contract Pool is Ownable {
     require(token.approve(address(moneyMarket), totalDepositNonFixed), "could not approve money market spend");
     require(moneyMarket.mint(totalDepositNonFixed) == 0, "could not supply money market");
 
-    emit BoughtTickets(msg.sender, _countNonFixed, totalDepositNonFixed);
+    emit Deposited(msg.sender, totalDepositNonFixed);
   }
 
   /**
@@ -341,7 +330,6 @@ contract Pool is Ownable {
     State poolState,
     address winner,
     int256 supplyBalanceTotal,
-    int256 ticketCost,
     int256 maxPoolSize,
     int256 estimatedInterestFixedPoint18,
     bytes32 hashOfSecret
@@ -353,32 +341,9 @@ contract Pool is Ownable {
       state,
       winningAddress,
       FixidityLib.fromFixed(finalAmount),
-      FixidityLib.fromFixed(ticketPrice),
       FixidityLib.fromFixed(maxPoolSizeFixedPoint24(FixidityLib.maxFixedDiv())),
       FixidityLib.fromFixed(currentInterestFractionFixedPoint24(), uint8(18)),
       secretHash
-    );
-  }
-
-  /**
-   * @notice Retrieves information about a user's entry in the Pool.
-   * @return Returns a tuple containing:
-   *    addr (the address of the user)
-   *    amount (the amount they deposited)
-   *    ticketCount (the number of tickets they have bought)
-   *    withdrawn (the amount they have withdrawn)
-   */
-  function getEntry(address _addr) public view returns (
-    address addr,
-    uint256 amount,
-    uint256 ticketCount,
-    uint256 withdrawn
-  ) {
-    return (
-      _addr,
-      balances[_addr],
-      balances[_addr] / uint256(FixidityLib.fromFixed(ticketPrice)),
-      0
     );
   }
 
