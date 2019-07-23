@@ -27,7 +27,7 @@ library DrawManager {
     /**
      * @dev Creates the next draw.  Does not add it to the sortition sum trees (yet)
      */
-    function openNextDraw(DrawState storage drawState) public {
+    function openNextDraw(DrawState storage drawState) public returns (uint256) {
         // If there is no previous draw, we must initialize
         if (drawState.currentDrawIndex == 0) {
             drawState.sortitionSumTrees.createTree(TREE_OF_DRAWS, 4);
@@ -44,6 +44,8 @@ library DrawManager {
             drawIndex,
             0
         );
+
+        return drawIndex;
     }
 
     function deposit(DrawState storage drawState, address user, uint256 amount) public requireOpenDraw(drawState) {

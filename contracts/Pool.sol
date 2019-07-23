@@ -6,6 +6,7 @@ import "./compound/ICErc20.sol";
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
 import "./DrawManager.sol";
 import "fixidity/contracts/FixidityLib.sol";
+import "zos-lib/contracts/Initializable.sol";
 
 /**
  * @title The Pool contract for PoolTogether
@@ -50,7 +51,32 @@ contract Pool is Ownable {
    */
   event PoolComplete(address indexed winner);
 
+  /**
+   * Emitted when the open duration is changed.
+   * @param durationInBlocks The new duration in blocks
+   */
+  event OpenDurationChanged(uint256 durationInBlocks);
+
+  /**
+   * Emitted when the lock duration is changed.
+   * @param durationInBlocks The new duration in blocks
+   */
+  event LockDurationChanged(uint256 durationInBlocks);
+
+  /**
+   * Emitted when the fee fraction is changed
+   * @param feeFractionFixedPoint18 The new fee fraction encoded as a fixed point 18 decimal
+   */
+  event FeeFractionChanged(int256 feeFractionFixedPoint18);
+
+  /**
+   * Emitted when the allow lock anytime is changed
+   * @param allowLockAnytime The value of allow lock anytime
+   */
+  event AllowLockAnytimeChanged(bool allowLockAnytime);
+
   enum State {
+    NEW,
     OPEN,
     LOCKED,
     UNLOCKED,
@@ -59,9 +85,34 @@ contract Pool is Ownable {
 
   mapping (address => uint256) balances;
 
+  /**
+   * The open duration in blocks to use for the next Pool
+   */
+  uint256 public openDurationInBlocks;
+
+  /**
+   * The lock duration in blocks to use for the next Pool
+   */
+  uint256 public lockDurationInBlocks;
+
+  /**
+   * The owner fee fraction to use for the next Pool
+   */
+  int256 private feeFractionFixedPoint18;
+
+  /**
+   * The number of Pools that have been created
+   */
+  uint256 public poolCount;
+
+  /**
+   * Whether to allow the owner of the next Pool to lock and unlock at anytime.
+   */
+  bool public allowLockAnytime;
+
   int256 private totalAmount; // fixed point 24
 
-
+  uint256 private drawCount;
   uint256 private lockStartBlock;
   uint256 private lockEndBlock;
   bytes32 private secretHash;
@@ -72,46 +123,56 @@ contract Pool is Ownable {
   IERC20 public token;
   int256 private feeFraction; //fixed point 24
   bool private ownerHasWithdrawn;
-  bool public allowLockAnytime;
+  bool public drawAllowLockAnytime;
   address private winningAddress;
 
   DrawManager.DrawState drawState;
 
   /**
-   * @notice Creates a new Pool.
-   * @param _moneyMarket The Compound money market to supply tokens to.
-   * @param _token The ERC20 token to be used.
-   * @param _lockStartBlock The block number on or after which the deposit can be made to Compound
-   * @param _lockEndBlock The block number on or after which the Compound supply can be withdrawn
-   * @param _feeFractionFixedPoint18 The fraction of the winnings going to the owner (fixed point 18)
+   * @notice Initializes a new Pool contract.  Generally called through ZeppelinOS
+   * @param _admin The admin of the Pool.  They are able to change settings and are set as the owner of new lotteries.
+   * @param _moneyMarket The Compound Finance MoneyMarket contract to supply and withdraw tokens.
+   * @param _token The token to use for the Pools
+   * @param _openDurationInBlocks The duration between a Pool's creation and when it can be locked.
+   * @param _lockDurationInBlocks The duration that a Pool must be locked for.
+   * @param _feeFractionFixedPoint18 The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
+   * @param _allowLockAnytime Whether the owner can lock and unlock the pools at any time.
    */
-  constructor (
-    ICErc20 _moneyMarket,
-    IERC20 _token,
-    uint256 _lockStartBlock,
-    uint256 _lockEndBlock,
+  function init (
+    address _admin,
+    address _moneyMarket,
+    address _token,
+    uint256 _openDurationInBlocks,
+    uint256 _lockDurationInBlocks,
     int256 _feeFractionFixedPoint18,
     bool _allowLockAnytime
-  ) public {
-    require(_lockEndBlock > _lockStartBlock, "lock end block is not after start block");
-    require(address(_moneyMarket) != address(0), "money market address cannot be zero");
-    require(address(_token) != address(0), "token address cannot be zero");
-    require(_feeFractionFixedPoint18 >= 0, "fee must be zero or greater");
-    require(_feeFractionFixedPoint18 <= 1000000000000000000, "fee fraction must be less than 1");
-    feeFraction = FixidityLib.newFixed(_feeFractionFixedPoint18, uint8(18));
-    drawState.openNextDraw();
-    state = State.OPEN;
-    moneyMarket = _moneyMarket;
-    token = _token;
-    lockStartBlock = _lockStartBlock;
-    lockEndBlock = _lockEndBlock;
-    allowLockAnytime = _allowLockAnytime;
+  ) public initializer {
+    require(_admin != address(0), "owner cannot be the null address");
+    require(_moneyMarket != address(0), "money market address is zero");
+    require(_token != address(0), "token address is zero");
+    Ownable.initialize(_admin);
+    token = IERC20(_token);
+    moneyMarket = ICErc20(_moneyMarket);
+
+    require(_token == moneyMarket.underlying(), "token does not match the underlying money market token");
+
+    _setFeeFraction(_feeFractionFixedPoint18);
+    _setLockDuration(_lockDurationInBlocks);
+    _setOpenDuration(_openDurationInBlocks);
+    _setAllowLockAnytime(_allowLockAnytime);
   }
 
-  function open() public onlyOwner {}
+  function open() public onlyOwner requireCompleteOrNew {
+    lockStartBlock = block.number + openDurationInBlocks;
+    lockEndBlock = lockStartBlock + lockDurationInBlocks;
+    feeFraction = FixidityLib.newFixed(feeFractionFixedPoint18, uint8(18));
+    drawState.openNextDraw();
+    state = State.OPEN;
+    drawAllowLockAnytime = allowLockAnytime;
+  }
 
   /**
-   * @notice Buys a pool ticket.  Each ticket is a chance of winning.  Tickets purchased will become eligible in the next pool.
+   * @notice Deposits into the pool.  Deposits will become eligible in the next pool.
    */
   function deposit (uint256 totalDepositNonFixed) public {
     require(totalDepositNonFixed > 0, "deposit is greater than zero");
@@ -145,7 +206,7 @@ contract Pool is Ownable {
    * Fires the PoolLocked event.
    */
   function lock(bytes32 _secretHash) external requireOpen onlyOwner {
-    if (allowLockAnytime) {
+    if (drawAllowLockAnytime) {
       lockStartBlock = block.number;
     } else {
       require(block.number >= lockStartBlock, "pool can only be locked on or after lock start block");
@@ -159,7 +220,7 @@ contract Pool is Ownable {
   }
 
   function unlock() public requireLocked {
-    if (allowLockAnytime && msg.sender == owner()) {
+    if (drawAllowLockAnytime && msg.sender == owner()) {
       lockEndBlock = block.number;
     } else {
       require(lockEndBlock < block.number, "pool cannot be unlocked yet");
@@ -317,7 +378,6 @@ contract Pool is Ownable {
    *    poolState (either OPEN, LOCKED, COMPLETE)
    *    winner (the address of the winner)
    *    supplyBalanceTotal (the total deposits plus any interest from Compound)
-   *    ticketCost (the cost of each ticket in DAI)
    *    participantCount (the number of unique purchasers of tickets)
    *    maxPoolSize (the maximum theoretical size of the pool to prevent overflow)
    *    estimatedInterestFixedPoint18 (the estimated total interest percent for this pool)
@@ -377,12 +437,79 @@ contract Pool is Ownable {
   }
 
   /**
-   * @notice Determines whether a given address has bought tickets
+   * @notice Determines whether a given address has deposited
    * @param _addr The given address
-   * @return Returns true if the given address bought tickets, false otherwise.
+   * @return Returns true if the given address deposited, false otherwise.
    */
   function _hasEntry(address _addr) internal view returns (bool) {
     return balances[_addr] > 0;
+  }
+
+  /**
+   * @notice Sets the open duration in blocks for new Pools.
+   * Fires the OpenDurationChanged event.
+   * Can only be set by the owner.  Fires the OpenDurationChanged event.
+   * @param _openDurationInBlocks The duration, in blocks, that a pool must be open for after it is created.
+   */
+  function setOpenDuration(uint256 _openDurationInBlocks) public onlyOwner {
+    _setOpenDuration(_openDurationInBlocks);
+  }
+
+  function _setOpenDuration(uint256 _openDurationInBlocks) internal {
+    openDurationInBlocks = _openDurationInBlocks;
+
+    emit OpenDurationChanged(_openDurationInBlocks);
+  }
+
+  /**
+   * @notice Sets the lock duration in blocks for new Pools.
+   * Fires the LockDurationChanged event.
+   * Can only be set by the owner.  Only applies to subsequent Pools.
+   * @param _lockDurationInBlocks The duration, in blocks, that new pools must be locked for.
+   */
+  function setLockDuration(uint256 _lockDurationInBlocks) public onlyOwner {
+    _setLockDuration(_lockDurationInBlocks);
+  }
+
+  function _setLockDuration(uint256 _lockDurationInBlocks) internal {
+    lockDurationInBlocks = _lockDurationInBlocks;
+
+    emit LockDurationChanged(_lockDurationInBlocks);
+  }
+
+  /**
+   * @notice Sets the fee fraction paid out to the Pool owner.
+   * Fires the FeeFractionChanged event.
+   * Can only be called by the owner. Only applies to subsequent Pools.
+   * @param _feeFractionFixedPoint18 The fraction to pay out.
+   * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
+   */
+  function setFeeFraction(int256 _feeFractionFixedPoint18) public onlyOwner {
+    _setFeeFraction(_feeFractionFixedPoint18);
+  }
+
+  function _setFeeFraction(int256 _feeFractionFixedPoint18) internal {
+    require(_feeFractionFixedPoint18 >= 0, "fee must be zero or greater");
+    require(_feeFractionFixedPoint18 <= 1000000000000000000, "fee fraction must be 1 or less");
+    feeFractionFixedPoint18 = _feeFractionFixedPoint18;
+
+    emit FeeFractionChanged(_feeFractionFixedPoint18);
+  }
+
+  /**
+   * @notice Allows the owner to set whether a Pool can be locked and unlocked at any time.
+   * Fires the AllowLockAnytimeChanged event.
+   * Can only be set by the owner.  Only applies to subsequent Pools.
+   * @param _allowLockAnytime True if the Pool can be locked and unlocked anytime, false otherwise.
+   */
+  function setAllowLockAnytime(bool _allowLockAnytime) public onlyOwner {
+    _setAllowLockAnytime(_allowLockAnytime);
+  }
+
+  function _setAllowLockAnytime(bool _allowLockAnytime) internal {
+    allowLockAnytime = _allowLockAnytime;
+
+    emit AllowLockAnytimeChanged(_allowLockAnytime);
   }
 
   modifier requireOpen() {
@@ -398,6 +525,11 @@ contract Pool is Ownable {
   modifier requireComplete() {
     require(state == State.COMPLETE, "pool is not complete");
     require(block.number > lockEndBlock, "block is before lock end period");
+    _;
+  }
+
+  modifier requireCompleteOrNew() {
+    require(state == State.NEW || state == State.COMPLETE, "pool is not new or complete");
     _;
   }
 }

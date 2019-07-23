@@ -18,6 +18,8 @@ contract('Pool', (accounts) => {
   let ticketPrice = new BN(web3.utils.toWei('10', 'ether'))
   // let feeFraction = new BN('5' + zero_22) // equal to 0.05
   let feeFraction = new BN('0')
+  let openDuration = 0
+  let lockDuration = 0
 
   const priceForTenTickets = ticketPrice.mul(new BN(10))
 
@@ -43,38 +45,36 @@ contract('Pool', (accounts) => {
     await token.mint(user2, web3.utils.toWei('100000', 'ether'))
   })
 
-  async function createPool(lockStartBlock = -1, lockEndBlock = 0, allowLockAnytime = true) {
-    const block = await blockNumber()
-
+  async function createPool(od = openDuration, ld = lockDuration, allowLockAnytime = true) {
     await Pool.link("DrawManager", drawManager.address)
     await Pool.link("FixidityLib", fixidity.address)
 
-    const pool = await Pool.new(
+    const pool = await Pool.new()
+    await pool.init(
+      owner,
       moneyMarket.address,
       token.address,
-      block + lockStartBlock,
-      block + lockEndBlock,
+      od,
+      ld,
       feeFraction,
       allowLockAnytime
     )
-    pool.initialize(owner)
-    return pool
-  }
 
-  async function blockNumber() {
-    return await web3.eth.getBlockNumber()
+    await pool.open()
+
+    return pool
   }
 
   describe('supplyRateMantissa()', () => {
     it('should work', async () => {
-      pool = await createPool(0, 10) // ten blocks long
+      pool = await createPool(10, 10) // ten blocks long
       assert.equal(await pool.supplyRateMantissa(), web3.utils.toWei('0.1', 'ether'))
     })
   })
 
   describe('currentInterestFractionFixedPoint24()', () => {
     it('should return the right value', async () => {
-      pool = await createPool(0, 10) // ten blocks long
+      pool = await createPool(10, 10) // ten blocks long
       const interestFraction = await pool.currentInterestFractionFixedPoint24()
       assert.equal(interestFraction.toString(), web3.utils.toWei('1000000', 'ether'))
     })
@@ -82,7 +82,7 @@ contract('Pool', (accounts) => {
 
   describe('maxPoolSize()', () => {
     it('should set an appropriate limit based on max integers', async () => {
-      pool = await createPool(0, 10) // ten blocks long
+      pool = await createPool(10, 10) // ten blocks long
       const limit = await fixidity.newFixed(new BN('1000'))
       const maxSize = await pool.maxPoolSizeFixedPoint24(limit);
       const poolLimit = new BN('333333333333333333333333000')
@@ -110,7 +110,7 @@ contract('Pool', (accounts) => {
 
   describe('pool that is still during the lock period', () => {
     beforeEach(async () => {
-      pool = await createPool(-10, 10, false)
+      pool = await createPool(1, 10, false)
     })
 
     describe('complete(secret)', () => {
