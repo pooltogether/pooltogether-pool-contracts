@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol
 import "./DrawManager.sol";
 import "fixidity/contracts/FixidityLib.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "./IPool.sol";
 
 /**
  * @title The Pool contract for PoolTogether
@@ -18,7 +19,7 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
  * the owner, and users will be able to withdraw their ticket money and winnings, if any.
  * @dev All monetary values are stored internally as fixed point 24.
  */
-contract Pool is Ownable {
+contract Pool is IPool, Ownable {
   using DrawManager for DrawManager.DrawState;
   using SafeMath for uint256;
 
@@ -36,57 +37,50 @@ contract Pool is Ownable {
    */
   event Withdrawn(address indexed sender, uint256 amount);
 
-  event PoolOpened(
-    uint256 id,
-    uint256 feeFraction
-  );
-
   /**
    * Emitted when the pool is locked.
    */
-  event PoolLocked();
+  event Opened(
+    uint256 indexed drawId,
+    uint256 feeFraction
+  );
+
+  event Committed(
+    uint256 indexed drawId,
+    bytes32 secretHash
+  );
 
   /**
-   * Emitted when the pool is unlocked.
+   * Emitted when the pool rewards a winner
    */
-  event PoolUnlocked();
-
-  /**
-   * Emitted when the pool is complete
-   */
-  event PoolComplete(address indexed winner);
+  event Rewarded(
+    uint256 indexed drawId,
+    address indexed winner,
+    bytes32 secret,
+    uint256 winnings,
+    uint256 fee
+  );
 
   /**
    * Emitted when the fee fraction is changed
    * @param feeFractionFixedPoint18 The new fee fraction encoded as a fixed point 18 decimal
    */
-  event FeeFractionChanged(int256 feeFractionFixedPoint18);
+  event FeeFractionChanged(uint256 feeFractionFixedPoint18);
 
-  enum State {
-    OPEN,
-    LOCKED,
-    UNLOCKED,
-    COMPLETE
+  struct Draw {
+    int256 feeFraction; //fixed point 24
   }
-
-  mapping (address => uint256) balances;
 
   /**
    * The owner fee fraction to use for the next Pool
    */
-  int256 private feeFractionFixedPoint18;
-
-  int256 private totalAmount; // fixed point 24
-  uint256 private drawCount;
-  bytes32 private secretHash;
-  bytes32 private secret;
-  State public state;
-  int256 private finalAmount; //fixed point 24
+  uint256 private feeFractionFixedPoint18;
   ICErc20 public moneyMarket;
   IERC20 public token;
-  int256 private feeFraction; //fixed point 24
-  bool private ownerHasWithdrawn;
-  address private winningAddress;
+  mapping (address => uint256) balances;
+  int256 private totalAmount; // fixed point 24
+  mapping(uint256 => Draw) draws;
+  bytes32 private secretHash;
 
   DrawManager.DrawState drawState;
 
@@ -101,7 +95,7 @@ contract Pool is Ownable {
     address _admin,
     address _moneyMarket,
     address _token,
-    int256 _feeFractionFixedPoint18
+    uint256 _feeFractionFixedPoint18
   ) public initializer {
     require(_admin != address(0), "owner cannot be the null address");
     require(_moneyMarket != address(0), "money market address is zero");
@@ -118,14 +112,32 @@ contract Pool is Ownable {
   }
 
   function open() internal {
-    feeFraction = FixidityLib.newFixed(feeFractionFixedPoint18, uint8(18));
-    drawCount = drawState.openNextDraw();
-    state = State.OPEN;
+    drawState.openNextDraw();
 
-    emit PoolOpened(
-      drawCount,
-      uint256(feeFractionFixedPoint18)
+    int256 feeFraction = FixidityLib.newFixed(int256(feeFractionFixedPoint18), uint8(18));
+
+    draws[drawState.openDrawIndex] = Draw(feeFraction);
+
+    emit Opened(
+      drawState.openDrawIndex,
+      feeFractionFixedPoint18
     );
+  }
+
+  /**
+   * @notice Pools the deposits and supplies them to Compound.
+   * Can only be called by the owner when the pool is open.
+   * Fires the PoolLocked event.
+   */
+  function commit(bytes32 _secretHash) public onlyOwner {
+    require(secretHash == 0, "secret was already committed");
+    require(_secretHash != 0, "passed secret hash must be defined");
+    secretHash = _secretHash;
+    emit Committed(
+      drawState.openDrawIndex,
+      _secretHash
+    );
+    open();
   }
 
   /**
@@ -155,53 +167,49 @@ contract Pool is Ownable {
   }
 
   /**
-   * @notice Pools the deposits and supplies them to Compound.
-   * Can only be called by the owner when the pool is open.
-   * Fires the PoolLocked event.
-   */
-  function lock(bytes32 _secretHash) external requireOpen onlyOwner {
-    require(_secretHash != 0, "secret hash must be defined");
-    open();
-    secretHash = _secretHash;
-    state = State.LOCKED;
-
-    emit PoolLocked();
-  }
-
-  function unlock() public requireLocked {
-    uint256 balance = moneyMarket.balanceOfUnderlying(address(this));
-    if (balance > 0) {
-      finalAmount = FixidityLib.newFixed(int256(balance));
-    }
-
-    state = State.UNLOCKED;
-
-    emit PoolUnlocked();
-  }
-
-  /**
    * @notice Withdraws the deposit from Compound and selects a winner.
    * Can only be called by the owner after the lock end block.
    * Fires the PoolUnlocked event.
    */
-  function complete(bytes32 _secret) public onlyOwner {
-    if (state == State.LOCKED) {
-      unlock();
-    }
-    require(state == State.UNLOCKED, "state must be unlocked");
-    require(keccak256(abi.encodePacked(_secret)) == secretHash, "secret does not match");
-    secret = _secret;
-    state = State.COMPLETE;
-    winningAddress = calculateWinner(entropy());
-    balances[winningAddress] = balances[winningAddress].add(netWinnings());
+  function reward(bytes32 secret) internal {
+    
 
-    uint256 fee = feeAmount();
+    require(keccak256(abi.encodePacked(secret)) == secretHash, "secret does not match");
+    secretHash = 0;
+
+    uint256 drawId = drawState.openDrawIndex.sub(1);
+    Draw storage draw = draws[drawId];
+
+    uint256 balance = moneyMarket.balanceOfUnderlying(address(this));
+    int256 balanceFixed = FixidityLib.newFixed(int256(balance));
+    int256 grossWinningsFixed = FixidityLib.subtract(balanceFixed, FixidityLib.newFixed(int256(drawState.eligibleSupply)));
+    int256 feeFixed = FixidityLib.multiply(grossWinningsFixed, draw.feeFraction);
+    uint256 fee = uint256(FixidityLib.fromFixed(feeFixed));
+    int256 winningsFixed = FixidityLib.subtract(grossWinningsFixed, feeFixed);
+    uint256 winnings = uint256(FixidityLib.fromFixed(winningsFixed));
+
+    address winningAddress = calculateWinner(entropy(secret));
+    balances[winningAddress] = balances[winningAddress].add(winnings);
+
     address owner_ = owner();
     if (fee > 0) {
       balances[owner_] = balances[owner_].add(fee);
     }
 
-    emit PoolComplete(winningAddress);
+    delete draws[drawId];
+
+    emit Rewarded(
+      drawState.openDrawIndex.sub(1),
+      winningAddress,
+      secret,
+      winnings,
+      fee
+    );
+  }
+
+  function rewardAndCommit(bytes32 _secret, bytes32 _newSecretHash) public onlyOwner {
+    reward(_secret);
+    commit(_newSecretHash);
   }
 
   /**
@@ -235,11 +243,11 @@ contract Pool is Ownable {
    * @param _addr The address of the user
    */
   function winnings(address _addr) public view returns (uint256) {
-    return balances[_addr];
+    return balances[_addr] - drawState.balanceOf(_addr);
   }
 
   /**
-   * @notice Calculates a user's remaining balance.  This is their winnings less how much they've withdrawn.
+   * @notice Calculates a user's total balance.
    * @return The users's current balance.
    */
   function balanceOf(address _addr) public view returns (uint256) {
@@ -254,92 +262,17 @@ contract Pool is Ownable {
     return drawState.eligibleSupply;
   }
 
+  function eligibleSupplyFixed() internal view returns (int256) {
+    return FixidityLib.newFixed(int256(drawState.eligibleSupply));
+  }
+
   /**
    * @notice Computes the entropy used to generate the random number.
    * The blockhash of the lock end block is XOR'd with the secret revealed by the owner.
    * @return The computed entropy value
    */
-  function entropy() public view returns (uint256) {
+  function entropy(bytes32 secret) public view returns (uint256) {
     return uint256(blockhash(block.number - 1) ^ secret);
-  }
-
-  /**
-   * @notice Selects and returns the winner's address
-   * @return The winner's address
-   */
-  function winnerAddress() public view returns (address) {
-    return winningAddress;
-  }
-
-  /**
-   * @notice Returns the total interest on the pool less the fee as a whole number
-   * @return The total interest on the pool less the fee as a whole number
-   */
-  function netWinnings() public view returns (uint256) {
-    return uint256(FixidityLib.fromFixed(netWinningsFixedPoint24()));
-  }
-
-  /**
-   * @notice Computes the total interest earned on the pool less the fee as a fixed point 24.
-   * @return The total interest earned on the pool less the fee as a fixed point 24.
-   */
-  function netWinningsFixedPoint24() internal view returns (int256) {
-    return grossWinningsFixedPoint24() - feeAmountFixedPoint24();
-  }
-
-  /**
-   * @notice Computes the total interest earned on the pool as a fixed point 24.
-   * This is what the winner will earn once the pool is unlocked.
-   * @return The total interest earned on the pool as a fixed point 24.
-   */
-  function grossWinningsFixedPoint24() internal view returns (int256) {
-    return FixidityLib.subtract(finalAmount, totalAmount);
-  }
-
-  /**
-   * @notice Calculates the size of the fee based on the gross winnings
-   * @return The fee for the pool to be transferred to the owner
-   */
-  function feeAmount() public view returns (uint256) {
-    return uint256(FixidityLib.fromFixed(feeAmountFixedPoint24()));
-  }
-
-  /**
-   * @notice Calculates the fee for the pool by multiplying the gross winnings by the fee fraction.
-   * @return The fee for the pool as a fixed point 24
-   */
-  function feeAmountFixedPoint24() internal view returns (int256) {
-    return FixidityLib.multiply(grossWinningsFixedPoint24(), feeFraction);
-  }
-
-  /**
-   * @notice Retrieves information about the pool.
-   * @return A tuple containing:
-   *    entryTotal (the total of all deposits)
-   *    startBlock (the block after which the pool can be locked)
-   *    endBlock (the block after which the pool can be unlocked)
-   *    poolState (either OPEN, LOCKED, COMPLETE)
-   *    winner (the address of the winner)
-   *    supplyBalanceTotal (the total deposits plus any interest from Compound)
-   *    participantCount (the number of unique purchasers of tickets)
-   *    maxPoolSize (the maximum theoretical size of the pool to prevent overflow)
-   *    estimatedInterestFixedPoint18 (the estimated total interest percent for this pool)
-   *    hashOfSecret (the hash of the secret the owner submitted upon locking)
-   */
-  function getInfo() public view returns (
-    int256 entryTotal,
-    State poolState,
-    address winner,
-    int256 supplyBalanceTotal,
-    bytes32 hashOfSecret
-  ) {
-    return (
-      FixidityLib.fromFixed(totalAmount),
-      state,
-      winningAddress,
-      FixidityLib.fromFixed(finalAmount),
-      secretHash
-    );
   }
 
   function maxPoolSize(int256 blocks) public view returns (int256) {
@@ -394,11 +327,11 @@ contract Pool is Ownable {
    * @param _feeFractionFixedPoint18 The fraction to pay out.
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
    */
-  function setFeeFraction(int256 _feeFractionFixedPoint18) public onlyOwner {
+  function setFeeFraction(uint256 _feeFractionFixedPoint18) public onlyOwner {
     _setFeeFraction(_feeFractionFixedPoint18);
   }
 
-  function _setFeeFraction(int256 _feeFractionFixedPoint18) internal {
+  function _setFeeFraction(uint256 _feeFractionFixedPoint18) internal {
     require(_feeFractionFixedPoint18 >= 0, "fee must be zero or greater");
     require(_feeFractionFixedPoint18 <= 1000000000000000000, "fee fraction must be 1 or less");
     feeFractionFixedPoint18 = _feeFractionFixedPoint18;
@@ -406,23 +339,8 @@ contract Pool is Ownable {
     emit FeeFractionChanged(_feeFractionFixedPoint18);
   }
 
-  modifier requireOpen() {
-    require(state == State.OPEN, "state is not open");
-    _;
-  }
-
-  modifier requireLocked() {
-    require(state == State.LOCKED, "state is not locked");
-    _;
-  }
-
-  modifier requireComplete() {
-    require(state == State.COMPLETE, "pool is not complete");
-    _;
-  }
-
-  modifier requireCompleteOrNew() {
-    require(state == State.OPEN || state == State.COMPLETE, "pool is not new or complete");
+  modifier requireCommitted() {
+    require(secretHash != 0, "no secret has been committed");
     _;
   }
 }

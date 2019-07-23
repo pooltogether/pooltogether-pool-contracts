@@ -24,9 +24,9 @@ contract('DrawManager', (accounts) => {
 
     describe('openNextDraw()', () => {
         it('should create a draw when none is available', async () => {
-            assert.equal(await drawManager.currentDrawIndex(), '0')
+            assert.equal(await drawManager.openDrawIndex(), '0')
             await drawManager.openNextDraw()
-            assert.equal(await drawManager.currentDrawIndex(), '1')
+            assert.equal(await drawManager.openDrawIndex(), '1')
         })
 
         describe('when there is an existing draw', () => {
@@ -36,7 +36,7 @@ contract('DrawManager', (accounts) => {
 
             it('should create the next draw', async () => {
                 await drawManager.openNextDraw()
-                assert.equal(await drawManager.currentDrawIndex(), '2')
+                assert.equal(await drawManager.openDrawIndex(), '2')
             })
         })
     })

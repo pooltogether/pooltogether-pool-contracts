@@ -39,8 +39,8 @@ contract ExposedDrawManager {
       return drawState.openSupply();
     }
 
-    function currentDrawIndex() public view returns (uint256) {
-      return drawState.currentDrawIndex;
+    function openDrawIndex() public view returns (uint256) {
+      return drawState.openDrawIndex;
     }
 
     /**

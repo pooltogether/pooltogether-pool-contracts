@@ -18,14 +18,14 @@ contract('Pool', (accounts) => {
   let ticketPrice = new BN(web3.utils.toWei('10', 'ether'))
   // let feeFraction = new BN('5' + zero_22) // equal to 0.05
   let feeFraction = new BN('0')
-  let openDuration = 0
-  let lockDuration = 0
 
   const priceForTenTickets = ticketPrice.mul(new BN(10))
 
   let secret = '0x1234123412341234123412341234123412341234123412341234123412341234'
   let secretHash = web3.utils.soliditySha3(secret)
   let supplyRateMantissa = '100000000000000000' // 0.1 per block
+
+  let Rewarded, winner, winnings
 
   beforeEach(async () => {
     sumTree = await SortitionSumTreeFactory.new()
@@ -49,7 +49,7 @@ contract('Pool', (accounts) => {
     await Pool.link("DrawManager", drawManager.address)
     await Pool.link("FixidityLib", fixidity.address)
 
-    const pool = await Pool.new()
+    pool = await Pool.new()
     await pool.init(
       owner,
       moneyMarket.address,
@@ -58,6 +58,19 @@ contract('Pool', (accounts) => {
     )
 
     return pool
+  }
+
+  async function rewardAndCommit(options) {
+    let logs
+    if (options) {
+      logs = (await pool.rewardAndCommit(secret, secretHash, options)).logs;
+    } else {
+      logs = (await pool.rewardAndCommit(secret, secretHash)).logs;
+    }
+    Rewarded = logs[0]
+    assert.equal(Rewarded.event, 'Rewarded')
+    winner = Rewarded.args.winner
+    winnings = Rewarded.args.winnings
   }
 
   describe('supplyRateMantissa()', () => {
@@ -128,97 +141,58 @@ contract('Pool', (accounts) => {
       })
     })
 
-    describe('lock()', () => {
-      it('should transfer tokens to the money market', async () => {
+    describe('commit()', () => {
+      it('should work', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
         await pool.deposit(ticketPrice, { from: user1 })
-        await pool.lock(secretHash)
+        await pool.commit(secretHash)
+      })
+
+      it('should not work for regular users', async () => {
+        let failed
+        try {
+          await pool.commit({ from: user1 })
+          failed = false
+        } catch (error) {
+          failed = true
+        }
+
+        assert.ok(failed, "pool should not have locked")
       })
     })
 
-    describe('unlock()', () => {
-      beforeEach(async () => {
-        await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.deposit(ticketPrice, { from: user1 })
-        await pool.lock(secretHash)
-      })
-
-      it('should not have a winner until the Pool is complete', async () => {
-        assert.equal(await pool.winnerAddress(), '0x0000000000000000000000000000000000000000')
-      })
-
-      it('should allow anyone to unlock the pool', async () => {
-        await pool.unlock({ from: user1 })
-      })
-
-      it('should allow the owner to unlock the pool', async () => {
-        await pool.unlock()
-      })
-
-      describe('withdraw() after unlock', () => {
-        beforeEach(async () => {
-          await pool.unlock({ from: user1 })
-        })
-
-        it('should allow users to withdraw after the pool is unlocked', async () => {
-          let poolBalance = await pool.balanceOf(user1)
-          assert.equal(poolBalance.toString(), ticketPrice.toString())
-
-          let balanceBefore = await token.balanceOf(user1)
-          await pool.withdraw({ from: user1 })
-          let balanceAfter = await token.balanceOf(user1)
-          let balanceDifference = new BN(balanceAfter).sub(new BN(balanceBefore))
-          assert.equal(balanceDifference.toString(), ticketPrice.toString())
-        })
-      })
-    })
-
-    describe('complete(secret)', () => {
+    describe('rewardAndCommit(secret, secretHash)', () => {
       describe('with one user', () => {
         beforeEach(async () => {
           await token.approve(pool.address, ticketPrice, { from: user1 })
           await pool.deposit(ticketPrice, { from: user1 })
-          await pool.lock(secretHash)
-          await pool.complete(secret)
+          await pool.commit(secretHash)
         })
 
         it('should select a winner and transfer tokens from money market back', async () => {
-          const info = await pool.getInfo()
-          assert.equal(info.supplyBalanceTotal.toString(), web3.utils.toWei('12', 'ether'))
-          assert.equal(info.winner, user1)
-        })
-      })
-
-      describe('with two users', () => {
-        beforeEach(async () => {
-          await token.approve(pool.address, priceForTenTickets, { from: user1 })
-          await pool.deposit(priceForTenTickets, { from: user1 })
-
-          await token.approve(pool.address, priceForTenTickets, { from: user2 })
-          await pool.deposit(priceForTenTickets, { from: user2 })
-
-          await pool.lock(secretHash)
-          await pool.complete(secret)
-        })
-
-        it('should not change the winner if time moves forward', async () => {
-          const originalWinner = await pool.winnerAddress()
-
-          await mineBlocks(256)
-
-          for (let i = 0; i < 10; i++) {
-            await mineBlocks(1)
-            const newWinner = await pool.winnerAddress()
-            assert.equal(newWinner.toString(), originalWinner.toString(), `Comparison failed at iteration ${i}`)
-          }
+          await rewardAndCommit()
+          assert.equal(Rewarded.event, 'Rewarded')
+          assert.equal(Rewarded.args.winner, user1)
+          assert.equal(Rewarded.args.winnings, toWei('2'))
         })
       })
 
       it('should succeed even without a balance', async () => {
-        await pool.lock(secretHash)
-        await pool.complete(secret)
-        const info = await pool.getInfo()
-        assert.equal(info.winner, '0x0000000000000000000000000000000000000000')
+        await pool.commit(secretHash)
+        await rewardAndCommit()
+        assert.equal(Rewarded.event, 'Rewarded')
+        assert.equal(Rewarded.args.winner, '0x0000000000000000000000000000000000000000')
+      })
+
+      it('should not work for anyone else', async () => {
+        let failed
+        try {
+          await rewardAndCommit({ from: user1 })
+          failed = false
+        } catch (error) {
+          failed = true
+        }
+        assert.ok(failed, "call did not fail")
       })
     })
 
@@ -226,18 +200,19 @@ contract('Pool', (accounts) => {
       it('should work for one participant', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
         await pool.deposit(ticketPrice, { from: user1 })
-        await pool.lock(secretHash)
-        await pool.complete(secret)
+        await pool.commit(secretHash)
+        await rewardAndCommit()
 
         let winnings = await pool.winnings(user1)
-        let winningBalance = new BN(web3.utils.toWei('12', 'ether'))
-        assert.equal(winnings.toString(), winningBalance.toString())
+        assert.equal(winnings.toString(), toWei('2'))
+        let balance = await pool.balanceOf(user1)
+        assert.equal(balance.toString(), toWei('12'))
 
         const balanceBefore = await token.balanceOf(user1)
         await pool.withdraw({ from: user1 })
         const balanceAfter = await token.balanceOf(user1)
 
-        assert.equal(balanceAfter.toString(), (new BN(balanceBefore).add(winningBalance)).toString())
+        assert.equal(balanceAfter.toString(), (new BN(balanceBefore).add(balance)).toString())
       })
 
       it('should work for two participants', async () => {
@@ -250,14 +225,13 @@ contract('Pool', (accounts) => {
 
         await pool.deposit(priceForTenTickets, { from: user2 })
 
-        await pool.lock(secretHash)
+        await pool.commit(secretHash)
 
         assert.equal((await pool.eligibleSupply()).toString(), toWei('200'))
 
-        await pool.complete(secret)
-
-        const info = await pool.getInfo()
-
+        await rewardAndCommit()
+        assert.equal(Rewarded.event, 'Rewarded')
+        
         const user1BalanceBefore = await token.balanceOf(user1)
         await pool.withdraw({ from: user1 })
         const user1BalanceAfter = await token.balanceOf(user1)
@@ -268,10 +242,10 @@ contract('Pool', (accounts) => {
 
         const earnedInterest = priceForTenTickets.mul(new BN(2)).mul(new BN(20)).div(new BN(100))
 
-        if (info.winner === user1) {
+        if (Rewarded.args.winner === user1) {
           assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(priceForTenTickets)).toString())
           assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(priceForTenTickets.add(earnedInterest))).toString())
-        } else if (info.winner === user2) {
+        } else if (Rewarded.args.winner === user2) {
           assert.equal(user2BalanceAfter.toString(), (new BN(user2BalanceBefore).add(priceForTenTickets.add(earnedInterest))).toString())
           assert.equal(user1BalanceAfter.toString(), (new BN(user1BalanceBefore).add(priceForTenTickets)).toString())
         } else {
@@ -280,82 +254,14 @@ contract('Pool', (accounts) => {
       })
     })
 
-    describe('winnings()', () => {
+    describe('balanceOf()', () => {
       it('should return the entrants total to withdraw', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
         await pool.deposit(ticketPrice, { from: user1 })
 
-        let winnings = await pool.winnings(user1)
+        let balance = await pool.balanceOf(user1)
 
-        assert.equal(winnings.toString(), ticketPrice.toString())
-      })
-    })
-  })
-
-  describe('when pool cannot be locked yet', () => {
-    beforeEach(async () => {
-      // one thousand seconds into future
-      const lockStartBlock = 15 * blocksPerMinute
-      const lockEndBlock = lockStartBlock + 15 * blocksPerMinute
-      pool = await createPool()
-    })
-
-    describe('lock()', () => {
-      beforeEach(async () => {
-        await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.deposit(ticketPrice, { from: user1 })
-      })
-
-      it('should not work for regular users', async () => {
-        let failed
-        try {
-          await pool.lock({ from: user1 })
-          failed = false
-        } catch (error) {
-          failed = true
-        }
-
-        assert.ok(failed, "pool should not have locked")
-      })
-
-      it('should support early locking by the owner', async () => {
-        await pool.lock(secretHash, { from: owner })
-      })
-    })
-  })
-
-  describe('when pool cannot be unlocked yet', () => {
-    beforeEach(async () => {
-
-      // in the past
-      let lockStartBlock = -10
-
-      // in the future
-      let lockEndBlock = 15 * blocksPerMinute
-
-      pool = await createPool()
-    })
-
-    describe('complete(secret)', () => {
-      beforeEach(async () => {
-        await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.deposit(ticketPrice, { from: user1 })
-        await pool.lock(secretHash)
-      })
-
-      it('should still work for the owner', async () => {
-        await pool.complete(secret)
-      })
-
-      it('should not work for anyone else', async () => {
-        let failed
-        try {
-          await pool.complete({ from: user1 })
-          failed = false
-        } catch (error) {
-          failed = true
-        }
-        assert.ok(failed, "call did not fail")
+        assert.equal(balance.toString(), ticketPrice.toString())
       })
     })
   })
@@ -368,14 +274,14 @@ contract('Pool', (accounts) => {
 
     it('should reward the owner the fee', async () => {
 
-      const pool = await createPool()
+      await createPool()
 
       const user1Tickets = ticketPrice.mul(new BN(100))
       await token.approve(pool.address, user1Tickets, { from: user1 })
       await pool.deposit(user1Tickets, { from: user1 })
 
       const ownerBalance = await token.balanceOf(owner)
-      await pool.lock(secretHash, { from: owner })
+      await pool.commit(secretHash, { from: owner })
 
       /// CErc20Mock awards 20% regardless of duration.
       const totalDeposit = user1Tickets
@@ -383,9 +289,9 @@ contract('Pool', (accounts) => {
       const fee = interestEarned.mul(new BN(10)).div(new BN(100))
 
       // we expect unlocking to transfer the fee to the owner
-      await pool.complete(secret, { from: owner })
+      await rewardAndCommit()
 
-      assert.equal((await pool.feeAmount()).toString(), fee.toString())
+      assert.equal(Rewarded.args.fee.toString(), fee.toString())
 
       assert.equal((await pool.balanceOf(owner)).toString(), fee.toString())
 

@@ -20,7 +20,7 @@ library DrawManager {
         mapping(address => uint256) usersFirstDrawIndex;
         mapping(address => uint256) usersSecondDrawIndex;
         mapping(uint256 => Draw) draws;
-        uint256 currentDrawIndex;
+        uint256 openDrawIndex;
         uint256 eligibleSupply;
     }
 
@@ -29,17 +29,17 @@ library DrawManager {
      */
     function openNextDraw(DrawState storage drawState) public returns (uint256) {
         // If there is no previous draw, we must initialize
-        if (drawState.currentDrawIndex == 0) {
+        if (drawState.openDrawIndex == 0) {
             drawState.sortitionSumTrees.createTree(TREE_OF_DRAWS, 4);
         } else { // else add current draw to sortition sum trees
-            Draw storage draw = drawState.draws[drawState.currentDrawIndex];
+            Draw storage draw = drawState.draws[drawState.openDrawIndex];
             drawState.sortitionSumTrees.set(TREE_OF_DRAWS, draw.total, bytes32(draw.index));
             drawState.eligibleSupply = drawState.eligibleSupply.add(draw.total);
         }
         // now create a new draw
-        uint256 drawIndex = drawState.currentDrawIndex.add(1);
+        uint256 drawIndex = drawState.openDrawIndex.add(1);
         drawState.sortitionSumTrees.createTree(bytes32(drawIndex), 4);
-        drawState.currentDrawIndex = drawIndex;
+        drawState.openDrawIndex = drawIndex;
         drawState.draws[drawIndex] = Draw(
             drawIndex,
             0
@@ -50,33 +50,33 @@ library DrawManager {
 
     function deposit(DrawState storage drawState, address user, uint256 amount) public requireOpenDraw(drawState) {
         bytes32 userId = bytes32(uint256(user));
-        uint256 currentDrawIndex = drawState.currentDrawIndex;
+        uint256 openDrawIndex = drawState.openDrawIndex;
 
         // update the current draw
-        uint256 currentAmount = drawState.sortitionSumTrees.stakeOf(bytes32(currentDrawIndex), userId);
+        uint256 currentAmount = drawState.sortitionSumTrees.stakeOf(bytes32(openDrawIndex), userId);
         currentAmount = currentAmount.add(amount);
-        drawSet(drawState, currentDrawIndex, currentAmount, user);
+        drawSet(drawState, openDrawIndex, currentAmount, user);
 
         uint256 firstDrawIndex = drawState.usersFirstDrawIndex[user];
         uint256 secondDrawIndex = drawState.usersSecondDrawIndex[user];
 
         // if this is the users first draw, set it
         if (firstDrawIndex == 0) {
-            drawState.usersFirstDrawIndex[user] = currentDrawIndex;
+            drawState.usersFirstDrawIndex[user] = openDrawIndex;
         // otherwise, if the first draw is not this draw
-        } else if (firstDrawIndex != currentDrawIndex) {
+        } else if (firstDrawIndex != openDrawIndex) {
             // if a second draw does not exist
             if (secondDrawIndex == 0) {
                 // set the second draw to the current draw
-                drawState.usersSecondDrawIndex[user] = currentDrawIndex;
+                drawState.usersSecondDrawIndex[user] = openDrawIndex;
             // otherwise if a second draw exists but is not the current one
-            } else if (secondDrawIndex != currentDrawIndex) {
+            } else if (secondDrawIndex != openDrawIndex) {
                 // merge it into the first draw, and update the second draw index to this one
                 uint256 firstAmount = drawState.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
                 uint256 secondAmount = drawState.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
                 drawSet(drawState, firstDrawIndex, firstAmount.add(secondAmount), user);
                 drawSet(drawState, secondDrawIndex, 0, user);
-                drawState.usersSecondDrawIndex[user] = currentDrawIndex;
+                drawState.usersSecondDrawIndex[user] = openDrawIndex;
             }
         }
     }
@@ -126,11 +126,11 @@ library DrawManager {
         uint256 firstDrawIndex = drawState.usersFirstDrawIndex[user];
         uint256 secondDrawIndex = drawState.usersSecondDrawIndex[user];
 
-        if (firstDrawIndex != 0 && firstDrawIndex != drawState.currentDrawIndex) {
+        if (firstDrawIndex != 0 && firstDrawIndex != drawState.openDrawIndex) {
             balance = balance.add(drawState.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), bytes32(uint256(user))));
         }
 
-        if (secondDrawIndex != 0 && secondDrawIndex != drawState.currentDrawIndex) {
+        if (secondDrawIndex != 0 && secondDrawIndex != drawState.openDrawIndex) {
             balance = balance.add(drawState.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), bytes32(uint256(user))));
         }
 
@@ -138,16 +138,16 @@ library DrawManager {
     }
 
     function openBalanceOf(DrawState storage drawState, address user) public view returns (uint256) {
-        if (drawState.currentDrawIndex == 0) {
+        if (drawState.openDrawIndex == 0) {
             return 0;
         } else {
-            return drawState.sortitionSumTrees.stakeOf(bytes32(drawState.currentDrawIndex), bytes32(uint256(user)));
+            return drawState.sortitionSumTrees.stakeOf(bytes32(drawState.openDrawIndex), bytes32(uint256(user)));
         }
     }
 
     function openSupply(DrawState storage drawState) public view returns (uint256) {
-        if (drawState.currentDrawIndex > 0) {
-            return drawState.draws[drawState.currentDrawIndex].total;
+        if (drawState.openDrawIndex > 0) {
+            return drawState.draws[drawState.openDrawIndex].total;
         } else {
             return 0;
         }
@@ -170,14 +170,14 @@ library DrawManager {
             if (oldAmount > amount) {
                 uint256 diffAmount = oldAmount.sub(amount);
                 draw.total = draw.total.sub(diffAmount);
-                if (drawIndex != drawState.currentDrawIndex) {
+                if (drawIndex != drawState.openDrawIndex) {
                     drawState.sortitionSumTrees.set(TREE_OF_DRAWS, draw.total, drawId);
                     drawState.eligibleSupply = drawState.eligibleSupply.sub(diffAmount);
                 }
             } else { // oldAmount < amount
                 uint256 diffAmount = amount.sub(oldAmount);
                 draw.total = draw.total.add(diffAmount);
-                if (drawIndex != drawState.currentDrawIndex) {
+                if (drawIndex != drawState.openDrawIndex) {
                     drawState.sortitionSumTrees.set(TREE_OF_DRAWS, draw.total, drawId);
                     drawState.eligibleSupply = drawState.eligibleSupply.add(diffAmount);
                 }
@@ -204,7 +204,7 @@ library DrawManager {
     }
 
     modifier requireOpenDraw(DrawState storage drawState) {
-        require(drawState.currentDrawIndex > 0, "there is no open draw");
+        require(drawState.openDrawIndex > 0, "there is no open draw");
         _;
     }
 }
