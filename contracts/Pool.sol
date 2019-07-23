@@ -36,6 +36,11 @@ contract Pool is Ownable {
    */
   event Withdrawn(address indexed sender, uint256 amount);
 
+  event PoolOpened(
+    uint256 id,
+    uint256 feeFraction
+  );
+
   /**
    * Emitted when the pool is locked.
    */
@@ -52,31 +57,12 @@ contract Pool is Ownable {
   event PoolComplete(address indexed winner);
 
   /**
-   * Emitted when the open duration is changed.
-   * @param durationInBlocks The new duration in blocks
-   */
-  event OpenDurationChanged(uint256 durationInBlocks);
-
-  /**
-   * Emitted when the lock duration is changed.
-   * @param durationInBlocks The new duration in blocks
-   */
-  event LockDurationChanged(uint256 durationInBlocks);
-
-  /**
    * Emitted when the fee fraction is changed
    * @param feeFractionFixedPoint18 The new fee fraction encoded as a fixed point 18 decimal
    */
   event FeeFractionChanged(int256 feeFractionFixedPoint18);
 
-  /**
-   * Emitted when the allow lock anytime is changed
-   * @param allowLockAnytime The value of allow lock anytime
-   */
-  event AllowLockAnytimeChanged(bool allowLockAnytime);
-
   enum State {
-    NEW,
     OPEN,
     LOCKED,
     UNLOCKED,
@@ -86,35 +72,12 @@ contract Pool is Ownable {
   mapping (address => uint256) balances;
 
   /**
-   * The open duration in blocks to use for the next Pool
-   */
-  uint256 public openDurationInBlocks;
-
-  /**
-   * The lock duration in blocks to use for the next Pool
-   */
-  uint256 public lockDurationInBlocks;
-
-  /**
    * The owner fee fraction to use for the next Pool
    */
   int256 private feeFractionFixedPoint18;
 
-  /**
-   * The number of Pools that have been created
-   */
-  uint256 public poolCount;
-
-  /**
-   * Whether to allow the owner of the next Pool to lock and unlock at anytime.
-   */
-  bool public allowLockAnytime;
-
   int256 private totalAmount; // fixed point 24
-
   uint256 private drawCount;
-  uint256 private lockStartBlock;
-  uint256 private lockEndBlock;
   bytes32 private secretHash;
   bytes32 private secret;
   State public state;
@@ -123,29 +86,22 @@ contract Pool is Ownable {
   IERC20 public token;
   int256 private feeFraction; //fixed point 24
   bool private ownerHasWithdrawn;
-  bool public drawAllowLockAnytime;
   address private winningAddress;
 
   DrawManager.DrawState drawState;
 
   /**
-   * @notice Initializes a new Pool contract.  Generally called through ZeppelinOS
+   * @notice Initializes a new Pool contract.
    * @param _admin The admin of the Pool.  They are able to change settings and are set as the owner of new lotteries.
    * @param _moneyMarket The Compound Finance MoneyMarket contract to supply and withdraw tokens.
    * @param _token The token to use for the Pools
-   * @param _openDurationInBlocks The duration between a Pool's creation and when it can be locked.
-   * @param _lockDurationInBlocks The duration that a Pool must be locked for.
    * @param _feeFractionFixedPoint18 The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
-   * @param _allowLockAnytime Whether the owner can lock and unlock the pools at any time.
    */
   function init (
     address _admin,
     address _moneyMarket,
     address _token,
-    uint256 _openDurationInBlocks,
-    uint256 _lockDurationInBlocks,
-    int256 _feeFractionFixedPoint18,
-    bool _allowLockAnytime
+    int256 _feeFractionFixedPoint18
   ) public initializer {
     require(_admin != address(0), "owner cannot be the null address");
     require(_moneyMarket != address(0), "money market address is zero");
@@ -157,18 +113,19 @@ contract Pool is Ownable {
     require(_token == moneyMarket.underlying(), "token does not match the underlying money market token");
 
     _setFeeFraction(_feeFractionFixedPoint18);
-    _setLockDuration(_lockDurationInBlocks);
-    _setOpenDuration(_openDurationInBlocks);
-    _setAllowLockAnytime(_allowLockAnytime);
+
+    open();
   }
 
-  function open() public onlyOwner requireCompleteOrNew {
-    lockStartBlock = block.number + openDurationInBlocks;
-    lockEndBlock = lockStartBlock + lockDurationInBlocks;
+  function open() internal {
     feeFraction = FixidityLib.newFixed(feeFractionFixedPoint18, uint8(18));
-    drawState.openNextDraw();
+    drawCount = drawState.openNextDraw();
     state = State.OPEN;
-    drawAllowLockAnytime = allowLockAnytime;
+
+    emit PoolOpened(
+      drawCount,
+      uint256(feeFractionFixedPoint18)
+    );
   }
 
   /**
@@ -190,9 +147,6 @@ contract Pool is Ownable {
     int256 totalDeposit = FixidityLib.newFixed(int256(totalDepositNonFixed));
     totalAmount = FixidityLib.add(totalAmount, totalDeposit);
 
-    // Require that the the total of this contract does not exceed the max pool size
-    require(totalAmount <= maxPoolSizeFixedPoint24(FixidityLib.maxFixedDiv()), "pool size exceeds maximum");
-
     // Deposit into Compound
     require(token.approve(address(moneyMarket), totalDepositNonFixed), "could not approve money market spend");
     require(moneyMarket.mint(totalDepositNonFixed) == 0, "could not supply money market");
@@ -206,26 +160,15 @@ contract Pool is Ownable {
    * Fires the PoolLocked event.
    */
   function lock(bytes32 _secretHash) external requireOpen onlyOwner {
-    if (drawAllowLockAnytime) {
-      lockStartBlock = block.number;
-    } else {
-      require(block.number >= lockStartBlock, "pool can only be locked on or after lock start block");
-    }
     require(_secretHash != 0, "secret hash must be defined");
+    open();
     secretHash = _secretHash;
     state = State.LOCKED;
-    drawState.openNextDraw();
 
     emit PoolLocked();
   }
 
   function unlock() public requireLocked {
-    if (drawAllowLockAnytime && msg.sender == owner()) {
-      lockEndBlock = block.number;
-    } else {
-      require(lockEndBlock < block.number, "pool cannot be unlocked yet");
-    }
-
     uint256 balance = moneyMarket.balanceOfUnderlying(address(this));
     if (balance > 0) {
       finalAmount = FixidityLib.newFixed(int256(balance));
@@ -385,26 +328,22 @@ contract Pool is Ownable {
    */
   function getInfo() public view returns (
     int256 entryTotal,
-    uint256 startBlock,
-    uint256 endBlock,
     State poolState,
     address winner,
     int256 supplyBalanceTotal,
-    int256 maxPoolSize,
-    int256 estimatedInterestFixedPoint18,
     bytes32 hashOfSecret
   ) {
     return (
       FixidityLib.fromFixed(totalAmount),
-      lockStartBlock,
-      lockEndBlock,
       state,
       winningAddress,
       FixidityLib.fromFixed(finalAmount),
-      FixidityLib.fromFixed(maxPoolSizeFixedPoint24(FixidityLib.maxFixedDiv())),
-      FixidityLib.fromFixed(currentInterestFractionFixedPoint24(), uint8(18)),
       secretHash
     );
+  }
+
+  function maxPoolSize(int256 blocks) public view returns (int256) {
+    return FixidityLib.fromFixed(maxPoolSizeFixedPoint24(blocks, FixidityLib.maxFixedDiv()));
   }
 
   /**
@@ -412,18 +351,21 @@ contract Pool is Ownable {
    * @dev poolSize = totalDeposits + totalDeposits * interest => totalDeposits = poolSize / (1 + interest)
    * @return The maximum size of the pool to be deposited into the money market
    */
-  function maxPoolSizeFixedPoint24(int256 _maxValueFixedPoint24) public view returns (int256) {
+  function maxPoolSizeFixedPoint24(int256 blocks, int256 _maxValueFixedPoint24) public view returns (int256) {
     /// Double the interest rate in case it increases over the lock period.  Somewhat arbitrarily.
-    int256 interestFraction = FixidityLib.multiply(currentInterestFractionFixedPoint24(), FixidityLib.newFixed(2));
+    int256 interestFraction = FixidityLib.multiply(currentInterestFractionFixedPoint24(blocks), FixidityLib.newFixed(2));
     return FixidityLib.divide(_maxValueFixedPoint24, FixidityLib.add(interestFraction, FixidityLib.newFixed(1)));
+  }
+
+  function estimatedInterestRate(int256 blocks) public view returns (int256) {
+    return FixidityLib.fromFixed(currentInterestFractionFixedPoint24(blocks), uint8(18));
   }
 
   /**
    * @notice Estimates the current effective interest rate using the money market's current supplyRateMantissa and the lock duration in blocks.
    * @return The current estimated effective interest rate
    */
-  function currentInterestFractionFixedPoint24() public view returns (int256) {
-    int256 blockDuration = int256(lockEndBlock - lockStartBlock);
+  function currentInterestFractionFixedPoint24(int256 blockDuration) public view returns (int256) {
     int256 supplyRateMantissaFixedPoint24 = FixidityLib.newFixed(int256(supplyRateMantissa()), uint8(18));
     return FixidityLib.multiply(supplyRateMantissaFixedPoint24, FixidityLib.newFixed(blockDuration));
   }
@@ -446,38 +388,6 @@ contract Pool is Ownable {
   }
 
   /**
-   * @notice Sets the open duration in blocks for new Pools.
-   * Fires the OpenDurationChanged event.
-   * Can only be set by the owner.  Fires the OpenDurationChanged event.
-   * @param _openDurationInBlocks The duration, in blocks, that a pool must be open for after it is created.
-   */
-  function setOpenDuration(uint256 _openDurationInBlocks) public onlyOwner {
-    _setOpenDuration(_openDurationInBlocks);
-  }
-
-  function _setOpenDuration(uint256 _openDurationInBlocks) internal {
-    openDurationInBlocks = _openDurationInBlocks;
-
-    emit OpenDurationChanged(_openDurationInBlocks);
-  }
-
-  /**
-   * @notice Sets the lock duration in blocks for new Pools.
-   * Fires the LockDurationChanged event.
-   * Can only be set by the owner.  Only applies to subsequent Pools.
-   * @param _lockDurationInBlocks The duration, in blocks, that new pools must be locked for.
-   */
-  function setLockDuration(uint256 _lockDurationInBlocks) public onlyOwner {
-    _setLockDuration(_lockDurationInBlocks);
-  }
-
-  function _setLockDuration(uint256 _lockDurationInBlocks) internal {
-    lockDurationInBlocks = _lockDurationInBlocks;
-
-    emit LockDurationChanged(_lockDurationInBlocks);
-  }
-
-  /**
    * @notice Sets the fee fraction paid out to the Pool owner.
    * Fires the FeeFractionChanged event.
    * Can only be called by the owner. Only applies to subsequent Pools.
@@ -496,22 +406,6 @@ contract Pool is Ownable {
     emit FeeFractionChanged(_feeFractionFixedPoint18);
   }
 
-  /**
-   * @notice Allows the owner to set whether a Pool can be locked and unlocked at any time.
-   * Fires the AllowLockAnytimeChanged event.
-   * Can only be set by the owner.  Only applies to subsequent Pools.
-   * @param _allowLockAnytime True if the Pool can be locked and unlocked anytime, false otherwise.
-   */
-  function setAllowLockAnytime(bool _allowLockAnytime) public onlyOwner {
-    _setAllowLockAnytime(_allowLockAnytime);
-  }
-
-  function _setAllowLockAnytime(bool _allowLockAnytime) internal {
-    allowLockAnytime = _allowLockAnytime;
-
-    emit AllowLockAnytimeChanged(_allowLockAnytime);
-  }
-
   modifier requireOpen() {
     require(state == State.OPEN, "state is not open");
     _;
@@ -524,12 +418,11 @@ contract Pool is Ownable {
 
   modifier requireComplete() {
     require(state == State.COMPLETE, "pool is not complete");
-    require(block.number > lockEndBlock, "block is before lock end period");
     _;
   }
 
   modifier requireCompleteOrNew() {
-    require(state == State.NEW || state == State.COMPLETE, "pool is not new or complete");
+    require(state == State.OPEN || state == State.COMPLETE, "pool is not new or complete");
     _;
   }
 }

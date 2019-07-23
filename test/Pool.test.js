@@ -45,7 +45,7 @@ contract('Pool', (accounts) => {
     await token.mint(user2, web3.utils.toWei('100000', 'ether'))
   })
 
-  async function createPool(od = openDuration, ld = lockDuration, allowLockAnytime = true) {
+  async function createPool() {
     await Pool.link("DrawManager", drawManager.address)
     await Pool.link("FixidityLib", fixidity.address)
 
@@ -54,76 +54,34 @@ contract('Pool', (accounts) => {
       owner,
       moneyMarket.address,
       token.address,
-      od,
-      ld,
-      feeFraction,
-      allowLockAnytime
+      feeFraction
     )
-
-    await pool.open()
 
     return pool
   }
 
   describe('supplyRateMantissa()', () => {
     it('should work', async () => {
-      pool = await createPool(10, 10) // ten blocks long
+      pool = await createPool() // ten blocks long
       assert.equal(await pool.supplyRateMantissa(), web3.utils.toWei('0.1', 'ether'))
     })
   })
 
   describe('currentInterestFractionFixedPoint24()', () => {
     it('should return the right value', async () => {
-      pool = await createPool(10, 10) // ten blocks long
-      const interestFraction = await pool.currentInterestFractionFixedPoint24()
+      pool = await createPool() // ten blocks long
+      const interestFraction = await pool.currentInterestFractionFixedPoint24(10)
       assert.equal(interestFraction.toString(), web3.utils.toWei('1000000', 'ether'))
     })
   })
 
   describe('maxPoolSize()', () => {
     it('should set an appropriate limit based on max integers', async () => {
-      pool = await createPool(10, 10) // ten blocks long
+      pool = await createPool() // ten blocks long
       const limit = await fixidity.newFixed(new BN('1000'))
-      const maxSize = await pool.maxPoolSizeFixedPoint24(limit);
+      const maxSize = await pool.maxPoolSizeFixedPoint24(10, limit);
       const poolLimit = new BN('333333333333333333333333000')
       assert.equal(maxSize.toString(), poolLimit.toString())
-    })
-  })
-
-  describe('pool that is still open and must respect block start and end', () => {
-    beforeEach(async () => {
-      pool = await createPool(9, 10, false)
-    })
-
-    describe('lock()', () => {
-      it('cannot be locked before the open duration is over', async () => {
-        let failed = false
-        try {
-          await pool.lock(secretHash)
-        } catch (error) {
-          failed = true
-        }
-        assert.ok(failed, "pool should not have been able to lock()")
-      })
-    })
-  })
-
-  describe('pool that is still during the lock period', () => {
-    beforeEach(async () => {
-      pool = await createPool(1, 10, false)
-    })
-
-    describe('complete(secret)', () => {
-      it('cannot be unlocked before the lock duration ends', async () => {
-        await pool.lock(secretHash)
-        let failed = false
-        try {
-          await pool.complete(secret)
-        } catch (error) {
-          failed = true
-        }
-        assert.ok(failed, "pool should not have been able to lock()")
-      })
     })
   })
 
@@ -339,7 +297,7 @@ contract('Pool', (accounts) => {
       // one thousand seconds into future
       const lockStartBlock = 15 * blocksPerMinute
       const lockEndBlock = lockStartBlock + 15 * blocksPerMinute
-      pool = await createPool(lockStartBlock, lockEndBlock)
+      pool = await createPool()
     })
 
     describe('lock()', () => {
@@ -375,7 +333,7 @@ contract('Pool', (accounts) => {
       // in the future
       let lockEndBlock = 15 * blocksPerMinute
 
-      pool = await createPool(lockStartBlock, lockEndBlock)
+      pool = await createPool()
     })
 
     describe('complete(secret)', () => {
@@ -410,7 +368,7 @@ contract('Pool', (accounts) => {
 
     it('should reward the owner the fee', async () => {
 
-      const pool = await createPool(0, 1)
+      const pool = await createPool()
 
       const user1Tickets = ticketPrice.mul(new BN(100))
       await token.approve(pool.address, user1Tickets, { from: user1 })
