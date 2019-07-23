@@ -8,3 +8,5 @@ yarn-error.log
 zos.dev*.json
 .zos.session
 .zos.lock
+
+.openzeppelin/.session

@@ -1,9 +1,0 @@
-{
-  "zosversion": "2.2",
-  "name": "pooltogether",
-  "version": "0.1.1",
-  "contracts": {
-    "PoolManager": "PoolManager",
-    "Migrations": "Migrations"
-  }
-}

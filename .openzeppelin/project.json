@@ -1,0 +1,15 @@
+{
+  "manifestVersion": "2.2",
+  "contracts": {
+    "Pool": "Pool"
+  },
+  "dependencies": {},
+  "name": "pooltogether",
+  "version": "0.2",
+  "compiler": {
+    "manager": "truffle",
+    "compilerSettings": {
+      "optimizer": {}
+    }
+  }
+}
