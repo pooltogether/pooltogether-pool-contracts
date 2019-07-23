@@ -32,7 +32,7 @@
     "eth-gas-reporter": "0.2.0",
     "fixidity": "DeltaCamp/Fixidity#edf533f77df43b16a7b92f17af7a8930db01f293",
     "ganache-cli": "6.5.0",
-    "kleros": "DeltaCamp/kleros#605bee4497874030b74ad7257c1d7b5f53f42f4a",
+    "kleros": "DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c",
     "shelljs": "0.8.3",
     "truffle": "5.0.28",
     "truffle-deploy-registry": "0.5.0",

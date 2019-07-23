@@ -2252,9 +2252,9 @@ klaw@^1.0.0:
   optionalDependencies:
     graceful-fs "^4.1.9"
 
-kleros@DeltaCamp/kleros#605bee4497874030b74ad7257c1d7b5f53f42f4a:
+kleros@DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c:
   version "0.0.7"
-  resolved "https://codeload.github.com/DeltaCamp/kleros/tar.gz/605bee4497874030b74ad7257c1d7b5f53f42f4a"
+  resolved "https://codeload.github.com/DeltaCamp/kleros/tar.gz/d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c"
   dependencies:
     "@kleros/kleros-interaction" "^0.9.0"
     minimetoken "^0.2.0"
