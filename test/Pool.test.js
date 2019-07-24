@@ -6,13 +6,10 @@ const CErc20Mock = artifacts.require('CErc20Mock.sol')
 const FixidityLib = artifacts.require('FixidityLib.sol')
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
 const DrawManager = artifacts.require('DrawManager.sol')
-const mineBlocks = require('./helpers/mineBlocks')
 
 contract('Pool', (accounts) => {
   let pool, token, moneyMarket, sumTree, drawManager
   
-  const blocksPerMinute = 5
-
   let [owner, admin, user1, user2] = accounts
 
   let ticketPrice = new BN(web3.utils.toWei('10', 'ether'))
@@ -25,7 +22,7 @@ contract('Pool', (accounts) => {
   let secretHash = web3.utils.soliditySha3(secret)
   let supplyRateMantissa = '100000000000000000' // 0.1 per block
 
-  let Rewarded, winner, winnings
+  let Rewarded
 
   beforeEach(async () => {
     sumTree = await SortitionSumTreeFactory.new()
@@ -103,13 +100,13 @@ contract('Pool', (accounts) => {
       pool = await createPool()
     })
 
-    describe('deposit()', () => {
+    describe('depositPool()', () => {
       it('should fail if not enough tokens approved', async () => {
         await token.approve(pool.address, ticketPrice.div(new BN(2)), { from: user1 })
 
         let failed
         try {
-          await pool.deposit(ticketPrice, { from: user1 })
+          await pool.depositPool(ticketPrice, { from: user1 })
           failed = false
         } catch (error) {
           failed = true
@@ -120,7 +117,7 @@ contract('Pool', (accounts) => {
       it('should deposit some tokens into the pool', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
 
-        const response = await pool.deposit(ticketPrice, { from: user1 })
+        const response = await pool.depositPool(ticketPrice, { from: user1 })
         const deposited = response.receipt.logs[0]
         assert.equal(deposited.event, 'Deposited')
         assert.equal(deposited.address, pool.address)
@@ -131,10 +128,10 @@ contract('Pool', (accounts) => {
       it('should allow multiple deposits', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
 
-        await pool.deposit(ticketPrice, { from: user1 })
+        await pool.depositPool(ticketPrice, { from: user1 })
 
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.deposit(ticketPrice, { from: user1 })
+        await pool.depositPool(ticketPrice, { from: user1 })
 
         const amount = await pool.balanceOf(user1)
         assert.equal(amount.toString(), ticketPrice.mul(new BN(2)).toString())
@@ -144,7 +141,7 @@ contract('Pool', (accounts) => {
     describe('commit()', () => {
       it('should work', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.deposit(ticketPrice, { from: user1 })
+        await pool.depositPool(ticketPrice, { from: user1 })
         await pool.commit(secretHash)
       })
 
@@ -161,11 +158,60 @@ contract('Pool', (accounts) => {
       })
     })
 
+    describe('depositSponsorship()', () => {
+      beforeEach(async () => {
+        await token.approve(pool.address, ticketPrice, { from: user1 })
+        await pool.depositPool(ticketPrice, { from: user1 })
+      })
+
+      it('should contribute to the winnings', async () => {
+        // console.log('checkpoint 1')
+        await token.approve(pool.address, toWei('1000'), { from: user2 })
+        // console.log('checkpoint 2')
+        await pool.depositSponsorship(toWei('1000'), { from: user2 })
+        
+        // Sponsor has no pool balance
+        assert.equal((await pool.balanceOf(user2)).toString(), toWei('0'))
+
+        // Sponsor has a sponsorship balance
+        assert.equal((await pool.balanceOfSponsorship(user2)).toString(), toWei('1000'))
+
+        await pool.commit(secretHash)
+        await rewardAndCommit()
+
+        assert.equal(Rewarded.event, 'Rewarded')
+        assert.equal(Rewarded.args.winner, user1)
+
+        // User's winnings include interest from the sponsorship
+        assert.equal(Rewarded.args.winnings.toString(), toWei('202'))
+
+        // User's balance includes their winnings and the ticket price
+        assert.equal((await pool.balanceOf(user1)).toString(), toWei('212'))
+      })
+    })
+
+    describe('withdrawSponsorship()', () => {
+      beforeEach(async () => {
+        await token.approve(pool.address, toWei('1000'), { from: user2 })
+        await pool.depositSponsorship(toWei('1000'), { from: user2 })
+      })
+
+      it('should allow the sponsor to withdraw partially', async () => {
+        const user2BalanceBefore = await token.balanceOf(user2)
+
+        await pool.withdrawSponsorship(toWei('500'), { from: user2 })
+
+        assert.equal((await pool.balanceOfSponsorship(user2)).toString(), toWei('500'))
+        const user2BalanceAfter = await token.balanceOf(user2)
+        assert.equal(user2BalanceAfter.toString(), user2BalanceBefore.add(new BN(toWei('500'))).toString())
+      })
+    })
+
     describe('rewardAndCommit(secret, secretHash)', () => {
       describe('with one user', () => {
         beforeEach(async () => {
           await token.approve(pool.address, ticketPrice, { from: user1 })
-          await pool.deposit(ticketPrice, { from: user1 })
+          await pool.depositPool(ticketPrice, { from: user1 })
           await pool.commit(secretHash)
         })
 
@@ -173,7 +219,10 @@ contract('Pool', (accounts) => {
           await rewardAndCommit()
           assert.equal(Rewarded.event, 'Rewarded')
           assert.equal(Rewarded.args.winner, user1)
-          assert.equal(Rewarded.args.winnings, toWei('2'))
+          assert.equal(Rewarded.args.winnings.toString(), toWei('2'))
+
+          12000000000000000000
+          2000000000000000000
         })
       })
 
@@ -196,10 +245,10 @@ contract('Pool', (accounts) => {
       })
     })
 
-    describe('withdraw()', () => {
+    describe('withdrawPool()', () => {
       it('should work for one participant', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.deposit(ticketPrice, { from: user1 })
+        await pool.depositPool(ticketPrice, { from: user1 })
         await pool.commit(secretHash)
         await rewardAndCommit()
 
@@ -209,7 +258,7 @@ contract('Pool', (accounts) => {
         assert.equal(balance.toString(), toWei('12'))
 
         const balanceBefore = await token.balanceOf(user1)
-        await pool.withdraw({ from: user1 })
+        await pool.withdrawPool({ from: user1 })
         const balanceAfter = await token.balanceOf(user1)
 
         assert.equal(balanceAfter.toString(), (new BN(balanceBefore).add(balance)).toString())
@@ -219,11 +268,11 @@ contract('Pool', (accounts) => {
 
         await token.approve(pool.address, priceForTenTickets, { from: user1 })
 
-        await pool.deposit(priceForTenTickets, { from: user1 })
+        await pool.depositPool(priceForTenTickets, { from: user1 })
 
         await token.approve(pool.address, priceForTenTickets, { from: user2 })
 
-        await pool.deposit(priceForTenTickets, { from: user2 })
+        await pool.depositPool(priceForTenTickets, { from: user2 })
 
         await pool.commit(secretHash)
 
@@ -233,11 +282,11 @@ contract('Pool', (accounts) => {
         assert.equal(Rewarded.event, 'Rewarded')
         
         const user1BalanceBefore = await token.balanceOf(user1)
-        await pool.withdraw({ from: user1 })
+        await pool.withdrawPool({ from: user1 })
         const user1BalanceAfter = await token.balanceOf(user1)
 
         const user2BalanceBefore = await token.balanceOf(user2)        
-        await pool.withdraw({ from: user2 })
+        await pool.withdrawPool({ from: user2 })
         const user2BalanceAfter = await token.balanceOf(user2)
 
         const earnedInterest = priceForTenTickets.mul(new BN(2)).mul(new BN(20)).div(new BN(100))
@@ -257,7 +306,7 @@ contract('Pool', (accounts) => {
     describe('balanceOf()', () => {
       it('should return the entrants total to withdraw', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
-        await pool.deposit(ticketPrice, { from: user1 })
+        await pool.depositPool(ticketPrice, { from: user1 })
 
         let balance = await pool.balanceOf(user1)
 
@@ -278,7 +327,7 @@ contract('Pool', (accounts) => {
 
       const user1Tickets = ticketPrice.mul(new BN(100))
       await token.approve(pool.address, user1Tickets, { from: user1 })
-      await pool.deposit(user1Tickets, { from: user1 })
+      await pool.depositPool(user1Tickets, { from: user1 })
 
       const ownerBalance = await token.balanceOf(owner)
       await pool.commit(secretHash, { from: owner })
@@ -297,7 +346,7 @@ contract('Pool', (accounts) => {
 
       // we expect the pool winner to receive the interest less the fee
       const user1Balance = await token.balanceOf(user1)
-      await pool.withdraw({ from: user1 })
+      await pool.withdrawPool({ from: user1 })
       const newUser1Balance = await token.balanceOf(user1)
       assert.equal(newUser1Balance.toString(), user1Balance.add(user1Tickets).add(interestEarned).sub(fee).toString())
     })

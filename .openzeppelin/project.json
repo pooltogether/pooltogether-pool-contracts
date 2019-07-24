@@ -7,9 +7,10 @@
   "name": "pooltogether",
   "version": "0.2",
   "compiler": {
-    "manager": "truffle",
+    "manager": "openzeppelin",
     "compilerSettings": {
       "optimizer": {}
-    }
+    },
+    "solcVersion": "0.5.10"
   }
 }

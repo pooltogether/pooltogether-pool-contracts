@@ -10,6 +10,16 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./IPool.sol";
 
 /**
+
+  What should be swappable: 
+
+  1. Winner selection
+  2. Fund dispersion?  Fee fraction should possibly be optional
+
+ */
+
+
+/**
  * @title The Pool contract for PoolTogether
  * @author Brendan Asselstine
  * @notice This contract implements a "lossless pool".  The pool exists in three states: open, locked, and complete.
@@ -22,6 +32,8 @@ import "./IPool.sol";
 contract Pool is IPool, Ownable {
   using DrawManager for DrawManager.DrawState;
   using SafeMath for uint256;
+
+  uint256 constant UINT256_MAX = ~uint256(0);
 
   /**
    * Emitted when "tickets" have been purchased.
@@ -42,6 +54,7 @@ contract Pool is IPool, Ownable {
    */
   event Opened(
     uint256 indexed drawId,
+    uint256 startingTotal,
     uint256 feeFraction
   );
 
@@ -68,6 +81,7 @@ contract Pool is IPool, Ownable {
   event FeeFractionChanged(uint256 feeFractionFixedPoint18);
 
   struct Draw {
+    int256 startingTotal; //fixed point 24
     int256 feeFraction; //fixed point 24
   }
 
@@ -78,6 +92,7 @@ contract Pool is IPool, Ownable {
   ICErc20 public moneyMarket;
   IERC20 public token;
   mapping (address => uint256) balances;
+  mapping (address => uint256) sponsorshipBalances;
   int256 private totalAmount; // fixed point 24
   mapping(uint256 => Draw) draws;
   bytes32 private secretHash;
@@ -116,10 +131,11 @@ contract Pool is IPool, Ownable {
 
     int256 feeFraction = FixidityLib.newFixed(int256(feeFractionFixedPoint18), uint8(18));
 
-    draws[drawState.openDrawIndex] = Draw(feeFraction);
+    draws[drawState.openDrawIndex] = Draw(0, feeFraction);
 
     emit Opened(
       drawState.openDrawIndex,
+      uint256(FixidityLib.fromFixed(totalAmount)),
       feeFractionFixedPoint18
     );
   }
@@ -137,30 +153,43 @@ contract Pool is IPool, Ownable {
       drawState.openDrawIndex,
       _secretHash
     );
+    draws[drawState.openDrawIndex].startingTotal = totalAmount;
     open();
+  }
+
+  function depositSponsorship(uint256 totalDepositNonFixed) public {
+    sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].add(totalDepositNonFixed);
+
+    // Deposit the funds
+    _deposit(totalDepositNonFixed);
   }
 
   /**
    * @notice Deposits into the pool.  Deposits will become eligible in the next pool.
    */
-  function deposit (uint256 totalDepositNonFixed) public {
-    require(totalDepositNonFixed > 0, "deposit is greater than zero");
-
-    // Transfer the tokens into this contract
-    require(token.transferFrom(msg.sender, address(this), totalDepositNonFixed), "token transfer failed");
-
+  function depositPool(uint256 totalDepositNonFixed) public {
     // Update the user's balance
     balances[msg.sender] = balances[msg.sender].add(totalDepositNonFixed);
 
     // Update the user's eligibility
     drawState.deposit(msg.sender, totalDepositNonFixed);
 
+    // Deposit the funds
+    _deposit(totalDepositNonFixed);
+  }
+
+  function _deposit(uint256 totalDepositNonFixed) internal {
+    require(totalDepositNonFixed > 0, "deposit is greater than zero");
+
+    // Transfer the tokens into this contract
+    require(token.transferFrom(msg.sender, address(this), totalDepositNonFixed), "token transfer failed");
+
     // Update the total of this contract
     int256 totalDeposit = FixidityLib.newFixed(int256(totalDepositNonFixed));
     totalAmount = FixidityLib.add(totalAmount, totalDeposit);
 
     // Deposit into Compound
-    require(token.approve(address(moneyMarket), totalDepositNonFixed), "could not approve money market spend");
+    ensureAllowance(totalDepositNonFixed);
     require(moneyMarket.mint(totalDepositNonFixed) == 0, "could not supply money market");
 
     emit Deposited(msg.sender, totalDepositNonFixed);
@@ -172,8 +201,6 @@ contract Pool is IPool, Ownable {
    * Fires the PoolUnlocked event.
    */
   function reward(bytes32 secret) internal {
-    
-
     require(keccak256(abi.encodePacked(secret)) == secretHash, "secret does not match");
     secretHash = 0;
 
@@ -182,7 +209,7 @@ contract Pool is IPool, Ownable {
 
     uint256 balance = moneyMarket.balanceOfUnderlying(address(this));
     int256 balanceFixed = FixidityLib.newFixed(int256(balance));
-    int256 grossWinningsFixed = FixidityLib.subtract(balanceFixed, FixidityLib.newFixed(int256(drawState.eligibleSupply)));
+    int256 grossWinningsFixed = FixidityLib.subtract(balanceFixed, draw.startingTotal);
     int256 feeFixed = FixidityLib.multiply(grossWinningsFixed, draw.feeFraction);
     uint256 fee = uint256(FixidityLib.fromFixed(feeFixed));
     int256 winningsFixed = FixidityLib.subtract(grossWinningsFixed, feeFixed);
@@ -212,12 +239,21 @@ contract Pool is IPool, Ownable {
     commit(_newSecretHash);
   }
 
+  function withdrawSponsorship(uint256 amount) public {
+    require(sponsorshipBalances[msg.sender] >= amount, "amount exceeds sponsorship balance");
+
+    // Update the sponsorship balance
+    sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].sub(amount);
+
+    _withdraw(amount);
+  }
+
   /**
    * @notice Transfers a users deposit, and potential winnings, back to them.
    * The Pool must be unlocked.
    * The user must have deposited funds.  Fires the Withdrawn event.
    */
-  function withdraw() public {
+  function withdrawPool() public {
     require(balances[msg.sender] > 0, "entrant has already withdrawn");
 
     // Update the user's balance
@@ -228,14 +264,20 @@ contract Pool is IPool, Ownable {
     uint256 drawBalance = drawState.balanceOf(msg.sender);
     drawState.withdraw(msg.sender, drawBalance);
 
+    _withdraw(balance);
+  }
+
+  function _withdraw(uint256 totalNonFixed) internal {
+    require(totalNonFixed > 0, "withdrawal is greater than zero");
+
     // Update the total of this contract
-    totalAmount = FixidityLib.subtract(totalAmount, FixidityLib.newFixed(int256(balance)));
+    totalAmount = FixidityLib.subtract(totalAmount, FixidityLib.newFixed(int256(totalNonFixed)));
 
     // Withdraw from Compound and transfer
-    require(moneyMarket.redeemUnderlying(balance) == 0, "could not redeem from compound");
-    require(token.transfer(msg.sender, balance), "could not transfer winnings");
+    require(moneyMarket.redeemUnderlying(totalNonFixed) == 0, "could not redeem from compound");
+    require(token.transfer(msg.sender, totalNonFixed), "could not transfer winnings");
 
-    emit Withdrawn(msg.sender, balance);
+    emit Withdrawn(msg.sender, totalNonFixed);
   }
 
   /**
@@ -252,6 +294,14 @@ contract Pool is IPool, Ownable {
    */
   function balanceOf(address _addr) public view returns (uint256) {
     return balances[_addr];
+  }
+
+  /**
+   * @notice Calculates a user's total balance.
+   * @return The users's current balance.
+   */
+  function balanceOfSponsorship(address _addr) public view returns (uint256) {
+    return sponsorshipBalances[_addr];
   }
 
   function calculateWinner(uint256 entropy) public view returns (address) {
@@ -312,15 +362,6 @@ contract Pool is IPool, Ownable {
   }
 
   /**
-   * @notice Determines whether a given address has deposited
-   * @param _addr The given address
-   * @return Returns true if the given address deposited, false otherwise.
-   */
-  function _hasEntry(address _addr) internal view returns (bool) {
-    return balances[_addr] > 0;
-  }
-
-  /**
    * @notice Sets the fee fraction paid out to the Pool owner.
    * Fires the FeeFractionChanged event.
    * Can only be called by the owner. Only applies to subsequent Pools.
@@ -329,6 +370,12 @@ contract Pool is IPool, Ownable {
    */
   function setFeeFraction(uint256 _feeFractionFixedPoint18) public onlyOwner {
     _setFeeFraction(_feeFractionFixedPoint18);
+  }
+
+  function ensureAllowance(uint256 amount) internal {
+    if (token.allowance(address(this), address(moneyMarket)) < amount) {
+      require(token.approve(address(moneyMarket), UINT256_MAX), "could not approve money market spend");
+    }
   }
 
   function _setFeeFraction(uint256 _feeFractionFixedPoint18) internal {

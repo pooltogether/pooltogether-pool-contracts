@@ -70,7 +70,7 @@ interface IPool {
   /**
    * @notice Deposits into the pool.  Deposits will become eligible in the next pool.
    */
-  function deposit (uint256 totalDepositNonFixed) external;
+  function depositPool(uint256 totalDepositNonFixed) external;
 
   function rewardAndCommit(bytes32 _secret, bytes32 _newSecretHash) external;
 
@@ -79,7 +79,7 @@ interface IPool {
    * The Pool must be unlocked.
    * The user must have deposited funds.  Fires the Withdrawn event.
    */
-  function withdraw() external;
+  function withdrawPool() external;
 
   /**
    * @notice Calculates a user's winnings.
