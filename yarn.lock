@@ -18,6 +18,13 @@
     minimetoken "^0.2.0"
     openzeppelin-solidity "^1.12.0"
 
+"@kleros/kleros@DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c":
+  version "0.0.7"
+  resolved "https://codeload.github.com/DeltaCamp/kleros/tar.gz/d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c"
+  dependencies:
+    "@kleros/kleros-interaction" "^0.9.0"
+    minimetoken "^0.2.0"
+
 "@openzeppelin/cli@^2.5.1":
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/@openzeppelin/cli/-/cli-2.5.1.tgz#d764494e1cea0dcf32f4f0363e6dee4ebb38fd7b"
@@ -2251,13 +2258,6 @@ klaw@^1.0.0:
   integrity sha1-QIhDO0azsbolnXh4XY6W9zugJDk=
   optionalDependencies:
     graceful-fs "^4.1.9"
-
-kleros@DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c:
-  version "0.0.7"
-  resolved "https://codeload.github.com/DeltaCamp/kleros/tar.gz/d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c"
-  dependencies:
-    "@kleros/kleros-interaction" "^0.9.0"
-    minimetoken "^0.2.0"
 
 lcid@^1.0.0:
   version "1.0.0"

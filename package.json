@@ -25,6 +25,7 @@
     "version": "truffle version"
   },
   "dependencies": {
+    "@kleros/kleros": "DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c",
     "@openzeppelin/cli": "^2.5.1",
     "@openzeppelin/contracts-ethereum-package": "^2.2.1",
     "@openzeppelin/upgrades": "^2.5.0",
@@ -32,7 +33,6 @@
     "eth-gas-reporter": "0.2.0",
     "fixidity": "DeltaCamp/Fixidity#edf533f77df43b16a7b92f17af7a8930db01f293",
     "ganache-cli": "6.5.0",
-    "kleros": "DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c",
     "shelljs": "0.8.3",
     "truffle": "5.0.28",
     "truffle-deploy-registry": "0.5.0",

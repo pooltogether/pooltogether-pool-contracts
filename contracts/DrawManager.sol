@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "./UniformRandomNumber.sol";
-import "kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
+import "@kleros/kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 library DrawManager {
