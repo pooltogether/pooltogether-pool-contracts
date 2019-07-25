@@ -199,8 +199,8 @@ library DrawManager {
         return address(uint256(drawState.sortitionSumTrees.draw(bytes32(drawIndex), drawToken)));
     }
 
-    function drawWithEntropy(DrawState storage drawState, uint256 entropy) public view returns (address) {
-        return draw(drawState, UniformRandomNumber.uniform(entropy, drawState.eligibleSupply));
+    function drawWithEntropy(DrawState storage drawState, bytes32 entropy) public view returns (address) {
+        return draw(drawState, UniformRandomNumber.uniform(uint256(entropy), drawState.eligibleSupply));
     }
 
     modifier requireOpenDraw(DrawState storage drawState) {

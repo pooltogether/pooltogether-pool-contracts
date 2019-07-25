@@ -25,55 +25,56 @@ contract Pool is IPool, Ownable {
 
   uint256 constant UINT256_MAX = ~uint256(0);
 
-  /**
-   * Emitted when "tickets" have been purchased.
-   * @param sender The purchaser of the tickets
-   * @param amount The size of the deposit
-   */
-  event Deposited(address indexed sender, uint256 amount);
+  // /**
+  //  * Emitted when "tickets" have been purchased.
+  //  * @param sender The purchaser of the tickets
+  //  * @param amount The size of the deposit
+  //  */
+  // event Deposited(address indexed sender, uint256 amount);
 
-  /**
-   * Emitted when a user withdraws from the pool.
-   * @param sender The user that is withdrawing from the pool
-   * @param amount The amount that the user withdrew
-   */
-  event Withdrawn(address indexed sender, uint256 amount);
+  // /**
+  //  * Emitted when a user withdraws from the pool.
+  //  * @param sender The user that is withdrawing from the pool
+  //  * @param amount The amount that the user withdrew
+  //  */
+  // event Withdrawn(address indexed sender, uint256 amount);
 
-  /**
-   * Emitted when the pool is locked.
-   */
-  event Opened(
-    uint256 indexed drawId,
-    uint256 startingTotal,
-    uint256 feeFraction
-  );
+  // /**
+  //  * Emitted when the pool is locked.
+  //  */
+  // event Opened(
+  //   uint256 indexed drawId,
+  //   uint256 startingTotal,
+  //   uint256 feeFraction
+  // );
 
-  event Committed(
-    uint256 indexed drawId,
-    bytes32 secretHash
-  );
+  // event Committed(
+  //   uint256 indexed drawId,
+  //   uint256 indexed commitBlock
+  // );
 
-  /**
-   * Emitted when the pool rewards a winner
-   */
-  event Rewarded(
-    uint256 indexed drawId,
-    address indexed winner,
-    bytes32 secret,
-    uint256 winnings,
-    uint256 fee
-  );
+  // /**
+  //  * Emitted when the pool rewards a winner
+  //  */
+  // event Rewarded(
+  //   uint256 indexed drawId,
+  //   address indexed winner,
+  //   bytes32 entropy,
+  //   uint256 winnings,
+  //   uint256 fee
+  // );
 
   /**
    * Emitted when the fee fraction is changed
    * @param feeFractionFixedPoint18 The new fee fraction encoded as a fixed point 18 decimal
    */
-  event FeeFractionChanged(uint256 feeFractionFixedPoint18);
+  // event FeeFractionChanged(uint256 feeFractionFixedPoint18);
 
-  struct Draw {
-    int256 startingTotal; //fixed point 24
-    int256 feeFraction; //fixed point 24
-  }
+  // struct Draw {
+  //   int256 startingTotal; //fixed point 24
+  //   int256 feeFraction; //fixed point 24
+  //   uint256 commitBlock;
+  // }
 
   /**
    * The owner fee fraction to use for the next Pool
@@ -121,7 +122,7 @@ contract Pool is IPool, Ownable {
 
     int256 feeFraction = FixidityLib.newFixed(int256(feeFractionFixedPoint18), uint8(18));
 
-    draws[drawState.openDrawIndex] = Draw(0, feeFraction);
+    draws[drawState.openDrawIndex] = Draw(0, feeFraction, 0);
 
     emit Opened(
       drawState.openDrawIndex,
@@ -135,15 +136,15 @@ contract Pool is IPool, Ownable {
    * Can only be called by the owner when the pool is open.
    * Fires the PoolLocked event.
    */
-  function commit(bytes32 _secretHash) public onlyOwner {
-    require(secretHash == 0, "secret was already committed");
-    require(_secretHash != 0, "passed secret hash must be defined");
-    secretHash = _secretHash;
+  function commit() public onlyOwner {
+    Draw storage draw = draws[drawState.openDrawIndex];
+    require(draw.commitBlock == 0, "draw was already committed");
+    draw.commitBlock = block.number;
+    draw.startingTotal = totalAmount;
     emit Committed(
       drawState.openDrawIndex,
-      _secretHash
+      draw.commitBlock
     );
-    draws[drawState.openDrawIndex].startingTotal = totalAmount;
     open();
   }
 
@@ -190,22 +191,26 @@ contract Pool is IPool, Ownable {
    * Can only be called by the owner after the lock end block.
    * Fires the PoolUnlocked event.
    */
-  function reward(bytes32 secret) internal {
-    require(keccak256(abi.encodePacked(secret)) == secretHash, "secret does not match");
-    secretHash = 0;
-
+  function reward(bytes32 commitBlockHash, uint8 v, bytes32 r, bytes32 s) internal {
     uint256 drawId = drawState.openDrawIndex.sub(1);
     Draw storage draw = draws[drawId];
 
+    require(commitBlockHash == keccak256(abi.encodePacked(draw.commitBlock)), "commit block does not match");
+
+    bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+    bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, commitBlockHash));
+    require(ecrecover(prefixedHash, v, r, s) == owner(), "only the owner can reward");
+
+    bytes32 entropyInput = r ^ s;
+    bytes32 e = entropy(entropyInput);
+
     uint256 balance = moneyMarket.balanceOfUnderlying(address(this));
-    int256 balanceFixed = FixidityLib.newFixed(int256(balance));
-    int256 grossWinningsFixed = FixidityLib.subtract(balanceFixed, draw.startingTotal);
+    int256 grossWinningsFixed = FixidityLib.subtract(FixidityLib.newFixed(int256(balance)), draw.startingTotal);
     int256 feeFixed = FixidityLib.multiply(grossWinningsFixed, draw.feeFraction);
     uint256 fee = uint256(FixidityLib.fromFixed(feeFixed));
-    int256 winningsFixed = FixidityLib.subtract(grossWinningsFixed, feeFixed);
-    uint256 winnings = uint256(FixidityLib.fromFixed(winningsFixed));
+    uint256 winnings = uint256(FixidityLib.fromFixed(FixidityLib.subtract(grossWinningsFixed, feeFixed)));
 
-    address winningAddress = calculateWinner(entropy(secret));
+    address winningAddress = calculateWinner(e);
     balances[winningAddress] = balances[winningAddress].add(winnings);
 
     address owner_ = owner();
@@ -218,15 +223,15 @@ contract Pool is IPool, Ownable {
     emit Rewarded(
       drawState.openDrawIndex.sub(1),
       winningAddress,
-      secret,
+      e,
       winnings,
       fee
     );
   }
 
-  function rewardAndCommit(bytes32 _secret, bytes32 _newSecretHash) public onlyOwner {
-    reward(_secret);
-    commit(_newSecretHash);
+  function rewardAndCommit(bytes32 commitBlockHash, uint8 v, bytes32 r, bytes32 s) public onlyOwner {
+    reward(commitBlockHash, v, r, s);
+    commit();
   }
 
   function withdrawSponsorship(uint256 amount) public {
@@ -307,7 +312,7 @@ contract Pool is IPool, Ownable {
     return sponsorshipBalances[_addr];
   }
 
-  function calculateWinner(uint256 entropy) public view returns (address) {
+  function calculateWinner(bytes32 entropy) public view returns (address) {
     return drawState.drawWithEntropy(entropy);
   }
 
@@ -324,8 +329,8 @@ contract Pool is IPool, Ownable {
    * The blockhash of the lock end block is XOR'd with the secret revealed by the owner.
    * @return The computed entropy value
    */
-  function entropy(bytes32 secret) public view returns (uint256) {
-    return uint256(blockhash(block.number - 1) ^ secret);
+  function entropy(bytes32 input) public view returns (bytes32) {
+    return blockhash(block.number - 1) ^ input;
   }
 
   function maxPoolSize(int256 blocks) public view returns (int256) {

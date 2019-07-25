@@ -22,7 +22,7 @@ contract('Pool', (accounts) => {
   let secretHash = web3.utils.soliditySha3(secret)
   let supplyRateMantissa = '100000000000000000' // 0.1 per block
 
-  let Rewarded
+  let Rewarded, Committed
 
   beforeEach(async () => {
     sumTree = await SortitionSumTreeFactory.new()
@@ -57,17 +57,37 @@ contract('Pool', (accounts) => {
     return pool
   }
 
-  async function rewardAndCommit(options) {
+  async function commit(options) {
     let logs
     if (options) {
-      logs = (await pool.rewardAndCommit(secret, secretHash, options)).logs;
+      logs = (await pool.commit(options)).logs;
     } else {
-      logs = (await pool.rewardAndCommit(secret, secretHash)).logs;
+      logs = (await pool.commit()).logs;
+    }
+    Committed = logs[0]
+    assert.equal(Committed.event, 'Committed')
+    commitBlock = Committed.args.commitBlock
+  }
+
+  async function rewardAndCommit(options) {
+
+    let hash = web3.utils.soliditySha3(new BN(Committed.args.commitBlock))
+
+    const sig = (await web3.eth.sign(hash, owner)).slice(2)
+    const r = `0x${sig.slice(0, 64)}`
+    const s = `0x${sig.slice(64, 128)}`
+    const v = web3.utils.hexToNumber(`0x${sig.slice(128, 130)}`) + 27
+
+    let logs
+    if (options) {
+      logs = (await pool.rewardAndCommit(hash, v, r, s, options)).logs;
+    } else {
+      logs = (await pool.rewardAndCommit(hash, v, r, s)).logs;
     }
     Rewarded = logs[0]
     assert.equal(Rewarded.event, 'Rewarded')
-    winner = Rewarded.args.winner
-    winnings = Rewarded.args.winnings
+    Committed = logs[1]
+    assert.equal(Committed.event, 'Committed')
   }
 
   describe('supplyRateMantissa()', () => {
@@ -142,13 +162,13 @@ contract('Pool', (accounts) => {
       it('should work', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
         await pool.depositPool(ticketPrice, { from: user1 })
-        await pool.commit(secretHash)
+        await commit()
       })
 
       it('should not work for regular users', async () => {
         let failed
         try {
-          await pool.commit({ from: user1 })
+          await commit({ from: user1 })
           failed = false
         } catch (error) {
           failed = true
@@ -176,7 +196,7 @@ contract('Pool', (accounts) => {
         // Sponsor has a sponsorship balance
         assert.equal((await pool.balanceOfSponsorship(user2)).toString(), toWei('1000'))
 
-        await pool.commit(secretHash)
+        await commit()
         await rewardAndCommit()
 
         assert.equal(Rewarded.event, 'Rewarded')
@@ -212,7 +232,7 @@ contract('Pool', (accounts) => {
         beforeEach(async () => {
           await token.approve(pool.address, ticketPrice, { from: user1 })
           await pool.depositPool(ticketPrice, { from: user1 })
-          await pool.commit(secretHash)
+          await commit()
         })
 
         it('should select a winner and transfer tokens from money market back', async () => {
@@ -227,7 +247,7 @@ contract('Pool', (accounts) => {
       })
 
       it('should succeed even without a balance', async () => {
-        await pool.commit(secretHash)
+        await commit()
         await rewardAndCommit()
         assert.equal(Rewarded.event, 'Rewarded')
         assert.equal(Rewarded.args.winner, '0x0000000000000000000000000000000000000000')
@@ -249,7 +269,7 @@ contract('Pool', (accounts) => {
       it('should work for one participant', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
         await pool.depositPool(ticketPrice, { from: user1 })
-        await pool.commit(secretHash)
+        await commit()
         await rewardAndCommit()
 
         let winnings = await pool.winnings(user1)
@@ -274,7 +294,7 @@ contract('Pool', (accounts) => {
 
         await pool.depositPool(priceForTenTickets, { from: user2 })
 
-        await pool.commit(secretHash)
+        await commit()
 
         assert.equal((await pool.eligibleSupply()).toString(), toWei('200'))
 
@@ -329,8 +349,7 @@ contract('Pool', (accounts) => {
       await token.approve(pool.address, user1Tickets, { from: user1 })
       await pool.depositPool(user1Tickets, { from: user1 })
 
-      const ownerBalance = await token.balanceOf(owner)
-      await pool.commit(secretHash, { from: owner })
+      await commit()
 
       /// CErc20Mock awards 20% regardless of duration.
       const totalDeposit = user1Tickets
