@@ -10,16 +10,6 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./IPool.sol";
 
 /**
-
-  What should be swappable: 
-
-  1. Winner selection
-  2. Fund dispersion?  Fee fraction should possibly be optional
-
- */
-
-
-/**
  * @title The Pool contract for PoolTogether
  * @author Brendan Asselstine
  * @notice This contract implements a "lossless pool".  The pool exists in three states: open, locked, and complete.
@@ -278,6 +268,19 @@ contract Pool is IPool, Ownable {
     require(token.transfer(msg.sender, totalNonFixed), "could not transfer winnings");
 
     emit Withdrawn(msg.sender, totalNonFixed);
+  }
+
+  function currentOpenDrawId() public view returns (uint256) {
+    return drawState.openDrawIndex;
+  }
+
+  function getDraw(uint256 drawId) public view returns (
+    int256 startingTotal,
+    int256 feeFraction
+  ) {
+    Draw storage draw = draws[drawId];
+    startingTotal = draw.startingTotal;
+    feeFraction = draw.feeFraction;
   }
 
   /**
