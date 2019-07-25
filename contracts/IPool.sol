@@ -10,6 +10,18 @@ interface IPool {
   event Deposited(address indexed sender, uint256 amount);
 
   /**
+   * Emitted when Sponsors have deposited into the Pool
+   * @param sender The purchaser of the tickets
+   * @param amount The size of the deposit
+   */
+  event SponsorshipDeposited(address indexed sender, uint256 amount);
+
+  event PoolWinningsDeposited(address indexed sender, uint256 amount);
+
+  event AdminAdded(address indexed admin);
+  event AdminRemoved(address indexed admin);
+
+  /**
    * Emitted when a user withdraws from the pool.
    * @param sender The user that is withdrawing from the pool
    * @param amount The amount that the user withdrew
@@ -21,7 +33,7 @@ interface IPool {
    */
   event Opened(
     uint256 indexed drawId,
-    uint256 startingTotal,
+    address indexed beneficiary,
     uint256 feeFraction
   );
 
@@ -30,13 +42,18 @@ interface IPool {
     uint256 indexed commitBlock
   );
 
+  event RewardLocked(
+    uint256 indexed drawId,
+    uint256 grossWinnings
+  );
+
   /**
    * Emitted when the pool rewards a winner
    */
   event Rewarded(
     uint256 indexed drawId,
     address indexed winner,
-    bytes32 secret,
+    bytes32 entropy,
     uint256 winnings,
     uint256 fee
   );
@@ -47,9 +64,15 @@ interface IPool {
    */
   event FeeFractionChanged(uint256 feeFractionFixedPoint18);
 
+  /**
+   * Emitted when the beneficiary changes
+   */
+  event BeneficiaryChanged(address indexed beneficiary);
+
   struct Draw {
-    int256 startingTotal; //fixed point 24
-    int256 feeFraction; //fixed point 24
+    uint256 grossWinnings;
+    uint256 feeFraction; //fixed point 18
+    address beneficiary;
     uint256 commitBlock;
   }
 
@@ -57,22 +80,14 @@ interface IPool {
    * @notice Initializes a new Pool contract.
    * @param _admin The admin of the Pool.  They are able to change settings and are set as the owner of new lotteries.
    * @param _moneyMarket The Compound Finance MoneyMarket contract to supply and withdraw tokens.
-   * @param _token The token to use for the Pools
    * @param _feeFractionFixedPoint18 The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
    */
   function init (
     address _admin,
     address _moneyMarket,
-    address _token,
-    uint256 _feeFractionFixedPoint18
+    uint256 _feeFractionFixedPoint18,
+    address _beneficiary
   ) external;
-
-  /**
-   * @notice Pools the deposits and supplies them to Compound.
-   * Can only be called by the owner when the pool is open.
-   * Fires the PoolLocked event.
-   */
-  function commit() external;
 
   function depositSponsorship(uint256 totalDepositNonFixed) external;
 
@@ -81,7 +96,11 @@ interface IPool {
    */
   function depositPool(uint256 totalDepositNonFixed) external;
 
-  function rewardAndCommit(bytes32 commitBlockHash, uint8 v, bytes32 r, bytes32 s) external;
+  function depositPoolWinnings() external;
+
+  function nextDraw() external;
+
+  function reward(bytes32 commitBlockHash, uint8 v, bytes32 r, bytes32 s) external;
 
   /**
    * @notice Transfers a users deposit, and potential winnings, back to them.
@@ -90,12 +109,17 @@ interface IPool {
    */
   function withdrawPool() external;
 
-
   function currentOpenDrawId() external view returns (uint256);
 
+  function currentCommittedDrawId() external view returns (uint256);
+
+  function currentRewardedDrawId() external view returns (uint256);
+
   function getDraw(uint256 drawId) external view returns (
-    int256 startingTotal,
-    int256 feeFraction
+    uint256 grossWinnings,
+    uint256 feeFraction,
+    address beneficiary,
+    uint256 commitBlock
   );
 
   /**
@@ -119,13 +143,6 @@ interface IPool {
   function calculateWinner(bytes32 entropy) external view returns (address);
 
   function eligibleSupply() external view returns (uint256);
-
-  /**
-   * @notice Computes the entropy used to generate the random number.
-   * The blockhash of the lock end block is XOR'd with the secret revealed by the owner.
-   * @return The computed entropy value
-   */
-  function entropy(bytes32 input) external view returns (bytes32);
 
   function maxPoolSize(int256 blocks) external view returns (int256);
 
@@ -157,5 +174,7 @@ interface IPool {
    * @param _feeFractionFixedPoint18 The fraction to pay out.
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
    */
-  function setFeeFraction(uint256 _feeFractionFixedPoint18) external;
+  function setNextFeeFraction(uint256 _feeFractionFixedPoint18) external;
+
+  function setNextFeeBeneficiary(address _beneficiary) external;
 }

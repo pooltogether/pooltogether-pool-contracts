@@ -2,8 +2,9 @@ pragma solidity ^0.5.0;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
 import "./compound/ICErc20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 import "./DrawManager.sol";
 import "fixidity/contracts/FixidityLib.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
@@ -19,115 +20,55 @@ import "./IPool.sol";
  * the owner, and users will be able to withdraw their ticket money and winnings, if any.
  * @dev All monetary values are stored internally as fixed point 24.
  */
-contract Pool is IPool, Ownable {
+contract Pool is IPool, Initializable, ReentrancyGuard {
   using DrawManager for DrawManager.DrawState;
   using SafeMath for uint256;
+  using Roles for Roles.Role;
 
   uint256 constant UINT256_MAX = ~uint256(0);
 
-  // /**
-  //  * Emitted when "tickets" have been purchased.
-  //  * @param sender The purchaser of the tickets
-  //  * @param amount The size of the deposit
-  //  */
-  // event Deposited(address indexed sender, uint256 amount);
-
-  // /**
-  //  * Emitted when a user withdraws from the pool.
-  //  * @param sender The user that is withdrawing from the pool
-  //  * @param amount The amount that the user withdrew
-  //  */
-  // event Withdrawn(address indexed sender, uint256 amount);
-
-  // /**
-  //  * Emitted when the pool is locked.
-  //  */
-  // event Opened(
-  //   uint256 indexed drawId,
-  //   uint256 startingTotal,
-  //   uint256 feeFraction
-  // );
-
-  // event Committed(
-  //   uint256 indexed drawId,
-  //   uint256 indexed commitBlock
-  // );
-
-  // /**
-  //  * Emitted when the pool rewards a winner
-  //  */
-  // event Rewarded(
-  //   uint256 indexed drawId,
-  //   address indexed winner,
-  //   bytes32 entropy,
-  //   uint256 winnings,
-  //   uint256 fee
-  // );
-
-  /**
-   * Emitted when the fee fraction is changed
-   * @param feeFractionFixedPoint18 The new fee fraction encoded as a fixed point 18 decimal
-   */
-  // event FeeFractionChanged(uint256 feeFractionFixedPoint18);
-
-  // struct Draw {
-  //   int256 startingTotal; //fixed point 24
-  //   int256 feeFraction; //fixed point 24
-  //   uint256 commitBlock;
-  // }
-
-  /**
-   * The owner fee fraction to use for the next Pool
-   */
-  uint256 private feeFractionFixedPoint18;
-  ICErc20 public moneyMarket;
-  IERC20 public token;
+  ICErc20 public cToken;
+  address public nextFeeBeneficiary;
+  uint256 public nextFeeFraction;
+  uint256 private accountedBalance;
   mapping (address => uint256) balances;
   mapping (address => uint256) sponsorshipBalances;
-  int256 private totalAmount; // fixed point 24
   mapping(uint256 => Draw) draws;
-  bytes32 private secretHash;
-
   DrawManager.DrawState drawState;
+  Roles.Role admins;
+  mapping(address => uint256) adminAddedBlock;
+  uint256 adminCount;
 
   /**
    * @notice Initializes a new Pool contract.
    * @param _admin The admin of the Pool.  They are able to change settings and are set as the owner of new lotteries.
-   * @param _moneyMarket The Compound Finance MoneyMarket contract to supply and withdraw tokens.
-   * @param _token The token to use for the Pools
-   * @param _feeFractionFixedPoint18 The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
+   * @param _cToken The Compound Finance MoneyMarket contract to supply and withdraw tokens.
+   * @param _nextFeeFraction The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
    */
   function init (
     address _admin,
-    address _moneyMarket,
-    address _token,
-    uint256 _feeFractionFixedPoint18
+    address _cToken,
+    uint256 _nextFeeFraction,
+    address _beneficiary
   ) public initializer {
     require(_admin != address(0), "owner cannot be the null address");
-    require(_moneyMarket != address(0), "money market address is zero");
-    require(_token != address(0), "token address is zero");
-    Ownable.initialize(_admin);
-    token = IERC20(_token);
-    moneyMarket = ICErc20(_moneyMarket);
+    require(_cToken != address(0), "money market address is zero");
+    cToken = ICErc20(_cToken);
 
-    require(_token == moneyMarket.underlying(), "token does not match the underlying money market token");
-
-    _setFeeFraction(_feeFractionFixedPoint18);
+    _addAdmin(_admin);
+    _setNextFeeFraction(_nextFeeFraction);
+    _setNextFeeBeneficiary(_beneficiary);
 
     open();
   }
 
   function open() internal {
     drawState.openNextDraw();
-
-    int256 feeFraction = FixidityLib.newFixed(int256(feeFractionFixedPoint18), uint8(18));
-
-    draws[drawState.openDrawIndex] = Draw(0, feeFraction, 0);
-
+    draws[drawState.openDrawIndex] = Draw(0, nextFeeFraction, nextFeeBeneficiary, 0);
     emit Opened(
       drawState.openDrawIndex,
-      uint256(FixidityLib.fromFixed(totalAmount)),
-      feeFractionFixedPoint18
+      nextFeeBeneficiary,
+      nextFeeFraction
     );
   }
 
@@ -136,29 +77,89 @@ contract Pool is IPool, Ownable {
    * Can only be called by the owner when the pool is open.
    * Fires the PoolLocked event.
    */
-  function commit() public onlyOwner {
+  function commit() internal {
     Draw storage draw = draws[drawState.openDrawIndex];
     require(draw.commitBlock == 0, "draw was already committed");
     draw.commitBlock = block.number;
-    draw.startingTotal = totalAmount;
     emit Committed(
       drawState.openDrawIndex,
       draw.commitBlock
     );
+  }
+
+  function lockReward() internal {
+    uint256 drawId = currentCommittedDrawId();
+    Draw storage draw = draws[drawId];
+    uint256 cTokenBalance = cToken.balanceOfUnderlying(address(this));
+    draw.grossWinnings = cTokenBalance.sub(accountedBalance);
+    accountedBalance = cTokenBalance;
+
+    emit RewardLocked(drawId, draw.grossWinnings);
+  }
+
+  function nextDraw() public onlyAdmin {
+    // If there are more than two draws
+    if (currentRewardedDrawId() != 0) {
+      // then we must have a rewarded draw, so make sure it's paid out first
+      require(draws[currentRewardedDrawId()].commitBlock == 0, "last rewarded draw has not been paid out");
+    }
+    // If there is more than one draw
+    if (currentCommittedDrawId() != 0) {
+      // then we must have a committed draw that we can reward
+      lockReward();
+    }
+    commit();
     open();
   }
 
-  function depositSponsorship(uint256 totalDepositNonFixed) public {
+  /**
+   * @notice Withdraws the deposit from Compound and selects a winner.
+   * Can only be called by the owner after the lock end block.
+   * Fires the PoolUnlocked event.
+   */
+  function reward(bytes32 messageHash, uint8 v, bytes32 r, bytes32 s) public onlyAdmin {
+    uint256 drawId = currentRewardedDrawId();
+    Draw storage draw = draws[drawId];
+    require(adminAddedBlock[msg.sender] < draw.commitBlock, "only admins present at time of draw can reward");
+    require(messageHash == keccak256(abi.encodePacked(draw.commitBlock, draw.grossWinnings)), "commit block and winnings hash do not match");
+    bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+    bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, messageHash));
+    require(admins.has(ecrecover(prefixedHash, v, r, s)), "only an admin can reward");
+    bytes32 entropy = r ^ s;
+
+    int256 grossWinningsFixed = FixidityLib.newFixed(int256(draw.grossWinnings));
+    int256 feeFixed = FixidityLib.multiply(grossWinningsFixed, FixidityLib.newFixed(int256(draw.feeFraction), uint8(18)));
+    uint256 fee = uint256(FixidityLib.fromFixed(feeFixed));
+    uint256 winnings = uint256(FixidityLib.fromFixed(FixidityLib.subtract(grossWinningsFixed, feeFixed)));
+
+    address winningAddress = calculateWinner(entropy);
+    balances[winningAddress] = balances[winningAddress].add(winnings);
+    balances[draw.beneficiary] = balances[draw.beneficiary].add(fee);
+
+    delete draws[drawId];
+
+    emit Rewarded(
+      drawId,
+      winningAddress,
+      entropy,
+      winnings,
+      fee
+    );
+  }
+
+  function depositSponsorship(uint256 totalDepositNonFixed) public nonReentrant {
     sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].add(totalDepositNonFixed);
 
     // Deposit the funds
     _deposit(totalDepositNonFixed);
+
+    emit SponsorshipDeposited(msg.sender, totalDepositNonFixed);
   }
 
   /**
    * @notice Deposits into the pool.  Deposits will become eligible in the next pool.
    */
-  function depositPool(uint256 totalDepositNonFixed) public {
+  function depositPool(uint256 totalDepositNonFixed) public nonReentrant {
     // Update the user's balance
     balances[msg.sender] = balances[msg.sender].add(totalDepositNonFixed);
 
@@ -167,74 +168,34 @@ contract Pool is IPool, Ownable {
 
     // Deposit the funds
     _deposit(totalDepositNonFixed);
+
+    emit Deposited(msg.sender, totalDepositNonFixed);
+  }
+
+  function depositPoolWinnings() public nonReentrant {
+    uint256 amount = winnings(msg.sender);
+
+    // Update the user's eligibility
+    drawState.deposit(msg.sender, amount);
+
+    emit PoolWinningsDeposited(msg.sender, amount);
   }
 
   function _deposit(uint256 totalDepositNonFixed) internal {
     require(totalDepositNonFixed > 0, "deposit is greater than zero");
 
     // Transfer the tokens into this contract
-    require(token.transferFrom(msg.sender, address(this), totalDepositNonFixed), "token transfer failed");
+    require(token().transferFrom(msg.sender, address(this), totalDepositNonFixed), "token transfer failed");
 
     // Update the total of this contract
-    int256 totalDeposit = FixidityLib.newFixed(int256(totalDepositNonFixed));
-    totalAmount = FixidityLib.add(totalAmount, totalDeposit);
+    accountedBalance = accountedBalance.add(totalDepositNonFixed);
 
     // Deposit into Compound
     ensureAllowance(totalDepositNonFixed);
-    require(moneyMarket.mint(totalDepositNonFixed) == 0, "could not supply money market");
-
-    emit Deposited(msg.sender, totalDepositNonFixed);
+    require(cToken.mint(totalDepositNonFixed) == 0, "could not supply money market");
   }
 
-  /**
-   * @notice Withdraws the deposit from Compound and selects a winner.
-   * Can only be called by the owner after the lock end block.
-   * Fires the PoolUnlocked event.
-   */
-  function reward(bytes32 commitBlockHash, uint8 v, bytes32 r, bytes32 s) internal {
-    uint256 drawId = drawState.openDrawIndex.sub(1);
-    Draw storage draw = draws[drawId];
-
-    require(commitBlockHash == keccak256(abi.encodePacked(draw.commitBlock)), "commit block does not match");
-
-    bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-    bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, commitBlockHash));
-    require(ecrecover(prefixedHash, v, r, s) == owner(), "only the owner can reward");
-
-    bytes32 entropyInput = r ^ s;
-    bytes32 e = entropy(entropyInput);
-
-    uint256 balance = moneyMarket.balanceOfUnderlying(address(this));
-    int256 grossWinningsFixed = FixidityLib.subtract(FixidityLib.newFixed(int256(balance)), draw.startingTotal);
-    int256 feeFixed = FixidityLib.multiply(grossWinningsFixed, draw.feeFraction);
-    uint256 fee = uint256(FixidityLib.fromFixed(feeFixed));
-    uint256 winnings = uint256(FixidityLib.fromFixed(FixidityLib.subtract(grossWinningsFixed, feeFixed)));
-
-    address winningAddress = calculateWinner(e);
-    balances[winningAddress] = balances[winningAddress].add(winnings);
-
-    address owner_ = owner();
-    if (fee > 0) {
-      balances[owner_] = balances[owner_].add(fee);
-    }
-
-    delete draws[drawId];
-
-    emit Rewarded(
-      drawState.openDrawIndex.sub(1),
-      winningAddress,
-      e,
-      winnings,
-      fee
-    );
-  }
-
-  function rewardAndCommit(bytes32 commitBlockHash, uint8 v, bytes32 r, bytes32 s) public onlyOwner {
-    reward(commitBlockHash, v, r, s);
-    commit();
-  }
-
-  function withdrawSponsorship(uint256 amount) public {
+  function withdrawSponsorship(uint256 amount) public nonReentrant {
     require(sponsorshipBalances[msg.sender] >= amount, "amount exceeds sponsorship balance");
 
     // Update the sponsorship balance
@@ -248,7 +209,7 @@ contract Pool is IPool, Ownable {
    * The Pool must be unlocked.
    * The user must have deposited funds.  Fires the Withdrawn event.
    */
-  function withdrawPool() public {
+  function withdrawPool() public nonReentrant {
     require(balances[msg.sender] > 0, "entrant has already withdrawn");
 
     // Update the user's balance
@@ -266,11 +227,11 @@ contract Pool is IPool, Ownable {
     require(totalNonFixed > 0, "withdrawal is greater than zero");
 
     // Update the total of this contract
-    totalAmount = FixidityLib.subtract(totalAmount, FixidityLib.newFixed(int256(totalNonFixed)));
+    accountedBalance = accountedBalance.sub(totalNonFixed);
 
     // Withdraw from Compound and transfer
-    require(moneyMarket.redeemUnderlying(totalNonFixed) == 0, "could not redeem from compound");
-    require(token.transfer(msg.sender, totalNonFixed), "could not transfer winnings");
+    require(cToken.redeemUnderlying(totalNonFixed) == 0, "could not redeem from compound");
+    require(token().transfer(msg.sender, totalNonFixed), "could not transfer winnings");
 
     emit Withdrawn(msg.sender, totalNonFixed);
   }
@@ -279,13 +240,33 @@ contract Pool is IPool, Ownable {
     return drawState.openDrawIndex;
   }
 
+  function currentCommittedDrawId() public view returns (uint256) {
+    if (drawState.openDrawIndex > 1) {
+      return drawState.openDrawIndex.sub(1);
+    } else {
+      return 0;
+    }
+  }
+
+  function currentRewardedDrawId() public view returns (uint256) {
+    if (drawState.openDrawIndex > 2) {
+      return drawState.openDrawIndex.sub(2);
+    } else {
+      return 0;
+    }
+  }
+
   function getDraw(uint256 drawId) public view returns (
-    int256 startingTotal,
-    int256 feeFraction
+    uint256 grossWinnings,
+    uint256 feeFraction,
+    address beneficiary,
+    uint256 commitBlock
   ) {
     Draw storage draw = draws[drawId];
-    startingTotal = draw.startingTotal;
+    grossWinnings = draw.grossWinnings;
     feeFraction = draw.feeFraction;
+    beneficiary = draw.beneficiary;
+    commitBlock = draw.commitBlock;
   }
 
   /**
@@ -324,15 +305,6 @@ contract Pool is IPool, Ownable {
     return FixidityLib.newFixed(int256(drawState.eligibleSupply));
   }
 
-  /**
-   * @notice Computes the entropy used to generate the random number.
-   * The blockhash of the lock end block is XOR'd with the secret revealed by the owner.
-   * @return The computed entropy value
-   */
-  function entropy(bytes32 input) public view returns (bytes32) {
-    return blockhash(block.number - 1) ^ input;
-  }
-
   function maxPoolSize(int256 blocks) public view returns (int256) {
     return FixidityLib.fromFixed(maxPoolSizeFixedPoint24(blocks, FixidityLib.maxFixedDiv()));
   }
@@ -366,36 +338,75 @@ contract Pool is IPool, Ownable {
    * @return The money market supply rate per block
    */
   function supplyRateMantissa() public view returns (uint256) {
-    return moneyMarket.supplyRatePerBlock();
+    return cToken.supplyRatePerBlock();
+  }
+
+  function ensureAllowance(uint256 amount) internal {
+    if (token().allowance(address(this), address(cToken)) < amount) {
+      require(token().approve(address(cToken), UINT256_MAX), "could not approve money market spend");
+    }
   }
 
   /**
    * @notice Sets the fee fraction paid out to the Pool owner.
    * Fires the FeeFractionChanged event.
    * Can only be called by the owner. Only applies to subsequent Pools.
-   * @param _feeFractionFixedPoint18 The fraction to pay out.
+   * @param _nextFeeFraction The fraction to pay out.
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
    */
-  function setFeeFraction(uint256 _feeFractionFixedPoint18) public onlyOwner {
-    _setFeeFraction(_feeFractionFixedPoint18);
+  function setNextFeeFraction(uint256 _nextFeeFraction) public onlyAdmin {
+    _setNextFeeFraction(_nextFeeFraction);
   }
 
-  function ensureAllowance(uint256 amount) internal {
-    if (token.allowance(address(this), address(moneyMarket)) < amount) {
-      require(token.approve(address(moneyMarket), UINT256_MAX), "could not approve money market spend");
-    }
+  function _setNextFeeFraction(uint256 _nextFeeFraction) internal {
+    require(_nextFeeFraction >= 0, "fee must be zero or greater");
+    require(_nextFeeFraction <= 1000000000000000000, "fee fraction must be 1 or less");
+    nextFeeFraction = _nextFeeFraction;
+
+    emit FeeFractionChanged(_nextFeeFraction);
   }
 
-  function _setFeeFraction(uint256 _feeFractionFixedPoint18) internal {
-    require(_feeFractionFixedPoint18 >= 0, "fee must be zero or greater");
-    require(_feeFractionFixedPoint18 <= 1000000000000000000, "fee fraction must be 1 or less");
-    feeFractionFixedPoint18 = _feeFractionFixedPoint18;
-
-    emit FeeFractionChanged(_feeFractionFixedPoint18);
+  function setNextFeeBeneficiary(address _beneficiary) public onlyAdmin {
+    _setNextFeeBeneficiary(_beneficiary);
   }
 
-  modifier requireCommitted() {
-    require(secretHash != 0, "no secret has been committed");
+  function _setNextFeeBeneficiary(address _beneficiary) internal {
+    require(_beneficiary != address(0), "beneficiary cannot be 0x");
+    nextFeeBeneficiary = _beneficiary;
+  }
+
+  function addAdmin(address _admin) public onlyAdmin {
+    _addAdmin(_admin);
+  }
+
+  function isAdmin(address _admin) public view returns (bool) {
+    return admins.has(_admin);
+  }
+
+  function _addAdmin(address _admin) internal {
+    require(adminCount < 3, "there can only be up to 3 admins");
+    admins.add(_admin);
+    adminAddedBlock[_admin] = block.number;
+    adminCount = adminCount.add(1);
+
+    emit AdminAdded(_admin);
+  }
+
+  function removeAdmin(address _admin) public onlyAdmin {
+    require(adminAddedBlock[_admin] != 0, "admin does not exist");
+    admins.remove(_admin);
+    adminCount = adminCount.sub(1);
+    delete adminAddedBlock[_admin];
+
+    emit AdminRemoved(_admin);
+  }
+
+  function token() internal view returns (IERC20) {
+    return IERC20(cToken.underlying());
+  }
+
+  modifier onlyAdmin() {
+    require(admins.has(msg.sender), "must be an admin");
     _;
   }
 }

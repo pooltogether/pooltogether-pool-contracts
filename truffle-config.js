@@ -34,7 +34,7 @@ module.exports = {
       skipDryRun: true,
       network_id: 1,
       gas: 7000000,
-      gasPrice: 20 * 1000000000
+      gasPrice: 3 * 1000000000
     }
   },
 

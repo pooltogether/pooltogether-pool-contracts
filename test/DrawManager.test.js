@@ -188,7 +188,7 @@ contract('DrawManager', (accounts) => {
 
                 describe('drawWithEntropy()', () => {
                     it('should work', async () => {
-                        const address = await drawManager.drawWithEntropy('12431')
+                        const address = await drawManager.drawWithEntropy('0x12431')
                         assert.ok([user1, user2, user3].indexOf(address) != -1)
                     })
                 })
