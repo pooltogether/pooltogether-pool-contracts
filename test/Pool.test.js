@@ -57,6 +57,7 @@ contract('Pool', (accounts) => {
 
   async function nextDraw(options) {
     let logs
+    Rewarded = undefined
 
     if (options) {
       logs = (await pool.nextDraw(options)).logs
@@ -94,6 +95,13 @@ contract('Pool', (accounts) => {
       Rewarded = logs[0]
       assert.equal(Rewarded.event, 'Rewarded')
     }
+  }
+
+  async function printDrawIds() {
+    const rewardId = await pool.currentRewardedDrawId()
+    const commitId = await pool.currentCommittedDrawId()
+    const openId = await pool.currentOpenDrawId()
+    console.log({ rewardId, commitId, openId })
   }
 
   describe('addAdmin()', () =>{ 
@@ -289,6 +297,17 @@ contract('Pool', (accounts) => {
         await nextDraw()
         assert.equal(Rewarded.event, 'Rewarded')
         assert.equal(Rewarded.args.winner, '0x0000000000000000000000000000000000000000')
+      })
+
+      it('should not be called without rewarding a rewarded draw', async () => {
+        await pool.nextDraw() // now one is committed, the other is open
+        await pool.nextDraw() // now one is rewarded, one is committed, and the other is open
+        let fail = true
+        try {
+          await pool.nextDraw()
+          fail = false
+        } catch (e) {}
+        assert.ok(fail)
       })
 
       it('should not work for anyone else', async () => {

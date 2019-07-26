@@ -8,7 +8,7 @@ module.exports = function(deployer, networkName, accounts) {
     if (networkName === 'rinkeby') {
       console.log('Using rinkeby config')
       // See https://compound.finance/developers#getting-started 
-    // and https://rinkeby.etherscan.io/address/0x6d7f0754ffeb405d23c51ce938289d4835be3b14
+      // and https://rinkeby.etherscan.io/address/0x6d7f0754ffeb405d23c51ce938289d4835be3b14
       cDAI = '0x6d7f0754ffeb405d23c51ce938289d4835be3b14'
     } else if (networkName === 'mainnet') {
       console.log('Using mainnet config')
