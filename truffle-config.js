@@ -19,9 +19,10 @@ module.exports = {
         0, // we start with address[0]
         8 // notice that we unlock eight: which will be address[0] and address[1]
       ),
+      skipDryRun: true,
       network_id: 4,
       gas: 5000000,
-      gasPrice: 10 * 1000000000
+      gasPrice: 1 * 1000000000
     },
 
     mainnet: {
