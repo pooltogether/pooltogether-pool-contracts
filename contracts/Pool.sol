@@ -3,7 +3,7 @@ pragma solidity ^0.5.0;
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 import "./compound/ICErc20.sol";
 import "./DrawManager.sol";
 import "fixidity/contracts/FixidityLib.sol";
@@ -20,42 +20,38 @@ import "./IPool.sol";
  * the owner, and users will be able to withdraw their ticket money and winnings, if any.
  * @dev All monetary values are stored internally as fixed point 24.
  */
-contract Pool is IPool, Initializable, ReentrancyGuard {
+contract Pool is IPool, Ownable, ReentrancyGuard {
   using DrawManager for DrawManager.DrawState;
   using SafeMath for uint256;
-  using Roles for Roles.Role;
 
   uint256 constant UINT256_MAX = ~uint256(0);
 
   ICErc20 public cToken;
   address public nextFeeBeneficiary;
   uint256 public nextFeeFraction;
-  uint256 private accountedBalance;
+  uint256 public accountedBalance;
   mapping (address => uint256) balances;
   mapping (address => uint256) sponsorshipBalances;
   mapping(uint256 => Draw) draws;
   DrawManager.DrawState drawState;
-  Roles.Role admins;
-  mapping(address => uint256) adminAddedBlock;
-  uint256 adminCount;
 
   /**
    * @notice Initializes a new Pool contract.
-   * @param _admin The admin of the Pool.  They are able to change settings and are set as the owner of new lotteries.
+   * @param _owner The owner of the Pool.  They are able to change settings and are set as the owner of new lotteries.
    * @param _cToken The Compound Finance MoneyMarket contract to supply and withdraw tokens.
    * @param _nextFeeFraction The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
    */
   function init (
-    address _admin,
+    address _owner,
     address _cToken,
     uint256 _nextFeeFraction,
     address _beneficiary
   ) public initializer {
-    require(_admin != address(0), "owner cannot be the null address");
+    require(_owner != address(0), "owner cannot be the null address");
     require(_cToken != address(0), "money market address is zero");
     cToken = ICErc20(_cToken);
+    Ownable.initialize(_owner);
 
-    _addAdmin(_admin);
     _setNextFeeFraction(_nextFeeFraction);
     _setNextFeeBeneficiary(_beneficiary);
 
@@ -64,7 +60,7 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
 
   function open() internal {
     drawState.openNextDraw();
-    draws[drawState.openDrawIndex] = Draw(0, nextFeeFraction, nextFeeBeneficiary, 0);
+    draws[drawState.openDrawIndex] = Draw(DrawState.UNLOCKED, 0, nextFeeFraction, nextFeeBeneficiary, 0);
     emit Opened(
       drawState.openDrawIndex,
       nextFeeBeneficiary,
@@ -72,43 +68,55 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     );
   }
 
-  /**
-   * @notice Pools the deposits and supplies them to Compound.
-   * Can only be called by the owner when the pool is open.
-   * Fires the PoolLocked event.
-   */
-  function commit() internal {
-    Draw storage draw = draws[drawState.openDrawIndex];
+  function commitOpenDraw() internal {
+    uint256 drawId = currentOpenDrawId();
+    Draw storage draw = draws[drawId];
     require(draw.commitBlock == 0, "draw was already committed");
     draw.commitBlock = block.number;
     emit Committed(
-      drawState.openDrawIndex,
+      drawId,
       draw.commitBlock
     );
   }
 
-  function lockReward() internal {
+  /**
+    OOP:
+
+    1. Contract created
+    2. commitFirstDrawAndOpenSecondDraw()
+    ... time passes ...
+    3. lockCommittedDrawRewards()
+    4. rewardAndOpenNextDraw()
+    ... time passes ...
+    5. lockCommittedDrawReward()
+    6. rewardAndOpenNextDraw()
+   */
+
+  function commitFirstDrawAndOpenSecondDraw() public onlyOwner requireNoCommittedDraw {
+    commitOpenDraw();
+    open();
+  }
+
+  function lockCommittedDrawRewards() public onlyOwner requireCommittedDrawUnlocked {
     uint256 drawId = currentCommittedDrawId();
     Draw storage draw = draws[drawId];
     uint256 cTokenBalance = cToken.balanceOfUnderlying(address(this));
+
+    // track the new interest from Compound
     draw.grossWinnings = cTokenBalance.sub(accountedBalance);
+
+    // Mark the draw as being locked
+    draw.state = DrawState.LOCKED;
+
+    // Updated the accounted balance to include the new interest
     accountedBalance = cTokenBalance;
 
     emit RewardLocked(drawId, draw.grossWinnings);
   }
 
-  function nextDraw() public onlyAdmin {
-    // If there are more than two draws
-    if (currentRewardedDrawId() != 0) {
-      // then we must have a rewarded draw, so make sure it's paid out first
-      require(draws[currentRewardedDrawId()].commitBlock == 0, "last rewarded draw has not been paid out");
-    }
-    // If there is more than one draw
-    if (currentCommittedDrawId() != 0) {
-      // then we must have a committed draw that we can reward
-      lockReward();
-    }
-    commit();
+  function rewardAndOpenNextDraw(bytes32 messageHash, uint8 v, bytes32 r, bytes32 s) public onlyOwner requireCommittedDrawLocked {
+    reward(messageHash, v, r, s);
+    commitOpenDraw();
     open();
   }
 
@@ -117,25 +125,32 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
    * Can only be called by the owner after the lock end block.
    * Fires the PoolUnlocked event.
    */
-  function reward(bytes32 messageHash, uint8 v, bytes32 r, bytes32 s) public onlyAdmin {
-    uint256 drawId = currentRewardedDrawId();
+  function reward(bytes32 messageHash, uint8 v, bytes32 r, bytes32 s) internal {
+    uint256 drawId = currentCommittedDrawId();
     Draw storage draw = draws[drawId];
-    require(adminAddedBlock[msg.sender] < draw.commitBlock, "only admins present at time of draw can reward");
-    require(messageHash == keccak256(abi.encodePacked(draw.commitBlock, draw.grossWinnings)), "commit block and winnings hash do not match");
-    bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-    bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, messageHash));
-    require(admins.has(ecrecover(prefixedHash, v, r, s)), "only an admin can reward");
-    bytes32 entropy = r ^ s;
 
+    // require the owner to have signed the commit block and gross winnings
+    require(messageHash == keccak256(abi.encodePacked(draw.commitBlock, draw.grossWinnings)), "commit block and winnings hash do not match");
+    require(recover(messageHash, v, r, s) == msg.sender, "the message was not signed by the owner");
+
+    // Select the winner using the signature as entropy
+    bytes32 entropy = r ^ s;
+    address winningAddress = calculateWinner(entropy);
+
+    // calculate the fee and the winnings
     int256 grossWinningsFixed = FixidityLib.newFixed(int256(draw.grossWinnings));
     int256 feeFixed = FixidityLib.multiply(grossWinningsFixed, FixidityLib.newFixed(int256(draw.feeFraction), uint8(18)));
     uint256 fee = uint256(FixidityLib.fromFixed(feeFixed));
     uint256 winnings = uint256(FixidityLib.fromFixed(FixidityLib.subtract(grossWinningsFixed, feeFixed)));
 
-    address winningAddress = calculateWinner(entropy);
+    // Update balance of the winner, and enter their winnings into the new draw
     balances[winningAddress] = balances[winningAddress].add(winnings);
+    drawState.deposit(winningAddress, winnings);
+
+    // Update balance of the beneficiary
     balances[draw.beneficiary] = balances[draw.beneficiary].add(fee);
 
+    // Destroy the draw now that it's complete
     delete draws[drawId];
 
     emit Rewarded(
@@ -248,21 +263,15 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     }
   }
 
-  function currentRewardedDrawId() public view returns (uint256) {
-    if (drawState.openDrawIndex > 2) {
-      return drawState.openDrawIndex.sub(2);
-    } else {
-      return 0;
-    }
-  }
-
   function getDraw(uint256 drawId) public view returns (
+    DrawState state,
     uint256 grossWinnings,
     uint256 feeFraction,
     address beneficiary,
     uint256 commitBlock
   ) {
     Draw storage draw = draws[drawId];
+    state = draw.state;
     grossWinnings = draw.grossWinnings;
     feeFraction = draw.feeFraction;
     beneficiary = draw.beneficiary;
@@ -354,7 +363,7 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
    * @param _nextFeeFraction The fraction to pay out.
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
    */
-  function setNextFeeFraction(uint256 _nextFeeFraction) public onlyAdmin {
+  function setNextFeeFraction(uint256 _nextFeeFraction) public onlyOwner {
     _setNextFeeFraction(_nextFeeFraction);
   }
 
@@ -366,7 +375,7 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     emit FeeFractionChanged(_nextFeeFraction);
   }
 
-  function setNextFeeBeneficiary(address _beneficiary) public onlyAdmin {
+  function setNextFeeBeneficiary(address _beneficiary) public onlyOwner {
     _setNextFeeBeneficiary(_beneficiary);
   }
 
@@ -375,38 +384,35 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     nextFeeBeneficiary = _beneficiary;
   }
 
-  function addAdmin(address _admin) public onlyAdmin {
-    _addAdmin(_admin);
-  }
-
-  function isAdmin(address _admin) public view returns (bool) {
-    return admins.has(_admin);
-  }
-
-  function _addAdmin(address _admin) internal {
-    require(adminCount < 3, "there can only be up to 3 admins");
-    admins.add(_admin);
-    adminAddedBlock[_admin] = block.number;
-    adminCount = adminCount.add(1);
-
-    emit AdminAdded(_admin);
-  }
-
-  function removeAdmin(address _admin) public onlyAdmin {
-    require(adminAddedBlock[_admin] != 0, "admin does not exist");
-    admins.remove(_admin);
-    adminCount = adminCount.sub(1);
-    delete adminAddedBlock[_admin];
-
-    emit AdminRemoved(_admin);
-  }
-
   function token() internal view returns (IERC20) {
     return IERC20(cToken.underlying());
   }
 
-  modifier onlyAdmin() {
-    require(admins.has(msg.sender), "must be an admin");
+  function recover(bytes32 messageHash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
+    bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+    bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, messageHash));
+    return ecrecover(prefixedHash, v, r, s);
+  }
+
+  modifier requireCommittedDrawUnlocked() {
+    uint256 drawId = currentCommittedDrawId();
+    require(drawId != 0, "there is no committed draw");
+    Draw storage draw = draws[drawId];
+    require(draw.state == DrawState.UNLOCKED, "draw is locked");
+    _;
+  }
+
+  modifier requireCommittedDrawLocked() {
+    uint256 drawId = currentCommittedDrawId();
+    require(drawId != 0, "there is no committed draw");
+    Draw storage draw = draws[drawId];
+    require(draw.state == DrawState.LOCKED, "draw has not been locked");
+    _;
+  }
+
+  modifier requireNoCommittedDraw() {
+    uint256 drawId = currentCommittedDrawId();
+    require(drawId == 0, "there is a committed draw");
     _;
   }
 }

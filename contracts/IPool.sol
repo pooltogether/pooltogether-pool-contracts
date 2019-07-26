@@ -69,7 +69,13 @@ interface IPool {
    */
   event BeneficiaryChanged(address indexed beneficiary);
 
+  enum DrawState {
+    UNLOCKED,
+    LOCKED
+  }
+
   struct Draw {
+    DrawState state;
     uint256 grossWinnings;
     uint256 feeFraction; //fixed point 18
     address beneficiary;
@@ -98,9 +104,11 @@ interface IPool {
 
   function depositPoolWinnings() external;
 
-  function nextDraw() external;
+  function commitFirstDrawAndOpenSecondDraw() external;
 
-  function reward(bytes32 commitBlockHash, uint8 v, bytes32 r, bytes32 s) external;
+  function lockCommittedDrawRewards() external;
+
+  function rewardAndOpenNextDraw(bytes32 messageHash, uint8 v, bytes32 r, bytes32 s) external;
 
   /**
    * @notice Transfers a users deposit, and potential winnings, back to them.
@@ -113,20 +121,13 @@ interface IPool {
 
   function currentCommittedDrawId() external view returns (uint256);
 
-  function currentRewardedDrawId() external view returns (uint256);
-
   function getDraw(uint256 drawId) external view returns (
+    DrawState state,
     uint256 grossWinnings,
     uint256 feeFraction,
     address beneficiary,
     uint256 commitBlock
   );
-
-  /**
-   * @notice Calculates a user's winnings.  This is their deposit plus their winnings, if any.
-   * @param _addr The address of the user
-   */
-  function winnings(address _addr) external view returns (uint256);
 
   /**
    * @notice Calculates a user's total balance.
@@ -175,6 +176,8 @@ interface IPool {
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
    */
   function setNextFeeFraction(uint256 _feeFractionFixedPoint18) external;
+  function nextFeeFraction() external returns (uint256);
 
   function setNextFeeBeneficiary(address _beneficiary) external;
+  function nextFeeBeneficiary() external returns (address);
 }
