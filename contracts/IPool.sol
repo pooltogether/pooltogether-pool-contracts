@@ -16,8 +16,6 @@ interface IPool {
    */
   event SponsorshipDeposited(address indexed sender, uint256 amount);
 
-  event PoolWinningsDeposited(address indexed sender, uint256 amount);
-
   event AdminAdded(address indexed admin);
   event AdminRemoved(address indexed admin);
 
@@ -34,17 +32,12 @@ interface IPool {
   event Opened(
     uint256 indexed drawId,
     address indexed beneficiary,
+    bytes32 secretHash,
     uint256 feeFraction
   );
 
   event Committed(
-    uint256 indexed drawId,
-    uint256 indexed commitBlock
-  );
-
-  event RewardLocked(
-    uint256 indexed drawId,
-    uint256 grossWinnings
+    uint256 indexed drawId
   );
 
   /**
@@ -69,17 +62,11 @@ interface IPool {
    */
   event BeneficiaryChanged(address indexed beneficiary);
 
-  enum DrawState {
-    UNLOCKED,
-    LOCKED
-  }
-
   struct Draw {
-    DrawState state;
-    uint256 grossWinnings;
     uint256 feeFraction; //fixed point 18
     address beneficiary;
-    uint256 commitBlock;
+    uint256 openedBlock;
+    bytes32 secretHash;
   }
 
   /**
@@ -102,13 +89,9 @@ interface IPool {
    */
   function depositPool(uint256 totalDepositNonFixed) external;
 
-  function depositPoolWinnings() external;
+  function openNextDraw(bytes32 nextSecretHash) external;
 
-  function commitFirstDrawAndOpenSecondDraw() external;
-
-  function lockCommittedDrawRewards() external;
-
-  function rewardAndOpenNextDraw(bytes32 messageHash, uint8 v, bytes32 r, bytes32 s) external;
+  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret) external;
 
   /**
    * @notice Transfers a users deposit, and potential winnings, back to them.
@@ -122,11 +105,9 @@ interface IPool {
   function currentCommittedDrawId() external view returns (uint256);
 
   function getDraw(uint256 drawId) external view returns (
-    DrawState state,
-    uint256 grossWinnings,
     uint256 feeFraction,
     address beneficiary,
-    uint256 commitBlock
+    uint256 openedBlock
   );
 
   /**

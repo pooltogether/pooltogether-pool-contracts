@@ -54,29 +54,22 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
 
     _setNextFeeFraction(_nextFeeFraction);
     _setNextFeeBeneficiary(_beneficiary);
-
-    open();
   }
 
-  function open() internal {
+  function open(bytes32 _secretHash) internal {
     drawState.openNextDraw();
-    draws[drawState.openDrawIndex] = Draw(DrawState.UNLOCKED, 0, nextFeeFraction, nextFeeBeneficiary, 0);
+    draws[drawState.openDrawIndex] = Draw(nextFeeFraction, nextFeeBeneficiary, block.number, _secretHash);
     emit Opened(
       drawState.openDrawIndex,
       nextFeeBeneficiary,
+      _secretHash,
       nextFeeFraction
     );
   }
 
-  function commitOpenDraw() internal {
+  function commit() internal {
     uint256 drawId = currentOpenDrawId();
-    Draw storage draw = draws[drawId];
-    require(draw.commitBlock == 0, "draw was already committed");
-    draw.commitBlock = block.number;
-    emit Committed(
-      drawId,
-      draw.commitBlock
-    );
+    emit Committed(drawId);
   }
 
   /**
@@ -92,32 +85,17 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
     6. rewardAndOpenNextDraw()
    */
 
-  function commitFirstDrawAndOpenSecondDraw() public onlyOwner requireNoCommittedDraw {
-    commitOpenDraw();
-    open();
+  function openNextDraw(bytes32 nextSecretHash) public onlyOwner requireNoCommittedDraw {
+    if (currentOpenDrawId() != 0) {
+      commit();
+    }
+    open(nextSecretHash);
   }
 
-  function lockCommittedDrawRewards() public onlyOwner requireCommittedDrawUnlocked {
-    uint256 drawId = currentCommittedDrawId();
-    Draw storage draw = draws[drawId];
-    uint256 cTokenBalance = cToken.balanceOfUnderlying(address(this));
-
-    // track the new interest from Compound
-    draw.grossWinnings = cTokenBalance.sub(accountedBalance);
-
-    // Mark the draw as being locked
-    draw.state = DrawState.LOCKED;
-
-    // Updated the accounted balance to include the new interest
-    accountedBalance = cTokenBalance;
-
-    emit RewardLocked(drawId, draw.grossWinnings);
-  }
-
-  function rewardAndOpenNextDraw(bytes32 messageHash, uint8 v, bytes32 r, bytes32 s) public onlyOwner requireCommittedDrawLocked {
-    reward(messageHash, v, r, s);
-    commitOpenDraw();
-    open();
+  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret) public onlyOwner requireCommittedDraw {
+    reward(lastSecret);
+    commit();
+    open(nextSecretHash);
   }
 
   /**
@@ -125,23 +103,27 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
    * Can only be called by the owner after the lock end block.
    * Fires the PoolUnlocked event.
    */
-  function reward(bytes32 messageHash, uint8 v, bytes32 r, bytes32 s) internal {
+  function reward(bytes32 _secret) internal {
     uint256 drawId = currentCommittedDrawId();
     Draw storage draw = draws[drawId];
 
-    // require the owner to have signed the commit block and gross winnings
-    require(messageHash == keccak256(abi.encodePacked(draw.commitBlock, draw.grossWinnings)), "commit block and winnings hash do not match");
-    require(recover(messageHash, v, r, s) == msg.sender, "the message was not signed by the owner");
+    require(draw.secretHash == keccak256(abi.encodePacked(_secret)), "secret does not match");
 
-    // Select the winner using the signature as entropy
-    bytes32 entropy = r ^ s;
+    // Calculate the gross winnings
+    uint256 underlyingBalance = cToken.balanceOfUnderlying(address(this));
+    uint256 grossWinnings = underlyingBalance.sub(accountedBalance);
+
+    // Updated the accounted total
+    accountedBalance = underlyingBalance;
+
+    // require the owner to have signed the commit block and gross winnings
+    bytes32 entropy = _secret ^ keccak256(abi.encodePacked(draw.openedBlock, grossWinnings));
+
+    // Select the winner using the hash as entropy
     address winningAddress = calculateWinner(entropy);
 
-    // calculate the fee and the winnings
-    int256 grossWinningsFixed = FixidityLib.newFixed(int256(draw.grossWinnings));
-    int256 feeFixed = FixidityLib.multiply(grossWinningsFixed, FixidityLib.newFixed(int256(draw.feeFraction), uint8(18)));
-    uint256 fee = uint256(FixidityLib.fromFixed(feeFixed));
-    uint256 winnings = uint256(FixidityLib.fromFixed(FixidityLib.subtract(grossWinningsFixed, feeFixed)));
+    uint256 fee = calculateFee(draw.feeFraction, grossWinnings);
+    uint256 winnings = grossWinnings.sub(fee);
 
     // Update balance of the winner, and enter their winnings into the new draw
     balances[winningAddress] = balances[winningAddress].add(winnings);
@@ -162,7 +144,13 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
     );
   }
 
-  function depositSponsorship(uint256 totalDepositNonFixed) public nonReentrant {
+  function calculateFee(uint256 feeFraction, uint256 grossWinnings) internal pure returns (uint256) {
+    int256 grossWinningsFixed = FixidityLib.newFixed(int256(grossWinnings));
+    int256 feeFixed = FixidityLib.multiply(grossWinningsFixed, FixidityLib.newFixed(int256(feeFraction), uint8(18)));
+    return uint256(FixidityLib.fromFixed(feeFixed));
+  }
+
+  function depositSponsorship(uint256 totalDepositNonFixed) public requireOpenDraw nonReentrant {
     sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].add(totalDepositNonFixed);
 
     // Deposit the funds
@@ -174,7 +162,7 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
   /**
    * @notice Deposits into the pool.  Deposits will become eligible in the next pool.
    */
-  function depositPool(uint256 totalDepositNonFixed) public nonReentrant {
+  function depositPool(uint256 totalDepositNonFixed) public requireOpenDraw nonReentrant {
     // Update the user's balance
     balances[msg.sender] = balances[msg.sender].add(totalDepositNonFixed);
 
@@ -185,15 +173,6 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
     _deposit(totalDepositNonFixed);
 
     emit Deposited(msg.sender, totalDepositNonFixed);
-  }
-
-  function depositPoolWinnings() public nonReentrant {
-    uint256 amount = winnings(msg.sender);
-
-    // Update the user's eligibility
-    drawState.deposit(msg.sender, amount);
-
-    emit PoolWinningsDeposited(msg.sender, amount);
   }
 
   function _deposit(uint256 totalDepositNonFixed) internal {
@@ -264,18 +243,14 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
   }
 
   function getDraw(uint256 drawId) public view returns (
-    DrawState state,
-    uint256 grossWinnings,
     uint256 feeFraction,
     address beneficiary,
-    uint256 commitBlock
+    uint256 openedBlock
   ) {
     Draw storage draw = draws[drawId];
-    state = draw.state;
-    grossWinnings = draw.grossWinnings;
     feeFraction = draw.feeFraction;
     beneficiary = draw.beneficiary;
-    commitBlock = draw.commitBlock;
+    openedBlock = draw.openedBlock;
   }
 
   /**
@@ -394,19 +369,14 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
     return ecrecover(prefixedHash, v, r, s);
   }
 
-  modifier requireCommittedDrawUnlocked() {
-    uint256 drawId = currentCommittedDrawId();
-    require(drawId != 0, "there is no committed draw");
-    Draw storage draw = draws[drawId];
-    require(draw.state == DrawState.UNLOCKED, "draw is locked");
+  modifier requireOpenDraw() {
+    require(currentOpenDrawId() != 0, "no open draw");
     _;
   }
 
-  modifier requireCommittedDrawLocked() {
+  modifier requireCommittedDraw() {
     uint256 drawId = currentCommittedDrawId();
-    require(drawId != 0, "there is no committed draw");
-    Draw storage draw = draws[drawId];
-    require(draw.state == DrawState.LOCKED, "draw has not been locked");
+    require(drawId != 0, "a draw has not been committed");
     _;
   }
 

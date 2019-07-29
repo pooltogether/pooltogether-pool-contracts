@@ -18,6 +18,9 @@ contract('Pool', (accounts) => {
   // let feeFraction = new BN('5' + zero_22) // equal to 0.05
   let feeFraction = new BN('0')
 
+  let secret = '0x1234123412341234123412341234123412341234123412341234123412341234'
+  let secretHash = web3.utils.soliditySha3(secret)
+
   const priceForTenTickets = ticketPrice.mul(new BN(10))
 
   let supplyRateMantissa = '100000000000000000' // 0.1 per block
@@ -54,6 +57,8 @@ contract('Pool', (accounts) => {
       owner
     )
 
+    await pool.openNextDraw(secretHash)
+
     return pool
   }
 
@@ -65,33 +70,13 @@ contract('Pool', (accounts) => {
     const currentDrawId = await pool.currentCommittedDrawId()
 
     if (currentDrawId.toString() === '0') {
-      logs = (await pool.commitFirstDrawAndOpenSecondDraw()).logs
+      logs = (await pool.openNextDraw(secretHash)).logs
       Committed = logs[0]
     } else {
       if (options) {
-        logs = (await pool.lockCommittedDrawRewards(options)).logs
+        logs = (await pool.rewardAndOpenNextDraw(secretHash, secret, options)).logs;
       } else {
-        logs = (await pool.lockCommittedDrawRewards()).logs
-      }
-  
-      const RewardLocked = logs[0]
-      assert.equal(RewardLocked.event, 'RewardLocked')
-  
-      nextDrawDebug('lockCommittedDrawRewards: ', logs)
-  
-      const draw = await pool.getDraw(RewardLocked.args.drawId);
-  
-      let hash = web3.utils.soliditySha3(draw.commitBlock, draw.grossWinnings)
-  
-      const sig = (await web3.eth.sign(hash, owner)).slice(2)
-      const r = `0x${sig.slice(0, 64)}`
-      const s = `0x${sig.slice(64, 128)}`
-      const v = web3.utils.hexToNumber(`0x${sig.slice(128, 130)}`) + 27
-  
-      if (options) {
-        logs = (await pool.rewardAndOpenNextDraw(hash, v, r, s, options)).logs;
-      } else {
-        logs = (await pool.rewardAndOpenNextDraw(hash, v, r, s)).logs;
+        logs = (await pool.rewardAndOpenNextDraw(secretHash, secret)).logs;
       }
   
       nextDrawDebug('rewardAndOpenNextDraw: ', logs)
