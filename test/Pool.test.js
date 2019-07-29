@@ -94,6 +94,47 @@ contract('Pool', (accounts) => {
     console.log({ rewardId, commitId, openId })
   }
 
+  describe('addAdmin()', () =>{
+    beforeEach(async () => {
+      await createPool()
+    })
+
+    it('should allow an admin to add another', async () => {
+      await pool.addAdmin(user1)
+      assert.ok(await pool.isAdmin(user1))
+    })
+
+    it('should not allow a non-admin to remove an admin', async () => {
+      let fail = true
+      try {
+        await pool.addAdmin(user2, { from: user1 })
+        fail = false
+      } catch (e) {}
+      assert.ok(fail)
+    })
+  })
+
+  describe('removeAdmin()', () =>{
+    beforeEach(async () => {
+      await createPool()
+      await pool.addAdmin(user1)
+    })
+
+    it('should allow an admin to remove another', async () => {
+      await pool.removeAdmin(user1)
+      assert.ok(!(await pool.isAdmin(user1)))
+    })
+
+    it('should not allow a non-admin to remove an admin', async () => {
+      let fail = true
+      try {
+        await pool.removeAdmin(user1, { from: admin })
+        fail = false
+      } catch (e) {}
+      assert.ok(fail)
+    })
+  })
+
   describe('supplyRateMantissa()', () => {
     it('should work', async () => {
       pool = await createPool() // ten blocks long

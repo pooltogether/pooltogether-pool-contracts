@@ -3,7 +3,7 @@ pragma solidity ^0.5.0;
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
 import "./compound/ICErc20.sol";
 import "./DrawManager.sol";
 import "fixidity/contracts/FixidityLib.sol";
@@ -20,9 +20,10 @@ import "./IPool.sol";
  * the owner, and users will be able to withdraw their ticket money and winnings, if any.
  * @dev All monetary values are stored internally as fixed point 24.
  */
-contract Pool is IPool, Ownable, ReentrancyGuard {
+contract Pool is IPool, Initializable, ReentrancyGuard {
   using DrawManager for DrawManager.DrawState;
   using SafeMath for uint256;
+  using Roles for Roles.Role;
 
   uint256 constant UINT256_MAX = ~uint256(0);
 
@@ -34,6 +35,7 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
   mapping (address => uint256) sponsorshipBalances;
   mapping(uint256 => Draw) draws;
   DrawManager.DrawState drawState;
+  Roles.Role admins;
 
   /**
    * @notice Initializes a new Pool contract.
@@ -50,8 +52,7 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
     require(_owner != address(0), "owner cannot be the null address");
     require(_cToken != address(0), "money market address is zero");
     cToken = ICErc20(_cToken);
-    Ownable.initialize(_owner);
-
+    _addAdmin(_owner);
     _setNextFeeFraction(_nextFeeFraction);
     _setNextFeeBeneficiary(_beneficiary);
   }
@@ -85,14 +86,16 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
     6. rewardAndOpenNextDraw()
    */
 
-  function openNextDraw(bytes32 nextSecretHash) public onlyOwner requireNoCommittedDraw {
+  function openNextDraw(bytes32 nextSecretHash) public onlyAdmin {
+    require(currentCommittedDrawId() == 0, "there is a committed draw");
     if (currentOpenDrawId() != 0) {
       commit();
     }
     open(nextSecretHash);
   }
 
-  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret) public onlyOwner requireCommittedDraw {
+  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret) public onlyAdmin {
+    require(currentCommittedDrawId() != 0, "a draw has not been committed");
     reward(lastSecret);
     commit();
     open(nextSecretHash);
@@ -338,7 +341,7 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
    * @param _nextFeeFraction The fraction to pay out.
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
    */
-  function setNextFeeFraction(uint256 _nextFeeFraction) public onlyOwner {
+  function setNextFeeFraction(uint256 _nextFeeFraction) public onlyAdmin {
     _setNextFeeFraction(_nextFeeFraction);
   }
 
@@ -350,7 +353,7 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
     emit FeeFractionChanged(_nextFeeFraction);
   }
 
-  function setNextFeeBeneficiary(address _beneficiary) public onlyOwner {
+  function setNextFeeBeneficiary(address _beneficiary) public onlyAdmin {
     _setNextFeeBeneficiary(_beneficiary);
   }
 
@@ -359,30 +362,38 @@ contract Pool is IPool, Ownable, ReentrancyGuard {
     nextFeeBeneficiary = _beneficiary;
   }
 
+  function addAdmin(address _admin) public onlyAdmin {
+    _addAdmin(_admin);
+  }
+
+  function isAdmin(address _admin) public view returns (bool) {
+    return admins.has(_admin);
+  }
+
+  function _addAdmin(address _admin) internal {
+    admins.add(_admin);
+
+    emit AdminAdded(_admin);
+  }
+
+  function removeAdmin(address _admin) public onlyAdmin {
+    require(admins.has(_admin), "admin does not exist");
+    admins.remove(_admin);
+
+    emit AdminRemoved(_admin);
+  }
+
   function token() internal view returns (IERC20) {
     return IERC20(cToken.underlying());
   }
 
-  function recover(bytes32 messageHash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
-    bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-    bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, messageHash));
-    return ecrecover(prefixedHash, v, r, s);
+  modifier onlyAdmin() {
+    require(admins.has(msg.sender), "must be an admin");
+    _;
   }
 
   modifier requireOpenDraw() {
-    require(currentOpenDrawId() != 0, "no open draw");
-    _;
-  }
-
-  modifier requireCommittedDraw() {
-    uint256 drawId = currentCommittedDrawId();
-    require(drawId != 0, "a draw has not been committed");
-    _;
-  }
-
-  modifier requireNoCommittedDraw() {
-    uint256 drawId = currentCommittedDrawId();
-    require(drawId == 0, "there is a committed draw");
+    require(currentOpenDrawId() != 0, "there is no open draw");
     _;
   }
 }
