@@ -107,7 +107,8 @@ interface IPool {
   function getDraw(uint256 drawId) external view returns (
     uint256 feeFraction,
     address beneficiary,
-    uint256 openedBlock
+    uint256 openedBlock,
+    bytes32 secretHash
   );
 
   /**

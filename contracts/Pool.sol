@@ -248,12 +248,14 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
   function getDraw(uint256 drawId) public view returns (
     uint256 feeFraction,
     address beneficiary,
-    uint256 openedBlock
+    uint256 openedBlock,
+    bytes32 secretHash
   ) {
     Draw storage draw = draws[drawId];
     feeFraction = draw.feeFraction;
     beneficiary = draw.beneficiary;
     openedBlock = draw.openedBlock;
+    secretHash = draw.secretHash;
   }
 
   /**
