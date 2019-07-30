@@ -38,4 +38,8 @@ contract CErc20Mock is Initializable, ICErc20 {
   function supplyRatePerBlock() external view returns (uint) {
     return __supplyRateMantissa;
   }
+
+  function setSupplyRateMantissa(uint256 _supplyRateMantissa) external {
+    __supplyRateMantissa = _supplyRateMantissa;
+  }
 }
