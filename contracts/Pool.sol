@@ -113,7 +113,7 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     require(draw.secretHash == keccak256(abi.encodePacked(_secret)), "secret does not match");
 
     // Calculate the gross winnings
-    uint256 underlyingBalance = cToken.balanceOfUnderlying(address(this));
+    uint256 underlyingBalance = balance();
     uint256 grossWinnings = underlyingBalance.sub(accountedBalance);
 
     // Updated the accounted total
@@ -387,6 +387,10 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
 
   function token() internal view returns (IERC20) {
     return IERC20(cToken.underlying());
+  }
+
+  function balance() public returns (uint256) {
+    return cToken.balanceOfUnderlying(address(this));
   }
 
   modifier onlyAdmin() {

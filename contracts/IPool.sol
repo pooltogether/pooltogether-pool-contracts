@@ -162,4 +162,9 @@ interface IPool {
 
   function setNextFeeBeneficiary(address _beneficiary) external;
   function nextFeeBeneficiary() external returns (address);
+
+  function cToken() external returns (address);
+
+  function accountedBalance() external returns (uint256);
+  function balance() external returns (uint256);
 }
