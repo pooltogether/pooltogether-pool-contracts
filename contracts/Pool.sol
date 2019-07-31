@@ -262,8 +262,8 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
    * @notice Calculates a user's winnings.  This is their deposit plus their winnings, if any.
    * @param _addr The address of the user
    */
-  function winnings(address _addr) public view returns (uint256) {
-    return balances[_addr] - drawState.balanceOf(_addr);
+  function eligibleBalanceOf(address _addr) public view returns (uint256) {
+    return drawState.balanceOf(_addr);
   }
 
   /**

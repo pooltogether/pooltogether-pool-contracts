@@ -111,6 +111,8 @@ interface IPool {
     bytes32 secretHash
   );
 
+  function eligibleBalanceOf(address _addr) external view returns (uint256);
+
   /**
    * @notice Calculates a user's total balance.
    * @return The users's current balance.
