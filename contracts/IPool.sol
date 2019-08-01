@@ -93,6 +93,8 @@ interface IPool {
 
   function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret) external;
 
+  function withdrawSponsorship(uint256 amount) external;
+
   /**
    * @notice Transfers a users deposit, and potential winnings, back to them.
    * The Pool must be unlocked.
