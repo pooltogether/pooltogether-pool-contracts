@@ -1,11 +1,99 @@
 {
   "contracts": {
+    "Migrations": {
+      "address": "0x498862973A159101F7838546D3E3D5466235B697",
+      "constructorCode": "60806040523480156100115760006000fd5b50610017565b6107cc806100266000396000f3fe",
+      "bodyBytecodeHash": "68751f96602c90220b80563eca69509a76f803364232eba26d2dd24df9da8ca2",
+      "localBytecodeHash": "f6b9aa4cdc9850273616691688a16f3c0f8faf563aec8ccfc0549bd58c6d6e3e",
+      "deployedBytecodeHash": "f6b9aa4cdc9850273616691688a16f3c0f8faf563aec8ccfc0549bd58c6d6e3e",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 1696,
+          "type": "t_bool",
+          "src": "757:24:9"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 1698,
+          "type": "t_bool",
+          "src": "876:25:9"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 1754,
+          "type": "t_array:50<t_uint256>",
+          "src": "1951:29:9"
+        },
+        {
+          "contract": "Ownable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
+          "label": "_owner",
+          "astId": 1032,
+          "type": "t_address",
+          "src": "317:22:4"
+        },
+        {
+          "contract": "Ownable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
+          "label": "______gap",
+          "astId": 1143,
+          "type": "t_array:50<t_uint256>",
+          "src": "2277:29:4"
+        },
+        {
+          "contract": "Migrations",
+          "path": "contracts/Migrations.sol",
+          "label": "last_completed_migration",
+          "astId": 3061,
+          "type": "t_uint256",
+          "src": "163:36:13"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
     "Pool": {
-      "address": "0xA9948Ef3336ADC48C703c5D9144C5DCd9ef474f9",
-      "constructorCode": "60806040523480156100115760006000fd5b50610017565b6146e980620000276000396000f3fe",
-      "bodyBytecodeHash": "c03ddfb92df00d255ef062ff7b38f26baed35e24ead8152ea4b1d923dd8db44c",
-      "localBytecodeHash": "86ae19441906fa458bc9788b499f1fb38ee55a3f35e6805dca3f01c6c0f8a5f1",
-      "deployedBytecodeHash": "4ca5b76d8c9562e96ccc6437588f7a20b137a5ebccfddb2021ea6e0e5639b8da",
+      "address": "0x871C9f90c3e7A1162DBD26c647E0B1b8812cAa02",
+      "constructorCode": "60806040523480156100115760006000fd5b50610017565b61415380620000276000396000f3fe",
+      "bodyBytecodeHash": "a8ab8089d64ffdb8cc9330a31aca9011f1b3dde0435e29a93cf5e3731a607770",
+      "localBytecodeHash": "0b25a4155767dfe0d37536939176b09ac31aeea40a3a0b82430fb1fe6188507c",
+      "deployedBytecodeHash": "91cddb0b1d7272f2705a5a63223f911251841b2f47f2a52b7ecec47424d71d0a",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -41,30 +129,35 @@
           "label": "IPool.Draw",
           "members": [
             {
-              "label": "grossWinnings",
-              "astId": 2891,
-              "type": "t_uint256",
-              "src": "1748:21:12"
-            },
-            {
               "label": "feeFraction",
-              "astId": 2893,
+              "astId": 2879,
               "type": "t_uint256",
-              "src": "1775:19:12"
+              "src": "1585:19:12"
             },
             {
               "label": "beneficiary",
-              "astId": 2895,
+              "astId": 2881,
               "type": "t_address",
-              "src": "1817:19:12"
+              "src": "1627:19:12"
             },
             {
-              "label": "commitBlock",
-              "astId": 2897,
+              "label": "openedBlock",
+              "astId": 2883,
               "type": "t_uint256",
-              "src": "1842:19:12"
+              "src": "1652:19:12"
+            },
+            {
+              "label": "secretHash",
+              "astId": 2885,
+              "type": "t_bytes32",
+              "src": "1677:18:12"
             }
           ]
+        },
+        "t_bytes32": {
+          "id": "t_bytes32",
+          "kind": "elementary",
+          "label": "bytes32"
         },
         "t_mapping<t_struct<IPool.Draw>>": {
           "id": "t_mapping<t_struct<IPool.Draw>>",
@@ -172,11 +265,6 @@
           "kind": "array",
           "label": "uint256[]"
         },
-        "t_bytes32": {
-          "id": "t_bytes32",
-          "kind": "elementary",
-          "label": "bytes32"
-        },
         "t_mapping<t_bytes32>": {
           "id": "t_mapping<t_bytes32>",
           "valueType": "t_bytes32",
@@ -279,7 +367,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "cToken",
-          "astId": 3120,
+          "astId": 3128,
           "type": "t_address",
           "src": "1637:21:14"
         },
@@ -287,7 +375,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "nextFeeBeneficiary",
-          "astId": 3122,
+          "astId": 3130,
           "type": "t_address",
           "src": "1662:33:14"
         },
@@ -295,7 +383,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "nextFeeFraction",
-          "astId": 3124,
+          "astId": 3132,
           "type": "t_uint256",
           "src": "1699:30:14"
         },
@@ -303,153 +391,49 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "accountedBalance",
-          "astId": 3126,
+          "astId": 3134,
           "type": "t_uint256",
-          "src": "1733:32:14"
+          "src": "1733:31:14"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "balances",
-          "astId": 3130,
+          "astId": 3138,
           "type": "t_mapping<t_uint256>",
-          "src": "1769:37:14"
+          "src": "1768:37:14"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "sponsorshipBalances",
-          "astId": 3134,
+          "astId": 3142,
           "type": "t_mapping<t_uint256>",
-          "src": "1810:48:14"
+          "src": "1809:48:14"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "draws",
-          "astId": 3138,
+          "astId": 3146,
           "type": "t_mapping<t_struct<IPool.Draw>>",
-          "src": "1862:30:14"
+          "src": "1861:30:14"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "drawState",
-          "astId": 3140,
+          "astId": 3148,
           "type": "t_struct<DrawManager.DrawState>",
-          "src": "1896:31:14"
+          "src": "1895:31:14"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "admins",
-          "astId": 3142,
+          "astId": 3150,
           "type": "t_struct<Roles.Role>",
-          "src": "1931:17:14"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "adminAddedBlock",
-          "astId": 3146,
-          "type": "t_mapping<t_uint256>",
-          "src": "1952:43:14"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "adminCount",
-          "astId": 3148,
-          "type": "t_uint256",
-          "src": "1999:18:14"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
-      }
-    },
-    "Migrations": {
-      "address": "0x9f8c841D51171a3FD2f4c263a33FB597E8C4692A",
-      "constructorCode": "60806040523480156100115760006000fd5b50610017565b6107cc806100266000396000f3fe",
-      "bodyBytecodeHash": "68751f96602c90220b80563eca69509a76f803364232eba26d2dd24df9da8ca2",
-      "localBytecodeHash": "f6b9aa4cdc9850273616691688a16f3c0f8faf563aec8ccfc0549bd58c6d6e3e",
-      "deployedBytecodeHash": "f6b9aa4cdc9850273616691688a16f3c0f8faf563aec8ccfc0549bd58c6d6e3e",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_address": {
-          "id": "t_address",
-          "kind": "elementary",
-          "label": "address"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 1696,
-          "type": "t_bool",
-          "src": "757:24:9"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 1698,
-          "type": "t_bool",
-          "src": "876:25:9"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 1754,
-          "type": "t_array:50<t_uint256>",
-          "src": "1951:29:9"
-        },
-        {
-          "contract": "Ownable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
-          "label": "_owner",
-          "astId": 1032,
-          "type": "t_address",
-          "src": "317:22:4"
-        },
-        {
-          "contract": "Ownable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
-          "label": "______gap",
-          "astId": 1143,
-          "type": "t_array:50<t_uint256>",
-          "src": "2277:29:4"
-        },
-        {
-          "contract": "Migrations",
-          "path": "contracts/Migrations.sol",
-          "label": "last_completed_migration",
-          "astId": 3053,
-          "type": "t_uint256",
-          "src": "163:36:13"
+          "src": "1930:17:14"
         }
       ],
       "warnings": {
@@ -463,14 +447,14 @@
   },
   "solidityLibs": {
     "DrawManager": {
-      "address": "0x3be5821EA1ABA1293cAB52c3a23cFa06D3888B18",
+      "address": "0xc7Ee65CFDF663e12895E0102041fE14540781Ee9",
       "constructorCode": "611e7a610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
       "bodyBytecodeHash": "14edac65c29225089a77898c2d1851f184c49e75ded20a94213317c7bea13da7",
       "localBytecodeHash": "47bb008f1e7c577dff83dbcc37d17f1c8d6d8e9d7c3487275293712100a447bd",
       "deployedBytecodeHash": "47bb008f1e7c577dff83dbcc37d17f1c8d6d8e9d7c3487275293712100a447bd"
     },
     "FixidityLib": {
-      "address": "0x13A023f483bbE86d1E45f1f3C7A8A0ACa15AF072",
+      "address": "0x52A93ed0f522BC94Ce9639507eF9e41c290d232e",
       "constructorCode": "61107f610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
       "bodyBytecodeHash": "bd8ad311c61d6b5554165a366e55cbe6f9bca56de8d0fba46411865cea34c618",
       "localBytecodeHash": "77828912cd97bb885fd3f93ca8d7522573a6e27bd431ebc9936c21ddb90847a9",
@@ -480,19 +464,19 @@
   "proxies": {
     "pooltogether/Migrations": [
       {
-        "address": "0x2eea58c111C41013b6B844375e5c53fd95a48BE0",
+        "address": "0xfa5672C40148d26E249FD45bf29376E89568aa03",
         "version": "0.2",
-        "implementation": "0x9f8c841D51171a3FD2f4c263a33FB597E8C4692A",
-        "admin": "0x552468995EE6a46c518664c9e4eaEae519206a6F",
+        "implementation": "0x498862973A159101F7838546D3E3D5466235B697",
+        "admin": "0xbaa77f4Fcf743B8824e726dbEC34071f4E912F58",
         "kind": "Upgradeable"
       }
     ],
     "pooltogether/Pool": [
       {
-        "address": "0x079Db0793Bd2d5f73388c46de3F4C12e45351c76",
+        "address": "0xc4982849893D280b38c5839549BE454424A77fF7",
         "version": "0.2",
-        "implementation": "0xA9948Ef3336ADC48C703c5D9144C5DCd9ef474f9",
-        "admin": "0x552468995EE6a46c518664c9e4eaEae519206a6F",
+        "implementation": "0x871C9f90c3e7A1162DBD26c647E0B1b8812cAa02",
+        "admin": "0xbaa77f4Fcf743B8824e726dbEC34071f4E912F58",
         "kind": "Upgradeable"
       }
     ]
@@ -500,6 +484,6 @@
   "manifestVersion": "2.2",
   "version": "0.2",
   "proxyAdmin": {
-    "address": "0x552468995EE6a46c518664c9e4eaEae519206a6F"
+    "address": "0xbaa77f4Fcf743B8824e726dbEC34071f4E912F58"
   }
 }
