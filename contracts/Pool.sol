@@ -263,7 +263,7 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
    * @param _addr The address of the user
    */
   function eligibleBalanceOf(address _addr) public view returns (uint256) {
-    return drawState.balanceOf(_addr);
+    return drawState.eligibleBalanceOf(_addr);
   }
 
   /**
