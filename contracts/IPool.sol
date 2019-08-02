@@ -171,4 +171,11 @@ interface IPool {
 
   function accountedBalance() external view returns (uint256);
   function balance() external returns (uint256);
+
+
+  function addAdmin(address _admin) external;
+
+  function isAdmin(address _admin) external view returns (bool);
+
+  function removeAdmin(address _admin) external;
 }
