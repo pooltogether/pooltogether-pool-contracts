@@ -31,8 +31,12 @@ contract CErc20Mock is Initializable, ICErc20 {
     require(IERC20(underlying).transfer(msg.sender, requestedAmount), "could not transfer tokens");
   }
 
+  function reward(address account) external {
+    ownerTokenAmounts[account] = (ownerTokenAmounts[account] * 120) / 100;
+  }
+
   function balanceOfUnderlying(address account) external returns (uint) {
-    return (ownerTokenAmounts[account] * 120) / 100;
+    return ownerTokenAmounts[account];
   }
 
   function supplyRatePerBlock() external view returns (uint) {

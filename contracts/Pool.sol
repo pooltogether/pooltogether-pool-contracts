@@ -116,24 +116,34 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     uint256 underlyingBalance = balance();
     uint256 grossWinnings = underlyingBalance.sub(accountedBalance);
 
-    // Updated the accounted total
-    accountedBalance = underlyingBalance;
-
     // require the owner to have signed the commit block and gross winnings
     bytes32 entropy = _secret ^ keccak256(abi.encodePacked(draw.openedBlock, grossWinnings));
 
     // Select the winner using the hash as entropy
     address winningAddress = calculateWinner(entropy);
 
-    uint256 fee = calculateFee(draw.feeFraction, grossWinnings);
-    uint256 winnings = grossWinnings.sub(fee);
+    uint256 fee;
 
-    // Update balance of the winner, and enter their winnings into the new draw
-    balances[winningAddress] = balances[winningAddress].add(winnings);
-    drawState.deposit(winningAddress, winnings);
+    // Calculate the beneficiary fee
+    fee = calculateFee(draw.feeFraction, grossWinnings);
 
     // Update balance of the beneficiary
     balances[draw.beneficiary] = balances[draw.beneficiary].add(fee);
+
+    uint256 winnings = grossWinnings.sub(fee);
+
+    // If there is a winner
+    if (winningAddress != address(0)) {
+      // Update balance of the winner, and enter their winnings into the new draw
+      balances[winningAddress] = balances[winningAddress].add(winnings);
+      drawState.deposit(winningAddress, winnings);
+
+      // Updated the accounted total
+      accountedBalance = underlyingBalance;
+    } else {
+      // Only account for the fee
+      accountedBalance = accountedBalance.add(fee);
+    }
 
     // Destroy the draw now that it's complete
     delete draws[drawId];

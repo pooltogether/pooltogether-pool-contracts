@@ -23,7 +23,7 @@ contract('DrawManager', (accounts) => {
     })
 
     describe('openNextDraw()', () => {
-        xit('should create a draw when none is available', async () => {
+        it('should create a draw when none is available', async () => {
             assert.equal(await drawManager.openDrawIndex(), '0')
             await drawManager.openNextDraw()
             assert.equal(await drawManager.openDrawIndex(), '1')
@@ -34,7 +34,7 @@ contract('DrawManager', (accounts) => {
                 await drawManager.openNextDraw()
             })
 
-            xit('should create the next draw', async () => {
+            it('should create the next draw', async () => {
                 await drawManager.openNextDraw()
                 assert.equal(await drawManager.openDrawIndex(), '2')
             })
@@ -42,7 +42,7 @@ contract('DrawManager', (accounts) => {
     })
 
     describe('deposit', () => {
-        xit('should fail if there is no current draw', async () => {
+        it('should fail if there is no current draw', async () => {
             let failed = true
             try {
                 await drawManager.deposit(user1, toWei('10'))
@@ -57,7 +57,7 @@ contract('DrawManager', (accounts) => {
                 await drawManager.openNextDraw()
             })
 
-            xit('should deposit the tokens as open tokens', async () => {
+            it('should deposit the tokens as open tokens', async () => {
                 await drawManager.deposit(user1, toWei('10'))
                 assert.equal(await drawManager.firstDrawIndex(user1), '1')
                 assert.equal(await drawManager.openBalanceOf(user1), toWei('10'))
@@ -75,7 +75,7 @@ contract('DrawManager', (accounts) => {
                     await drawManager.deposit(user1, toWei('10'))
                 })
 
-                xit('should allow them to deposit again', async () => {
+                it('should allow them to deposit again', async () => {
                     await drawManager.deposit(user1, toWei('10'))
 
                     assert.equal(await drawManager.firstDrawIndex(user1), '1')
@@ -89,7 +89,7 @@ contract('DrawManager', (accounts) => {
                         await drawManager.openNextDraw()
                     })
 
-                    xit('should make the previous balance eligibile and start a new open balance', async () => {
+                    it('should make the previous balance eligibile and start a new open balance', async () => {
                         await drawManager.deposit(user1, toWei('10'))
 
                         assert.equal(await drawManager.firstDrawIndex(user1), '1')
@@ -106,7 +106,7 @@ contract('DrawManager', (accounts) => {
                             await drawManager.openNextDraw()
                         })
 
-                        xit('should collapse the previous two draws and update the open draw', async () => {
+                        it('should collapse the previous two draws and update the open draw', async () => {
                             await drawManager.deposit(user1, toWei('10'))
 
                             assert.equal(await drawManager.firstDrawIndex(user1), '1')
@@ -128,7 +128,7 @@ contract('DrawManager', (accounts) => {
             await drawManager.deposit(user1, toWei('10'))
         })
 
-        xit('should allow the user to withdraw their open tokens', async () => {
+        it('should allow the user to withdraw their open tokens', async () => {
             await drawManager.withdraw(user1, toWei('10'))
 
             assert.equal(await drawManager.openBalanceOf(user1), '0')
@@ -142,14 +142,14 @@ contract('DrawManager', (accounts) => {
                 await drawManager.deposit(user1, toWei('10'))
             })
 
-            xit('should allow the user to withdraw their open tokens', async () => {
+            it('should allow the user to withdraw their open tokens', async () => {
                 await drawManager.withdraw(user1, toWei('10'))
                 assert.equal(await drawManager.openBalanceOf(user1), toWei('0'))
                 assert.equal(await drawManager.eligibleBalanceOf(user1), toWei('10'))
                 assert.equal((await drawManager.balanceOf(user1)).toString(), toWei('10'))
             })  
 
-            xit('should allow the user to withdraw all of their tokens', async () => {
+            it('should allow the user to withdraw all of their tokens', async () => {
                 await drawManager.withdraw(user1, toWei('20'))
                 assert.equal(await drawManager.openBalanceOf(user1), toWei('0'))
                 assert.equal(await drawManager.eligibleBalanceOf(user1), toWei('0'))
@@ -159,7 +159,7 @@ contract('DrawManager', (accounts) => {
 
 
     describe('draw', () => {
-        xit('should return address(0) if no eligible deposits', async () => {
+        it('should return address(0) if no eligible deposits', async () => {
             assert.equal(await drawManager.draw(0), ZERO_ADDRESS)
         })
 
@@ -171,7 +171,7 @@ contract('DrawManager', (accounts) => {
                 await drawManager.deposit(user3, toWei('10'))
             })
 
-            xit('should return 0', async () => {
+            it('should return 0', async () => {
                 assert.equal(await drawManager.draw(0), ZERO_ADDRESS)
             })
 
@@ -180,14 +180,14 @@ contract('DrawManager', (accounts) => {
                     await drawManager.openNextDraw()
                 })
 
-                xit('should work', async () => {
+                it('should work', async () => {
                     assert.equal(await drawManager.draw(toWei('1')), user1)
                     assert.equal(await drawManager.draw(toWei('11')), user2)
                     assert.equal(await drawManager.draw(toWei('21')), user3)
                 })
 
                 describe('drawWithEntropy()', () => {
-                    xit('should work', async () => {
+                    it('should work', async () => {
                         const address = await drawManager.drawWithEntropy('0x12431')
                         assert.ok([user1, user2, user3].indexOf(address) != -1)
                     })
@@ -199,7 +199,7 @@ contract('DrawManager', (accounts) => {
                         assert.equal(await drawManager.eligibleSupply(), toWei('20'))
                     })
 
-                    xit('should fail with the previous total', async () => {
+                    it('should fail with the previous total', async () => {
                         let fail = true
                         try {
                             await drawManager.draw(toWei('21'))
@@ -208,7 +208,7 @@ contract('DrawManager', (accounts) => {
                         assert.ok(fail)
                     })
 
-                    xit('should read the original depositers', async () => {
+                    it('should read the original depositers', async () => {
                         assert.equal(await drawManager.draw(toWei('1')), user1)
                         assert.equal(await drawManager.draw(toWei('11')), user3)                        
                     })
@@ -223,7 +223,7 @@ contract('DrawManager', (accounts) => {
                         await drawManager.deposit(user1, toWei('10'))
                     })
 
-                    xit('should draw from them all', async () => {
+                    it('should draw from them all', async () => {
                         assert.equal(await drawManager.draw(toWei('1')), user1)
                         assert.equal(await drawManager.draw(toWei('11')), user2)
                         assert.equal(await drawManager.draw(toWei('21')), user3)
@@ -232,7 +232,7 @@ contract('DrawManager', (accounts) => {
                         assert.equal(await drawManager.draw(toWei('51')), user6)
                     })
 
-                    xit('should fail with an invalid token', async () => {
+                    it('should fail with an invalid token', async () => {
                         assert.equal(await drawManager.eligibleSupply(), toWei('60'))
                         assert.equal(await drawManager.openSupply(), toWei('10'))
                         let fail = true
