@@ -89,11 +89,11 @@
       }
     },
     "Pool": {
-      "address": "0x871C9f90c3e7A1162DBD26c647E0B1b8812cAa02",
-      "constructorCode": "60806040523480156100115760006000fd5b50610017565b61415380620000276000396000f3fe",
-      "bodyBytecodeHash": "a8ab8089d64ffdb8cc9330a31aca9011f1b3dde0435e29a93cf5e3731a607770",
-      "localBytecodeHash": "0b25a4155767dfe0d37536939176b09ac31aeea40a3a0b82430fb1fe6188507c",
-      "deployedBytecodeHash": "91cddb0b1d7272f2705a5a63223f911251841b2f47f2a52b7ecec47424d71d0a",
+      "address": "0x22Bd490cd7D7d857677B1044B05a9eAa5dD9B740",
+      "constructorCode": "60806040523480156100115760006000fd5b50610017565b6141b480620000276000396000f3fe",
+      "bodyBytecodeHash": "33b88feed772d0ec9120b009eb0d5d7548beff5635c80e5d374337d69a2a1806",
+      "localBytecodeHash": "0ca9279d30d07d8caba8ce2eeffa9447e2cf96ee8af283cdba23dc2e1181302d",
+      "deployedBytecodeHash": "d77e705000c35a4185361b82f442a16e6816fc346fbb20cffd7124718f1d7026",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -367,7 +367,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "cToken",
-          "astId": 3128,
+          "astId": 3145,
           "type": "t_address",
           "src": "1637:21:14"
         },
@@ -375,7 +375,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "nextFeeBeneficiary",
-          "astId": 3130,
+          "astId": 3147,
           "type": "t_address",
           "src": "1662:33:14"
         },
@@ -383,7 +383,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "nextFeeFraction",
-          "astId": 3132,
+          "astId": 3149,
           "type": "t_uint256",
           "src": "1699:30:14"
         },
@@ -391,7 +391,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "accountedBalance",
-          "astId": 3134,
+          "astId": 3151,
           "type": "t_uint256",
           "src": "1733:31:14"
         },
@@ -399,7 +399,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "balances",
-          "astId": 3138,
+          "astId": 3155,
           "type": "t_mapping<t_uint256>",
           "src": "1768:37:14"
         },
@@ -407,7 +407,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "sponsorshipBalances",
-          "astId": 3142,
+          "astId": 3159,
           "type": "t_mapping<t_uint256>",
           "src": "1809:48:14"
         },
@@ -415,7 +415,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "draws",
-          "astId": 3146,
+          "astId": 3163,
           "type": "t_mapping<t_struct<IPool.Draw>>",
           "src": "1861:30:14"
         },
@@ -423,7 +423,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "drawState",
-          "astId": 3148,
+          "astId": 3165,
           "type": "t_struct<DrawManager.DrawState>",
           "src": "1895:31:14"
         },
@@ -431,7 +431,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "admins",
-          "astId": 3150,
+          "astId": 3167,
           "type": "t_struct<Roles.Role>",
           "src": "1930:17:14"
         }
@@ -441,7 +441,34 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [
+          {
+            "contract": "Pool",
+            "path": "contracts/Pool.sol",
+            "label": "draws",
+            "astId": 3163,
+            "type": "t_mapping<t_struct<IPool.Draw>>",
+            "src": "1861:30:14"
+          },
+          {
+            "contract": "Pool",
+            "path": "contracts/Pool.sol",
+            "label": "drawState",
+            "astId": 3165,
+            "type": "t_struct<DrawManager.DrawState>",
+            "src": "1895:31:14"
+          },
+          {
+            "contract": "Pool",
+            "path": "contracts/Pool.sol",
+            "label": "admins",
+            "astId": 3167,
+            "type": "t_struct<Roles.Role>",
+            "src": "1930:17:14"
+          }
+        ],
+        "storageDiff": []
       }
     }
   },
@@ -475,7 +502,7 @@
       {
         "address": "0xc4982849893D280b38c5839549BE454424A77fF7",
         "version": "0.2",
-        "implementation": "0x871C9f90c3e7A1162DBD26c647E0B1b8812cAa02",
+        "implementation": "0x22Bd490cd7D7d857677B1044B05a9eAa5dD9B740",
         "admin": "0xbaa77f4Fcf743B8824e726dbEC34071f4E912F58",
         "kind": "Upgradeable"
       }
