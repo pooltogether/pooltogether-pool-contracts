@@ -1,6 +1,6 @@
 // Migrations.sol
 
-pragma solidity ^0.5.0;
+pragma solidity 0.5.10;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 

@@ -25,7 +25,7 @@
     "@kleros/kleros-interaction" "^0.9.0"
     minimetoken "^0.2.0"
 
-"@openzeppelin/cli@^2.5.1":
+"@openzeppelin/cli@2.5.1":
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/@openzeppelin/cli/-/cli-2.5.1.tgz#d764494e1cea0dcf32f4f0363e6dee4ebb38fd7b"
   integrity sha512-7HmAE9uqlgUiFeu+SP3+qMiVSJwrn2QkloRSaeNdfTdZGo9AzYTSD5K/cTfoEglp9JheuFpCoA91e4MdIZF/tQ==
@@ -95,7 +95,7 @@
     truffle-config "1.1.2"
     web3 "1.0.0-beta.37"
 
-"@openzeppelin/contracts-ethereum-package@^2.2.1":
+"@openzeppelin/contracts-ethereum-package@2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-ethereum-package/-/contracts-ethereum-package-2.2.1.tgz#be517ba31fd83cb472290dac904b822240f4ed9e"
   integrity sha512-KLisw0g0KftlEa9AvzQYNvz7LlxRmCoFZi5VedJPuYgtC1nflm6gH5TJDpxv4DzKrGN/+rB3usbamWL8A/ZrOA==
@@ -138,7 +138,7 @@
     path-browserify "^1.0.0"
     url "^0.11.0"
 
-"@openzeppelin/upgrades@2.5.1", "@openzeppelin/upgrades@^2.5.0":
+"@openzeppelin/upgrades@2.5.1":
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades/-/upgrades-2.5.1.tgz#7909dfc582d0ab202ac6401925c7674d96ab3c57"
   integrity sha512-RAX/1rIPa4mXH2vgis3TybbqRLV8/rBDahs760FSo4O4jiaIRAn1kEuIBDAjAnvYAjs/+PyVYBNm0+QzHFmpBg==
@@ -4925,7 +4925,7 @@ solc-wrapper@^0.5.8:
     semver "^5.5.0"
     tmp "0.0.33"
 
-solidity-coverage@^0.6.4:
+solidity-coverage@0.6.4:
   version "0.6.4"
   resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.6.4.tgz#7f4d28b42c10cea1df9f27ca80beac9b03dfa25a"
   integrity sha512-jj7JBag7SAh1TZE7cok+Hd6jKCjC5fTnZZM4K3CJMHOMjtXb9R/+4vHoCksUEYCIYNVpSp7+2ioxOPFRh1gBBQ==

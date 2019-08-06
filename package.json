@@ -27,9 +27,9 @@
   },
   "dependencies": {
     "@kleros/kleros": "DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c",
-    "@openzeppelin/cli": "^2.5.1",
-    "@openzeppelin/contracts-ethereum-package": "^2.2.1",
-    "@openzeppelin/upgrades": "^2.5.0",
+    "@openzeppelin/cli": "2.5.1",
+    "@openzeppelin/contracts-ethereum-package": "2.2.1",
+    "@openzeppelin/upgrades": "2.5.1",
     "chalk": "2.4.2",
     "eth-gas-reporter": "0.2.0",
     "fixidity": "DeltaCamp/Fixidity#edf533f77df43b16a7b92f17af7a8930db01f293",
@@ -41,6 +41,6 @@
     "zos-truffle-merge": "0.0.3"
   },
   "devDependencies": {
-    "solidity-coverage": "^0.6.4"
+    "solidity-coverage": "0.6.4"
   }
 }
