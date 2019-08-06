@@ -7,6 +7,7 @@
   "author": "Brendan Asselstine brendan@delta.camp",
   "scripts": {
     "test": "truffle test --migrations_directory ./migrations/empty",
+    "coverage": "solidity-coverage",
     "compile": "truffle compile",
     "compile-and-merge": "yarn compile && zos-truffle-merge -n 1 zos.mainnet.json && zos-truffle-merge -n 4 zos.rinkeby.json",
     "start": "./scripts/ganache.sh",
@@ -38,5 +39,8 @@
     "truffle-deploy-registry": "0.5.0",
     "truffle-hdwallet-provider": "1.0.0-web3one.5",
     "zos-truffle-merge": "0.0.3"
+  },
+  "devDependencies": {
+    "solidity-coverage": "^0.6.4"
   }
 }

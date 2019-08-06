@@ -300,25 +300,6 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     return drawState.eligibleSupply;
   }
 
-  function eligibleSupplyFixed() internal view returns (int256) {
-    return FixidityLib.newFixed(int256(drawState.eligibleSupply));
-  }
-
-  function maxPoolSize(int256 blocks) public view returns (int256) {
-    return FixidityLib.fromFixed(maxPoolSizeFixedPoint24(blocks, FixidityLib.maxFixedDiv()));
-  }
-
-  /**
-   * @notice Calculates the maximum pool size so that it doesn't overflow after earning interest
-   * @dev poolSize = totalDeposits + totalDeposits * interest => totalDeposits = poolSize / (1 + interest)
-   * @return The maximum size of the pool to be deposited into the money market
-   */
-  function maxPoolSizeFixedPoint24(int256 blocks, int256 _maxValueFixedPoint24) public view returns (int256) {
-    /// Double the interest rate in case it increases over the lock period.  Somewhat arbitrarily.
-    int256 interestFraction = FixidityLib.multiply(currentInterestFractionFixedPoint24(blocks), FixidityLib.newFixed(2));
-    return FixidityLib.divide(_maxValueFixedPoint24, FixidityLib.add(interestFraction, FixidityLib.newFixed(1)));
-  }
-
   function estimatedInterestRate(int256 blocks) public view returns (int256) {
     return FixidityLib.fromFixed(currentInterestFractionFixedPoint24(blocks), uint8(18));
   }

@@ -153,13 +153,6 @@ library DrawManager {
         }
     }
 
-    /**
-     * Draws a winner from the previous draws
-     */
-    function getDraw(DrawState storage drawState, uint256 index) public view returns (uint256) {
-        return drawState.draws[index].total;
-    }
-
     function drawSet(DrawState storage drawState, uint256 drawIndex, uint256 amount, address user) internal {
         bytes32 drawId = bytes32(drawIndex);
         bytes32 userId = bytes32(uint256(user));

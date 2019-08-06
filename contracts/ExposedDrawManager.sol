@@ -43,13 +43,6 @@ contract ExposedDrawManager {
       return drawState.openDrawIndex;
     }
 
-    /**
-     * Draws a winner from the previous draws
-     */
-    function getDraw(uint256 index) public view returns (uint256) {
-      return drawState.getDraw(index);
-    }
-
     function draw(uint256 token) public view returns (address) {
       return drawState.draw(token);
     }

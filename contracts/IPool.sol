@@ -131,15 +131,6 @@ interface IPool {
 
   function eligibleSupply() external view returns (uint256);
 
-  function maxPoolSize(int256 blocks) external view returns (int256);
-
-  /**
-   * @notice Calculates the maximum pool size so that it doesn't overflow after earning interest
-   * @dev poolSize = totalDeposits + totalDeposits * interest => totalDeposits = poolSize / (1 + interest)
-   * @return The maximum size of the pool to be deposited into the money market
-   */
-  function maxPoolSizeFixedPoint24(int256 blocks, int256 _maxValueFixedPoint24) external view returns (int256);
-
   function estimatedInterestRate(int256 blocks) external view returns (int256);
 
   /**

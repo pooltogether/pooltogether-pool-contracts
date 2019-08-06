@@ -9,6 +9,8 @@ const DrawManager = artifacts.require('DrawManager.sol')
 
 const nextDrawDebug = require('debug')('Pool.test.js:nextDraw')
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
 contract('Pool', (accounts) => {
   let pool, token, moneyMarket, sumTree, drawManager
   
@@ -182,13 +184,34 @@ contract('Pool', (accounts) => {
     })
   })
 
-  describe('maxPoolSize()', () => {
+  describe('estimatedInterestRate()', () => {
     it('should set an appropriate limit based on max integers', async () => {
       pool = await createPool() // ten blocks long
-      const limit = await fixidity.newFixed(new BN('1000'))
-      const maxSize = await pool.maxPoolSizeFixedPoint24(10, limit);
-      const poolLimit = new BN('333333333333333333333333000')
-      assert.equal(maxSize.toString(), poolLimit.toString())
+
+      const interestRate = await pool.estimatedInterestRate(10);
+      assert.equal(interestRate.toString(), '1000000000000000000')
+    })
+  })
+
+  describe('getDraw()', () => {
+    it('should return empty values if no draw exists', async () => {
+      pool = await createPool()
+      const draw = await pool.getDraw(12)
+      assert.equal(draw.feeFraction, '0')
+      assert.equal(draw.beneficiary, ZERO_ADDRESS)
+      assert.equal(draw.openedBlock, '0')
+      assert.equal(draw.secretHash, '0x0000000000000000000000000000000000000000000000000000000000000000')
+    })
+
+    it('should return true values if a draw exists', async () => {
+      feeFraction = toWei('0.1')
+      pool = await createPool()
+      await nextDraw()
+      const draw = await pool.getDraw(1)
+      assert.equal(draw.feeFraction.toString(), feeFraction.toString())
+      assert.equal(draw.beneficiary, owner)
+      assert.ok(draw.openedBlock !== '0')
+      assert.equal(draw.secretHash, secretHash)
     })
   })
 
@@ -443,6 +466,46 @@ contract('Pool', (accounts) => {
       // The user's balance should include the winnings
       assert.equal((await pool.balanceOf(user1)).toString(), web3.utils.toWei('120'))
 
+    })
+  })
+
+  describe('setNextFeeFraction()', () => {
+    beforeEach(async () => {
+      await createPool()
+    })
+
+    it('should allow the owner to set the next fee fraction', async () => {
+      await pool.setNextFeeFraction(toWei('0.05'))
+      assert.equal((await pool.nextFeeFraction()).toString(), toWei('0.05'))
+    })
+
+    it('should not allow anyone else to set the fee fraction', async () => {
+      let failed = true
+      try {
+        await pool.setNextFeeFraction(toWei('0.05'), { from: user1 })
+        failed = false
+      } catch (e) {}
+      assert.ok(failed)
+    })
+  })
+
+  describe('setNextFeeBeneficiary()', () => {
+    beforeEach(async () => {
+      await createPool()
+    })
+
+    it('should allow the owner to set the next fee fraction', async () => {
+      await pool.setNextFeeBeneficiary(user1)
+      assert.equal((await pool.nextFeeBeneficiary()).toString(), user1)
+    })
+
+    it('should not allow anyone else to set the fee fraction', async () => {
+      let failed = true
+      try {
+        await pool.setNextFeeBeneficiary(user1, { from: user1 })
+        failed = false
+      } catch (e) {}
+      assert.ok(failed)
     })
   })
 })

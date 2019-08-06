@@ -41,6 +41,12 @@ contract('DrawManager', (accounts) => {
         })
     })
 
+    describe('openSupply()', () => {
+        it('should return 0 if no draw exists', async () => {
+            assert.equal((await drawManager.openSupply()).toString(), '0')
+        })
+    })
+
     describe('deposit', () => {
         it('should fail if there is no current draw', async () => {
             let failed = true
@@ -118,6 +124,36 @@ contract('DrawManager', (accounts) => {
                         })
                     })
                 })
+            })
+        })
+    })
+
+    describe('openBalanceOf()', () => {
+        it('should return 0 when no draw exists', async () => {
+            assert.equal((await drawManager.openBalanceOf(user1)).toString(), toWei('0'))
+        })
+
+        describe('when an open draw exists', () => {
+            beforeEach(async () => {
+                await drawManager.openNextDraw()
+                await drawManager.deposit(user1, toWei('10'))
+            })
+
+            it('should return the open balance of the user', async () => {
+                assert.equal((await drawManager.openBalanceOf(user1)).toString(), toWei('10'))
+            })
+        })
+
+        describe('when an open draw has passed', () => {
+            beforeEach(async () => {
+                await drawManager.openNextDraw()
+                await drawManager.deposit(user1, toWei('10'))
+                await drawManager.openNextDraw()
+                await drawManager.deposit(user1, toWei('15'))
+            })
+
+            it('should reflect the current open draw only', async () => {
+                assert.equal((await drawManager.openBalanceOf(user1)).toString(), toWei('15'))
             })
         })
     })
