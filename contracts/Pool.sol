@@ -11,14 +11,9 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./IPool.sol";
 
 /**
- * @title The Pool contract for PoolTogether
+ * @title The Pool contract
  * @author Brendan Asselstine
- * @notice This contract implements a "lossless pool".  The pool exists in three states: open, locked, and complete.
- * The pool begins in the open state during which users can buy any number of tickets.  The more tickets they purchase, the greater their chances of winning.
- * After the lockStartBlock the owner may lock the pool.  The pool transfers the pool of ticket money into the Compound Finance money market and no more tickets are sold.
- * After the lockEndBlock the owner may unlock the pool.  The pool will withdraw the ticket money from the money market, plus earned interest, back into the contract.  The fee will be sent to
- * the owner, and users will be able to withdraw their ticket money and winnings, if any.
- * @dev All monetary values are stored internally as fixed point 24.
+ * @notice This contract allows users to pool their Compound deposits and win the accrued interest in draws.
  */
 contract Pool is IPool, Initializable, ReentrancyGuard {
   using DrawManager for DrawManager.DrawState;
@@ -73,19 +68,6 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     emit Committed(drawId);
   }
 
-  /**
-    OOP:
-
-    1. Contract created
-    2. commitFirstDrawAndOpenSecondDraw()
-    ... time passes ...
-    3. lockCommittedDrawRewards()
-    4. rewardAndOpenNextDraw()
-    ... time passes ...
-    5. lockCommittedDrawReward()
-    6. rewardAndOpenNextDraw()
-   */
-
   function openNextDraw(bytes32 nextSecretHash) public onlyAdmin {
     require(currentCommittedDrawId() == 0, "there is a committed draw");
     if (currentOpenDrawId() != 0) {
@@ -116,27 +98,28 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     uint256 underlyingBalance = balance();
     uint256 grossWinnings = underlyingBalance.sub(accountedBalance);
 
-    // require the owner to have signed the commit block and gross winnings
+    // derive entropy from the revealed secret and the hash of the openedBlock and gross winnings
     bytes32 entropy = _secret ^ keccak256(abi.encodePacked(draw.openedBlock, grossWinnings));
 
     // Select the winner using the hash as entropy
     address winningAddress = calculateWinner(entropy);
 
-    uint256 fee;
-
     // Calculate the beneficiary fee
-    fee = calculateFee(draw.feeFraction, grossWinnings);
+    uint256 fee = calculateFee(draw.feeFraction, grossWinnings);
 
     // Update balance of the beneficiary
     balances[draw.beneficiary] = balances[draw.beneficiary].add(fee);
 
-    uint256 winnings = grossWinnings.sub(fee);
+    // Calculate the net winnings
+    uint256 netWinnings = grossWinnings.sub(fee);
 
     // If there is a winner
     if (winningAddress != address(0)) {
-      // Update balance of the winner, and enter their winnings into the new draw
-      balances[winningAddress] = balances[winningAddress].add(winnings);
-      drawState.deposit(winningAddress, winnings);
+      // Update balance of the winner
+      balances[winningAddress] = balances[winningAddress].add(netWinnings);
+
+      // Enter their winnings into the next draw
+      drawState.deposit(winningAddress, netWinnings);
 
       // Updated the accounted total
       accountedBalance = underlyingBalance;
@@ -152,7 +135,7 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
       drawId,
       winningAddress,
       entropy,
-      winnings,
+      netWinnings,
       fee
     );
   }
@@ -163,52 +146,52 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     return uint256(FixidityLib.fromFixed(feeFixed));
   }
 
-  function depositSponsorship(uint256 totalDepositNonFixed) public requireOpenDraw nonReentrant {
-    sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].add(totalDepositNonFixed);
+  function depositSponsorship(uint256 _amount) public requireOpenDraw nonReentrant {
+    sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].add(_amount);
 
     // Deposit the funds
-    _deposit(totalDepositNonFixed);
+    _deposit(_amount);
 
-    emit SponsorshipDeposited(msg.sender, totalDepositNonFixed);
+    emit SponsorshipDeposited(msg.sender, _amount);
   }
 
   /**
    * @notice Deposits into the pool.  Deposits will become eligible in the next pool.
    */
-  function depositPool(uint256 totalDepositNonFixed) public requireOpenDraw nonReentrant {
+  function depositPool(uint256 _amount) public requireOpenDraw nonReentrant {
     // Update the user's balance
-    balances[msg.sender] = balances[msg.sender].add(totalDepositNonFixed);
+    balances[msg.sender] = balances[msg.sender].add(_amount);
 
     // Update the user's eligibility
-    drawState.deposit(msg.sender, totalDepositNonFixed);
+    drawState.deposit(msg.sender, _amount);
 
     // Deposit the funds
-    _deposit(totalDepositNonFixed);
+    _deposit(_amount);
 
-    emit Deposited(msg.sender, totalDepositNonFixed);
+    emit Deposited(msg.sender, _amount);
   }
 
-  function _deposit(uint256 totalDepositNonFixed) internal {
-    require(totalDepositNonFixed > 0, "deposit is greater than zero");
+  function _deposit(uint256 _amount) internal {
+    require(_amount > 0, "deposit is greater than zero");
 
     // Transfer the tokens into this contract
-    require(token().transferFrom(msg.sender, address(this), totalDepositNonFixed), "token transfer failed");
+    require(token().transferFrom(msg.sender, address(this), _amount), "token transfer failed");
 
     // Update the total of this contract
-    accountedBalance = accountedBalance.add(totalDepositNonFixed);
+    accountedBalance = accountedBalance.add(_amount);
 
     // Deposit into Compound
-    ensureAllowance(totalDepositNonFixed);
-    require(cToken.mint(totalDepositNonFixed) == 0, "could not supply money market");
+    ensureAllowance(_amount);
+    require(cToken.mint(_amount) == 0, "could not supply money market");
   }
 
-  function withdrawSponsorship(uint256 amount) public nonReentrant {
-    require(sponsorshipBalances[msg.sender] >= amount, "amount exceeds sponsorship balance");
+  function withdrawSponsorship(uint256 _amount) public nonReentrant {
+    require(sponsorshipBalances[msg.sender] >= _amount, "amount exceeds sponsorship balance");
 
     // Update the sponsorship balance
-    sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].sub(amount);
+    sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].sub(_amount);
 
-    _withdraw(amount);
+    _withdraw(_amount);
   }
 
   /**
@@ -230,17 +213,17 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     _withdraw(balance);
   }
 
-  function _withdraw(uint256 totalNonFixed) internal {
-    require(totalNonFixed > 0, "withdrawal is greater than zero");
+  function _withdraw(uint256 _amount) internal {
+    require(_amount > 0, "withdrawal is greater than zero");
 
     // Update the total of this contract
-    accountedBalance = accountedBalance.sub(totalNonFixed);
+    accountedBalance = accountedBalance.sub(_amount);
 
     // Withdraw from Compound and transfer
-    require(cToken.redeemUnderlying(totalNonFixed) == 0, "could not redeem from compound");
-    require(token().transfer(msg.sender, totalNonFixed), "could not transfer winnings");
+    require(cToken.redeemUnderlying(_amount) == 0, "could not redeem from compound");
+    require(token().transfer(msg.sender, _amount), "could not transfer winnings");
 
-    emit Withdrawn(msg.sender, totalNonFixed);
+    emit Withdrawn(msg.sender, _amount);
   }
 
   function currentOpenDrawId() public view returns (uint256) {
@@ -300,24 +283,15 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     return drawState.eligibleSupply;
   }
 
-  function estimatedInterestRate(int256 blocks) public view returns (int256) {
-    return FixidityLib.fromFixed(currentInterestFractionFixedPoint24(blocks), uint8(18));
+  function estimatedInterestRate(uint256 blocks) public view returns (uint256) {
+    return supplyRatePerBlock().mul(blocks);
   }
 
   /**
-   * @notice Estimates the current effective interest rate using the money market's current supplyRateMantissa and the lock duration in blocks.
-   * @return The current estimated effective interest rate
-   */
-  function currentInterestFractionFixedPoint24(int256 blockDuration) public view returns (int256) {
-    int256 supplyRateMantissaFixedPoint24 = FixidityLib.newFixed(int256(supplyRateMantissa()), uint8(18));
-    return FixidityLib.multiply(supplyRateMantissaFixedPoint24, FixidityLib.newFixed(blockDuration));
-  }
-
-  /**
-   * @notice Extracts the supplyRateMantissa value from the money market contract
+   * @notice Extracts the supplyRatePerBlock value from the money market contract
    * @return The money market supply rate per block
    */
-  function supplyRateMantissa() public view returns (uint256) {
+  function supplyRatePerBlock() public view returns (uint256) {
     return cToken.supplyRatePerBlock();
   }
 
@@ -329,7 +303,7 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
 
   /**
    * @notice Sets the fee fraction paid out to the Pool owner.
-   * Fires the FeeFractionChanged event.
+   * Fires the NextFeeFractionChanged event.
    * Can only be called by the owner. Only applies to subsequent Pools.
    * @param _nextFeeFraction The fraction to pay out.
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
@@ -338,12 +312,12 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     _setNextFeeFraction(_nextFeeFraction);
   }
 
-  function _setNextFeeFraction(uint256 _nextFeeFraction) internal {
-    require(_nextFeeFraction >= 0, "fee must be zero or greater");
-    require(_nextFeeFraction <= 1000000000000000000, "fee fraction must be 1 or less");
-    nextFeeFraction = _nextFeeFraction;
+  function _setNextFeeFraction(uint256 _feeFraction) internal {
+    require(_feeFraction >= 0, "fee must be zero or greater");
+    require(_feeFraction <= 1000000000000000000, "fee fraction must be 1 or less");
+    nextFeeFraction = _feeFraction;
 
-    emit FeeFractionChanged(_nextFeeFraction);
+    emit NextFeeFractionChanged(_feeFraction);
   }
 
   function setNextFeeBeneficiary(address _beneficiary) public onlyAdmin {
@@ -353,6 +327,8 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
   function _setNextFeeBeneficiary(address _beneficiary) internal {
     require(_beneficiary != address(0), "beneficiary cannot be 0x");
     nextFeeBeneficiary = _beneficiary;
+
+    emit NextFeeBeneficiaryChanged(_beneficiary);
   }
 
   function addAdmin(address _admin) public onlyAdmin {

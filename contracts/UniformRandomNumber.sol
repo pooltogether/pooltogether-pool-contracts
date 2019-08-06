@@ -1,7 +1,10 @@
 pragma solidity 0.5.10;
 
+/**
+ * @author Brendan Asselstine
+ * @notice A library that uses entropy to select a random number within a bound.  Compensates for modulo bias.
+ */
 library UniformRandomNumber {
-  /// @author Brendan Asselstine
   /// @notice Select a random number without modulo bias using a random seed and upper bound
   /// @param _entropy The seed for randomness
   /// @param _upperBound The upper bound of the desired number

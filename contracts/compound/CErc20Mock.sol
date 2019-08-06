@@ -7,12 +7,12 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 contract CErc20Mock is Initializable, ICErc20 {
   mapping(address => uint256) ownerTokenAmounts;
 
-  uint __supplyRateMantissa;
+  uint __supplyRatePerBlock;
 
-  function initialize (address _token, uint256 _supplyRateMantissa) public initializer {
+  function initialize (address _token, uint256 _supplyRatePerBlock) public initializer {
     require(_token != address(0), "token is not defined");
     underlying = _token;
-    __supplyRateMantissa = _supplyRateMantissa;
+    __supplyRatePerBlock = _supplyRatePerBlock;
   }
 
   function mint(uint amount) external returns (uint) {
@@ -40,10 +40,10 @@ contract CErc20Mock is Initializable, ICErc20 {
   }
 
   function supplyRatePerBlock() external view returns (uint) {
-    return __supplyRateMantissa;
+    return __supplyRatePerBlock;
   }
 
-  function setSupplyRateMantissa(uint256 _supplyRateMantissa) external {
-    __supplyRateMantissa = _supplyRateMantissa;
+  function setSupplyRateMantissa(uint256 _supplyRatePerBlock) external {
+    __supplyRatePerBlock = _supplyRatePerBlock;
   }
 }

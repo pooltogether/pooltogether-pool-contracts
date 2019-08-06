@@ -55,12 +55,12 @@ interface IPool {
    * Emitted when the fee fraction is changed
    * @param feeFractionFixedPoint18 The new fee fraction encoded as a fixed point 18 decimal
    */
-  event FeeFractionChanged(uint256 feeFractionFixedPoint18);
+  event NextFeeFractionChanged(uint256 feeFractionFixedPoint18);
 
   /**
    * Emitted when the beneficiary changes
    */
-  event BeneficiaryChanged(address indexed beneficiary);
+  event NextFeeBeneficiaryChanged(address indexed beneficiary);
 
   struct Draw {
     uint256 feeFraction; //fixed point 18
@@ -131,28 +131,22 @@ interface IPool {
 
   function eligibleSupply() external view returns (uint256);
 
-  function estimatedInterestRate(int256 blocks) external view returns (int256);
+  function estimatedInterestRate(uint256 blocks) external view returns (uint256);
 
   /**
-   * @notice Estimates the current effective interest rate using the money market's current supplyRateMantissa and the lock duration in blocks.
-   * @return The current estimated effective interest rate
-   */
-  function currentInterestFractionFixedPoint24(int256 blockDuration) external view returns (int256);
-
-  /**
-   * @notice Extracts the supplyRateMantissa value from the money market contract
+   * @notice Extracts the supplyRatePerBlock value from the money market contract
    * @return The money market supply rate per block
    */
-  function supplyRateMantissa() external view returns (uint256);
+  function supplyRatePerBlock() external view returns (uint256);
 
   /**
    * @notice Sets the fee fraction paid out to the Pool owner.
-   * Fires the FeeFractionChanged event.
+   * Fires the NextFeeFractionChanged event.
    * Can only be called by the owner. Only applies to subsequent Pools.
-   * @param _feeFractionFixedPoint18 The fraction to pay out.
+   * @param _feeFraction The fraction to pay out.
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
    */
-  function setNextFeeFraction(uint256 _feeFractionFixedPoint18) external;
+  function setNextFeeFraction(uint256 _feeFraction) external;
   function nextFeeFraction() external returns (uint256);
 
   function setNextFeeBeneficiary(address _beneficiary) external;
@@ -162,7 +156,6 @@ interface IPool {
 
   function accountedBalance() external view returns (uint256);
   function balance() external returns (uint256);
-
 
   function addAdmin(address _admin) external;
 

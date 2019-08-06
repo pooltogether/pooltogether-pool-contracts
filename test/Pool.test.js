@@ -25,7 +25,7 @@ contract('Pool', (accounts) => {
 
   const priceForTenTickets = ticketPrice.mul(new BN(10))
 
-  const supplyRateMantissa = '100000000000000000' // 0.1 per block
+  const supplyRatePerBlock = '100000000000000000' // 0.1 per block
 
   let Rewarded, Committed
 
@@ -42,7 +42,7 @@ contract('Pool', (accounts) => {
     await token.initialize(owner)
 
     moneyMarket = await CErc20Mock.new({ from: admin })
-    await moneyMarket.initialize(token.address, new BN(supplyRateMantissa))
+    await moneyMarket.initialize(token.address, new BN(supplyRatePerBlock))
 
     await token.mint(moneyMarket.address, web3.utils.toWei('10000000', 'ether'))
     await token.mint(user1, web3.utils.toWei('100000', 'ether'))
@@ -154,10 +154,10 @@ contract('Pool', (accounts) => {
     })
   })
 
-  describe('supplyRateMantissa()', () => {
+  describe('supplyRatePerBlock()', () => {
     it('should work', async () => {
       pool = await createPool() // ten blocks long
-      assert.equal(await pool.supplyRateMantissa(), web3.utils.toWei('0.1', 'ether'))
+      assert.equal(await pool.supplyRatePerBlock(), web3.utils.toWei('0.1', 'ether'))
     })
   })
 
@@ -173,14 +173,6 @@ contract('Pool', (accounts) => {
       await nextDraw()
 
       assert.equal(await pool.eligibleBalanceOf(user1), ticketPrice.toString())
-    })
-  })
-
-  describe('currentInterestFractionFixedPoint24()', () => {
-    it('should return the right value', async () => {
-      pool = await createPool() // ten blocks long
-      const interestFraction = await pool.currentInterestFractionFixedPoint24(10)
-      assert.equal(interestFraction.toString(), web3.utils.toWei('1000000', 'ether'))
     })
   })
 
