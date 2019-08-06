@@ -89,11 +89,11 @@
       }
     },
     "Pool": {
-      "address": "0x22Bd490cd7D7d857677B1044B05a9eAa5dD9B740",
-      "constructorCode": "60806040523480156100115760006000fd5b50610017565b6141b480620000276000396000f3fe",
-      "bodyBytecodeHash": "33b88feed772d0ec9120b009eb0d5d7548beff5635c80e5d374337d69a2a1806",
-      "localBytecodeHash": "0ca9279d30d07d8caba8ce2eeffa9447e2cf96ee8af283cdba23dc2e1181302d",
-      "deployedBytecodeHash": "d77e705000c35a4185361b82f442a16e6816fc346fbb20cffd7124718f1d7026",
+      "address": "0xb864f04b6408d73E56085960aac6a96E132e00a4",
+      "constructorCode": "60806040523480156100115760006000fd5b50610017565b613ab8806100266000396000f3fe",
+      "bodyBytecodeHash": "8881adb44cf21efe85ff9f1f5fcca16090683b77f9f40db8dbb169d7d1f828dc",
+      "localBytecodeHash": "3c336265a373fca42a73183c4a792715ed34cb1dd15295414e28307f49ba7f24",
+      "deployedBytecodeHash": "bd8f05592698515d6f3a218a50c22f07cc57c632414de59beed1c47727977fde",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -130,27 +130,27 @@
           "members": [
             {
               "label": "feeFraction",
-              "astId": 2879,
+              "astId": 2870,
               "type": "t_uint256",
-              "src": "1585:19:12"
+              "src": "1578:19:13"
             },
             {
-              "label": "beneficiary",
-              "astId": 2881,
+              "label": "feeBeneficiary",
+              "astId": 2872,
               "type": "t_address",
-              "src": "1627:19:12"
+              "src": "1620:22:13"
             },
             {
               "label": "openedBlock",
-              "astId": 2883,
+              "astId": 2874,
               "type": "t_uint256",
-              "src": "1652:19:12"
+              "src": "1648:19:13"
             },
             {
               "label": "secretHash",
-              "astId": 2885,
+              "astId": 2876,
               "type": "t_bytes32",
-              "src": "1677:18:12"
+              "src": "1673:18:13"
             }
           ]
         },
@@ -367,73 +367,73 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "cToken",
-          "astId": 3145,
+          "astId": 3113,
           "type": "t_address",
-          "src": "1637:21:14"
+          "src": "932:21:15"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "nextFeeBeneficiary",
-          "astId": 3147,
+          "astId": 3115,
           "type": "t_address",
-          "src": "1662:33:14"
+          "src": "957:33:15"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "nextFeeFraction",
-          "astId": 3149,
+          "astId": 3117,
           "type": "t_uint256",
-          "src": "1699:30:14"
+          "src": "994:30:15"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "accountedBalance",
-          "astId": 3151,
+          "astId": 3119,
           "type": "t_uint256",
-          "src": "1733:31:14"
+          "src": "1028:31:15"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "balances",
-          "astId": 3155,
+          "astId": 3123,
           "type": "t_mapping<t_uint256>",
-          "src": "1768:37:14"
+          "src": "1063:37:15"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "sponsorshipBalances",
-          "astId": 3159,
+          "astId": 3127,
           "type": "t_mapping<t_uint256>",
-          "src": "1809:48:14"
+          "src": "1104:48:15"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "draws",
-          "astId": 3163,
+          "astId": 3131,
           "type": "t_mapping<t_struct<IPool.Draw>>",
-          "src": "1861:30:14"
+          "src": "1156:30:15"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "drawState",
-          "astId": 3165,
+          "astId": 3133,
           "type": "t_struct<DrawManager.DrawState>",
-          "src": "1895:31:14"
+          "src": "1190:31:15"
         },
         {
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "admins",
-          "astId": 3167,
+          "astId": 3135,
           "type": "t_struct<Roles.Role>",
-          "src": "1930:17:14"
+          "src": "1225:17:15"
         }
       ],
       "warnings": {
@@ -447,25 +447,25 @@
             "contract": "Pool",
             "path": "contracts/Pool.sol",
             "label": "draws",
-            "astId": 3163,
+            "astId": 3131,
             "type": "t_mapping<t_struct<IPool.Draw>>",
-            "src": "1861:30:14"
+            "src": "1156:30:15"
           },
           {
             "contract": "Pool",
             "path": "contracts/Pool.sol",
             "label": "drawState",
-            "astId": 3165,
+            "astId": 3133,
             "type": "t_struct<DrawManager.DrawState>",
-            "src": "1895:31:14"
+            "src": "1190:31:15"
           },
           {
             "contract": "Pool",
             "path": "contracts/Pool.sol",
             "label": "admins",
-            "astId": 3167,
+            "astId": 3135,
             "type": "t_struct<Roles.Role>",
-            "src": "1930:17:14"
+            "src": "1225:17:15"
           }
         ],
         "storageDiff": []
@@ -474,11 +474,11 @@
   },
   "solidityLibs": {
     "DrawManager": {
-      "address": "0xc7Ee65CFDF663e12895E0102041fE14540781Ee9",
-      "constructorCode": "611e7a610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
-      "bodyBytecodeHash": "14edac65c29225089a77898c2d1851f184c49e75ded20a94213317c7bea13da7",
-      "localBytecodeHash": "47bb008f1e7c577dff83dbcc37d17f1c8d6d8e9d7c3487275293712100a447bd",
-      "deployedBytecodeHash": "47bb008f1e7c577dff83dbcc37d17f1c8d6d8e9d7c3487275293712100a447bd"
+      "address": "0x63ec3E40a82FBA4cB0cC2bF2b0Ee550FDD1efac5",
+      "constructorCode": "611df1610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
+      "bodyBytecodeHash": "3dd449fadb6167e573c2201e5e9a448f8eb5d29f63bd65c3e5b741ec50fc3c5e",
+      "localBytecodeHash": "b7a0411520234a60f9385ea2148c646a87123a0886df9e7fec40dfd831958c18",
+      "deployedBytecodeHash": "b7a0411520234a60f9385ea2148c646a87123a0886df9e7fec40dfd831958c18"
     },
     "FixidityLib": {
       "address": "0x52A93ed0f522BC94Ce9639507eF9e41c290d232e",
@@ -502,7 +502,7 @@
       {
         "address": "0xc4982849893D280b38c5839549BE454424A77fF7",
         "version": "0.2",
-        "implementation": "0x22Bd490cd7D7d857677B1044B05a9eAa5dD9B740",
+        "implementation": "0xb864f04b6408d73E56085960aac6a96E132e00a4",
         "admin": "0xbaa77f4Fcf743B8824e726dbEC34071f4E912F58",
         "kind": "Upgradeable"
       }
