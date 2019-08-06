@@ -53,9 +53,9 @@ interface IPool {
 
   /**
    * Emitted when the fee fraction is changed
-   * @param feeFractionFixedPoint18 The new fee fraction encoded as a fixed point 18 decimal
+   * @param feeFraction The new fee fraction encoded as a fixed point 18 decimal
    */
-  event NextFeeFractionChanged(uint256 feeFractionFixedPoint18);
+  event NextFeeFractionChanged(uint256 feeFraction);
 
   /**
    * Emitted when the beneficiary changes
@@ -72,28 +72,28 @@ interface IPool {
   /**
    * @notice Initializes a new Pool contract.
    * @param _admin The admin of the Pool.  They are able to change settings and are set as the owner of new lotteries.
-   * @param _moneyMarket The Compound Finance MoneyMarket contract to supply and withdraw tokens.
-   * @param _feeFractionFixedPoint18 The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
+   * @param _cToken The Compound Finance cToken contract to supply and withdraw tokens.
+   * @param _feeFraction The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
    */
   function init (
     address _admin,
-    address _moneyMarket,
-    uint256 _feeFractionFixedPoint18,
-    address _beneficiary
+    address _cToken,
+    uint256 _feeFraction,
+    address _feeBeneficiary
   ) external;
 
-  function depositSponsorship(uint256 totalDepositNonFixed) external;
+  function depositSponsorship(uint256 _amount) external;
 
   /**
    * @notice Deposits into the pool.  Deposits will become eligible in the next pool.
    */
-  function depositPool(uint256 totalDepositNonFixed) external;
+  function depositPool(uint256 _amount) external;
 
-  function openNextDraw(bytes32 nextSecretHash) external;
+  function openNextDraw(bytes32 _nextSecretHash) external;
 
-  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret) external;
+  function rewardAndOpenNextDraw(bytes32 _nextSecretHash, bytes32 _lastSecret) external;
 
-  function withdrawSponsorship(uint256 amount) external;
+  function withdrawSponsorship(uint256 _amount) external;
 
   /**
    * @notice Transfers a users deposit, and potential winnings, back to them.
@@ -106,20 +106,20 @@ interface IPool {
 
   function currentCommittedDrawId() external view returns (uint256);
 
-  function getDraw(uint256 drawId) external view returns (
+  function getDraw(uint256 _drawId) external view returns (
     uint256 feeFraction,
     address beneficiary,
     uint256 openedBlock,
     bytes32 secretHash
   );
 
-  function eligibleBalanceOf(address _addr) external view returns (uint256);
+  function eligibleBalanceOf(address _address) external view returns (uint256);
 
   /**
    * @notice Calculates a user's total balance.
    * @return The users's current balance.
    */
-  function balanceOf(address _addr) external view returns (uint256);
+  function balanceOf(address _address) external view returns (uint256);
 
   /**
    * @notice Calculates a user's total balance.
@@ -127,11 +127,11 @@ interface IPool {
    */
   function balanceOfSponsorship(address _addr) external view returns (uint256);
 
-  function calculateWinner(bytes32 entropy) external view returns (address);
+  function calculateWinner(bytes32 _entropy) external view returns (address);
 
   function eligibleSupply() external view returns (uint256);
 
-  function estimatedInterestRate(uint256 blocks) external view returns (uint256);
+  function estimatedInterestRate(uint256 _blocks) external view returns (uint256);
 
   /**
    * @notice Extracts the supplyRatePerBlock value from the money market contract
@@ -149,7 +149,7 @@ interface IPool {
   function setNextFeeFraction(uint256 _feeFraction) external;
   function nextFeeFraction() external returns (uint256);
 
-  function setNextFeeBeneficiary(address _beneficiary) external;
+  function setNextFeeBeneficiary(address _feeBeneficiary) external;
   function nextFeeBeneficiary() external returns (address);
 
   function cToken() external view returns (address);

@@ -36,20 +36,21 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
    * @notice Initializes a new Pool contract.
    * @param _owner The owner of the Pool.  They are able to change settings and are set as the owner of new lotteries.
    * @param _cToken The Compound Finance MoneyMarket contract to supply and withdraw tokens.
-   * @param _nextFeeFraction The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
+   * @param _feeFraction The fraction of the gross winnings that should be transferred to the owner as the fee.  Is a fixed point 18 number.
+   * @param _feeBeneficiary The address that will receive the fee fraction
    */
   function init (
     address _owner,
     address _cToken,
-    uint256 _nextFeeFraction,
-    address _beneficiary
+    uint256 _feeFraction,
+    address _feeBeneficiary
   ) public initializer {
     require(_owner != address(0), "owner cannot be the null address");
     require(_cToken != address(0), "money market address is zero");
     cToken = ICErc20(_cToken);
     _addAdmin(_owner);
-    _setNextFeeFraction(_nextFeeFraction);
-    _setNextFeeBeneficiary(_beneficiary);
+    _setNextFeeFraction(_feeFraction);
+    _setNextFeeBeneficiary(_feeBeneficiary);
   }
 
   function open(bytes32 _secretHash) internal {
@@ -305,11 +306,11 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
    * @notice Sets the fee fraction paid out to the Pool owner.
    * Fires the NextFeeFractionChanged event.
    * Can only be called by the owner. Only applies to subsequent Pools.
-   * @param _nextFeeFraction The fraction to pay out.
+   * @param _feeFraction The fraction to pay out.
    * Must be between 0 and 1 and formatted as a fixed point number with 18 decimals (as in Ether).
    */
-  function setNextFeeFraction(uint256 _nextFeeFraction) public onlyAdmin {
-    _setNextFeeFraction(_nextFeeFraction);
+  function setNextFeeFraction(uint256 _feeFraction) public onlyAdmin {
+    _setNextFeeFraction(_feeFraction);
   }
 
   function _setNextFeeFraction(uint256 _feeFraction) internal {
@@ -320,15 +321,15 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     emit NextFeeFractionChanged(_feeFraction);
   }
 
-  function setNextFeeBeneficiary(address _beneficiary) public onlyAdmin {
-    _setNextFeeBeneficiary(_beneficiary);
+  function setNextFeeBeneficiary(address _feeBeneficiary) public onlyAdmin {
+    _setNextFeeBeneficiary(_feeBeneficiary);
   }
 
-  function _setNextFeeBeneficiary(address _beneficiary) internal {
-    require(_beneficiary != address(0), "beneficiary cannot be 0x");
-    nextFeeBeneficiary = _beneficiary;
+  function _setNextFeeBeneficiary(address _feeBeneficiary) internal {
+    require(_feeBeneficiary != address(0), "beneficiary cannot be 0x");
+    nextFeeBeneficiary = _feeBeneficiary;
 
-    emit NextFeeBeneficiaryChanged(_beneficiary);
+    emit NextFeeBeneficiaryChanged(_feeBeneficiary);
   }
 
   function addAdmin(address _admin) public onlyAdmin {
