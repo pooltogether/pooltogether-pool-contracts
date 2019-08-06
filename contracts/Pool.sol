@@ -109,7 +109,7 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
     uint256 fee = calculateFee(draw.feeFraction, grossWinnings);
 
     // Update balance of the beneficiary
-    balances[draw.beneficiary] = balances[draw.beneficiary].add(fee);
+    balances[draw.feeBeneficiary] = balances[draw.feeBeneficiary].add(fee);
 
     // Calculate the net winnings
     uint256 netWinnings = grossWinnings.sub(fee);
@@ -241,13 +241,13 @@ contract Pool is IPool, Initializable, ReentrancyGuard {
 
   function getDraw(uint256 drawId) public view returns (
     uint256 feeFraction,
-    address beneficiary,
+    address feeBeneficiary,
     uint256 openedBlock,
     bytes32 secretHash
   ) {
     Draw storage draw = draws[drawId];
     feeFraction = draw.feeFraction;
-    beneficiary = draw.beneficiary;
+    feeBeneficiary = draw.feeBeneficiary;
     openedBlock = draw.openedBlock;
     secretHash = draw.secretHash;
   }

@@ -31,7 +31,7 @@ interface IPool {
    */
   event Opened(
     uint256 indexed drawId,
-    address indexed beneficiary,
+    address indexed feeBeneficiary,
     bytes32 secretHash,
     uint256 feeFraction
   );
@@ -60,11 +60,11 @@ interface IPool {
   /**
    * Emitted when the beneficiary changes
    */
-  event NextFeeBeneficiaryChanged(address indexed beneficiary);
+  event NextFeeBeneficiaryChanged(address indexed feeBeneficiary);
 
   struct Draw {
     uint256 feeFraction; //fixed point 18
-    address beneficiary;
+    address feeBeneficiary;
     uint256 openedBlock;
     bytes32 secretHash;
   }
@@ -108,7 +108,7 @@ interface IPool {
 
   function getDraw(uint256 _drawId) external view returns (
     uint256 feeFraction,
-    address beneficiary,
+    address feeBeneficiary,
     uint256 openedBlock,
     bytes32 secretHash
   );
