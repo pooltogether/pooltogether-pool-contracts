@@ -161,18 +161,33 @@ contract('Pool', (accounts) => {
     })
   })
 
-  describe('eligibleBalanceOf()', () => {
+  describe('committedBalanceOf()', () => {
     it('should return the users balance for the current draw', async () => {
       pool = await createPool()
 
       await token.approve(pool.address, ticketPrice, { from: user1 })
       await pool.depositPool(ticketPrice, { from: user1 })
 
-      assert.equal((await pool.eligibleBalanceOf(user1)).toString(), '0')
+      assert.equal((await pool.committedBalanceOf(user1)).toString(), '0')
 
       await nextDraw()
 
-      assert.equal(await pool.eligibleBalanceOf(user1), ticketPrice.toString())
+      assert.equal(await pool.committedBalanceOf(user1), ticketPrice.toString())
+    })
+  })
+
+  describe('openBalanceOf()', () => {
+    it('should return the users balance for the current draw', async () => {
+      pool = await createPool()
+
+      await token.approve(pool.address, ticketPrice, { from: user1 })
+      await pool.depositPool(ticketPrice, { from: user1 })
+
+      assert.equal((await pool.openBalanceOf(user1)).toString(), ticketPrice.toString())
+
+      await nextDraw()
+
+      assert.equal(await pool.openBalanceOf(user1), '0')
     })
   })
 
@@ -327,7 +342,7 @@ contract('Pool', (accounts) => {
 
         await nextDraw()
 
-        assert.equal((await pool.eligibleSupply()).toString(), toWei('200'))
+        assert.equal((await pool.committedSupply()).toString(), toWei('200'))
 
         await nextDraw()
         
