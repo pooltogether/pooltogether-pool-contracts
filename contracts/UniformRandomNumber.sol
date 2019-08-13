@@ -3,6 +3,7 @@ pragma solidity 0.5.10;
 /**
  * @author Brendan Asselstine
  * @notice A library that uses entropy to select a random number within a bound.  Compensates for modulo bias.
+ * @dev Thanks to https://medium.com/hownetworks/dont-waste-cycles-with-modulo-bias-35b6fdafcf94
  */
 library UniformRandomNumber {
   /// @notice Select a random number without modulo bias using a random seed and upper bound

@@ -20,9 +20,9 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
  * When a Draw is rewarded, the gross winnings are the accrued interest since the last reward (if any).  A winner is selected with their chances being
  * proportional to their committed balance vs the total committed balance of all users.
  *
- * 
+ *
  * With the above in mind, there is always an open draw and possibly a committed draw.  The progression is:
- * 
+ *
  * Step 1: Draw 1 Open
  * Step 2: Draw 2 Open | Draw 1 Committed
  * Step 3: Draw 3 Open | Draw 2 Committed | Draw 1 Rewarded
@@ -322,7 +322,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * There must be an open draw to deposit to.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
-  function depositSponsorship(uint256 _amount) public requireOpenDraw nonReentrant {
+  function depositSponsorship(uint256 _amount) public nonReentrant {
     sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].add(_amount);
 
     // Deposit the funds
@@ -333,8 +333,8 @@ contract Pool is Initializable, ReentrancyGuard {
 
   /**
    * @notice Deposits into the pool under the current open Draw.  The deposit is transferred into the cToken.
-   * Once the open draw is committed, the deposit will be added to the user's total eligible balance and increase their chances of winning
-   * proportional to the total eligible balance of all users.
+   * Once the open draw is committed, the deposit will be added to the user's total committed balance and increase their chances of winning
+   * proportional to the total committed balance of all users.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
   function depositPool(uint256 _amount) public requireOpenDraw nonReentrant {
@@ -392,7 +392,7 @@ contract Pool is Initializable, ReentrancyGuard {
     balances[msg.sender] = 0;
 
     // Update their chances of winning
-    drawState.withdraw(msg.sender, balance);
+    drawState.withdraw(msg.sender);
 
     _withdraw(balance);
   }
@@ -461,7 +461,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * @return The total committed balance for the user
    */
   function committedBalanceOf(address _addr) public view returns (uint256) {
-    return drawState.eligibleBalanceOf(_addr);
+    return drawState.committedBalanceOf(_addr);
   }
 
   /**
@@ -470,7 +470,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * @return The total open balance for the user
    */
   function openBalanceOf(address _addr) public view returns (uint256) {
-    return balances[_addr] - drawState.eligibleBalanceOf(_addr);
+    return balances[_addr] - drawState.committedBalanceOf(_addr);
   }
 
   /**
@@ -505,7 +505,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * @return The total committed balance.
    */
   function committedSupply() public view returns (uint256) {
-    return drawState.eligibleSupply;
+    return drawState.committedSupply;
   }
 
   /**

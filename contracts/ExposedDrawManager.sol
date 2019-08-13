@@ -15,24 +15,24 @@ contract ExposedDrawManager {
       drawState.deposit(user, amount);
     }
 
-    function withdraw(address user, uint256 amount) public {
-      drawState.withdraw(user, amount);
+    function withdraw(address user) public {
+      drawState.withdraw(user);
     }
 
     function balanceOf(address user) public view returns (uint256) {
       return drawState.balanceOf(user);
     }
 
-    function eligibleBalanceOf(address user) public view returns (uint256) {
-      return drawState.eligibleBalanceOf(user);
+    function committedBalanceOf(address user) public view returns (uint256) {
+      return drawState.committedBalanceOf(user);
     }
 
     function openBalanceOf(address user) public view returns (uint256) {
       return drawState.openBalanceOf(user);
     }
 
-    function eligibleSupply() public view returns (uint256) {
-      return drawState.eligibleSupply;
+    function committedSupply() public view returns (uint256) {
+      return drawState.committedSupply;
     }
 
     function openSupply() public view returns (uint256) {
