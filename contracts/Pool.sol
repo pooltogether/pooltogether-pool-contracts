@@ -293,8 +293,8 @@ contract Pool is Initializable, ReentrancyGuard {
     // Calculate the net winnings
     uint256 netWinnings = grossWinnings.sub(fee);
 
-    // If there is a winner
-    if (winningAddress != address(0)) {
+    // If there is a winner who is to receive non-zero winnings
+    if (winningAddress != address(0) && netWinnings != 0) {
       // Update balance of the winner
       balances[winningAddress] = balances[winningAddress].add(netWinnings);
 
@@ -485,7 +485,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * @return The total open balance for the user
    */
   function openBalanceOf(address _addr) public view returns (uint256) {
-    return balances[_addr] - drawState.committedBalanceOf(_addr);
+    return balances[_addr].sub(drawState.committedBalanceOf(_addr));
   }
 
   /**

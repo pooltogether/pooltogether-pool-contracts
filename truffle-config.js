@@ -7,7 +7,7 @@ module.exports = {
     local: {
       host: 'localhost',
       port: 8545,
-      gas: 5000000,
+      gas: 6999999,
       gasPrice: 1 * 1000000000,
       network_id: '*'
     },
@@ -29,8 +29,8 @@ module.exports = {
       ),
       skipDryRun: true,
       network_id: 4,
-      gas: 7000000,
-      gasPrice: 3.001 * 1000000000
+      gas: 6980000,
+      gasPrice: 6.001 * 1000000000
     },
 
     mainnet: {
@@ -42,8 +42,8 @@ module.exports = {
       ),
       skipDryRun: true,
       network_id: 1,
-      gas: 7000000,
-      gasPrice: 3 * 1000000000
+      gas: 6999999,
+      gasPrice: 3.001 * 1000000000
     }
   },
 
@@ -56,7 +56,7 @@ module.exports = {
   solc: {
     optimizer: {
       enabled: true,
-      runs: 1
+      runs: 100
     }
   },
 
