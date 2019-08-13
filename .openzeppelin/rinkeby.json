@@ -1,7 +1,346 @@
 {
   "contracts": {
+    "Pool": {
+      "address": "0x4869bdB92252E97A4bbC3E7a952adBc7081910e2",
+      "constructorCode": "60806040523480156100115760006000fd5b50610017565b613f3b806100266000396000f3fe",
+      "bodyBytecodeHash": "6bf1365e395d05cc890d7c1819c4aff3137187f874ad07edac775e9b38ab6744",
+      "localBytecodeHash": "a963e2219684d0f43b50a0f65e2bd7677183acb6ec63c3dd19d3ce971780caba",
+      "deployedBytecodeHash": "73c7b966f08023d04f8b9369cc169ae03f685585f5b495f0216a1dfcf595a892",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        },
+        "t_mapping<t_uint256>": {
+          "id": "t_mapping<t_uint256>",
+          "valueType": "t_uint256",
+          "label": "mapping(key => uint256)",
+          "kind": "mapping"
+        },
+        "t_struct<Pool.Draw>": {
+          "id": "t_struct<Pool.Draw>",
+          "kind": "struct",
+          "label": "Pool.Draw",
+          "members": [
+            {
+              "label": "feeFraction",
+              "astId": 2810,
+              "type": "t_uint256",
+              "src": "4589:19:14"
+            },
+            {
+              "label": "feeBeneficiary",
+              "astId": 2812,
+              "type": "t_address",
+              "src": "4631:22:14"
+            },
+            {
+              "label": "openedBlock",
+              "astId": 2814,
+              "type": "t_uint256",
+              "src": "4659:19:14"
+            },
+            {
+              "label": "secretHash",
+              "astId": 2816,
+              "type": "t_bytes32",
+              "src": "4684:18:14"
+            }
+          ]
+        },
+        "t_bytes32": {
+          "id": "t_bytes32",
+          "kind": "elementary",
+          "label": "bytes32"
+        },
+        "t_mapping<t_struct<Pool.Draw>>": {
+          "id": "t_mapping<t_struct<Pool.Draw>>",
+          "valueType": "t_struct<Pool.Draw>",
+          "label": "mapping(key => Pool.Draw)",
+          "kind": "mapping"
+        },
+        "t_struct<DrawManager.State>": {
+          "id": "t_struct<DrawManager.State>",
+          "kind": "struct",
+          "label": "DrawManager.State",
+          "members": [
+            {
+              "label": "sortitionSumTrees",
+              "astId": 1771,
+              "type": "t_struct<SortitionSumTreeFactory.SortitionSumTrees>",
+              "src": "1356:59:10"
+            },
+            {
+              "label": "usersFirstDrawIndex",
+              "astId": 1775,
+              "type": "t_mapping<t_uint256>",
+              "src": "1519:47:10"
+            },
+            {
+              "label": "usersSecondDrawIndex",
+              "astId": 1779,
+              "type": "t_mapping<t_uint256>",
+              "src": "1669:48:10"
+            },
+            {
+              "label": "drawTotals",
+              "astId": 1783,
+              "type": "t_mapping<t_uint256>",
+              "src": "1808:38:10"
+            },
+            {
+              "label": "openDrawIndex",
+              "astId": 1785,
+              "type": "t_uint256",
+              "src": "1920:21:10"
+            },
+            {
+              "label": "committedSupply",
+              "astId": 1787,
+              "type": "t_uint256",
+              "src": "2019:23:10"
+            }
+          ]
+        },
+        "t_struct<SortitionSumTreeFactory.SortitionSumTrees>": {
+          "id": "t_struct<SortitionSumTreeFactory.SortitionSumTrees>",
+          "kind": "struct",
+          "label": "SortitionSumTreeFactory.SortitionSumTrees",
+          "members": [
+            {
+              "label": "sortitionSumTrees",
+              "astId": 22,
+              "type": "t_mapping<t_struct<SortitionSumTreeFactory.SortitionSumTree>>",
+              "src": "1037:54:0"
+            }
+          ]
+        },
+        "t_struct<SortitionSumTreeFactory.SortitionSumTree>": {
+          "id": "t_struct<SortitionSumTreeFactory.SortitionSumTree>",
+          "kind": "struct",
+          "label": "SortitionSumTreeFactory.SortitionSumTree",
+          "members": [
+            {
+              "label": "K",
+              "astId": 3,
+              "type": "t_uint256",
+              "src": "442:6:0"
+            },
+            {
+              "label": "stack",
+              "astId": 6,
+              "type": "t_array:dyn<t_uint256>",
+              "src": "690:12:0"
+            },
+            {
+              "label": "nodes",
+              "astId": 9,
+              "type": "t_array:dyn<t_uint256>",
+              "src": "712:12:0"
+            },
+            {
+              "label": "IDsToNodeIndexes",
+              "astId": 13,
+              "type": "t_mapping<t_uint256>",
+              "src": "878:41:0"
+            },
+            {
+              "label": "nodeIndexesToIDs",
+              "astId": 17,
+              "type": "t_mapping<t_bytes32>",
+              "src": "929:41:0"
+            }
+          ]
+        },
+        "t_array:dyn<t_uint256>": {
+          "id": "t_array:dyn<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "dyn",
+          "kind": "array",
+          "label": "uint256[]"
+        },
+        "t_mapping<t_bytes32>": {
+          "id": "t_mapping<t_bytes32>",
+          "valueType": "t_bytes32",
+          "label": "mapping(key => bytes32)",
+          "kind": "mapping"
+        },
+        "t_mapping<t_struct<SortitionSumTreeFactory.SortitionSumTree>>": {
+          "id": "t_mapping<t_struct<SortitionSumTreeFactory.SortitionSumTree>>",
+          "valueType": "t_struct<SortitionSumTreeFactory.SortitionSumTree>",
+          "label": "mapping(key => SortitionSumTreeFactory.SortitionSumTree)",
+          "kind": "mapping"
+        },
+        "t_struct<Roles.Role>": {
+          "id": "t_struct<Roles.Role>",
+          "kind": "struct",
+          "label": "Roles.Role",
+          "members": [
+            {
+              "label": "bearer",
+              "astId": 690,
+              "type": "t_mapping<t_bool>",
+              "src": "150:32:1"
+            }
+          ]
+        },
+        "t_mapping<t_bool>": {
+          "id": "t_mapping<t_bool>",
+          "valueType": "t_bool",
+          "label": "mapping(key => bool)",
+          "kind": "mapping"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 1696,
+          "type": "t_bool",
+          "src": "757:24:9"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 1698,
+          "type": "t_bool",
+          "src": "876:25:9"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 1754,
+          "type": "t_array:50<t_uint256>",
+          "src": "1951:29:9"
+        },
+        {
+          "contract": "ReentrancyGuard",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol",
+          "label": "_guardCounter",
+          "astId": 1659,
+          "type": "t_uint256",
+          "src": "430:29:8"
+        },
+        {
+          "contract": "ReentrancyGuard",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol",
+          "label": "______gap",
+          "astId": 1691,
+          "type": "t_array:50<t_uint256>",
+          "src": "1225:29:8"
+        },
+        {
+          "contract": "Pool",
+          "path": "contracts/Pool.sol",
+          "label": "cToken",
+          "astId": 2819,
+          "type": "t_address",
+          "src": "4776:21:14"
+        },
+        {
+          "contract": "Pool",
+          "path": "contracts/Pool.sol",
+          "label": "nextFeeBeneficiary",
+          "astId": 2821,
+          "type": "t_address",
+          "src": "4868:33:14"
+        },
+        {
+          "contract": "Pool",
+          "path": "contracts/Pool.sol",
+          "label": "nextFeeFraction",
+          "astId": 2823,
+          "type": "t_uint256",
+          "src": "4969:30:14"
+        },
+        {
+          "contract": "Pool",
+          "path": "contracts/Pool.sol",
+          "label": "accountedBalance",
+          "astId": 2825,
+          "type": "t_uint256",
+          "src": "5073:31:14"
+        },
+        {
+          "contract": "Pool",
+          "path": "contracts/Pool.sol",
+          "label": "balances",
+          "astId": 2829,
+          "type": "t_mapping<t_uint256>",
+          "src": "5173:37:14"
+        },
+        {
+          "contract": "Pool",
+          "path": "contracts/Pool.sol",
+          "label": "sponsorshipBalances",
+          "astId": 2833,
+          "type": "t_mapping<t_uint256>",
+          "src": "5277:48:14"
+        },
+        {
+          "contract": "Pool",
+          "path": "contracts/Pool.sol",
+          "label": "draws",
+          "astId": 2837,
+          "type": "t_mapping<t_struct<Pool.Draw>>",
+          "src": "5388:30:14"
+        },
+        {
+          "contract": "Pool",
+          "path": "contracts/Pool.sol",
+          "label": "drawState",
+          "astId": 2839,
+          "type": "t_struct<DrawManager.State>",
+          "src": "5503:27:14"
+        },
+        {
+          "contract": "Pool",
+          "path": "contracts/Pool.sol",
+          "label": "admins",
+          "astId": 2841,
+          "type": "t_struct<Roles.Role>",
+          "src": "5594:17:14"
+        },
+        {
+          "contract": "Pool",
+          "path": "contracts/Pool.sol",
+          "label": "paused",
+          "astId": 2843,
+          "type": "t_bool",
+          "src": "5664:18:14"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
     "Migrations": {
-      "address": "0x498862973A159101F7838546D3E3D5466235B697",
+      "address": "0x2Ce584B7600d2660bF14fD8D7A47579F8E095993",
       "constructorCode": "60806040523480156100115760006000fd5b50610017565b6107cc806100266000396000f3fe",
       "bodyBytecodeHash": "68751f96602c90220b80563eca69509a76f803364232eba26d2dd24df9da8ca2",
       "localBytecodeHash": "f6b9aa4cdc9850273616691688a16f3c0f8faf563aec8ccfc0549bd58c6d6e3e",
@@ -75,7 +414,7 @@
           "contract": "Migrations",
           "path": "contracts/Migrations.sol",
           "label": "last_completed_migration",
-          "astId": 3061,
+          "astId": 2684,
           "type": "t_uint256",
           "src": "163:36:13"
         }
@@ -87,401 +426,18 @@
         "hasInitialValuesInDeclarations": false,
         "uninitializedBaseContracts": []
       }
-    },
-    "Pool": {
-      "address": "0xb864f04b6408d73E56085960aac6a96E132e00a4",
-      "constructorCode": "60806040523480156100115760006000fd5b50610017565b613ab8806100266000396000f3fe",
-      "bodyBytecodeHash": "8881adb44cf21efe85ff9f1f5fcca16090683b77f9f40db8dbb169d7d1f828dc",
-      "localBytecodeHash": "3c336265a373fca42a73183c4a792715ed34cb1dd15295414e28307f49ba7f24",
-      "deployedBytecodeHash": "bd8f05592698515d6f3a218a50c22f07cc57c632414de59beed1c47727977fde",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_address": {
-          "id": "t_address",
-          "kind": "elementary",
-          "label": "address"
-        },
-        "t_mapping<t_uint256>": {
-          "id": "t_mapping<t_uint256>",
-          "valueType": "t_uint256",
-          "label": "mapping(key => uint256)",
-          "kind": "mapping"
-        },
-        "t_struct<IPool.Draw>": {
-          "id": "t_struct<IPool.Draw>",
-          "kind": "struct",
-          "label": "IPool.Draw",
-          "members": [
-            {
-              "label": "feeFraction",
-              "astId": 2870,
-              "type": "t_uint256",
-              "src": "1578:19:13"
-            },
-            {
-              "label": "feeBeneficiary",
-              "astId": 2872,
-              "type": "t_address",
-              "src": "1620:22:13"
-            },
-            {
-              "label": "openedBlock",
-              "astId": 2874,
-              "type": "t_uint256",
-              "src": "1648:19:13"
-            },
-            {
-              "label": "secretHash",
-              "astId": 2876,
-              "type": "t_bytes32",
-              "src": "1673:18:13"
-            }
-          ]
-        },
-        "t_bytes32": {
-          "id": "t_bytes32",
-          "kind": "elementary",
-          "label": "bytes32"
-        },
-        "t_mapping<t_struct<IPool.Draw>>": {
-          "id": "t_mapping<t_struct<IPool.Draw>>",
-          "valueType": "t_struct<IPool.Draw>",
-          "label": "mapping(key => IPool.Draw)",
-          "kind": "mapping"
-        },
-        "t_struct<DrawManager.DrawState>": {
-          "id": "t_struct<DrawManager.DrawState>",
-          "kind": "struct",
-          "label": "DrawManager.DrawState",
-          "members": [
-            {
-              "label": "sortitionSumTrees",
-              "astId": 1776,
-              "type": "t_struct<SortitionSumTreeFactory.SortitionSumTrees>",
-              "src": "518:59:10"
-            },
-            {
-              "label": "usersFirstDrawIndex",
-              "astId": 1780,
-              "type": "t_mapping<t_uint256>",
-              "src": "587:47:10"
-            },
-            {
-              "label": "usersSecondDrawIndex",
-              "astId": 1784,
-              "type": "t_mapping<t_uint256>",
-              "src": "644:48:10"
-            },
-            {
-              "label": "draws",
-              "astId": 1788,
-              "type": "t_mapping<t_struct<DrawManager.Draw>>",
-              "src": "702:30:10"
-            },
-            {
-              "label": "openDrawIndex",
-              "astId": 1790,
-              "type": "t_uint256",
-              "src": "742:21:10"
-            },
-            {
-              "label": "eligibleSupply",
-              "astId": 1792,
-              "type": "t_uint256",
-              "src": "773:22:10"
-            }
-          ]
-        },
-        "t_struct<SortitionSumTreeFactory.SortitionSumTrees>": {
-          "id": "t_struct<SortitionSumTreeFactory.SortitionSumTrees>",
-          "kind": "struct",
-          "label": "SortitionSumTreeFactory.SortitionSumTrees",
-          "members": [
-            {
-              "label": "sortitionSumTrees",
-              "astId": 22,
-              "type": "t_mapping<t_struct<SortitionSumTreeFactory.SortitionSumTree>>",
-              "src": "1037:54:0"
-            }
-          ]
-        },
-        "t_struct<SortitionSumTreeFactory.SortitionSumTree>": {
-          "id": "t_struct<SortitionSumTreeFactory.SortitionSumTree>",
-          "kind": "struct",
-          "label": "SortitionSumTreeFactory.SortitionSumTree",
-          "members": [
-            {
-              "label": "K",
-              "astId": 3,
-              "type": "t_uint256",
-              "src": "442:6:0"
-            },
-            {
-              "label": "stack",
-              "astId": 6,
-              "type": "t_array:dyn<t_uint256>",
-              "src": "690:12:0"
-            },
-            {
-              "label": "nodes",
-              "astId": 9,
-              "type": "t_array:dyn<t_uint256>",
-              "src": "712:12:0"
-            },
-            {
-              "label": "IDsToNodeIndexes",
-              "astId": 13,
-              "type": "t_mapping<t_uint256>",
-              "src": "878:41:0"
-            },
-            {
-              "label": "nodeIndexesToIDs",
-              "astId": 17,
-              "type": "t_mapping<t_bytes32>",
-              "src": "929:41:0"
-            }
-          ]
-        },
-        "t_array:dyn<t_uint256>": {
-          "id": "t_array:dyn<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "dyn",
-          "kind": "array",
-          "label": "uint256[]"
-        },
-        "t_mapping<t_bytes32>": {
-          "id": "t_mapping<t_bytes32>",
-          "valueType": "t_bytes32",
-          "label": "mapping(key => bytes32)",
-          "kind": "mapping"
-        },
-        "t_mapping<t_struct<SortitionSumTreeFactory.SortitionSumTree>>": {
-          "id": "t_mapping<t_struct<SortitionSumTreeFactory.SortitionSumTree>>",
-          "valueType": "t_struct<SortitionSumTreeFactory.SortitionSumTree>",
-          "label": "mapping(key => SortitionSumTreeFactory.SortitionSumTree)",
-          "kind": "mapping"
-        },
-        "t_struct<DrawManager.Draw>": {
-          "id": "t_struct<DrawManager.Draw>",
-          "kind": "struct",
-          "label": "DrawManager.Draw",
-          "members": [
-            {
-              "label": "index",
-              "astId": 1771,
-              "type": "t_uint256",
-              "src": "442:13:10"
-            },
-            {
-              "label": "total",
-              "astId": 1773,
-              "type": "t_uint256",
-              "src": "465:13:10"
-            }
-          ]
-        },
-        "t_mapping<t_struct<DrawManager.Draw>>": {
-          "id": "t_mapping<t_struct<DrawManager.Draw>>",
-          "valueType": "t_struct<DrawManager.Draw>",
-          "label": "mapping(key => DrawManager.Draw)",
-          "kind": "mapping"
-        },
-        "t_struct<Roles.Role>": {
-          "id": "t_struct<Roles.Role>",
-          "kind": "struct",
-          "label": "Roles.Role",
-          "members": [
-            {
-              "label": "bearer",
-              "astId": 690,
-              "type": "t_mapping<t_bool>",
-              "src": "150:32:1"
-            }
-          ]
-        },
-        "t_mapping<t_bool>": {
-          "id": "t_mapping<t_bool>",
-          "valueType": "t_bool",
-          "label": "mapping(key => bool)",
-          "kind": "mapping"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 1696,
-          "type": "t_bool",
-          "src": "757:24:9"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 1698,
-          "type": "t_bool",
-          "src": "876:25:9"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 1754,
-          "type": "t_array:50<t_uint256>",
-          "src": "1951:29:9"
-        },
-        {
-          "contract": "ReentrancyGuard",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol",
-          "label": "_guardCounter",
-          "astId": 1659,
-          "type": "t_uint256",
-          "src": "430:29:8"
-        },
-        {
-          "contract": "ReentrancyGuard",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol",
-          "label": "______gap",
-          "astId": 1691,
-          "type": "t_array:50<t_uint256>",
-          "src": "1225:29:8"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "cToken",
-          "astId": 3113,
-          "type": "t_address",
-          "src": "932:21:15"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "nextFeeBeneficiary",
-          "astId": 3115,
-          "type": "t_address",
-          "src": "957:33:15"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "nextFeeFraction",
-          "astId": 3117,
-          "type": "t_uint256",
-          "src": "994:30:15"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "accountedBalance",
-          "astId": 3119,
-          "type": "t_uint256",
-          "src": "1028:31:15"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "balances",
-          "astId": 3123,
-          "type": "t_mapping<t_uint256>",
-          "src": "1063:37:15"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "sponsorshipBalances",
-          "astId": 3127,
-          "type": "t_mapping<t_uint256>",
-          "src": "1104:48:15"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "draws",
-          "astId": 3131,
-          "type": "t_mapping<t_struct<IPool.Draw>>",
-          "src": "1156:30:15"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "drawState",
-          "astId": 3133,
-          "type": "t_struct<DrawManager.DrawState>",
-          "src": "1190:31:15"
-        },
-        {
-          "contract": "Pool",
-          "path": "contracts/Pool.sol",
-          "label": "admins",
-          "astId": 3135,
-          "type": "t_struct<Roles.Role>",
-          "src": "1225:17:15"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": [],
-        "storageUncheckedVars": [
-          {
-            "contract": "Pool",
-            "path": "contracts/Pool.sol",
-            "label": "draws",
-            "astId": 3131,
-            "type": "t_mapping<t_struct<IPool.Draw>>",
-            "src": "1156:30:15"
-          },
-          {
-            "contract": "Pool",
-            "path": "contracts/Pool.sol",
-            "label": "drawState",
-            "astId": 3133,
-            "type": "t_struct<DrawManager.DrawState>",
-            "src": "1190:31:15"
-          },
-          {
-            "contract": "Pool",
-            "path": "contracts/Pool.sol",
-            "label": "admins",
-            "astId": 3135,
-            "type": "t_struct<Roles.Role>",
-            "src": "1225:17:15"
-          }
-        ],
-        "storageDiff": []
-      }
     }
   },
   "solidityLibs": {
     "DrawManager": {
-      "address": "0x63ec3E40a82FBA4cB0cC2bF2b0Ee550FDD1efac5",
-      "constructorCode": "611df1610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
-      "bodyBytecodeHash": "3dd449fadb6167e573c2201e5e9a448f8eb5d29f63bd65c3e5b741ec50fc3c5e",
-      "localBytecodeHash": "b7a0411520234a60f9385ea2148c646a87123a0886df9e7fec40dfd831958c18",
-      "deployedBytecodeHash": "b7a0411520234a60f9385ea2148c646a87123a0886df9e7fec40dfd831958c18"
+      "address": "0xDc69B5D907BA7b70424c7E25bDC20DBdac380f87",
+      "constructorCode": "611af6610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
+      "bodyBytecodeHash": "e5c6858841f7c76d8a696abbd531e1a39cceec4522480d6bcd107be66911e698",
+      "localBytecodeHash": "0182c5fad70b6ff532cca2e7a029d6e12ccbdb3ce6789316abef02c7289dfc3a",
+      "deployedBytecodeHash": "0182c5fad70b6ff532cca2e7a029d6e12ccbdb3ce6789316abef02c7289dfc3a"
     },
     "FixidityLib": {
-      "address": "0x52A93ed0f522BC94Ce9639507eF9e41c290d232e",
+      "address": "0xf0CDDB11B445fC8af3929779CA45B8b7C8760720",
       "constructorCode": "61107f610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
       "bodyBytecodeHash": "bd8ad311c61d6b5554165a366e55cbe6f9bca56de8d0fba46411865cea34c618",
       "localBytecodeHash": "77828912cd97bb885fd3f93ca8d7522573a6e27bd431ebc9936c21ddb90847a9",
@@ -491,19 +447,19 @@
   "proxies": {
     "pooltogether/Migrations": [
       {
-        "address": "0xfa5672C40148d26E249FD45bf29376E89568aa03",
+        "address": "0x846DC5Ede94611C8657cB620293aEf83C2eD5418",
         "version": "0.2",
-        "implementation": "0x498862973A159101F7838546D3E3D5466235B697",
-        "admin": "0xbaa77f4Fcf743B8824e726dbEC34071f4E912F58",
+        "implementation": "0x2Ce584B7600d2660bF14fD8D7A47579F8E095993",
+        "admin": "0x4Ac77C9b978f97c919830824812ac4CF956F36F1",
         "kind": "Upgradeable"
       }
     ],
     "pooltogether/Pool": [
       {
-        "address": "0xc4982849893D280b38c5839549BE454424A77fF7",
+        "address": "0x45f5A7Bff72c80A602403154DDfCbabA5e8d8955",
         "version": "0.2",
-        "implementation": "0xb864f04b6408d73E56085960aac6a96E132e00a4",
-        "admin": "0xbaa77f4Fcf743B8824e726dbEC34071f4E912F58",
+        "implementation": "0x4869bdB92252E97A4bbC3E7a952adBc7081910e2",
+        "admin": "0x4Ac77C9b978f97c919830824812ac4CF956F36F1",
         "kind": "Upgradeable"
       }
     ]
@@ -511,6 +467,6 @@
   "manifestVersion": "2.2",
   "version": "0.2",
   "proxyAdmin": {
-    "address": "0xbaa77f4Fcf743B8824e726dbEC34071f4E912F58"
+    "address": "0x4Ac77C9b978f97c919830824812ac4CF956F36F1"
   }
 }
