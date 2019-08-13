@@ -53,6 +53,16 @@ contract('Pool', (accounts) => {
     return (await pool.methods['balance()'].call()).toString()
   }
 
+  async function depositPool(amount, options) {
+    if (options) {
+      await token.approve(pool.address, amount, options)
+      await pool.depositPool(amount, options)  
+    } else {
+      await token.approve(pool.address, amount)
+      await pool.depositPool(amount)
+    }
+  }
+
   async function createPool() {
     await Pool.link("DrawManager", drawManager.address)
     await Pool.link("FixidityLib", fixidity.address)
@@ -513,6 +523,45 @@ contract('Pool', (accounts) => {
         failed = false
       } catch (e) {}
       assert.ok(failed)
+    })
+  })
+
+  describe('pause()', () => {
+    beforeEach(async () => {
+      await createPool()
+      await nextDraw()
+    })
+
+    it('should not allow any more deposits', async () => {
+      await pool.pause()
+      let failed = true
+      try {
+        await depositPool(toWei('10'), { from: user2 })
+        failed = false
+      } catch (e) {}
+      assert.ok(failed)
+    })
+
+    it('should not allow new draws', async () => {
+      await pool.pause()
+      let failed = true
+      try {
+        await nextDraw()
+        failed = false
+      } catch (e) {}
+      assert.ok(failed)
+    })
+  })
+
+  describe('unpause()', () => {
+    beforeEach(async () => {
+      await createPool()
+      await pool.pause()
+    })
+
+    it('should allow deposit after unpausing', async () => {
+      await pool.unpause()
+      await depositPool(toWei('10'), { from: user2 })
     })
   })
 })

@@ -31,7 +31,7 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
  * Step X: ...
  */
 contract Pool is Initializable, ReentrancyGuard {
-  using DrawManager for DrawManager.DrawState;
+  using DrawManager for DrawManager.State;
   using SafeMath for uint256;
   using Roles for Roles.Role;
 
@@ -118,6 +118,16 @@ contract Pool is Initializable, ReentrancyGuard {
    */
   event NextFeeBeneficiaryChanged(address indexed feeBeneficiary);
 
+  /**
+   * Emitted when an admin pauses the contract
+   */
+  event Paused(address indexed sender);
+
+  /**
+   * Emitted when an admin unpauses the contract
+   */
+  event Unpaused(address indexed sender);
+
   struct Draw {
     uint256 feeFraction; //fixed point 18
     address feeBeneficiary;
@@ -163,12 +173,17 @@ contract Pool is Initializable, ReentrancyGuard {
   /**
    * A structure that is used to manage the user's odds of winning.
    */
-  DrawManager.DrawState drawState;
+  DrawManager.State drawState;
 
   /**
    * A structure containing the administrators
    */
   Roles.Role admins;
+
+  /**
+   * Whether the contract is paused
+   */
+  bool public paused;
 
   /**
    * @notice Initializes a new Pool contract.
@@ -221,7 +236,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * May fire the Committed event, and always fires the Open event.
    * @param nextSecretHash The secret hash to use to open a new Draw
    */
-  function openNextDraw(bytes32 nextSecretHash) public onlyAdmin {
+  function openNextDraw(bytes32 nextSecretHash) public onlyAdmin unlessPaused {
     require(currentCommittedDrawId() == 0, "there is a committed draw");
     if (currentOpenDrawId() != 0) {
       commit();
@@ -236,7 +251,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * @param nextSecretHash The secret hash to use to open a new Draw
    * @param lastSecret The secret to reveal to reward the current committed Draw.
    */
-  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret) public onlyAdmin {
+  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret) public onlyAdmin unlessPaused {
     require(currentCommittedDrawId() != 0, "a draw has not been committed");
     reward(lastSecret);
     commit();
@@ -322,7 +337,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * There must be an open draw to deposit to.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
-  function depositSponsorship(uint256 _amount) public nonReentrant {
+  function depositSponsorship(uint256 _amount) public nonReentrant unlessPaused {
     sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].add(_amount);
 
     // Deposit the funds
@@ -337,7 +352,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * proportional to the total committed balance of all users.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
-  function depositPool(uint256 _amount) public requireOpenDraw nonReentrant {
+  function depositPool(uint256 _amount) public requireOpenDraw nonReentrant unlessPaused {
     // Update the user's balance
     balances[msg.sender] = balances[msg.sender].add(_amount);
 
@@ -613,6 +628,18 @@ contract Pool is Initializable, ReentrancyGuard {
     return cToken.balanceOfUnderlying(address(this));
   }
 
+  function pause() public unlessPaused onlyAdmin {
+    paused = true;
+
+    emit Paused(msg.sender);
+  }
+
+  function unpause() public whenPaused onlyAdmin {
+    paused = false;
+
+    emit Unpaused(msg.sender);
+  }
+
   modifier onlyAdmin() {
     require(admins.has(msg.sender), "must be an admin");
     _;
@@ -620,6 +647,16 @@ contract Pool is Initializable, ReentrancyGuard {
 
   modifier requireOpenDraw() {
     require(currentOpenDrawId() != 0, "there is no open draw");
+    _;
+  }
+
+  modifier whenPaused() {
+    require(paused, "contract is not paused");
+    _;
+  }
+
+  modifier unlessPaused() {
+    require(!paused, "contract is paused");
     _;
   }
 }

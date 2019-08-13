@@ -158,6 +158,53 @@ contract('DrawManager', (accounts) => {
         })
     })
 
+    describe('committedBalanceOf()', () => {
+        it('should return 0 when no draw exists', async () => {
+            assert.equal((await drawManager.committedBalanceOf(user1)).toString(), toWei('0'))
+        })
+
+        describe('when a committed draw exists', () => {
+            beforeEach(async () => {
+                await drawManager.openNextDraw()
+                await drawManager.deposit(user1, toWei('10'))
+                await drawManager.openNextDraw()
+            })
+
+            it('should return the committed balance of the user', async () => {
+                assert.equal((await drawManager.committedBalanceOf(user1)).toString(), toWei('10'))
+            })
+
+            describe('and the user has deposited multiple times', () => {
+                beforeEach(async () => {
+                    await drawManager.deposit(user1, toWei('20'))
+                    await drawManager.openNextDraw()
+                    await drawManager.deposit(user1, toWei('40'))
+                    await drawManager.openNextDraw()
+                })
+
+                it('should return the total of both draws', async () => {
+                    assert.equal((await drawManager.committedBalanceOf(user1)).toString(), toWei('70'))
+                })
+            })
+        })
+    })
+
+    describe('balanceOf', async () => {
+        it('should return 0 if nothing exists', async () => {
+            assert.equal((await drawManager.balanceOf(user1)).toString(), toWei('0'))
+        })
+
+        describe('when balance exists', () => {
+            beforeEach(async () => {
+                await drawManager.openNextDraw()
+                await drawManager.deposit(user1, toWei('13'))
+                await drawManager.openNextDraw()
+                await drawManager.deposit(user1, toWei('12'))
+                assert.equal((await drawManager.balanceOf(user1)).toString(), toWei('25'))
+            })
+        })
+    })
+
     describe('withdraw', () => {
         beforeEach(async () => {
             await drawManager.openNextDraw()

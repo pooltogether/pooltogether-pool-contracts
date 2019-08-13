@@ -10,3 +10,4 @@ zos.dev*.json
 .zos.lock
 .openzeppelin/.session
 coverage
+coverage.json

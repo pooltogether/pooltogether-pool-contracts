@@ -3,59 +3,59 @@ pragma solidity 0.5.10;
 import "./DrawManager.sol";
 
 contract ExposedDrawManager {
-    using DrawManager for DrawManager.DrawState;
+    using DrawManager for DrawManager.State;
 
-    DrawManager.DrawState drawState;
+    DrawManager.State state;
 
     function openNextDraw() public {
-      drawState.openNextDraw();
+      state.openNextDraw();
     }
 
     function deposit(address user, uint256 amount) public {
-      drawState.deposit(user, amount);
+      state.deposit(user, amount);
     }
 
     function withdraw(address user) public {
-      drawState.withdraw(user);
+      state.withdraw(user);
     }
 
     function balanceOf(address user) public view returns (uint256) {
-      return drawState.balanceOf(user);
+      return state.balanceOf(user);
     }
 
     function committedBalanceOf(address user) public view returns (uint256) {
-      return drawState.committedBalanceOf(user);
+      return state.committedBalanceOf(user);
     }
 
     function openBalanceOf(address user) public view returns (uint256) {
-      return drawState.openBalanceOf(user);
+      return state.openBalanceOf(user);
     }
 
     function committedSupply() public view returns (uint256) {
-      return drawState.committedSupply;
+      return state.committedSupply;
     }
 
     function openSupply() public view returns (uint256) {
-      return drawState.openSupply();
+      return state.openSupply();
     }
 
     function openDrawIndex() public view returns (uint256) {
-      return drawState.openDrawIndex;
+      return state.openDrawIndex;
     }
 
     function draw(uint256 token) public view returns (address) {
-      return drawState.draw(token);
+      return state.draw(token);
     }
 
     function firstDrawIndex(address user) public view returns (uint256) {
-        return drawState.usersFirstDrawIndex[user];
+        return state.usersFirstDrawIndex[user];
     }
 
     function secondDrawIndex(address user) public view returns (uint256) {
-        return drawState.usersSecondDrawIndex[user];
+        return state.usersSecondDrawIndex[user];
     }
 
     function drawWithEntropy(bytes32 entropy) public view returns (address) {
-        return drawState.drawWithEntropy(entropy);
+        return state.drawWithEntropy(entropy);
     }
 }
