@@ -23,6 +23,8 @@ library DrawManager {
      */
     bytes32 public constant TREE_OF_DRAWS = "TreeOfDraws";
 
+    uint8 public constant MAX_LEAVES = 10;
+
     /**
      * Stores information for all draws.
      */
@@ -67,7 +69,7 @@ library DrawManager {
     function openNextDraw(State storage self) public returns (uint256) {
         if (self.openDrawIndex == 0) {
             // If there is no previous draw, we must initialize
-            self.sortitionSumTrees.createTree(TREE_OF_DRAWS, 4);
+            self.sortitionSumTrees.createTree(TREE_OF_DRAWS, MAX_LEAVES);
         } else {
             // else add current draw to sortition sum trees
             bytes32 drawId = bytes32(self.openDrawIndex);
@@ -77,7 +79,7 @@ library DrawManager {
         }
         // now create a new draw
         uint256 drawIndex = self.openDrawIndex.add(1);
-        self.sortitionSumTrees.createTree(bytes32(drawIndex), 4);
+        self.sortitionSumTrees.createTree(bytes32(drawIndex), MAX_LEAVES);
         self.openDrawIndex = drawIndex;
 
         return drawIndex;

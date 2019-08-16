@@ -485,7 +485,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * @return The total open balance for the user
    */
   function openBalanceOf(address _addr) public view returns (uint256) {
-    return balances[_addr].sub(drawState.committedBalanceOf(_addr));
+    return drawState.openBalanceOf(_addr);
   }
 
   /**

@@ -7,7 +7,7 @@ const FixidityLib = artifacts.require('FixidityLib.sol')
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
 const DrawManager = artifacts.require('DrawManager.sol')
 
-const nextDrawDebug = require('debug')('Pool.test.js:nextDraw')
+const debug = require('debug')('Pool.test.js')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -75,7 +75,7 @@ contract('Pool', (accounts) => {
       owner
     )
 
-    await pool.openNextDraw(secretHash)
+    await openNextDraw()
 
     return pool
   }
@@ -83,13 +83,14 @@ contract('Pool', (accounts) => {
   async function rewardAndOpenNextDraw(options) {
     let logs
 
+    debug(`rewardAndOpenNextDraw(${secretHash}, ${secret})`)
     if (options) {
       logs = (await pool.rewardAndOpenNextDraw(secretHash, secret, options)).logs;
     } else {
       logs = (await pool.rewardAndOpenNextDraw(secretHash, secret)).logs;
     }
 
-    nextDrawDebug('rewardAndOpenNextDraw: ', logs)
+    debug('rewardAndOpenNextDraw: ', logs)
     Rewarded = logs[0]
     assert.equal(Rewarded.event, 'Rewarded')
     Committed = logs[1]
@@ -97,6 +98,7 @@ contract('Pool', (accounts) => {
   }
 
   async function openNextDraw() {
+    debug(`openNextDraw(${secretHash})`)
     let logs = (await pool.openNextDraw(secretHash)).logs
     Committed = logs[0]
   }
@@ -111,6 +113,7 @@ contract('Pool', (accounts) => {
     if (currentDrawId.toString() === '0') {
       await openNextDraw()
     } else {
+      debug(`reward(${pool.address})`)
       await moneyMarket.reward(pool.address)
       await rewardAndOpenNextDraw(options)
     }
