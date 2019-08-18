@@ -1,11 +1,11 @@
 {
   "contracts": {
     "Pool": {
-      "address": "0x4869bdB92252E97A4bbC3E7a952adBc7081910e2",
-      "constructorCode": "60806040523480156100115760006000fd5b50610017565b613f3b806100266000396000f3fe",
-      "bodyBytecodeHash": "6bf1365e395d05cc890d7c1819c4aff3137187f874ad07edac775e9b38ab6744",
-      "localBytecodeHash": "a963e2219684d0f43b50a0f65e2bd7677183acb6ec63c3dd19d3ce971780caba",
-      "deployedBytecodeHash": "73c7b966f08023d04f8b9369cc169ae03f685585f5b495f0216a1dfcf595a892",
+      "address": "0x9A6D6ac8A27F148BE5672DDf2F0B01d66af00866",
+      "constructorCode": "60806040523480156100115760006000fd5b50610017565b613ee4806100266000396000f3fe",
+      "bodyBytecodeHash": "f2b76f0f3d13f0aa973becf96f45d7f772b935f277256c9ef3c16e5ff5a3de89",
+      "localBytecodeHash": "839f9dd6cf6f7e79894addd5ec0ed3027196a6e13456f5aa409f5d567b8a5a38",
+      "deployedBytecodeHash": "8189d108c52d961b96beebccf3133304a7038c80afdccea759103951a65e922c",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -42,25 +42,25 @@
           "members": [
             {
               "label": "feeFraction",
-              "astId": 2810,
+              "astId": 2813,
               "type": "t_uint256",
               "src": "4589:19:14"
             },
             {
               "label": "feeBeneficiary",
-              "astId": 2812,
+              "astId": 2815,
               "type": "t_address",
               "src": "4631:22:14"
             },
             {
               "label": "openedBlock",
-              "astId": 2814,
+              "astId": 2817,
               "type": "t_uint256",
               "src": "4659:19:14"
             },
             {
               "label": "secretHash",
-              "astId": 2816,
+              "astId": 2819,
               "type": "t_bytes32",
               "src": "4684:18:14"
             }
@@ -84,39 +84,39 @@
           "members": [
             {
               "label": "sortitionSumTrees",
-              "astId": 1771,
+              "astId": 1774,
               "type": "t_struct<SortitionSumTreeFactory.SortitionSumTrees>",
-              "src": "1356:59:10"
+              "src": "1400:59:10"
             },
             {
               "label": "usersFirstDrawIndex",
-              "astId": 1775,
+              "astId": 1778,
               "type": "t_mapping<t_uint256>",
-              "src": "1519:47:10"
+              "src": "1563:47:10"
             },
             {
               "label": "usersSecondDrawIndex",
-              "astId": 1779,
+              "astId": 1782,
               "type": "t_mapping<t_uint256>",
-              "src": "1669:48:10"
+              "src": "1713:48:10"
             },
             {
               "label": "drawTotals",
-              "astId": 1783,
+              "astId": 1786,
               "type": "t_mapping<t_uint256>",
-              "src": "1808:38:10"
+              "src": "1852:38:10"
             },
             {
               "label": "openDrawIndex",
-              "astId": 1785,
+              "astId": 1788,
               "type": "t_uint256",
-              "src": "1920:21:10"
+              "src": "1964:21:10"
             },
             {
               "label": "committedSupply",
-              "astId": 1787,
+              "astId": 1790,
               "type": "t_uint256",
-              "src": "2019:23:10"
+              "src": "2063:23:10"
             }
           ]
         },
@@ -254,7 +254,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "cToken",
-          "astId": 2819,
+          "astId": 2822,
           "type": "t_address",
           "src": "4776:21:14"
         },
@@ -262,7 +262,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "nextFeeBeneficiary",
-          "astId": 2821,
+          "astId": 2824,
           "type": "t_address",
           "src": "4868:33:14"
         },
@@ -270,7 +270,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "nextFeeFraction",
-          "astId": 2823,
+          "astId": 2826,
           "type": "t_uint256",
           "src": "4969:30:14"
         },
@@ -278,7 +278,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "accountedBalance",
-          "astId": 2825,
+          "astId": 2828,
           "type": "t_uint256",
           "src": "5073:31:14"
         },
@@ -286,7 +286,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "balances",
-          "astId": 2829,
+          "astId": 2832,
           "type": "t_mapping<t_uint256>",
           "src": "5173:37:14"
         },
@@ -294,7 +294,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "sponsorshipBalances",
-          "astId": 2833,
+          "astId": 2836,
           "type": "t_mapping<t_uint256>",
           "src": "5277:48:14"
         },
@@ -302,7 +302,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "draws",
-          "astId": 2837,
+          "astId": 2840,
           "type": "t_mapping<t_struct<Pool.Draw>>",
           "src": "5388:30:14"
         },
@@ -310,7 +310,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "drawState",
-          "astId": 2839,
+          "astId": 2842,
           "type": "t_struct<DrawManager.State>",
           "src": "5503:27:14"
         },
@@ -318,7 +318,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "admins",
-          "astId": 2841,
+          "astId": 2844,
           "type": "t_struct<Roles.Role>",
           "src": "5594:17:14"
         },
@@ -326,7 +326,7 @@
           "contract": "Pool",
           "path": "contracts/Pool.sol",
           "label": "paused",
-          "astId": 2843,
+          "astId": 2846,
           "type": "t_bool",
           "src": "5664:18:14"
         }
@@ -340,7 +340,7 @@
       }
     },
     "Migrations": {
-      "address": "0x2Ce584B7600d2660bF14fD8D7A47579F8E095993",
+      "address": "0x225fe1575195A3278201f379276d71Ed7C031157",
       "constructorCode": "60806040523480156100115760006000fd5b50610017565b6107cc806100266000396000f3fe",
       "bodyBytecodeHash": "68751f96602c90220b80563eca69509a76f803364232eba26d2dd24df9da8ca2",
       "localBytecodeHash": "f6b9aa4cdc9850273616691688a16f3c0f8faf563aec8ccfc0549bd58c6d6e3e",
@@ -414,7 +414,7 @@
           "contract": "Migrations",
           "path": "contracts/Migrations.sol",
           "label": "last_completed_migration",
-          "astId": 2684,
+          "astId": 2687,
           "type": "t_uint256",
           "src": "163:36:13"
         }
@@ -430,14 +430,14 @@
   },
   "solidityLibs": {
     "DrawManager": {
-      "address": "0xDc69B5D907BA7b70424c7E25bDC20DBdac380f87",
-      "constructorCode": "611af6610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
-      "bodyBytecodeHash": "e5c6858841f7c76d8a696abbd531e1a39cceec4522480d6bcd107be66911e698",
-      "localBytecodeHash": "0182c5fad70b6ff532cca2e7a029d6e12ccbdb3ce6789316abef02c7289dfc3a",
-      "deployedBytecodeHash": "0182c5fad70b6ff532cca2e7a029d6e12ccbdb3ce6789316abef02c7289dfc3a"
+      "address": "0x519c492fe7eAD94C43a7db30928f4F1baab43336",
+      "constructorCode": "611b30610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
+      "bodyBytecodeHash": "baaf95c62a14fef839defc3e87e97d5db76622a51f090558137fa83f10c08bd3",
+      "localBytecodeHash": "6a39ec420cf53bae89babfd4867ddd8b5a572262b483ce87e11a53d195a8b63b",
+      "deployedBytecodeHash": "6a39ec420cf53bae89babfd4867ddd8b5a572262b483ce87e11a53d195a8b63b"
     },
     "FixidityLib": {
-      "address": "0xf0CDDB11B445fC8af3929779CA45B8b7C8760720",
+      "address": "0x5425D9B900edf51208a45BbE7D526f42D5D99157",
       "constructorCode": "61107f610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
       "bodyBytecodeHash": "bd8ad311c61d6b5554165a366e55cbe6f9bca56de8d0fba46411865cea34c618",
       "localBytecodeHash": "77828912cd97bb885fd3f93ca8d7522573a6e27bd431ebc9936c21ddb90847a9",
@@ -447,19 +447,19 @@
   "proxies": {
     "pooltogether/Migrations": [
       {
-        "address": "0x846DC5Ede94611C8657cB620293aEf83C2eD5418",
+        "address": "0x59f5ADb69859275777f1Ad21db22329e14C2C783",
         "version": "0.2",
-        "implementation": "0x2Ce584B7600d2660bF14fD8D7A47579F8E095993",
-        "admin": "0x4Ac77C9b978f97c919830824812ac4CF956F36F1",
+        "implementation": "0x225fe1575195A3278201f379276d71Ed7C031157",
+        "admin": "0x8A7E278BF014B2D92B8e3092fE79AEC824294AC6",
         "kind": "Upgradeable"
       }
     ],
     "pooltogether/Pool": [
       {
-        "address": "0x45f5A7Bff72c80A602403154DDfCbabA5e8d8955",
+        "address": "0xB4c3DC5e4d890278Fda0a8a1d000EBA66dCc4eB5",
         "version": "0.2",
-        "implementation": "0x4869bdB92252E97A4bbC3E7a952adBc7081910e2",
-        "admin": "0x4Ac77C9b978f97c919830824812ac4CF956F36F1",
+        "implementation": "0x9A6D6ac8A27F148BE5672DDf2F0B01d66af00866",
+        "admin": "0x8A7E278BF014B2D92B8e3092fE79AEC824294AC6",
         "kind": "Upgradeable"
       }
     ]
@@ -467,6 +467,6 @@
   "manifestVersion": "2.2",
   "version": "0.2",
   "proxyAdmin": {
-    "address": "0x4Ac77C9b978f97c919830824812ac4CF956F36F1"
+    "address": "0x8A7E278BF014B2D92B8e3092fE79AEC824294AC6"
   }
 }
