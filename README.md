@@ -1,3 +1,7 @@
+## DEPRECATED
+
+❗️❗️❗️❗️ The version 1.0 contracts are no longer used or maintained. ❗️❗️❗️❗️
+
 # PoolTogether Contracts
 
 The PoolTogether contracts allow users to deposit into a pool of tokens.  The pool is then supplied to the [Compound CErc20](https://compound.finance/developers).  After the bonding period is over, the supply plus interest is withdrawn.  The winner of a pool receives the interest earned.
