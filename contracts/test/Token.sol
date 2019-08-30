@@ -16,12 +16,16 @@ You should have received a copy of the GNU General Public License
 along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pragma solidity ^0.5.10;
+pragma solidity 0.5.10;
 
-import "../UniformRandomNumber.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Mintable.sol";
 
-contract ExposedUniformRandomNumber {
-  function uniform(uint256 _entropy, uint256 _upperBound) public pure returns (uint256) {
-    return UniformRandomNumber.uniform(_entropy, _upperBound);
-  }
+/**
+ * @author Brendan Asselstine
+ * @notice An ERC20 Token contract to be used for testing the Pool contract
+ */
+contract Token is ERC20Mintable {
+  string public constant name = "Token";
+  string public constant symbol = "TOK";
+  uint8 public constant decimals = 18;
 }
