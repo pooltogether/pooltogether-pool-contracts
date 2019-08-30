@@ -2,7 +2,7 @@
 
 The PoolTogether contracts allow users to deposit into a pool of tokens.  The pool is then supplied to the [Compound CErc20](https://compound.finance/developers).  After the bonding period is over, the supply plus interest is withdrawn.  The winner of a pool receives the interest earned.
 
-The contracts have been audited by Quantstamp.  Their audit is [available here](https://certificate.quantstamp.com/view/pool-together-contracts)
+The contracts are currently under audit by [Quantstamp](https://quantstamp.com/).
 
 # Setup
 
@@ -38,7 +38,7 @@ $ yarn session
 Push out the local contracts:
 
 ```
-$ zos push
+$ yarn push
 ```
 
 Migrate the contracts and bootstrap the data:
@@ -51,7 +51,7 @@ $ yarn migrate
 
 ```
 yarn session-rinkeby
-zos push
+yarn push
 yarn migrate-rinkeby
 ```
 
