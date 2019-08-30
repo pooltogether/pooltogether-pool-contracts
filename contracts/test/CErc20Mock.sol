@@ -1,6 +1,6 @@
 pragma solidity 0.5.10;
 
-import "./ICErc20.sol";
+import "../compound/ICErc20.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 

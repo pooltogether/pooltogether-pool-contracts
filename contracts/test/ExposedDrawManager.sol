@@ -1,6 +1,6 @@
 pragma solidity 0.5.10;
 
-import "./DrawManager.sol";
+import "../DrawManager.sol";
 
 contract ExposedDrawManager {
     using DrawManager for DrawManager.State;

@@ -35,6 +35,8 @@ contract Pool is Initializable, ReentrancyGuard {
   using SafeMath for uint256;
   using Roles for Roles.Role;
 
+  uint256 private constant ETHER_IN_WEI = 1000000000000000000;
+
   /**
    * Emitted when a user deposits into the Pool.
    * @param sender The purchaser of the tickets
@@ -151,7 +153,7 @@ contract Pool is Initializable, ReentrancyGuard {
   uint256 public nextFeeFraction;
 
   /**
-   * The total of all balances and sponsorship balances.
+   * The total of all balances
    */
   uint256 public accountedBalance;
 
@@ -159,11 +161,6 @@ contract Pool is Initializable, ReentrancyGuard {
    * The total deposits and winnings for each user.
    */
   mapping (address => uint256) balances;
-
-  /**
-   * The total sponsorship balance for each user.
-   */
-  mapping (address => uint256) sponsorshipBalances;
 
   /**
    * A mapping of draw ids to Draw structures
@@ -334,12 +331,10 @@ contract Pool is Initializable, ReentrancyGuard {
   /**
    * @notice Allows a user to deposit a sponsorship amount.  The deposit is transferred into the cToken.
    * Sponsorships allow a user to contribute to the pool without becoming eligible to win.  They can withdraw their sponsorship at any time.
-   * There must be an open draw to deposit to.
+   * The deposit will immediately be added to Compound and the interest will contribute to the next draw.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
   function depositSponsorship(uint256 _amount) public nonReentrant unlessPaused {
-    sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].add(_amount);
-
     // Deposit the funds
     _deposit(_amount);
 
@@ -353,9 +348,6 @@ contract Pool is Initializable, ReentrancyGuard {
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
   function depositPool(uint256 _amount) public requireOpenDraw nonReentrant unlessPaused {
-    // Update the user's balance
-    balances[msg.sender] = balances[msg.sender].add(_amount);
-
     // Update the user's eligibility
     drawState.deposit(msg.sender, _amount);
 
@@ -370,10 +362,13 @@ contract Pool is Initializable, ReentrancyGuard {
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
   function _deposit(uint256 _amount) internal {
-    require(_amount > 0, "deposit is greater than zero");
+    require(_amount > 0, "deposit is not greater than zero");
 
     // Transfer the tokens into this contract
     require(token().transferFrom(msg.sender, address(this), _amount), "token transfer failed");
+
+    // Update the user's balance
+    balances[msg.sender] = balances[msg.sender].add(_amount);
 
     // Update the total of this contract
     accountedBalance = accountedBalance.add(_amount);
@@ -384,26 +379,14 @@ contract Pool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * @notice Withdraws from the sender's sponsorship balance.
-   * @param _amount The amount to withdraw from the sender's sponsorship balance.
-   */
-  function withdrawSponsorship(uint256 _amount) public nonReentrant {
-    require(sponsorshipBalances[msg.sender] >= _amount, "amount exceeds sponsorship balance");
-
-    // Update the sponsorship balance
-    sponsorshipBalances[msg.sender] = sponsorshipBalances[msg.sender].sub(_amount);
-
-    _withdraw(_amount);
-  }
-
-  /**
    * @notice Withdraw the sender's entire balance back to them.
    */
-  function withdrawPool() public nonReentrant {
-    require(balances[msg.sender] > 0, "entrant has already withdrawn");
+  function withdraw() public nonReentrant {
+    uint balance = balances[msg.sender];
+
+    require(balance > 0, "balance has already been withdrawn");
 
     // Update the user's balance
-    uint balance = balances[msg.sender];
     balances[msg.sender] = 0;
 
     // Update their chances of winning
@@ -416,7 +399,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * @notice Transfers tokens from the cToken contract to the sender.  Updates the accounted balance.
    */
   function _withdraw(uint256 _amount) internal {
-    require(_amount > 0, "withdrawal is greater than zero");
+    require(_amount > 0, "withdrawal is not greater than zero");
 
     // Update the total of this contract
     accountedBalance = accountedBalance.sub(_amount);
@@ -442,7 +425,7 @@ contract Pool is Initializable, ReentrancyGuard {
    */
   function currentCommittedDrawId() public view returns (uint256) {
     if (drawState.openDrawIndex > 1) {
-      return drawState.openDrawIndex.sub(1);
+      return drawState.openDrawIndex - 1;
     } else {
       return 0;
     }
@@ -498,15 +481,6 @@ contract Pool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * @notice Returns the sponsorship balance for an address
-   * @param _addr The address to check.
-   * @return The address's sponsorship balance.
-   */
-  function balanceOfSponsorship(address _addr) public view returns (uint256) {
-    return sponsorshipBalances[_addr];
-  }
-
-  /**
    * @notice Calculates a winner using the passed entropy for the current committed balances.
    * @param _entropy The entropy to use to select the winner
    * @return The winning address
@@ -553,7 +527,7 @@ contract Pool is Initializable, ReentrancyGuard {
 
   function _setNextFeeFraction(uint256 _feeFraction) internal {
     require(_feeFraction >= 0, "fee must be zero or greater");
-    require(_feeFraction <= 1000000000000000000, "fee fraction must be 1 or less");
+    require(_feeFraction <= ETHER_IN_WEI, "fee fraction must be 1 or less");
     nextFeeFraction = _feeFraction;
 
     emit NextFeeFractionChanged(_feeFraction);
@@ -569,7 +543,7 @@ contract Pool is Initializable, ReentrancyGuard {
   }
 
   function _setNextFeeBeneficiary(address _feeBeneficiary) internal {
-    require(_feeBeneficiary != address(0), "beneficiary cannot be 0x");
+    require(_feeBeneficiary != address(0), "beneficiary should not be 0x0");
     nextFeeBeneficiary = _feeBeneficiary;
 
     emit NextFeeBeneficiaryChanged(_feeBeneficiary);

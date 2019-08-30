@@ -258,7 +258,7 @@ library DrawManager {
         assert(drawIndex != 0);
         uint256 drawSupply = self.drawTotals[drawIndex];
         assert(drawSupply > 0);
-        uint256 drawToken = _token % self.drawTotals[drawIndex];
+        uint256 drawToken = _token % drawSupply;
         return address(uint256(self.sortitionSumTrees.draw(bytes32(drawIndex), drawToken)));
     }
 

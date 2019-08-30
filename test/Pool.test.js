@@ -293,10 +293,14 @@ contract('Pool', (accounts) => {
         await pool.depositSponsorship(toWei('1000'), { from: user2 })
         
         // Sponsor has no pool balance
-        assert.equal((await pool.balanceOf(user2)).toString(), toWei('0'))
+        assert.equal((await pool.openBalanceOf(user2)).toString(), toWei('0'))
+        assert.equal((await pool.committedBalanceOf(user2)).toString(), toWei('0'))
+
+        // Sponsor has balance
+        assert.equal((await pool.balanceOf(user2)).toString(), toWei('1000'))
 
         // Sponsor has a sponsorship balance
-        assert.equal((await pool.balanceOfSponsorship(user2)).toString(), toWei('1000'))
+        assert.equal((await pool.balanceOf(user2)).toString(), toWei('1000'))
 
         await nextDraw()
 
@@ -311,24 +315,26 @@ contract('Pool', (accounts) => {
       })
     })
 
-    describe('withdrawSponsorship()', () => {
-      beforeEach(async () => {
-        await token.approve(pool.address, toWei('1000'), { from: user2 })
-        await pool.depositSponsorship(toWei('1000'), { from: user2 })
+    
+
+    describe('withdraw()', () => {
+      describe('with sponsorship', () => {
+        beforeEach(async () => {
+          await token.approve(pool.address, toWei('1000'), { from: user2 })
+          await pool.depositSponsorship(toWei('1000'), { from: user2 })
+        })
+  
+        it('should allow the sponsor to withdraw partially', async () => {
+          const user2BalanceBefore = await token.balanceOf(user2)
+  
+          await pool.withdraw({ from: user2 })
+  
+          assert.equal((await pool.balanceOf(user2)).toString(), toWei('0'))
+          const user2BalanceAfter = await token.balanceOf(user2)
+          assert.equal(user2BalanceAfter.toString(), user2BalanceBefore.add(new BN(toWei('1000'))).toString())
+        })
       })
 
-      it('should allow the sponsor to withdraw partially', async () => {
-        const user2BalanceBefore = await token.balanceOf(user2)
-
-        await pool.withdrawSponsorship(toWei('500'), { from: user2 })
-
-        assert.equal((await pool.balanceOfSponsorship(user2)).toString(), toWei('500'))
-        const user2BalanceAfter = await token.balanceOf(user2)
-        assert.equal(user2BalanceAfter.toString(), user2BalanceBefore.add(new BN(toWei('500'))).toString())
-      })
-    })
-
-    describe('withdrawPool()', () => {
       it('should work for one participant', async () => {
         await token.approve(pool.address, ticketPrice, { from: user1 })
         await pool.depositPool(ticketPrice, { from: user1 })
@@ -339,7 +345,7 @@ contract('Pool', (accounts) => {
         assert.equal(balance.toString(), toWei('12'))
 
         const balanceBefore = await token.balanceOf(user1)
-        await pool.withdrawPool({ from: user1 })
+        await pool.withdraw({ from: user1 })
         const balanceAfter = await token.balanceOf(user1)
 
         assert.equal(balanceAfter.toString(), (new BN(balanceBefore).add(balance)).toString())
@@ -360,11 +366,11 @@ contract('Pool', (accounts) => {
         await nextDraw()
         
         const user1BalanceBefore = await token.balanceOf(user1)
-        await pool.withdrawPool({ from: user1 })
+        await pool.withdraw({ from: user1 })
         const user1BalanceAfter = await token.balanceOf(user1)
 
         const user2BalanceBefore = await token.balanceOf(user2)        
-        await pool.withdrawPool({ from: user2 })
+        await pool.withdraw({ from: user2 })
         const user2BalanceAfter = await token.balanceOf(user2)
 
         const earnedInterest = priceForTenTickets.mul(new BN(2)).mul(new BN(20)).div(new BN(100))
@@ -390,7 +396,7 @@ contract('Pool', (accounts) => {
         await nextDraw()
 
         // pool is now committed and earning interest
-        await pool.withdrawPool({ from: user2 })
+        await pool.withdraw({ from: user2 })
 
         await nextDraw()
 
@@ -445,7 +451,7 @@ contract('Pool', (accounts) => {
 
       // we expect the pool winner to receive the interest less the fee
       const user1Balance = await token.balanceOf(user1)
-      await pool.withdrawPool({ from: user1 })
+      await pool.withdraw({ from: user1 })
       const newUser1Balance = await token.balanceOf(user1)
       assert.equal(newUser1Balance.toString(), user1Balance.add(user1Tickets).add(interestEarned).sub(fee).toString())
     })
