@@ -1,11 +1,11 @@
 {
   "contracts": {
     "Pool": {
-      "address": "0x80F9F539F42B36FC778ea22c4e7Cb42676e1a8E7",
-      "constructorCode": "60806040523480156100115760006000fd5b50610017565b613b52806100266000396000f3fe",
-      "bodyBytecodeHash": "ea5fefba9e52790a6c74088547c4b468eab634f2d2662f1b7421e0670a383e09",
-      "localBytecodeHash": "ba5479ed4a3202b44e1c5c7b5182c8739767bb5d5ffed810cee6450876165cc5",
-      "deployedBytecodeHash": "5e6a65be7f49b4963b8f4569b1c1386094b21cb571d918121c8ac8c382bedbbf",
+      "address": "0x093985DA8F1d9fBeF331c36861920484bd76ed32",
+      "constructorCode": "60806040523480156100115760006000fd5b50610017565b613c1a806100266000396000f3fe",
+      "bodyBytecodeHash": "c15f2f2d599ee2bfdf4c3176bec5be66f7f0830488a852728328d24198950f44",
+      "localBytecodeHash": "40f7a8a5cb0367c1d40ec9bf82e8dd1eeac20b0c52ca4c0d06100b950a02e1ab",
+      "deployedBytecodeHash": "e0b49667902e2567960ea756cc6b20805b16647ac1b53014447c6c35d7c3f471",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -328,7 +328,34 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [
+          {
+            "contract": "Pool",
+            "path": "contracts/Pool.sol",
+            "label": "draws",
+            "astId": 2652,
+            "type": "t_mapping<t_struct<Pool.Draw>>",
+            "src": "5960:30:12"
+          },
+          {
+            "contract": "Pool",
+            "path": "contracts/Pool.sol",
+            "label": "drawState",
+            "astId": 2654,
+            "type": "t_struct<DrawManager.State>",
+            "src": "6075:27:12"
+          },
+          {
+            "contract": "Pool",
+            "path": "contracts/Pool.sol",
+            "label": "admins",
+            "astId": 2656,
+            "type": "t_struct<Roles.Role>",
+            "src": "6166:17:12"
+          }
+        ],
+        "storageDiff": []
       }
     },
     "Migrations": {
@@ -450,7 +477,7 @@
       {
         "address": "0x6422476AB787C01a3Ea82896621ab6b691e2dc07",
         "version": "0.2",
-        "implementation": "0x80F9F539F42B36FC778ea22c4e7Cb42676e1a8E7",
+        "implementation": "0x093985DA8F1d9fBeF331c36861920484bd76ed32",
         "admin": "0x1e452CF955B92bdB307D3FDd6607545d1dBa9826",
         "kind": "Upgradeable"
       }

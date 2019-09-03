@@ -18,7 +18,7 @@
     "session-rinkeby": "openzeppelin session --from $ADMIN_ADDRESS --network rinkeby --expires 7200 --timeout 3600",
     "session-mainnet": "openzeppelin session --from $ADMIN_ADDRESS --network mainnet --expires 7200 --timeout 3600",
     "push": "openzeppelin push",
-    "update-all": "openzeppelin update --all",
+    "update-all": "openzeppelin update --all --from $ADMIN_ADDRESS",
     "push-and-update": "yarn push && yarn update-all && zos-truffle-merge -n 1234 zos.dev-1234.json",
     "console": "truffle console --network local",
     "console-rinkeby": "truffle console --network rinkeby",
