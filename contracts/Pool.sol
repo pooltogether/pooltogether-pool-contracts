@@ -266,9 +266,9 @@ contract Pool is Initializable, ReentrancyGuard {
    * @param nextSecretHash The secret hash to use to open a new Draw
    * @param lastSecret The secret to reveal to reward the current committed Draw.
    */
-  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret) public onlyAdmin unlessPaused {
+  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret, bytes32 _salt) public onlyAdmin unlessPaused {
     require(currentCommittedDrawId() != 0, "a draw has not been committed");
-    reward(lastSecret);
+    reward(lastSecret, _salt);
     commit();
     open(nextSecretHash);
   }
@@ -283,11 +283,11 @@ contract Pool is Initializable, ReentrancyGuard {
    * Fires the Rewarded event.
    * @param _secret The secret to reveal for the current committed Draw
    */
-  function reward(bytes32 _secret) internal {
+  function reward(bytes32 _secret, bytes32 _salt) internal {
     uint256 drawId = currentCommittedDrawId();
     Draw storage draw = draws[drawId];
 
-    require(draw.secretHash == keccak256(abi.encodePacked(_secret)), "secret does not match");
+    require(draw.secretHash == keccak256(abi.encodePacked(_secret, _salt)), "secret does not match");
 
     // Calculate the gross winnings
     uint256 underlyingBalance = balance();
