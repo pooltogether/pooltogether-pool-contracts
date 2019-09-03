@@ -516,6 +516,14 @@ contract Pool is Initializable, ReentrancyGuard {
   }
 
   /**
+   * @notice Returns the total open balance.  This balance is the number of tickets purchased for the open draw.
+   * @return The total open balance
+   */
+  function openSupply() public view returns (uint256) {
+    return drawState.openSupply();
+  }
+
+  /**
    * @notice Calculates the total estimated interest earned for the given number of blocks
    * @param _blocks The number of block that interest accrued for
    * @return The total estimated interest as a 18 point fixed decimal.
