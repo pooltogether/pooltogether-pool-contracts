@@ -38,12 +38,12 @@ module.exports = {
         process.env.HDWALLET_MNEMONIC,
         process.env.INFURA_PROVIDER_URL_MAINNET,
         0,
-        2
+        3
       ),
       skipDryRun: true,
       network_id: 1,
-      gas: 6999999,
-      gasPrice: 3.001 * 1000000000
+      // gas: 1000000,
+      // gasPrice: 11.101 * 1000000000
     }
   },
 
