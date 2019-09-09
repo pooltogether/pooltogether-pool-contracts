@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@kleros/kleros": "DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c",
-    "@openzeppelin/cli": "2.5.1",
+    "@openzeppelin/cli": "2.5.3",
     "@openzeppelin/contracts-ethereum-package": "2.2.1",
     "@openzeppelin/upgrades": "2.5.1",
     "chalk": "2.4.2",
