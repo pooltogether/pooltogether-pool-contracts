@@ -9,6 +9,7 @@
   "version": "0.2",
   "compiler": {
     "manager": "openzeppelin",
+    "evmVersion": "constantinople",
     "compilerSettings": {
       "optimizer": {}
     },
