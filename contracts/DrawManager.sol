@@ -66,7 +66,7 @@ library DrawManager {
         /**
          * Stores a mapping of Draw index => Draw total
          */
-        mapping(uint256 => uint256) drawTotals;
+        mapping(uint256 => uint256) __old__drawTotals;
 
         /**
          * The current open Draw index
@@ -76,7 +76,7 @@ library DrawManager {
         /**
          * The total of committed balances
          */
-        uint256 committedSupply;
+        uint256 __old__committedSupply;
     }
 
     /**
@@ -91,9 +91,8 @@ library DrawManager {
         } else {
             // else add current draw to sortition sum trees
             bytes32 drawId = bytes32(self.openDrawIndex);
-            uint256 drawTotal = self.drawTotals[self.openDrawIndex];
+            uint256 drawTotal = openSupply(self);
             self.sortitionSumTrees.set(TREE_OF_DRAWS, drawTotal, drawId);
-            self.committedSupply = self.committedSupply.add(drawTotal);
         }
         // now create a new draw
         uint256 drawIndex = self.openDrawIndex.add(1);
@@ -210,7 +209,16 @@ library DrawManager {
      * @return The open draw total balance
      */
     function openSupply(State storage self) public view returns (uint256) {
-        return self.drawTotals[self.openDrawIndex];
+        return self.sortitionSumTrees.total(bytes32(self.openDrawIndex));
+    }
+
+    /**
+     * @notice Returns the committed balance for the DrawManager
+     * @param self The DrawManager state
+     * @return The total committed balance
+     */
+    function committedSupply(State storage self) public view returns (uint256) {
+        return self.sortitionSumTrees.total(TREE_OF_DRAWS);
     }
 
     /**
@@ -231,32 +239,14 @@ library DrawManager {
             // Update the Draw's balance for that address
             self.sortitionSumTrees.set(drawId, _amount, userId);
 
-            uint256 drawTotal = self.drawTotals[_drawIndex];
-            if (oldAmount > _amount) {
-                // If the amount is less than the old amount
+            // Get the new draw total
+            uint256 newDrawTotal = self.sortitionSumTrees.total(drawId);
 
-                // Subtract the difference from the Draw total
-                uint256 diffAmount = oldAmount.sub(_amount);
-                drawTotal = drawTotal.sub(diffAmount);
-                if (_drawIndex != self.openDrawIndex) {
-                    // If the Draw is committed, update the root tree and committed supply
-                    self.sortitionSumTrees.set(TREE_OF_DRAWS, drawTotal, drawId);
-                    self.committedSupply = self.committedSupply.sub(diffAmount);
-                }
-            } else { // oldAmount < _amount
-                // if the amount is greater than the old amount
-
-                // Add the difference to the Draw total
-                uint256 diffAmount = _amount.sub(oldAmount);
-                drawTotal = drawTotal.add(diffAmount);
-                if (_drawIndex != self.openDrawIndex) {
-                    // If the Draw is committed, update the root tree and committed supply
-                    self.sortitionSumTrees.set(TREE_OF_DRAWS, drawTotal, drawId);
-                    self.committedSupply = self.committedSupply.add(diffAmount);
-                }
+            // if the draw is committed
+            if (_drawIndex != self.openDrawIndex) {
+                // update the draw in the committed tree
+                self.sortitionSumTrees.set(TREE_OF_DRAWS, newDrawTotal, drawId);
             }
-            // Update the Draw total with the new total
-            self.drawTotals[_drawIndex] = drawTotal;
         }
     }
 
@@ -268,13 +258,15 @@ library DrawManager {
      */
     function draw(State storage self, uint256 _token) public view returns (address) {
         // If there is no one to select, just return the zero address
-        if (self.committedSupply == 0) {
+        if (committedSupply(self) == 0) {
             return address(0);
         }
-        require(_token < self.committedSupply, "token is beyond the eligible supply");
+        require(_token < committedSupply(self), "token is beyond the eligible supply");
         uint256 drawIndex = uint256(self.sortitionSumTrees.draw(TREE_OF_DRAWS, _token));
         assert(drawIndex != 0);
-        uint256 drawSupply = self.drawTotals[drawIndex];
+
+        uint256 drawSupply = self.sortitionSumTrees.total(bytes32(drawIndex));
+
         assert(drawSupply > 0);
         uint256 drawToken = _token % drawSupply;
         return address(uint256(self.sortitionSumTrees.draw(bytes32(drawIndex), drawToken)));
@@ -288,7 +280,7 @@ library DrawManager {
      * @return The selected address
      */
     function drawWithEntropy(State storage self, bytes32 _entropy) public view returns (address) {
-        return draw(self, UniformRandomNumber.uniform(uint256(_entropy), self.committedSupply));
+        return draw(self, UniformRandomNumber.uniform(uint256(_entropy), committedSupply(self)));
     }
 
     modifier requireOpenDraw(State storage self) {

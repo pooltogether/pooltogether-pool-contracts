@@ -352,7 +352,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * The deposit will immediately be added to Compound and the interest will contribute to the next draw.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
-  function depositSponsorship(uint256 _amount) public nonReentrant unlessPaused {
+  function depositSponsorship(uint256 _amount) public unlessPaused {
     // Deposit the funds
     _deposit(_amount);
 
@@ -365,7 +365,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * proportional to the total committed balance of all users.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
-  function depositPool(uint256 _amount) public requireOpenDraw nonReentrant unlessPaused {
+  function depositPool(uint256 _amount) public requireOpenDraw unlessPaused {
     // Update the user's eligibility
     drawState.deposit(msg.sender, _amount);
 
@@ -399,7 +399,7 @@ contract Pool is Initializable, ReentrancyGuard {
   /**
    * @notice Withdraw the sender's entire balance back to them.
    */
-  function withdraw() public nonReentrant {
+  function withdraw() public {
     uint balance = balances[msg.sender];
 
     require(balance > 0, "balance has already been withdrawn");
@@ -512,7 +512,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * @return The total committed balance.
    */
   function committedSupply() public view returns (uint256) {
-    return drawState.committedSupply;
+    return drawState.committedSupply();
   }
 
   /**

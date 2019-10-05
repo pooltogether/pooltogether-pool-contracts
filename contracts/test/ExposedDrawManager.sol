@@ -50,7 +50,7 @@ contract ExposedDrawManager {
     }
 
     function committedSupply() public view returns (uint256) {
-      return state.committedSupply;
+      return state.committedSupply();
     }
 
     function openSupply() public view returns (uint256) {

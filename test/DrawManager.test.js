@@ -2,6 +2,7 @@ const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
 const DrawManager = artifacts.require('DrawManager.sol')
 const ExposedDrawManager = artifacts.require('ExposedDrawManager.sol')
 const toWei = require('./helpers/toWei')
+const fromWei = require('./helpers/fromWei')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -74,6 +75,34 @@ contract('DrawManager', (accounts) => {
                 assert.equal(await drawManager.firstDrawIndex(user1), '1')
                 assert.equal(await drawManager.openBalanceOf(user1), toWei('20'))
                 assert.equal(await drawManager.committedBalanceOf(user1), toWei('0'))
+
+                // await drawManager.deposit(user2, toWei('10'))
+                // await drawManager.deposit(user2, toWei('10'))
+
+                // await drawManager.openNextDraw()
+
+                // await drawManager.deposit(user1, toWei('10'))
+                // await drawManager.deposit(user1, toWei('10'))
+
+                // await drawManager.deposit(user2, toWei('10'))
+                // await drawManager.deposit(user2, toWei('10'))
+
+                // await drawManager.openNextDraw()
+
+                // await drawManager.deposit(user1, toWei('10'))
+                // await drawManager.deposit(user1, toWei('10'))
+
+                // await drawManager.deposit(user2, toWei('10'))
+                // await drawManager.deposit(user2, toWei('10'))
+
+                // await drawManager.openNextDraw()
+
+                // await drawManager.deposit(user1, toWei('10'))
+                // await drawManager.deposit(user1, toWei('10'))
+
+                // await drawManager.deposit(user2, toWei('10'))
+                // await drawManager.deposit(user2, toWei('10'))
+
             })
 
             describe('when the user has already deposited', () => {
@@ -242,8 +271,11 @@ contract('DrawManager', (accounts) => {
             beforeEach(async () => {
                 await drawManager.openNextDraw()
                 await drawManager.deposit(user1, toWei('10'))
+                assert.equal(fromWei(await drawManager.openSupply()), '10')
                 await drawManager.deposit(user2, toWei('10'))
+                assert.equal(fromWei(await drawManager.openSupply()), '20')
                 await drawManager.deposit(user3, toWei('10'))
+                assert.equal(fromWei(await drawManager.openSupply()), '30')
             })
 
             it('should return 0', async () => {
@@ -252,7 +284,10 @@ contract('DrawManager', (accounts) => {
 
             describe('and they become eligible', async () => {
                 beforeEach(async () => {
+                    assert.equal(fromWei(await drawManager.openSupply()), '30')
                     await drawManager.openNextDraw()
+                    assert.equal(fromWei(await drawManager.openSupply()), '0')
+                    assert.equal(fromWei(await drawManager.committedSupply()), '30')
                 })
 
                 it('should work', async () => {
@@ -270,8 +305,17 @@ contract('DrawManager', (accounts) => {
 
                 describe('and one withdraws', async () => { 
                     beforeEach(async () => {
+                        // console.log('first draw index: ', await drawManager.firstDrawIndex(user2))
+                        // console.log('second draw index: ', await drawManager.secondDrawIndex(user2))
+                        // console.log('committed balance: ', await drawManager.committedBalanceOf(user2))
                         await drawManager.withdraw(user2)
-                        assert.equal(await drawManager.committedSupply(), toWei('20'))
+                        // console.log('total committed nodes: ', (await drawManager.totalCommittedNodes()).toString())
+                        // console.log('node @ 0: ', fromWei(await drawManager.committedNodeAt(0)))
+                        // console.log('node @ 1: ', fromWei(await drawManager.committedNodeAt(1)))
+                        // console.log('node id @ 0: ', await drawManager.committedNodeIdAt(0))
+                        // console.log('node id @ 1: ', await drawManager.committedNodeIdAt(1))
+                        // console.log('node id @ 2: ', await drawManager.committedNodeIdAt(2))
+                        assert.equal(fromWei(await drawManager.committedSupply()), '20')
                     })
 
                     it('should fail with the previous total', async () => {

@@ -28,7 +28,7 @@
     "solc": "cat solc_input.json | solcjs --standard-json"
   },
   "dependencies": {
-    "@kleros/kleros": "DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c",
+    "@kleros/kleros": "DeltaCamp/kleros#c594df4fb8f1917e81292518dd46c6dda3be02ea",
     "@openzeppelin/cli": "2.5.3",
     "@openzeppelin/contracts-ethereum-package": "2.2.1",
     "@openzeppelin/upgrades": "2.5.1",

@@ -18,9 +18,9 @@
     minimetoken "^0.2.0"
     openzeppelin-solidity "^1.12.0"
 
-"@kleros/kleros@DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c":
+"@kleros/kleros@DeltaCamp/kleros#c594df4fb8f1917e81292518dd46c6dda3be02ea":
   version "0.0.7"
-  resolved "https://codeload.github.com/DeltaCamp/kleros/tar.gz/d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c"
+  resolved "https://codeload.github.com/DeltaCamp/kleros/tar.gz/c594df4fb8f1917e81292518dd46c6dda3be02ea"
   dependencies:
     "@kleros/kleros-interaction" "^0.9.0"
     minimetoken "^0.2.0"
