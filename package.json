@@ -23,7 +23,9 @@
     "console": "truffle console --network local",
     "console-rinkeby": "truffle console --network rinkeby",
     "console-mainnet": "truffle console --network mainnet",
-    "version": "truffle version"
+    "version": "truffle version",
+    "docs": "solidity-docgen -i contracts -d node_modules/@openzeppelin/contracts-ethereum-package/contracts/access/roles/MinterRole.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Mintable.sol,node_modules/@openzeppelin/upgrades/contracts/Initializable.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol,node_modules/@kleros/kleros/contracts/data-structures/SortitionSumTreeFactory.sol,node_modules/fixidity/contracts/FixidityLib.sol -o docs --solc-module=./node_modules/solc --solc-settings='{\"remappings\": [\"contracts/DrawManager.sol:@kleros=node_modules/@kleros\",\":@openzeppelin=node_modules/@openzeppelin\",\":fixidity=node_modules/fixidity\"]}'",
+    "solc": "cat solc_input.json | solcjs --standard-json"
   },
   "dependencies": {
     "@kleros/kleros": "DeltaCamp/kleros#d4cd76b5ff2cfeeffc4957a571630b8ca5eee62c",
@@ -41,6 +43,8 @@
     "zos-truffle-merge": "0.0.3"
   },
   "devDependencies": {
+    "solc": "0.5.10",
+    "solidity-docgen": "^0.3.4",
     "solidity-coverage": "0.6.4"
   }
 }
