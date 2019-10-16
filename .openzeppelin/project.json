@@ -12,7 +12,7 @@
     "evmVersion": "constantinople",
     "compilerSettings": {
       "optimizer": {
-        "enabled": "true",
+        "enabled": true,
         "runs": "200"
       }
     },
