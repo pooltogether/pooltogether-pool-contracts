@@ -1,7 +1,6 @@
 pragma solidity ^0.5.10;
 
 import "./Pool.sol";
-import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777.sol";
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Sender.sol";

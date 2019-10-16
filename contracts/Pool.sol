@@ -18,7 +18,7 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.5.10;
 
-import { IERC20 as StdERC20 } from "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
@@ -625,8 +625,8 @@ contract Pool is Initializable, ReentrancyGuard {
    * @notice Returns the token underlying the cToken.
    * @return An ERC20 token address
    */
-  function token() internal view returns (StdERC20) {
-    return StdERC20(cToken.underlying());
+  function token() internal view returns (IERC20) {
+    return IERC20(cToken.underlying());
   }
 
   /**
