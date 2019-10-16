@@ -20,7 +20,7 @@ pragma solidity 0.5.10;
 
 import "./UniformRandomNumber.sol";
 import "@kleros/kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/contracts/math/SafeMath.sol";
 
 /**
  * @author Brendan Asselstine
@@ -141,6 +141,21 @@ library DrawManager {
         }
     }
 
+    function depositCommitted(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) {
+        bytes32 userId = bytes32(uint256(_addr));
+        uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
+
+        // if they have a committed balance
+        if (firstDrawIndex != 0 && firstDrawIndex != self.openDrawIndex) {
+            uint256 firstAmount = self.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
+            drawSet(self, firstDrawIndex, firstAmount.add(_amount), _addr);
+        } else { // they must not have any committed balance
+            self.usersSecondDrawIndex[_addr] = firstDrawIndex;
+            self.usersFirstDrawIndex[_addr] = self.openDrawIndex.sub(1);
+            drawSet(self, self.usersFirstDrawIndex[_addr], _amount, _addr);
+        }
+    }
+
     /**
      * @notice Withdraws a user's committed and open draws.
      * @param self The DrawManager state
@@ -152,10 +167,51 @@ library DrawManager {
 
         if (firstDrawIndex != 0) {
             drawSet(self, firstDrawIndex, 0, _addr);
+            delete self.usersFirstDrawIndex[_addr];
         }
 
         if (secondDrawIndex != 0) {
             drawSet(self, secondDrawIndex, 0, _addr);
+            delete self.usersSecondDrawIndex[_addr];
+        }
+    }
+
+    function withdrawCommitted(State storage state, address user, uint256 amount) public requireOpenDraw(state) {
+        bytes32 userId = bytes32(uint256(user));
+        uint256 firstDrawIndex = state.usersFirstDrawIndex[user];
+        uint256 secondDrawIndex = state.usersSecondDrawIndex[user];
+
+        uint256 firstAmount;
+        uint256 secondAmount;
+        uint256 total;
+
+        if (secondDrawIndex != 0 && secondDrawIndex != state.openDrawIndex) {
+            secondAmount = state.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
+            total = total.add(secondAmount);
+        }
+
+        if (firstDrawIndex != 0 && firstDrawIndex != state.openDrawIndex) {
+            firstAmount = state.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
+            total = total.add(firstAmount);
+        }
+
+        require(amount <= total, "cannot withdraw more than available");
+
+        uint256 remaining = total.sub(amount);
+
+        // if there was a second amount that needs to be updated
+        if (remaining > firstAmount) {
+            uint256 secondRemaining = remaining.sub(firstAmount);
+            drawSet(state, secondDrawIndex, secondRemaining, user);
+        } else if (secondAmount > 0) { // else delete the second amount if it exists
+            delete state.usersSecondDrawIndex[user];
+        }
+
+        // if the first amount needs to be destroye
+        if (remaining == 0) {
+            delete state.usersFirstDrawIndex[user];
+        } else if (remaining < firstAmount) {
+            drawSet(state, firstDrawIndex, remaining, user);
         }
     }
 

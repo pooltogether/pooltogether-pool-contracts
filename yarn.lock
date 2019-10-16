@@ -102,6 +102,10 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-ethereum-package/-/contracts-ethereum-package-2.2.1.tgz#be517ba31fd83cb472290dac904b822240f4ed9e"
   integrity sha512-KLisw0g0KftlEa9AvzQYNvz7LlxRmCoFZi5VedJPuYgtC1nflm6gH5TJDpxv4DzKrGN/+rB3usbamWL8A/ZrOA==
 
+"@openzeppelin/contracts@OpenZeppelin/openzeppelin-contracts#45befe6e9505c457c096c04776dae40a83cff2de":
+  version "2.3.0"
+  resolved "https://codeload.github.com/OpenZeppelin/openzeppelin-contracts/tar.gz/45befe6e9505c457c096c04776dae40a83cff2de"
+
 "@openzeppelin/resolver-engine-core@^0.3.3":
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/@openzeppelin/resolver-engine-core/-/resolver-engine-core-0.3.3.tgz#d03f08fbe86ea6a002276c7ab2b6a643b99dd5a7"

@@ -18,8 +18,8 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.5.10;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import { IERC20 as StdERC20 } from "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
 import "./compound/ICErc20.sol";
@@ -352,7 +352,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * The deposit will immediately be added to Compound and the interest will contribute to the next draw.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
-  function depositSponsorship(uint256 _amount) public unlessPaused {
+  function depositSponsorship(uint256 _amount) public unlessPaused nonReentrant {
     // Deposit the funds
     _deposit(_amount);
 
@@ -365,7 +365,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * proportional to the total committed balance of all users.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
-  function depositPool(uint256 _amount) public requireOpenDraw unlessPaused {
+  function depositPool(uint256 _amount) public requireOpenDraw unlessPaused nonReentrant {
     // Update the user's eligibility
     drawState.deposit(msg.sender, _amount);
 
@@ -399,7 +399,7 @@ contract Pool is Initializable, ReentrancyGuard {
   /**
    * @notice Withdraw the sender's entire balance back to them.
    */
-  function withdraw() public {
+  function withdraw() public nonReentrant {
     uint balance = balances[msg.sender];
 
     require(balance > 0, "balance has already been withdrawn");
@@ -476,7 +476,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * @param _addr The address of the user
    * @return The total committed balance for the user
    */
-  function committedBalanceOf(address _addr) public view returns (uint256) {
+  function committedBalanceOf(address _addr) external view returns (uint256) {
     return drawState.committedBalanceOf(_addr);
   }
 
@@ -485,7 +485,7 @@ contract Pool is Initializable, ReentrancyGuard {
    * @param _addr The address of the user
    * @return The total open balance for the user
    */
-  function openBalanceOf(address _addr) public view returns (uint256) {
+  function openBalanceOf(address _addr) external view returns (uint256) {
     return drawState.openBalanceOf(_addr);
   }
 
@@ -494,8 +494,17 @@ contract Pool is Initializable, ReentrancyGuard {
    * @param _addr The address of the user to check.
    * @return The users's current balance.
    */
-  function balanceOf(address _addr) public view returns (uint256) {
+  function totalBalanceOf(address _addr) external view returns (uint256) {
     return balances[_addr];
+  }
+
+  /**
+   * @notice Returns a user's total balance, including both committed Draw balance and open Draw balance.
+   * @param _addr The address of the user to check.
+   * @return The users's current balance.
+   */
+  function balanceOf(address _addr) external view returns (uint256) {
+    return drawState.committedBalanceOf(_addr);
   }
 
   /**
@@ -616,8 +625,8 @@ contract Pool is Initializable, ReentrancyGuard {
    * @notice Returns the token underlying the cToken.
    * @return An ERC20 token address
    */
-  function token() internal view returns (IERC20) {
-    return IERC20(cToken.underlying());
+  function token() internal view returns (StdERC20) {
+    return StdERC20(cToken.underlying());
   }
 
   /**
