@@ -388,6 +388,8 @@ contract TokenizedPool is IERC20, IERC777, Pool {
   )
       private
   {
+      balances[from] = balances[from].sub(amount, "move could not sub amount");
+      balances[to] = balances[to].add(amount);
       drawState.withdrawCommitted(from, amount);
       drawState.depositCommitted(to, amount);
 

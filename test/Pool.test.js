@@ -259,6 +259,12 @@ contract('TokenizedPool', (accounts) => {
 
         assert.equal(await pool.balanceOf(user1), '0')
         assert.equal(await pool.balanceOf(user2), ticketPrice.toString())
+
+        const balanceBefore = await token.balanceOf(user2)
+        await pool.withdraw({ from: user2 })
+        const balanceAfter = await token.balanceOf(user2)
+
+        assert.equal(balanceBefore.add(ticketPrice), balanceAfter.toString())
       })
     })
 
