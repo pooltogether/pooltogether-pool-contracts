@@ -9,12 +9,12 @@
   "version": "0.2",
   "compiler": {
     "manager": "openzeppelin",
-    "evmVersion": "constantinople",
     "compilerSettings": {
       "optimizer": {
         "enabled": true,
         "runs": "200"
-      }
+      },
+      "evmVersion": "constantinople"
     },
     "solcVersion": "0.5.10"
   }
