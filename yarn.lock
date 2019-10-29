@@ -4020,7 +4020,7 @@ onetime@^5.1.0:
 
 openzeppelin-ethers@pooltogether/openzeppelin-ethers#master:
   version "1.0.0"
-  resolved "https://codeload.github.com/pooltogether/openzeppelin-ethers/tar.gz/d0483f5dc90f2cc0bfbb958c4ef5f6d89acdaee2"
+  resolved "https://codeload.github.com/pooltogether/openzeppelin-ethers/tar.gz/77d8c40805453abd6a1a081793a09d5bb77f7064"
   dependencies:
     async-repl "^0.4.0"
     chalk "^2.4.2"

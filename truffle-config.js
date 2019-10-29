@@ -30,7 +30,7 @@ module.exports = {
       skipDryRun: true,
       network_id: 4,
       gas: 6980000,
-      gasPrice: 6.001 * 1000000000
+      gasPrice: 2.001 * 1000000000
     },
 
     mainnet: {
