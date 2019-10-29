@@ -57,10 +57,10 @@ contract TokenizedPool is IERC20, IERC777, Pool {
     * @dev `defaultOperators` may be an empty array.
     */
   function initERC777 (
-      string memory name,
-      string memory symbol,
-      address[] memory defaultOperators
-  ) public onlyAdmin {
+      string calldata name,
+      string calldata symbol,
+      address[] calldata defaultOperators
+  ) external {
       require(bytes(name).length != 0, "name must be defined");
       require(bytes(_name).length == 0, "ERC777 has already been initialized");
 
