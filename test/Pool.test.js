@@ -1,7 +1,7 @@
 const toWei = require('./helpers/toWei')
 const BN = require('bn.js')
 const Token = artifacts.require('Token.sol')
-const TokenizedPool = artifacts.require('TokenizedPool.sol')
+const Pool = artifacts.require('Pool.sol')
 const CErc20Mock = artifacts.require('CErc20Mock.sol')
 const FixidityLib = artifacts.require('FixidityLib.sol')
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
@@ -13,7 +13,7 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 const ERC_1820_SINGLE_USE_ADDRESS = '0xa990077c3205cbDf861e17Fa532eeB069cE9fF96'
 
-contract('TokenizedPool', (accounts) => {
+contract('Pool', (accounts) => {
   let pool, token, moneyMarket, sumTree, drawManager
   
   const [owner, admin, user1, user2] = accounts
@@ -43,7 +43,7 @@ contract('TokenizedPool', (accounts) => {
     sumTree = await SortitionSumTreeFactory.new()
     await DrawManager.link("SortitionSumTreeFactory", sumTree.address)
     drawManager = await DrawManager.new()
-    await TokenizedPool.link('DrawManager', drawManager.address)
+    await Pool.link('DrawManager', drawManager.address)
     fixidity = await FixidityLib.new({ from: admin })
 
     token = await Token.new({ from: admin })
@@ -72,10 +72,10 @@ contract('TokenizedPool', (accounts) => {
   }
 
   async function createPool() {
-    await TokenizedPool.link("DrawManager", drawManager.address)
-    await TokenizedPool.link("FixidityLib", fixidity.address)
+    await Pool.link("DrawManager", drawManager.address)
+    await Pool.link("FixidityLib", fixidity.address)
 
-    pool = await TokenizedPool.new()
+    pool = await Pool.new()
     await pool.init(
       owner,
       moneyMarket.address,

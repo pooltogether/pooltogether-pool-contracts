@@ -1,10 +1,10 @@
 const tdr = require('truffle-deploy-registry')
-const TokenizedPool = artifacts.require('TokenizedPool.sol')
+const Pool = artifacts.require('Pool.sol')
 
 module.exports = function(deployer, networkName, accounts) {
   if (tdr.isDryRunNetworkName(networkName)) { return }
   deployer.then(async () => {
-    const token = await TokenizedPool.deployed()
+    const token = await Pool.deployed()
     
     await token.initERC777('Prize Dai', 'pzDai', [])
   })
