@@ -61,8 +61,8 @@ contract Pool is IERC20, IERC777, BasePool {
       string calldata symbol,
       address[] calldata defaultOperators
   ) external {
-      require(bytes(name).length != 0, "name must be defined");
-      require(bytes(_name).length == 0, "ERC777 has already been initialized");
+      // require(bytes(name).length != 0, "name must be defined");
+      // require(bytes(_name).length == 0, "ERC777 has already been initialized");
 
       _name = name;
       _symbol = symbol;

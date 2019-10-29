@@ -1,11 +1,11 @@
 {
   "contracts": {
     "Pool": {
-      "address": "0xf49d4E4Fe21796C7f84424DbFa3C2e1bA3152e99",
-      "constructorCode": "608060405234801561001057600080fd5b5061433c806100206000396000f3fe",
-      "bodyBytecodeHash": "573fc4bbf444a17362e29c7b729688671ddae2fbfdf2225025084a8ceac87d88",
-      "localBytecodeHash": "933b1fb2baf451991e866af8f367b969326393aa06fd0c7a6a71bad1d3d3fc36",
-      "deployedBytecodeHash": "4b873eb2b2633f83b648400881aefe212f0ffb32fc349ddec2aa08bdc5433fbc",
+      "address": "0x147595AfF9DeA76769A8dCbC0cf60Da2aFd381Ef",
+      "constructorCode": "608060405234801561001057600080fd5b5061427e806100206000396000f3fe",
+      "bodyBytecodeHash": "58ed70bd0f580ed55416558165652e94af7a9a3768b65e8d2c17605dcff050c1",
+      "localBytecodeHash": "86a6e1359a8a3d72b984b95fcaf119968bc314594e8fbe3081e57ea4e03e3daa",
+      "deployedBytecodeHash": "d783003e85d28e622cd0788ee7093af3518c48a2e7b693ba061476c3b72d4a59",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -423,113 +423,7 @@
             "src": "6153:17:15"
           }
         ],
-        "storageDiff": [
-          {
-            "action": "typechange",
-            "updated": {
-              "index": 10,
-              "contract": "BasePool",
-              "path": "contracts/BasePool.sol",
-              "label": "draws",
-              "astId": 2355,
-              "type": "t_mapping<t_struct<BasePool.Draw>>",
-              "src": "5947:30:15"
-            },
-            "original": {
-              "index": 10,
-              "contract": "Pool",
-              "path": "contracts/Pool.sol",
-              "label": "draws",
-              "astId": 2652,
-              "type": "t_mapping<t_struct<Pool.Draw>>",
-              "src": "5960:30:12"
-            }
-          },
-          {
-            "action": "append",
-            "updated": {
-              "index": 14,
-              "contract": "Pool",
-              "path": "contracts/Pool.sol",
-              "label": "_name",
-              "astId": 4346,
-              "type": "t_string",
-              "src": "1773:20:18"
-            }
-          },
-          {
-            "action": "append",
-            "updated": {
-              "index": 15,
-              "contract": "Pool",
-              "path": "contracts/Pool.sol",
-              "label": "_symbol",
-              "astId": 4348,
-              "type": "t_string",
-              "src": "1797:22:18"
-            }
-          },
-          {
-            "action": "append",
-            "updated": {
-              "index": 16,
-              "contract": "Pool",
-              "path": "contracts/Pool.sol",
-              "label": "_defaultOperatorsArray",
-              "astId": 4351,
-              "type": "t_array:dyn<t_address>",
-              "src": "1914:40:18"
-            }
-          },
-          {
-            "action": "append",
-            "updated": {
-              "index": 17,
-              "contract": "Pool",
-              "path": "contracts/Pool.sol",
-              "label": "_defaultOperators",
-              "astId": 4355,
-              "type": "t_mapping<t_bool>",
-              "src": "2044:50:18"
-            }
-          },
-          {
-            "action": "append",
-            "updated": {
-              "index": 18,
-              "contract": "Pool",
-              "path": "contracts/Pool.sol",
-              "label": "_operators",
-              "astId": 4361,
-              "type": "t_mapping<t_bool>",
-              "src": "2180:63:18"
-            }
-          },
-          {
-            "action": "append",
-            "updated": {
-              "index": 19,
-              "contract": "Pool",
-              "path": "contracts/Pool.sol",
-              "label": "_revokedDefaultOperators",
-              "astId": 4367,
-              "type": "t_mapping<t_bool>",
-              "src": "2247:77:18"
-            }
-          },
-          {
-            "action": "append",
-            "updated": {
-              "index": 20,
-              "contract": "Pool",
-              "path": "contracts/Pool.sol",
-              "label": "_allowances",
-              "astId": 4373,
-              "type": "t_mapping<t_uint256>",
-              "src": "2351:69:18"
-            }
-          }
-        ]
+        "storageDiff": []
       }
     },
     "Migrations": {
@@ -653,7 +547,7 @@
       {
         "address": "0x289C23B1f53579eb911c7B46D4aB805b1a2E6A29",
         "version": "0.2",
-        "implementation": "0x228Be6460518d4864dD82BE3aF11b41ad15a12FC",
+        "implementation": "0x147595AfF9DeA76769A8dCbC0cf60Da2aFd381Ef",
         "admin": "0x7356dA1712FF2ed84c6A5D86177e5b6E2222A41C",
         "kind": "Upgradeable"
       }
