@@ -6,7 +6,7 @@ const toWei = require('./helpers/toWei')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-contract('DrawManager', (accounts) => {
+contract('StressTest', (accounts) => {
 
     let drawManager
 
