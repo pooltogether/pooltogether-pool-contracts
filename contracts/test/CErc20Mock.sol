@@ -44,7 +44,7 @@ contract CErc20Mock is Initializable, ICErc20 {
   }
 
   function redeemUnderlying(uint requestedAmount) external returns (uint) {
-    require(ownerTokenAmounts[msg.sender] > 0, "you must have supplied tokens");
+    require(requestedAmount <= ownerTokenAmounts[msg.sender], "insufficient underlying funds");
     ownerTokenAmounts[msg.sender] = ownerTokenAmounts[msg.sender] - requestedAmount;
     require(IERC20(underlying).transfer(msg.sender, requestedAmount), "could not transfer tokens");
   }

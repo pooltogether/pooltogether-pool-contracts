@@ -366,13 +366,14 @@ contract Pool is IERC20, IERC777, BasePool {
       private
   {
       require(from != address(0), "ERC777: burn from the zero address");
+      uint256 committedBalance = drawState.committedBalanceOf(from);
+      require(amount <= committedBalance, "not enough funds");
 
       _callTokensToSend(operator, from, address(0), amount, data, operatorData);
 
       // Update state variables
-      require(false, "not implemented");
-    //   _balances[from] = _balances[from].sub(amount, "ERC777: burn amount exceeds balance");
-    //   _totalSupply = _totalSupply.sub(amount);
+      drawState.withdrawCommitted(from, amount);
+      _withdraw(from, amount);
 
       emit Burned(operator, from, amount, data, operatorData);
       emit Transfer(from, address(0), amount);

@@ -402,31 +402,31 @@ contract BasePool is Initializable, ReentrancyGuard {
   function withdraw() public nonReentrant {
     uint balance = balances[msg.sender];
 
-    require(balance > 0, "balance has already been withdrawn");
-
-    // Update the user's balance
-    balances[msg.sender] = 0;
-
     // Update their chances of winning
     drawState.withdraw(msg.sender);
 
-    _withdraw(balance);
+    _withdraw(msg.sender, balance);
   }
 
   /**
    * @notice Transfers tokens from the cToken contract to the sender.  Updates the accounted balance.
    */
-  function _withdraw(uint256 _amount) internal {
-    require(_amount > 0, "withdrawal is not greater than zero");
+  function _withdraw(address _sender, uint256 _amount) internal {
+    uint balance = balances[_sender];
+
+    require(_amount <= balance, "not enough funds");
+
+    // Update the user's balance
+    balances[_sender] = balance.sub(_amount);
 
     // Update the total of this contract
     accountedBalance = accountedBalance.sub(_amount);
 
     // Withdraw from Compound and transfer
     require(cToken.redeemUnderlying(_amount) == 0, "could not redeem from compound");
-    require(token().transfer(msg.sender, _amount), "could not transfer winnings");
+    require(token().transfer(_sender, _amount), "could not transfer winnings");
 
-    emit Withdrawn(msg.sender, _amount);
+    emit Withdrawn(_sender, _amount);
   }
 
   /**
