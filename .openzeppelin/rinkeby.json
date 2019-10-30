@@ -1,11 +1,11 @@
 {
   "contracts": {
     "Pool": {
-      "address": "0x1a2a9Fcb28695D0f0104AB9685fA6043aa24899e",
-      "constructorCode": "60806040523480156100115760006000fd5b50610017565b613c3b806100266000396000f3fe",
-      "bodyBytecodeHash": "d60fc63654ee5c2fa786ad8baf908cd7d7294e9c6372ed1d966f51591138f1aa",
-      "localBytecodeHash": "713ad86c344dde59c3f6a9ae15455dc52e035f4cba910ceb9bd0769dde805cd6",
-      "deployedBytecodeHash": "c996e6c667b462c3eaeb02ef03da46cff68ac130ead9fc5fdfddbbb4a4c5c4a7",
+      "address": "0x770e0142BeB44F681b927e0fE3022026C2934CD0",
+      "constructorCode": "608060405234801561001057600080fd5b5061427e806100206000396000f3fe",
+      "bodyBytecodeHash": "2fcfeb5d684b2776005e6d7e064cf999a761899ff4bd925852341b723f7e9d89",
+      "localBytecodeHash": "86a6e1359a8a3d72b984b95fcaf119968bc314594e8fbe3081e57ea4e03e3daa",
+      "deployedBytecodeHash": "1e610405ea7601375859f73097c542e7fa165aa86ca6225bb926aac97d33bb03",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -427,11 +427,11 @@
       }
     },
     "Migrations": {
-      "address": "0xDc92b7b46F47fBdd41Ed9A354A9Ed19A2E347A5C",
-      "constructorCode": "60806040523480156100115760006000fd5b50610017565b6107cc806100266000396000f3fe",
-      "bodyBytecodeHash": "68751f96602c90220b80563eca69509a76f803364232eba26d2dd24df9da8ca2",
-      "localBytecodeHash": "f6b9aa4cdc9850273616691688a16f3c0f8faf563aec8ccfc0549bd58c6d6e3e",
-      "deployedBytecodeHash": "f6b9aa4cdc9850273616691688a16f3c0f8faf563aec8ccfc0549bd58c6d6e3e",
+      "address": "0x9b905F1F18c35d2588a659D8f4995C18685AbFbe",
+      "constructorCode": "608060405234801561001057600080fd5b50610478806100206000396000f3fe",
+      "bodyBytecodeHash": "452fb98fd04bbc9001c053ffabd859b15ed20cdb4a32d2df8d13f5be24cb0fda",
+      "localBytecodeHash": "5b221d8f6a2b1a60a6f306f462f71ed50863b1a3762301fd371f3543a829bf7e",
+      "deployedBytecodeHash": "5b221d8f6a2b1a60a6f306f462f71ed50863b1a3762301fd371f3543a829bf7e",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -519,18 +519,18 @@
   },
   "solidityLibs": {
     "DrawManager": {
-      "address": "0x068F0B282Da5A37B94f69Ba38d5A08c4Ddc4Eb94",
-      "constructorCode": "611b15610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
-      "bodyBytecodeHash": "9f197b012b1a614dc90664b725e01d5296a960138a538cc90341192e8f71eed9",
-      "localBytecodeHash": "d05f3927c135154114d3db37e9c40863882dec4c022dc7424a5bec1e2081df42",
-      "deployedBytecodeHash": "d05f3927c135154114d3db37e9c40863882dec4c022dc7424a5bec1e2081df42"
+      "address": "0x16e7da8A35237e24D21BFE78568f415CdBA1dF56",
+      "constructorCode": "61145f610026600b82828239805160001a60731461001957fe5b30600052607381538281f3fe",
+      "bodyBytecodeHash": "0112a61e2b0a88514d4d974579ecf0fa3f2429a7a00646e96dc4c78550c93b1f",
+      "localBytecodeHash": "eaa24bceae4ddb5329697429c1b558364475e19ad43e015796dba2dc95cbbdd3",
+      "deployedBytecodeHash": "eaa24bceae4ddb5329697429c1b558364475e19ad43e015796dba2dc95cbbdd3"
     },
     "FixidityLib": {
-      "address": "0x071Cb10ca2cF3787C99C08E0F13572809Ec08f1d",
-      "constructorCode": "61107f610029600b82828239805160001a607314151561001b57fe5b30600052607381538281f350fe",
-      "bodyBytecodeHash": "bd8ad311c61d6b5554165a366e55cbe6f9bca56de8d0fba46411865cea34c618",
-      "localBytecodeHash": "77828912cd97bb885fd3f93ca8d7522573a6e27bd431ebc9936c21ddb90847a9",
-      "deployedBytecodeHash": "77828912cd97bb885fd3f93ca8d7522573a6e27bd431ebc9936c21ddb90847a9"
+      "address": "0xB8112C40A0C22901061348664e5b7Fdeffb775AD",
+      "constructorCode": "610960610026600b82828239805160001a60731461001957fe5b30600052607381538281f3fe",
+      "bodyBytecodeHash": "e1674b3405e5bdbf970297016ac3a3f167e5ac8e8f19e11bb767e02321f35d24",
+      "localBytecodeHash": "30603a9262ad0eebffc221b8b7081d5bfdba5f5e5d1c134802ca286b61d65f46",
+      "deployedBytecodeHash": "30603a9262ad0eebffc221b8b7081d5bfdba5f5e5d1c134802ca286b61d65f46"
     }
   },
   "proxies": {
@@ -547,7 +547,7 @@
       {
         "address": "0xf6535134C89D5e32ccE2C88E7847e207164E754F",
         "version": "0.2",
-        "implementation": "0x1a2a9Fcb28695D0f0104AB9685fA6043aa24899e",
+        "implementation": "0x770e0142BeB44F681b927e0fE3022026C2934CD0",
         "admin": "0xf00ceA896293DBb10Ba5A7C8e2038C5803B5Dd7E",
         "kind": "Upgradeable"
       }
