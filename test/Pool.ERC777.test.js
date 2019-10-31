@@ -2,6 +2,7 @@ const PoolContext = require('./helpers/PoolContext')
 const toWei = require('./helpers/toWei')
 const BN = require('bn.js')
 const {
+  ZERO_ADDRESS,
   ERC_20_INTERFACE_HASH,
   ERC_777_INTERFACE_HASH,
   TOKENS_SENDER_INTERFACE_HASH,
@@ -57,6 +58,18 @@ contract('Pool.ERC777', (accounts) => {
 
         await pool.authorizeOperator(owner, { from: user2 })
         assert.ok(await pool.isOperatorFor(owner, user2), "is not an operator for")
+      })
+    })
+      
+    describe('operatorBurn()', () => {
+      it('should not allow someone to burn the zero address tokens', async () => {
+        let failed = false
+        try {
+          await pool.operatorBurn(ZERO_ADDRESS, toWei('10'), [], [])
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to burn tokens")
       })
     })
   })
@@ -177,6 +190,7 @@ contract('Pool.ERC777', (accounts) => {
         try {
           await pool.transfer(ZERO_ADDRESS, toWei('10'))
         } catch (e) {
+          console.log(e)
           failed = true
         }
         assert.ok(failed, "successfully failed")

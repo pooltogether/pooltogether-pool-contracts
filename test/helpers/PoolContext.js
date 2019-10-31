@@ -46,6 +46,8 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     await token.mint(user2, web3.utils.toWei('100000', 'ether'))
 
     return {
+      drawManager,
+      fixidity,
       token,
       moneyMarket,
       registry

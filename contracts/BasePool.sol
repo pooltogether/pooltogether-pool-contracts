@@ -380,8 +380,6 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
   function _deposit(uint256 _amount) internal {
-    require(_amount > 0, "deposit is not greater than zero");
-
     // Transfer the tokens into this contract
     require(token().transferFrom(msg.sender, address(this), _amount), "token transfer failed");
 
@@ -561,7 +559,6 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   function _setNextFeeFraction(uint256 _feeFraction) internal {
-    require(_feeFraction >= 0, "fee must be zero or greater");
     require(_feeFraction <= ETHER_IN_WEI, "fee fraction must be 1 or less");
     nextFeeFraction = _feeFraction;
 

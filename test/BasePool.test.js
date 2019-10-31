@@ -2,7 +2,10 @@ const toWei = require('./helpers/toWei')
 const PoolContext = require('./helpers/PoolContext')
 const setupERC1820 = require('./helpers/setupERC1820')
 const BN = require('bn.js')
+const Pool = artifacts.require('Pool.sol')
 const {
+  SECRET,
+  SALT,
   SECRET_HASH,
   ZERO_ADDRESS,
   TICKET_PRICE
@@ -27,6 +30,42 @@ contract('BasePool', (accounts) => {
     result = await poolContext.init()
     token = result.token
     moneyMarket = result.moneyMarket
+    await Pool.link("DrawManager", result.drawManager.address)
+    await Pool.link("FixidityLib", result.fixidity.address)
+  })
+
+  describe('init()', () => {
+    it('should fail if owner is zero', async () => {
+      pool = await Pool.new()
+      let failed = false
+      try {
+        await pool.init(
+          ZERO_ADDRESS,
+          moneyMarket.address,
+          new BN('0'),
+          owner
+        )
+      } catch (e) {
+        failed = true
+      }
+      assert.ok(failed, "was able to init with zero owner")
+    })
+
+    it('should fail if moneymarket is zero', async () => {
+      pool = await Pool.new()
+      let failed = false
+      try {
+        await pool.init(
+          owner,
+          ZERO_ADDRESS,
+          new BN('0'),
+          owner
+        )
+      } catch (e) {
+        failed = true
+      }
+      assert.ok(failed, "was able to init with zero ctoken")
+    })
   })
 
   describe('addAdmin()', () =>{
@@ -64,6 +103,15 @@ contract('BasePool', (accounts) => {
       let fail = true
       try {
         await pool.removeAdmin(user1, { from: admin })
+        fail = false
+      } catch (e) {}
+      assert.ok(fail)
+    })
+
+    it('should not an admin to remove an non-admin', async () => {
+      let fail = true
+      try {
+        await pool.removeAdmin(user2)
         fail = false
       } catch (e) {}
       assert.ok(fail)
@@ -134,6 +182,72 @@ contract('BasePool', (accounts) => {
       assert.equal(draw.feeBeneficiary, owner)
       assert.ok(draw.openedBlock !== '0')
       assert.equal(draw.secretHash, SECRET_HASH)
+    })
+  })
+
+  describe('openNextDraw()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPool(feeFraction)
+    })
+
+    it('should revert when if there is a committed draw already', async () => {
+      await pool.openNextDraw(SECRET_HASH)
+
+      let failed = false
+      try {
+        await pool.openNextDraw(SECRET_HASH)
+      } catch (e) {
+        failed = true
+      }
+      assert.ok(failed, "can open next draw with a committed draw")
+    })
+  })
+
+  describe('rewardAndOpenNextDraw()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPool(feeFraction)
+    })
+
+    it('should revert if there is no committed draw', async () => {
+      let failed = false
+      try {
+        await pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT)
+      } catch (e) {
+        failed = true
+      }
+      assert.ok(failed, "can reward and open next draw without a committed draw")
+    })
+
+    it('should fail if the secret does not match', async () => {
+      await pool.openNextDraw(SECRET_HASH)
+
+      let failed = false
+      try {
+        await pool.rewardAndOpenNextDraw(SECRET_HASH, SALT, SECRET)
+      } catch (e) {
+        failed = true
+      }
+
+      assert.ok(failed, "was able to reward with wrong secret")
+    })
+  })
+
+  describe('depositPool()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPoolNoInit()
+    })
+
+    it('should fail if there is no open draw', async () => {
+      await token.approve(pool.address, TICKET_PRICE, { from: user1 })
+
+      let failed
+      try {
+        await pool.depositPool(TICKET_PRICE, { from: user1 })
+        failed = false
+      } catch (error) {
+        failed = true
+      }
+      assert.ok(failed, "was able to deposit when no open draw")
     })
   })
 
@@ -210,9 +324,7 @@ contract('BasePool', (accounts) => {
       it('should contribute to the winnings', async () => {
         await poolContext.nextDraw()
 
-        // console.log('checkpoint 1')
         await token.approve(pool.address, toWei('1000'), { from: user2 })
-        // console.log('checkpoint 2')
         await pool.depositSponsorship(toWei('1000'), { from: user2 })
         
         // Sponsor has no pool balance
@@ -439,6 +551,18 @@ contract('BasePool', (accounts) => {
       } catch (e) {}
       assert.ok(failed)
     })
+
+    it('should require the fee fraction to be less than or equal to 1', async () => {
+      // 1 is okay
+      await pool.setNextFeeFraction(toWei('1'))
+      let failed = false
+      try {
+        await pool.setNextFeeFraction(toWei('1.1'))
+      } catch (e) {
+        failed = true
+      }
+      assert.ok(failed)
+    })
   })
 
   describe('setNextFeeBeneficiary()', () => {
@@ -455,6 +579,15 @@ contract('BasePool', (accounts) => {
       let failed = true
       try {
         await pool.setNextFeeBeneficiary(user1, { from: user1 })
+        failed = false
+      } catch (e) {}
+      assert.ok(failed)
+    })
+
+    it('should not allow the beneficiary to be zero', async () => {
+      let failed = true
+      try {
+        await pool.setNextFeeBeneficiary(ZERO_ADDRESS)
         failed = false
       } catch (e) {}
       assert.ok(failed)
