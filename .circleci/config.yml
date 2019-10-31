@@ -38,7 +38,7 @@ jobs:
       - run:
           command: yarn coverage
           environment:
-            MOCHA_FILE: ~/test-results.xml
+            MOCHA_FILE: ~/junit/test-results.xml
           when: always
       
       - store_test_results:

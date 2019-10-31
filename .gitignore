@@ -12,3 +12,4 @@ zos.dev*.json
 coverage
 coverage.json
 test-results.xml
+junit
