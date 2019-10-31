@@ -49,8 +49,10 @@ module.exports = {
     }
   },
 
-  mocha: {
-    reporter: isCircle ? 'mocha-junit-reporter' : 'eth-gas-reporter',
+  mocha: isCircle ? {
+    reporter: 'mocha-junit-reporter',
+  } : {
+    reporter: 'eth-gas-reporter',
     reporterOptions : {
       currency: 'USD',
       gasPrice: 10
