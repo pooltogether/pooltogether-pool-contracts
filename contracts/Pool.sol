@@ -282,44 +282,6 @@ contract Pool is IERC20, IERC777, BasePool {
   }
 
   /**
-    * @dev Creates `amount` tokens and assigns them to `account`, increasing
-    * the total supply.
-    *
-    * If a send hook is registered for `account`, the corresponding function
-    * will be called with `operator`, `data` and `operatorData`.
-    *
-    * See {IERC777Sender} and {IERC777Recipient}.
-    *
-    * Emits {Minted} and {Transfer} events.
-    *
-    * Requirements
-    *
-    * - `account` cannot be the zero address.
-    * - if `account` is a contract, it must implement the {IERC777Recipient}
-    * interface.
-    */
-//   function _mint(
-//       address operator,
-//       address account,
-//       uint256 amount,
-//       bytes memory userData,
-//       bytes memory operatorData
-//   )
-//   internal
-//   {
-//       require(account != address(0), "ERC777: mint to the zero address");
-
-//       // Update state variables
-//       _totalSupply = _totalSupply.add(amount);
-//       _balances[account] = _balances[account].add(amount);
-
-//       _callTokensReceived(operator, address(0), account, amount, userData, operatorData);
-
-//       emit Minted(operator, account, amount, userData, operatorData);
-//       emit Transfer(address(0), account, amount);
-//   }
-
-  /**
     * @dev Send tokens
     * @param operator address operator requesting the transfer
     * @param from address token holder address

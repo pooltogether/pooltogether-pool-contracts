@@ -72,6 +72,18 @@ contract('Pool.ERC777', (accounts) => {
         assert.ok(failed, "was able to burn tokens")
       })
     })
+
+    describe('operatorSend()', () => {
+      it('should not send tokens from zero address', async () => {
+        let failed = false
+        try {
+          await pool.operatorSend(ZERO_ADDRESS, user1, toWei('10'), [], [])
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to send from zero address")
+      })
+    })
   })
 
   describe('with a fully initialized pool', () => {
