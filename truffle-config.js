@@ -49,6 +49,14 @@ module.exports = {
     }
   },
 
+  // optimization breaks code coverage
+  solc: isCircle ? {} : {
+    optimizer: {
+      enabled: true,
+      runs: 100
+    }
+  },
+
   mocha: isCircle ? {
     reporter: 'mocha-junit-reporter',
   } : {

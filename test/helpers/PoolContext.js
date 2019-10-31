@@ -85,6 +85,21 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     return pool
   }
 
+  this.createPoolNoInit = async (feeFraction = new BN('0')) => {
+    await Pool.link("DrawManager", drawManager.address)
+    await Pool.link("FixidityLib", fixidity.address)
+
+    pool = await Pool.new()
+    await pool.init(
+      owner,
+      moneyMarket.address,
+      feeFraction,
+      owner
+    )
+
+    return pool
+  }
+
   this.rewardAndOpenNextDraw = async (options) => {
     let logs
 

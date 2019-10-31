@@ -75,34 +75,6 @@ contract('DrawManager', (accounts) => {
                 assert.equal(await drawManager.firstDrawIndex(user1), '1')
                 assert.equal(await drawManager.openBalanceOf(user1), toWei('20'))
                 assert.equal(await drawManager.committedBalanceOf(user1), toWei('0'))
-
-                // await drawManager.deposit(user2, toWei('10'))
-                // await drawManager.deposit(user2, toWei('10'))
-
-                // await drawManager.openNextDraw()
-
-                // await drawManager.deposit(user1, toWei('10'))
-                // await drawManager.deposit(user1, toWei('10'))
-
-                // await drawManager.deposit(user2, toWei('10'))
-                // await drawManager.deposit(user2, toWei('10'))
-
-                // await drawManager.openNextDraw()
-
-                // await drawManager.deposit(user1, toWei('10'))
-                // await drawManager.deposit(user1, toWei('10'))
-
-                // await drawManager.deposit(user2, toWei('10'))
-                // await drawManager.deposit(user2, toWei('10'))
-
-                // await drawManager.openNextDraw()
-
-                // await drawManager.deposit(user1, toWei('10'))
-                // await drawManager.deposit(user1, toWei('10'))
-
-                // await drawManager.deposit(user2, toWei('10'))
-                // await drawManager.deposit(user2, toWei('10'))
-
             })
 
             describe('when the user has already deposited', () => {
@@ -231,6 +203,36 @@ contract('DrawManager', (accounts) => {
                 await drawManager.deposit(user1, toWei('12'))
                 assert.equal((await drawManager.balanceOf(user1)).toString(), toWei('25'))
             })
+        })
+    })
+
+    describe('depositCommitted', () => {
+        beforeEach(async () => {
+            await drawManager.openNextDraw()
+        })
+
+        it('should work when recipient already has committed deposits', async () => {
+            await drawManager.deposit(user1, toWei('10'))
+            await drawManager.openNextDraw()
+            await drawManager.depositCommitted(user1, toWei('10'))
+            assert.equal(await drawManager.committedBalanceOf(user1), toWei('20'))
+        })
+
+        it('should fail when there is no committed draw', async () => {
+            let failed = false
+            try {
+                await drawManager.depositCommitted(user1, toWei('10'))
+            } catch (e) {
+                failed = true
+            }
+            assert.ok(failed, "was able to deposit committed")
+        })
+
+        it('should work when recipient has no committed deposits', async () => {
+            await drawManager.openNextDraw()
+            await drawManager.deposit(user1, toWei('10'))
+            await drawManager.depositCommitted(user1, toWei('10'))
+            assert.equal(await drawManager.committedBalanceOf(user1), toWei('10'))
         })
     })
 

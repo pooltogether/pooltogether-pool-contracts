@@ -33,6 +33,10 @@ contract ExposedDrawManager {
       state.deposit(user, amount);
     }
 
+    function depositCommitted(address _addr, uint256 _amount) public {
+      state.depositCommitted(_addr, _amount);
+    }
+
     function withdraw(address user) public {
       state.withdraw(user);
     }
