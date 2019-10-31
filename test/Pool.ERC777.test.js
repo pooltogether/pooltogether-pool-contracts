@@ -202,7 +202,6 @@ contract('Pool.ERC777', (accounts) => {
         try {
           await pool.transfer(ZERO_ADDRESS, toWei('10'))
         } catch (e) {
-          console.log(e)
           failed = true
         }
         assert.ok(failed, "successfully failed")
