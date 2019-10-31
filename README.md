@@ -4,7 +4,7 @@
 
 [Code Coverage](https://v2.coverage.pooltogether.us/)
 
-The PoolTogether contracts implement a prize-linked savings account using [Compound](https://compound.finance/developers).  Users deposit into the pool and receive tickets in exchange.  The pooled deposits earn interest in Compound, and periodically the total interest is awarded to a randomly selected ticket holder.  You can read more about the algorithm in the article [Inside PoolTogether v2.0](https://medium.com/pooltogether/inside-pooltogether-v2-0-e7d0e1b90a08).
+PoolTogether is a prize-linked savings account built on Ethereum. This project contains the Ethereum smart contracts that power the protocol. Users deposit into the pool and receive tickets in exchange.  The pooled deposits earn interest in [Compound](https://compound.finance), and periodically the total interest is awarded to a randomly selected ticket holder.  You can read more about the algorithm in the article [Inside PoolTogether v2.0](https://medium.com/pooltogether/inside-pooltogether-v2-0-e7d0e1b90a08).
 
 **If you want to run PoolTogether locally in an isolated test environment check out the [PoolTogether Mock](https://github.com/pooltogether/pooltogether-contracts-mock) project**
 
