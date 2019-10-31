@@ -37,6 +37,7 @@
     "eth-gas-reporter": "0.2.0",
     "fixidity": "DeltaCamp/Fixidity#edf533f77df43b16a7b92f17af7a8930db01f293",
     "ganache-cli": "6.8.1-beta.0",
+    "mocha-junit-reporter": "^1.23.1",
     "openzeppelin-ethers": "pooltogether/openzeppelin-ethers#master",
     "shelljs": "0.8.3",
     "truffle": "5.0.42",

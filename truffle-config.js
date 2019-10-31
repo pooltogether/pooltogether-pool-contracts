@@ -2,6 +2,8 @@
 
 var HDWalletProvider = require("truffle-hdwallet-provider")
 
+const isCircle = process.env.CI === 'true'
+
 module.exports = {
   networks: {
     local: {
@@ -48,7 +50,7 @@ module.exports = {
   },
 
   mocha: {
-    reporter: 'eth-gas-reporter',
+    reporter: isCircle ? 'mocha-junit-reporter' : 'eth-gas-reporter',
     reporterOptions : {
       currency: 'USD',
       gasPrice: 10
