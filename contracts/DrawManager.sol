@@ -319,11 +319,7 @@ library DrawManager {
         }
         require(_token < committedSupply(self), "token is beyond the eligible supply");
         uint256 drawIndex = uint256(self.sortitionSumTrees.draw(TREE_OF_DRAWS, _token));
-        assert(drawIndex != 0);
-
         uint256 drawSupply = self.sortitionSumTrees.total(bytes32(drawIndex));
-
-        assert(drawSupply > 0);
         uint256 drawToken = _token % drawSupply;
         return address(uint256(self.sortitionSumTrees.draw(bytes32(drawIndex), drawToken)));
     }
