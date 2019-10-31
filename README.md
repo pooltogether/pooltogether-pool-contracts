@@ -12,8 +12,8 @@ The PoolTogether contracts implement a prize-linked savings account using [Compo
 
 | Network | Address |
 | ------- | ------- |
-| mainnet | 0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84 |
-| rinkeby | 0xf6535134C89D5e32ccE2C88E7847e207164E754F |
+| mainnet | [0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84](https://etherscan.io/address/0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84) |
+| rinkeby | [0xf6535134C89D5e32ccE2C88E7847e207164E754F](https://rinkeby.etherscan.io/address/0xf6535134C89D5e32ccE2C88E7847e207164E754F) |
 
 # Setup
 
