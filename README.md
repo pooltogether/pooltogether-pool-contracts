@@ -10,10 +10,10 @@ PoolTogether is a prize-linked savings account built on Ethereum. This project c
 
 # Ethereum Networks
 
-| Network | Address |
-| ------- | ------- |
-| mainnet | [0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84](https://etherscan.io/address/0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84) |
-| rinkeby | [0xf6535134C89D5e32ccE2C88E7847e207164E754F](https://rinkeby.etherscan.io/address/0xf6535134C89D5e32ccE2C88E7847e207164E754F) |
+| Network | Contract | Address |
+| ------- | -------- | ------- |
+| mainnet | Pool (abi on Etherscan)    | [0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84](https://etherscan.io/address/0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84) |
+| rinkeby | Pool ([abi](https://abis.v2.pooltogether.us/Pool.json)) | [0xf6535134C89D5e32ccE2C88E7847e207164E754F](https://rinkeby.etherscan.io/address/0xf6535134C89D5e32ccE2C88E7847e207164E754F) |
 
 # Setup
 

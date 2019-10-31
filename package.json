@@ -23,7 +23,7 @@
     "console": "oze --network localhost console",
     "console-rinkeby": "oze --network rinkeby console",
     "console-mainnet": "oze --network mainnet console",
-    "extract-abis": "truffle-extract -o abis",
+    "extract-abis": "oz compile && truffle-extract -o abis",
     "version": "truffle version",
     "docs": "solidity-docgen -i contracts -d node_modules/@openzeppelin/contracts-ethereum-package/contracts/access/roles/MinterRole.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Mintable.sol,node_modules/@openzeppelin/upgrades/contracts/Initializable.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol,node_modules/@kleros/kleros/contracts/data-structures/SortitionSumTreeFactory.sol,node_modules/fixidity/contracts/FixidityLib.sol -o docs --solc-module=./node_modules/solc --solc-settings='{\"remappings\": [\"contracts/DrawManager.sol:@kleros=node_modules/@kleros\",\":@openzeppelin=node_modules/@openzeppelin\",\":fixidity=node_modules/fixidity\"]}'",
     "solc": "cat solc_input.json | solcjs --standard-json"
