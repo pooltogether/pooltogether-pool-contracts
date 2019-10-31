@@ -46,7 +46,17 @@ contract('Pool.ERC777', (accounts) => {
     describe('revokeOperator()', () => {
       it('should allow users to revoke the operator', async () => {
         await pool.revokeOperator(owner, { from: user2 })
-        assert.ok(!(await pool.isOperatorFor(user2, owner)), "is still an operator for")
+        assert.ok(!(await pool.isOperatorFor(owner, user2)), "is still an operator for")
+      })
+    })
+
+    describe('authorizeOperator()', () => {
+      it('should allow users to revoke the default operator then add them back', async () => {
+        await pool.revokeOperator(owner, { from: user2 })
+        assert.ok(!(await pool.isOperatorFor(owner, user2)), "is still an operator for")
+
+        await pool.authorizeOperator(owner, { from: user2 })
+        assert.ok(await pool.isOperatorFor(owner, user2), "is not an operator for")
       })
     })
   })
@@ -177,6 +187,16 @@ contract('Pool.ERC777', (accounts) => {
         assert.equal(await pool.balanceOf(owner), toWei('0'))
         assert.equal(await pool.balanceOf(user2), toWei('0'))
       })
+
+      it('should reject when transferring to zero address', async () => {
+        let failed = false
+        try {
+          await pool.transfer(ZERO_ADDRESS, toWei('0'))
+        } catch  (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to transfer to zero address")
+      })
     })
   
     describe('burn()', () => {
@@ -262,6 +282,54 @@ contract('Pool.ERC777', (accounts) => {
         assert.equal(await pool.balanceOf(owner), toWei('0'))
         assert.equal(await pool.balanceOf(user2), toWei('10'))
       })
+
+      it('should not allow an non-authorized operator to send tokens on behalf of another user', async () => {
+        await poolContext.depositPool(toWei('10'))
+        await poolContext.nextDraw()
+        let failed = false
+        try {
+          await pool.operatorSend(owner, user2, toWei('10'), [], [], { from: user2 })
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to send other peoples tokens")
+      })
+
+      it('should not allow an operator to send from the zero address', async () => {
+        let failed = false
+        try {
+          await pool.operatorSend(ZERO_ADDRESS, user2, toWei('10'), [], [], { from: user2 })
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to send from zero address")
+      })
+
+      it('should not allow an operator to send to the zero address', async () => {
+        await poolContext.depositPool(toWei('10'))
+        await poolContext.nextDraw()
+        await pool.authorizeOperator(user1)
+        let failed = false
+        try {
+          await pool.operatorSend(owner, ZERO_ADDRESS, toWei('10'), [], [], { from: user2 })
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to send from zero address")
+      })
+
+      it('should not allow an operator to send more tokens than their balance', async () => {
+        await poolContext.depositPool(toWei('10'))
+        await poolContext.nextDraw()
+        await pool.authorizeOperator(user1)
+        let failed = false
+        try {
+          await pool.operatorSend(owner, user2, toWei('12'), [], [], { from: user2 })
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to send other peoples tokens")
+      })
     })
   
     describe('operatorBurn()', () => {
@@ -276,9 +344,54 @@ contract('Pool.ERC777', (accounts) => {
   
         assert.equal(afterBalance, beforeBalance.add(new BN(toWei('10'))).toString())
       })
+
+      it('should not allow an non-authorized operator to burn someones tokens', async () => {
+        await poolContext.depositPool(toWei('10'))
+        await poolContext.nextDraw()
+        let failed = false
+        try {
+          await pool.operatorBurn(owner, toWei('10'), [], [], { from: user1 })
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to burn tokens")
+      })
+
+      it('should not allow someone to burn the zero address tokens', async () => {
+        let failed = false
+        try {
+          await pool.operatorBurn(ZERO_ADDRESS, toWei('10'), [], [], { from: user1 })
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to burn tokens")
+      })
+
+      it('should not allow the burn to exceed the balance', async () => {
+        await poolContext.depositPool(toWei('10'))
+        await poolContext.nextDraw()
+        await pool.authorizeOperator(user1)
+        let failed = false
+        try {
+          await pool.operatorBurn(owner, toWei('12'), [], [], { from: user1 })
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to burn tokens")
+      })
     })
   
     describe('allowance() & approve()', () => {
+      it('should not allow someone to approve the zero address', async () => {
+        let failed = false
+        try {
+          await pool.approve(ZERO_ADDRESS, toWei('5'))
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to approve zero address")
+      })
+
       it('should return the number of tokens that are approved to spend', async () => {
         await pool.approve(user1, toWei('5'))
         assert.equal(await pool.allowance(owner, user1), toWei('5'))
@@ -314,6 +427,32 @@ contract('Pool.ERC777', (accounts) => {
         }
   
         assert.ok(failed, "was able to transfer beyond allowance")
+      })
+
+      it('should fail if the recipient is zero', async () => {
+        await pool.approve(user1, toWei('5'))
+  
+        let failed = false
+        try {
+          await pool.transferFrom(owner, ZERO_ADDRESS, toWei('5'), { from: user1 })
+        } catch (e) {
+          failed = true
+        }
+  
+        assert.ok(failed, "was able to transfer to zero address")
+      })
+
+      it('should fail if the from is zero', async () => {
+        await pool.approve(user1, toWei('5'))
+  
+        let failed = false
+        try {
+          await pool.transferFrom(ZERO_ADDRESS, user2, toWei('5'), { from: user1 })
+        } catch (e) {
+          failed = true
+        }
+  
+        assert.ok(failed, "was able to transfer to zero address")
       })
     })
   })

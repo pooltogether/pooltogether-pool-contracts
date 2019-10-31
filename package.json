@@ -7,7 +7,7 @@
   "author": "Brendan Asselstine brendan@pooltogether.us",
   "scripts": {
     "test": "truffle test --migrations_directory ./migrations/empty",
-    "coverage": "truffle run coverage --migrations_directory ./migrations/empty",
+    "coverage": "COVERAGE=true truffle run coverage --migrations_directory ./migrations/empty",
     "compile": "truffle compile",
     "compile-and-merge": "yarn compile && zos-truffle-merge -n 1 zos.mainnet.json && zos-truffle-merge -n 4 zos.rinkeby.json",
     "start": "./scripts/ganache.sh",

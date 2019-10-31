@@ -2,7 +2,7 @@
 
 var HDWalletProvider = require("truffle-hdwallet-provider")
 
-const isCircle = process.env.CI === 'true'
+const isCoverage = process.env.COVERAGE === 'true'
 
 module.exports = {
   networks: {
@@ -50,14 +50,14 @@ module.exports = {
   },
 
   // optimization breaks code coverage
-  solc: isCircle ? {} : {
+  solc: isCoverage ? {} : {
     optimizer: {
       enabled: true,
       runs: 100
     }
   },
 
-  mocha: isCircle ? {
+  mocha: isCoverage ? {
     reporter: 'mocha-junit-reporter',
   } : {
     reporter: 'eth-gas-reporter',
