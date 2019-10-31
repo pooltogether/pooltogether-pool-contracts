@@ -30,6 +30,33 @@ contract('Pool.ERC777', (accounts) => {
     registry = result.registry
   })
 
+  describe('initERC777()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPoolNoInit()
+    })
+    
+    it('requires the name to be defined', async () => {
+      let failed = false
+      try {
+        await pool.initERC777('', 'FBAR', [owner])
+      } catch (e) {
+        failed = true
+      }
+      assert.ok(failed, "was able to init with empty name")
+    })    
+
+    it('requires the symbol to be defined', async () => {
+      let failed = false
+      try {
+        await pool.initERC777('Foobar', '', [owner])
+      } catch (e) {
+        failed = true
+      }
+      assert.ok(failed, "was able to init with empty symbol")
+    })
+
+  })
+
   describe('with a pool with a default operator', () => {
     beforeEach(async () => {
       pool = await poolContext.createPoolNoInit()
@@ -41,7 +68,17 @@ contract('Pool.ERC777', (accounts) => {
         assert.equal(await pool.name(), 'Foobar')
         assert.equal(await pool.symbol(), 'FBAR')
         assert.deepEqual(await pool.defaultOperators(), [owner])
-      })    
+      })
+
+      it('cannot be called twice', async () => {
+        let failed = false
+        try {
+          await pool.initERC777('Foobar', 'FBAR', [owner])
+        } catch (e) {
+          failed = true
+        }
+        assert.ok(failed, "was able to initERC777 twice")
+      })
     })
 
     describe('revokeOperator()', () => {

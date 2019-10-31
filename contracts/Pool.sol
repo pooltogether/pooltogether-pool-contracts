@@ -1,4 +1,4 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.10;
 
 import "./BasePool.sol";
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777.sol";
@@ -9,8 +9,7 @@ import "@openzeppelin/contracts/contracts/introspection/IERC1820Registry.sol";
 /**
  * @dev Implementation of the {IERC777} interface.
  *
- * This implementation is agnostic to the way tokens are created. This means
- * that a supply mechanism has to be added in a derived contract using {_mint}.
+ * Largely taken from the OpenZeppelin ERC777 contract.
  *
  * Support for ERC20 is included in this contract, as specified by the EIP: both
  * the ERC777 and ERC20 interfaces can be safely used when interacting with it.
@@ -20,6 +19,11 @@ import "@openzeppelin/contracts/contracts/introspection/IERC1820Registry.sol";
  * Additionally, the {IERC777-granularity} value is hard-coded to `1`, meaning that there
  * are no special restrictions in the amount of tokens that created, moved, or
  * destroyed. This makes integration with ERC20 applications seamless.
+ *
+ * It is important to note that no Mint events are emitted.  Tokens are minted in batches
+ * by a state change in a tree data structure, so emitting a Mint event for each user
+ * is not possible.
+ *
  */
 contract Pool is IERC20, IERC777, BasePool {
   using SafeMath for uint256;
@@ -61,8 +65,9 @@ contract Pool is IERC20, IERC777, BasePool {
       string calldata symbol,
       address[] calldata defaultOperators
   ) external {
-      // require(bytes(name).length != 0, "name must be defined");
-      // require(bytes(_name).length == 0, "ERC777 has already been initialized");
+      require(bytes(name).length != 0, "name must be defined");
+      require(bytes(symbol).length != 0, "symbol must be defined");
+      require(bytes(_name).length == 0, "ERC777 has already been initialized");
 
       _name = name;
       _symbol = symbol;
@@ -361,9 +366,6 @@ contract Pool is IERC20, IERC777, BasePool {
   }
 
   function _approve(address holder, address spender, uint256 value) private {
-      // TODO: restore this require statement if this function becomes internal, or is called at a new callsite. It is
-      // currently unnecessary.
-      //require(holder != address(0), "ERC777: approve from the zero address");
       require(spender != address(0), "ERC777: approve to the zero address");
 
       _allowances[holder][spender] = value;
