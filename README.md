@@ -1,8 +1,14 @@
 # PoolTogether Contracts
 
-The PoolTogether contracts allow users to deposit into a pool of tokens.  The pool is then supplied to the [Compound CErc20](https://compound.finance/developers).  After the bonding period is over, the supply plus interest is withdrawn.  The winner of a pool receives the interest earned.
+PoolTogether is a prize-linked savings account built on Ethereum. This project contains the Ethereum smart contracts that power the protocol.
 
-The contracts are currently under audit by [Quantstamp](https://quantstamp.com/).
+**If you want to run PoolTogether locally in an isolated test environment check out the [PoolTogether Mock](https://github.com/pooltogether/pooltogether-contracts-mock) project**
+
+# Ethereum Networks
+
+| Network | Contract | Address |
+| ------- | -------- | ------- |
+| mainnet | Pool ([abi](https://v1.abis.pooltogether.us/Pool.json))    | [0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84](https://etherscan.io/address/0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84) |
 
 # Setup
 
