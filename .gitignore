@@ -11,3 +11,5 @@ zos.dev*.json
 .openzeppelin/.session
 coverage
 coverage.json
+test-results.xml
+abis
