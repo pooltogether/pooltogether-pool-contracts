@@ -7020,7 +7020,7 @@ solc@0.5.10:
     tmp "0.0.33"
     yargs "^11.0.0"
 
-solidity-coverage@^0.7.0-beta.2:
+solidity-coverage@0.7.0-beta.2:
   version "0.7.0-beta.2"
   resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.7.0-beta.2.tgz#e50b3a3ee8930c2cdbc0382187f11c1e3fef8096"
   integrity sha512-2o38EZ6Hd013yyRURnUtfP9qaHbNTj+0Ahfq6BrPYu6i695euxkO/ypudgg0Bve93IX08xXEvXKt78Y5x7P26A==
