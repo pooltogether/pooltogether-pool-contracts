@@ -59,3 +59,37 @@ yarn session-rinkeby
 yarn push
 yarn migrate-rinkeby
 ```
+
+# How it Works
+
+A prize-linked savings account is one in which interest payments are distributed as prizes.  PoolTogether uses [Compound](https://compound.finance) to generate interest on pooled deposits and distributes the interest in prize draws.
+
+## User Flow
+
+1. An administrator opens a new draw by committing the hash of a secret and salt.
+2. A user deposits tokens into the Pool.  The Pool transfers the tokens to the Compound CToken contract and adds the deposit to the currently open draw.
+3. Time passes.  Interest accrues.
+4. An administrator executes the "reward" function, which:
+  a. If there is a committed draw it is "rewarded": the admin reveals the previously committed secret and uses it to select a winner for the currently accrued interest on the pool deposits.  The interest is added to the open draw to increase the user's eligibility.
+  b. The open draw is "committed", meaning it will no longer receive deposits.
+  c. A new draw is opened to receive deposits.  The admin commits a hash of a secret and salt.
+5. A user withdraws.  The Pool will withdraw from the Compound CToken all of the user's deposits and winnings.  Any amounts across open, committed, or rewarded draws will be withdrawn.
+
+As you can see, prizes are awarded in rolling draws.  In this way, we can ensure users will contribute fairly to a prize.  The open period allows users to queue up their deposits for the committed period, then once the committed period is over the interest accrued is awarded to one of the participants.
+
+You can visualize the rolling draws like so:
+
+| Step  | Draw 1    | Draw 2    | Draw 3    | Draw 4    |  Draw ... |
+| ----- | ------    | ------    | ------    | ------    | --------- |
+| 1     | Open      |           |           |           |           |
+| 2     | Committed | Open      |           |           |           |
+| 3     | Rewarded  | Committed | Open      |           |           |
+| 4     |           | Rewarded  | Committed | Open      |           |
+| 5     |           |           | Rewarded  | Committed |           |
+| ...   |           |           |           | Rewarded  |           |
+
+## Winner Selection
+
+When a Pool administrator opens a new draw, they commit a hash of a secret and salt.  When the Pool administrator rewards a draw, they reveal the secret and salt.  The secret is combined with the hash of the gross winnings to serve as the entropy used to randomly select a winner.
+
+Decentralizing this portion of the protocol is very high on our to-do list.
