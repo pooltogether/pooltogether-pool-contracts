@@ -70,9 +70,9 @@ A prize-linked savings account is one in which interest payments are distributed
 2. A user deposits tokens into the Pool.  The Pool transfers the tokens to the Compound CToken contract and adds the deposit to the currently open draw.
 3. Time passes.  Interest accrues.
 4. An administrator executes the "reward" function, which:
-  a. If there is a committed draw it is "rewarded": the admin reveals the previously committed secret and uses it to select a winner for the currently accrued interest on the pool deposits.  The interest is added to the open draw to increase the user's eligibility.
-  b. The open draw is "committed", meaning it will no longer receive deposits.
-  c. A new draw is opened to receive deposits.  The admin commits a hash of a secret and salt.
+  - If there is a committed draw it is "rewarded": the admin reveals the previously committed secret and uses it to select a winner for the currently accrued interest on the pool deposits.  The interest is added to the open draw to increase the user's eligibility.
+  - The open draw is "committed", meaning it will no longer receive deposits.
+  - A new draw is opened to receive deposits.  The admin commits a hash of a secret and salt.
 5. A user withdraws.  The Pool will withdraw from the Compound CToken all of the user's deposits and winnings.  Any amounts across open, committed, or rewarded draws will be withdrawn.
 
 As you can see, prizes are awarded in rolling draws.  In this way, we can ensure users will contribute fairly to a prize.  The open period allows users to queue up their deposits for the committed period, then once the committed period is over the interest accrued is awarded to one of the participants.
