@@ -1,5 +1,4 @@
 const toWei = require('./helpers/toWei')
-const fromWei = require('./helpers/fromWei')
 const chai = require('./helpers/chai')
 const PoolContext = require('./helpers/PoolContext')
 const setupERC1820 = require('./helpers/setupERC1820')
@@ -721,6 +720,25 @@ contract('BasePool', (accounts) => {
       await pool.pause()
       await pool.unpause()
       await poolContext.depositPool(toWei('10'), { from: user2 })
+    })
+  })
+
+  describe('transferBalanceToSponsorship()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPool(feeFraction)
+    })
+
+    it('should transfer the balance of the pool in as sponsorship', async () => {
+      await token.mint(pool.address, toWei('1000'))
+
+      assert.equal(await token.balanceOf(pool.address), toWei('1000'))
+
+      await pool.transferBalanceToSponsorship()
+
+      assert.equal(await token.balanceOf(pool.address), toWei('0'))
+      assert.equal(await pool.totalBalanceOf(pool.address), toWei('1000'))
+      assert.equal(await pool.accountedBalance(), toWei('1000'))
+      assert.equal((await pool.methods['balance()'].call()).toString(), toWei('1000'))
     })
   })
 })

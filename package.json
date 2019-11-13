@@ -49,6 +49,8 @@
     "zos-truffle-merge": "0.0.3"
   },
   "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "solc": "0.5.12",
     "solidity-coverage": "0.7.0-beta.2"
   }

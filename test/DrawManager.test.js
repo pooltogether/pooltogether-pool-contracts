@@ -105,6 +105,13 @@ contract('DrawManager', (accounts) => {
                         assert.equal(await drawManager.openSupply(), toWei('10'))
                         assert.equal(await drawManager.committedBalanceOf(user1), toWei('10'))
                         assert.equal(await drawManager.committedSupply(), toWei('10'))
+
+                        // accept a second deposit into the open draw
+                        await drawManager.deposit(user1, toWei('10'))
+
+                        assert.equal(await drawManager.secondDrawIndex(user1), '2')
+                        assert.equal(await drawManager.openBalanceOf(user1), toWei('20'))
+                        assert.equal(await drawManager.openSupply(), toWei('20'))
                     })
 
                     describe('and the user has deposited, and there is a third open', () => {

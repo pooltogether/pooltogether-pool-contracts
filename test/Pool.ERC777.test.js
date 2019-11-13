@@ -1,6 +1,7 @@
 const PoolContext = require('./helpers/PoolContext')
 const toWei = require('./helpers/toWei')
 const BN = require('bn.js')
+const chai = require('./helpers/chai')
 const {
   ZERO_ADDRESS,
   ERC_20_INTERFACE_HASH,
@@ -217,6 +218,22 @@ contract('Pool.ERC777', (accounts) => {
           await poolContext.nextDraw()
           await pool.send(user2, toWei('10'), [])
           assert.equal(await recipient.count(), '1')
+        })
+      })
+
+      describe('when recipient does not have IERC777Recipient interface', () => {
+        it('should succeed for EOA addresses', async () => {
+          await poolContext.depositPool(toWei('10'))
+          await poolContext.nextDraw()
+          await pool.send(user2, toWei('10'), [])
+          assert.equal(await pool.balanceOf(user2), toWei('10'))
+        })
+
+        it('should fail for contract addresses without ERC777Recipient interfaces', async () => {
+          let recipient = await MockERC777Recipient.new()
+          await poolContext.depositPool(toWei('10'))
+          await poolContext.nextDraw()
+          await chai.assert.isRejected(pool.send(recipient.address, toWei('10'), []), /recipient has no implementer for ERC777TokensRecipient/)
         })
       })
     })

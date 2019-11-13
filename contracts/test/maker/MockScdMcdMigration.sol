@@ -21,6 +21,16 @@ contract MockScdMcdMigration {
     dai = _dai;
   }
 
+  function setSai(Token _sai) public {
+    saiJoin = new MockJoinLike(address(_sai), address(0));
+    sai = _sai;
+  }
+
+  function setDai(Token _dai) public {
+    daiJoin = new MockJoinLike(address(0), address(_dai));
+    dai = _dai;
+  }
+
   function swapSaiToDai(
     uint wad
   ) external {

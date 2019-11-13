@@ -1,4 +1,4 @@
-pragma solidity ^0.5.12;
+pragma solidity 0.5.12;
 
 import "./Pool.sol";
 import "scd-mcd-migration/src/ScdMcdMigration.sol";
@@ -9,9 +9,7 @@ contract MCDAwarePool is Pool, IERC777Recipient {
   // keccak("PoolTogether.MCDAwarePool")
   bytes32 public constant MCD_AWARE_POOL_INTERFACE_HASH = 0xf07efa750d04abfb9556d73b16e6ffb37436eb789c2a8fd17117e0bf232a506c;
 
-  function scdMcdMigration() public view returns (ScdMcdMigration) {
-    revert("not implemented");
-  }
+  function scdMcdMigration() public view returns (ScdMcdMigration);
 
   function init (
     address _owner,
@@ -40,42 +38,18 @@ contract MCDAwarePool is Pool, IERC777Recipient {
   }
 
   function tokensReceived(
-    address,
+    address, // operator
     address from,
-    address to,
+    address, // to address can't be anything but us because we don't implement ERC1820ImplementerInterface
     uint256 amount,
     bytes calldata,
     bytes calldata
   ) external {
-    require(to == address(this), "does not receive for others");
+    MCDAwarePool mcdPool = getMCDAwarePoolImplementor(msg.sender);
 
-    // if this is a migration transaction
-    if (shouldMigrateTokensReceived(msg.sender)) {
-      migrateTokensReceived(msg.sender, from, amount);
-    } else if (msg.sender == address(token())) { // if we are receiving tokens we know
-      _depositPoolFrom(from, amount);
-    } else { // fail if it's an unrecognized token
-      revert("cannot receive unknown token");
-    }
-  }
-
-  function shouldMigrateTokensReceived(address sender) internal returns (bool) {
-    MCDAwarePool mcdPool = getMCDAwarePoolImplementor(sender);
-    bool isMcdPool = address(mcdPool) != address(0);
-    require(isMcdPool, "is not an MCD pool");
-    bool receivingPoolSai = mcdPool.cToken().underlying() == address(saiToken());
-    require(receivingPoolSai, "is not receiving pool sai");
-    bool weAreDai = address(token()) == address(daiToken());
-    require(weAreDai, " we are not dai");
-    return (
-      isMcdPool && // mcdPool is defined
-      mcdPool.cToken().underlying() == address(saiToken()) && // we are receiving Pool Sai
-      address(token()) == address(daiToken()) // we are Pool Dai
-    );
-  }
-
-  function migrateTokensReceived(address sender, address from, uint256 amount) internal {
-    MCDAwarePool mcdPool = getMCDAwarePoolImplementor(sender);
+    require(address(mcdPool) != address(0), "sender must implement MCDAwarePool");
+    require(address(mcdPool.token()) == address(saiToken()), "sender must be using Sai");
+    require(address(token()) == address(daiToken()), "contract does not use Dai");
 
     // cash out of the Pool.  This call transfers sai to this contract
     mcdPool.burn(amount, '');

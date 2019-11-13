@@ -33,17 +33,13 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     await LocalMCDAwarePool.link('DrawManager', drawManager.address)
     fixidity = await FixidityLib.new({ from: admin })
 
-    token = await Token.new({ from: admin })
-    await token.initialize(owner)
+    token = await this.newToken()
 
     moneyMarket = await CErc20Mock.new({ from: admin })
     await moneyMarket.initialize(token.address, new BN(SUPPLY_RATE_PER_BLOCK))
 
     await token.mint(moneyMarket.address, web3.utils.toWei('10000000', 'ether'))
-    await token.mint(owner, web3.utils.toWei('100000', 'ether'))
     await token.mint(admin, web3.utils.toWei('100000', 'ether'))
-    await token.mint(user1, web3.utils.toWei('100000', 'ether'))
-    await token.mint(user2, web3.utils.toWei('100000', 'ether'))
 
     return {
       drawManager,
@@ -52,6 +48,15 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
       moneyMarket,
       registry
     }
+  }
+
+  this.newToken = async () => {
+    const token = await Token.new({ from: admin })
+    await token.initialize(owner)
+    await token.mint(owner, web3.utils.toWei('100000', 'ether'))
+    await token.mint(user1, web3.utils.toWei('100000', 'ether'))
+    await token.mint(user2, web3.utils.toWei('100000', 'ether'))
+    return token
   }
 
   this.balance = async () => {

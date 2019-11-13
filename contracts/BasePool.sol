@@ -729,7 +729,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @notice Returns the token underlying the cToken.
    * @return An ERC20 token address
    */
-  function token() internal view returns (IERC20) {
+  function token() public view returns (IERC20) {
     return IERC20(cToken.underlying());
   }
 
