@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/contracts/math/SafeMath.sol";
@@ -61,6 +61,13 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @param amount The size of the deposit
    */
   event Deposited(address indexed sender, uint256 amount);
+
+  /**
+   * Emitted when a user deposits into the Pool and the deposit is immediately committed
+   * @param sender The purchaser of the tickets
+   * @param amount The size of the deposit
+   */
+  event DepositedAndCommitted(address indexed sender, uint256 amount);
 
   /**
    * Emitted when Sponsors have deposited into the Pool
@@ -412,10 +419,16 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
   function depositSponsorship(uint256 _amount) public unlessPaused nonReentrant {
-    // Deposit the funds
-    _deposit(_amount);
+    // Transfer the tokens into this contract
+    require(token().transferFrom(msg.sender, address(this), _amount), "token transfer failed");
 
-    emit SponsorshipDeposited(msg.sender, _amount);
+    // Deposit the sponsorship amount
+    _depositSponsorshipFrom(msg.sender, _amount);
+  }
+
+  function transferBalanceToSponsorship() public {
+    // Deposit the sponsorship amount
+    _depositSponsorshipFrom(address(this), token().balanceOf(address(this)));
   }
 
   /**
@@ -425,25 +438,41 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
   function depositPool(uint256 _amount) public requireOpenDraw unlessPaused nonReentrant {
-    // Update the user's eligibility
-    drawState.deposit(msg.sender, _amount);
-
-    // Deposit the funds
-    _deposit(_amount);
-
-    emit Deposited(msg.sender, _amount);
-  }
-
-  /**
-   * @notice Transfers tokens from the sender into the Compound cToken contract and updates the accountedBalance.
-   * @param _amount The amount of the token underlying the cToken to deposit.
-   */
-  function _deposit(uint256 _amount) internal {
     // Transfer the tokens into this contract
     require(token().transferFrom(msg.sender, address(this), _amount), "token transfer failed");
 
+    // Deposit the funds
+    _depositPoolFrom(msg.sender, _amount);
+  }
+
+  function _depositSponsorshipFrom(address _spender, uint256 _amount) internal {
+    // Deposit the funds
+    _depositFrom(_spender, _amount);
+
+    emit SponsorshipDeposited(_spender, _amount);
+  }
+
+  function _depositPoolFrom(address _spender, uint256 _amount) internal {
+    // Update the user's eligibility
+    drawState.deposit(_spender, _amount);
+
+    _depositFrom(_spender, _amount);
+
+    emit Deposited(_spender, _amount);
+  }
+
+  function _depositPoolFromCommitted(address _spender, uint256 _amount) internal {
+    // Update the user's eligibility
+    drawState.depositCommitted(_spender, _amount);
+
+    _depositFrom(_spender, _amount);
+
+    emit DepositedAndCommitted(_spender, _amount);
+  }
+
+  function _depositFrom(address _spender, uint256 _amount) internal {
     // Update the user's balance
-    balances[msg.sender] = balances[msg.sender].add(_amount);
+    balances[_spender] = balances[_spender].add(_amount);
 
     // Update the total of this contract
     accountedBalance = accountedBalance.add(_amount);

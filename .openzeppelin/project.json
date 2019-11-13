@@ -16,7 +16,7 @@
       },
       "evmVersion": "constantinople"
     },
-    "solcVersion": "0.5.10"
+    "solcVersion": "0.5.12"
   },
-  "telemetryOptIn": true
+  "telemetryOptIn": false
 }

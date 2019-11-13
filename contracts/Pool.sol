@@ -1,10 +1,11 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 import "./BasePool.sol";
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777.sol";
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Sender.sol";
 import "@openzeppelin/contracts/contracts/introspection/IERC1820Registry.sol";
+import "@openzeppelin/contracts/contracts/utils/Address.sol";
 
 /**
  * @dev Implementation of the {IERC777} interface.
@@ -27,44 +28,58 @@ import "@openzeppelin/contracts/contracts/introspection/IERC1820Registry.sol";
  */
 contract Pool is IERC20, IERC777, BasePool {
   using SafeMath for uint256;
+  using Address for address;
 
-  IERC1820Registry constant private ERC1820_REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
+  IERC1820Registry constant internal ERC1820_REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
 
   // We inline the result of the following hashes because Solidity doesn't resolve them at compile time.
   // See https://github.com/ethereum/solidity/issues/4024.
 
   // keccak256("ERC777TokensSender")
-  bytes32 constant private TOKENS_SENDER_INTERFACE_HASH =
+  bytes32 constant internal TOKENS_SENDER_INTERFACE_HASH =
       0x29ddb589b1fb5fc7cf394961c1adf5f8c6454761adf795e67fe149f658abe895;
 
   // keccak256("ERC777TokensRecipient")
-  bytes32 constant private TOKENS_RECIPIENT_INTERFACE_HASH =
+  bytes32 constant internal TOKENS_RECIPIENT_INTERFACE_HASH =
       0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
 
-  string private _name;
-  string private _symbol;
+  string internal _name;
+  string internal _symbol;
 
   // This isn't ever read from - it's only used to respond to the defaultOperators query.
-  address[] private _defaultOperatorsArray;
+  address[] internal _defaultOperatorsArray;
 
   // Immutable, but accounts may revoke them (tracked in __revokedDefaultOperators).
-  mapping(address => bool) private _defaultOperators;
+  mapping(address => bool) internal _defaultOperators;
 
   // For each account, a mapping of its operators and revoked default operators.
-  mapping(address => mapping(address => bool)) private _operators;
-  mapping(address => mapping(address => bool)) private _revokedDefaultOperators;
+  mapping(address => mapping(address => bool)) internal _operators;
+  mapping(address => mapping(address => bool)) internal _revokedDefaultOperators;
 
   // ERC20-allowances
-  mapping (address => mapping (address => uint256)) private _allowances;
+  mapping (address => mapping (address => uint256)) internal _allowances;
+
+  function init (
+    address _owner,
+    address _cToken,
+    uint256 _feeFraction,
+    address _feeBeneficiary,
+    string memory name,
+    string memory symbol,
+    address[] memory defaultOperators
+  ) public initializer {
+    init(_owner, _cToken, _feeFraction, _feeBeneficiary);
+    initERC777(name, symbol, defaultOperators);
+  }
 
   /**
     * @dev `defaultOperators` may be an empty array.
     */
   function initERC777 (
-      string calldata name,
-      string calldata symbol,
-      address[] calldata defaultOperators
-  ) external {
+      string memory name,
+      string memory symbol,
+      address[] memory defaultOperators
+  ) public {
       require(bytes(name).length != 0, "name must be defined");
       require(bytes(symbol).length != 0, "symbol must be defined");
       require(bytes(_name).length == 0, "ERC777 has already been initialized");
@@ -148,7 +163,7 @@ contract Pool is IERC20, IERC777, BasePool {
 
       _move(from, from, recipient, amount, "", "");
 
-      _callTokensReceived(from, from, recipient, amount, "", "");
+      _callTokensReceived(from, from, recipient, amount, "", "", false);
 
       return true;
   }
@@ -281,7 +296,7 @@ contract Pool is IERC20, IERC777, BasePool {
       _move(spender, holder, recipient, amount, "", "");
       _approve(holder, spender, _allowances[holder][spender].sub(amount, "ERC777: transfer amount exceeds allowance"));
 
-      _callTokensReceived(spender, holder, recipient, amount, "", "");
+      _callTokensReceived(spender, holder, recipient, amount, "", "", false);
 
       return true;
   }
@@ -312,7 +327,7 @@ contract Pool is IERC20, IERC777, BasePool {
 
       _move(operator, from, to, amount, userData, operatorData);
 
-      _callTokensReceived(operator, from, to, amount, userData, operatorData);
+      _callTokensReceived(operator, from, to, amount, userData, operatorData, true);
   }
 
   /**
@@ -413,13 +428,16 @@ contract Pool is IERC20, IERC777, BasePool {
       address to,
       uint256 amount,
       bytes memory userData,
-      bytes memory operatorData
+      bytes memory operatorData,
+      bool requireReceptionAck
   )
       private
   {
       address implementer = ERC1820_REGISTRY.getInterfaceImplementer(to, TOKENS_RECIPIENT_INTERFACE_HASH);
       if (implementer != address(0)) {
           IERC777Recipient(implementer).tokensReceived(operator, from, to, amount, userData, operatorData);
+      } else if (requireReceptionAck) {
+          require(!to.isContract(), "ERC777: contract recipient has no implementer for ERC777TokensRecipient");
       }
   }
 }

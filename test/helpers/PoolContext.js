@@ -16,7 +16,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   const [owner, admin, user1, user2] = accounts
 
   const Token = artifacts.require('Token.sol')
-  const Pool = artifacts.require('Pool.sol')
+  const LocalMCDAwarePool = artifacts.require('LocalMCDAwarePool.sol')
   const CErc20Mock = artifacts.require('CErc20Mock.sol')
   const FixidityLib = artifacts.require('FixidityLib.sol')
   const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
@@ -30,7 +30,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     sumTree = await SortitionSumTreeFactory.new()
     await DrawManager.link("SortitionSumTreeFactory", sumTree.address)
     drawManager = await DrawManager.new()
-    await Pool.link('DrawManager', drawManager.address)
+    await LocalMCDAwarePool.link('DrawManager', drawManager.address)
     fixidity = await FixidityLib.new({ from: admin })
 
     token = await Token.new({ from: admin })
@@ -69,18 +69,17 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   }
 
   this.createPool = async (feeFraction = new BN('0')) => {
-    await Pool.link("DrawManager", drawManager.address)
-    await Pool.link("FixidityLib", fixidity.address)
+    await LocalMCDAwarePool.link("DrawManager", drawManager.address)
+    await LocalMCDAwarePool.link("FixidityLib", fixidity.address)
 
-    pool = await Pool.new()
+    pool = await LocalMCDAwarePool.new()
     await pool.init(
       owner,
       moneyMarket.address,
       feeFraction,
-      owner
+      owner,
+      'Prize Dai', 'pzDAI', []
     )
-
-    await pool.initERC777('Prize Dai', 'pzDAI', [])
 
     await this.openNextDraw()
 
@@ -88,10 +87,10 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   }
 
   this.createPoolNoInit = async (feeFraction = new BN('0')) => {
-    await Pool.link("DrawManager", drawManager.address)
-    await Pool.link("FixidityLib", fixidity.address)
+    await LocalMCDAwarePool.link("DrawManager", drawManager.address)
+    await LocalMCDAwarePool.link("FixidityLib", fixidity.address)
 
-    pool = await Pool.new()
+    pool = await LocalMCDAwarePool.new()
     await pool.init(
       owner,
       moneyMarket.address,

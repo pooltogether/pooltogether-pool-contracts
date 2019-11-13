@@ -1,4 +1,4 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Sender.sol";
 import "@openzeppelin/contracts/contracts/introspection/IERC1820Implementer.sol";
@@ -33,7 +33,7 @@ contract MockERC777Sender is IERC777Sender, IERC1820Implementer {
     operatorData = _operatorData;
   }
 
-  function canImplementInterfaceForAddress(bytes32 interfaceHash, address account) external view returns (bytes32) {
+  function canImplementInterfaceForAddress(bytes32 interfaceHash, address) external view returns (bytes32) {
     if (interfaceHash == TOKENS_SENDER_INTERFACE_HASH) {
       return ERC1820_ACCEPT_MAGIC;
     } else {

@@ -192,7 +192,6 @@ contract('Pool.ERC777', (accounts) => {
         
         beforeEach(async () => {
           sender = await MockERC777Sender.new()
-          console.log(owner, TOKENS_SENDER_INTERFACE_HASH, sender.address)
           assert.equal(await registry.getManager(owner), owner)
           await registry.setInterfaceImplementer(owner, TOKENS_SENDER_INTERFACE_HASH, sender.address)
         })
@@ -210,7 +209,6 @@ contract('Pool.ERC777', (accounts) => {
         
         beforeEach(async () => {
           recipient = await MockERC777Recipient.new()
-          console.log(owner, TOKENS_RECIPIENT_INTERFACE_HASH, recipient.address)
           await registry.setInterfaceImplementer(user2, TOKENS_RECIPIENT_INTERFACE_HASH, recipient.address, { from: user2 })
         })
   
