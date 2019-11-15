@@ -5690,16 +5690,6 @@ onetime@^5.1.0:
   dependencies:
     mimic-fn "^2.1.0"
 
-openzeppelin-ethers@pooltogether/openzeppelin-ethers#master:
-  version "1.0.0"
-  resolved "https://codeload.github.com/pooltogether/openzeppelin-ethers/tar.gz/77d8c40805453abd6a1a081793a09d5bb77f7064"
-  dependencies:
-    async-repl "^0.4.0"
-    chalk "^2.4.2"
-    commander "^3.0.2"
-    ethers "^4.0.38"
-    glob "^7.1.5"
-
 openzeppelin-solidity@^1.12.0:
   version "1.12.0"
   resolved "https://registry.yarnpkg.com/openzeppelin-solidity/-/openzeppelin-solidity-1.12.0.tgz#7b9c55975e73370d4541e3442b30cb3d91ac973a"
@@ -5756,6 +5746,16 @@ osenv@^0.1.5:
   dependencies:
     os-homedir "^1.0.0"
     os-tmpdir "^1.0.0"
+
+oz-console@pooltogether/oz-console#master:
+  version "1.0.0"
+  resolved "https://codeload.github.com/pooltogether/oz-console/tar.gz/5433243513f678cf8273adeb7b945e45ac5b3948"
+  dependencies:
+    async-repl "^0.4.0"
+    chalk "^2.4.2"
+    commander "^3.0.2"
+    ethers "^4.0.38"
+    glob "^7.1.5"
 
 p-cancelable@^0.3.0:
   version "0.3.0"
