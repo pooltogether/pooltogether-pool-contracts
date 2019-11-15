@@ -18,7 +18,7 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.5.12;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
