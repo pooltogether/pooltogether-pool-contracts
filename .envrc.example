@@ -2,3 +2,6 @@ export HDWALLET_MNEMONIC="front ski wolf horse woman mushroom frown fold vacuum 
 export INFURA_PROVIDER_URL=https://ropsten.infura.io/v3/< your api key >
 export INFURA_PROVIDER_URL_MAINNET=https://mainnet.infura.io/v3/< your api key >
 export ADMIN_ADDRESS=0x51f595ef681c3b3b6b6949fbbb36b7d98daa15bf
+
+# export GANACHE_FORK_URL=https://mainnet.infura.io/v3/< your api key >
+# export GANACHE_FORK_EXTRA_OPTIONS="--unlock 0xbe0eb53f46cd790cd13851d5eff43d12404d33e8--unlock 0x567fb0238d73fcF4DB40C3BD83433b9a39284CaE --unlock 0x14300cd613d6A719AC19dE68C2F1042B3217cBFf --unlock 0x0000000000000000000000000000000000000000 --unlock 0xed4B4AA039Cbb8A1A125cEB955765D8908E1D4c1 --unlock 0xa38445311cCd04a54183CDd347E793F4D548Df3F --unlock 0x41e5ce140F7Cfd1e2217a80B8A4f65BbB218fa3E"

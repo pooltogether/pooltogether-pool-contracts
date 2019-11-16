@@ -1,10 +1,10 @@
 pragma solidity 0.5.12;
 
-import "./Pool.sol";
+import "./ERC777Pool.sol";
 import "scd-mcd-migration/src/ScdMcdMigration.sol";
 import { GemLike } from "scd-mcd-migration/src/Interfaces.sol";
 
-contract MCDAwarePool is Pool, IERC777Recipient {
+contract MCDAwarePool is ERC777Pool, IERC777Recipient {
 
   // keccak("PoolTogether.MCDAwarePool")
   bytes32 public constant MCD_AWARE_POOL_INTERFACE_HASH = 0xf07efa750d04abfb9556d73b16e6ffb37436eb789c2a8fd17117e0bf232a506c;
@@ -29,6 +29,15 @@ contract MCDAwarePool is Pool, IERC777Recipient {
       symbol,
       defaultOperators
     );
+    initMCDAwarePool();
+  }
+
+  function initBasePoolUpgrade(
+    string memory name,
+    string memory symbol,
+    address[] memory defaultOperators
+  ) public {
+    initERC777(name, symbol, defaultOperators);
     initMCDAwarePool();
   }
 

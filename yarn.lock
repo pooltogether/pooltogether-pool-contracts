@@ -6254,7 +6254,7 @@ optjs@~3.2.2:
   resolved "https://registry.yarnpkg.com/optjs/-/optjs-3.2.2.tgz#69a6ce89c442a44403141ad2f9b370bd5bb6f4ee"
   integrity sha1-aabOicRCpEQDFBrS+bNwvVu29O4=
 
-original-require@1.0.1:
+original-require@1.0.1, original-require@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/original-require/-/original-require-1.0.1.tgz#0f130471584cd33511c5ec38c8d59213f9ac5e20"
   integrity sha1-DxMEcVhM0zURxew4yNWSE/msXiA=
@@ -6295,13 +6295,14 @@ osenv@^0.1.4, osenv@^0.1.5:
 
 oz-console@pooltogether/oz-console#master:
   version "1.0.0"
-  resolved "https://codeload.github.com/pooltogether/oz-console/tar.gz/4f4a8b6323e5435b9ba3548669e50939879a16c0"
+  resolved "https://codeload.github.com/pooltogether/oz-console/tar.gz/47ee52ce04a9ce24acd17a517687e22fa2c42eec"
   dependencies:
     async-repl "^0.4.0"
     chalk "^2.4.2"
     commander "^3.0.2"
     ethers "^4.0.38"
     glob "^7.1.5"
+    original-require "^1.0.1"
 
 p-cancelable@^0.3.0:
   version "0.3.0"
