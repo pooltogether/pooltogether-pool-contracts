@@ -239,7 +239,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   /**
    * @notice Commits the current draw.
    */
-  function commit() internal {
+  function emitCommitted() internal {
     uint256 drawId = currentOpenDrawId();
     emit Committed(drawId);
   }
@@ -254,7 +254,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   function openNextDraw(bytes32 nextSecretHash) public onlyAdmin unlessPaused {
     require(currentCommittedDrawId() == 0, "there is a committed draw");
     if (currentOpenDrawId() != 0) {
-      commit();
+      emitCommitted();
     }
     open(nextSecretHash);
   }
@@ -269,7 +269,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret, bytes32 _salt) public onlyAdmin unlessPaused {
     require(currentCommittedDrawId() != 0, "a draw has not been committed");
     reward(lastSecret, _salt);
-    commit();
+    emitCommitted();
     open(nextSecretHash);
   }
 

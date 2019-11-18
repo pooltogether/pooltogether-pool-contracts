@@ -141,6 +141,12 @@ library DrawManager {
         }
     }
 
+    /**
+     * @notice Deposits into a user's committed balance, thereby bypassing the open draw.
+     * @param self The DrawManager state
+     * @param _addr The address of the user for whom to deposit
+     * @param _amount The amount to deposit
+     */
     function depositCommitted(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) {
         bytes32 userId = bytes32(uint256(_addr));
         uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
@@ -176,22 +182,28 @@ library DrawManager {
         }
     }
 
-    function withdrawCommitted(State storage state, address user, uint256 amount) public requireOpenDraw(state) {
+    /**
+     * @notice Withdraw's from a user's committed balance.  Fails if the user attempts to take more than available.
+     * @param self The DrawManager state
+     * @param user The user to withdraw from
+     * @param amount The amount to withdraw.
+     */
+    function withdrawCommitted(State storage self, address user, uint256 amount) public requireOpenDraw(self) {
         bytes32 userId = bytes32(uint256(user));
-        uint256 firstDrawIndex = state.usersFirstDrawIndex[user];
-        uint256 secondDrawIndex = state.usersSecondDrawIndex[user];
+        uint256 firstDrawIndex = self.usersFirstDrawIndex[user];
+        uint256 secondDrawIndex = self.usersSecondDrawIndex[user];
 
         uint256 firstAmount;
         uint256 secondAmount;
         uint256 total;
 
-        if (secondDrawIndex != 0 && secondDrawIndex != state.openDrawIndex) {
-            secondAmount = state.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
+        if (secondDrawIndex != 0 && secondDrawIndex != self.openDrawIndex) {
+            secondAmount = self.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
             total = total.add(secondAmount);
         }
 
-        if (firstDrawIndex != 0 && firstDrawIndex != state.openDrawIndex) {
-            firstAmount = state.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
+        if (firstDrawIndex != 0 && firstDrawIndex != self.openDrawIndex) {
+            firstAmount = self.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
             total = total.add(firstAmount);
         }
 
@@ -202,16 +214,18 @@ library DrawManager {
         // if there was a second amount that needs to be updated
         if (remaining > firstAmount) {
             uint256 secondRemaining = remaining.sub(firstAmount);
-            drawSet(state, secondDrawIndex, secondRemaining, user);
+            drawSet(self, secondDrawIndex, secondRemaining, user);
         } else if (secondAmount > 0) { // else delete the second amount if it exists
-            delete state.usersSecondDrawIndex[user];
+            delete self.usersSecondDrawIndex[user];
+            drawSet(self, secondDrawIndex, 0, user);
         }
 
-        // if the first amount needs to be destroye
+        // if the first amount needs to be destroyed
         if (remaining == 0) {
-            delete state.usersFirstDrawIndex[user];
+            delete self.usersFirstDrawIndex[user];
+            drawSet(self, firstDrawIndex, 0, user);
         } else if (remaining < firstAmount) {
-            drawSet(state, firstDrawIndex, remaining, user);
+            drawSet(self, firstDrawIndex, remaining, user);
         }
     }
 
