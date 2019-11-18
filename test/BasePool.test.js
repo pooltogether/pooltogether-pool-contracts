@@ -609,16 +609,6 @@ contract('BasePool', (accounts) => {
       } catch (e) {}
       assert.ok(failed)
     })
-
-    it('should not allow new draws', async () => {
-      await pool.pause()
-      let failed = true
-      try {
-        await poolContext.nextDraw()
-        failed = false
-      } catch (e) {}
-      assert.ok(failed)
-    })
   })
 
   describe('unpause()', () => {

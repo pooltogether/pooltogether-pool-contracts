@@ -66,7 +66,7 @@ library DrawManager {
         /**
          * Stores a mapping of Draw index => Draw total
          */
-        mapping(uint256 => uint256) __old__drawTotals;
+        mapping(uint256 => uint256) __deprecated__drawTotals;
 
         /**
          * The current open Draw index
@@ -76,7 +76,7 @@ library DrawManager {
         /**
          * The total of committed balances
          */
-        uint256 __old__committedSupply;
+        uint256 __deprecated__committedSupply;
     }
 
     /**
@@ -109,6 +109,7 @@ library DrawManager {
      * @param _amount The amount to deposit
      */
     function deposit(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) {
+        require(_addr != address(0), "address is zero");
         bytes32 userId = bytes32(uint256(_addr));
         uint256 openDrawIndex = self.openDrawIndex;
 
@@ -148,6 +149,7 @@ library DrawManager {
      * @param _amount The amount to deposit
      */
     function depositCommitted(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) {
+        require(_addr != address(0), "address is zero");
         bytes32 userId = bytes32(uint256(_addr));
         uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
 
@@ -168,6 +170,7 @@ library DrawManager {
      * @param _addr The address whose balance to withdraw
      */
     function withdraw(State storage self, address _addr) public requireOpenDraw(self) {
+        require(_addr != address(0), "address is zero");
         uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
         uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
 
@@ -185,17 +188,18 @@ library DrawManager {
     /**
      * @notice Withdraw's from a user's committed balance.  Fails if the user attempts to take more than available.
      * @param self The DrawManager state
-     * @param user The user to withdraw from
-     * @param amount The amount to withdraw.
+     * @param _addr The user to withdraw from
+     * @param _amount The amount to withdraw.
      */
-    function withdrawCommitted(State storage self, address user, uint256 amount) public requireOpenDraw(self) {
-        bytes32 userId = bytes32(uint256(user));
-        uint256 firstDrawIndex = self.usersFirstDrawIndex[user];
-        uint256 secondDrawIndex = self.usersSecondDrawIndex[user];
+    function withdrawCommitted(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) {
+        require(_addr != address(0), "address is zero");
+        bytes32 userId = bytes32(uint256(_addr));
+        uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
+        uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
 
-        uint256 firstAmount;
-        uint256 secondAmount;
-        uint256 total;
+        uint256 firstAmount = 0;
+        uint256 secondAmount = 0;
+        uint256 total = 0;
 
         if (secondDrawIndex != 0 && secondDrawIndex != self.openDrawIndex) {
             secondAmount = self.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
@@ -207,25 +211,25 @@ library DrawManager {
             total = total.add(firstAmount);
         }
 
-        require(amount <= total, "cannot withdraw more than available");
+        require(_amount <= total, "cannot withdraw more than available");
 
-        uint256 remaining = total.sub(amount);
+        uint256 remaining = total.sub(_amount);
 
         // if there was a second amount that needs to be updated
         if (remaining > firstAmount) {
             uint256 secondRemaining = remaining.sub(firstAmount);
-            drawSet(self, secondDrawIndex, secondRemaining, user);
+            drawSet(self, secondDrawIndex, secondRemaining, _addr);
         } else if (secondAmount > 0) { // else delete the second amount if it exists
-            delete self.usersSecondDrawIndex[user];
-            drawSet(self, secondDrawIndex, 0, user);
+            delete self.usersSecondDrawIndex[_addr];
+            drawSet(self, secondDrawIndex, 0, _addr);
         }
 
         // if the first amount needs to be destroyed
         if (remaining == 0) {
-            delete self.usersFirstDrawIndex[user];
-            drawSet(self, firstDrawIndex, 0, user);
+            delete self.usersFirstDrawIndex[_addr];
+            drawSet(self, firstDrawIndex, 0, _addr);
         } else if (remaining < firstAmount) {
-            drawSet(self, firstDrawIndex, remaining, user);
+            drawSet(self, firstDrawIndex, remaining, _addr);
         }
     }
 

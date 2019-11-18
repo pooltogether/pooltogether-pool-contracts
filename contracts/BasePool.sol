@@ -53,7 +53,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   using SafeMath for uint256;
   using Roles for Roles.Role;
 
-  uint256 private constant ETHER_IN_WEI = 1000000000000000000;
+  bytes32 private constant ROLLED_OVER_ENTROPY_MAGIC_NUMBER = bytes32(uint256(1));
 
   /**
    * Emitted when a user deposits into the Pool.
@@ -148,11 +148,20 @@ contract BasePool is Initializable, ReentrancyGuard {
    */
   event Unpaused(address indexed sender);
 
+  /**
+   * Emitted when the draw is rolled over in the event that the secret is forgotten.
+   */
+  event RolledOver(uint256 indexed drawId);
+
   struct Draw {
     uint256 feeFraction; //fixed point 18
     address feeBeneficiary;
     uint256 openedBlock;
     bytes32 secretHash;
+    bytes32 entropy;
+    address winner;
+    uint256 netWinnings;
+    uint256 fee;
   }
 
   /**
@@ -227,7 +236,16 @@ contract BasePool is Initializable, ReentrancyGuard {
    */
   function open(bytes32 _secretHash) internal {
     drawState.openNextDraw();
-    draws[drawState.openDrawIndex] = Draw(nextFeeFraction, nextFeeBeneficiary, block.number, _secretHash);
+    draws[drawState.openDrawIndex] = Draw(
+      nextFeeFraction,
+      nextFeeBeneficiary,
+      block.number,
+      _secretHash,
+      bytes32(0),
+      address(0),
+      uint256(0),
+      uint256(0)
+    );
     emit Opened(
       drawState.openDrawIndex,
       nextFeeBeneficiary,
@@ -251,12 +269,23 @@ contract BasePool is Initializable, ReentrancyGuard {
    * May fire the Committed event, and always fires the Open event.
    * @param nextSecretHash The secret hash to use to open a new Draw
    */
-  function openNextDraw(bytes32 nextSecretHash) public onlyAdmin unlessPaused {
-    require(currentCommittedDrawId() == 0, "there is a committed draw");
+  function openNextDraw(bytes32 nextSecretHash) public onlyAdmin {
+    if (currentCommittedDrawId() > 0) {
+      require(currentCommittedDrawHasBeenRewarded(), "the current committed draw has not been rewarded");
+    }
     if (currentOpenDrawId() != 0) {
       emitCommitted();
     }
     open(nextSecretHash);
+  }
+
+  /**
+   * @notice Ignores the current draw, and opens the next draw.
+   * @dev This function will be removed once the winner selection has been decentralized.
+   */
+  function rolloverAndOpenNextDraw(bytes32 nextSecretHash) public onlyAdmin {
+    rollover();
+    openNextDraw(nextSecretHash);
   }
 
   /**
@@ -266,38 +295,41 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @param nextSecretHash The secret hash to use to open a new Draw
    * @param lastSecret The secret to reveal to reward the current committed Draw.
    */
-  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret, bytes32 _salt) public onlyAdmin unlessPaused {
-    require(currentCommittedDrawId() != 0, "a draw has not been committed");
+  function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret, bytes32 _salt) public onlyAdmin {
     reward(lastSecret, _salt);
-    emitCommitted();
-    open(nextSecretHash);
+    openNextDraw(nextSecretHash);
   }
 
   /**
    * @notice Rewards the winner for the current committed Draw using the passed secret.
    * The gross winnings are calculated by subtracting the accounted balance from the current underlying cToken balance.
-   * A winner is calculated using the revealed secret and a hash of the Draw's opened block and the gross winnings.
+   * A winner is calculated using the revealed secret.
    * If there is a winner (i.e. any eligible users) then winner's balance is updated with their net winnings.
    * The draw beneficiary's balance is updated with the fee.
    * The accounted balance is updated to include the fee and, if there was a winner, the net winnings.
    * Fires the Rewarded event.
    * @param _secret The secret to reveal for the current committed Draw
    */
-  function reward(bytes32 _secret, bytes32 _salt) internal {
+  function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin {
+    // require that there is a committed draw
+    // require that the committed draw has not been rewarded
     uint256 drawId = currentCommittedDrawId();
+    require(drawId > 0, "must be a committed draw");
+    require(!currentCommittedDrawHasBeenRewarded(), "the committed draw has already been rewarded");
+
     Draw storage draw = draws[drawId];
 
     require(draw.secretHash == keccak256(abi.encodePacked(_secret, _salt)), "secret does not match");
 
-    // Calculate the gross winnings
-    uint256 underlyingBalance = balance();
-    uint256 grossWinnings = underlyingBalance.sub(accountedBalance);
-
-    // derive entropy from the revealed secret and the hash of the openedBlock and gross winnings
-    bytes32 entropy = _secret ^ keccak256(abi.encodePacked(draw.openedBlock, grossWinnings));
+    // derive entropy from the revealed secret
+    bytes32 entropy = keccak256(abi.encodePacked(_secret));
 
     // Select the winner using the hash as entropy
     address winningAddress = calculateWinner(entropy);
+
+    // Calculate the gross winnings
+    uint256 underlyingBalance = balance();
+    uint256 grossWinnings = underlyingBalance.sub(accountedBalance);
 
     // Calculate the beneficiary fee
     uint256 fee = calculateFee(draw.feeFraction, grossWinnings);
@@ -323,8 +355,10 @@ contract BasePool is Initializable, ReentrancyGuard {
       accountedBalance = accountedBalance.add(fee);
     }
 
-    // Destroy the draw now that it's complete
-    delete draws[drawId];
+    draw.winner = winningAddress;
+    draw.netWinnings = netWinnings;
+    draw.fee = fee;
+    draw.entropy = entropy;
 
     emit Rewarded(
       drawId,
@@ -332,6 +366,31 @@ contract BasePool is Initializable, ReentrancyGuard {
       entropy,
       netWinnings,
       fee
+    );
+  }
+
+  /**
+   * @notice A function that skips the reward for the committed draw id.
+   * @dev This function will be removed once the entropy is decentralized.
+   */
+  function rollover() public onlyAdmin {
+    uint256 drawId = currentCommittedDrawId();
+    require(drawId > 0, "must be a committed draw");
+    require(!currentCommittedDrawHasBeenRewarded(), "the committed draw has already been rewarded");
+
+    Draw storage draw = draws[drawId];
+    draw.entropy = ROLLED_OVER_ENTROPY_MAGIC_NUMBER;
+
+    emit RolledOver(
+      drawId
+    );
+
+    emit Rewarded(
+      drawId,
+      address(0),
+      ROLLED_OVER_ENTROPY_MAGIC_NUMBER,
+      0,
+      0
     );
   }
 
@@ -448,6 +507,15 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
+   * @notice Returns whether the current committed draw has been rewarded
+   * @return True if the current committed draw has been rewarded, false otherwise
+   */
+  function currentCommittedDrawHasBeenRewarded() internal view returns (bool) {
+    Draw storage draw = draws[currentCommittedDrawId()];
+    return draw.entropy != bytes32(0);
+  }
+
+  /**
    * @notice Gets information for a given draw.
    * @param _drawId The id of the Draw to retrieve info for.
    * @return Fields including:
@@ -460,13 +528,21 @@ contract BasePool is Initializable, ReentrancyGuard {
     uint256 feeFraction,
     address feeBeneficiary,
     uint256 openedBlock,
-    bytes32 secretHash
+    bytes32 secretHash,
+    bytes32 entropy,
+    address winner,
+    uint256 netWinnings,
+    uint256 fee
   ) {
     Draw storage draw = draws[_drawId];
     feeFraction = draw.feeFraction;
     feeBeneficiary = draw.feeBeneficiary;
     openedBlock = draw.openedBlock;
     secretHash = draw.secretHash;
+    entropy = draw.entropy;
+    winner = draw.winner;
+    netWinnings = draw.netWinnings;
+    fee = draw.fee;
   }
 
   /**
@@ -559,7 +635,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   function _setNextFeeFraction(uint256 _feeFraction) internal {
-    require(_feeFraction <= ETHER_IN_WEI, "fee fraction must be 1 or less");
+    require(_feeFraction <= 1 ether, "fee fraction must be 1 or less");
     nextFeeFraction = _feeFraction;
 
     emit NextFeeFractionChanged(_feeFraction);
@@ -609,10 +685,12 @@ contract BasePool is Initializable, ReentrancyGuard {
   /**
    * @notice Removes an administrator
    * Can only be called by an admin.
+   * Admins cannot remove themselves.  This ensures there is always one admin.
    * @param _admin The address of the admin to remove
    */
   function removeAdmin(address _admin) public onlyAdmin {
     require(admins.has(_admin), "admin does not exist");
+    require(_admin != msg.sender, "cannot remove yourself");
     admins.remove(_admin);
 
     emit AdminRemoved(_admin);
