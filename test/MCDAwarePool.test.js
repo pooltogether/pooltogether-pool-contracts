@@ -1,6 +1,12 @@
 const PoolContext = require('./helpers/PoolContext')
 const toWei = require('./helpers/toWei')
 const chai = require('./helpers/chai')
+const {
+  ERC_777_INTERFACE_HASH,
+  ERC_20_INTERFACE_HASH,
+  TOKENS_RECIPIENT_INTERFACE_HASH,
+  MCD_AWARE_POOL_INTERFACE_HASH
+} = require('./helpers/constants')
 
 const BN = require('bn.js')
 
@@ -13,10 +19,10 @@ contract('MCDAwarePool', (accounts) => {
   let sendingContext = new PoolContext({ web3, artifacts, accounts })
   let receivingContext = new PoolContext({ web3, artifacts, accounts })
 
-  let receivingPool, dai
+  let receivingPool, dai, receivingContracts
 
   beforeEach(async () => {
-    const receivingContracts = await receivingContext.init()
+    receivingContracts = await receivingContext.init()
     dai = receivingContracts.token
     receivingPool = await receivingContext.createPool()
   })
@@ -120,6 +126,27 @@ contract('MCDAwarePool', (accounts) => {
           await chai.assert.isRejected(sendingPool.transfer(receivingPool.address, amount), /contract does not use Dai/)
         })
       })
+    })
+  })
+
+  describe('initBasePoolUpgrade()', () => {
+    it('should safely upgrae the pool', async () => {
+      let pool = await receivingContext.createPoolNoInit()
+      await receivingContext.openNextDraw()
+
+      await receivingContext.depositPool(toWei('10'), { from: user1 })
+      await receivingContext.depositPool(toWei('20'), { from: user2 })
+      await receivingContext.nextDraw()
+      await receivingContext.depositPool(toWei('10', { from: user1 }))
+
+      await pool.initBasePoolUpgrade('Prize Dai', 'pzDai', [])
+
+      assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, ERC_777_INTERFACE_HASH), pool.address)
+      assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, ERC_20_INTERFACE_HASH), pool.address)
+      assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, MCD_AWARE_POOL_INTERFACE_HASH), pool.address)
+      assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, TOKENS_RECIPIENT_INTERFACE_HASH), pool.address)
+      assert.equal(await pool.name(), 'Prize Dai')
+      assert.equal(await pool.symbol(), 'pzDai')
     })
   })
 })

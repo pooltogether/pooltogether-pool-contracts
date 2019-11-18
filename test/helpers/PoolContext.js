@@ -17,6 +17,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
 
   const Token = artifacts.require('Token.sol')
   const LocalMCDAwarePool = artifacts.require('LocalMCDAwarePool.sol')
+  const BasePool = artifacts.require('BasePool.sol')
   const CErc20Mock = artifacts.require('CErc20Mock.sol')
   const FixidityLib = artifacts.require('FixidityLib.sol')
   const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
@@ -71,6 +72,23 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
       await token.approve(pool.address, amount)
       await pool.depositPool(amount)
     }
+  }
+
+  this.createBasePool = async (feeFraction = new BN('0')) => {
+    await BasePool.link("DrawManager", drawManager.address)
+    await BasePool.link("FixidityLib", fixidity.address)
+
+    pool = await BasePool.new()
+    await pool.init(
+      owner,
+      moneyMarket.address,
+      feeFraction,
+      owner
+    )
+
+    await this.openNextDraw()
+
+    return pool
   }
 
   this.createPool = async (feeFraction = new BN('0')) => {
