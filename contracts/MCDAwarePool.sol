@@ -28,6 +28,13 @@ contract MCDAwarePool is ERC777Pool, IERC777Recipient {
 
   /**
    * @notice Initializes the contract.
+   * @param _owner The initial administrator of the contract
+   * @param _cToken The Compound cToken to bind this Pool to
+   * @param _feeFraction The fraction of the winnings to give to the beneficiary
+   * @param _feeBeneficiary The beneficiary who receives the fee
+   * @param name The name of the Pool ticket tokens
+   * @param symbol The symbol (short name) of the Pool ticket tokens
+   * @param defaultOperators Addresses that should always be able to move tokens on behalf of others
    */
   function init (
     address _owner,

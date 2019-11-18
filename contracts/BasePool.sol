@@ -426,6 +426,10 @@ contract BasePool is Initializable, ReentrancyGuard {
     _depositSponsorshipFrom(msg.sender, _amount);
   }
 
+  /**
+   * @notice Deposits the token balance for this contract as a sponsorship.
+   * If people erroneously transfer tokens to this contract, this function will allow us to recoup those tokens as sponsorship.
+   */
   function transferBalanceToSponsorship() public {
     // Deposit the sponsorship amount
     _depositSponsorshipFrom(address(this), token().balanceOf(address(this)));
