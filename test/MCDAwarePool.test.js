@@ -4,8 +4,7 @@ const chai = require('./helpers/chai')
 const {
   ERC_777_INTERFACE_HASH,
   ERC_20_INTERFACE_HASH,
-  TOKENS_RECIPIENT_INTERFACE_HASH,
-  MCD_AWARE_POOL_INTERFACE_HASH
+  TOKENS_RECIPIENT_INTERFACE_HASH
 } = require('./helpers/constants')
 
 const BN = require('bn.js')
@@ -40,7 +39,7 @@ contract('MCDAwarePool', (accounts) => {
       it('should fail', async () => {
         await token.mint(owner, toWei('1000'), [])
 
-        await chai.assert.isRejected(token.send(receivingPool.address, toWei('1000'), []), /sender must implement MCDAwarePool/)
+        await chai.assert.isRejected(token.send(receivingPool.address, toWei('1000'), []), /can only receive tokens from Sai Pool/)
       })
     })
 
@@ -68,7 +67,7 @@ contract('MCDAwarePool', (accounts) => {
         assert.equal(await scdMcdMigration.dai(), dai.address)
 
         // Inject SCDMCDMigration into receiving pool
-        await receivingPool.initLocalMCDAwarePool(scdMcdMigration.address)
+        await receivingPool.initLocalMCDAwarePool(scdMcdMigration.address, sendingPool.address)
         // Ensure the dai pool has the ScdMcdMigration wired up correctly
         assert.equal(await receivingPool.scdMcdMigration(), scdMcdMigration.address)
         assert.equal((await receivingPool.methods['sai()'].call()).toString(), sai.address)
@@ -95,23 +94,6 @@ contract('MCDAwarePool', (accounts) => {
         assert.equal(await sendingPool.balanceOf(owner), '0')
         assert.equal(await receivingPool.balanceOf(owner), '0')
         assert.equal(await receivingPool.openBalanceOf(owner), toWei('10'))
-      })
-
-      describe('when receiving tokens from non-Sai MCD Pool', () => {
-        let newSaiToken
-
-        beforeEach(async () => {
-          // Replace the Sai token with a new one
-          newSaiToken = await sendingContext.newToken()
-          await scdMcdMigration.setSai(newSaiToken.address)
-          assert.equal((await receivingPool.methods['sai()'].call()).toString(), newSaiToken.address)
-          assert.ok(newSaiToken.address != sai.address)
-          assert.equal(await moneyMarket.underlying(), sai.address)
-        })
-
-        it('should reject the transfer', async () => {
-          await chai.assert.isRejected(sendingPool.transfer(receivingPool.address, amount), /sender must be using Sai/)
-        })
       })
 
       describe('to a non-Dai MCD Pool', () => {
@@ -143,7 +125,6 @@ contract('MCDAwarePool', (accounts) => {
 
       assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, ERC_777_INTERFACE_HASH), pool.address)
       assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, ERC_20_INTERFACE_HASH), pool.address)
-      assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, MCD_AWARE_POOL_INTERFACE_HASH), pool.address)
       assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, TOKENS_RECIPIENT_INTERFACE_HASH), pool.address)
       assert.equal(await pool.name(), 'Prize Dai')
       assert.equal(await pool.symbol(), 'pzDai')

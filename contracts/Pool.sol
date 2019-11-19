@@ -25,4 +25,8 @@ contract Pool is MCDAwarePool {
   function scdMcdMigration() public view returns (ScdMcdMigration) {
     return ScdMcdMigration(0xc73e0383F3Aff3215E6f04B0331D58CeCf0Ab849);
   }
+
+  function saiPool() public view returns (MCDAwarePool) {
+    return MCDAwarePool(0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84);
+  }
 }
