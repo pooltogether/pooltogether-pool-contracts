@@ -21,11 +21,25 @@ pragma solidity 0.5.12;
 import "./MCDAwarePool.sol";
 import "scd-mcd-migration/src/ScdMcdMigration.sol";
 
+/**
+ * @title Pool
+ * @author Brendan Asselstine
+ * @notice The mainnet Pool contract that implements functions bound to mainnet addresses.
+ */
 contract Pool is MCDAwarePool {
+
+  /**
+   * @notice Function that returns the address of the Maker ScdMcdMigration contract on mainnet
+   * @return The ScdMcdMigration contract address on mainnet
+   */
   function scdMcdMigration() public view returns (ScdMcdMigration) {
     return ScdMcdMigration(0xc73e0383F3Aff3215E6f04B0331D58CeCf0Ab849);
   }
 
+  /**
+   * @notice Function that returns the address of the PoolTogether Sai Pool contract on mainnet
+   * @return The Sai Pool contract address on mainnet
+   */
   function saiPool() public view returns (MCDAwarePool) {
     return MCDAwarePool(0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84);
   }

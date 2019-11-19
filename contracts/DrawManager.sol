@@ -108,8 +108,7 @@ library DrawManager {
      * @param _addr The address to deposit for
      * @param _amount The amount to deposit
      */
-    function deposit(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) {
-        require(_addr != address(0), "address is zero");
+    function deposit(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) onlyNonZero(_addr) {
         bytes32 userId = bytes32(uint256(_addr));
         uint256 openDrawIndex = self.openDrawIndex;
 
@@ -148,8 +147,7 @@ library DrawManager {
      * @param _addr The address of the user for whom to deposit
      * @param _amount The amount to deposit
      */
-    function depositCommitted(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) {
-        require(_addr != address(0), "address is zero");
+    function depositCommitted(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) onlyNonZero(_addr) {
         bytes32 userId = bytes32(uint256(_addr));
         uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
 
@@ -169,8 +167,7 @@ library DrawManager {
      * @param self The DrawManager state
      * @param _addr The address whose balance to withdraw
      */
-    function withdraw(State storage self, address _addr) public requireOpenDraw(self) {
-        require(_addr != address(0), "address is zero");
+    function withdraw(State storage self, address _addr) public requireOpenDraw(self) onlyNonZero(_addr) {
         uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
         uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
 
@@ -191,8 +188,7 @@ library DrawManager {
      * @param _addr The user to withdraw from
      * @param _amount The amount to withdraw.
      */
-    function withdrawCommitted(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) {
-        require(_addr != address(0), "address is zero");
+    function withdrawCommitted(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) onlyNonZero(_addr) {
         bytes32 userId = bytes32(uint256(_addr));
         uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
         uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
@@ -355,6 +351,11 @@ library DrawManager {
 
     modifier requireOpenDraw(State storage self) {
         require(self.openDrawIndex > 0, "there is no open draw");
+        _;
+    }
+
+    modifier onlyNonZero(address _addr) {
+        require(_addr != address(0), "address cannot be zero");
         _;
     }
 }

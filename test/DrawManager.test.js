@@ -1,4 +1,5 @@
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
+const chai = require('./helpers/chai')
 const DrawManager = artifacts.require('DrawManager.sol')
 const ExposedDrawManager = artifacts.require('ExposedDrawManager.sol')
 const toWei = require('./helpers/toWei')
@@ -48,7 +49,7 @@ contract('DrawManager', (accounts) => {
         })
     })
 
-    describe('deposit', () => {
+    describe('deposit()', () => {
         it('should fail if there is no current draw', async () => {
             let failed = true
             try {
@@ -62,6 +63,10 @@ contract('DrawManager', (accounts) => {
         describe('when a draw has been opened', () => {
             beforeEach(async () => {
                 await drawManager.openNextDraw()
+            })
+
+            it('should fail if the address is zero', async () => {
+                await chai.assert.isRejected(drawManager.deposit(ZERO_ADDRESS, toWei('10')), /address cannot be zero/)
             })
 
             it('should deposit the tokens as open tokens', async () => {
@@ -213,9 +218,13 @@ contract('DrawManager', (accounts) => {
         })
     })
 
-    describe('depositCommitted', () => {
+    describe('depositCommitted()', () => {
         beforeEach(async () => {
             await drawManager.openNextDraw()
+        })
+
+        it('should fail if the address is zero', async () => {
+            await chai.assert.isRejected(drawManager.depositCommitted(ZERO_ADDRESS, toWei('10')), /address cannot be zero/)
         })
 
         it('should work when recipient already has committed deposits', async () => {
@@ -243,10 +252,14 @@ contract('DrawManager', (accounts) => {
         })
     })
 
-    describe('withdrawCommitted', () => {
+    describe('withdrawCommitted()', () => {
         beforeEach(async () => {
             await drawManager.openNextDraw()
             await drawManager.deposit(user1, toWei('10'))
+        })
+
+        it('should fail if the address is zero', async () => {
+            await chai.assert.isRejected(drawManager.withdrawCommitted(ZERO_ADDRESS, toWei('10')), /address cannot be zero/)
         })
 
         it('should allow a user to withdraw their committed tokens', async () => {
@@ -302,11 +315,15 @@ contract('DrawManager', (accounts) => {
         })
     })
 
-    describe('withdraw', () => {
+    describe('withdraw()', () => {
         beforeEach(async () => {
             await drawManager.openNextDraw()
             await drawManager.deposit(user1, toWei('10'))
             assert.equal(await drawManager.openBalanceOf(user1), toWei('10'))
+        })
+
+        it('should fail if the address is zero', async () => {
+            await chai.assert.isRejected(drawManager.withdraw(ZERO_ADDRESS), /address cannot be zero/)
         })
 
         it('should allow the user to withdraw their open tokens', async () => {

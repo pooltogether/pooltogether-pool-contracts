@@ -73,6 +73,12 @@ contract MCDAwarePool is ERC777Pool, IERC777Recipient {
     initMCDAwarePool();
   }
 
+  /**
+   * @notice Used to initialze the BasePool contract after an upgrade.
+   * @param name Name of the token
+   * @param symbol Symbol of the token
+   * @param defaultOperators The initial set of operators for all users
+   */
   function initBasePoolUpgrade(
     string memory name,
     string memory symbol,
@@ -82,10 +88,24 @@ contract MCDAwarePool is ERC777Pool, IERC777Recipient {
     initMCDAwarePool();
   }
 
+  /**
+   * @notice Registers the MCDAwarePool with the ERC1820 registry so that it can receive tokens
+   */
   function initMCDAwarePool() public {
     ERC1820_REGISTRY.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
+  /**
+   * @notice Called by an ERC777 token when tokens are sent, transferred, or minted.  If the sender is the original Sai Pool
+   * and this pool is bound to the Dai token then it will accept the transfer, migrate the tokens, and deposit on behalf of
+   * the sender.  It will reject all other tokens.
+   *
+   * If there is a committed draw this function will mint the user tickets immediately, otherwise it will place them in the
+   * open prize.  This is to encourage migration.
+   *
+   * @param from The sender
+   * @param amount The amount they are transferring
+   */
   function tokensReceived(
     address, // operator
     address from,
