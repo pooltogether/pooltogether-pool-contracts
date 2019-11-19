@@ -1,4 +1,5 @@
 const toWei = require('./helpers/toWei')
+const fromWei = require('./helpers/fromWei')
 const chai = require('./helpers/chai')
 const PoolContext = require('./helpers/PoolContext')
 const setupERC1820 = require('./helpers/setupERC1820')
@@ -36,7 +37,7 @@ contract('BasePool', (accounts) => {
   })
 
   describe('init()', () => {
-    xit('should fail if owner is zero', async () => {
+    it('should fail if owner is zero', async () => {
       pool = await Pool.new()
       await chai.assert.isRejected(pool.init(
         ZERO_ADDRESS,
@@ -62,7 +63,7 @@ contract('BasePool', (accounts) => {
       pool = await poolContext.createPool(feeFraction)
     })
 
-    xit('should allow an admin to add another', async () => {
+    it('should allow an admin to add another', async () => {
       await pool.addAdmin(user1)
       assert.ok(await pool.isAdmin(user1))
     })
@@ -78,7 +79,7 @@ contract('BasePool', (accounts) => {
       await pool.addAdmin(user1)
     })
 
-    xit('should allow an admin to remove another', async () => {
+    it('should allow an admin to remove another', async () => {
       await pool.removeAdmin(user1)
       assert.ok(!(await pool.isAdmin(user1)))
     })
@@ -97,14 +98,14 @@ contract('BasePool', (accounts) => {
   })
 
   describe('supplyRatePerBlock()', () => {
-    xit('should work', async () => {
+    it('should work', async () => {
       pool = await poolContext.createPool(feeFraction) // ten blocks long
       assert.equal(await pool.supplyRatePerBlock(), web3.utils.toWei('0.1', 'ether'))
     })
   })
 
   describe('committedBalanceOf()', () => {
-    xit('should return the users balance for the current draw', async () => {
+    it('should return the users balance for the current draw', async () => {
       pool = await poolContext.createPool(feeFraction)
 
       await poolContext.depositPool(TICKET_PRICE, { from: user1 })
@@ -118,7 +119,7 @@ contract('BasePool', (accounts) => {
   })
 
   describe('openBalanceOf()', () => {
-    xit('should return the users balance for the current draw', async () => {
+    it('should return the users balance for the current draw', async () => {
       pool = await poolContext.createPool(feeFraction)
 
       await token.approve(pool.address, TICKET_PRICE, { from: user1 })
@@ -133,7 +134,7 @@ contract('BasePool', (accounts) => {
   })
 
   describe('estimatedInterestRate()', () => {
-    xit('should set an appropriate limit based on max integers', async () => {
+    it('should set an appropriate limit based on max integers', async () => {
       pool = await poolContext.createPool(feeFraction) // ten blocks long
 
       const interestRate = await pool.estimatedInterestRate(10);
@@ -142,7 +143,7 @@ contract('BasePool', (accounts) => {
   })
 
   describe('getDraw()', () => {
-    xit('should return empty values if no draw exists', async () => {
+    it('should return empty values if no draw exists', async () => {
       pool = await poolContext.createPool(feeFraction)
       const draw = await pool.getDraw(12)
       assert.equal(draw.feeFraction, '0')
@@ -151,7 +152,7 @@ contract('BasePool', (accounts) => {
       assert.equal(draw.secretHash, '0x0000000000000000000000000000000000000000000000000000000000000000')
     })
 
-    xit('should return true values if a draw exists', async () => {
+    it('should return true values if a draw exists', async () => {
       feeFraction = toWei('0.1')
       pool = await poolContext.createPool(feeFraction)
       await poolContext.nextDraw()
@@ -329,6 +330,62 @@ contract('BasePool', (accounts) => {
       await pool.reward(SECRET, SALT)
       await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH), /the committed draw has already been rewarded/)
     })
+
+    it('should only be run by an admin', async () => {
+      await poolContext.nextDraw()
+      await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH, { from: user1 }), /must be an admin/)
+    })
+
+    it('should rollover the draw and open the next', async () => {
+      await poolContext.nextDraw()
+      const tx = await pool.rolloverAndOpenNextDraw(SECRET_HASH)
+      const [RolledOver, Rewarded, Committed, Opened] = tx.logs
+      assert.equal(RolledOver.event, 'RolledOver')
+      assert.equal(Rewarded.event, 'Rewarded')
+      assert.equal(Committed.event, 'Committed')
+      assert.equal(Opened.event, 'Opened')
+    })
+  })
+
+  describe('rollover()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPool(feeFraction)
+    })
+
+    it('should only be called by admin', async () => {
+      await pool.openNextDraw(SECRET_HASH) // now have committed
+      await chai.assert.isRejected(pool.rollover({from: user1}), /must be an admin/)
+    })
+
+    it('should not run if there is no committed draw', async () => {
+      await chai.assert.isRejected(pool.rollover(), /must be a committed draw/)
+    })
+
+    it('should not run if the committed draw has been rewarded', async () => {
+      // the committed draw has already been rewarded
+      await poolContext.nextDraw() // have an open draw and committed draw
+      await pool.reward(SECRET, SALT)
+      await chai.assert.isRejected(pool.rollover(), /the committed draw has already been rewarded/)
+    })
+
+    it('should reward the pool with 0', async () => {
+      await poolContext.nextDraw() // have an open draw and committed draw
+      const tx = await pool.rollover()
+      const [RolledOver, Rewarded] = tx.logs
+      assert.equal(RolledOver.event, 'RolledOver')
+      assert.equal(RolledOver.args.drawId, '1')
+      assert.equal(Rewarded.event, 'Rewarded')
+      assert.equal(Rewarded.args.drawId, '1')
+      assert.equal(Rewarded.args.winner, ZERO_ADDRESS)
+      assert.equal(Rewarded.args.entropy, '0x0000000000000000000000000000000000000000000000000000000000000001')
+      assert.equal(Rewarded.args.fee, '0')
+      assert.equal(Rewarded.args.winnings, '0')
+
+      const draw = await pool.getDraw('1')
+      assert.equal(draw.entropy, '0x0000000000000000000000000000000000000000000000000000000000000001')
+
+      await poolContext.openNextDraw(SECRET_HASH) // now continue
+    })
   })
 
   describe('rewardAndOpenNextDraw()', () => {
@@ -336,11 +393,11 @@ contract('BasePool', (accounts) => {
       pool = await poolContext.createPool(feeFraction)
     })
 
-    xit('should revert if there is no committed draw', async () => {
+    it('should revert if there is no committed draw', async () => {
       await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT), /must be a committed draw/)
     })
 
-    xit('should fail if the secret does not match', async () => {
+    it('should fail if the secret does not match', async () => {
       await pool.openNextDraw(SECRET_HASH)
       await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SALT, SECRET), /secret does not match/)
     })
@@ -351,7 +408,7 @@ contract('BasePool', (accounts) => {
       pool = await poolContext.createPoolNoInit()
     })
 
-    xit('should fail if there is no open draw', async () => {
+    it('should fail if there is no open draw', async () => {
       await token.approve(pool.address, TICKET_PRICE, { from: user1 })
 
       await chai.assert.isRejected(pool.depositPool(TICKET_PRICE, { from: user1 }), /there is no open draw/)
@@ -364,7 +421,7 @@ contract('BasePool', (accounts) => {
     })
 
     describe('transfer()', () => {
-      xit('should transfer tickets to another user', async () => {
+      it('should transfer tickets to another user', async () => {
         
         await poolContext.depositPool(TICKET_PRICE, { from: user1 })
         await poolContext.openNextDraw()
@@ -385,12 +442,12 @@ contract('BasePool', (accounts) => {
     })
 
     describe('depositPool()', () => {
-      xit('should fail if not enough tokens approved', async () => {
+      it('should fail if not enough tokens approved', async () => {
         await token.approve(pool.address, TICKET_PRICE.div(new BN(2)), { from: user1 })
         await chai.assert.isRejected(pool.depositPool(TICKET_PRICE, { from: user1 }))
       })
 
-      xit('should deposit some tokens into the pool', async () => {
+      it('should deposit some tokens into the pool', async () => {
         await token.approve(pool.address, TICKET_PRICE, { from: user1 })
 
         const response = await pool.depositPool(TICKET_PRICE, { from: user1 })
@@ -401,7 +458,7 @@ contract('BasePool', (accounts) => {
         assert.equal(deposited.args[1].toString(), toWei('10'))
       })
 
-      xit('should allow multiple deposits', async () => {
+      it('should allow multiple deposits', async () => {
         await token.approve(pool.address, TICKET_PRICE, { from: user1 })
 
         await pool.depositPool(TICKET_PRICE, { from: user1 })
@@ -420,7 +477,7 @@ contract('BasePool', (accounts) => {
         await pool.depositPool(TICKET_PRICE, { from: user1 })
       })
 
-      xit('should contribute to the winnings', async () => {
+      it('should contribute to the winnings', async () => {
         await poolContext.nextDraw()
 
         await token.approve(pool.address, toWei('1000'), { from: user2 })
@@ -458,7 +515,7 @@ contract('BasePool', (accounts) => {
           await pool.depositSponsorship(toWei('1000'), { from: user2 })
         })
   
-        xit('should allow the sponsor to withdraw partially', async () => {
+        it('should allow the sponsor to withdraw partially', async () => {
           const user2BalanceBefore = await token.balanceOf(user2)
   
           await pool.withdraw({ from: user2 })
@@ -469,7 +526,7 @@ contract('BasePool', (accounts) => {
         })
       })
 
-      xit('should work for one participant', async () => {
+      it('should work for one participant', async () => {
         await token.approve(pool.address, TICKET_PRICE, { from: user1 })
         await pool.depositPool(TICKET_PRICE, { from: user1 })
         await poolContext.nextDraw()
@@ -485,7 +542,7 @@ contract('BasePool', (accounts) => {
         assert.equal(balanceAfter.toString(), (new BN(balanceBefore).add(balance)).toString())
       })
 
-      xit('should work for two participants', async () => {
+      it('should work for two participants', async () => {
 
         await token.approve(pool.address, priceForTenTickets, { from: user1 })
         await pool.depositPool(priceForTenTickets, { from: user1 })
@@ -523,7 +580,7 @@ contract('BasePool', (accounts) => {
         }
       })
 
-      xit('should work when one user withdraws before the next draw', async () => {
+      it('should work when one user withdraws before the next draw', async () => {
         await token.approve(pool.address, priceForTenTickets, { from: user1 })
         await pool.depositPool(priceForTenTickets, { from: user1 })
 
@@ -547,7 +604,7 @@ contract('BasePool', (accounts) => {
     })
 
     describe('balanceOf()', () => {
-      xit('should return the entrants total to withdraw', async () => {
+      it('should return the entrants total to withdraw', async () => {
         await token.approve(pool.address, TICKET_PRICE, { from: user1 })
         await pool.depositPool(TICKET_PRICE, { from: user1 })
 
@@ -564,7 +621,7 @@ contract('BasePool', (accounts) => {
       feeFraction = web3.utils.toWei('0.1', 'ether')
     })
 
-    xit('should reward the owner the fee', async () => {
+    it('should reward the owner the fee', async () => {
 
       pool = await poolContext.createPool(feeFraction)
 
@@ -595,7 +652,7 @@ contract('BasePool', (accounts) => {
   })
 
   describe('when a pool is rewarded without a winner', () => {
-    xit('should save the winnings for the next draw', async () => {
+    it('should save the winnings for the next draw', async () => {
 
       // Here we create the pool and open the first draw
       pool = await poolContext.createPool(feeFraction)
@@ -637,7 +694,7 @@ contract('BasePool', (accounts) => {
       pool = await poolContext.createPool(feeFraction)
     })
 
-    xit('should allow the owner to set the next fee fraction', async () => {
+    it('should allow the owner to set the next fee fraction', async () => {
       await pool.setNextFeeFraction(toWei('0.05'))
       assert.equal((await pool.nextFeeFraction()).toString(), toWei('0.05'))
     })
@@ -646,7 +703,7 @@ contract('BasePool', (accounts) => {
       await chai.assert.isRejected(pool.setNextFeeFraction(toWei('0.05'), { from: user1 }), /must be an admin/)
     })
 
-    xit('should require the fee fraction to be less than or equal to 1', async () => {
+    it('should require the fee fraction to be less than or equal to 1', async () => {
       // 1 is okay
       await pool.setNextFeeFraction(toWei('1'))
       await chai.assert.isRejected(pool.setNextFeeFraction(toWei('1.1')), /fee fraction must be 1 or less/)
@@ -658,7 +715,7 @@ contract('BasePool', (accounts) => {
       pool = await poolContext.createPool(feeFraction)
     })
 
-    xit('should allow the owner to set the next fee fraction', async () => {
+    it('should allow the owner to set the next fee fraction', async () => {
       await pool.setNextFeeBeneficiary(user1)
       assert.equal((await pool.nextFeeBeneficiary()).toString(), user1)
     })
@@ -678,7 +735,7 @@ contract('BasePool', (accounts) => {
       await poolContext.nextDraw()
     })
 
-    xit('should not allow any more deposits', async () => {
+    it('should not allow any more deposits', async () => {
       await pool.pause()
       await chai.assert.isRejected(poolContext.depositPool(toWei('10'), { from: user2 }), /contract is paused/)
     })
@@ -689,11 +746,11 @@ contract('BasePool', (accounts) => {
       pool = await poolContext.createPool(feeFraction)
     })
 
-    xit('should not work unless paused', async () => {
+    it('should not work unless paused', async () => {
       await chai.assert.isRejected(pool.unpause(), /contract is not paused/)
     })
 
-    xit('should allow deposit after unpausing', async () => {
+    it('should allow deposit after unpausing', async () => {
       await pool.pause()
       await pool.unpause()
       await poolContext.depositPool(toWei('10'), { from: user2 })
@@ -705,7 +762,7 @@ contract('BasePool', (accounts) => {
       pool = await poolContext.createPool(feeFraction)
     })
 
-    xit('should transfer the balance of the pool in as sponsorship', async () => {
+    it('should transfer the balance of the pool in as sponsorship', async () => {
       await token.mint(pool.address, toWei('1000'))
 
       assert.equal(await token.balanceOf(pool.address), toWei('1000'))
