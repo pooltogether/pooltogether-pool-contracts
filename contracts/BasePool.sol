@@ -289,6 +289,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   /**
    * @notice Ignores the current draw, and opens the next draw.
    * @dev This function will be removed once the winner selection has been decentralized.
+   * @param nextSecretHash The hash to commit for the next draw
    */
   function rolloverAndOpenNextDraw(bytes32 nextSecretHash) public onlyAdmin {
     rollover();
@@ -317,12 +318,10 @@ contract BasePool is Initializable, ReentrancyGuard {
    * Fires the Rewarded event.
    * @param _secret The secret to reveal for the current committed Draw
    */
-  function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin {
+  function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin requireCommittedNoReward {
     // require that there is a committed draw
     // require that the committed draw has not been rewarded
     uint256 drawId = currentCommittedDrawId();
-    require(drawId > 0, "must be a committed draw");
-    require(!currentCommittedDrawHasBeenRewarded(), "the committed draw has already been rewarded");
 
     Draw storage draw = draws[drawId];
 
@@ -380,10 +379,8 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @notice A function that skips the reward for the committed draw id.
    * @dev This function will be removed once the entropy is decentralized.
    */
-  function rollover() public onlyAdmin {
+  function rollover() public onlyAdmin requireCommittedNoReward {
     uint256 drawId = currentCommittedDrawId();
-    require(drawId > 0, "must be a committed draw");
-    require(!currentCommittedDrawHasBeenRewarded(), "the committed draw has already been rewarded");
 
     Draw storage draw = draws[drawId];
     draw.entropy = ROLLED_OVER_ENTROPY_MAGIC_NUMBER;
@@ -727,6 +724,12 @@ contract BasePool is Initializable, ReentrancyGuard {
     admins.remove(_admin);
 
     emit AdminRemoved(_admin);
+  }
+
+  modifier requireCommittedNoReward() {
+    require(currentCommittedDrawId() > 0, "must be a committed draw");
+    require(!currentCommittedDrawHasBeenRewarded(), "the committed draw has already been rewarded");
+    _;
   }
 
   /**
