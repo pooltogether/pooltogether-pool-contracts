@@ -134,37 +134,40 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
       logs = (await pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT)).logs;
     }
 
+    logs.reverse()
+
+    // console.log(
+    //   logs.map(log => log.event)
+    // )
+
+    const [Opened, Transfer, Minted, Committed, Rewarded] = logs
+
     debug('rewardAndOpenNextDraw: ', logs)
-    Rewarded = logs[0]
     assert.equal(Rewarded.event, 'Rewarded')
-    Committed = logs[1]
     assert.equal(Committed.event, 'Committed')  
+
+    return { Rewarded, Committed }
   }
 
   this.openNextDraw = async () => {
     debug(`openNextDraw(${SECRET_HASH})`)
     let logs = (await pool.openNextDraw(SECRET_HASH)).logs
-    Committed = logs[0]
+
+    const Committed = logs.find(log => log.event === 'Committed')
+    const Opened = logs.find(log => log.event === 'Opened')
+
+    return { Committed, Opened }
   }
 
   this.nextDraw = async (options) => {
-    let logs
-    Rewarded = undefined
-    Committed = undefined
-
     const currentDrawId = await pool.currentCommittedDrawId()
 
     if (currentDrawId.toString() === '0') {
-      await this.openNextDraw()
+      return await this.openNextDraw()
     } else {
       debug(`reward(${pool.address})`)
       await moneyMarket.reward(pool.address)
-      await this.rewardAndOpenNextDraw(options)
-    }
-
-    return {
-      Rewarded,
-      Committed
+      return await this.rewardAndOpenNextDraw(options)
     }
   }
 

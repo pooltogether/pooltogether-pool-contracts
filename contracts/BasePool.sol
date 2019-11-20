@@ -318,7 +318,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * Fires the Rewarded event.
    * @param _secret The secret to reveal for the current committed Draw
    */
-  function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin requireCommittedNoReward {
+  function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin requireCommittedNoReward nonReentrant {
     // require that there is a committed draw
     // require that the committed draw has not been rewarded
     uint256 drawId = currentCommittedDrawId();
@@ -348,11 +348,7 @@ contract BasePool is Initializable, ReentrancyGuard {
 
     // If there is a winner who is to receive non-zero winnings
     if (winningAddress != address(0) && netWinnings != 0) {
-      // Update balance of the winner
-      balances[winningAddress] = balances[winningAddress].add(netWinnings);
-
-      // Enter their winnings into the next draw
-      drawState.deposit(winningAddress, netWinnings);
+      awardWinnings(winningAddress, netWinnings);
 
       // Updated the accounted total
       accountedBalance = underlyingBalance;
@@ -373,6 +369,14 @@ contract BasePool is Initializable, ReentrancyGuard {
       netWinnings,
       fee
     );
+  }
+
+  function awardWinnings(address winner, uint256 amount) internal {
+    // Update balance of the winner
+    balances[winner] = balances[winner].add(amount);
+
+    // Enter their winnings into the next draw
+    drawState.deposit(winner, amount);
   }
 
   /**

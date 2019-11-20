@@ -320,6 +320,70 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   }
 
   /**
+   * @notice Commits the current draw.  Mints the open supply number of tokens.
+   * @dev This function deviates from the ERC 777 spec (https://eips.ethereum.org/EIPS/eip-777).  The spec
+   * says that:
+   *  - "The balance of the recipient MUST be increased by the amount of tokens minted."
+   * However, for this contract it is not feasible to emit Minted for every open deposit.
+   */
+  function emitCommitted() internal {
+    super.emitCommitted();
+    uint256 mintingAmount = openSupply();
+    _mintEvents(address(this), address(this), mintingAmount, '', '');
+  }
+
+  /**
+   * @notice Awards the winnings to a user.  Ensures that the Minted event is fired
+   */
+  function awardWinnings(address winner, uint256 amount) internal {
+    super.awardWinnings(winner, amount);
+    _mint(address(this), winner, amount, '', '');
+  }
+
+  /**
+    * @dev Creates `amount` tokens and assigns them to `account`, increasing
+    * the total supply.
+    *
+    * If a send hook is registered for `account`, the corresponding function
+    * will be called with `operator`, `data` and `operatorData`.
+    *
+    * See {IERC777Sender} and {IERC777Recipient}.
+    *
+    * Emits {Minted} and {IERC20-Transfer} events.
+    *
+    * Requirements
+    *
+    * - `account` cannot be the zero address.
+    * - if `account` is a contract, it must implement the {IERC777Recipient}
+    * interface.
+    */
+  function _mint(
+      address operator,
+      address account,
+      uint256 amount,
+      bytes memory userData,
+      bytes memory operatorData
+  )
+  internal
+  {
+      _callTokensReceived(operator, address(0), account, amount, userData, operatorData, true);
+      _mintEvents(operator, account, amount, userData, operatorData);
+  }
+
+  function _mintEvents(
+      address operator,
+      address account,
+      uint256 amount,
+      bytes memory userData,
+      bytes memory operatorData
+  )
+  internal
+  {
+      emit Minted(operator, account, amount, userData, operatorData);
+      emit Transfer(address(0), account, amount);
+  }
+
+  /**
     * @dev Send tokens
     * @param operator address operator requesting the transfer
     * @param from address token holder address
