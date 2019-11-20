@@ -711,7 +711,6 @@ contract('BasePool', (accounts) => {
   describe('unpause()', () => {
     beforeEach(async () => {
       pool = await poolContext.createPool(feeFraction)
-      await pool.pause()
     })
 
     it('should not work unless paused', async () => {
