@@ -346,21 +346,21 @@ contract BasePool is Initializable, ReentrancyGuard {
     // Calculate the net winnings
     uint256 netWinnings = grossWinnings.sub(fee);
 
-    // If there is a winner who is to receive non-zero winnings
-    if (winningAddress != address(0) && netWinnings != 0) {
-      awardWinnings(winningAddress, netWinnings);
-
-      // Updated the accounted total
-      accountedBalance = underlyingBalance;
-    } else {
-      // Only account for the fee
-      accountedBalance = accountedBalance.add(fee);
-    }
-
     draw.winner = winningAddress;
     draw.netWinnings = netWinnings;
     draw.fee = fee;
     draw.entropy = entropy;
+
+    // If there is a winner who is to receive non-zero winnings
+    if (winningAddress != address(0) && netWinnings != 0) {
+      // Updated the accounted total
+      accountedBalance = underlyingBalance;
+
+      awardWinnings(winningAddress, netWinnings);
+    } else {
+      // Only account for the fee
+      accountedBalance = accountedBalance.add(fee);
+    }
 
     emit Rewarded(
       drawId,
