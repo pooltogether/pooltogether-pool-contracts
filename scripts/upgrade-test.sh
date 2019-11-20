@@ -17,7 +17,7 @@ sleep 4
 echo "Starting tests..."
 
 # Ensure that we override the mainnet URL
-INFURA_PROVIDER_URL_MAINNET=http://localhost:8545 oz-console --network http://localhost:8545 -c .openzeppelin/mainnet.json -e ./upgrade-test/MCDAwarePoolUpgrade.test.js -d build/contracts
+INFURA_PROVIDER_URL_MAINNET=$LOCALHOST_URL oz-console -n $LOCALHOST_URL -c .openzeppelin/mainnet.json -e ./upgrade-test/MCDAwarePoolUpgrade.test.js
 
 cp .openzeppelin/mainnet.json .openzeppelin/mainnet_fork.json
 mv .openzeppelin/mainnet_backup.json .openzeppelin/mainnet.json

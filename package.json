@@ -22,6 +22,7 @@
     "push-and-update": "yarn push && yarn update-all && zos-truffle-merge -n 1234 zos.dev-1234.json",
     "console": "oz-console --network http://localhost:8545 -c .openzeppelin/mainnet.json",
     "upgrade-test": "./scripts/upgrade-test.sh",
+    "ganache-fork": "./scripts/ganache-fork.sh",
     "console-rinkeby": "oz-console --network rinkeby",
     "console-mainnet": "oz-console --network mainnet",
     "extract-abis": "oz compile && truffle-extract -o abis",
