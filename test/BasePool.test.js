@@ -748,10 +748,6 @@ contract('BasePool', (accounts) => {
       await chai.assert.isRejected(pool.unpause(), /contract is not paused/)
     })
 
-    it('should not work unless paused', async () => {
-      await chai.assert.isRejected(pool.unpause(), /contract is not paused/)
-    })
-
     it('should allow deposit after unpausing', async () => {
       await pool.pause()
       await pool.unpause()
