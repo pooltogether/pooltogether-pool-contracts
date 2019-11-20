@@ -9,15 +9,16 @@ fi
 cp .openzeppelin/mainnet.json .openzeppelin/mainnet_backup.json
 
 # Run Ganache CLI in background
-./scripts/ganache-fork.sh &
+./upgrade-test/startFork.js &
 
 # Wait for ganache
-sleep 4
-
-echo "Starting tests..."
+sleep 5
 
 # Ensure that we override the mainnet URL
-INFURA_PROVIDER_URL_MAINNET=$LOCALHOST_URL oz-console -n $LOCALHOST_URL -c .openzeppelin/mainnet.json -e ./upgrade-test/MCDAwarePoolUpgrade.test.js
+# INFURA_PROVIDER_URL_MAINNET=$LOCALHOST_URL oz-console -n $LOCALHOST_URL -c .openzeppelin/mainnet.json -e ./upgrade-test/MCDAwarePoolUpgrade.test.js
+INFURA_PROVIDER_URL_MAINNET=$LOCALHOST_URL ./upgrade-test/upgradePool.js
 
 cp .openzeppelin/mainnet.json .openzeppelin/mainnet_fork.json
 mv .openzeppelin/mainnet_backup.json .openzeppelin/mainnet.json
+
+wait
