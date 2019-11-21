@@ -18,7 +18,7 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.5.12;
 
-import "./ERC777Pool.sol";
+import "./RecipientWhitelistERC777Pool.sol";
 import "scd-mcd-migration/src/ScdMcdMigration.sol";
 import { GemLike } from "scd-mcd-migration/src/Interfaces.sol";
 
@@ -30,7 +30,7 @@ import { GemLike } from "scd-mcd-migration/src/Interfaces.sol";
  * and immediately deposits the new Dai as committed tickets for that user.  We are knowingly bypassing the committed period for
  * users to encourage them to migrate to the MCD Pool.
  */
-contract MCDAwarePool is ERC777Pool, IERC777Recipient {
+contract MCDAwarePool is RecipientWhitelistERC777Pool, IERC777Recipient {
 
   /**
    * @notice Returns the address of the ScdMcdMigration contract (see https://github.com/makerdao/developerguides/blob/master/mcd/upgrading-to-multi-collateral-dai/upgrading-to-multi-collateral-dai.md#direct-integration-with-smart-contracts)
