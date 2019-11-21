@@ -182,7 +182,7 @@ contract('BasePool', (accounts) => {
     it('should emit a committed event', async () => {
       const tx = await pool.openNextDraw(SECRET_HASH) // now has a committed draw
 
-      const [Committed, Opened] = tx.logs
+      const [Committed, Minted, Transfer, Opened] = tx.logs
       assert.equal(Committed.event, 'Committed')
       assert.equal(Committed.args.drawId, '1')
       assert.equal(Opened.event, 'Opened')
@@ -199,7 +199,7 @@ contract('BasePool', (accounts) => {
       await pool.reward(SECRET, SALT) // committed draw 2 is now rewarded
       const tx = await pool.openNextDraw(SECRET_HASH) // now can open the next draw 3
 
-      const [Committed, Opened] = tx.logs
+      const [Committed, Minted, Transfer, Opened] = tx.logs
       assert.equal(Committed.event, 'Committed')
       assert.equal(Committed.args.drawId, '2')
       assert.equal(Opened.event, 'Opened')
@@ -266,10 +266,12 @@ contract('BasePool', (accounts) => {
     it('should rollover the draw and open the next', async () => {
       await poolContext.nextDraw()
       const tx = await pool.rolloverAndOpenNextDraw(SECRET_HASH)
-      const [RolledOver, Rewarded, Committed, Opened] = tx.logs
+      const [RolledOver, Rewarded, Committed, Minted, Transfer, Opened] = tx.logs
       assert.equal(RolledOver.event, 'RolledOver')
       assert.equal(Rewarded.event, 'Rewarded')
       assert.equal(Committed.event, 'Committed')
+      assert.equal(Minted.event, 'Minted')
+      assert.equal(Transfer.event, 'Transfer')
       assert.equal(Opened.event, 'Opened')
     })
   })
