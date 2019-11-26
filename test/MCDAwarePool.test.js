@@ -61,7 +61,8 @@ contract('MCDAwarePool', (accounts) => {
         await sendingContext.nextDraw()
 
         // Create Maker SCD MCD Migration contract
-        scdMcdMigration = await MockScdMcdMigration.new(sai.address, dai.address)
+        scdMcdMigration = await MockScdMcdMigration.new()
+        await scdMcdMigration.initialize(sai.address, dai.address)
         // ensure that migration contract *has* dai
         await dai.mint(scdMcdMigration.address, toWei('10000'))
         // ensure that the mock migration is wired up correctly
