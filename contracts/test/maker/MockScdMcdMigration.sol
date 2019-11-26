@@ -1,20 +1,21 @@
 pragma solidity ^0.5.12;
 
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import { GemLike } from "scd-mcd-migration/src/Interfaces.sol";
 import "./MockJoinLike.sol";
 import "../Token.sol";
 
-contract MockScdMcdMigration {
+contract MockScdMcdMigration is Initializable {
 
   MockJoinLike public saiJoin;
   MockJoinLike public daiJoin;
   Token public sai;
   Token public dai;
 
-  constructor(
+  function initialize (
     Token _sai,
     Token _dai
-  ) public {
+  ) public initializer {
     saiJoin = new MockJoinLike(address(_sai), address(0));
     daiJoin = new MockJoinLike(address(0), address(_dai));
     sai = _sai;
