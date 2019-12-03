@@ -549,7 +549,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     * @param amount uint256 amount of tokens to transfer
     * @param userData bytes extra information provided by the token holder (if any)
     * @param operatorData bytes extra information provided by the operator (if any)
-    * @param requireReceptionAck whether to require that, if the recipient is a contract, it implements IERC777Recipient
+    * @param requireReceptionAck whether to require that, if the recipient is a contract, it has registered a IERC777Recipient
     */
   function _callTokensReceived(
       address operator,

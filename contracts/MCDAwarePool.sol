@@ -74,17 +74,22 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
       lockDuration,
       cooldownDuration
     );
-    initMCDAwarePool();
+    initRegistry();
+    initBlocklock(lockDuration, cooldownDuration);
   }
 
   /**
    * @notice Used to initialize the BasePool contract after an upgrade.  Registers the MCDAwarePool with the ERC1820 registry so that it can receive tokens, and inits the block lock.
    */
   function initMCDAwarePool() public {
-    ERC1820_REGISTRY.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+    initRegistry();
     if (blocklock.lockDuration == 0) {
       initBlocklock(DEFAULT_LOCK_DURATION, DEFAULT_COOLDOWN_DURATION);
     }
+  }
+
+  function initRegistry() internal {
+    ERC1820_REGISTRY.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
   /**
