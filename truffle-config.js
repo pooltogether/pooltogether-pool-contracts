@@ -6,6 +6,14 @@ const isCoverage = process.env.COVERAGE === 'true'
 
 module.exports = {
   networks: {
+    development: {
+      host: 'localhost',
+      port: 8546,
+      gas: 6999999,
+      gasPrice: 1 * 1000000000,
+      network_id: '*'
+    },
+
     local: {
       host: 'localhost',
       port: 8545,
