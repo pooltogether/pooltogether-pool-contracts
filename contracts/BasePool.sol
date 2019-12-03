@@ -357,6 +357,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * Fires the Rewarded event, the Committed event, and the Open event.
    * @param nextSecretHash The secret hash to use to open a new Draw
    * @param lastSecret The secret to reveal to reward the current committed Draw.
+   * @param _salt The salt that was combined with the revealed secret to use as the hash.  Expects secretHash == keccak256(abi.encodePacked(_secret, _salt))
    */
   function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret, bytes32 _salt) public onlyAdmin {
     reward(lastSecret, _salt);
