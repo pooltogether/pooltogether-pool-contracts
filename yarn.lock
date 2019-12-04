@@ -6316,6 +6316,13 @@ oz-console@1.1.2:
     glob "^7.1.5"
     original-require "^1.0.1"
 
+oz-migrate@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/oz-migrate/-/oz-migrate-0.2.2.tgz#9d197fa106713c246d6d5592fed921f4b5926e4f"
+  integrity sha512-0UScIGTdoXdlGyteb03BKupkde00mxojGCiuqdMSyQhNtww/xnUW6qQIo9Vm7QBXREOz1Gi0P7dtg3t9+houug==
+  dependencies:
+    mkdirp-promise "^5.0.1"
+
 p-cancelable@^0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/p-cancelable/-/p-cancelable-0.3.0.tgz#b9e123800bcebb7ac13a479be195b507b98d30fa"
