@@ -3864,10 +3864,10 @@ functional-red-black-tree@^1.0.1, functional-red-black-tree@~1.0.1:
   resolved "https://registry.yarnpkg.com/functional-red-black-tree/-/functional-red-black-tree-1.0.1.tgz#1b0ab3bd553b2a0d6399d29c0e3ea0b252078327"
   integrity sha1-GwqzvVU7Kg1jmdKcDj6gslIHgyc=
 
-ganache-cli@6.7.0:
-  version "6.7.0"
-  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.7.0.tgz#b59845578221bdf686cf124d007c5ee62e85a62f"
-  integrity sha512-9CZsClo9hl5MxGL7hkk14mie89Q94P0idh92jcV7LmppTYTCG7SHatuwcfqN7emFHArMt3fneN4QbH2do2N6Ow==
+ganache-cli@6.8.1-beta.0:
+  version "6.8.1-beta.0"
+  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.8.1-beta.0.tgz#d7e9506197637f170fd659093fb6395342de5321"
+  integrity sha512-OnfmoBV5Vb+Mi0nux9rjKBDFd360zNP3NSdnyk+jFlkwMB3gRHWDw6/34R9TLX3yapZW0mDQ+Py7BPgeYiQMiA==
   dependencies:
     ethereumjs-util "6.1.0"
     source-map-support "0.5.12"
@@ -6304,9 +6304,10 @@ osenv@^0.1.4, osenv@^0.1.5:
     os-homedir "^1.0.0"
     os-tmpdir "^1.0.0"
 
-oz-console@pooltogether/oz-console#master:
-  version "1.0.0"
-  resolved "https://codeload.github.com/pooltogether/oz-console/tar.gz/0973f0ccb1031d5c508b37727f536d3164643126"
+oz-console@1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/oz-console/-/oz-console-1.1.2.tgz#3e57c71244de7b0f38bc9d69d7cdfe2fa635c72b"
+  integrity sha512-ofJT7pXoX1aafRQaeWOtglKQ/Z1ZsjxLpC67MxV/rErUjTbgtMqyqmN/IOgNFi6KamGHAglFnoYPfw0nbriAZA==
   dependencies:
     async-repl "^0.4.0"
     chalk "^2.4.2"
