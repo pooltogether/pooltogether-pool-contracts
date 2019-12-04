@@ -6,6 +6,7 @@ const forkMainnet = require('./forkMainnet')
 const {
   BINANCE_ADDRESS,
   DEPLOY_ADMIN,
+  SAI_BUDDY,
   MULTISIG_ADMIN1,
   MULTISIG_ADMIN2,
 } = require('./constants')
@@ -17,6 +18,7 @@ async function run() {
   const unlockedAccounts = users.map(user => user.id).concat([
     BINANCE_ADDRESS,
     DEPLOY_ADMIN,
+    SAI_BUDDY,
     MULTISIG_ADMIN1,
     MULTISIG_ADMIN2,
   ])

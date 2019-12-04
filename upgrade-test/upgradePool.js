@@ -40,7 +40,7 @@ async function test (context) {
   await provider.waitForTransaction(binTx.hash)
 
   // Deploy the new contracts
-  const response = shell.exec(`oz push --network mainnet --force --from ${DEPLOY_ADMIN}`)
+  const response = shell.exec(`INFURA_PROVIDER_URL_MAINNET=${process.env.LOCALHOST_URL} oz push --network mainnet --force --from ${DEPLOY_ADMIN}`)
   if (response.code !== 0) {
     throw new Error('Unable to push contracts: ', response)
   }
