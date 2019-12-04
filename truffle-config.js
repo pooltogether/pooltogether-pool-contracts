@@ -46,6 +46,17 @@ module.exports = {
       network_id: 1,
       // gas: 1000000,
       // gasPrice: 11.101 * 1000000000
+    },
+
+    mainnet_fork: {
+      provider: () => new HDWalletProvider(
+        process.env.HDWALLET_MNEMONIC,
+        process.env.LOCALHOST_URL,
+        0,
+        3
+      )
+      // gas: 1000000,
+      // gasPrice: 11.101 * 1000000000
     }
   },
 

@@ -93,3 +93,43 @@ You can visualize the rolling draws like so:
 When a Pool administrator opens a new draw, they commit a hash of a secret and salt.  When the Pool administrator rewards a draw, they reveal the secret and salt.  The secret is combined with the hash of the gross winnings to serve as the entropy used to randomly select a winner.
 
 Decentralizing this portion of the protocol is very high on our to-do list.
+
+# Testing Upgrades
+
+The project includes a CLI tool to make working with forks much easier.  To see what commands the tool offers, enter:
+
+```sh
+$ yarn fork -h
+```
+
+The only drawback to this tool is that it **changes the .openzeppelin/mainnet.json config**.  Make sure to `git checkout .openzeppelin/mainnet.json` so that you don't commit the forked changes.  This is a limitation of OpenZeppelin for the moment.
+
+To test the upgrade to v2.x follow these steps:
+
+**1. Fix .envrc**
+
+Set the environment variables SECRET_SEED, SALT_SEED, LOCALHOST_URL, GANACHE_FORK_URL and then run `direnv allow`
+
+**2. Start a fork of mainnet**
+
+`yarn fork start`
+
+**3. Give some eth to the deployment admin**
+
+`yarn fork pay`
+
+**4. Push the latest contract to the fork**
+
+`yarn fork push`
+
+**5. Upgrade the contracts to v2.x**
+
+`yarn fork upgrade-v2x`
+
+**6. Test withdrawals and deposits**
+
+`yarn fork withdraw-deposit`
+
+**7. Trigger the reward function**
+
+`yarn fork reward`

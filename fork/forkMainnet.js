@@ -1,6 +1,6 @@
-const ganache = require("ganache-cli");
-
 module.exports = function ({ unlockedAccounts }) {
+  const ganache = require("ganache-cli");
+
   const server = ganache.server({
     fork: process.env.GANACHE_FORK_URL,
     unlocked_accounts: unlockedAccounts,

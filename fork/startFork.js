@@ -1,32 +1,34 @@
-#!/usr/bin/env node
 const chalk = require('chalk')
 const loadUsers = require('./loadUsers')
 const forkMainnet = require('./forkMainnet')
+const { runShell } = require('./runShell')
 
 const {
   BINANCE_ADDRESS,
-  DEPLOY_ADMIN,
   SAI_BUDDY,
   MULTISIG_ADMIN1,
   MULTISIG_ADMIN2,
 } = require('./constants')
 
-async function run() {
+async function startFork() {
+  console.log(chalk.green('Starting fork...'))
+
   const users = await loadUsers()
   console.log(`Found ${users.length} users`)
 
   const unlockedAccounts = users.map(user => user.id).concat([
     BINANCE_ADDRESS,
-    DEPLOY_ADMIN,
+    process.env.ADMIN_ADDRESS,
     SAI_BUDDY,
     MULTISIG_ADMIN1,
     MULTISIG_ADMIN2,
   ])
 
   await forkMainnet({ unlockedAccounts })
+
+  console.log(chalk.green('Started fork'))
 }
 
-console.log(chalk.green('Starting fork...'))
-run().then(() => {
-  console.log(chalk.green('Started fork'))
-})
+module.exports = {
+  startFork
+}

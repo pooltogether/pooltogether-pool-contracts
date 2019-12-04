@@ -3,10 +3,10 @@ const assert = require('assert')
 const chalk = require('chalk')
 const loadUsers = require('./loadUsers')
 const { buildContext } = require('oz-console')
+const { exec } = require('./exec')
 
 const {
-  BINANCE_ADDRESS,
-  SAI
+  BINANCE_ADDRESS
 } = require('./constants')
 
 const overrides = {
@@ -21,13 +21,6 @@ async function test (context) {
     ethers,
   } = context
 
-  async function exec(tx) {
-    await provider.waitForTransaction(tx.hash)
-    const receipt = await provider.getTransactionReceipt(tx.hash)
-    // console.log(receipt)
-    assert.equal(receipt.status, '1')
-  }
-
   provider.pollingInterval = 500
 
   const users = await loadUsers()
@@ -41,14 +34,14 @@ async function test (context) {
   for (let i = 0; i < withdrawalsCount && i < users.length; i++) {
     let address = users[i].id
     let signer = provider.getSigner(address)
-    let pool = new ethers.Contract(contracts.Pool.address, artifacts.Pool.abi, signer)
+    let pool = new ethers.Contract(contracts.PoolSai.address, artifacts.Pool.abi, signer)
     // let address = users[i].id
     // Make sure they have enough ether
     console.log(chalk.green(`sending eth from ${BINANCE_ADDRESS} to ${address}...`))
     let binTx2 = await binance.sendTransaction({ to: address, value: ethers.utils.parseEther('1') })
     await provider.waitForTransaction(binTx2.hash)
     // let signer = provider.getSigner(address)
-    // let pool = new ethers.Contract(contracts.Pool.address, artifacts.Pool.abi, signer)
+    // let pool = new ethers.Contract(contracts.PoolSai.address, artifacts.Pool.abi, signer)
     let openBalance = await pool.openBalanceOf(address)
     let committedBalance = await pool.committedBalanceOf(address)
     let balance = openBalance.add(committedBalance)
@@ -70,10 +63,10 @@ async function test (context) {
 
     if (balance.gt('0x0')) {
       console.log(chalk.yellow(`Approving....`))
-      exec(await token.approve(pool.address, balance, overrides))
+      exec(provider, await token.approve(pool.address, balance, overrides))
 
       console.log(chalk.yellow(`Depositing....`))
-      exec(await pool.depositPool(balance, overrides))
+      exec(provider, await pool.depositPool(balance, overrides))
 
       let newSaiBalance = await token.balanceOf(address)
       console.log(`New Sai balance: ${ethers.utils.formatEther(newSaiBalance)}`)
@@ -88,7 +81,7 @@ async function test (context) {
   }
 }
 
-async function run() {
+async function withdrawAndDeposit() {
   const context = buildContext({
     projectConfig: '.openzeppelin/project.json',
     network: process.env.LOCALHOST_URL,
@@ -100,6 +93,6 @@ async function run() {
   await test(context)
 }
 
-run().then(() => {
-  console.log("Done.")
-})
+module.exports = {
+  withdrawAndDeposit
+}

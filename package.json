@@ -22,6 +22,7 @@
     "push-and-update": "yarn push && yarn update-all && zos-truffle-merge -n 1234 zos.dev-1234.json",
     "console": "oz-console --network $LOCALHOST_URL -c .openzeppelin/mainnet.json",
     "fork-and-upgrade": "./scripts/fork-and-upgrade.sh",
+    "fork": "./fork/cli.js",
     "fork-and-upgrade-and-test": "./scripts/fork-and-upgrade-and-test.sh",
     "console-rinkeby": "oz-console --network rinkeby",
     "console-mainnet": "oz-console --network mainnet",

@@ -9,7 +9,6 @@ zos.dev*.json
 .zos.session
 .zos.lock
 .openzeppelin/.session
-.openzeppelin/mainnet_fork.json
 coverage
 coverage.json
 test-results.xml
