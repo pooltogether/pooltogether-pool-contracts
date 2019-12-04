@@ -373,6 +373,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * The accounted balance is updated to include the fee and, if there was a winner, the net winnings.
    * Fires the Rewarded event.
    * @param _secret The secret to reveal for the current committed Draw
+   * @param _salt The salt that was combined with the revealed secret to use as the hash.  Expects secretHash == keccak256(abi.encodePacked(_secret, _salt))
    */
   function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin onlyLocked requireCommittedNoReward nonReentrant {
     blocklock.unlock(block.number);
