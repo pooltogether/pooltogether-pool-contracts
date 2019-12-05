@@ -4,7 +4,8 @@ module.exports = function ({ unlockedAccounts }) {
   const server = ganache.server({
     fork: process.env.GANACHE_FORK_URL,
     unlocked_accounts: unlockedAccounts,
-    hardfork: 'constantinople'
+    hardfork: 'constantinople',
+    network_id: 999
   });
   return new Promise((resolve, reject) => {
     server.listen('8546', function(err, blockchain) {
