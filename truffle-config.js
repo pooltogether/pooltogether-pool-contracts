@@ -54,8 +54,9 @@ module.exports = {
         process.env.LOCALHOST_URL,
         0,
         3
-      )
-      // gas: 1000000,
+      ),
+      gas: 6721974,
+      network_id: 999
       // gasPrice: 11.101 * 1000000000
     }
   },
@@ -65,6 +66,9 @@ module.exports = {
   compilers: {
     solc: {
       version: "0.5.12",
+      settings: {
+        evmVersion: 'constantinpole'
+      }
     }
   },
 
@@ -72,7 +76,7 @@ module.exports = {
   solc: isCoverage ? {} : {
     optimizer: {
       enabled: true,
-      runs: 100
+      runs: 200
     }
   },
 

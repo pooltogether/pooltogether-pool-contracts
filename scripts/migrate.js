@@ -90,13 +90,6 @@ async function migrate() {
     runShell(`oz create Pool --init init --args ${owner},${cSai},${feeFraction},${owner}`)
     context = loadContext()
   })
-
-  await migration.migrate(20, () => {
-    // deploy upgraded pool contract
-    runShell(`oz push ${ozOptions} ${forceOption}`)
-    context = loadContext()
-  })
-
 }
 
 console.log(chalk.yellow('Started...'))

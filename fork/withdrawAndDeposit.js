@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 const assert = require('assert')
 const chalk = require('chalk')
-const loadUsers = require('./loadUsers')
-const { buildContext } = require('oz-console')
+const { fetchUsers } = require('./fetchUsers')
 const { exec } = require('./exec')
 
 const {
@@ -13,7 +12,9 @@ const overrides = {
   gasLimit: 2000000
 }
 
-async function test (context) {
+async function withdrawAndDeposit (context, type) {
+  console.log(chalk.yellow(`Starting withdraw and deposit for ${type} pool...`))
+
   const {
     provider,
     artifacts,
@@ -21,76 +22,60 @@ async function test (context) {
     ethers,
   } = context
 
+  let pool
+
+  switch (type) {
+    case 'dai':
+      pool = contracts.PoolDai
+      break
+    default:
+      pool = contracts.PoolSai
+  }
+
   provider.pollingInterval = 500
 
-  const users = await loadUsers()
-
-  // Binance 7 account.  Has *tons* of Ether
-  let binance = provider.getSigner(BINANCE_ADDRESS)
-
-  let withdrawalsCount = 5
+  const users = await fetchUsers(5)
 
   // Now ensure we can withdraw the top 5
-  for (let i = 0; i < withdrawalsCount && i < users.length; i++) {
+  for (let i = 0; i < users.length; i++) {
     let address = users[i].id
     let signer = provider.getSigner(address)
-    let pool = new ethers.Contract(contracts.PoolSai.address, artifacts.Pool.abi, signer)
-    // let address = users[i].id
-    // Make sure they have enough ether
-    console.log(chalk.green(`sending eth from ${BINANCE_ADDRESS} to ${address}...`))
-    let binTx2 = await binance.sendTransaction({ to: address, value: ethers.utils.parseEther('1') })
-    await provider.waitForTransaction(binTx2.hash)
-    // let signer = provider.getSigner(address)
-    // let pool = new ethers.Contract(contracts.PoolSai.address, artifacts.Pool.abi, signer)
-    let openBalance = await pool.openBalanceOf(address)
-    let committedBalance = await pool.committedBalanceOf(address)
+    let signingPool = pool.connect(signer)
+
+    let openBalance = await signingPool.openBalanceOf(address)
+    let committedBalance = await signingPool.committedBalanceOf(address)
     let balance = openBalance.add(committedBalance)
 
     if (balance.gt('0x0')) {
       console.log(chalk.yellow(`Withdrawing ${ethers.utils.formatEther(balance)} from ${address}...`))
-      let tx = await pool.withdraw(overrides)
-      await provider.waitForTransaction(tx.hash)
+      await exec(provider, signingPool.withdraw(overrides))
       console.log(chalk.green(`Withdrew ${ethers.utils.formatEther(balance)} from ${address}`))
     } else {
-      console.log(chalk.red(`Cannot withdraw because ${address} has no balance`))
+      console.log(chalk.dim(`Skipping withdraw because ${address} has no Pool ${type} balance`))
     }
 
-    let cToken = new ethers.Contract(await pool.cToken(), artifacts.CErc20Mock.abi, provider)
+    let cToken = new ethers.Contract(await signingPool.cToken(), artifacts.CErc20Mock.abi, provider)
     let token = new ethers.Contract(await cToken.underlying(), artifacts.ERC20.abi, signer)
 
     balance = await token.balanceOf(address)
-    console.log(`Sai balance for ${address}: ${ethers.utils.formatEther(balance)}`)
 
     if (balance.gt('0x0')) {
-      console.log(chalk.yellow(`Approving....`))
-      exec(provider, await token.approve(pool.address, balance, overrides))
+      console.log(chalk.yellow(`Approving ${ethers.utils.formatEther(balance)} ${type}....`))
+      await exec(provider, token.approve(signingPool.address, balance, overrides))
 
-      console.log(chalk.yellow(`Depositing....`))
-      exec(provider, await pool.depositPool(balance, overrides))
+      console.log(chalk.yellow(`Depositing ${ethers.utils.formatEther(balance)} ${type}....`))
+      await exec(provider, signingPool.depositPool(balance, overrides))
 
-      let newSaiBalance = await token.balanceOf(address)
-      console.log(`New Sai balance: ${ethers.utils.formatEther(newSaiBalance)}`)
-
-      let poolBalance = await pool.openBalanceOf(address)
+      let poolBalance = await signingPool.openBalanceOf(address)
       assert.equal(poolBalance.toString(), balance.toString())
 
-      console.log(chalk.green(`Deposit Successful. ${address} deposited ${balance}`))
+      console.log(chalk.green(`Deposit Successful. ${address} deposited ${ethers.utils.formatEther(balance)}`))
     } else {
-      console.log(chalk.dim(`User ${address} has no balance, skipping deposit`))
+      console.log(chalk.dim(`User ${address} has no ${type} balance, skipping deposit`))
     }
   }
-}
 
-async function withdrawAndDeposit() {
-  const context = buildContext({
-    projectConfig: '.openzeppelin/project.json',
-    network: process.env.LOCALHOST_URL,
-    networkConfig: '.openzeppelin/mainnet.json',
-    directory: 'build/contracts',
-    verbose: false
-  })
-
-  await test(context)
+  console.log(chalk.green('Completed withdraw and deposit.'))
 }
 
 module.exports = {

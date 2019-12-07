@@ -20,10 +20,10 @@
     "push": "openzeppelin push",
     "update-all": "openzeppelin update --all --from $ADMIN_ADDRESS",
     "push-and-update": "yarn push && yarn update-all && zos-truffle-merge -n 1234 zos.dev-1234.json",
-    "console": "oz-console --network $LOCALHOST_URL -c .openzeppelin/mainnet.json",
     "fork-and-upgrade": "./scripts/fork-and-upgrade.sh",
     "fork": "./fork/cli.js",
     "fork-and-upgrade-and-test": "./scripts/fork-and-upgrade-and-test.sh",
+    "console": "oz-console --network $LOCALHOST_URL -c .openzeppelin/dev-999.json",
     "console-rinkeby": "oz-console --network rinkeby",
     "console-mainnet": "oz-console --network mainnet",
     "extract-abis": "oz compile && truffle-extract -o abis",
@@ -39,6 +39,7 @@
     "apollo-fetch": "^0.7.0",
     "chalk": "2.4.2",
     "eth-gas-reporter": "0.2.0",
+    "ethers": "^4.0.40",
     "fixidity": "DeltaCamp/Fixidity#edf533f77df43b16a7b92f17af7a8930db01f293",
     "ganache-cli": "6.8.1-beta.0",
     "mocha-junit-reporter": "1.23.1",
@@ -53,6 +54,8 @@
     "zos-truffle-merge": "0.0.3"
   },
   "devDependencies": {
+    "@0x/sol-trace": "^3.0.0",
+    "@0x/web3-wrapper": "^7.0.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "solc": "0.5.12",
