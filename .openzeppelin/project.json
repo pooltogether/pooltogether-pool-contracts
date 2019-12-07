@@ -1,7 +1,8 @@
 {
   "manifestVersion": "2.2",
   "contracts": {
-    "PoolSai": "Pool"
+    "PoolSai": "Pool",
+    "PoolDai": "Pool"
   },
   "dependencies": {},
   "name": "pooltogether",

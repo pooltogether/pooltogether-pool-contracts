@@ -1,5 +1,7 @@
 const chalk = require('chalk')
-const loadUsers = require('./loadUsers')
+const {
+  fetchUsers
+ } = require('./fetchUsers')
 const forkMainnet = require('./forkMainnet')
 const { runShell } = require('./runShell')
 
@@ -8,12 +10,15 @@ const {
   SAI_BUDDY,
   MULTISIG_ADMIN1,
   MULTISIG_ADMIN2,
+  DAI_BUDDY
 } = require('./constants')
 
 async function startFork() {
   console.log(chalk.green('Starting fork...'))
 
-  const users = await loadUsers()
+  runShell(`cp .openzeppelin/mainnet.json .openzeppelin/dev-999.json`)
+
+  const users = await fetchUsers()
   console.log(`Found ${users.length} users`)
 
   const unlockedAccounts = users.map(user => user.id).concat([
@@ -22,6 +27,7 @@ async function startFork() {
     SAI_BUDDY,
     MULTISIG_ADMIN1,
     MULTISIG_ADMIN2,
+    DAI_BUDDY
   ])
 
   await forkMainnet({ unlockedAccounts })

@@ -3,7 +3,6 @@ const chai = require('chai')
 const chalk = require('chalk')
 const expect = chai.expect
 const MultisigAbi = require('./GnosisMultisigAbi')
-const { buildContext } = require('oz-console')
 
 const {
   BINANCE_ADDRESS,
@@ -14,7 +13,8 @@ const {
   OLD_POOL_IMPLEMENTATION
 } = require('./constants')
 
-async function test (context) {
+async function upgradePool (context) {
+  console.log(chalk.yellow('Upgrading Pool...'))
   const {
     provider,
     interfaces,
@@ -36,9 +36,15 @@ async function test (context) {
   let binTx = await binance.sendTransaction({ to: process.env.ADMIN_ADDRESS, value: ethers.utils.parseEther('100') })
   await provider.waitForTransaction(binTx.hash)
 
+  // Expect the user to have pushed the contracts
   let newNetworkConfig = loadNetworkConfig()
   const newPoolAddress = newNetworkConfig.contracts.PoolSai.address
-  expect(newPoolAddress).to.not.equal(OLD_POOL_IMPLEMENTATION)
+  try {
+    expect(newPoolAddress).to.not.equal(OLD_POOL_IMPLEMENTATION)
+  } catch (e) {
+    console.log(chalk.red(`Make sure to run 'yarn fork push' first`))
+    throw e
+  }
 
   // const newPoolAddress = contracts.PoolSai.address
   // expect(newPoolAddress).to.not.equal(OLD_POOL_IMPLEMENTATION)
@@ -65,19 +71,7 @@ async function test (context) {
 
   // Check that the upgrade was successful
   expect(await contracts.ProxyAdmin.getProxyImplementation(POOL_PROXY_ADDRESS)).to.equal(newPoolAddress)
-}
 
-async function upgradePool() {
-  console.log(chalk.yellow('Upgrading Pool...'))
-  const context = buildContext({
-    projectConfig: '.openzeppelin/project.json',
-    network: process.env.LOCALHOST_URL,
-    networkConfig: '.openzeppelin/mainnet.json',
-    directory: 'build/contracts',
-    verbose: false
-  })
-
-  await test(context)
   console.log(chalk.green("Upgraded."))
 }
 
