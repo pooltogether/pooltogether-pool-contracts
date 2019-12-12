@@ -5,6 +5,7 @@ const {
   DAI,
   SAI,
   SAI_BUDDY,
+  LITTLE_SAI_GUY,
   DAI_BUDDY
 } = require('./constants')
 
@@ -26,8 +27,11 @@ async function mint(context, type) {
       token = new ethers.Contract(SAI, interfaces.ERC20.abi, provider.getSigner(SAI_BUDDY))
   }
 
-  const users = await fetchUsers(5)
 
+  await exec(provider, token.transfer(LITTLE_SAI_GUY, ethers.utils.parseEther('100')))
+  console.log(chalk.dim(`Transferred 100 ${type} to LITTLE_SAI_GUY`))
+
+  const users = await fetchUsers(5)
   for (let i = 0; i < users.length; i++) {
     const user = users[i].id
     await exec(provider, token.transfer(user, ethers.utils.parseEther('100')))

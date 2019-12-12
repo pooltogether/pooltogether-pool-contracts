@@ -3,7 +3,8 @@ const chai = require('chai')
 const { exec } = require('./exec')
 const chalk = require('chalk')
 const {
-  BINANCE_ADDRESS
+  BINANCE_ADDRESS,
+  LITTLE_SAI_GUY
 } = require('./constants')
 
 async function pay (context) {
@@ -22,6 +23,9 @@ async function pay (context) {
   // Transfer eth to the admin so that we can deploy contracts
   await exec(provider, binance.sendTransaction({ to: process.env.ADMIN_ADDRESS, value: ethers.utils.parseEther('100') }))
   console.log(chalk.dim(`ProxyAdmin ${process.env.ADMIN_ADDRESS} received 100 ether`))
+
+  await exec(provider, binance.sendTransaction({ to: LITTLE_SAI_GUY, value: ethers.utils.parseEther('100') }))
+  console.log(chalk.dim(`LITTLE_SAI_GUY received 100 ether`))
 
   for (let i = 0; i < users.length; i++) {
     const user = users[i].id

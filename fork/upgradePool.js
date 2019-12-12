@@ -27,15 +27,6 @@ async function upgradePool (context) {
 
   expect(await contracts.ProxyAdmin.getProxyImplementation(POOL_PROXY_ADDRESS)).to.equal(OLD_POOL_IMPLEMENTATION)
 
-  console.log('Balance of Binance: ', (await provider.getBalance(BINANCE_ADDRESS)).toString())
-
-  // Binance 7 account.  Has *tons* of Ether
-  let binance = provider.getSigner(BINANCE_ADDRESS)
-
-  // Transfer eth to the admin so that we can deploy contracts
-  let binTx = await binance.sendTransaction({ to: process.env.ADMIN_ADDRESS, value: ethers.utils.parseEther('100') })
-  await provider.waitForTransaction(binTx.hash)
-
   // Expect the user to have pushed the contracts
   let newNetworkConfig = loadNetworkConfig()
   const newPoolAddress = newNetworkConfig.contracts.PoolSai.address
