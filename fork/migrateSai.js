@@ -20,8 +20,9 @@ async function migrateSai (context) {
 
   const users = await fetchUsers()
 
-  for (let i = 0; i < 5; i++) {
-    const user = users[i].id
+  // for (let i = 0; i < 5; i++) {
+    // const user = users[i].id
+    const user = users[0].id
     const signer = provider.getSigner(user)
     const signingSai = contracts.PoolSai.connect(signer)
     const balance = await signingSai.balanceOf(user)
@@ -35,7 +36,7 @@ async function migrateSai (context) {
     } else {
       console.log(chalk.dim(`Skipping migrate for user ${user} who has no PoolSai`))
     }
-  }
+  // }
 
   console.log(chalk.green('Completed migrate sai.'))
 }
