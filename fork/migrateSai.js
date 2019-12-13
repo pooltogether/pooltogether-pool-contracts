@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const chalk = require('chalk')
+const { expect } = require('chai')
 const { fetchUsers } = require('./fetchUsers')
 const { exec } = require('./exec')
 const { ethers } = require('ethers')
@@ -32,7 +33,7 @@ async function migrateSai (context) {
       await exec(provider, signingSai.transfer(contracts.PoolDai.address, balance, overrides))
       console.log(chalk.dim(`Migrated ${user}.`))
       const endingPoolDaiBalance = await contracts.PoolDai.balanceOf(user)
-      expect(endingPoolDaiBalance.sub(startingPoolDaiBalance)).to.equal(balance.toString())
+      expect(endingPoolDaiBalance.sub(startingPoolDaiBalance).toString()).to.equal(balance.toString())
     } else {
       console.log(chalk.dim(`Skipping migrate for user ${user} who has no PoolSai`))
     }

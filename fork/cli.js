@@ -16,6 +16,7 @@ const { swapSaiToDai } = require('./swapSaiToDai')
 const { wards } = require('./wards')
 const { trace } = require('./trace')
 const { context } = require('./context')
+const { rollover } = require('./rollover')
 
 const program = new commander.Command()
 program.description('Handles fork scripting.  Start a mainnet fork then run scripts against it.')
@@ -84,6 +85,18 @@ program
     for (let i = 0; i < count; i++) {
       await reward(c, type)
     }
+  })
+
+program
+  .command('rollover [type]')
+  .description('rollover and open the next draw. Type is one of sai | dai.  Defaults to sai')
+  .action(async (type) => {
+    ranAction = true
+    if (!type) {
+      type = 'sai'
+    }
+    const c = await callContext()
+    await rollover(c, type)
   })
 
 program
