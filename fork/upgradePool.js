@@ -14,7 +14,7 @@ const {
 } = require('./constants')
 
 async function upgradePool (context) {
-  console.log(chalk.yellow('Upgrading Pool...'))
+  console.log(chalk.yellow('Upgrading Pool to v2x...'))
   const {
     provider,
     interfaces,
@@ -63,7 +63,7 @@ async function upgradePool (context) {
   // Check that the upgrade was successful
   expect(await contracts.ProxyAdmin.getProxyImplementation(POOL_PROXY_ADDRESS)).to.equal(newPoolAddress)
 
-  console.log(chalk.green("Upgraded."))
+  console.log(chalk.green("Upgraded to v2x."))
 }
 
 module.exports = {

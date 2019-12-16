@@ -21,6 +21,8 @@ async function migrateSai (context) {
 
   const users = await fetchUsers()
 
+  const user2 = users[1].id
+
   // for (let i = 0; i < 5; i++) {
     // const user = users[i].id
     const user = users[0].id

@@ -12,7 +12,7 @@ const overrides = {
   gasLimit: 2000000
 }
 
-async function withdrawAndDeposit (context, type) {
+async function withdrawAndDeposit (context, type, count = '5') {
   console.log(chalk.yellow(`Starting withdraw and deposit for ${type} pool...`))
 
   const {
@@ -34,7 +34,7 @@ async function withdrawAndDeposit (context, type) {
 
   provider.pollingInterval = 500
 
-  const users = await fetchUsers(5)
+  const users = await fetchUsers(parseInt(count, 10))
 
   // Now ensure we can withdraw the top 5
   for (let i = 0; i < users.length; i++) {
@@ -42,8 +42,16 @@ async function withdrawAndDeposit (context, type) {
     let signer = provider.getSigner(address)
     let signingPool = pool.connect(signer)
 
+    console.log(chalk.dim(`Checking balances for ${address}...`))
+
     let openBalance = await signingPool.openBalanceOf(address)
+
+    console.log(chalk.dim(`Retrieving committed balance...`))
+
     let committedBalance = await signingPool.committedBalanceOf(address)
+
+    console.log(chalk.dim(`adding balances...`))
+
     let balance = openBalance.add(committedBalance)
 
     if (balance.gt('0x0')) {

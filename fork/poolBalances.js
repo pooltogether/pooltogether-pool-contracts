@@ -1,14 +1,14 @@
 const { fetchUsers } = require('./fetchUsers')
 const chalk = require('chalk')
 
-async function poolBalances (context, type) {
+async function poolBalances (context, type, count = '10') {
   console.log(chalk.yellow(`Checking ${type} balances...`))
   const {
     contracts,
     ethers
   } = context
 
-  const users = await fetchUsers(10)
+  const users = await fetchUsers(parseInt(count, 10))
 
   let pool
 
@@ -20,7 +20,7 @@ async function poolBalances (context, type) {
       pool = contracts.PoolSai
   }
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < users.length; i++) {
     const user = users[i].id
     console.log(chalk.dim(`Checking balance for ${user}...`))
     const balance = await pool.balanceOf(user)
