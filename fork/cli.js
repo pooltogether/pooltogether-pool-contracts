@@ -5,18 +5,24 @@ const { showUsers } = require('./showUsers')
 const { startFork } = require('./startFork')
 const { pay } = require('./pay')
 const { upgradePool } = require('./upgradePool')
+const { upgrade } = require('./upgrade')
 const { pushContracts } = require('./pushContracts')
 const { withdrawAndDeposit } = require('./withdrawAndDeposit')
+const { rewardAndOpen } = require('./rewardAndOpen')
+const { openNextDraw } = require('./openNextDraw')
 const { reward } = require('./reward')
 const { deployPoolDai } = require('./deployPoolDai')
 const { mint } = require('./mint')
 const { migrateSai } = require('./migrateSai')
 const { poolBalances } = require('./poolBalances')
 const { swapSaiToDai } = require('./swapSaiToDai')
+const { calculateWinners } = require('./calculateWinners')
 const { wards } = require('./wards')
 const { trace } = require('./trace')
 const { context } = require('./context')
 const { rollover } = require('./rollover')
+const { transfer } = require('./transfer')
+const { burn } = require('./burn')
 
 const program = new commander.Command()
 program.description('Handles fork scripting.  Start a mainnet fork then run scripts against it.')
@@ -56,10 +62,19 @@ program
 
 program
   .command('upgrade-v2x')
-  .description('Executes the v2x migration')
+  .description('Executes the v2x upgrade')
   .action(async () => {
     ranAction = true
     await upgradePool(await callContext())
+  })
+
+
+program
+  .command('upgrade')
+  .description('Executes a generic upgrade')
+  .action(async () => {
+    ranAction = true
+    await upgrade(await callContext())
   })
 
 program
@@ -71,7 +86,7 @@ program
   })
 
 program
-  .command('reward [type] [count]')
+  .command('reward-open [type] [count]')
   .description('reward and open the next draw [count] times. Type is one of sai | dai.  Defaults to sai')
   .action(async (type, count) => {
     ranAction = true
@@ -83,8 +98,32 @@ program
     }
     const c = await callContext()
     for (let i = 0; i < count; i++) {
-      await reward(c, type)
+      await rewardAndOpen(c, type)
     }
+  })
+
+program
+  .command('reward [type]')
+  .description('reward the next draw. Type is one of sai | dai.  Defaults to sai')
+  .action(async (type) => {
+    ranAction = true
+    if (!type) {
+      type = 'sai'
+    }
+    const c = await callContext()
+    await reward(c, type)
+  })
+
+program
+  .command('open [type]')
+  .description('open the next draw. Type is one of sai | dai.  Defaults to sai')
+  .action(async (type) => {
+    ranAction = true
+    if (!type) {
+      type = 'sai'
+    }
+    const c = await callContext()
+    await openNextDraw(c, type)
   })
 
 program
@@ -100,14 +139,50 @@ program
   })
 
 program
-  .command('withdraw-deposit [type] Type is one of sai | dai.  Defaults to sai')
-  .description('tests withdrawals and deposits for top 5 users')
-  .action(async (type) => {
+  .command('transfer')
+  .description('transfer some sai between users.')
+  .action(async () => {
+    ranAction = true
+    const c = await callContext()
+    await transfer(c)
+  })
+
+program
+  .command('burn')
+  .description('burn sai for the first user.')
+  .action(async () => {
+    ranAction = true
+    const c = await callContext()
+    await burn(c)
+  })
+
+program
+  .command('withdraw-deposit [type] [count]')
+  .description('tests withdrawals and deposits for top *count* users')
+  .action(async (type, count) => {
     ranAction = true
     if (!type) {
       type = 'sai'
     }
-    await withdrawAndDeposit(await callContext(), type)
+    if (!count) {
+      count = 5
+    }
+    await withdrawAndDeposit(await callContext(), type, count)
+  })
+
+
+program
+  .command('winners [type] [count]')
+  .description('precalculate winners')
+  .action(async (type, count) => {
+    ranAction = true
+    if (!type) {
+      type = 'sai'
+    }
+    if (!count) {
+      count = 5
+    }
+    await calculateWinners(await callContext(), type, count)
   })
 
 program
@@ -162,14 +237,17 @@ program
   })
 
 program
-  .command('balances [type]')
-  .description('Displays Pool balances for the top 10 users.   Type is one of sai | dai.  Defaults to sai')
-  .action(async (type) => {
+  .command('balances [type] [count]')
+  .description('Displays Pool balances for the top X users.   Type is one of sai | dai.  Defaults to sai')
+  .action(async (type, count) => {
     ranAction = true
     if (!type) {
       type = 'sai'
     }
-    await poolBalances(await callContext(), type)
+    if (!count) {
+      count = 10
+    }
+    await poolBalances(await callContext(), type, count)
   })
 
 program.parse(process.argv)

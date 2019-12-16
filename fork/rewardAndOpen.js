@@ -26,7 +26,7 @@ function generateSecretHash(secret, salt) {
   )
 }
 
-async function reward(context, type = 'sai') {
+async function rewardAndOpen(context, type = 'sai') {
   console.log(chalk.yellow(`Rewarding ${type} pool...`))
 
   const {
@@ -59,6 +59,10 @@ async function reward(context, type = 'sai') {
     return
   }
 
+  let secret = generateSecret(poolSeed, nextDrawId)
+  let salt = generateSecret(poolSaltSeed, nextDrawId)
+  let secretHash = generateSecretHash(secret, salt)
+
   console.log({
     currentCommittedDrawId: currentCommittedDrawId.toString(),
     currentOpenDrawId: currentOpenDrawId.toString(),
@@ -67,13 +71,13 @@ async function reward(context, type = 'sai') {
 
   // if no pool is committed
   if (currentCommittedDrawId.toString() === '0') {
-    console.log(chalk.red('No draw is committed!'))
+    await exec(provider, pool.openNextDraw(secretHash, overrides))
   } else {
     let lastSalt = generateSecret(poolSaltSeed, currentCommittedDrawId)
     let lastSecret = generateSecret(poolSeed, currentCommittedDrawId)
 
     // await exec(provider, pool.reward(lastSecret, lastSalt, overrides))
-    await exec(provider, pool.reward(lastSecret, lastSalt, overrides))
+    await exec(provider, pool.rewardAndOpenNextDraw(secretHash, lastSecret, lastSalt, overrides))
 
     let draw = await pool.getDraw(currentCommittedDrawId)
 
@@ -86,5 +90,5 @@ async function reward(context, type = 'sai') {
 }
 
 module.exports = {
-  reward
+  rewardAndOpen
 }

@@ -26,8 +26,8 @@ function generateSecretHash(secret, salt) {
   )
 }
 
-async function reward(context, type = 'sai') {
-  console.log(chalk.yellow(`Rewarding ${type} pool...`))
+async function openNextDraw(context, type = 'sai') {
+  console.log(chalk.yellow(`Opening next draw for ${type} pool...`))
 
   const {
     provider,
@@ -59,32 +59,21 @@ async function reward(context, type = 'sai') {
     return
   }
 
+  let secret = generateSecret(poolSeed, nextDrawId)
+  let salt = generateSecret(poolSaltSeed, nextDrawId)
+  let secretHash = generateSecretHash(secret, salt)
+
   console.log({
     currentCommittedDrawId: currentCommittedDrawId.toString(),
     currentOpenDrawId: currentOpenDrawId.toString(),
     nextDrawId: nextDrawId.toString()
   })
 
-  // if no pool is committed
-  if (currentCommittedDrawId.toString() === '0') {
-    console.log(chalk.red('No draw is committed!'))
-  } else {
-    let lastSalt = generateSecret(poolSaltSeed, currentCommittedDrawId)
-    let lastSecret = generateSecret(poolSeed, currentCommittedDrawId)
+  await exec(provider, pool.openNextDraw(secretHash, overrides))
 
-    // await exec(provider, pool.reward(lastSecret, lastSalt, overrides))
-    await exec(provider, pool.reward(lastSecret, lastSalt, overrides))
-
-    let draw = await pool.getDraw(currentCommittedDrawId)
-
-    let winnerBalance = await pool.balanceOf(draw.winner)
-
-    console.log(chalk.green(`Address ${draw.winner} won ${ethers.utils.formatEther(draw.netWinnings)} with ${ethers.utils.formatEther(winnerBalance)}`))
-  }
-
-  console.log(chalk.green('Done reward.'))
+  console.log(chalk.green('Done openNextDraw.'))
 }
 
 module.exports = {
-  reward
+  openNextDraw
 }

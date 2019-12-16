@@ -20,7 +20,6 @@ async function startFork() {
   runShell(`cp .openzeppelin/mainnet.json .openzeppelin/dev-999.json`)
 
   const users = await fetchUsers()
-  console.log(`Found ${users.length} users`)
 
   const unlockedAccounts = users.map(user => user.id).concat([
     BINANCE_ADDRESS,
@@ -32,10 +31,15 @@ async function startFork() {
     DAI_BUDDY
   ])
 
+  console.log(chalk.dim(`Unlocked: \n\t${unlockedAccounts.join('\n\t')}`))
+
   const server = ganache.server({
     fork: process.env.GANACHE_FORK_URL,
     unlocked_accounts: unlockedAccounts,
-    network_id: 999
+    network_id: 999,
+    gasLimit: 20000000,
+    defaultTransactionGasLimit: 20000000,
+    allowUnlimitedContractSize: true
   });
 
   await new Promise((resolve, reject) => {
