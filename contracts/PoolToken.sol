@@ -70,6 +70,14 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   bytes32 constant internal TOKENS_RECIPIENT_INTERFACE_HASH =
       0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
 
+  // keccak256("ERC777Token")
+  bytes32 constant internal TOKENS_INTERFACE_HASH =
+      0xac7fbab5f54a3ca8194167523c6753bfeb96a445279294b6125b68cce2177054;
+
+  // keccak256("ERC20Token")
+  bytes32 constant internal ERC20_TOKENS_INTERFACE_HASH =
+      0xaea199e31a596269b42cdafd93407f14436db6e4cad65417994c2eb37381e05a;
+
   string internal _name;
   string internal _symbol;
 
@@ -94,9 +102,9 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     address[] memory defaultOperators,
     BasePool pool
   ) public initializer {
-      require(bytes(name).length != 0, "name must be defined");
-      require(bytes(symbol).length != 0, "symbol must be defined");
-      require(address(pool) != address(0), "PoolToken/pool-not-def");
+      require(bytes(name).length != 0, "Pool/name");
+      require(bytes(symbol).length != 0, "Pool/symbol");
+      require(bytes(_name).length == 0, "Pool/init");
 
       _name = name;
       _symbol = symbol;
@@ -108,8 +116,8 @@ contract PoolToken is Initializable, IERC20, IERC777 {
       }
 
       // register interfaces
-      ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
-      ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
+      ERC1820_REGISTRY.setInterfaceImplementer(address(this), TOKENS_INTERFACE_HASH, address(this));
+      ERC1820_REGISTRY.setInterfaceImplementer(address(this), ERC20_TOKENS_INTERFACE_HASH, address(this));
   }
 
   function pool() public view returns (address) {
@@ -188,7 +196,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     * Also emits a {Sent} event.
     */
   function transfer(address recipient, uint256 amount) external returns (bool) {
-      require(recipient != address(0), "ERC777: transfer to the zero address");
+      require(recipient != address(0), "Pool/transfer-zero");
 
       address from = msg.sender;
 
@@ -235,7 +243,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     * @dev See {IERC777-authorizeOperator}.
     */
   function authorizeOperator(address operator) external {
-      require(msg.sender != operator, "ERC777: authorizing self as operator");
+      require(msg.sender != operator, "Pool/auth-self");
 
       if (_defaultOperators[operator]) {
           delete _revokedDefaultOperators[msg.sender][operator];
@@ -250,7 +258,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     * @dev See {IERC777-revokeOperator}.
     */
   function revokeOperator(address operator) external {
-      require(operator != msg.sender, "ERC777: revoking self as operator");
+      require(operator != msg.sender, "Pool/revoke-self");
 
       if (_defaultOperators[operator]) {
           _revokedDefaultOperators[msg.sender][operator] = true;
@@ -282,7 +290,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   )
   external
   {
-      require(isOperatorFor(msg.sender, sender), "ERC777: caller is not an operator for holder");
+      require(isOperatorFor(msg.sender, sender), "Pool/not-operator");
       _send(msg.sender, sender, recipient, amount, data, operatorData);
   }
 
@@ -301,7 +309,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     * Emits {Redeemed} and {Transfer} events.
     */
   function operatorRedeem(address account, uint256 amount, bytes calldata data, bytes calldata operatorData) external {
-      require(isOperatorFor(msg.sender, account), "ERC777: caller is not an operator for holder");
+      require(isOperatorFor(msg.sender, account), "Pool/not-operator");
       _redeem(msg.sender, account, amount, data, operatorData);
   }
 
@@ -337,15 +345,15 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   * Emits {Sent}, {Transfer} and {Approval} events.
   */
   function transferFrom(address holder, address recipient, uint256 amount) external returns (bool) {
-      require(recipient != address(0), "ERC777: transfer to the zero address");
-      require(holder != address(0), "ERC777: transfer from the zero address");
+      require(recipient != address(0), "Pool/to-zero");
+      require(holder != address(0), "Pool/from-zero");
 
       address spender = msg.sender;
 
       _callTokensToSend(spender, holder, recipient, amount, "", "");
 
       _move(spender, holder, recipient, amount, "", "");
-      _approve(holder, spender, _allowances[holder][spender].sub(amount, "ERC777: transfer amount exceeds allowance"));
+      _approve(holder, spender, _allowances[holder][spender].sub(amount, "Pool/exceed-allow"));
 
       _callTokensReceived(spender, holder, recipient, amount, "", "", false);
 
@@ -395,8 +403,8 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   )
       private
   {
-      require(from != address(0), "ERC777: send from the zero address");
-      require(to != address(0), "ERC777: send to the zero address");
+      require(from != address(0), "Pool/from-zero");
+      require(to != address(0), "Pool/to-zero");
 
       _callTokensToSend(operator, from, to, amount, userData, operatorData);
 
@@ -422,7 +430,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   )
       private
   {
-      require(from != address(0), "ERC777: redeem from the zero address");
+      require(from != address(0), "Pool/zero-addr");
 
       _callTokensToSend(operator, from, address(0), amount, data, operatorData);
 
@@ -449,7 +457,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   }
 
   function _approve(address holder, address spender, uint256 value) private {
-      require(spender != address(0), "ERC777: approve to the zero address");
+      require(spender != address(0), "Pool/zero-addr");
 
       _allowances[holder][spender] = value;
       emit Approval(holder, spender, value);
@@ -506,7 +514,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
       if (implementer != address(0)) {
           IERC777Recipient(implementer).tokensReceived(operator, from, to, amount, userData, operatorData);
       } else if (requireReceptionAck) {
-          require(!to.isContract(), "ERC777: contract recipient has no implementer for ERC777TokensRecipient");
+          require(!to.isContract(), "Pool/no-recip-inter");
       }
   }
 

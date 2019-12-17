@@ -218,7 +218,7 @@ library DrawManager {
             total = total.add(firstAmount);
         }
 
-        require(_amount <= total, "cannot withdraw more than available");
+        require(_amount <= total, "Pool/exceed");
 
         uint256 remaining = total.sub(_amount);
 
@@ -342,7 +342,7 @@ library DrawManager {
         if (committedSupply(self) == 0) {
             return address(0);
         }
-        require(_token < committedSupply(self), "token is beyond the eligible supply");
+        require(_token < committedSupply(self), "Pool/ineligible");
         uint256 drawIndex = uint256(self.sortitionSumTrees.draw(TREE_OF_DRAWS, _token));
         uint256 drawSupply = self.sortitionSumTrees.total(bytes32(drawIndex));
         uint256 drawToken = _token % drawSupply;
@@ -361,7 +361,7 @@ library DrawManager {
     }
 
     modifier requireOpenDraw(State storage self) {
-        require(self.openDrawIndex > 0, "there is no open draw");
+        require(self.openDrawIndex > 0, "Pool/no-draw");
         _;
     }
 
@@ -371,7 +371,7 @@ library DrawManager {
     }
 
     modifier onlyNonZero(address _addr) {
-        require(_addr != address(0), "address cannot be zero");
+        require(_addr != address(0), "Pool/not-zero");
         _;
     }
 }

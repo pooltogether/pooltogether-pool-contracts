@@ -60,7 +60,7 @@ contract RecipientWhitelistPoolToken is PoolToken {
       internal
   {
       if (_recipientWhitelistEnabled) {
-        require(to == address(0) || _recipientWhitelist[to], "recipient is not whitelisted");
+        require(to == address(0) || _recipientWhitelist[to], "Pool/not-list");
       }
       super._callTokensToSend(operator, from, to, amount, userData, operatorData);
   }

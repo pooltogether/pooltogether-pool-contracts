@@ -191,7 +191,7 @@ contract('PoolToken', (accounts) => {
           let recipient = await MockERC777Recipient.new()
           await poolContext.depositPool(toWei('10'))
           await poolContext.nextDraw()
-          await chai.assert.isRejected(poolToken.send(recipient.address, toWei('10'), []), /recipient has no implementer for ERC777TokensRecipient/)
+          await chai.assert.isRejected(poolToken.send(recipient.address, toWei('10'), []), /Pool\/no-recip-inter/)
         })
       })
     })

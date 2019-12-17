@@ -269,8 +269,8 @@ contract BasePool is Initializable, ReentrancyGuard {
     uint256 _lockDuration,
     uint256 _cooldownDuration
   ) public initializer {
-    require(_owner != address(0), "owner cannot be the null address");
-    require(_cToken != address(0), "money market address is zero");
+    require(_owner != address(0), "Pool/owner-zero");
+    require(_cToken != address(0), "Pool/ctoken-zero");
     cToken = ICErc20(_cToken);
     _addAdmin(_owner);
     _setNextFeeFraction(_feeFraction);
@@ -333,7 +333,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    */
   function openNextDraw(bytes32 nextSecretHash) public onlyAdmin {
     if (currentCommittedDrawId() > 0) {
-      require(currentCommittedDrawHasBeenRewarded(), "the current committed draw has not been rewarded");
+      require(currentCommittedDrawHasBeenRewarded(), "Pool/not-reward");
     }
     if (currentOpenDrawId() != 0) {
       emitCommitted();
@@ -384,7 +384,7 @@ contract BasePool is Initializable, ReentrancyGuard {
 
     Draw storage draw = draws[drawId];
 
-    require(draw.secretHash == keccak256(abi.encodePacked(_secret, _salt)), "secret does not match");
+    require(draw.secretHash == keccak256(abi.encodePacked(_secret, _salt)), "Pool/bad-secret");
 
     // derive entropy from the revealed secret
     bytes32 entropy = keccak256(abi.encodePacked(_secret));
@@ -481,7 +481,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    */
   function depositSponsorship(uint256 _amount) public unlessPaused nonReentrant {
     // Transfer the tokens into this contract
-    require(token().transferFrom(msg.sender, address(this), _amount), "token transfer failed");
+    require(token().transferFrom(msg.sender, address(this), _amount), "Pool/t-fail");
 
     // Deposit the sponsorship amount
     _depositSponsorshipFrom(msg.sender, _amount);
@@ -504,7 +504,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    */
   function depositPool(uint256 _amount) public requireOpenDraw unlessPaused nonReentrant {
     // Transfer the tokens into this contract
-    require(token().transferFrom(msg.sender, address(this), _amount), "token transfer failed");
+    require(token().transferFrom(msg.sender, address(this), _amount), "Pool/t-fail");
 
     // Deposit the funds
     _depositPoolFrom(msg.sender, _amount);
@@ -543,8 +543,8 @@ contract BasePool is Initializable, ReentrancyGuard {
     accountedBalance = accountedBalance.add(_amount);
 
     // Deposit into Compound
-    require(token().approve(address(cToken), _amount), "could not approve money market spend");
-    require(cToken.mint(_amount) == 0, "could not supply money market");
+    require(token().approve(address(cToken), _amount), "Pool/approve");
+    require(cToken.mint(_amount) == 0, "Pool/supply");
   }
 
   /**
@@ -661,7 +661,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   function _withdraw(address _sender, uint256 _amount) internal {
     uint balance = balances[_sender];
 
-    require(_amount <= balance, "not enough funds");
+    require(_amount <= balance, "Pool/no-funds");
 
     // Update the user's balance
     balances[_sender] = balance.sub(_amount);
@@ -670,8 +670,8 @@ contract BasePool is Initializable, ReentrancyGuard {
     accountedBalance = accountedBalance.sub(_amount);
 
     // Withdraw from Compound and transfer
-    require(cToken.redeemUnderlying(_amount) == 0, "could not redeem from compound");
-    require(token().transfer(_sender, _amount), "could not transfer winnings");
+    require(cToken.redeemUnderlying(_amount) == 0, "Pool/redeem");
+    require(token().transfer(_sender, _amount), "Pool/transfer");
   }
 
   /**
@@ -823,7 +823,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   function _setNextFeeFraction(uint256 _feeFraction) internal {
-    require(_feeFraction <= 1 ether, "fee fraction must be 1 or less");
+    require(_feeFraction <= 1 ether, "Pool/less-1");
     nextFeeFraction = _feeFraction;
 
     emit NextFeeFractionChanged(_feeFraction);
@@ -839,7 +839,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   function _setNextFeeBeneficiary(address _feeBeneficiary) internal {
-    require(_feeBeneficiary != address(0), "beneficiary should not be 0x0");
+    require(_feeBeneficiary != address(0), "Pool/not-zero");
     nextFeeBeneficiary = _feeBeneficiary;
 
     emit NextFeeBeneficiaryChanged(_feeBeneficiary);
@@ -877,16 +877,16 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @param _admin The address of the admin to remove
    */
   function removeAdmin(address _admin) public onlyAdmin {
-    require(admins.has(_admin), "admin does not exist");
-    require(_admin != msg.sender, "cannot remove yourself");
+    require(admins.has(_admin), "Pool/no-admin");
+    require(_admin != msg.sender, "Pool/remove-self");
     admins.remove(_admin);
 
     emit AdminRemoved(_admin);
   }
 
   modifier requireCommittedNoReward() {
-    require(currentCommittedDrawId() > 0, "must be a committed draw");
-    require(!currentCommittedDrawHasBeenRewarded(), "the committed draw has already been rewarded");
+    require(currentCommittedDrawId() > 0, "Pool/committed");
+    require(!currentCommittedDrawHasBeenRewarded(), "Pool/already");
     _;
   }
 
@@ -963,22 +963,22 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   modifier onlyAdmin() {
-    require(admins.has(msg.sender), "must be an admin");
+    require(admins.has(msg.sender), "Pool/admin");
     _;
   }
 
   modifier requireOpenDraw() {
-    require(currentOpenDrawId() != 0, "there is no open draw");
+    require(currentOpenDrawId() != 0, "Pool/no-open");
     _;
   }
 
   modifier whenPaused() {
-    require(paused, "contract is not paused");
+    require(paused, "Pool/be-paused");
     _;
   }
 
   modifier unlessPaused() {
-    require(!paused, "contract is paused");
+    require(!paused, "Pool/not-paused");
     _;
   }
 

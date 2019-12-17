@@ -66,7 +66,7 @@ contract('DrawManager', (accounts) => {
             })
 
             it('should fail if the address is zero', async () => {
-                await chai.assert.isRejected(drawManager.deposit(ZERO_ADDRESS, toWei('10')), /address cannot be zero/)
+                await chai.assert.isRejected(drawManager.deposit(ZERO_ADDRESS, toWei('10')), /Pool\/not-zero/)
             })
 
             it('should deposit the tokens as open tokens', async () => {
@@ -228,7 +228,7 @@ contract('DrawManager', (accounts) => {
         })
 
         it('should fail if the address is zero', async () => {
-            await chai.assert.isRejected(drawManager.depositCommitted(ZERO_ADDRESS, toWei('10')), /address cannot be zero/)
+            await chai.assert.isRejected(drawManager.depositCommitted(ZERO_ADDRESS, toWei('10')), /Pool\/not-zero/)
         })
 
         it('should work when recipient already has committed deposits', async () => {
@@ -299,7 +299,7 @@ contract('DrawManager', (accounts) => {
         })
 
         it('should fail if the address is zero', async () => {
-            await chai.assert.isRejected(drawManager.withdrawCommitted(ZERO_ADDRESS, toWei('10')), /address cannot be zero/)
+            await chai.assert.isRejected(drawManager.withdrawCommitted(ZERO_ADDRESS, toWei('10')), /Pool\/not-zero/)
         })
 
         it('should fail if there is no committed draw', async () => {
@@ -367,7 +367,7 @@ contract('DrawManager', (accounts) => {
         })
 
         it('should fail if the address is zero', async () => {
-            await chai.assert.isRejected(drawManager.withdraw(ZERO_ADDRESS), /address cannot be zero/)
+            await chai.assert.isRejected(drawManager.withdraw(ZERO_ADDRESS), /Pool\/not-zero/)
         })
 
         it('should allow the user to withdraw their open tokens', async () => {
