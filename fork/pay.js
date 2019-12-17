@@ -7,7 +7,7 @@ const {
   LITTLE_SAI_GUY
 } = require('./constants')
 
-async function pay (context) {
+async function pay (context, count = '5') {
   console.log(chalk.yellow('Starting ethers payments to admin and users...'))
 
   const {
@@ -15,7 +15,9 @@ async function pay (context) {
     ethers
   } = context
 
-  const users = await fetchUsers(5)
+  count = parseInt(count, 10)
+
+  const users = await fetchUsers(count)
 
   // Binance 7 account.  Has *tons* of Ether
   let binance = provider.getSigner(BINANCE_ADDRESS)

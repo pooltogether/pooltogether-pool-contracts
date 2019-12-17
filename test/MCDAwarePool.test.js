@@ -70,7 +70,7 @@ contract('MCDAwarePool', (accounts) => {
         assert.equal(await scdMcdMigration.dai(), dai.address)
 
         // Inject SCDMCDMigration into receiving pool
-        await receivingPool.initLocalMCDAwarePool(scdMcdMigration.address, sendingPool.address)
+        await receivingPool.initMigration(scdMcdMigration.address, sendingPool.address)
         // Ensure the dai pool has the ScdMcdMigration wired up correctly
         assert.equal(await receivingPool.scdMcdMigration(), scdMcdMigration.address)
         assert.equal((await receivingPool.methods['sai()'].call()).toString(), sai.address)

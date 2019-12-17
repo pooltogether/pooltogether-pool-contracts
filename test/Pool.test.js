@@ -1,4 +1,4 @@
-const Pool = artifacts.require('Pool.sol')
+const Pool = artifacts.require('MCDAwarePool.sol')
 const DrawManager = artifacts.require('DrawManager.sol')
 const FixidityLib = artifacts.require('FixidityLib.sol')
 const Blocklock = artifacts.require('Blocklock.sol')

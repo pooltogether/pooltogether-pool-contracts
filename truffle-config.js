@@ -6,13 +6,13 @@ const isCoverage = process.env.COVERAGE === 'true'
 
 module.exports = {
   networks: {
-    // development: {
-    //   host: 'localhost',
-    //   port: 8546,
-    //   gas: 6999999,
-    //   gasPrice: 1 * 1000000000,
-    //   network_id: '*'
-    // },
+    development: {
+      host: 'localhost',
+      port: 7545,
+      gas: 12000000,
+      gasPrice: 1 * 1000000000,
+      network_id: '5777'
+    },
 
     local: {
       host: 'localhost',
@@ -55,7 +55,7 @@ module.exports = {
         0,
         3
       ),
-      gas: 6721974,
+      gas: 7000000,
       network_id: 999
       // gasPrice: 11.101 * 1000000000
     }
@@ -76,7 +76,7 @@ module.exports = {
   solc: isCoverage ? {} : {
     optimizer: {
       enabled: true,
-      runs: 200
+      runs: 1
     }
   },
 

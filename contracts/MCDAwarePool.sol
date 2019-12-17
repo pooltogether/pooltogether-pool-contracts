@@ -42,14 +42,14 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
   uint256 internal constant DEFAULT_COOLDOWN_DURATION = 80;
 
   /**
-   * @notice Returns the address of the ScdMcdMigration contract (see https://github.com/makerdao/developerguides/blob/master/mcd/upgrading-to-multi-collateral-dai/upgrading-to-multi-collateral-dai.md#direct-integration-with-smart-contracts)
+   * @notice The address of the ScdMcdMigration contract (see https://github.com/makerdao/developerguides/blob/master/mcd/upgrading-to-multi-collateral-dai/upgrading-to-multi-collateral-dai.md#direct-integration-with-smart-contracts)
    */
-  function scdMcdMigration() public view returns (ScdMcdMigration);
+  ScdMcdMigration public scdMcdMigration;
 
   /**
-   * @notice Returns the address of the Sai Pool contract
+   * @notice The address of the Sai Pool contract
    */
-  function saiPool() public view returns (MCDAwarePool);
+  MCDAwarePool public saiPool;
 
   /**
    * @notice Initializes the contract.
@@ -92,6 +92,17 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
     ERC1820_REGISTRY.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
+  function initMigration(ScdMcdMigration _scdMcdMigration, MCDAwarePool _saiPool) public onlyAdmin {
+    _initMigration(_scdMcdMigration, _saiPool);
+  }
+
+  function _initMigration(ScdMcdMigration _scdMcdMigration, MCDAwarePool _saiPool) internal {
+    require(address(scdMcdMigration) == address(0), "has already been initialized");
+    require(address(_scdMcdMigration) != address(0), "migration is not defined");
+    scdMcdMigration = _scdMcdMigration;
+    saiPool = _saiPool; // may be null
+  }
+
   /**
    * @notice Called by an ERC777 token when tokens are sent, transferred, or minted.  If the sender is the original Sai Pool
    * and this pool is bound to the Dai token then it will accept the transfer, migrate the tokens, and deposit on behalf of
@@ -118,10 +129,10 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
     saiPoolToken().redeem(amount, '');
 
     // approve of the transfer to the migration contract
-    saiToken().approve(address(scdMcdMigration()), amount);
+    saiToken().approve(address(scdMcdMigration), amount);
 
     // migrate the sai to dai.  The contract now has dai
-    scdMcdMigration().swapSaiToDai(amount);
+    scdMcdMigration.swapSaiToDai(amount);
 
     if (currentCommittedDrawId() > 0) {
       // now deposit the dai as tickets
@@ -136,8 +147,8 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
    * @return The address of the Sai PoolToken contract
    */
   function saiPoolToken() internal view returns (PoolToken) {
-    if (address(saiPool()) != address(0)) {
-      return saiPool().poolToken();
+    if (address(saiPool) != address(0)) {
+      return saiPool.poolToken();
     } else {
       return PoolToken(0);
     }
@@ -148,14 +159,14 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
    * @return The address of the sai token
    */
   function saiToken() internal returns (GemLike) {
-    return scdMcdMigration().saiJoin().gem();
+    return scdMcdMigration.saiJoin().gem();
   }
 
   /**
    * @notice Returns the address of the Dai token
    * @return The address of the Dai token.
    */
-  function daiToken() internal returns (GemLike) {
-    return scdMcdMigration().daiJoin().dai();
+  function daiToken() public returns (GemLike) {
+    return scdMcdMigration.daiJoin().dai();
   }
 }

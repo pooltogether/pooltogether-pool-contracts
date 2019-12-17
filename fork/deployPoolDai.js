@@ -17,7 +17,7 @@ async function deployPoolDai(context) {
   const name = 'Pool Dai'
   const symbol = 'poolDai'
 
-  const args = `${owner},${cToken},${feeFraction},${feeBeneficiary},"${name}","${symbol}",[]`
+  const args = `${owner},${cToken},${feeFraction},${feeBeneficiary},"${name}","${symbol}",[],0xc73e0383f3aff3215e6f04b0331d58cecf0ab849,${context.contracts.PoolSai.address}`
 
   runShell(`oz create PoolDai --network mainnet_fork --from ${process.env.ADMIN_ADDRESS} --init init --args '${args}'`)
 }
