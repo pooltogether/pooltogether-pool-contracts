@@ -4338,10 +4338,10 @@ functional-red-black-tree@^1.0.1, functional-red-black-tree@~1.0.1:
   resolved "https://registry.yarnpkg.com/functional-red-black-tree/-/functional-red-black-tree-1.0.1.tgz#1b0ab3bd553b2a0d6399d29c0e3ea0b252078327"
   integrity sha1-GwqzvVU7Kg1jmdKcDj6gslIHgyc=
 
-ganache-cli@6.8.1-beta.0:
-  version "6.8.1-beta.0"
-  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.8.1-beta.0.tgz#d7e9506197637f170fd659093fb6395342de5321"
-  integrity sha512-OnfmoBV5Vb+Mi0nux9rjKBDFd360zNP3NSdnyk+jFlkwMB3gRHWDw6/34R9TLX3yapZW0mDQ+Py7BPgeYiQMiA==
+ganache-cli@6.7.0:
+  version "6.7.0"
+  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.7.0.tgz#b59845578221bdf686cf124d007c5ee62e85a62f"
+  integrity sha512-9CZsClo9hl5MxGL7hkk14mie89Q94P0idh92jcV7LmppTYTCG7SHatuwcfqN7emFHArMt3fneN4QbH2do2N6Ow==
   dependencies:
     ethereumjs-util "6.1.0"
     source-map-support "0.5.12"

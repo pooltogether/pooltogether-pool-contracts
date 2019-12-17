@@ -4,7 +4,7 @@ const chai = require('./helpers/chai')
 const PoolContext = require('./helpers/PoolContext')
 const setupERC1820 = require('./helpers/setupERC1820')
 const BN = require('bn.js')
-const Pool = artifacts.require('Pool.sol')
+const Pool = artifacts.require('MCDAwarePool.sol')
 const {
   SECRET,
   SALT,

@@ -45,11 +45,14 @@ program
   })
 
 program
-  .command('pay')
-  .description('transfers eth to the admin account on the fork')
-  .action(async () => {
+  .command('pay [count]')
+  .description('transfers eth to the admin account on the fork.')
+  .action(async (count) => {
     ranAction = true
-    await pay(await callContext())
+    if (!count) {
+      count = '5'
+    }
+    await pay(await callContext(), count)
   })
 
 program
@@ -229,11 +232,14 @@ program
   })
 
 program
-  .command('migrate-sai')
-  .description('migrates PoolSai for the top 10 users.')
-  .action(async () => {
+  .command('migrate-sai [count]')
+  .description('migrates PoolSai for the top X users.')
+  .action(async (count) => {
     ranAction = true
-    await migrateSai(await callContext())
+    if (!count) {
+      count = '1'
+    }
+    await migrateSai(await callContext(), count)
   })
 
 program

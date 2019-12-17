@@ -46,7 +46,7 @@ async function upgradePool (context) {
   const ms1 = new ethers.Contract(MULTISIG, MultisigAbi, multisigSigner1)
   const ms2 = new ethers.Contract(MULTISIG, MultisigAbi, multisigSigner2)
 
-  const initBasePoolUpgradeData = interfaces.Pool.functions.initBasePoolUpgrade.encode(['Pool Sai', 'plSAI', []])
+  const initBasePoolUpgradeData = interfaces.MCDAwarePool.functions.initBasePoolUpgrade.encode(['Pool Sai', 'plSAI', []])
   const upgradeAndCallData = interfaces.ProxyAdmin.functions.upgradeAndCall.encode([POOL_PROXY_ADDRESS, newPoolAddress, initBasePoolUpgradeData])
 
   const submitTx = await ms1.submitTransaction(contracts.ProxyAdmin.address, 0, upgradeAndCallData)

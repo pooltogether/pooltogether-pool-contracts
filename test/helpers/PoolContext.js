@@ -16,7 +16,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   const [owner, admin, user1, user2] = accounts
 
   const Token = artifacts.require('Token.sol')
-  const LocalMCDAwarePool = artifacts.require('LocalMCDAwarePool.sol')
+  const MCDAwarePool = artifacts.require('MCDAwarePool.sol')
   const BasePool = artifacts.require('BasePool.sol')
   const CErc20Mock = artifacts.require('CErc20Mock.sol')
   const FixidityLib = artifacts.require('FixidityLib.sol')
@@ -31,7 +31,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     sumTree = await SortitionSumTreeFactory.new()
     await DrawManager.link("SortitionSumTreeFactory", sumTree.address)
     drawManager = await DrawManager.new()
-    await LocalMCDAwarePool.link('DrawManager', drawManager.address)
+    await MCDAwarePool.link('DrawManager', drawManager.address)
     fixidity = await FixidityLib.new({ from: admin })
 
     blocklock = await Blocklock.new()
