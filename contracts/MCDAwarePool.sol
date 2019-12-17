@@ -97,8 +97,8 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
   }
 
   function _initMigration(ScdMcdMigration _scdMcdMigration, MCDAwarePool _saiPool) internal {
-    require(address(scdMcdMigration) == address(0), "has already been initialized");
-    require(address(_scdMcdMigration) != address(0), "migration is not defined");
+    require(address(scdMcdMigration) == address(0), "Pool/init");
+    require(address(_scdMcdMigration) != address(0), "Pool/mig-def");
     scdMcdMigration = _scdMcdMigration;
     saiPool = _saiPool; // may be null
   }
@@ -122,8 +122,8 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
     bytes calldata,
     bytes calldata
   ) external unlessDepositsPaused {
-    require(msg.sender == address(saiPoolToken()), "can only receive tokens from Sai Pool Token");
-    require(address(token()) == address(daiToken()), "contract does not use Dai");
+    require(msg.sender == address(saiPoolToken()), "Pool/sai-only");
+    require(address(token()) == address(daiToken()), "Pool/not-dai");
 
     // cash out of the Pool.  This call transfers sai to this contract
     saiPoolToken().redeem(amount, '');

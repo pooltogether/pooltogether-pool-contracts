@@ -26,6 +26,10 @@ contract('MCDAwarePool', (accounts) => {
     receivingPool = await receivingContext.createPool()
   })
 
+  describe('init()', () => {
+
+  })
+
   describe('tokensReceived()', () => {
     const amount = toWei('10')
 
@@ -40,7 +44,7 @@ contract('MCDAwarePool', (accounts) => {
       it('should fail', async () => {
         await token.mint(owner, toWei('1000'), [])
 
-        await chai.assert.isRejected(token.send(receivingPool.address, toWei('1000'), []), /can only receive tokens from Sai Pool Token/)
+        await chai.assert.isRejected(token.send(receivingPool.address, toWei('1000'), []), /Pool\/sai-only/)
       })
     })
 
@@ -118,7 +122,7 @@ contract('MCDAwarePool', (accounts) => {
         })
 
         it('should reject the transfer', async () => {
-          await chai.assert.isRejected(sendingToken.transfer(receivingPool.address, amount), /contract does not use Dai/)
+          await chai.assert.isRejected(sendingToken.transfer(receivingPool.address, amount), /Pool\/not-dai/)
         })
       })
     })

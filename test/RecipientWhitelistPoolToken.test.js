@@ -63,7 +63,7 @@ contract('RecipientWhitelistPoolToken', (accounts) => {
 
       describe('transfer()', () => {
         it('should not be allowed', async () => {
-          await chai.assert.isRejected(poolToken.transfer(user2, toWei('10'), { from: user1 }), /recipient is not whitelisted/)
+          await chai.assert.isRejected(poolToken.transfer(user2, toWei('10'), { from: user1 }), /Pool\/not-list/)
         })
 
         it('should be allowed for whitelist', async () => {
@@ -74,7 +74,7 @@ contract('RecipientWhitelistPoolToken', (accounts) => {
       
       describe('send()', () => {
         it('should not be allowed', async () => {
-          await chai.assert.isRejected(poolToken.send(user2, toWei('10'), [], { from: user1 }), /recipient is not whitelisted/)
+          await chai.assert.isRejected(poolToken.send(user2, toWei('10'), [], { from: user1 }), /Pool\/not-list/)
         })
 
         it('should be allowed for whitelist', async () => {

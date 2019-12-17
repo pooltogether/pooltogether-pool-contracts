@@ -48,7 +48,7 @@ contract('BasePool', (accounts) => {
         owner,
         10,
         10
-      ), /owner cannot be the null address/)
+      ), /Pool\/owner-zero/)
     })
 
     it('should fail if moneymarket is zero', async () => {
@@ -60,7 +60,7 @@ contract('BasePool', (accounts) => {
         owner,
         10,
         10
-      ), /money market address is zero/)
+      ), /Pool\/ctoken-zero/)
     })
   })
 
@@ -75,7 +75,7 @@ contract('BasePool', (accounts) => {
     })
 
     it('should not allow a non-admin to remove an admin', async () => {
-      await chai.assert.isRejected(pool.addAdmin(user2, { from: user1 }), /must be an admin/)
+      await chai.assert.isRejected(pool.addAdmin(user2, { from: user1 }), /Pool\/admin/)
     })
   })
 
@@ -91,15 +91,15 @@ contract('BasePool', (accounts) => {
     })
 
     it('should not allow a non-admin to remove an admin', async () => {
-      await chai.assert.isRejected(pool.removeAdmin(user1, { from: admin }), /must be an admin/)
+      await chai.assert.isRejected(pool.removeAdmin(user1, { from: admin }), /Pool\/admin/)
     })
 
     it('should not an admin to remove an non-admin', async () => {
-      await chai.assert.isRejected(pool.removeAdmin(user2), /admin does not exist/)
+      await chai.assert.isRejected(pool.removeAdmin(user2), /Pool\/no-admin/)
     })
 
     it('should not allow an admin to remove themselves', async () => {
-      await chai.assert.isRejected(pool.removeAdmin(owner), /cannot remove yourself/)
+      await chai.assert.isRejected(pool.removeAdmin(owner), /Pool\/remove-self/)
     })
   })
 
@@ -197,7 +197,7 @@ contract('BasePool', (accounts) => {
 
     it('should revert when the committed draw has not been rewarded', async () => {
       await pool.openNextDraw(SECRET_HASH)
-      await chai.assert.isRejected(pool.openNextDraw(SECRET_HASH), /the current committed draw has not been rewarded/)
+      await chai.assert.isRejected(pool.openNextDraw(SECRET_HASH), /Pool\/not-reward/)
     })
 
     it('should succeed when the committed draw has been rewarded', async () => {
@@ -221,7 +221,7 @@ contract('BasePool', (accounts) => {
 
     it('should fail if there is no committed draw', async () => {
       await pool.lockTokens()
-      await chai.assert.isRejected(pool.reward(SECRET, SALT), /must be a committed draw/)
+      await chai.assert.isRejected(pool.reward(SECRET, SALT), /Pool\/committed/)
     })
 
     it('should fail if the committed draw has already been rewarded', async () => {
@@ -232,13 +232,13 @@ contract('BasePool', (accounts) => {
       // Trigger the next block (only on testrpc!)
       await web3.eth.sendTransaction({ to: user1, from: user2, value: 1 })
       await pool.lockTokens()
-      await chai.assert.isRejected(pool.reward(SECRET, SALT), /the committed draw has already been rewarded/)
+      await chai.assert.isRejected(pool.reward(SECRET, SALT), /Pool\/already/)
     })
 
     it('should fail if the secret does not match', async () => {
       await pool.openNextDraw(SECRET_HASH) // now committed and open
       await pool.lockTokens()
-      await chai.assert.isRejected(pool.reward('0xdeadbeef', SALT), /secret does not match/)
+      await chai.assert.isRejected(pool.reward('0xdeadbeef', SALT), /Pool\/bad-secret/)
     })
 
     it('should award the interest to the winner', async () => {
@@ -253,7 +253,7 @@ contract('BasePool', (accounts) => {
 
     it('can only be run by an admin', async () => {
       await pool.openNextDraw(SECRET_HASH) // now committed and open
-      await chai.assert.isRejected(pool.reward(SECRET, SALT, { from: user1 }), /must be an admin/)
+      await chai.assert.isRejected(pool.reward(SECRET, SALT, { from: user1 }), /Pool\/admin/)
     })
   })
 
@@ -263,7 +263,7 @@ contract('BasePool', (accounts) => {
     })
 
     it('should not run if there is no committed draw', async () => {
-      await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH), /must be a committed draw/)
+      await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH), /Pool\/committed/)
     })
 
     it('should not run if the committed draw has already been rewarded', async () => {
@@ -271,12 +271,12 @@ contract('BasePool', (accounts) => {
       await poolContext.nextDraw() // have an open draw and committed draw
       await pool.lockTokens()
       await pool.reward(SECRET, SALT)
-      await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH), /the committed draw has already been rewarded/)
+      await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH), /Pool\/already/)
     })
 
     it('should only be run by an admin', async () => {
       await poolContext.nextDraw()
-      await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH, { from: user1 }), /must be an admin/)
+      await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH, { from: user1 }), /Pool\/admin/)
     })
 
     it('should rollover the draw and open the next', async () => {
@@ -297,11 +297,11 @@ contract('BasePool', (accounts) => {
 
     it('should only be called by admin', async () => {
       await pool.openNextDraw(SECRET_HASH) // now have committed
-      await chai.assert.isRejected(pool.rollover({from: user1}), /must be an admin/)
+      await chai.assert.isRejected(pool.rollover({from: user1}), /Pool\/admin/)
     })
 
     it('should not run if there is no committed draw', async () => {
-      await chai.assert.isRejected(pool.rollover(), /must be a committed draw/)
+      await chai.assert.isRejected(pool.rollover(), /Pool\/committed/)
     })
 
     it('should not run if the committed draw has been rewarded', async () => {
@@ -309,7 +309,7 @@ contract('BasePool', (accounts) => {
       await poolContext.nextDraw() // have an open draw and committed draw
       await pool.lockTokens()
       await pool.reward(SECRET, SALT)
-      await chai.assert.isRejected(pool.rollover(), /the committed draw has already been rewarded/)
+      await chai.assert.isRejected(pool.rollover(), /Pool\/already/)
     })
 
     it('should reward the pool with 0', async () => {
@@ -395,13 +395,13 @@ contract('BasePool', (accounts) => {
 
     it('should revert if there is no committed draw', async () => {
       await pool.lockTokens()
-      await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT), /must be a committed draw/)
+      await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT), /Pool\/committed/)
     })
 
     it('should fail if the secret does not match', async () => {
       await pool.openNextDraw(SECRET_HASH)
       await pool.lockTokens()
-      await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SALT, SECRET), /secret does not match/)
+      await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SALT, SECRET), /Pool\/bad-secret/)
     })
   })
 
@@ -413,7 +413,7 @@ contract('BasePool', (accounts) => {
     it('should fail if there is no open draw', async () => {
       await token.approve(pool.address, TICKET_PRICE, { from: user1 })
 
-      await chai.assert.isRejected(pool.depositPool(TICKET_PRICE, { from: user1 }), /there is no open draw/)
+      await chai.assert.isRejected(pool.depositPool(TICKET_PRICE, { from: user1 }), /Pool\/no-open/)
     })
   })
 
@@ -806,13 +806,13 @@ contract('BasePool', (accounts) => {
     })
 
     it('should not allow anyone else to set the fee fraction', async () => {
-      await chai.assert.isRejected(pool.setNextFeeFraction(toWei('0.05'), { from: user1 }), /must be an admin/)
+      await chai.assert.isRejected(pool.setNextFeeFraction(toWei('0.05'), { from: user1 }), /Pool\/admin/)
     })
 
     it('should require the fee fraction to be less than or equal to 1', async () => {
       // 1 is okay
       await pool.setNextFeeFraction(toWei('1'))
-      await chai.assert.isRejected(pool.setNextFeeFraction(toWei('1.1')), /fee fraction must be 1 or less/)
+      await chai.assert.isRejected(pool.setNextFeeFraction(toWei('1.1')), /Pool\/less-1/)
     })
   })
 
@@ -827,11 +827,11 @@ contract('BasePool', (accounts) => {
     })
 
     it('should not allow anyone else to set the fee fraction', async () => {
-      await chai.assert.isRejected(pool.setNextFeeBeneficiary(user1, { from: user1 }), /must be an admin/)
+      await chai.assert.isRejected(pool.setNextFeeBeneficiary(user1, { from: user1 }), /Pool\/admin/)
     })
 
     it('should not allow the beneficiary to be zero', async () => {
-      await chai.assert.isRejected(pool.setNextFeeBeneficiary(ZERO_ADDRESS), /beneficiary should not be 0x0/)
+      await chai.assert.isRejected(pool.setNextFeeBeneficiary(ZERO_ADDRESS), /Pool\/not-zero/)
     })
   })
 
