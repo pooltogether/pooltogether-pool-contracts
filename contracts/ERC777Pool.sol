@@ -486,7 +486,7 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
       bytes memory userData,
       bytes memory operatorData
   )
-      internal
+      internal notLocked
   {
       address implementer = ERC1820_REGISTRY.getInterfaceImplementer(from, TOKENS_SENDER_INTERFACE_HASH);
       if (implementer != address(0)) {

@@ -26,6 +26,7 @@ import "./compound/ICErc20.sol";
 import "./DrawManager.sol";
 import "fixidity/contracts/FixidityLib.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "./Blocklock.sol";
 
 /**
  * @title The Pool contract
@@ -52,8 +53,11 @@ contract BasePool is Initializable, ReentrancyGuard {
   using DrawManager for DrawManager.State;
   using SafeMath for uint256;
   using Roles for Roles.Role;
+  using Blocklock for Blocklock.State;
 
-  bytes32 private constant ROLLED_OVER_ENTROPY_MAGIC_NUMBER = bytes32(uint256(1));
+  bytes32 internal constant ROLLED_OVER_ENTROPY_MAGIC_NUMBER = bytes32(uint256(1));
+  uint256 internal constant DEFAULT_LOCK_DURATION = 40;
+  uint256 internal constant DEFAULT_COOLDOWN_DURATION = 80;
 
   /**
    * Emitted when a user deposits into the Pool.
@@ -216,6 +220,8 @@ contract BasePool is Initializable, ReentrancyGuard {
    */
   bool public paused;
 
+  Blocklock.State blocklock;
+
   /**
    * @notice Initializes a new Pool contract.
    * @param _owner The owner of the Pool.  They are able to change settings and are set as the owner of new lotteries.
@@ -235,6 +241,12 @@ contract BasePool is Initializable, ReentrancyGuard {
     _addAdmin(_owner);
     _setNextFeeFraction(_feeFraction);
     _setNextFeeBeneficiary(_feeBeneficiary);
+    initBlocklock(DEFAULT_LOCK_DURATION, DEFAULT_COOLDOWN_DURATION);
+  }
+
+  function initBlocklock(uint256 _lockDuration, uint256 _cooldownDuration) internal {
+    blocklock.setLockDuration(_lockDuration);
+    blocklock.setCooldownDuration(_cooldownDuration);
   }
 
   /**
@@ -318,7 +330,9 @@ contract BasePool is Initializable, ReentrancyGuard {
    * Fires the Rewarded event.
    * @param _secret The secret to reveal for the current committed Draw
    */
-  function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin requireCommittedNoReward nonReentrant {
+  function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin onlyLocked requireCommittedNoReward nonReentrant {
+    blocklock.unlock(block.number);
+
     // require that there is a committed draw
     // require that the committed draw has not been rewarded
     uint256 drawId = currentCommittedDrawId();
@@ -466,7 +480,7 @@ contract BasePool is Initializable, ReentrancyGuard {
     emit Deposited(_spender, _amount);
   }
 
-  function _depositPoolFromCommitted(address _spender, uint256 _amount) internal {
+  function _depositPoolFromCommitted(address _spender, uint256 _amount) internal notLocked {
     // Update the user's eligibility
     drawState.depositCommitted(_spender, _amount);
 
@@ -490,7 +504,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   /**
    * @notice Withdraw the sender's entire balance back to them.
    */
-  function withdraw() public nonReentrant {
+  function withdraw() public nonReentrant notLocked {
     uint balance = balances[msg.sender];
 
     // Update their chances of winning
@@ -752,6 +766,14 @@ contract BasePool is Initializable, ReentrancyGuard {
     return cToken.balanceOfUnderlying(address(this));
   }
 
+  function lockTokens() public onlyAdmin {
+    blocklock.lock(block.number);
+  }
+
+  function unlockTokens() public onlyAdmin {
+    blocklock.unlock(block.number);
+  }
+
   function pause() public unlessPaused onlyAdmin {
     paused = true;
 
@@ -762,6 +784,28 @@ contract BasePool is Initializable, ReentrancyGuard {
     paused = false;
 
     emit Unpaused(msg.sender);
+  }
+
+  function isLocked() public view returns (bool) {
+    return blocklock.isLocked(block.number);
+  }
+
+  function lockDuration() public view returns (uint256) {
+    return blocklock.lockDuration;
+  }
+
+  function cooldownDuration() public view returns (uint256) {
+    return blocklock.cooldownDuration;
+  }
+
+  modifier notLocked() {
+    require(!blocklock.isLocked(block.number), "Pool/locked");
+    _;
+  }
+
+  modifier onlyLocked() {
+    require(blocklock.isLocked(block.number), "Pool/unlocked");
+    _;
   }
 
   modifier onlyAdmin() {

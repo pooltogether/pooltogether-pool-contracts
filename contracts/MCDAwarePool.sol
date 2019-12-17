@@ -59,7 +59,9 @@ contract MCDAwarePool is RecipientWhitelistERC777Pool, IERC777Recipient {
     address _feeBeneficiary,
     string memory name,
     string memory symbol,
-    address[] memory defaultOperators
+    address[] memory defaultOperators,
+    uint256 lockDuration,
+    uint256 cooldownDuration
   ) public initializer {
     super.init(
       _owner,
@@ -71,6 +73,7 @@ contract MCDAwarePool is RecipientWhitelistERC777Pool, IERC777Recipient {
       defaultOperators
     );
     initMCDAwarePool();
+    initBlocklock(lockDuration, cooldownDuration);
   }
 
   /**
@@ -86,6 +89,7 @@ contract MCDAwarePool is RecipientWhitelistERC777Pool, IERC777Recipient {
   ) public {
     initERC777(name, symbol, defaultOperators);
     initMCDAwarePool();
+    initBlocklock(DEFAULT_LOCK_DURATION, DEFAULT_COOLDOWN_DURATION);
   }
 
   /**

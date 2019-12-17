@@ -11,7 +11,7 @@ const debug = require('debug')('PoolContext.js')
 
 module.exports = function PoolContext({ web3, artifacts, accounts }) {
 
-  let pool, token, moneyMarket, sumTree, drawManager, registry
+  let pool, token, moneyMarket, sumTree, drawManager, registry, blocklock
   
   const [owner, admin, user1, user2] = accounts
 
@@ -22,8 +22,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   const FixidityLib = artifacts.require('FixidityLib.sol')
   const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
   const DrawManager = artifacts.require('DrawManager.sol')
-
-  let Rewarded, Committed
+  const Blocklock = artifacts.require('Blocklock.sol')
 
   this.init = async () => {
     registry = await setupERC1820({ web3, artifacts, account: owner })
@@ -33,6 +32,8 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     drawManager = await DrawManager.new()
     await LocalMCDAwarePool.link('DrawManager', drawManager.address)
     fixidity = await FixidityLib.new({ from: admin })
+
+    blocklock = await Blocklock.new()
 
     token = await this.newToken()
 
@@ -47,7 +48,8 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
       fixidity,
       token,
       moneyMarket,
-      registry
+      registry,
+      blocklock
     }
   }
 
@@ -77,6 +79,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   this.createBasePool = async (feeFraction = new BN('0')) => {
     await BasePool.link("DrawManager", drawManager.address)
     await BasePool.link("FixidityLib", fixidity.address)
+    await BasePool.link("Blocklock", blocklock.address)
 
     pool = await BasePool.new()
     await pool.init(
@@ -91,9 +94,13 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     return pool
   }
 
-  this.createPool = async (feeFraction = new BN('0')) => {
+  this.createPool = async (feeFraction = new BN('0'), cooldownDuration = 0) => {
     await LocalMCDAwarePool.link("DrawManager", drawManager.address)
     await LocalMCDAwarePool.link("FixidityLib", fixidity.address)
+    await LocalMCDAwarePool.link('Blocklock', blocklock.address)
+    
+    // just long enough to lock then reward
+    const lockDuration = 2
 
     pool = await LocalMCDAwarePool.new()
     await pool.init(
@@ -101,7 +108,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
       moneyMarket.address,
       feeFraction,
       owner,
-      'Prize Dai', 'pzDAI', []
+      'Prize Dai', 'pzDAI', [], lockDuration, cooldownDuration
     )
 
     await this.openNextDraw()
@@ -112,6 +119,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   this.createPoolNoInit = async (feeFraction = new BN('0')) => {
     await LocalMCDAwarePool.link("DrawManager", drawManager.address)
     await LocalMCDAwarePool.link("FixidityLib", fixidity.address)
+    await LocalMCDAwarePool.link('Blocklock', blocklock.address)
 
     pool = await LocalMCDAwarePool.new()
     await pool.init(
@@ -128,6 +136,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     let logs
 
     debug(`rewardAndOpenNextDraw(${SECRET_HASH}, ${SECRET})`)
+    await pool.lockTokens()
     if (options) {
       logs = (await pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT, options)).logs;
     } else {
@@ -135,10 +144,6 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     }
 
     logs.reverse()
-
-    // console.log(
-    //   logs.map(log => log.event)
-    // )
 
     const [Opened, Transfer, Minted, Committed, Rewarded] = logs
 

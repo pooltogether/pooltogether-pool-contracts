@@ -34,6 +34,7 @@ contract('BasePool', (accounts) => {
     moneyMarket = contracts.moneyMarket
     await Pool.link("DrawManager", contracts.drawManager.address)
     await Pool.link("FixidityLib", contracts.fixidity.address)
+    await Pool.link("Blocklock", contracts.blocklock.address)
   })
 
   describe('init()', () => {
@@ -196,6 +197,7 @@ contract('BasePool', (accounts) => {
 
     it('should succeed when the committed draw has been rewarded', async () => {
       await pool.openNextDraw(SECRET_HASH) // now has a committed draw 2
+      await pool.lockTokens()
       await pool.reward(SECRET, SALT) // committed draw 2 is now rewarded
       const tx = await pool.openNextDraw(SECRET_HASH) // now can open the next draw 3
 
@@ -213,17 +215,21 @@ contract('BasePool', (accounts) => {
     })
 
     it('should fail if there is no committed draw', async () => {
+      await pool.lockTokens()
       await chai.assert.isRejected(pool.reward(SECRET, SALT), /must be a committed draw/)
     })
 
     it('should fail if the committed draw has already been rewarded', async () => {
       await poolContext.nextDraw()
+      await pool.lockTokens()
       await pool.reward(SECRET, SALT)
+      await pool.lockTokens()
       await chai.assert.isRejected(pool.reward(SECRET, SALT), /the committed draw has already been rewarded/)
     })
 
     it('should fail if the secret does not match', async () => {
       await pool.openNextDraw(SECRET_HASH) // now committed and open
+      await pool.lockTokens()
       await chai.assert.isRejected(pool.reward('0xdeadbeef', SALT), /secret does not match/)
     })
 
@@ -231,6 +237,7 @@ contract('BasePool', (accounts) => {
       await poolContext.depositPool(toWei('10'), { from: user1 })
       await pool.openNextDraw(SECRET_HASH) // now committed and open
       await moneyMarket.reward(pool.address)
+      await pool.lockTokens()
       await pool.reward(SECRET, SALT) // reward winnings to user1 and fee to owner
       assert.equal(await pool.balanceOf(user1), toWei('10'))
       assert.equal(await pool.openBalanceOf(user1), toWei('2'))
@@ -254,6 +261,7 @@ contract('BasePool', (accounts) => {
     it('should not run if the committed draw has already been rewarded', async () => {
       // the committed draw has already been rewarded
       await poolContext.nextDraw() // have an open draw and committed draw
+      await pool.lockTokens()
       await pool.reward(SECRET, SALT)
       await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH), /the committed draw has already been rewarded/)
     })
@@ -293,6 +301,7 @@ contract('BasePool', (accounts) => {
     it('should not run if the committed draw has been rewarded', async () => {
       // the committed draw has already been rewarded
       await poolContext.nextDraw() // have an open draw and committed draw
+      await pool.lockTokens()
       await pool.reward(SECRET, SALT)
       await chai.assert.isRejected(pool.rollover(), /the committed draw has already been rewarded/)
     })
@@ -317,17 +326,75 @@ contract('BasePool', (accounts) => {
     })
   })
 
+  describe('lockTokens()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPool(feeFraction, 12)
+    })
+
+    it('should lock the pool', async () => {
+      assert.equal(await pool.isLocked(), false)
+      await pool.lockTokens()
+      assert.equal(await pool.isLocked(), true)
+    })
+
+    it('should only be called by the admin', async () => {
+      await chai.assert.isRejected(pool.lockTokens({ from: user1 }), /must be an admin/)
+    })
+  })
+
+  describe('lockDuration()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPool(feeFraction, 12)
+    })
+
+    it('should return the lock duration', async () => {
+      assert.equal(await pool.lockDuration(), '2')
+    })
+  })
+
+  describe('cooldownDuration()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPool(feeFraction, 12)
+    })
+
+    it('should return the cooldown duration', async () => {
+      assert.equal(await pool.cooldownDuration(), '12')
+    })
+  })
+
+  describe('unlockTokens()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPool(feeFraction)
+      await pool.lockTokens()  
+    })
+
+    it('should unlock the pool', async () => {
+      await pool.unlockTokens()  
+      assert.equal(await pool.isLocked(), false)
+    })
+
+    it('should only be called by the admin', async () => {
+      await chai.assert.isRejected(pool.unlockTokens({ from: user1 }), /must be an admin/)
+    })
+  })
+
   describe('rewardAndOpenNextDraw()', () => {
     beforeEach(async () => {
       pool = await poolContext.createPool(feeFraction)
     })
 
+    it('should revert if the pool isnt locked', async () => {
+      await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT), /Pool\/unlocked/)
+    })
+
     it('should revert if there is no committed draw', async () => {
+      await pool.lockTokens()
       await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT), /must be a committed draw/)
     })
 
     it('should fail if the secret does not match', async () => {
       await pool.openNextDraw(SECRET_HASH)
+      await pool.lockTokens()
       await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SALT, SECRET), /secret does not match/)
     })
   })

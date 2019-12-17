@@ -6,7 +6,7 @@
   "repository": "git@github.com:pooltogether/pooltogether-contracts.git",
   "author": "Brendan Asselstine brendan@pooltogether.us",
   "scripts": {
-    "test": "truffle test --migrations_directory ./migrations/empty",
+    "test": "truffle test --migrations_directory ./migrations/empty --network test",
     "coverage": "COVERAGE=true truffle run coverage --migrations_directory ./migrations/empty",
     "compile": "truffle compile",
     "compile-and-merge": "yarn compile && zos-truffle-merge -n 1 zos.mainnet.json && zos-truffle-merge -n 4 zos.rinkeby.json",
