@@ -223,6 +223,10 @@ contract('DrawManager', (accounts) => {
             await drawManager.openNextDraw()
         })
 
+        it('should fail if there is no committed draw', async () => {
+            await chai.assert.isRejected(drawManager.depositCommitted(user1, toWei('10')), /there is no committed draw/)
+        })
+
         it('should fail if the address is zero', async () => {
             await chai.assert.isRejected(drawManager.depositCommitted(ZERO_ADDRESS, toWei('10')), /address cannot be zero/)
         })
@@ -296,6 +300,10 @@ contract('DrawManager', (accounts) => {
 
         it('should fail if the address is zero', async () => {
             await chai.assert.isRejected(drawManager.withdrawCommitted(ZERO_ADDRESS, toWei('10')), /address cannot be zero/)
+        })
+
+        it('should fail if there is no committed draw', async () => {
+            await chai.assert.isRejected(drawManager.withdrawCommitted(user1, toWei('10')), /there is no committed draw/)
         })
 
         it('should allow a user to withdraw their committed tokens', async () => {
