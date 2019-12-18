@@ -20,7 +20,7 @@ pragma solidity 0.5.12;
 
 import "./UniformRandomNumber.sol";
 import "@kleros/kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
-import "@openzeppelin/contracts/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 /**
  * @author Brendan Asselstine
