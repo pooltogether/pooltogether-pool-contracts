@@ -62,10 +62,7 @@ contract RecipientWhitelistPoolToken is PoolToken {
       if (_recipientWhitelistEnabled) {
         require(to == address(0) || _recipientWhitelist[to], "recipient is not whitelisted");
       }
-      address implementer = ERC1820_REGISTRY.getInterfaceImplementer(from, TOKENS_SENDER_INTERFACE_HASH);
-      if (implementer != address(0)) {
-          IERC777Sender(implementer).tokensToSend(operator, from, to, amount, userData, operatorData);
-      }
+      super._callTokensToSend(operator, from, to, amount, userData, operatorData);
   }
 
   modifier onlyAdmin() {

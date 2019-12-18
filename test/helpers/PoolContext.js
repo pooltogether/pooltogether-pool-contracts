@@ -133,7 +133,9 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
       logs = (await pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT)).logs;
     }
 
-    const [Rewarded, Committed, Opened] = logs
+    // console.log(logs.map(log => log.event))
+
+    const [Rewarded, FeeCollected, Committed, Opened] = logs
 
     debug('rewardAndOpenNextDraw: ', logs)
     assert.equal(Opened.event, "Opened")

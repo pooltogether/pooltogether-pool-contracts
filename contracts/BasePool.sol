@@ -101,6 +101,35 @@ contract BasePool is Initializable, ReentrancyGuard {
   event Withdrawn(address indexed sender, uint256 amount);
 
   /**
+   * Emitted when a user withdraws their sponsorship and fees from the pool.
+   * @param sender The user that is withdrawing
+   * @param amount The amount they are withdrawing
+   */
+  event SponsorshipAndFeesWithdrawn(address indexed sender, uint256 amount);
+
+  /**
+   * Emitted when a user withdraws from their open deposit.
+   * @param sender The user that is withdrawing
+   * @param amount The amount they are withdrawing
+   */
+  event OpenDepositWithdrawn(address indexed sender, uint256 amount);
+
+  /**
+   * Emitted when a user withdraws from their committed deposit.
+   * @param sender The user that is withdrawing
+   * @param amount The amount they are withdrawing
+   */
+  event CommittedDepositWithdrawn(address indexed sender, uint256 amount);
+
+  /**
+   * Emitted when an address collects a fee
+   * @param sender The address collecting the fee
+   * @param amount The fee amount
+   * @param drawId The draw from which the fee was awarded
+   */
+  event FeeCollected(address indexed sender, uint256 amount, uint256 drawId);
+
+  /**
    * Emitted when a new draw is opened for deposit.
    * @param drawId The draw id
    * @param feeBeneficiary The fee beneficiary for this draw
@@ -290,6 +319,9 @@ contract BasePool is Initializable, ReentrancyGuard {
   function emitCommitted() internal {
     uint256 drawId = currentOpenDrawId();
     emit Committed(drawId);
+    if (address(poolToken) != address(0)) {
+      poolToken.poolMint(openSupply());
+    }
   }
 
   /**
@@ -394,13 +426,14 @@ contract BasePool is Initializable, ReentrancyGuard {
       netWinnings,
       fee
     );
+    emit FeeCollected(draw.feeBeneficiary, fee, drawId);
   }
 
   function awardWinnings(address winner, uint256 amount) internal {
     // Update balance of the winner
     balances[winner] = balances[winner].add(amount);
 
-    // Enter their winnings into the next draw
+    // Enter their winnings into the open draw
     drawState.deposit(winner, amount);
   }
 
@@ -517,29 +550,101 @@ contract BasePool is Initializable, ReentrancyGuard {
    */
   function withdraw() public nonReentrant notLocked {
     uint balance = balances[msg.sender];
-
     // Update their chances of winning
     drawState.withdraw(msg.sender);
-
     _withdraw(msg.sender, balance);
+
+    uint256 sponsorshipAndFees = sponsorshipAndFeeBalanceOf(msg.sender);
+    uint256 openBalance = drawState.openBalanceOf(msg.sender);
+    uint256 committedBalance = drawState.committedBalanceOf(msg.sender);
+
+    if (address(poolToken) != address(0)) {
+      poolToken.poolBurn(msg.sender, committedBalance);
+    }
+
+    emit SponsorshipAndFeesWithdrawn(msg.sender, sponsorshipAndFees);
+    emit OpenDepositWithdrawn(msg.sender, openBalance);
+    emit CommittedDepositWithdrawn(msg.sender, committedBalance);
+    emit Withdrawn(msg.sender, balance);
   }
 
-  function withdrawCommitted(
+  /**
+   * Withdraws only from the sender's sponsorship and fee balances
+   * @param _amount The amount to withdraw
+   */
+  function withdrawSponsorshipAndFee(uint256 _amount) public {
+    uint256 sponsorshipAndFees = sponsorshipAndFeeBalanceOf(msg.sender);
+    require(_amount <= sponsorshipAndFees, "Pool/exceeds-sfee");
+    _withdraw(msg.sender, _amount);
+
+    emit SponsorshipAndFeesWithdrawn(msg.sender, _amount);
+  }
+
+  /**
+   * Returns the total balance of the users sponsorship and fees
+   * @param _sender The user whose balance should be returned
+   */
+  function sponsorshipAndFeeBalanceOf(address _sender) public view returns (uint256) {
+    return balances[_sender] - drawState.balanceOf(_sender);
+  }
+
+  /**
+   * Withdraws from the users open deposits
+   * @param _amount The amount to withdraw
+   */
+  function withdrawOpenDeposit(uint256 _amount) public {
+    drawState.withdrawOpen(msg.sender, _amount);
+    _withdraw(msg.sender, _amount);
+
+    emit OpenDepositWithdrawn(msg.sender, _amount);
+  }
+
+  /**
+   * Withdraws from the users committed deposits
+   * @param _amount The amount to withdraw
+   */
+  function withdrawCommittedDeposit(uint256 _amount) external notLocked returns (bool)  {
+    _withdrawCommittedDepositAndEmit(msg.sender, _amount);
+    if (address(poolToken) != address(0)) {
+      poolToken.poolBurn(msg.sender, _amount);
+    }
+    return true;
+  }
+
+  /**
+   * Allows the associated PoolToken to withdraw for a user; useful when redeeming through the token.
+   * @param _from The user to withdraw from
+   * @param _amount The amount to withdraw
+   */
+  function withdrawCommittedDeposit(
     address _from,
     uint256 _amount
-  ) external onlyToken onlyCommittedBalanceGteq(_from, _amount) returns (bool)  {
-    // Update state variables
+  ) external onlyToken notLocked returns (bool)  {
+    return _withdrawCommittedDepositAndEmit(_from, _amount);
+  }
+
+  /**
+   * A function that withdraws committed deposits for a user and emit the corresponding events.
+   * @param _from User to withdraw for
+   * @param _amount The amount to withdraw
+   */
+  function _withdrawCommittedDepositAndEmit(address _from, uint256 _amount) internal returns (bool) {
     drawState.withdrawCommitted(_from, _amount);
     _withdraw(_from, _amount);
+
+    emit CommittedDepositWithdrawn(_from, _amount);
 
     return true;
   }
 
+  /**
+   * Allows the associated PoolToken to move committed tokens from one user to another.
+   */
   function moveCommitted(
     address _from,
     address _to,
     uint256 _amount
-  ) external onlyToken onlyCommittedBalanceGteq(_from, _amount) returns (bool) {
+  ) external onlyToken onlyCommittedBalanceGteq(_from, _amount) notLocked returns (bool) {
     balances[_from] = balances[_from].sub(_amount, "move could not sub amount");
     balances[_to] = balances[_to].add(_amount);
     drawState.withdrawCommitted(_from, _amount);
@@ -565,8 +670,6 @@ contract BasePool is Initializable, ReentrancyGuard {
     // Withdraw from Compound and transfer
     require(cToken.redeemUnderlying(_amount) == 0, "could not redeem from compound");
     require(token().transfer(_sender, _amount), "could not transfer winnings");
-
-    emit Withdrawn(_sender, _amount);
   }
 
   /**
@@ -647,7 +750,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * @notice Returns a user's total balance, including both committed Draw balance and open Draw balance.
+   * @notice Returns a user's total balance.  This includes their sponsorships, fees, open deposits, and committed deposits.
    * @param _addr The address of the user to check.
    * @return The users's current balance.
    */
@@ -801,10 +904,17 @@ contract BasePool is Initializable, ReentrancyGuard {
     return cToken.balanceOfUnderlying(address(this));
   }
 
+  /**
+   * @notice Locks the movement of tokens (essentially the committed deposits and winnings)
+   * @dev The lock only lasts for a duration of blocks.  The lock cannot be relocked until the cooldown duration completes.
+   */
   function lockTokens() public onlyAdmin {
     blocklock.lock(block.number);
   }
 
+  /**
+   * @notice Unlocks the movement of tokens (essentially the committed deposits)
+   */
   function unlockTokens() public onlyAdmin {
     blocklock.unlock(block.number);
   }
