@@ -14,13 +14,13 @@ module.exports = {
       network_id: '*'
     },
 
-    test: {
-      host: 'localhost',
-      port: 8545,
-      gas: 10000000,
-      gasPrice: 1 * 1000000000,
-      network_id: 1234
-    },
+    // test: {
+    //   host: 'localhost',
+    //   port: 8545,
+    //   gas: 10000000,
+    //   gasPrice: 1 * 1000000000,
+    //   network_id: 1234
+    // },
 
     rinkeby: {
       provider: () => new HDWalletProvider(

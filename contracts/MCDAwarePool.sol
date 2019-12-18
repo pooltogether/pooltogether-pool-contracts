@@ -107,7 +107,7 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
     require(address(token()) == address(daiToken()), "contract does not use Dai");
 
     // cash out of the Pool.  This call transfers sai to this contract
-    saiPoolToken().burn(amount, '');
+    saiPoolToken().redeem(amount, '');
 
     // approve of the transfer to the migration contract
     saiToken().approve(address(scdMcdMigration()), amount);
