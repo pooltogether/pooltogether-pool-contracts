@@ -6,6 +6,7 @@ module.exports = {
     "test/maker/MockScdMcdMigration.sol",
     "test/CErc20Mock.sol",
     "test/ERC777Mintable.sol",
+    "test/ExposedBlocklock.sol",
     "test/ExposedDrawManager.sol",
     "test/ExposedUniformRandomNumber.sol",
     "test/MockERC777Recipient.sol",

@@ -229,6 +229,30 @@ contract('PoolToken', (accounts) => {
       })
     })
 
+    describe('poolRedeem()', async () => {
+      it('should only be callable by the pool', async () => {
+        await chai.assert.isRejected(poolToken.poolRedeem(user1, toWei('0')), /PoolToken\/only-pool/)
+      })
+    })
+
+    describe('poolMint()', async () => {
+      it('should only be callable by the pool', async () => {
+        await chai.assert.isRejected(poolToken.poolMint(toWei('0')), /PoolToken\/only-pool/)
+      })
+    })
+
+    describe('burn()', () => {
+      it('should revert', async () => {
+        await chai.assert.isRejected(poolToken.burn(toWei('0'), []), /PoolToken\/no-support/)
+      })
+    })
+
+    describe('operatorBurn()', () => {
+      it('should revert', async () => {
+        await chai.assert.isRejected(poolToken.operatorBurn(user1, toWei('0'), [], []), /PoolToken\/no-support/)
+      })
+    })
+
     describe('redeem()', () => {
       it('should be okay to redeem nothing', async () => {
         await poolContext.nextDraw()

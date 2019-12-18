@@ -1,4 +1,4 @@
-pragma solidity ^0.5.12;
+pragma solidity 0.5.12;
 
 // import { GemLike, JoinLike } from "scd-mcd-migration/src/Interfaces.sol";
 
