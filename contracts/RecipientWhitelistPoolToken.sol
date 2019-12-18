@@ -18,9 +18,9 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.5.12;
 
-import "./ERC777Pool.sol";
+import "./PoolToken.sol";
 
-contract RecipientWhitelistERC777Pool is ERC777Pool {
+contract RecipientWhitelistPoolToken is PoolToken {
   bool _recipientWhitelistEnabled;
   mapping(address => bool) _recipientWhitelist;
 
@@ -68,4 +68,8 @@ contract RecipientWhitelistERC777Pool is ERC777Pool {
       }
   }
 
+  modifier onlyAdmin() {
+    require(_pool.isAdmin(msg.sender), "WhitelistToken/is-admin");
+    _;
+  }
 }

@@ -19,11 +19,15 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.5.12;
 
 import "./BasePool.sol";
+import "@openzeppelin/contracts/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777.sol";
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Sender.sol";
 import "@openzeppelin/contracts/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts/contracts/utils/Address.sol";
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @dev Implementation of the {IERC777} interface.
@@ -44,7 +48,7 @@ import "@openzeppelin/contracts/contracts/utils/Address.sol";
  * is not possible.
  *
  */
-contract ERC777Pool is IERC20, IERC777, BasePool {
+contract PoolToken is Initializable, IERC20, IERC777 {
   using SafeMath for uint256;
   using Address for address;
 
@@ -77,42 +81,34 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   // ERC20-allowances
   mapping (address => mapping (address => uint256)) internal _allowances;
 
+  BasePool internal _pool;
+
   function init (
-    address _owner,
-    address _cToken,
-    uint256 _feeFraction,
-    address _feeBeneficiary,
     string memory name,
     string memory symbol,
-    address[] memory defaultOperators
+    address[] memory defaultOperators,
+    BasePool pool
   ) public initializer {
-    init(_owner, _cToken, _feeFraction, _feeBeneficiary);
-    initERC777(name, symbol, defaultOperators);
+    require(bytes(name).length != 0, "name must be defined");
+    require(bytes(symbol).length != 0, "symbol must be defined");
+    require(address(pool) != address(0), "PoolToken/pool-not-def");
+
+    _name = name;
+    _symbol = symbol;
+    _pool = pool;
+
+    _defaultOperatorsArray = defaultOperators;
+    for (uint256 i = 0; i < _defaultOperatorsArray.length; i++) {
+        _defaultOperators[_defaultOperatorsArray[i]] = true;
+    }
+
+    // register interfaces
+    ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
+    ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
   }
 
-  /**
-    * @dev `defaultOperators` may be an empty array.
-    */
-  function initERC777 (
-      string memory name,
-      string memory symbol,
-      address[] memory defaultOperators
-  ) public {
-      require(bytes(name).length != 0, "name must be defined");
-      require(bytes(symbol).length != 0, "symbol must be defined");
-      require(bytes(_name).length == 0, "ERC777 has already been initialized");
-
-      _name = name;
-      _symbol = symbol;
-
-      _defaultOperatorsArray = defaultOperators;
-      for (uint256 i = 0; i < _defaultOperatorsArray.length; i++) {
-          _defaultOperators[_defaultOperatorsArray[i]] = true;
-      }
-
-      // register interfaces
-      ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
-      ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
+  function pool() public view returns (address) {
+    return address(_pool);
   }
 
   /**
@@ -152,7 +148,14 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
     * @dev See {IERC777-totalSupply}.
     */
   function totalSupply() public view returns (uint256) {
-      return committedSupply();
+      return _pool.committedSupply();
+  }
+
+  /**
+    * @dev See {IERC20-balanceOf}.
+    */
+  function balanceOf(address _addr) external view returns (uint256) {
+      return _pool.committedBalanceOf(_addr);
   }
 
   /**
@@ -320,27 +323,6 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   }
 
   /**
-   * @notice Commits the current draw.  Mints the open supply number of tokens.
-   * @dev This function deviates from the ERC 777 spec (https://eips.ethereum.org/EIPS/eip-777).  The spec
-   * says that:
-   *  - "The balance of the recipient MUST be increased by the amount of tokens minted."
-   * However, for this contract it is not feasible to emit Minted for every open deposit.
-   */
-  function emitCommitted() internal {
-    super.emitCommitted();
-    uint256 mintingAmount = openSupply();
-    _mintEvents(address(this), address(this), mintingAmount, '', '');
-  }
-
-  /**
-   * @notice Awards the winnings to a user.  Ensures that the Minted event is fired
-   */
-  function awardWinnings(address winner, uint256 amount) internal {
-    super.awardWinnings(winner, amount);
-    _mint(address(this), winner, amount, '', '');
-  }
-
-  /**
     * @dev Creates `amount` tokens and assigns them to `account`, increasing
     * the total supply.
     *
@@ -430,14 +412,10 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
       private
   {
       require(from != address(0), "ERC777: burn from the zero address");
-      uint256 committedBalance = drawState.committedBalanceOf(from);
-      require(amount <= committedBalance, "not enough funds");
 
       _callTokensToSend(operator, from, address(0), amount, data, operatorData);
 
-      // Update state variables
-      drawState.withdrawCommitted(from, amount);
-      _withdraw(from, amount);
+      _pool.withdrawCommitted(from, amount);
 
       emit Burned(operator, from, amount, data, operatorData);
       emit Transfer(from, address(0), amount);
@@ -453,10 +431,7 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   )
       private
   {
-      balances[from] = balances[from].sub(amount, "move could not sub amount");
-      balances[to] = balances[to].add(amount);
-      drawState.withdrawCommitted(from, amount);
-      drawState.depositCommitted(to, amount);
+      _pool.moveCommitted(from, to, amount);
 
       emit Sent(operator, from, to, amount, userData, operatorData);
       emit Transfer(from, to, amount);
@@ -521,5 +496,10 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
       } else if (requireReceptionAck) {
           require(!to.isContract(), "ERC777: contract recipient has no implementer for ERC777TokensRecipient");
       }
+  }
+
+  modifier notLocked() {
+    require(!_pool.isLocked(), "PoolToken/is-locked");
+    _;
   }
 }

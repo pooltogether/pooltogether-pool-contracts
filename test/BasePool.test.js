@@ -44,7 +44,9 @@ contract('BasePool', (accounts) => {
         ZERO_ADDRESS,
         moneyMarket.address,
         new BN('0'),
-        owner
+        owner,
+        10,
+        10
       ), /owner cannot be the null address/)
     })
 
@@ -54,7 +56,9 @@ contract('BasePool', (accounts) => {
         owner,
         ZERO_ADDRESS,
         new BN('0'),
-        owner
+        owner,
+        10,
+        10
       ), /money market address is zero/)
     })
   })
@@ -183,7 +187,7 @@ contract('BasePool', (accounts) => {
     it('should emit a committed event', async () => {
       const tx = await pool.openNextDraw(SECRET_HASH) // now has a committed draw
 
-      const [Committed, Minted, Transfer, Opened] = tx.logs
+      const [Committed, Opened] = tx.logs
       assert.equal(Committed.event, 'Committed')
       assert.equal(Committed.args.drawId, '1')
       assert.equal(Opened.event, 'Opened')
@@ -201,7 +205,7 @@ contract('BasePool', (accounts) => {
       await pool.reward(SECRET, SALT) // committed draw 2 is now rewarded
       const tx = await pool.openNextDraw(SECRET_HASH) // now can open the next draw 3
 
-      const [Committed, Minted, Transfer, Opened] = tx.logs
+      const [Committed, Opened] = tx.logs
       assert.equal(Committed.event, 'Committed')
       assert.equal(Committed.args.drawId, '2')
       assert.equal(Opened.event, 'Opened')
@@ -274,12 +278,10 @@ contract('BasePool', (accounts) => {
     it('should rollover the draw and open the next', async () => {
       await poolContext.nextDraw()
       const tx = await pool.rolloverAndOpenNextDraw(SECRET_HASH)
-      const [RolledOver, Rewarded, Committed, Minted, Transfer, Opened] = tx.logs
+      const [RolledOver, Rewarded, Committed, Opened] = tx.logs
       assert.equal(RolledOver.event, 'RolledOver')
       assert.equal(Rewarded.event, 'Rewarded')
       assert.equal(Committed.event, 'Committed')
-      assert.equal(Minted.event, 'Minted')
-      assert.equal(Transfer.event, 'Transfer')
       assert.equal(Opened.event, 'Opened')
     })
   })
@@ -401,7 +403,7 @@ contract('BasePool', (accounts) => {
 
   describe('depositPool()', () => {
     beforeEach(async () => {
-      pool = await poolContext.createPoolNoInit()
+      pool = await poolContext.createPoolNoOpenDraw()
     })
 
     it('should fail if there is no open draw', async () => {
@@ -414,27 +416,6 @@ contract('BasePool', (accounts) => {
   describe('with a fresh pool', () => {
     beforeEach(async () => {
       pool = await poolContext.createPool(feeFraction)
-    })
-
-    describe('transfer()', () => {
-      it('should transfer tickets to another user', async () => {
-        
-        await poolContext.depositPool(TICKET_PRICE, { from: user1 })
-        await poolContext.openNextDraw()
-
-        assert.equal(await pool.balanceOf(user1), TICKET_PRICE.toString())
-
-        await pool.transfer(user2, TICKET_PRICE, { from: user1 })
-
-        assert.equal(await pool.balanceOf(user1), '0')
-        assert.equal(await pool.balanceOf(user2), TICKET_PRICE.toString())
-
-        const balanceBefore = await token.balanceOf(user2)
-        await pool.withdraw({ from: user2 })
-        const balanceAfter = await token.balanceOf(user2)
-
-        assert.equal(balanceBefore.add(TICKET_PRICE), balanceAfter.toString())
-      })
     })
 
     describe('depositPool()', () => {

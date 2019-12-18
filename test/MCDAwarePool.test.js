@@ -39,7 +39,7 @@ contract('MCDAwarePool', (accounts) => {
       it('should fail', async () => {
         await token.mint(owner, toWei('1000'), [])
 
-        await chai.assert.isRejected(token.send(receivingPool.address, toWei('1000'), []), /can only receive tokens from Sai Pool/)
+        await chai.assert.isRejected(token.send(receivingPool.address, toWei('1000'), []), /can only receive tokens from Sai Pool Token/)
       })
     })
 
@@ -53,6 +53,7 @@ contract('MCDAwarePool', (accounts) => {
         moneyMarket = sendingContracts.moneyMarket
         registry = sendingContracts.registry
         sendingPool = await sendingContext.createPool()
+        sendingToken = await sendingContext.createToken()
 
         // ensure user has Pool Sai to transfer
         await sendingContext.depositPool(amount)
@@ -81,7 +82,7 @@ contract('MCDAwarePool', (accounts) => {
         })
 
         it('should migrate the sai to dai and immediately have a balance', async () => {
-          await sendingPool.transfer(receivingPool.address, amount)
+          await sendingToken.transfer(receivingPool.address, amount)
 
           assert.equal(await sendingPool.balanceOf(owner), '0')
           assert.equal(await receivingPool.balanceOf(owner), toWei('10'))
@@ -89,7 +90,7 @@ contract('MCDAwarePool', (accounts) => {
       })
 
       it('should migrate the sai to dai and deposit', async () => {
-        await sendingPool.transfer(receivingPool.address, amount)
+        await sendingToken.transfer(receivingPool.address, amount)
 
         assert.equal(await sendingPool.balanceOf(owner), '0')
         assert.equal(await receivingPool.balanceOf(owner), '0')
@@ -105,29 +106,21 @@ contract('MCDAwarePool', (accounts) => {
         })
 
         it('should reject the transfer', async () => {
-          await chai.assert.isRejected(sendingPool.transfer(receivingPool.address, amount), /contract does not use Dai/)
+          await chai.assert.isRejected(sendingToken.transfer(receivingPool.address, amount), /contract does not use Dai/)
         })
       })
     })
   })
 
-  describe('initBasePoolUpgrade()', () => {
-    it('should safely upgrae the pool', async () => {
-      let pool = await receivingContext.createPoolNoInit()
-      await receivingContext.openNextDraw()
+  describe('initMCDAwarePool()', () => {
+    it('should init the MCDAwarePool', async () => {
+      pool = await receivingContext.newPool()
+      
+      await pool.initMCDAwarePool()
 
-      await receivingContext.depositPool(toWei('10'), { from: user1 })
-      await receivingContext.depositPool(toWei('20'), { from: user2 })
-      await receivingContext.nextDraw()
-      await receivingContext.depositPool(toWei('10', { from: user1 }))
-
-      await pool.initBasePoolUpgrade('Prize Dai', 'pzDai', [])
-
-      assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, ERC_777_INTERFACE_HASH), pool.address)
-      assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, ERC_20_INTERFACE_HASH), pool.address)
       assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, TOKENS_RECIPIENT_INTERFACE_HASH), pool.address)
-      assert.equal(await pool.name(), 'Prize Dai')
-      assert.equal(await pool.symbol(), 'pzDai')
+      assert.equal(await pool.lockDuration(), '40')
+      assert.equal(await pool.cooldownDuration(), '80')
     })
   })
 })

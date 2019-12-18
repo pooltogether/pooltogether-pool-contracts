@@ -27,6 +27,7 @@ import "./DrawManager.sol";
 import "fixidity/contracts/FixidityLib.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./Blocklock.sol";
+import "./PoolToken.sol";
 
 /**
  * @title The Pool contract
@@ -222,6 +223,8 @@ contract BasePool is Initializable, ReentrancyGuard {
 
   Blocklock.State blocklock;
 
+  PoolToken public poolToken;
+
   /**
    * @notice Initializes a new Pool contract.
    * @param _owner The owner of the Pool.  They are able to change settings and are set as the owner of new lotteries.
@@ -233,7 +236,9 @@ contract BasePool is Initializable, ReentrancyGuard {
     address _owner,
     address _cToken,
     uint256 _feeFraction,
-    address _feeBeneficiary
+    address _feeBeneficiary,
+    uint256 _lockDuration,
+    uint256 _cooldownDuration
   ) public initializer {
     require(_owner != address(0), "owner cannot be the null address");
     require(_cToken != address(0), "money market address is zero");
@@ -241,7 +246,13 @@ contract BasePool is Initializable, ReentrancyGuard {
     _addAdmin(_owner);
     _setNextFeeFraction(_feeFraction);
     _setNextFeeBeneficiary(_feeBeneficiary);
-    initBlocklock(DEFAULT_LOCK_DURATION, DEFAULT_COOLDOWN_DURATION);
+    initBlocklock(_lockDuration, _cooldownDuration);
+  }
+
+  function setPoolToken(PoolToken _poolToken) external onlyAdmin {
+    require(address(poolToken) == address(0), "Pool/token-was-set");
+    require(_poolToken.pool() == address(this), "Pool/token-mismatch");
+    poolToken = _poolToken;
   }
 
   function initBlocklock(uint256 _lockDuration, uint256 _cooldownDuration) internal {
@@ -511,6 +522,30 @@ contract BasePool is Initializable, ReentrancyGuard {
     drawState.withdraw(msg.sender);
 
     _withdraw(msg.sender, balance);
+  }
+
+  function withdrawCommitted(
+    address _from,
+    uint256 _amount
+  ) external onlyToken onlyCommittedBalanceGteq(_from, _amount) returns (bool)  {
+    // Update state variables
+    drawState.withdrawCommitted(_from, _amount);
+    _withdraw(_from, _amount);
+
+    return true;
+  }
+
+  function moveCommitted(
+    address _from,
+    address _to,
+    uint256 _amount
+  ) external onlyToken onlyCommittedBalanceGteq(_from, _amount) returns (bool) {
+    balances[_from] = balances[_from].sub(_amount, "move could not sub amount");
+    balances[_to] = balances[_to].add(_amount);
+    drawState.withdrawCommitted(_from, _amount);
+    drawState.depositCommitted(_to, _amount);
+
+    return true;
   }
 
   /**
@@ -825,6 +860,17 @@ contract BasePool is Initializable, ReentrancyGuard {
 
   modifier unlessPaused() {
     require(!paused, "contract is paused");
+    _;
+  }
+
+  modifier onlyToken() {
+    require(msg.sender == address(poolToken), "Pool/only-token");
+    _;
+  }
+
+  modifier onlyCommittedBalanceGteq(address _from, uint256 _amount) {
+    uint256 committedBalance = drawState.committedBalanceOf(_from);
+    require(_amount <= committedBalance, "not enough funds");
     _;
   }
 }
