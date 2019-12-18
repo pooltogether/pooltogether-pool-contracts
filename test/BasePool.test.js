@@ -579,7 +579,32 @@ contract('BasePool', (accounts) => {
       })
     })
 
+    describe('withdrawCommittedDeposit(address,uint256)', () => {
+      it('should only be called by the token', async () => {
+        await chai.assert.isRejected(pool.withdrawCommittedDeposit(user1, toWei('0')), /Pool\/only-token/)
+      })
+    })
+
     describe('withdraw()', () => {
+
+      it('should call the PoolToken', async () => {
+        await token.approve(pool.address, TICKET_PRICE, { from: user1 })
+        await pool.depositPool(TICKET_PRICE, { from: user1 })
+        await poolContext.nextDraw()
+
+        const poolToken = await poolContext.createToken()
+
+        await pool.withdraw({ from: user1 })
+
+        const [Redeemed, Transfer] = await poolToken.getPastEvents({fromBlock: 0, toBlock: 'latest'})
+
+        // console.log(Redeemed)
+
+        assert.equal(Redeemed.event, 'Redeemed')
+        assert.equal(Redeemed.args.from, user1)
+        assert.equal(Redeemed.args.amount, TICKET_PRICE.toString())
+      })
+
       describe('with sponsorship', () => {
         beforeEach(async () => {
           await token.approve(pool.address, toWei('1000'), { from: user2 })

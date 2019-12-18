@@ -110,7 +110,6 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   ) public initializer {
       require(bytes(name).length != 0, "PoolToken/name");
       require(bytes(symbol).length != 0, "PoolToken/symbol");
-      require(bytes(_name).length == 0, "PoolToken/init");
       require(address(pool) != address(0), "PoolToken/pool-zero");
 
       _name = name;

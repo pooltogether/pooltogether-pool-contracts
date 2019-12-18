@@ -73,10 +73,10 @@ module.exports = {
   },
 
   // optimization breaks code coverage
-  solc: isCoverage ? {} : {
+  solc: {
     optimizer: {
-      enabled: true,
-      runs: 1
+      enabled: !isCoverage,
+      runs: 200
     }
   },
 
