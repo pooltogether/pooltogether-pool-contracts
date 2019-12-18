@@ -182,12 +182,12 @@ contract BasePool is Initializable, ReentrancyGuard {
   /**
    * Emitted when an admin pauses the contract
    */
-  event Paused(address indexed sender);
+  event DepositsPaused(address indexed sender);
 
   /**
    * Emitted when an admin unpauses the contract
    */
-  event Unpaused(address indexed sender);
+  event DepositsUnpaused(address indexed sender);
 
   /**
    * Emitted when the draw is rolled over in the event that the secret is forgotten.
@@ -477,7 +477,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * The deposit will immediately be added to Compound and the interest will contribute to the next draw.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
-  function depositSponsorship(uint256 _amount) public unlessPaused nonReentrant {
+  function depositSponsorship(uint256 _amount) public unlessDepositsPaused nonReentrant {
     // Transfer the tokens into this contract
     require(token().transferFrom(msg.sender, address(this), _amount), "token transfer failed");
 
@@ -489,7 +489,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @notice Deposits the token balance for this contract as a sponsorship.
    * If people erroneously transfer tokens to this contract, this function will allow us to recoup those tokens as sponsorship.
    */
-  function transferBalanceToSponsorship() public {
+  function transferBalanceToSponsorship() public unlessDepositsPaused {
     // Deposit the sponsorship amount
     _depositSponsorshipFrom(address(this), token().balanceOf(address(this)));
   }
@@ -500,7 +500,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * proportional to the total committed balance of all users.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
-  function depositPool(uint256 _amount) public requireOpenDraw unlessPaused nonReentrant {
+  function depositPool(uint256 _amount) public requireOpenDraw unlessDepositsPaused nonReentrant {
     // Transfer the tokens into this contract
     require(token().transferFrom(msg.sender, address(this), _amount), "token transfer failed");
 
@@ -919,16 +919,27 @@ contract BasePool is Initializable, ReentrancyGuard {
     blocklock.unlock(block.number);
   }
 
-  function pause() public unlessPaused onlyAdmin {
+  /**
+   * Pauses all deposits into the contract.  This was added so that we can slowly deprecate Pools.  Users can continue
+   * to collect rewards and withdraw, but eventually the Pool will grow smaller.
+   *
+   * emits DepositsPaused
+   */
+  function pauseDeposits() public unlessDepositsPaused onlyAdmin {
     paused = true;
 
-    emit Paused(msg.sender);
+    emit DepositsPaused(msg.sender);
   }
 
-  function unpause() public whenPaused onlyAdmin {
+  /**
+   * Unpauses all deposits into the contract
+   *
+   * emits DepositsUnpaused
+   */
+  function unpauseDeposits() public whenDepositsPaused onlyAdmin {
     paused = false;
 
-    emit Unpaused(msg.sender);
+    emit DepositsUnpaused(msg.sender);
   }
 
   function isLocked() public view returns (bool) {
@@ -963,13 +974,13 @@ contract BasePool is Initializable, ReentrancyGuard {
     _;
   }
 
-  modifier whenPaused() {
-    require(paused, "contract is not paused");
+  modifier whenDepositsPaused() {
+    require(paused, "Pool/d-not-paused");
     _;
   }
 
-  modifier unlessPaused() {
-    require(!paused, "contract is paused");
+  modifier unlessDepositsPaused() {
+    require(!paused, "Pool/d-paused");
     _;
   }
 

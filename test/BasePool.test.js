@@ -796,30 +796,30 @@ contract('BasePool', (accounts) => {
     })
   })
 
-  describe('pause()', () => {
+  describe('pauseDeposits()', () => {
     beforeEach(async () => {
       pool = await poolContext.createPool(feeFraction)
       await poolContext.nextDraw()
     })
 
     it('should not allow any more deposits', async () => {
-      await pool.pause()
-      await chai.assert.isRejected(poolContext.depositPool(toWei('10'), { from: user2 }), /contract is paused/)
+      await pool.pauseDeposits()
+      await chai.assert.isRejected(poolContext.depositPool(toWei('10'), { from: user2 }), /Pool\/d-paused/)
     })
   })
 
-  describe('unpause()', () => {
+  describe('unpauseDeposits()', () => {
     beforeEach(async () => {
       pool = await poolContext.createPool(feeFraction)
     })
 
     it('should not work unless paused', async () => {
-      await chai.assert.isRejected(pool.unpause(), /contract is not paused/)
+      await chai.assert.isRejected(pool.unpauseDeposits(), /Pool\/d-not-paused/)
     })
 
     it('should allow deposit after unpausing', async () => {
-      await pool.pause()
-      await pool.unpause()
+      await pool.pauseDeposits()
+      await pool.unpauseDeposits()
       await poolContext.depositPool(toWei('10'), { from: user2 })
     })
   })

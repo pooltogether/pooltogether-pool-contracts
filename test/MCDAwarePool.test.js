@@ -97,6 +97,16 @@ contract('MCDAwarePool', (accounts) => {
         assert.equal(await receivingPool.openBalanceOf(owner), toWei('10'))
       })
 
+      describe('when paused', async () => {
+        beforeEach(async () => {
+          await receivingPool.pauseDeposits()
+        })
+
+        it('should reject the migration', async () => {
+          await chai.assert.isRejected(sendingToken.transfer(receivingPool.address, amount), /Pool\/d-paused/)
+        })
+      })
+
       describe('to a non-Dai MCD Pool', () => {
         let newDaiToken
 
