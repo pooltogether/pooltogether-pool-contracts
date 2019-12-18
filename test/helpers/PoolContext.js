@@ -97,11 +97,11 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   }
 
   this.newPool = async () => {
-    await LocalMCDAwarePool.link("DrawManager", drawManager.address)
-    await LocalMCDAwarePool.link("FixidityLib", fixidity.address)
-    await LocalMCDAwarePool.link('Blocklock', blocklock.address)
+    await MCDAwarePool.link("DrawManager", drawManager.address)
+    await MCDAwarePool.link("FixidityLib", fixidity.address)
+    await MCDAwarePool.link('Blocklock', blocklock.address)
     
-    return await LocalMCDAwarePool.new()
+    return await MCDAwarePool.new()
   }
 
   this.createPoolNoOpenDraw = async (feeFraction = new BN('0'), cooldownDuration = 1) => {
