@@ -361,12 +361,12 @@ library DrawManager {
     }
 
     modifier requireOpenDraw(State storage self) {
-        require(self.openDrawIndex > 0, "Pool/no-draw");
+        require(self.openDrawIndex > 0, "Pool/no-open");
         _;
     }
 
     modifier requireCommittedDraw(State storage self) {
-        require(self.openDrawIndex > 1, "there is no committed draw");
+        require(self.openDrawIndex > 1, "Pool/no-commit");
         _;
     }
 

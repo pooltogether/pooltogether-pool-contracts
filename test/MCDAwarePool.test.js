@@ -77,8 +77,8 @@ contract('MCDAwarePool', (accounts) => {
         await receivingPool.initMigration(scdMcdMigration.address, sendingPool.address)
         // Ensure the dai pool has the ScdMcdMigration wired up correctly
         assert.equal(await receivingPool.scdMcdMigration(), scdMcdMigration.address)
-        assert.equal((await receivingPool.methods['sai()'].call()).toString(), sai.address)
-        assert.equal((await receivingPool.methods['dai()'].call()).toString(), dai.address)
+        assert.equal((await receivingPool.methods['saiToken()'].call()).toString(), sai.address)
+        assert.equal((await receivingPool.methods['daiToken()'].call()).toString(), dai.address)
       })
 
       describe('when the dai pool has a committed draw', async () => {
@@ -109,7 +109,7 @@ contract('MCDAwarePool', (accounts) => {
         })
 
         it('should reject the migration', async () => {
-          await chai.assert.isRejected(sendingToken.transfer(receivingPool.address, amount), /contract is paused/)
+          await chai.assert.isRejected(sendingToken.transfer(receivingPool.address, amount), /Pool\/not-paused/)
         })
       })
 

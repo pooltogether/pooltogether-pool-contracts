@@ -39,15 +39,15 @@ contract('PoolToken', (accounts) => {
     })
 
     it('requires the name to be defined', async () => {
-      await chai.assert.isRejected(poolToken.init('', 'FBAR', [owner], pool.address), /name must be defined/)
+      await chai.assert.isRejected(poolToken.init('', 'FBAR', [owner], pool.address), /PoolToken\/name/)
     })
 
     it('requires the symbol to be defined', async () => {
-      await chai.assert.isRejected(poolToken.init('Foobar', '', [owner], pool.address), /symbol must be defined/)
+      await chai.assert.isRejected(poolToken.init('Foobar', '', [owner], pool.address), /PoolToken\/symbol/)
     })
 
     it('requires the pool to be defined', async () => {
-      await chai.assert.isRejected(poolToken.init('Foobar', 'fbar', [owner], ZERO_ADDRESS), /PoolToken\/pool-not-def/)
+      await chai.assert.isRejected(poolToken.init('Foobar', 'fbar', [owner], ZERO_ADDRESS), /PoolToken\/pool-zero/)
     })
 
     it('should work', async () => {
@@ -86,13 +86,13 @@ contract('PoolToken', (accounts) => {
 
     describe('operatorRedeem()', () => {
       it('should not allow someone to redeem the zero address tokens', async () => {
-        await chai.assert.isRejected(poolToken.operatorRedeem(ZERO_ADDRESS, toWei('10'), [], []), /ERC777: redeem from the zero address/)
+        await chai.assert.isRejected(poolToken.operatorRedeem(ZERO_ADDRESS, toWei('10'), [], []), /PoolToken\/from-zero/)
       })
     })
 
     describe('operatorSend()', () => {
       it('should not send tokens from zero address', async () => {
-        await chai.assert.isRejected(poolToken.operatorSend(ZERO_ADDRESS, user1, toWei('10'), [], []), /ERC777: send from the zero address/)
+        await chai.assert.isRejected(poolToken.operatorSend(ZERO_ADDRESS, user1, toWei('10'), [], []), /PoolToken\/from-zero/)
       })
     })
   })
@@ -137,10 +137,11 @@ contract('PoolToken', (accounts) => {
       it('should revert if sending to the burner address', async () => {
         await poolContext.depositPool(toWei('10'))
         await poolContext.nextDraw()
-        await chai.assert.isRejected(poolToken.send(ZERO_ADDRESS, toWei('10'), []), /ERC777: send to the zero address/)
+        await chai.assert.isRejected(poolToken.send(ZERO_ADDRESS, toWei('10'), []), /PoolToken\/to-zero/)
       })
 
       it('should work if sending zero', async () => {
+        await poolContext.nextDraw()
         await poolToken.send(user2, toWei('0'), [])
         assert.equal(await poolToken.balanceOf(owner), toWei('0'))
         assert.equal(await poolToken.balanceOf(user2), toWei('0'))
@@ -191,7 +192,7 @@ contract('PoolToken', (accounts) => {
           let recipient = await MockERC777Recipient.new()
           await poolContext.depositPool(toWei('10'))
           await poolContext.nextDraw()
-          await chai.assert.isRejected(poolToken.send(recipient.address, toWei('10'), []), /Pool\/no-recip-inter/)
+          await chai.assert.isRejected(poolToken.send(recipient.address, toWei('10'), []), /PoolToken\/no-recip-inter/)
         })
       })
     })
@@ -213,22 +214,24 @@ contract('PoolToken', (accounts) => {
       it('should revert if transferring to the burner address', async () => {
         await poolContext.depositPool(toWei('10'))
         await poolContext.nextDraw()
-        await chai.assert.isRejected(poolToken.transfer(ZERO_ADDRESS, toWei('10')), /ERC777: transfer to the zero address/)
+        await chai.assert.isRejected(poolToken.transfer(ZERO_ADDRESS, toWei('10')), /PoolToken\/transfer-zero/)
       })
 
       it('should work if transferring zero', async () => {
+        await poolContext.nextDraw()
         await poolToken.transfer(user2, toWei('0'))
         assert.equal(await poolToken.balanceOf(owner), toWei('0'))
         assert.equal(await poolToken.balanceOf(user2), toWei('0'))
       })
 
       it('should reject when transferring to zero address', async () => {
-        await chai.assert.isRejected(poolToken.transfer(ZERO_ADDRESS, toWei('0')), /ERC777: transfer to the zero address/)
+        await chai.assert.isRejected(poolToken.transfer(ZERO_ADDRESS, toWei('0')), /PoolToken\/transfer-zero/)
       })
     })
 
     describe('redeem()', () => {
       it('should be okay to redeem nothing', async () => {
+        await poolContext.nextDraw()
         await poolToken.redeem('0', [])
       })
 

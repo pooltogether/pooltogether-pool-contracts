@@ -102,9 +102,10 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     address[] memory defaultOperators,
     BasePool pool
   ) public initializer {
-      require(bytes(name).length != 0, "Pool/name");
-      require(bytes(symbol).length != 0, "Pool/symbol");
-      require(bytes(_name).length == 0, "Pool/init");
+      require(bytes(name).length != 0, "PoolToken/name");
+      require(bytes(symbol).length != 0, "PoolToken/symbol");
+      require(bytes(_name).length == 0, "PoolToken/init");
+      require(address(pool) != address(0), "PoolToken/pool-zero");
 
       _name = name;
       _symbol = symbol;
@@ -196,7 +197,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     * Also emits a {Sent} event.
     */
   function transfer(address recipient, uint256 amount) external returns (bool) {
-      require(recipient != address(0), "Pool/transfer-zero");
+      require(recipient != address(0), "PoolToken/transfer-zero");
 
       address from = msg.sender;
 
@@ -243,7 +244,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     * @dev See {IERC777-authorizeOperator}.
     */
   function authorizeOperator(address operator) external {
-      require(msg.sender != operator, "Pool/auth-self");
+      require(msg.sender != operator, "PoolToken/auth-self");
 
       if (_defaultOperators[operator]) {
           delete _revokedDefaultOperators[msg.sender][operator];
@@ -258,7 +259,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     * @dev See {IERC777-revokeOperator}.
     */
   function revokeOperator(address operator) external {
-      require(operator != msg.sender, "Pool/revoke-self");
+      require(operator != msg.sender, "PoolToken/revoke-self");
 
       if (_defaultOperators[operator]) {
           _revokedDefaultOperators[msg.sender][operator] = true;
@@ -290,7 +291,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   )
   external
   {
-      require(isOperatorFor(msg.sender, sender), "Pool/not-operator");
+      require(isOperatorFor(msg.sender, sender), "PoolToken/not-operator");
       _send(msg.sender, sender, recipient, amount, data, operatorData);
   }
 
@@ -309,7 +310,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     * Emits {Redeemed} and {Transfer} events.
     */
   function operatorRedeem(address account, uint256 amount, bytes calldata data, bytes calldata operatorData) external {
-      require(isOperatorFor(msg.sender, account), "Pool/not-operator");
+      require(isOperatorFor(msg.sender, account), "PoolToken/not-operator");
       _redeem(msg.sender, account, amount, data, operatorData);
   }
 
@@ -345,15 +346,15 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   * Emits {Sent}, {Transfer} and {Approval} events.
   */
   function transferFrom(address holder, address recipient, uint256 amount) external returns (bool) {
-      require(recipient != address(0), "Pool/to-zero");
-      require(holder != address(0), "Pool/from-zero");
+      require(recipient != address(0), "PoolToken/to-zero");
+      require(holder != address(0), "PoolToken/from-zero");
 
       address spender = msg.sender;
 
       _callTokensToSend(spender, holder, recipient, amount, "", "");
 
       _move(spender, holder, recipient, amount, "", "");
-      _approve(holder, spender, _allowances[holder][spender].sub(amount, "Pool/exceed-allow"));
+      _approve(holder, spender, _allowances[holder][spender].sub(amount, "PoolToken/exceed-allow"));
 
       _callTokensReceived(spender, holder, recipient, amount, "", "", false);
 
@@ -403,8 +404,8 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   )
       private
   {
-      require(from != address(0), "Pool/from-zero");
-      require(to != address(0), "Pool/to-zero");
+      require(from != address(0), "PoolToken/from-zero");
+      require(to != address(0), "PoolToken/to-zero");
 
       _callTokensToSend(operator, from, to, amount, userData, operatorData);
 
@@ -430,7 +431,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   )
       private
   {
-      require(from != address(0), "Pool/zero-addr");
+      require(from != address(0), "PoolToken/from-zero");
 
       _callTokensToSend(operator, from, address(0), amount, data, operatorData);
 
@@ -457,7 +458,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   }
 
   function _approve(address holder, address spender, uint256 value) private {
-      require(spender != address(0), "Pool/zero-addr");
+      require(spender != address(0), "PoolToken/from-zero");
 
       _allowances[holder][spender] = value;
       emit Approval(holder, spender, value);
@@ -514,7 +515,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
       if (implementer != address(0)) {
           IERC777Recipient(implementer).tokensReceived(operator, from, to, amount, userData, operatorData);
       } else if (requireReceptionAck) {
-          require(!to.isContract(), "Pool/no-recip-inter");
+          require(!to.isContract(), "PoolToken/no-recip-inter");
       }
   }
 

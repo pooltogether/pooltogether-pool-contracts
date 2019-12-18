@@ -147,7 +147,7 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
     }
   }
 
-  function saiToken() internal returns (GemLike) {
+  function saiToken() public returns (GemLike) {
     return scdMcdMigration.saiJoin().gem();
   }
 
