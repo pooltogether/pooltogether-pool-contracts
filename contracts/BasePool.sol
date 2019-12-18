@@ -559,7 +559,7 @@ contract BasePool is Initializable, ReentrancyGuard {
     uint256 committedBalance = drawState.committedBalanceOf(msg.sender);
 
     if (address(poolToken) != address(0)) {
-      poolToken.poolBurn(msg.sender, committedBalance);
+      poolToken.poolRedeem(msg.sender, committedBalance);
     }
 
     emit SponsorshipAndFeesWithdrawn(msg.sender, sponsorshipAndFees);
@@ -606,7 +606,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   function withdrawCommittedDeposit(uint256 _amount) external notLocked returns (bool)  {
     _withdrawCommittedDepositAndEmit(msg.sender, _amount);
     if (address(poolToken) != address(0)) {
-      poolToken.poolBurn(msg.sender, _amount);
+      poolToken.poolRedeem(msg.sender, _amount);
     }
     return true;
   }
