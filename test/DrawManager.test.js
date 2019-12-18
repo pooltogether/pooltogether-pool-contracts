@@ -224,7 +224,7 @@ contract('DrawManager', (accounts) => {
         })
 
         it('should fail if there is no committed draw', async () => {
-            await chai.assert.isRejected(drawManager.depositCommitted(user1, toWei('10')), /there is no committed draw/)
+            await chai.assert.isRejected(drawManager.depositCommitted(user1, toWei('10')), /Pool\/no-commit/)
         })
 
         it('should fail if the address is zero', async () => {
@@ -239,16 +239,6 @@ contract('DrawManager', (accounts) => {
             assert.equal(await drawManager.committedBalanceOf(user1), toWei('20'))
         })
 
-        it('should fail when there is no committed draw', async () => {
-            let failed = false
-            try {
-                await drawManager.depositCommitted(user1, toWei('10'))
-            } catch (e) {
-                failed = true
-            }
-            assert.ok(failed, "was able to deposit committed")
-        })
-
         it('should work when recipient has no committed deposits', async () => {
             await drawManager.openNextDraw()
             await drawManager.deposit(user1, toWei('10'))
@@ -259,7 +249,7 @@ contract('DrawManager', (accounts) => {
 
     describe('withdrawOpen()', () => {
         it('should now allow a user to withdraw more', async () => {
-            await chai.assert.isRejected(drawManager.withdrawOpen(user1, toWei('10.00001')), /there is no open draw/)
+            await chai.assert.isRejected(drawManager.withdrawOpen(user1, toWei('10.00001')), /Pool\/no-open/)
         })
 
         describe('with open draw', () => {
@@ -273,7 +263,7 @@ contract('DrawManager', (accounts) => {
             })
 
             it('should not allow withdrawing from the zero address', async () => {
-                await chai.assert.isRejected(drawManager.withdrawOpen(ZERO_ADDRESS, toWei('5')), /address cannot be zero/)
+                await chai.assert.isRejected(drawManager.withdrawOpen(ZERO_ADDRESS, toWei('5')), /Pool\/not-zero/)
             })
         
             it('should allow a user to partially withdraw', async () => {
@@ -305,7 +295,7 @@ contract('DrawManager', (accounts) => {
         })
 
         it('should fail if there is no committed draw', async () => {
-            await chai.assert.isRejected(drawManager.withdrawCommitted(user1, toWei('10')), /there is no committed draw/)
+            await chai.assert.isRejected(drawManager.withdrawCommitted(user1, toWei('10')), /Pool\/no-commit/)
         })
 
         it('should allow a user to withdraw their committed tokens', async () => {

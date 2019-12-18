@@ -344,7 +344,7 @@ contract('BasePool', (accounts) => {
     })
 
     it('should only be called by the admin', async () => {
-      await chai.assert.isRejected(pool.lockTokens({ from: user1 }), /must be an admin/)
+      await chai.assert.isRejected(pool.lockTokens({ from: user1 }), /Pool\/admin/)
     })
   })
 
@@ -380,7 +380,7 @@ contract('BasePool', (accounts) => {
     })
 
     it('should only be called by the admin', async () => {
-      await chai.assert.isRejected(pool.unlockTokens({ from: user1 }), /must be an admin/)
+      await chai.assert.isRejected(pool.unlockTokens({ from: user1 }), /Pool\/admin/)
     })
   })
 
@@ -571,7 +571,7 @@ contract('BasePool', (accounts) => {
 
         const { receipt } = await pool.withdrawCommittedDeposit(toWei('3'), { from: user1 })
 
-        const [Redeemed, Transfer] = await poolToken.getPastEvents({fromBlock: receipt.blockNumber, toBlock: 'latest'})
+        const [Redeemed] = await poolToken.getPastEvents({fromBlock: receipt.blockNumber, toBlock: 'latest'})
 
         assert.equal(Redeemed.event, 'Redeemed')
         assert.equal(Redeemed.args.from, user1)
