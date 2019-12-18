@@ -489,7 +489,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @notice Deposits the token balance for this contract as a sponsorship.
    * If people erroneously transfer tokens to this contract, this function will allow us to recoup those tokens as sponsorship.
    */
-  function transferBalanceToSponsorship() public {
+  function transferBalanceToSponsorship() public unlessPaused {
     // Deposit the sponsorship amount
     _depositSponsorshipFrom(address(this), token().balanceOf(address(this)));
   }
@@ -919,12 +919,19 @@ contract BasePool is Initializable, ReentrancyGuard {
     blocklock.unlock(block.number);
   }
 
+  /**
+   * Pauses all deposits into the contract.  This was added so that we can slowly deprecate Pools.  Users can continue
+   * to collect rewards, but eventually the Pool will grow smaller.
+   */
   function pause() public unlessPaused onlyAdmin {
     paused = true;
 
     emit Paused(msg.sender);
   }
 
+  /**
+   * Unpauses all deposits into the contract
+   */
   function unpause() public whenPaused onlyAdmin {
     paused = false;
 
