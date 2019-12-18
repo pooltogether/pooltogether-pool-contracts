@@ -102,7 +102,7 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
     uint256 amount,
     bytes calldata,
     bytes calldata
-  ) external {
+  ) external unlessPaused {
     require(msg.sender == address(saiPoolToken()), "can only receive tokens from Sai Pool Token");
     require(address(token()) == address(daiToken()), "contract does not use Dai");
 
