@@ -483,6 +483,98 @@ contract('BasePool', (accounts) => {
       })
     })
 
+    describe('withdrawSponsorshipAndFee()', () => {
+      it('should withdraw the sponsorship and any fees they have taken', async () => {
+        await token.approve(pool.address, toWei('1000'), { from: user2 })
+        await pool.depositSponsorship(toWei('1000'), { from: user2 })
+        assert.equal(await pool.sponsorshipAndFeeBalanceOf(user2), toWei('1000'))
+
+        const { logs } = await pool.withdrawSponsorshipAndFee(toWei('500'), { from: user2 })
+
+        assert.equal(await pool.sponsorshipAndFeeBalanceOf(user2), toWei('500'))
+
+        const [ SponsorshipAndFeesWithdrawn ] = logs
+
+        assert.equal(SponsorshipAndFeesWithdrawn.event, 'SponsorshipAndFeesWithdrawn')
+        assert.equal(SponsorshipAndFeesWithdrawn.args.sender, user2)
+        assert.equal(SponsorshipAndFeesWithdrawn.args.amount, toWei('500'))
+      })
+
+      it('does not allow a withdrawal when their balance is zero', async () => {
+        await chai.assert.isRejected(pool.withdrawSponsorshipAndFee(toWei('500'), { from: user2 }), /Pool\/exceeds-sfee/)
+      })
+
+      it('does not allow a withdrawal that exceeds their balance', async () => {
+        await token.approve(pool.address, toWei('1000'), { from: user2 })
+        await pool.depositSponsorship(toWei('1000'), { from: user2 })
+        await chai.assert.isRejected(pool.withdrawSponsorshipAndFee(toWei('1000.01'), { from: user2 }), /Pool\/exceeds-sfee/)
+      })
+    })
+
+    describe('withdrawOpenDeposit()', () => {
+      it('should allow a user to withdraw their open deposit', async () => {
+        await token.approve(pool.address, toWei('10'), { from: user1 })
+        await pool.depositPool(toWei('10'), { from: user1 })
+
+        assert.equal(await pool.openBalanceOf(user1), toWei('10'))
+
+        const { logs } = await pool.withdrawOpenDeposit(toWei('10'), { from: user1 })
+
+        assert.equal(await pool.openBalanceOf(user1), toWei('0'))
+
+        const [ OpenDepositWithdrawn ] = logs
+
+        assert.equal(OpenDepositWithdrawn.event, 'OpenDepositWithdrawn')
+        assert.equal(OpenDepositWithdrawn.args.sender, user1)
+        assert.equal(OpenDepositWithdrawn.args.amount, toWei('10'))
+      })
+
+      it('should allow a user to partially withdraw their open deposit', async () => {
+        await token.approve(pool.address, toWei('10'), { from: user1 })
+        await pool.depositPool(toWei('10'), { from: user1 })
+        assert.equal(await pool.openBalanceOf(user1), toWei('10'))
+        await pool.withdrawOpenDeposit(toWei('6'), { from: user1 })
+        assert.equal(await pool.openBalanceOf(user1), toWei('4'))
+      })
+
+      it('should not allow a user to withdraw more than their open deposit', async () => {
+        await chai.assert.isRejected(pool.withdrawOpenDeposit(toWei('6'), { from: user1 }), /DrawMan\/exceeds-open/)
+      })
+    })
+
+    describe('withdrawCommittedDeposit()', () => {
+      it('should allow a user to withdraw their committed deposit', async () => {
+        await token.approve(pool.address, toWei('10'), { from: user1 })
+        await pool.depositPool(toWei('10'), { from: user1 })
+        await poolContext.nextDraw()
+
+        const { logs } = await pool.withdrawCommittedDeposit(toWei('3'), { from: user1 })
+        assert.equal(await pool.committedBalanceOf(user1), toWei('7'))
+
+        const [ CommittedDepositWithdrawn ] = logs
+
+        assert.equal(CommittedDepositWithdrawn.event, 'CommittedDepositWithdrawn')
+        assert.equal(CommittedDepositWithdrawn.args.sender, user1)
+        assert.equal(CommittedDepositWithdrawn.args.amount, toWei('3'))
+      })
+
+      it('should call burn on the poolToken if available', async () => {
+        let poolToken = await poolContext.createToken()
+
+        await token.approve(pool.address, toWei('10'), { from: user1 })
+        await pool.depositPool(toWei('10'), { from: user1 })
+        await poolContext.nextDraw()
+
+        await pool.withdrawCommittedDeposit(toWei('3'), { from: user1 })
+
+        const [Burned, Transfer] = await poolToken.getPastEvents({fromBlock: 0, toBlock: 'latest'})
+
+        assert.equal(Burned.event, 'Burned')
+        assert.equal(Burned.args.from, user1)
+        assert.equal(Burned.args.amount, toWei('3'))
+      })
+    })
+
     describe('withdraw()', () => {
       describe('with sponsorship', () => {
         beforeEach(async () => {

@@ -89,26 +89,33 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     address[] memory defaultOperators,
     BasePool pool
   ) public initializer {
-    require(bytes(name).length != 0, "name must be defined");
-    require(bytes(symbol).length != 0, "symbol must be defined");
-    require(address(pool) != address(0), "PoolToken/pool-not-def");
+      require(bytes(name).length != 0, "name must be defined");
+      require(bytes(symbol).length != 0, "symbol must be defined");
+      require(address(pool) != address(0), "PoolToken/pool-not-def");
 
-    _name = name;
-    _symbol = symbol;
-    _pool = pool;
+      _name = name;
+      _symbol = symbol;
+      _pool = pool;
 
-    _defaultOperatorsArray = defaultOperators;
-    for (uint256 i = 0; i < _defaultOperatorsArray.length; i++) {
-        _defaultOperators[_defaultOperatorsArray[i]] = true;
-    }
+      _defaultOperatorsArray = defaultOperators;
+      for (uint256 i = 0; i < _defaultOperatorsArray.length; i++) {
+          _defaultOperators[_defaultOperatorsArray[i]] = true;
+      }
 
-    // register interfaces
-    ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
-    ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
+      // register interfaces
+      ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
+      ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
   }
 
   function pool() public view returns (address) {
-    return address(_pool);
+      return address(_pool);
+  }
+
+  function poolBurn(address from, uint256 amount) external onlyPool {
+      _callTokensToSend(from, from, address(0), amount, '', '');
+
+      emit Burned(from, from, amount, '', '');
+      emit Transfer(from, address(0), amount);
   }
 
   /**
@@ -323,35 +330,16 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   }
 
   /**
-    * @dev Creates `amount` tokens and assigns them to `account`, increasing
-    * the total supply.
-    *
-    * If a send hook is registered for `account`, the corresponding function
-    * will be called with `operator`, `data` and `operatorData`.
-    *
-    * See {IERC777Sender} and {IERC777Recipient}.
-    *
-    * Emits {Minted} and {IERC20-Transfer} events.
-    *
-    * Requirements
-    *
-    * - `account` cannot be the zero address.
-    * - if `account` is a contract, it must implement the {IERC777Recipient}
-    * interface.
-    */
-  function _mint(
-      address operator,
-      address account,
-      uint256 amount,
-      bytes memory userData,
-      bytes memory operatorData
-  )
-  internal
-  {
-      _callTokensReceived(operator, address(0), account, amount, userData, operatorData, true);
-      _mintEvents(operator, account, amount, userData, operatorData);
+   * Called by the associated Pool to emit `Mint` events.
+   * @param amount The amount that was minted
+   */
+  function poolMint(uint256 amount) external onlyPool {
+    _mintEvents(address(_pool), address(_pool), amount, '', '');
   }
 
+  /**
+    * Emits {Minted} and {IERC20-Transfer} events.
+    */
   function _mintEvents(
       address operator,
       address account,
@@ -415,7 +403,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
 
       _callTokensToSend(operator, from, address(0), amount, data, operatorData);
 
-      _pool.withdrawCommitted(from, amount);
+      _pool.withdrawCommittedDeposit(from, amount);
 
       emit Burned(operator, from, amount, data, operatorData);
       emit Transfer(from, address(0), amount);
@@ -496,6 +484,11 @@ contract PoolToken is Initializable, IERC20, IERC777 {
       } else if (requireReceptionAck) {
           require(!to.isContract(), "ERC777: contract recipient has no implementer for ERC777TokensRecipient");
       }
+  }
+
+  modifier onlyPool() {
+    require(msg.sender == address(_pool), "PoolToken/only-pool");
+    _;
   }
 
   modifier notLocked() {

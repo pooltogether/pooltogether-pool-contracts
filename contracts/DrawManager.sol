@@ -182,6 +182,17 @@ library DrawManager {
         }
     }
 
+    function withdrawOpen(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) onlyNonZero(_addr) {
+        bytes32 userId = bytes32(uint256(_addr));
+        uint256 openTotal = self.sortitionSumTrees.stakeOf(bytes32(self.openDrawIndex), userId);
+
+        require(_amount <= openTotal, "DrawMan/exceeds-open");
+
+        uint256 remaining = openTotal.sub(_amount);
+
+        drawSet(self, self.openDrawIndex, remaining, _addr);
+    }
+
     /**
      * @notice Withdraw's from a user's committed balance.  Fails if the user attempts to take more than available.
      * @param self The DrawManager state
@@ -309,11 +320,11 @@ library DrawManager {
             // Update the Draw's balance for that address
             self.sortitionSumTrees.set(drawId, _amount, userId);
 
-            // Get the new draw total
-            uint256 newDrawTotal = self.sortitionSumTrees.total(drawId);
-
             // if the draw is committed
             if (_drawIndex != self.openDrawIndex) {
+                // Get the new draw total
+                uint256 newDrawTotal = self.sortitionSumTrees.total(drawId);
+
                 // update the draw in the committed tree
                 self.sortitionSumTrees.set(TREE_OF_DRAWS, newDrawTotal, drawId);
             }

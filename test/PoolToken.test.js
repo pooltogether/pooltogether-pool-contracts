@@ -215,6 +215,11 @@ contract('PoolToken', (accounts) => {
     })
 
     describe('transfer()', () => {
+      it('should fail when the pool is locked', async () => {
+        await pool.lockTokens()
+        await chai.assert.isRejected(poolToken.transfer(user2, toWei('10')), /PoolToken\/is-locked/)
+      })
+
       it('should transfer tokens to another user', async () => {
         await poolContext.depositPool(toWei('10'))
         await poolContext.nextDraw()

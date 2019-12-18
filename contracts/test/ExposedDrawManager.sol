@@ -41,6 +41,10 @@ contract ExposedDrawManager {
       state.withdraw(user);
     }
 
+    function withdrawOpen(address user, uint256 amount) public {
+      state.withdrawOpen(user, amount);
+    }
+
     function withdrawCommitted(address user, uint256 amount) public {
       state.withdrawCommitted(user, amount);
     }
