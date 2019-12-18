@@ -141,6 +141,7 @@ contract('PoolToken', (accounts) => {
       })
 
       it('should work if sending zero', async () => {
+        await poolContext.nextDraw() // ensure committed
         await poolToken.send(user2, toWei('0'), [])
         assert.equal(await poolToken.balanceOf(owner), toWei('0'))
         assert.equal(await poolToken.balanceOf(user2), toWei('0'))
@@ -217,6 +218,7 @@ contract('PoolToken', (accounts) => {
       })
 
       it('should work if transferring zero', async () => {
+        await poolContext.nextDraw() // ensure committed draw
         await poolToken.transfer(user2, toWei('0'))
         assert.equal(await poolToken.balanceOf(owner), toWei('0'))
         assert.equal(await poolToken.balanceOf(user2), toWei('0'))
@@ -229,6 +231,7 @@ contract('PoolToken', (accounts) => {
 
     describe('redeem()', () => {
       it('should be okay to redeem nothing', async () => {
+        await poolContext.nextDraw() // ensure committed draw
         await poolToken.redeem('0', [])
       })
 

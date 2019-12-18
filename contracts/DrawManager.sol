@@ -147,7 +147,7 @@ library DrawManager {
      * @param _addr The address of the user for whom to deposit
      * @param _amount The amount to deposit
      */
-    function depositCommitted(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) onlyNonZero(_addr) {
+    function depositCommitted(State storage self, address _addr, uint256 _amount) public requireCommittedDraw(self) onlyNonZero(_addr) {
         bytes32 userId = bytes32(uint256(_addr));
         uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
 
@@ -199,7 +199,7 @@ library DrawManager {
      * @param _addr The user to withdraw from
      * @param _amount The amount to withdraw.
      */
-    function withdrawCommitted(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) onlyNonZero(_addr) {
+    function withdrawCommitted(State storage self, address _addr, uint256 _amount) public requireCommittedDraw(self) onlyNonZero(_addr) {
         bytes32 userId = bytes32(uint256(_addr));
         uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
         uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
@@ -362,6 +362,11 @@ library DrawManager {
 
     modifier requireOpenDraw(State storage self) {
         require(self.openDrawIndex > 0, "there is no open draw");
+        _;
+    }
+
+    modifier requireCommittedDraw(State storage self) {
+        require(self.openDrawIndex > 1, "there is no committed draw");
         _;
     }
 
