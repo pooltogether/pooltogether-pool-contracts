@@ -3,6 +3,7 @@ node_modules*
 build
 networks/*
 .DS_Store
+.openzeppelin/.lock
 yarn-error.log
 .envrc
 zos.dev*.json
@@ -10,6 +11,7 @@ zos.dev*.json
 .zos.lock
 .openzeppelin/.session
 .openzeppelin/dev-*.json
+.oz-migrate/mainnet_fork
 coverage
 coverage.json
 test-results.xml

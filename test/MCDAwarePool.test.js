@@ -132,11 +132,11 @@ contract('MCDAwarePool', (accounts) => {
     it('should init the MCDAwarePool', async () => {
       pool = await receivingContext.newPool()
       
-      await pool.initMCDAwarePool()
+      await pool.initMCDAwarePool(55, 90)
 
       assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, TOKENS_RECIPIENT_INTERFACE_HASH), pool.address)
-      assert.equal(await pool.lockDuration(), '40')
-      assert.equal(await pool.cooldownDuration(), '80')
+      assert.equal(await pool.lockDuration(), '55')
+      assert.equal(await pool.cooldownDuration(), '90')
     })
   })
 })

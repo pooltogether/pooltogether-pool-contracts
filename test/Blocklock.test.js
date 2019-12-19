@@ -125,5 +125,15 @@ contract('Blocklock', (accounts) => {
       await blocklock.lock(newBlockNumber)
       chai.expect(await blocklock.isLocked(newBlockNumber)).to.be.true
     })
+
+    it('should allow immediate relock if cooldown is zero', async () => {
+      await blocklock.setCooldownDuration(0)
+
+      let blockNumber = 1
+      await blocklock.lock(blockNumber)
+      await blocklock.unlock(blockNumber)
+      await blocklock.lock(blockNumber)
+      await blocklock.unlock(blockNumber)
+    })
   })
 })

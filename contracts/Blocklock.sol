@@ -42,15 +42,11 @@ library Blocklock {
    * @param blockNumber The current block number.
    */
   function isLocked(State storage self, uint256 blockNumber) public view returns (bool) {
-    uint256 lockEndAt = self.lockedAt + self.lockDuration;
-    // if we unlocked early
-    if (self.unlockedAt >= self.lockedAt && self.unlockedAt < lockEndAt) {
-      lockEndAt = self.unlockedAt;
-    }
+    uint256 endAt = lockEndAt(self);
     return (
       self.lockedAt != 0 &&
       blockNumber >= self.lockedAt &&
-      blockNumber < lockEndAt
+      blockNumber < endAt
     );
   }
 
@@ -80,9 +76,19 @@ library Blocklock {
    * @return True if we can lock at the given block number, false otherwise.
    */
   function canLock(State storage self, uint256 blockNumber) public view returns (bool) {
+    uint256 endAt = lockEndAt(self);
     return (
       self.lockedAt == 0 ||
-      blockNumber >= self.lockedAt + self.lockDuration + self.cooldownDuration
+      blockNumber >= endAt + self.cooldownDuration
     );
+  }
+
+  function lockEndAt(State storage self) internal view returns (uint256) {
+    uint256 endAt = self.lockedAt + self.lockDuration;
+    // if we unlocked early
+    if (self.unlockedAt >= self.lockedAt && self.unlockedAt < endAt) {
+      endAt = self.unlockedAt;
+    }
+    return endAt;
   }
 }

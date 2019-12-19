@@ -8,7 +8,8 @@ async function context(verbose = false, mainnet = false) {
   let args = {
     projectConfig: '.openzeppelin/project.json',
     directory: 'build/contracts',
-    verbose
+    verbose,
+    mnemonic: process.env.HDWALLET_MNEMONIC
   }
 
   if (mainnet) {

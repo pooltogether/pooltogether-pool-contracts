@@ -7,6 +7,7 @@ const { runShell } = require('./runShell')
 const {
   BINANCE_ADDRESS,
   SAI_BUDDY,
+  HD_FIRST_ADDRESS,
   LITTLE_SAI_GUY,
   MULTISIG_ADMIN1,
   MULTISIG_ADMIN2,
@@ -18,11 +19,13 @@ async function startFork() {
   const ganache = require("ganache-cli");
 
   runShell(`cp .openzeppelin/mainnet.json .openzeppelin/dev-999.json`)
+  runShell(`cp .oz-migrate/mainnet .oz-migrate/mainnet_fork`)
 
   const users = await fetchUsers()
 
   const unlockedAccounts = users.map(user => user.id).concat([
     BINANCE_ADDRESS,
+    HD_FIRST_ADDRESS,
     process.env.ADMIN_ADDRESS,
     SAI_BUDDY,
     LITTLE_SAI_GUY,
