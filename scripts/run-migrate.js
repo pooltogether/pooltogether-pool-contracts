@@ -1,26 +1,18 @@
 #!/usr/bin/env node
-const { Project } = require('oz-migrate')
-const shell = require('shelljs')
 const chalk = require('chalk')
 const { buildContext } = require('oz-console')
 const commander = require('commander');
 const { migrate } = require('./migrate')
 
-function runShell(cmd) {
-  console.log(chalk.dim(`$ ${cmd}`))
-  const result = shell.exec(cmd)
-  if (result.code !== 0) {
-    throw new Error(`Could not run ${cmd}:`, result)
-  }
-}
-
 const program = new commander.Command()
-program.option('-n --network', 'select the network.')
+program.option('-n --network [network]', 'select the network.')
 program.option('-v --verbose', 'make all commands verbose', () => true)
 program.option('-f --force', 'force the OpenZeppelin push command', () => true)
 program.parse(process.argv)
 
 let consoleNetwork, networkConfig, ozNetworkName
+
+console.log(program.network)
 
 switch (program.network) {
   case 'mainnet':

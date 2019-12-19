@@ -56,6 +56,17 @@ module.exports = {
       // gasPrice: 11.101 * 1000000000
     },
 
+    kovan: {
+      provider: () => new HDWalletProvider(
+        process.env.HDWALLET_MNEMONIC,
+        process.env.INFURA_PROVIDER_URL_KOVAN,
+        0,
+        3
+      ),
+      skipDryRun: true,
+      network_id: 42
+    },
+
     mainnet_fork: {
       provider: () => new HDWalletProvider(
         process.env.HDWALLET_MNEMONIC,
