@@ -26,14 +26,14 @@ async function migrateSai (context, count = '1') {
   for (let i = 0; i < count; i++) {
     const user = users[i].id
     const signer = provider.getSigner(user)
-    const signingSai = contracts.PoolSai.connect(signer)
+    const signingSai = contracts.PoolSaiToken.connect(signer)
     const balance = await signingSai.balanceOf(user)
     if (balance.gt('0x0')) {
-      const startingPoolDaiBalance = await contracts.PoolDai.balanceOf(user)
+      const startingPoolDaiBalance = await contracts.PoolDai.totalBalanceOf(user)
       console.log(chalk.dim(`Migrating ${ethers.utils.formatEther(balance)} for ${user} to PoolDai ${contracts.PoolDai.address}...`))
       await exec(provider, signingSai.send(contracts.PoolDai.address, balance, [], overrides))
       console.log(chalk.dim(`Migrated ${user}.`))
-      const endingPoolDaiBalance = await contracts.PoolDai.balanceOf(user)
+      const endingPoolDaiBalance = await contracts.PoolDai.totalBalanceOf(user)
       expect(endingPoolDaiBalance.sub(startingPoolDaiBalance).toString()).to.equal(balance.toString())
     } else {
       console.log(chalk.dim(`Skipping migrate for user ${user} who has no PoolSai`))

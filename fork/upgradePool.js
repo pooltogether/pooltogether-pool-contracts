@@ -3,6 +3,7 @@ const chai = require('chai')
 const chalk = require('chalk')
 const expect = chai.expect
 const MultisigAbi = require('./GnosisMultisigAbi')
+const { runShell } = require('./runShell')
 
 const {
   BINANCE_ADDRESS,
@@ -46,8 +47,8 @@ async function upgradePool (context) {
   const ms1 = new ethers.Contract(MULTISIG, MultisigAbi, multisigSigner1)
   const ms2 = new ethers.Contract(MULTISIG, MultisigAbi, multisigSigner2)
 
-  const initBasePoolUpgradeData = interfaces.MCDAwarePool.functions.initBasePoolUpgrade.encode(['Pool Sai', 'plSAI', []])
-  const upgradeAndCallData = interfaces.ProxyAdmin.functions.upgradeAndCall.encode([POOL_PROXY_ADDRESS, newPoolAddress, initBasePoolUpgradeData])
+  const initMcdAwarePoolData = interfaces.MCDAwarePool.functions.initMCDAwarePool.encode([40, 0])
+  const upgradeAndCallData = interfaces.ProxyAdmin.functions.upgradeAndCall.encode([POOL_PROXY_ADDRESS, newPoolAddress, initMcdAwarePoolData])
 
   const submitTx = await ms1.submitTransaction(contracts.ProxyAdmin.address, 0, upgradeAndCallData)
   await provider.waitForTransaction(submitTx.hash)
@@ -62,6 +63,8 @@ async function upgradePool (context) {
 
   // Check that the upgrade was successful
   expect(await contracts.ProxyAdmin.getProxyImplementation(POOL_PROXY_ADDRESS)).to.equal(newPoolAddress)
+
+  runShell(`echo 20 > .oz-migrate/mainnet_fork`)
 
   console.log(chalk.green("Upgraded to v2x."))
 }

@@ -72,7 +72,7 @@ async function reward(context, type = 'sai') {
     let lastSalt = generateSecret(poolSaltSeed, currentCommittedDrawId)
     let lastSecret = generateSecret(poolSeed, currentCommittedDrawId)
 
-    // await exec(provider, pool.reward(lastSecret, lastSalt, overrides))
+    await exec(provider, pool.lockTokens())
     await exec(provider, pool.reward(lastSecret, lastSalt, overrides))
 
     let draw = await pool.getDraw(currentCommittedDrawId)

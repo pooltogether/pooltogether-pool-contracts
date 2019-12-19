@@ -11,7 +11,8 @@ const { withdrawAndDeposit } = require('./withdrawAndDeposit')
 const { rewardAndOpen } = require('./rewardAndOpen')
 const { openNextDraw } = require('./openNextDraw')
 const { reward } = require('./reward')
-const { deployPoolDai } = require('./deployPoolDai')
+// const { deployPoolDai } = require('./deployPoolDai')
+const { migrateScript } = require('./migrateScript')
 const { mint } = require('./mint')
 const { migrateSai } = require('./migrateSai')
 const { poolBalances } = require('./poolBalances')
@@ -64,8 +65,8 @@ program
   })
 
 program
-  .command('upgrade-v2x')
-  .description('Executes the v2x upgrade')
+  .command('upgrade-pool')
+  .description('Upgrades the Pool contract')
   .action(async () => {
     ranAction = true
     await upgradePool(await callContext())
@@ -81,12 +82,20 @@ program
   })
 
 program
-  .command('deploy-dai')
-  .description('deploys the McDai Pool')
+  .command('migrate')
+  .description('runs the migrate script')
   .action(async () => {
     ranAction = true
-    await deployPoolDai(await callContext())
+    await migrateScript(await callContext())
   })
+
+// program
+//   .command('deploy-dai')
+//   .description('deploys the McDai Pool')
+//   .action(async () => {
+//     ranAction = true
+//     await deployPoolDai(await callContext())
+//   })
 
 program
   .command('reward-open [type] [count]')
