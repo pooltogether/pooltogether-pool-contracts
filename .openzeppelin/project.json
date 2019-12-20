@@ -1,8 +1,8 @@
 {
   "manifestVersion": "2.2",
   "contracts": {
-    "PoolSaiToken": "PoolToken",
-    "PoolDaiToken": "PoolToken",
+    "PoolSaiToken": "RecipientWhitelistPoolToken",
+    "PoolDaiToken": "RecipientWhitelistPoolToken",
     "PoolSai": "MCDAwarePool",
     "PoolDai": "MCDAwarePool"
   },
