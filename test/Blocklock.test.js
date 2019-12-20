@@ -61,6 +61,22 @@ contract('Blocklock', (accounts) => {
     })
   })
 
+  describe('cooldownEndAt()', () => {
+    it('should return when the cooldown ends', async () => {
+      let blockNumber = 1
+      await blocklock.lock(blockNumber)
+      chai.expect((await blocklock.cooldownEndAt()).toString()).to.equal('11')
+    })
+  })
+
+  describe('lockEndAt()', () => {
+    it('should return when the lock ends', async () => {
+      let blockNumber = 1
+      await blocklock.lock(blockNumber)
+      chai.expect((await blocklock.lockEndAt()).toString()).to.equal('4')
+    })
+  })
+
   describe('canLock()', () => {
     it('should be true if unlocked', async () => {
       let blockNumber = 1

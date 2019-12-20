@@ -83,6 +83,10 @@ library Blocklock {
     );
   }
 
+  function cooldownEndAt(State storage self) internal view returns (uint256) {
+    return lockEndAt(self) + self.cooldownDuration;
+  }
+
   function lockEndAt(State storage self) internal view returns (uint256) {
     uint256 endAt = self.lockedAt + self.lockDuration;
     // if we unlocked early
