@@ -52,7 +52,7 @@ module.exports = {
       ),
       skipDryRun: true,
       network_id: 1,
-      // gas: 1000000,
+      gas: 5000000
       // gasPrice: 11.101 * 1000000000
     },
 
