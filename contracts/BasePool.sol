@@ -945,6 +945,18 @@ contract BasePool is Initializable, ReentrancyGuard {
     return blocklock.isLocked(block.number);
   }
 
+  function lockEndAt() public view returns (uint256) {
+    return blocklock.lockEndAt();
+  }
+
+  function cooldownEndAt() public view returns (uint256) {
+    return blocklock.cooldownEndAt();
+  }
+
+  function canLock() public view returns (bool) {
+    return blocklock.canLock(block.number);
+  }
+
   function lockDuration() public view returns (uint256) {
     return blocklock.lockDuration;
   }

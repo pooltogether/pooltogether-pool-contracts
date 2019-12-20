@@ -46,7 +46,7 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
 
   const feeFraction = ethers.utils.parseUnits('0.1', 'ether')
   const lockDuration = 40
-  const cooldownDuration = ozNetworkName === 'mainnet' ? 80 : 0
+  const cooldownDuration = ozNetworkName === 'mainnet' ? lockDuration : 0
 
   let skip20 = false
 

@@ -354,6 +354,30 @@ contract('BasePool', (accounts) => {
     })
   })
 
+  describe('lockEndAt()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPool(feeFraction, 12)
+    })
+
+    it('should return the lock end block', async () => {
+      await pool.lockTokens()
+      const blockNumber = await web3.eth.getBlockNumber()
+      assert.equal((await pool.lockEndAt()).toString(), '' + (blockNumber + 2))
+    })
+  })
+
+  describe('cooldownEndAt()', () => {
+    beforeEach(async () => {
+      pool = await poolContext.createPool(feeFraction, 12)
+    })
+
+    it('should return the cooldown end block', async () => {
+      await pool.lockTokens()
+      const blockNumber = await web3.eth.getBlockNumber()
+      assert.equal((await pool.cooldownEndAt()).toString(), '' + (blockNumber + 2 + 12))
+    })
+  })
+
   describe('cooldownDuration()', () => {
     beforeEach(async () => {
       pool = await poolContext.createPool(feeFraction, 12)

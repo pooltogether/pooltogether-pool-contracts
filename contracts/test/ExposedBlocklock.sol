@@ -38,4 +38,12 @@ contract ExposedBlocklock {
   function cooldownDuration() public view returns (uint256) {
     return state.cooldownDuration;
   }
+
+  function cooldownEndAt() public view returns (uint256) {
+    return state.cooldownEndAt();
+  }
+
+  function lockEndAt() public view returns (uint256) {
+    return state.lockEndAt();
+  }
 }
