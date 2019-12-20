@@ -33,10 +33,6 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
     scdMcdMigration = '0xc73e0383f3aff3215e6f04b0331d58cecf0ab849'
   }
 
-  runShell(`oz session ${ozOptions} --network ${ozNetworkName} --from ${process.env.ADMIN_ADDRESS} --expires 3600 --timeout 600`)
-
-  runShell(`oz push`)
-
   let {
     walletAtIndex,
     ethers
@@ -47,6 +43,10 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
   const feeFraction = ethers.utils.parseUnits('0.1', 'ether')
   const lockDuration = 40
   const cooldownDuration = ozNetworkName === 'mainnet' ? lockDuration : 0
+
+  runShell(`oz session ${ozOptions} --network ${ozNetworkName} --from ${process.env.ADMIN_ADDRESS} --expires 3600 --timeout 600`)
+
+  // runShell(`oz push --force`)
 
   let skip20 = false
 
@@ -63,7 +63,7 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
   }
 
   await migration.migrate(30, async () => {
-    runShell(`oz create PoolSaiToken ${ozOptions} --network ${ozNetworkName} --init init --args '"Pool Sai","poolSai",[],${context.contracts.PoolSai.address}'`)
+    runShell(`oz create PoolSaiToken ${ozOptions} --network ${ozNetworkName} --init init --args '"Pool Sai","plSai",[],${context.contracts.PoolSai.address}'`)
     context.reload()
   })
 
@@ -84,7 +84,7 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
   })
 
   await migration.migrate(55, async () => {
-    runShell(`oz create PoolDaiToken ${ozOptions} --network ${ozNetworkName} --init init --args '"Pool Dai","poolDai",[],${context.contracts.PoolDai.address}'`)
+    runShell(`oz create PoolDaiToken ${ozOptions} --network ${ozNetworkName} --init init --args '"Pool Dai","plDai",[],${context.contracts.PoolDai.address}'`)
     context.reload()
   })
 
