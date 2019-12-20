@@ -69,6 +69,7 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
 
   await migration.migrate(39, async () => {
     chai.expect(await context.contracts.PoolSai.isAdmin(ownerWallet.address)).to.be.true
+    throw new Error('THIS FAILED...?')
     await context.contracts.PoolSai.setPoolToken(context.contracts.PoolSaiToken.address)
   })
 
@@ -79,6 +80,7 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
 
   await migration.migrate(50, async () => {
     if (scdMcdMigration) {
+      throw new Error('THIS FAILED...?')
       await context.contracts.PoolDai.initMigration(scdMcdMigration, context.contracts.PoolSai.address)
     }
   })
@@ -90,6 +92,7 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
 
   await migration.migrate(56, async () => {
     console.log(chalk.yellow(`PoolDai#setPoolToken: ${context.contracts.PoolDaiToken.address}`))
+    throw new Error('THIS FAILED...?')
     await context.contracts.PoolDai.setPoolToken(context.contracts.PoolDaiToken.address)
     console.log(chalk.green(`PoolDai#setPoolToken`))
   })

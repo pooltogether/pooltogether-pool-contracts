@@ -419,11 +419,11 @@
       }
     },
     "PoolDaiToken": {
-      "address": "0xf50017a930b7A3c5631aE0E3245c6612d76fBf59",
-      "constructorCode": "608060405234801561001057600080fd5b50612878806100206000396000f3fe",
-      "bodyBytecodeHash": "b10f7fc2deca5d275fb710b66c195430b335e6debab337177779834272ca0609",
-      "localBytecodeHash": "ee36e30cf42dc48eb8ee2ecc2a8c366070f88191c016f6300cfdf1ee459b0916",
-      "deployedBytecodeHash": "ee36e30cf42dc48eb8ee2ecc2a8c366070f88191c016f6300cfdf1ee459b0916",
+      "address": "0x07F56574eE85a0CCB64D29dc1ddff2cA32778dbe",
+      "constructorCode": "608060405234801561001057600080fd5b50612be9806100206000396000f3fe",
+      "bodyBytecodeHash": "bc9b3703f7feeb68b31fdbfe8466db6b75ba305f35195a25c71481c8bd383a0a",
+      "localBytecodeHash": "7aaca0b98a84b71baa48c67c9af14c3096a425b2a9164363cc81b91caa90e7d3",
+      "deployedBytecodeHash": "7aaca0b98a84b71baa48c67c9af14c3096a425b2a9164363cc81b91caa90e7d3",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -560,6 +560,22 @@
           "astId": 6643,
           "type": "t_address",
           "src": "4182:23:21"
+        },
+        {
+          "contract": "RecipientWhitelistPoolToken",
+          "path": "contracts/RecipientWhitelistPoolToken.sol",
+          "label": "_recipientWhitelistEnabled",
+          "astId": 7657,
+          "type": "t_bool",
+          "src": "755:31:22"
+        },
+        {
+          "contract": "RecipientWhitelistPoolToken",
+          "path": "contracts/RecipientWhitelistPoolToken.sol",
+          "label": "_recipientWhitelist",
+          "astId": 7661,
+          "type": "t_mapping<t_bool>",
+          "src": "790:44:22"
         }
       ],
       "warnings": {
@@ -567,15 +583,42 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": [
+          {
+            "action": "append",
+            "updated": {
+              "index": 11,
+              "contract": "RecipientWhitelistPoolToken",
+              "path": "contracts/RecipientWhitelistPoolToken.sol",
+              "label": "_recipientWhitelistEnabled",
+              "astId": 7657,
+              "type": "t_bool",
+              "src": "755:31:22"
+            }
+          },
+          {
+            "action": "append",
+            "updated": {
+              "index": 12,
+              "contract": "RecipientWhitelistPoolToken",
+              "path": "contracts/RecipientWhitelistPoolToken.sol",
+              "label": "_recipientWhitelist",
+              "astId": 7661,
+              "type": "t_mapping<t_bool>",
+              "src": "790:44:22"
+            }
+          }
+        ]
       }
     },
     "PoolSaiToken": {
-      "address": "0x8e6Cc8Aa23B21689D98BFA99cE3D287a2e6f1898",
-      "constructorCode": "608060405234801561001057600080fd5b50612878806100206000396000f3fe",
-      "bodyBytecodeHash": "b10f7fc2deca5d275fb710b66c195430b335e6debab337177779834272ca0609",
-      "localBytecodeHash": "ee36e30cf42dc48eb8ee2ecc2a8c366070f88191c016f6300cfdf1ee459b0916",
-      "deployedBytecodeHash": "ee36e30cf42dc48eb8ee2ecc2a8c366070f88191c016f6300cfdf1ee459b0916",
+      "address": "0xB2E6e3D9Af235434385c28Bd31d98041A48226a6",
+      "constructorCode": "608060405234801561001057600080fd5b50612be9806100206000396000f3fe",
+      "bodyBytecodeHash": "bc9b3703f7feeb68b31fdbfe8466db6b75ba305f35195a25c71481c8bd383a0a",
+      "localBytecodeHash": "7aaca0b98a84b71baa48c67c9af14c3096a425b2a9164363cc81b91caa90e7d3",
+      "deployedBytecodeHash": "7aaca0b98a84b71baa48c67c9af14c3096a425b2a9164363cc81b91caa90e7d3",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -712,6 +755,22 @@
           "astId": 6643,
           "type": "t_address",
           "src": "4182:23:21"
+        },
+        {
+          "contract": "RecipientWhitelistPoolToken",
+          "path": "contracts/RecipientWhitelistPoolToken.sol",
+          "label": "_recipientWhitelistEnabled",
+          "astId": 7657,
+          "type": "t_bool",
+          "src": "755:31:22"
+        },
+        {
+          "contract": "RecipientWhitelistPoolToken",
+          "path": "contracts/RecipientWhitelistPoolToken.sol",
+          "label": "_recipientWhitelist",
+          "astId": 7661,
+          "type": "t_mapping<t_bool>",
+          "src": "790:44:22"
         }
       ],
       "warnings": {
@@ -719,7 +778,34 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": [
+          {
+            "action": "append",
+            "updated": {
+              "index": 11,
+              "contract": "RecipientWhitelistPoolToken",
+              "path": "contracts/RecipientWhitelistPoolToken.sol",
+              "label": "_recipientWhitelistEnabled",
+              "astId": 7657,
+              "type": "t_bool",
+              "src": "755:31:22"
+            }
+          },
+          {
+            "action": "append",
+            "updated": {
+              "index": 12,
+              "contract": "RecipientWhitelistPoolToken",
+              "path": "contracts/RecipientWhitelistPoolToken.sol",
+              "label": "_recipientWhitelist",
+              "astId": 7661,
+              "type": "t_mapping<t_bool>",
+              "src": "790:44:22"
+            }
+          }
+        ]
       }
     },
     "PoolDai": {
@@ -1178,7 +1264,7 @@
       {
         "address": "0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84",
         "version": "0.2",
-        "implementation": "0xaf1610D242c7CdD30c546844aF75c147C12e94F9",
+        "implementation": "0xbD930a33Ee079f5f27D646E4B110B389aa6810c3",
         "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
         "kind": "Upgradeable"
       }
@@ -1187,7 +1273,7 @@
       {
         "address": "0xfE6892654CBB05eB73d28DCc1Ff938f59666Fe9f",
         "version": "0.2",
-        "implementation": "0x8e6Cc8Aa23B21689D98BFA99cE3D287a2e6f1898",
+        "implementation": "0xB2E6e3D9Af235434385c28Bd31d98041A48226a6",
         "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
         "kind": "Upgradeable"
       }
@@ -1205,7 +1291,7 @@
       {
         "address": "0x49d716DFe60b37379010A75329ae09428f17118d",
         "version": "0.2",
-        "implementation": "0xf50017a930b7A3c5631aE0E3245c6612d76fBf59",
+        "implementation": "0x07F56574eE85a0CCB64D29dc1ddff2cA32778dbe",
         "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
         "kind": "Upgradeable"
       }
