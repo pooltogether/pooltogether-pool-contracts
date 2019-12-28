@@ -357,7 +357,14 @@ library DrawManager {
      * @return The selected address
      */
     function drawWithEntropy(State storage self, bytes32 _entropy) public view returns (address) {
-        return draw(self, UniformRandomNumber.uniform(uint256(_entropy), committedSupply(self)));
+        uint256 bound = committedSupply(self);
+        address selected;
+        if (bound == 0) {
+            selected = address(0);
+        } else {
+            selected = draw(self, UniformRandomNumber.uniform(uint256(_entropy), bound));
+        }
+        return selected;
     }
 
     modifier requireOpenDraw(State storage self) {
