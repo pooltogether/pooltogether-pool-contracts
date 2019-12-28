@@ -53,6 +53,10 @@ contract CErc20Mock is Initializable, ICErc20 {
     ownerTokenAmounts[account] = (ownerTokenAmounts[account] * 120) / 100;
   }
 
+  function rewardCustom(address account, uint256 amount) external {
+    ownerTokenAmounts[account] = ownerTokenAmounts[account] + amount;
+  }
+
   function balanceOfUnderlying(address account) external returns (uint) {
     return ownerTokenAmounts[account];
   }

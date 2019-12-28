@@ -392,7 +392,7 @@ contract BasePool is Initializable, ReentrancyGuard {
 
     // Calculate the gross winnings
     uint256 underlyingBalance = balance();
-    uint256 grossWinnings = underlyingBalance.sub(accountedBalance);
+    uint256 grossWinnings = capWinnings(underlyingBalance.sub(accountedBalance));
 
     // Calculate the beneficiary fee
     uint256 fee = calculateFee(draw.feeFraction, grossWinnings);
@@ -461,12 +461,25 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
+   * @notice Ensures that the winnings don't overflow.  Note that we can make this integer max, because the fee
+   * is always less than zero (meaning the FixidityLib.multiply will always make the number smaller)
+   */
+  function capWinnings(uint256 _grossWinnings) internal pure returns (uint256) {
+    uint256 max = uint256(FixidityLib.maxNewFixed());
+    if (_grossWinnings > max) {
+      return max;
+    }
+    return _grossWinnings;
+  }
+
+  /**
    * @notice Calculate the beneficiary fee using the passed fee fraction and gross winnings.
    * @param _feeFraction The fee fraction, between 0 and 1, represented as a 18 point fixed number.
    * @param _grossWinnings The gross winnings to take a fraction of.
    */
   function calculateFee(uint256 _feeFraction, uint256 _grossWinnings) internal pure returns (uint256) {
     int256 grossWinningsFixed = FixidityLib.newFixed(int256(_grossWinnings));
+    // _feeFraction *must* be less than 1 ether, so it will never overflow
     int256 feeFixed = FixidityLib.multiply(grossWinningsFixed, FixidityLib.newFixed(int256(_feeFraction), uint8(18)));
     return uint256(FixidityLib.fromFixed(feeFixed));
   }
