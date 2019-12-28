@@ -228,29 +228,29 @@ contract BasePool is Initializable, ReentrancyGuard {
   /**
    * The total deposits and winnings for each user.
    */
-  mapping (address => uint256) balances;
+  mapping (address => uint256) internal balances;
 
   /**
    * A mapping of draw ids to Draw structures
    */
-  mapping(uint256 => Draw) draws;
+  mapping(uint256 => Draw) internal draws;
 
   /**
    * A structure that is used to manage the user's odds of winning.
    */
-  DrawManager.State drawState;
+  DrawManager.State internal drawState;
 
   /**
    * A structure containing the administrators
    */
-  Roles.Role admins;
+  Roles.Role internal admins;
 
   /**
    * Whether the contract is paused
    */
   bool public paused;
 
-  Blocklock.State blocklock;
+  Blocklock.State internal blocklock;
 
   PoolToken public poolToken;
 

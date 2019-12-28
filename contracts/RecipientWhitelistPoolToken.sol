@@ -21,8 +21,8 @@ pragma solidity 0.5.12;
 import "./PoolToken.sol";
 
 contract RecipientWhitelistPoolToken is PoolToken {
-  bool _recipientWhitelistEnabled;
-  mapping(address => bool) _recipientWhitelist;
+  bool internal _recipientWhitelistEnabled;
+  mapping(address => bool) internal _recipientWhitelist;
 
   function recipientWhitelistEnabled() public view returns (bool) {
     return _recipientWhitelistEnabled;
