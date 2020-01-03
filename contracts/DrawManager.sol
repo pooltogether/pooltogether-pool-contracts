@@ -54,14 +54,14 @@ library DrawManager {
         SortitionSumTreeFactory.SortitionSumTrees sortitionSumTrees;
 
         /**
-         * Stores the first Draw index that an address deposited to.
+         * Stores the consolidated draw index that an address deposited to.
          */
-        mapping(address => uint256) usersFirstDrawIndex;
+        mapping(address => uint256) consolidatedDrawIndices;
 
         /**
          * Stores the last Draw index that an address deposited to.
          */
-        mapping(address => uint256) usersSecondDrawIndex;
+        mapping(address => uint256) latestDrawIndices;
 
         /**
          * Stores a mapping of Draw index => Draw total
@@ -117,26 +117,26 @@ library DrawManager {
         currentAmount = currentAmount.add(_amount);
         drawSet(self, openDrawIndex, currentAmount, _addr);
 
-        uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
-        uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
+        uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
+        uint256 latestDrawIndex = self.latestDrawIndices[_addr];
 
         // if this is the users first draw, set it
-        if (firstDrawIndex == 0) {
-            self.usersFirstDrawIndex[_addr] = openDrawIndex;
-        // otherwise, if the first draw is not this draw
-        } else if (firstDrawIndex != openDrawIndex) {
+        if (consolidatedDrawIndex == 0) {
+            self.consolidatedDrawIndices[_addr] = openDrawIndex;
+        // otherwise, if the consolidated draw is not this draw
+        } else if (consolidatedDrawIndex != openDrawIndex) {
             // if a second draw does not exist
-            if (secondDrawIndex == 0) {
+            if (latestDrawIndex == 0) {
                 // set the second draw to the current draw
-                self.usersSecondDrawIndex[_addr] = openDrawIndex;
+                self.latestDrawIndices[_addr] = openDrawIndex;
             // otherwise if a second draw exists but is not the current one
-            } else if (secondDrawIndex != openDrawIndex) {
+            } else if (latestDrawIndex != openDrawIndex) {
                 // merge it into the first draw, and update the second draw index to this one
-                uint256 firstAmount = self.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
-                uint256 secondAmount = self.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
-                drawSet(self, firstDrawIndex, firstAmount.add(secondAmount), _addr);
-                drawSet(self, secondDrawIndex, 0, _addr);
-                self.usersSecondDrawIndex[_addr] = openDrawIndex;
+                uint256 consolidatedAmount = self.sortitionSumTrees.stakeOf(bytes32(consolidatedDrawIndex), userId);
+                uint256 latestAmount = self.sortitionSumTrees.stakeOf(bytes32(latestDrawIndex), userId);
+                drawSet(self, consolidatedDrawIndex, consolidatedAmount.add(latestAmount), _addr);
+                drawSet(self, latestDrawIndex, 0, _addr);
+                self.latestDrawIndices[_addr] = openDrawIndex;
             }
         }
     }
@@ -149,16 +149,16 @@ library DrawManager {
      */
     function depositCommitted(State storage self, address _addr, uint256 _amount) public requireCommittedDraw(self) onlyNonZero(_addr) {
         bytes32 userId = bytes32(uint256(_addr));
-        uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
+        uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
 
         // if they have a committed balance
-        if (firstDrawIndex != 0 && firstDrawIndex != self.openDrawIndex) {
-            uint256 firstAmount = self.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
-            drawSet(self, firstDrawIndex, firstAmount.add(_amount), _addr);
+        if (consolidatedDrawIndex != 0 && consolidatedDrawIndex != self.openDrawIndex) {
+            uint256 consolidatedAmount = self.sortitionSumTrees.stakeOf(bytes32(consolidatedDrawIndex), userId);
+            drawSet(self, consolidatedDrawIndex, consolidatedAmount.add(_amount), _addr);
         } else { // they must not have any committed balance
-            self.usersSecondDrawIndex[_addr] = firstDrawIndex;
-            self.usersFirstDrawIndex[_addr] = self.openDrawIndex.sub(1);
-            drawSet(self, self.usersFirstDrawIndex[_addr], _amount, _addr);
+            self.latestDrawIndices[_addr] = consolidatedDrawIndex;
+            self.consolidatedDrawIndices[_addr] = self.openDrawIndex.sub(1);
+            drawSet(self, self.consolidatedDrawIndices[_addr], _amount, _addr);
         }
     }
 
@@ -168,17 +168,17 @@ library DrawManager {
      * @param _addr The address whose balance to withdraw
      */
     function withdraw(State storage self, address _addr) public requireOpenDraw(self) onlyNonZero(_addr) {
-        uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
-        uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
+        uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
+        uint256 latestDrawIndex = self.latestDrawIndices[_addr];
 
-        if (firstDrawIndex != 0) {
-            drawSet(self, firstDrawIndex, 0, _addr);
-            delete self.usersFirstDrawIndex[_addr];
+        if (consolidatedDrawIndex != 0) {
+            drawSet(self, consolidatedDrawIndex, 0, _addr);
+            delete self.consolidatedDrawIndices[_addr];
         }
 
-        if (secondDrawIndex != 0) {
-            drawSet(self, secondDrawIndex, 0, _addr);
-            delete self.usersSecondDrawIndex[_addr];
+        if (latestDrawIndex != 0) {
+            drawSet(self, latestDrawIndex, 0, _addr);
+            delete self.latestDrawIndices[_addr];
         }
     }
 
@@ -201,21 +201,21 @@ library DrawManager {
      */
     function withdrawCommitted(State storage self, address _addr, uint256 _amount) public requireCommittedDraw(self) onlyNonZero(_addr) {
         bytes32 userId = bytes32(uint256(_addr));
-        uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
-        uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
+        uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
+        uint256 latestDrawIndex = self.latestDrawIndices[_addr];
 
-        uint256 firstAmount = 0;
-        uint256 secondAmount = 0;
+        uint256 consolidatedAmount = 0;
+        uint256 latestAmount = 0;
         uint256 total = 0;
 
-        if (secondDrawIndex != 0 && secondDrawIndex != self.openDrawIndex) {
-            secondAmount = self.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
-            total = total.add(secondAmount);
+        if (latestDrawIndex != 0 && latestDrawIndex != self.openDrawIndex) {
+            latestAmount = self.sortitionSumTrees.stakeOf(bytes32(latestDrawIndex), userId);
+            total = total.add(latestAmount);
         }
 
-        if (firstDrawIndex != 0 && firstDrawIndex != self.openDrawIndex) {
-            firstAmount = self.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
-            total = total.add(firstAmount);
+        if (consolidatedDrawIndex != 0 && consolidatedDrawIndex != self.openDrawIndex) {
+            consolidatedAmount = self.sortitionSumTrees.stakeOf(bytes32(consolidatedDrawIndex), userId);
+            total = total.add(consolidatedAmount);
         }
 
         require(_amount <= total, "cannot withdraw more than available");
@@ -223,20 +223,20 @@ library DrawManager {
         uint256 remaining = total.sub(_amount);
 
         // if there was a second amount that needs to be updated
-        if (remaining > firstAmount) {
-            uint256 secondRemaining = remaining.sub(firstAmount);
-            drawSet(self, secondDrawIndex, secondRemaining, _addr);
-        } else if (secondAmount > 0) { // else delete the second amount if it exists
-            delete self.usersSecondDrawIndex[_addr];
-            drawSet(self, secondDrawIndex, 0, _addr);
+        if (remaining > consolidatedAmount) {
+            uint256 secondRemaining = remaining.sub(consolidatedAmount);
+            drawSet(self, latestDrawIndex, secondRemaining, _addr);
+        } else if (latestAmount > 0) { // else delete the second amount if it exists
+            delete self.latestDrawIndices[_addr];
+            drawSet(self, latestDrawIndex, 0, _addr);
         }
 
-        // if the first amount needs to be destroyed
+        // if the consolidated amount needs to be destroyed
         if (remaining == 0) {
-            delete self.usersFirstDrawIndex[_addr];
-            drawSet(self, firstDrawIndex, 0, _addr);
-        } else if (remaining < firstAmount) {
-            drawSet(self, firstDrawIndex, remaining, _addr);
+            delete self.consolidatedDrawIndices[_addr];
+            drawSet(self, consolidatedDrawIndex, 0, _addr);
+        } else if (remaining < consolidatedAmount) {
+            drawSet(self, consolidatedDrawIndex, remaining, _addr);
         }
     }
 
@@ -256,15 +256,15 @@ library DrawManager {
     function committedBalanceOf(State storage self, address _addr) public view returns (uint256) {
         uint256 balance = 0;
 
-        uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
-        uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
+        uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
+        uint256 latestDrawIndex = self.latestDrawIndices[_addr];
 
-        if (firstDrawIndex != 0 && firstDrawIndex != self.openDrawIndex) {
-            balance = self.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), bytes32(uint256(_addr)));
+        if (consolidatedDrawIndex != 0 && consolidatedDrawIndex != self.openDrawIndex) {
+            balance = self.sortitionSumTrees.stakeOf(bytes32(consolidatedDrawIndex), bytes32(uint256(_addr)));
         }
 
-        if (secondDrawIndex != 0 && secondDrawIndex != self.openDrawIndex) {
-            balance = balance.add(self.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), bytes32(uint256(_addr))));
+        if (latestDrawIndex != 0 && latestDrawIndex != self.openDrawIndex) {
+            balance = balance.add(self.sortitionSumTrees.stakeOf(bytes32(latestDrawIndex), bytes32(uint256(_addr))));
         }
 
         return balance;
