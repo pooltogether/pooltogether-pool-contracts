@@ -260,7 +260,7 @@ library DrawManager {
         uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
 
         if (firstDrawIndex != 0 && firstDrawIndex != self.openDrawIndex) {
-            balance = balance.add(self.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), bytes32(uint256(_addr))));
+            balance = self.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), bytes32(uint256(_addr)));
         }
 
         if (secondDrawIndex != 0 && secondDrawIndex != self.openDrawIndex) {
