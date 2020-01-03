@@ -562,7 +562,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @notice Withdraw the sender's entire balance back to them.
    */
   function withdraw() public nonReentrant notLocked {
-    uint balance = balances[msg.sender];
+    uint256 balance = balances[msg.sender];
     // Update their chances of winning
     drawState.withdraw(msg.sender);
     _withdraw(msg.sender, balance);
@@ -670,7 +670,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @notice Transfers tokens from the cToken contract to the sender.  Updates the accounted balance.
    */
   function _withdraw(address _sender, uint256 _amount) internal {
-    uint balance = balances[_sender];
+    uint256 balance = balances[_sender];
 
     require(_amount <= balance, "not enough funds");
 
