@@ -314,7 +314,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * @notice Commits the current draw.
+   * @notice Emits the Committed event for the current open draw.
    */
   function emitCommitted() internal {
     uint256 drawId = currentOpenDrawId();
@@ -357,6 +357,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * Fires the Rewarded event, the Committed event, and the Open event.
    * @param nextSecretHash The secret hash to use to open a new Draw
    * @param lastSecret The secret to reveal to reward the current committed Draw.
+   * @param _salt The salt that was used to conceal the secret
    */
   function rewardAndOpenNextDraw(bytes32 nextSecretHash, bytes32 lastSecret, bytes32 _salt) public onlyAdmin {
     reward(lastSecret, _salt);
@@ -372,6 +373,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * The accounted balance is updated to include the fee and, if there was a winner, the net winnings.
    * Fires the Rewarded event.
    * @param _secret The secret to reveal for the current committed Draw
+   * @param _salt The salt that was used to conceal the secret
    */
   function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin onlyLocked requireCommittedNoReward nonReentrant {
     blocklock.unlock(block.number);
@@ -521,6 +523,11 @@ contract BasePool is Initializable, ReentrancyGuard {
     _depositPoolFrom(msg.sender, _amount);
   }
 
+  /**
+   * @notice Deposits sponsorship for a user
+   * @param _spender The user who is sponsoring
+   * @param _amount The amount they are sponsoring
+   */
   function _depositSponsorshipFrom(address _spender, uint256 _amount) internal {
     // Deposit the funds
     _depositFrom(_spender, _amount);
@@ -528,6 +535,11 @@ contract BasePool is Initializable, ReentrancyGuard {
     emit SponsorshipDeposited(_spender, _amount);
   }
 
+  /**
+   * @notice Deposits into the pool for a user.  The deposit will be open until the next draw is committed.
+   * @param _spender The user who is depositing
+   * @param _amount The amount the user is depositing
+   */
   function _depositPoolFrom(address _spender, uint256 _amount) internal {
     // Update the user's eligibility
     drawState.deposit(_spender, _amount);
@@ -537,6 +549,11 @@ contract BasePool is Initializable, ReentrancyGuard {
     emit Deposited(_spender, _amount);
   }
 
+  /**
+   * @notice Deposits into the pool for a user.  The deposit is made part of the currently committed draw
+   * @param _spender The user who is depositing
+   * @param _amount The amount to deposit
+   */
   function _depositPoolFromCommitted(address _spender, uint256 _amount) internal notLocked {
     // Update the user's eligibility
     drawState.depositCommitted(_spender, _amount);
@@ -546,6 +563,11 @@ contract BasePool is Initializable, ReentrancyGuard {
     emit DepositedAndCommitted(_spender, _amount);
   }
 
+  /**
+   * @notice Deposits into the pool for a user.  Updates their balance and transfers their tokens into this contract.
+   * @param _spender The user who is depositing
+   * @param _amount The amount they are depositing
+   */
   function _depositFrom(address _spender, uint256 _amount) internal {
     // Update the user's balance
     balances[_spender] = balances[_spender].add(_amount);
@@ -682,7 +704,7 @@ contract BasePool is Initializable, ReentrancyGuard {
 
     // Withdraw from Compound and transfer
     require(cToken.redeemUnderlying(_amount) == 0, "could not redeem from compound");
-    require(token().transfer(_sender, _amount), "could not transfer winnings");
+    require(token().transfer(_sender, _amount), "could not transfer tokens");
   }
 
   /**
@@ -722,6 +744,10 @@ contract BasePool is Initializable, ReentrancyGuard {
    *  feeBeneficiary: the beneficiary of the fee
    *  openedBlock: The block at which the draw was opened
    *  secretHash: The hash of the secret committed to this draw.
+   *  entropy: the entropy used to select the winner
+   *  winner: the address of the winner
+   *  netWinnings: the total winnings less the fee
+   *  fee: the fee taken by the beneficiary
    */
   function getDraw(uint256 _drawId) public view returns (
     uint256 feeFraction,
@@ -772,7 +798,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * @notice Returns a user's total balance, including both committed Draw balance and open Draw balance.
+   * @notice Returns a user's committed balance.  This is the balance of their Pool tokens.
    * @param _addr The address of the user to check.
    * @return The users's current balance.
    */
@@ -849,6 +875,10 @@ contract BasePool is Initializable, ReentrancyGuard {
     _setNextFeeBeneficiary(_feeBeneficiary);
   }
 
+  /**
+   * @notice Sets the fee beneficiary for subsequent Draws.
+   * @param _feeBeneficiary The beneficiary for the fee fraction.  Cannot be the 0 address.
+   */
   function _setNextFeeBeneficiary(address _feeBeneficiary) internal {
     require(_feeBeneficiary != address(0), "beneficiary should not be 0x0");
     nextFeeBeneficiary = _feeBeneficiary;
@@ -875,6 +905,11 @@ contract BasePool is Initializable, ReentrancyGuard {
     return admins.has(_admin);
   }
 
+  /**
+   * @notice Checks whether a given address is an administrator.
+   * @param _admin The address to check
+   * @return True if the address is an admin, false otherwise.
+   */
   function _addAdmin(address _admin) internal {
     admins.add(_admin);
 
@@ -895,6 +930,9 @@ contract BasePool is Initializable, ReentrancyGuard {
     emit AdminRemoved(_admin);
   }
 
+  /**
+   * Requires that there is a committed draw that has not been rewarded.
+   */
   modifier requireCommittedNoReward() {
     require(currentCommittedDrawId() > 0, "must be a committed draw");
     require(!currentCommittedDrawHasBeenRewarded(), "the committed draw has already been rewarded");
@@ -945,7 +983,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * Unpauses all deposits into the contract
+   * @notice Unpauses all deposits into the contract
    *
    * emits DepositsUnpaused
    */
@@ -955,53 +993,92 @@ contract BasePool is Initializable, ReentrancyGuard {
     emit DepositsUnpaused(msg.sender);
   }
 
+  /**
+   * @notice Check if the contract is locked.
+   * @return True if the contract is locked, false otherwise
+   */
   function isLocked() public view returns (bool) {
     return blocklock.isLocked(block.number);
   }
 
+  /**
+   * @notice Returns the lock duration.  This is the maximum time that the lock will last.
+   * @return The lock duration in blocks
+   */
   function lockDuration() public view returns (uint256) {
     return blocklock.lockDuration;
   }
 
+  /**
+   * @notice Returns the cooldown duration.  The cooldown period starts after the Pool has been unlocked.  
+   * The Pool cannot be locked during the cooldown period.
+   * @return The cooldown duration in blocks
+   */
   function cooldownDuration() public view returns (uint256) {
     return blocklock.cooldownDuration;
   }
 
+  /**
+   * @notice requires the pool not to be locked
+   */
   modifier notLocked() {
     require(!blocklock.isLocked(block.number), "Pool/locked");
     _;
   }
 
+  /**
+   * @notice requires the pool to be locked
+   */
   modifier onlyLocked() {
     require(blocklock.isLocked(block.number), "Pool/unlocked");
     _;
   }
 
+  /**
+   * @notice requires the caller to be an admin
+   */
   modifier onlyAdmin() {
     require(admins.has(msg.sender), "must be an admin");
     _;
   }
 
+  /**
+   * @notice Requires an open draw to exist
+   */
   modifier requireOpenDraw() {
     require(currentOpenDrawId() != 0, "there is no open draw");
     _;
   }
 
+  /**
+   * @notice Requires deposits to be paused
+   */
   modifier whenDepositsPaused() {
     require(paused, "Pool/d-not-paused");
     _;
   }
 
+  /**
+   * @notice Requires deposits not to be paused
+   */
   modifier unlessDepositsPaused() {
     require(!paused, "Pool/d-paused");
     _;
   }
 
+  /**
+   * @notice Requires the caller to be the pool token
+   */
   modifier onlyToken() {
     require(msg.sender == address(poolToken), "Pool/only-token");
     _;
   }
 
+  /**
+   * @notice requires the passed users committed balance to be greater than or equal to the passed amount
+   * @param _from The user whose committed balance should be checked
+   * @param _amount The minimum amount they must have
+   */
   modifier onlyCommittedBalanceGteq(address _from, uint256 _amount) {
     uint256 committedBalance = drawState.committedBalanceOf(_from);
     require(_amount <= committedBalance, "not enough funds");
