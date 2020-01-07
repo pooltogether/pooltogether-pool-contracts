@@ -999,18 +999,34 @@ contract BasePool is Initializable, ReentrancyGuard {
     return blocklock.isLocked(block.number);
   }
 
+  /**
+   * @notice Returns the block number at which the lock expires
+   * @return The block number at which the lock expires
+   */
   function lockEndAt() public view returns (uint256) {
     return blocklock.lockEndAt();
   }
 
+  /**
+   * @notice Check cooldown end block
+   * @return The block number at which the cooldown ends and the contract can be re-locked
+   */
   function cooldownEndAt() public view returns (uint256) {
     return blocklock.cooldownEndAt();
   }
 
+  /**
+   * @notice Returns whether the contract can be locked
+   * @return True if the contract can be locked, false otherwise
+   */
   function canLock() public view returns (bool) {
     return blocklock.canLock(block.number);
   }
 
+  /**
+   * @notice Duration of the lock
+   * @return Returns the duration of the lock in blocks.
+   */
   function lockDuration() public view returns (uint256) {
     return blocklock.lockDuration;
   }
