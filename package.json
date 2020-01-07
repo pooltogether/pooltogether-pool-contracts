@@ -35,25 +35,10 @@
   },
   "dependencies": {
     "@kleros/kleros": "DeltaCamp/kleros#ca7fbdcc195cfd1267efb99aae905c3400a5ea5f",
-    "@openzeppelin/cli": "2.6.0",
     "@openzeppelin/contracts-ethereum-package": "2.4.0",
-    "@openzeppelin/upgrades": "2.5.1",
-    "apollo-fetch": "^0.7.0",
-    "chalk": "2.4.2",
-    "eth-gas-reporter": "0.2.0",
-    "ethers": "^4.0.40",
-    "fixidity": "DeltaCamp/Fixidity#edf533f77df43b16a7b92f17af7a8930db01f293",
-    "ganache-cli": "6.7.0",
-    "mocha-junit-reporter": "1.23.1",
-    "oz-console": "1.1.2",
-    "oz-migrate": "^0.2.2",
     "scd-mcd-migration": "pooltogether/scd-mcd-migration",
-    "shelljs": "0.8.3",
-    "truffle": "5.0.42",
-    "truffle-deploy-registry": "0.5.0",
-    "truffle-extract": "pooltogether/truffle-extract#2a57b6e63a8a2057aad0fec63ba255cd46e9ff1d",
-    "truffle-hdwallet-provider": "1.0.0-web3one.5",
-    "zos-truffle-merge": "0.0.3"
+    "@openzeppelin/upgrades": "2.5.1",
+    "fixidity": "DeltaCamp/Fixidity#edf533f77df43b16a7b92f17af7a8930db01f293"
   },
   "devDependencies": {
     "@0x/sol-trace": "^3.0.0",
@@ -61,6 +46,21 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "solc": "0.5.12",
-    "solidity-coverage": "0.7.0-beta.2"
+    "solidity-coverage": "0.7.0-beta.2",
+    "@openzeppelin/cli": "2.6.0",
+    "apollo-fetch": "^0.7.0",
+    "chalk": "2.4.2",
+    "eth-gas-reporter": "0.2.0",
+    "ethers": "^4.0.40",
+    "ganache-cli": "6.7.0",
+    "mocha-junit-reporter": "1.23.1",
+    "oz-console": "1.1.2",
+    "oz-migrate": "^0.2.2",
+    "shelljs": "0.8.3",
+    "truffle": "5.0.42",
+    "truffle-deploy-registry": "0.5.0",
+    "truffle-extract": "pooltogether/truffle-extract#2a57b6e63a8a2057aad0fec63ba255cd46e9ff1d",
+    "truffle-hdwallet-provider": "1.0.0-web3one.5",
+    "zos-truffle-merge": "0.0.3"
   }
 }
