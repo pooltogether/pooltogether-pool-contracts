@@ -37,10 +37,8 @@ contract('Blocklock', (accounts) => {
       expect(await blocklock.cooldownDuration(), 10)
     })
 
-    it('should accept zero', async () => {
-      await blocklock.setCooldownDuration(10)
-      await blocklock.setCooldownDuration(0)
-      expect(await blocklock.cooldownDuration(), 0)
+    it('should not accept zero', async () => {
+      await chai.assert.isRejected(blocklock.setCooldownDuration(0), /Blocklock\/cool-min/)
     })
   })
 

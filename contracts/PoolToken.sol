@@ -27,7 +27,6 @@ import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Sender.sol";
 import "@openzeppelin/contracts/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts/contracts/utils/Address.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @dev Implementation of the {IERC777} interface.

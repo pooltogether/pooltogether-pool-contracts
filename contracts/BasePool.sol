@@ -57,8 +57,6 @@ contract BasePool is Initializable, ReentrancyGuard {
   using Blocklock for Blocklock.State;
 
   bytes32 internal constant ROLLED_OVER_ENTROPY_MAGIC_NUMBER = bytes32(uint256(1));
-  uint256 internal constant DEFAULT_LOCK_DURATION = 40;
-  uint256 internal constant DEFAULT_COOLDOWN_DURATION = 80;
 
   /**
    * Emitted when a user deposits into the Pool.
