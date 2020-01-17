@@ -3,8 +3,10 @@
   "contracts": {
     "PoolSaiToken": "RecipientWhitelistPoolToken",
     "PoolDaiToken": "RecipientWhitelistPoolToken",
+    "PoolUsdcToken": "RecipientWhitelistPoolToken",
     "PoolSai": "MCDAwarePool",
-    "PoolDai": "MCDAwarePool"
+    "PoolDai": "MCDAwarePool",
+    "PoolUsdc": "MCDAwarePool"
   },
   "dependencies": {},
   "name": "pooltogether",
