@@ -1251,15 +1251,6 @@
     }
   },
   "proxies": {
-    "pooltogether/Migrations": [
-      {
-        "address": "0xF6e245adb2d4758fC180dAB8B212316C8fBA3c02",
-        "version": "0.2",
-        "implementation": "0x0827E097D8ff6778b7f660EaF5b8d8022B4bdBFA",
-        "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
-        "kind": "Upgradeable"
-      }
-    ],
     "pooltogether/PoolSai": [
       {
         "address": "0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84",

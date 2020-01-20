@@ -6,23 +6,12 @@ const expect = chai.expect
 
 const {
   MULTISIG_ADMIN1
-} = require('./constants')
-
-const overrides = {
-  gasLimit: 6000000
-}
+} = require('./helpers/constants')
 
 function generateSecret(poolSeed, drawId) {
   return ethers.utils.solidityKeccak256(
     ['bytes32', 'uint256'],
     [poolSeed, drawId]
-  )
-}
-
-function generateSecretHash(secret, salt) {
-  return ethers.utils.solidityKeccak256(
-    ['bytes32', 'bytes32'],
-    [secret, salt]
   )
 }
 

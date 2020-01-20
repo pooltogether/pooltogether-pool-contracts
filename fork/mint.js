@@ -7,7 +7,7 @@ const {
   SAI_BUDDY,
   LITTLE_SAI_GUY,
   DAI_BUDDY
-} = require('./constants')
+} = require('./helpers/constants')
 
 async function mint(context, type) {
   console.log(chalk.yellow(`Starting ${type} mint...`))
@@ -33,7 +33,7 @@ async function mint(context, type) {
 
   const users = await fetchUsers(5)
   for (let i = 0; i < users.length; i++) {
-    const user = users[i].id
+    const user = users[i].address
     await exec(provider, token.transfer(user, ethers.utils.parseEther('100')))
     console.log(chalk.dim(`Transferred 100 ${type} to ${user}`))
   }

@@ -6,7 +6,7 @@ const { exec } = require('./exec')
 
 const {
   BINANCE_ADDRESS
-} = require('./constants')
+} = require('./helpers/constants')
 
 const overrides = {
   gasLimit: 2000000
@@ -38,7 +38,7 @@ async function withdrawAndDeposit (context, type, count = '5') {
 
   // Now ensure we can withdraw the top 5
   for (let i = 0; i < users.length; i++) {
-    let address = users[i].id
+    let address = users[i].address
     let signer = provider.getSigner(address)
     let signingPool = pool.connect(signer)
 

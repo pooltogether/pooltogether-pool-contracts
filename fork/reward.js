@@ -6,7 +6,7 @@ const expect = chai.expect
 
 const {
   MULTISIG_ADMIN1
-} = require('./constants')
+} = require('./helpers/constants')
 
 const overrides = {
   gasLimit: 6000000

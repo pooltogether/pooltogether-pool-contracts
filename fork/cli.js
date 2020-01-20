@@ -4,7 +4,7 @@ const chalk = require('chalk')
 const { showUsers } = require('./showUsers')
 const { startFork } = require('./startFork')
 const { pay } = require('./pay')
-const { upgradePool } = require('./upgradePool')
+const { upgradeV2x } = require('./upgradeV2x')
 const { upgrade } = require('./upgrade')
 const { pushContracts } = require('./pushContracts')
 const { withdrawAndDeposit } = require('./withdrawAndDeposit')
@@ -39,7 +39,7 @@ async function callContext() {
 
 program
   .command('start')
-  .description('Starts a local node that is forked from mainnet.  Available on http://localhost:8546')
+  .description('Starts a local node that is forked from mainnet.  Available on http://localhost:8546.  Copies .openzeppelin/mainnet.json to .openzeppelin/dev-999.json')
   .action(async () => {
     ranAction = true
     await startFork()
@@ -65,17 +65,16 @@ program
   })
 
 program
-  .command('upgrade-pool')
+  .command('upgrade-v2x')
   .description('Upgrades the Pool contract')
   .action(async () => {
     ranAction = true
-    await upgradePool(await callContext())
+    await upgradeV2x(await callContext())
   })
-
 
 program
   .command('upgrade')
-  .description('Executes a generic upgrade')
+  .description('Upgrade all contracts with the new deployed versions.  Should have pushed already.')
   .action(async () => {
     ranAction = true
     await upgrade(await callContext())

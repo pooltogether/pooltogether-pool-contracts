@@ -24,7 +24,7 @@ async function migrateSai (context, count = '1') {
   const users = await fetchUsers(count)
 
   for (let i = 0; i < count; i++) {
-    const user = users[i].id
+    const user = users[i].address
     const signer = provider.getSigner(user)
     const signingSai = contracts.PoolSaiToken.connect(signer)
     const balance = await signingSai.balanceOf(user)

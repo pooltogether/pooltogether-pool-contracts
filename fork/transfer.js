@@ -18,8 +18,8 @@ async function transfer(context) {
 
   const users = await fetchUsers()
 
-  const user1 = users[0].id
-  const user2 = users[1].id
+  const user1 = users[0].address
+  const user2 = users[1].address
 
   const poolSai = contracts.PoolSai.connect(provider.getSigner(user1))
 

@@ -4,10 +4,13 @@ var fetch = apolloFetch.createApolloFetch({ uri: process.env.GRAPHQL_MAINNET_END
 
 var playersWithBalanceQuery = `
   query allPlayers($first: Int!, $skip: Int!) {
-    players (first: $first, skip: $skip, where: { balance_gt: 0 }, orderBy: balance, orderDirection: desc) {
+    players (first: $first, skip: $skip, orderBy: consolidatedBalance, orderDirection: desc) {
       id
-      balance
-      sponsorshipBalance
+      address
+      consolidatedBalance
+      firstDepositDrawId
+      latestBalance
+      latestDrawId
     }
   }
 `

@@ -18,7 +18,7 @@ async function burn(context) {
 
   const users = await fetchUsers()
 
-  const user1 = users[0].id
+  const user1 = users[0].address
 
   const poolSai = contracts.PoolSai.connect(provider.getSigner(user1))
 

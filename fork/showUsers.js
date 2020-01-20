@@ -9,7 +9,7 @@ async function showUsers() {
 
   richest = users.map(user => ({
     balance: ethers.utils.formatEther(user.balance),
-    address: user.id
+    address: user.address
   }))
 
   console.log(richest)

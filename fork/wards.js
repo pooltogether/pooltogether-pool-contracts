@@ -7,7 +7,7 @@ const {
   SAI_JOIN,
   LITTLE_SAI_GUY,
   SCD_MCD_MIGRATION
-} = require('./constants')
+} = require('./helpers/constants')
 
 const overrides = {
   gasLimit: 6700000

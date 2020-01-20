@@ -12,9 +12,9 @@ const {
   MULTISIG_ADMIN2,
   POOL_PROXY_ADDRESS,
   OLD_POOL_IMPLEMENTATION
-} = require('./constants')
+} = require('./helpers/constants')
 
-async function upgradePool (context) {
+async function upgradeV2x (context) {
   console.log(chalk.yellow('Upgrading Pool to v2x...'))
   const {
     provider,
@@ -70,5 +70,5 @@ async function upgradePool (context) {
 }
 
 module.exports = {
-  upgradePool
+  upgradeV2x
 }

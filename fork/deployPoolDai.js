@@ -3,7 +3,7 @@ const { exec } = require('./exec')
 const {
   MULTISIG,
   MULTISIG_ADMIN1
-} = require('./constants')
+} = require('./helpers/helpers/constants')
 const chai = require('chai')
 const expect = chai.expect
 

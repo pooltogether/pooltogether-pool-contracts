@@ -117,34 +117,44 @@ The project includes a CLI tool to make working with forks much easier.  To see 
 $ yarn fork -h
 ```
 
-The only drawback to this tool is that it **changes the .openzeppelin/mainnet.json config**.  Make sure to `git checkout .openzeppelin/mainnet.json` so that you don't commit the forked changes.  This is a limitation of OpenZeppelin for the moment.
+The fork command will allow you to spin up a fork of mainnet and run transactions using unlocked accounts.  The first 10 largest accounts from the subgraph are automatically unlocked.
 
-To test the upgrade to v2.x follow these steps:
+## Upgrading All Proxies
 
-**1. Fix .envrc**
+To upgrade all proxies in the fork by doing a simple implementation address change (i.e. using `upgrade` vs `upgradeAndCall`) you can use the `yarn fork upgrade` command.  Just make sure to `yarn fork push` the new contracts first.
 
-Set the environment variables SECRET_SEED, SALT_SEED, LOCALHOST_URL, GANACHE_FORK_URL and then run `direnv allow`
+For example:
 
-**2. Start a fork of mainnet**
+```sh
+# starts the fork
+$ yarn fork start
+```
 
-`yarn fork start`
+```sh
+# Ensures the necessary accounts have Eth and tokens
+$ yarn fork pay
+```
 
-**3. Give some eth to the deployment admin**
+```sh
+# Pushes the latest contract implementations to the fork
+$ yarn fork push
+```
 
-`yarn fork pay`
+```sh
+# Upgrades the deployed proxies to their latest implementations
+$ yarn fork upgrade
+```
 
-**4. Push the latest contract to the fork**
+## Fork Actions
 
-`yarn fork push`
+There are a few pre-baked actions that can be performed to test the fork.
 
-**5. Upgrade the contracts to v2.x**
+```sh
+# For the top ten users, withdraw and then deposit back into the pool.
+$ yarn fork withdraw-deposit
+```
 
-`yarn fork upgrade-v2x`
-
-**6. Test withdrawals and deposits**
-
-`yarn fork withdraw-deposit`
-
-**7. Trigger the reward function**
-
-`yarn fork reward`
+```sh
+# Rewards the pool
+$ yarn fork reward
+```

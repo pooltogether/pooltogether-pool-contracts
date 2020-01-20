@@ -1,6 +1,6 @@
 const {
   BINANCE
-} = require('./constants')
+} = require('./helpers/constants')
 
 function traceProvider({ rpcUrl }) {
   const { TruffleArtifactAdapter } = require('@0x/sol-trace')

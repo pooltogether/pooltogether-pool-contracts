@@ -5,7 +5,7 @@ const chai = require('chai')
 const { runShell } = require('../fork/runShell')
 const {
   MULTISIG_ADMIN1
-} = require('../fork/constants')
+} = require('../fork/helpers/constants')
 
 async function migrate(context, ozNetworkName, ozOptions = '') {
   console.log(chalk.yellow('Starting migration...'))

@@ -21,7 +21,7 @@ async function poolBalances (context, type, count = '10') {
   }
 
   for (let i = 0; i < users.length; i++) {
-    const user = users[i].id
+    const user = users[i].address
     console.log(chalk.dim(`Checking balance for ${user}...`))
     const balance = await pool.balanceOf(user)
     console.log(chalk.dim(`${type} balance for ${user}: ${ethers.utils.formatEther(balance)}`))
