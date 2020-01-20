@@ -18,9 +18,10 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.5.12;
 
-import "./RecipientWhitelistERC777Pool.sol";
+import "./BasePool.sol";
 import "scd-mcd-migration/src/ScdMcdMigration.sol";
 import { GemLike } from "scd-mcd-migration/src/Interfaces.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 
 /**
  * @title MCDAwarePool
@@ -30,7 +31,15 @@ import { GemLike } from "scd-mcd-migration/src/Interfaces.sol";
  * and immediately deposits the new Dai as committed tickets for that user.  We are knowingly bypassing the committed period for
  * users to encourage them to migrate to the MCD Pool.
  */
-contract MCDAwarePool is RecipientWhitelistERC777Pool, IERC777Recipient {
+contract MCDAwarePool is BasePool, IERC777Recipient {
+  IERC1820Registry constant internal ERC1820_REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
+
+  // keccak256("ERC777TokensRecipient")
+  bytes32 constant internal TOKENS_RECIPIENT_INTERFACE_HASH =
+      0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
+
+  uint256 internal constant DEFAULT_LOCK_DURATION = 40;
+  uint256 internal constant DEFAULT_COOLDOWN_DURATION = 80;
 
   /**
    * @notice Returns the address of the ScdMcdMigration contract (see https://github.com/makerdao/developerguides/blob/master/mcd/upgrading-to-multi-collateral-dai/upgrading-to-multi-collateral-dai.md#direct-integration-with-smart-contracts)
@@ -48,51 +57,34 @@ contract MCDAwarePool is RecipientWhitelistERC777Pool, IERC777Recipient {
    * @param _cToken The Compound cToken to bind this Pool to
    * @param _feeFraction The fraction of the winnings to give to the beneficiary
    * @param _feeBeneficiary The beneficiary who receives the fee
-   * @param name The name of the Pool ticket tokens
-   * @param symbol The symbol (short name) of the Pool ticket tokens
-   * @param defaultOperators Addresses that should always be able to move tokens on behalf of others
    */
   function init (
     address _owner,
     address _cToken,
     uint256 _feeFraction,
     address _feeBeneficiary,
-    string memory name,
-    string memory symbol,
-    address[] memory defaultOperators
+    uint256 lockDuration,
+    uint256 cooldownDuration
   ) public initializer {
     super.init(
       _owner,
       _cToken,
       _feeFraction,
       _feeBeneficiary,
-      name,
-      symbol,
-      defaultOperators
+      lockDuration,
+      cooldownDuration
     );
     initMCDAwarePool();
   }
 
   /**
-   * @notice Used to initialze the BasePool contract after an upgrade.
-   * @param name Name of the token
-   * @param symbol Symbol of the token
-   * @param defaultOperators The initial set of operators for all users
-   */
-  function initBasePoolUpgrade(
-    string memory name,
-    string memory symbol,
-    address[] memory defaultOperators
-  ) public {
-    initERC777(name, symbol, defaultOperators);
-    initMCDAwarePool();
-  }
-
-  /**
-   * @notice Registers the MCDAwarePool with the ERC1820 registry so that it can receive tokens
+   * @notice Used to initialize the BasePool contract after an upgrade.  Registers the MCDAwarePool with the ERC1820 registry so that it can receive tokens, and inits the block lock.
    */
   function initMCDAwarePool() public {
     ERC1820_REGISTRY.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+    if (blocklock.lockDuration == 0) {
+      initBlocklock(DEFAULT_LOCK_DURATION, DEFAULT_COOLDOWN_DURATION);
+    }
   }
 
   /**
@@ -113,12 +105,12 @@ contract MCDAwarePool is RecipientWhitelistERC777Pool, IERC777Recipient {
     uint256 amount,
     bytes calldata,
     bytes calldata
-  ) external {
-    require(msg.sender == address(saiPool()), "can only receive tokens from Sai Pool");
+  ) external unlessDepositsPaused {
+    require(msg.sender == address(saiPoolToken()), "can only receive tokens from Sai Pool Token");
     require(address(token()) == address(daiToken()), "contract does not use Dai");
 
     // cash out of the Pool.  This call transfers sai to this contract
-    saiPool().burn(amount, '');
+    saiPoolToken().redeem(amount, '');
 
     // approve of the transfer to the migration contract
     saiToken().approve(address(scdMcdMigration()), amount);
@@ -134,10 +126,30 @@ contract MCDAwarePool is RecipientWhitelistERC777Pool, IERC777Recipient {
     }
   }
 
+  /**
+   * @notice Returns the address of the PoolSai pool token contract
+   * @return The address of the Sai PoolToken contract
+   */
+  function saiPoolToken() internal view returns (PoolToken) {
+    if (address(saiPool()) != address(0)) {
+      return saiPool().poolToken();
+    } else {
+      return PoolToken(0);
+    }
+  }
+
+  /**
+   * @notice Returns the address of the Sai token
+   * @return The address of the sai token
+   */
   function saiToken() internal returns (GemLike) {
     return scdMcdMigration().saiJoin().gem();
   }
 
+  /**
+   * @notice Returns the address of the Dai token
+   * @return The address of the Dai token.
+   */
   function daiToken() internal returns (GemLike) {
     return scdMcdMigration().daiJoin().dai();
   }

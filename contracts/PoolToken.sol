@@ -19,11 +19,14 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.5.12;
 
 import "./BasePool.sol";
-import "@openzeppelin/contracts/contracts/token/ERC777/IERC777.sol";
-import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Recipient.sol";
-import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Sender.sol";
-import "@openzeppelin/contracts/contracts/introspection/IERC1820Registry.sol";
-import "@openzeppelin/contracts/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Sender.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 /**
  * @dev Implementation of the {IERC777} interface.
@@ -44,9 +47,14 @@ import "@openzeppelin/contracts/contracts/utils/Address.sol";
  * is not possible.
  *
  */
-contract ERC777Pool is IERC20, IERC777, BasePool {
+contract PoolToken is Initializable, IERC20, IERC777 {
   using SafeMath for uint256;
   using Address for address;
+
+  /**
+   * Event emitted when a user or operator redeems tokens
+   */
+  event Redeemed(address indexed operator, address indexed from, uint256 amount, bytes data, bytes operatorData);
 
   IERC1820Registry constant internal ERC1820_REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
 
@@ -77,33 +85,28 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   // ERC20-allowances
   mapping (address => mapping (address => uint256)) internal _allowances;
 
-  function init (
-    address _owner,
-    address _cToken,
-    uint256 _feeFraction,
-    address _feeBeneficiary,
-    string memory name,
-    string memory symbol,
-    address[] memory defaultOperators
-  ) public initializer {
-    init(_owner, _cToken, _feeFraction, _feeBeneficiary);
-    initERC777(name, symbol, defaultOperators);
-  }
+  // The Pool that is bound to this token
+  BasePool internal _pool;
 
   /**
-    * @dev `defaultOperators` may be an empty array.
-    */
-  function initERC777 (
-      string memory name,
-      string memory symbol,
-      address[] memory defaultOperators
-  ) public {
+   * @notice Initializes the PoolToken.
+   * @param name The name of the token
+   * @param symbol The token symbol
+   * @param defaultOperators The default operators who are allowed to move tokens
+   */
+  function init (
+    string memory name,
+    string memory symbol,
+    address[] memory defaultOperators,
+    BasePool pool
+  ) public initializer {
       require(bytes(name).length != 0, "name must be defined");
       require(bytes(symbol).length != 0, "symbol must be defined");
-      require(bytes(_name).length == 0, "ERC777 has already been initialized");
+      require(address(pool) != address(0), "PoolToken/pool-not-def");
 
       _name = name;
       _symbol = symbol;
+      _pool = pool;
 
       _defaultOperatorsArray = defaultOperators;
       for (uint256 i = 0; i < _defaultOperatorsArray.length; i++) {
@@ -113,6 +116,26 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
       // register interfaces
       ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC777Token"), address(this));
       ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
+  }
+
+  /**
+   * @notice Returns the address of the Pool contract
+   * @return The address of the pool contract
+   */
+  function pool() public view returns (address) {
+      return address(_pool);
+  }
+
+  /**
+   * @notice Calls the ERC777 transfer hook, and emits Redeemed and Transfer.  Can only be called by the Pool contract.
+   * @param from The address from which to redeem tokens
+   * @param amount The amount of tokens to redeem
+   */
+  function poolRedeem(address from, uint256 amount) external onlyPool {
+      _callTokensToSend(from, from, address(0), amount, '', '');
+
+      emit Redeemed(from, from, amount, '', '');
+      emit Transfer(from, address(0), amount);
   }
 
   /**
@@ -152,7 +175,14 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
     * @dev See {IERC777-totalSupply}.
     */
   function totalSupply() public view returns (uint256) {
-      return committedSupply();
+      return _pool.committedSupply();
+  }
+
+  /**
+    * @dev See {IERC20-balanceOf}.
+    */
+  function balanceOf(address _addr) external view returns (uint256) {
+      return _pool.committedBalanceOf(_addr);
   }
 
   /**
@@ -187,12 +217,21 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   }
 
   /**
-    * @dev See {IERC777-burn}.
+    * @dev Allows a user to withdraw their tokens as the underlying asset.
     *
     * Also emits a {Transfer} event for ERC20 compatibility.
     */
-  function burn(uint256 amount, bytes calldata data) external {
-      _burn(msg.sender, msg.sender, amount, data, "");
+  function redeem(uint256 amount, bytes calldata data) external {
+      _redeem(msg.sender, msg.sender, amount, data, "");
+  }
+
+  /**
+    * @dev See {IERC777-burn}.  Not currently implemented.
+    *
+    * Also emits a {Transfer} event for ERC20 compatibility.
+    */
+  function burn(uint256, bytes calldata) external {
+      revert("PoolToken/no-support");
   }
 
   /**
@@ -265,11 +304,20 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   /**
     * @dev See {IERC777-operatorBurn}.
     *
-    * Emits {Burned} and {Transfer} events.
+    * Currently not supported
     */
-  function operatorBurn(address account, uint256 amount, bytes calldata data, bytes calldata operatorData) external {
+  function operatorBurn(address, uint256, bytes calldata, bytes calldata) external {
+      revert("PoolToken/no-support");
+  }
+
+  /**
+    * @dev Allows an operator to redeem tokens for the underlying asset on behalf of a user.
+    *
+    * Emits {Redeemed} and {Transfer} events.
+    */
+  function operatorRedeem(address account, uint256 amount, bytes calldata data, bytes calldata operatorData) external {
       require(isOperatorFor(msg.sender, account), "ERC777: caller is not an operator for holder");
-      _burn(msg.sender, account, amount, data, operatorData);
+      _redeem(msg.sender, account, amount, data, operatorData);
   }
 
   /**
@@ -291,6 +339,42 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   function approve(address spender, uint256 value) external returns (bool) {
       address holder = msg.sender;
       _approve(holder, spender, value);
+      return true;
+  }
+
+  /**
+    * @dev Atomically increases the allowance granted to `spender` by the caller.
+    *
+    * This is an alternative to {approve} that can be used as a mitigation for
+    * problems described in {IERC20-approve}.
+    *
+    * Emits an {Approval} event indicating the updated allowance.
+    *
+    * Requirements:
+    *
+    * - `spender` cannot be the zero address.
+    */
+  function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
+      _approve(msg.sender, spender, _allowances[msg.sender][spender].add(addedValue));
+      return true;
+  }
+
+  /**
+    * @dev Atomically decreases the allowance granted to `spender` by the caller.
+    *
+    * This is an alternative to {approve} that can be used as a mitigation for
+    * problems described in {IERC20-approve}.
+    *
+    * Emits an {Approval} event indicating the updated allowance.
+    *
+    * Requirements:
+    *
+    * - `spender` cannot be the zero address.
+    * - `spender` must have allowance for the caller of at least
+    * `subtractedValue`.
+    */
+  function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
+      _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue, "PoolToken/negative"));
       return true;
   }
 
@@ -320,56 +404,16 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   }
 
   /**
-   * @notice Commits the current draw.  Mints the open supply number of tokens.
-   * @dev This function deviates from the ERC 777 spec (https://eips.ethereum.org/EIPS/eip-777).  The spec
-   * says that:
-   *  - "The balance of the recipient MUST be increased by the amount of tokens minted."
-   * However, for this contract it is not feasible to emit Minted for every open deposit.
+   * Called by the associated Pool to emit `Mint` events.
+   * @param amount The amount that was minted
    */
-  function emitCommitted() internal {
-    super.emitCommitted();
-    uint256 mintingAmount = openSupply();
-    _mintEvents(address(this), address(this), mintingAmount, '', '');
+  function poolMint(uint256 amount) external onlyPool {
+    _mintEvents(address(_pool), address(_pool), amount, '', '');
   }
 
   /**
-   * @notice Awards the winnings to a user.  Ensures that the Minted event is fired
-   */
-  function awardWinnings(address winner, uint256 amount) internal {
-    super.awardWinnings(winner, amount);
-    _mint(address(this), winner, amount, '', '');
-  }
-
-  /**
-    * @dev Creates `amount` tokens and assigns them to `account`, increasing
-    * the total supply.
-    *
-    * If a send hook is registered for `account`, the corresponding function
-    * will be called with `operator`, `data` and `operatorData`.
-    *
-    * See {IERC777Sender} and {IERC777Recipient}.
-    *
     * Emits {Minted} and {IERC20-Transfer} events.
-    *
-    * Requirements
-    *
-    * - `account` cannot be the zero address.
-    * - if `account` is a contract, it must implement the {IERC777Recipient}
-    * interface.
     */
-  function _mint(
-      address operator,
-      address account,
-      uint256 amount,
-      bytes memory userData,
-      bytes memory operatorData
-  )
-  internal
-  {
-      _callTokensReceived(operator, address(0), account, amount, userData, operatorData, true);
-      _mintEvents(operator, account, amount, userData, operatorData);
-  }
-
   function _mintEvents(
       address operator,
       address account,
@@ -413,14 +457,14 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   }
 
   /**
-    * @dev Burn tokens
+    * @dev Redeems tokens for the underlying asset.
     * @param operator address operator requesting the operation
     * @param from address token holder address
-    * @param amount uint256 amount of tokens to burn
+    * @param amount uint256 amount of tokens to redeem
     * @param data bytes extra information provided by the token holder
     * @param operatorData bytes extra information provided by the operator (if any)
     */
-  function _burn(
+  function _redeem(
       address operator,
       address from,
       uint256 amount,
@@ -429,20 +473,19 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   )
       private
   {
-      require(from != address(0), "ERC777: burn from the zero address");
-      uint256 committedBalance = drawState.committedBalanceOf(from);
-      require(amount <= committedBalance, "not enough funds");
+      require(from != address(0), "ERC777: redeem from the zero address");
 
       _callTokensToSend(operator, from, address(0), amount, data, operatorData);
 
-      // Update state variables
-      drawState.withdrawCommitted(from, amount);
-      _withdraw(from, amount);
+      _pool.withdrawCommittedDeposit(from, amount);
 
-      emit Burned(operator, from, amount, data, operatorData);
+      emit Redeemed(operator, from, amount, data, operatorData);
       emit Transfer(from, address(0), amount);
   }
 
+  /**
+   * @notice Moves tokens from one user to another.  Emits Sent and Transfer events.
+   */
   function _move(
       address operator,
       address from,
@@ -453,15 +496,18 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
   )
       private
   {
-      balances[from] = balances[from].sub(amount, "move could not sub amount");
-      balances[to] = balances[to].add(amount);
-      drawState.withdrawCommitted(from, amount);
-      drawState.depositCommitted(to, amount);
+      _pool.moveCommitted(from, to, amount);
 
       emit Sent(operator, from, to, amount, userData, operatorData);
       emit Transfer(from, to, amount);
   }
 
+  /**
+   * Approves of a token spend by a spender for a holder.
+   * @param holder The address from which the tokens are spent
+   * @param spender The address that is spending the tokens
+   * @param value The amount of tokens to spend
+   */
   function _approve(address holder, address spender, uint256 value) private {
       require(spender != address(0), "ERC777: approve to the zero address");
 
@@ -486,7 +532,7 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
       bytes memory userData,
       bytes memory operatorData
   )
-      internal
+      internal notLocked
   {
       address implementer = ERC1820_REGISTRY.getInterfaceImplementer(from, TOKENS_SENDER_INTERFACE_HASH);
       if (implementer != address(0)) {
@@ -503,6 +549,7 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
     * @param amount uint256 amount of tokens to transfer
     * @param userData bytes extra information provided by the token holder (if any)
     * @param operatorData bytes extra information provided by the operator (if any)
+    * @param requireReceptionAck whether to require that, if the recipient is a contract, it implements IERC777Recipient
     */
   function _callTokensReceived(
       address operator,
@@ -521,5 +568,21 @@ contract ERC777Pool is IERC20, IERC777, BasePool {
       } else if (requireReceptionAck) {
           require(!to.isContract(), "ERC777: contract recipient has no implementer for ERC777TokensRecipient");
       }
+  }
+
+  /**
+   * @notice Requires the sender to be the pool contract
+   */
+  modifier onlyPool() {
+    require(msg.sender == address(_pool), "PoolToken/only-pool");
+    _;
+  }
+
+  /**
+   * @notice Requires the contract to be unlocked
+   */
+  modifier notLocked() {
+    require(!_pool.isLocked(), "PoolToken/is-locked");
+    _;
   }
 }

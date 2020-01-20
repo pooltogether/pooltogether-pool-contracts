@@ -41,6 +41,10 @@ contract ExposedDrawManager {
       state.withdraw(user);
     }
 
+    function withdrawOpen(address user, uint256 amount) public {
+      state.withdrawOpen(user, amount);
+    }
+
     function withdrawCommitted(address user, uint256 amount) public {
       state.withdrawCommitted(user, amount);
     }
@@ -74,11 +78,11 @@ contract ExposedDrawManager {
     }
 
     function firstDrawIndex(address user) public view returns (uint256) {
-        return state.usersFirstDrawIndex[user];
+        return state.consolidatedDrawIndices[user];
     }
 
     function secondDrawIndex(address user) public view returns (uint256) {
-        return state.usersSecondDrawIndex[user];
+        return state.latestDrawIndices[user];
     }
 
     function drawWithEntropy(bytes32 entropy) public view returns (address) {

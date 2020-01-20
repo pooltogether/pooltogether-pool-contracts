@@ -3,7 +3,8 @@ const {
   SALT,
   SECRET,
   SECRET_HASH,
-  SUPPLY_RATE_PER_BLOCK
+  SUPPLY_RATE_PER_BLOCK,
+  MAX_NEW_FIXED
 } = require('./constants')
 const setupERC1820 = require('./setupERC1820')
 
@@ -11,19 +12,18 @@ const debug = require('debug')('PoolContext.js')
 
 module.exports = function PoolContext({ web3, artifacts, accounts }) {
 
-  let pool, token, moneyMarket, sumTree, drawManager, registry
+  let pool, token, moneyMarket, sumTree, drawManager, registry, blocklock,  poolToken
   
   const [owner, admin, user1, user2] = accounts
 
   const Token = artifacts.require('Token.sol')
   const LocalMCDAwarePool = artifacts.require('LocalMCDAwarePool.sol')
-  const BasePool = artifacts.require('BasePool.sol')
   const CErc20Mock = artifacts.require('CErc20Mock.sol')
   const FixidityLib = artifacts.require('FixidityLib.sol')
   const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
   const DrawManager = artifacts.require('DrawManager.sol')
-
-  let Rewarded, Committed
+  const Blocklock = artifacts.require('Blocklock.sol')
+  const PoolToken = artifacts.require('RecipientWhitelistPoolToken.sol')
 
   this.init = async () => {
     registry = await setupERC1820({ web3, artifacts, account: owner })
@@ -34,12 +34,14 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     await LocalMCDAwarePool.link('DrawManager', drawManager.address)
     fixidity = await FixidityLib.new({ from: admin })
 
+    blocklock = await Blocklock.new()
+
     token = await this.newToken()
 
     moneyMarket = await CErc20Mock.new({ from: admin })
     await moneyMarket.initialize(token.address, new BN(SUPPLY_RATE_PER_BLOCK))
 
-    await token.mint(moneyMarket.address, web3.utils.toWei('10000000', 'ether'))
+    await token.mint(moneyMarket.address, new BN(MAX_NEW_FIXED).add(new BN(web3.utils.toWei('10000000', 'ether'))).toString())
     await token.mint(admin, web3.utils.toWei('100000', 'ether'))
 
     return {
@@ -47,7 +49,8 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
       fixidity,
       token,
       moneyMarket,
-      registry
+      registry,
+      blocklock
     }
   }
 
@@ -74,51 +77,46 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     }
   }
 
-  this.createBasePool = async (feeFraction = new BN('0')) => {
-    await BasePool.link("DrawManager", drawManager.address)
-    await BasePool.link("FixidityLib", fixidity.address)
-
-    pool = await BasePool.new()
-    await pool.init(
-      owner,
-      moneyMarket.address,
-      feeFraction,
-      owner
-    )
-
+  this.createPool = async (feeFraction = new BN('0'), cooldownDuration = 1) => {
+    pool = await this.createPoolNoOpenDraw(feeFraction, cooldownDuration)
     await this.openNextDraw()
-
     return pool
   }
 
-  this.createPool = async (feeFraction = new BN('0')) => {
-    await LocalMCDAwarePool.link("DrawManager", drawManager.address)
-    await LocalMCDAwarePool.link("FixidityLib", fixidity.address)
-
-    pool = await LocalMCDAwarePool.new()
-    await pool.init(
-      owner,
-      moneyMarket.address,
-      feeFraction,
-      owner,
-      'Prize Dai', 'pzDAI', []
+  this.createToken = async () => {
+    poolToken = await PoolToken.new()
+    await poolToken.init(
+      'Prize Dai', 'pzDAI', [], pool.address
     )
 
-    await this.openNextDraw()
+    assert.equal(await poolToken.pool(), pool.address)
 
-    return pool
+    await pool.setPoolToken(poolToken.address)
+
+    return poolToken
   }
 
-  this.createPoolNoInit = async (feeFraction = new BN('0')) => {
+  this.newPool = async () => {
     await LocalMCDAwarePool.link("DrawManager", drawManager.address)
     await LocalMCDAwarePool.link("FixidityLib", fixidity.address)
+    await LocalMCDAwarePool.link('Blocklock', blocklock.address)
+    
+    return await LocalMCDAwarePool.new()
+  }
 
-    pool = await LocalMCDAwarePool.new()
+  this.createPoolNoOpenDraw = async (feeFraction = new BN('0'), cooldownDuration = 1) => {
+    pool = await this.newPool()
+
+    // just long enough to lock then reward
+    const lockDuration = 2
+    
     await pool.init(
       owner,
       moneyMarket.address,
       feeFraction,
-      owner
+      owner,
+      lockDuration,
+      cooldownDuration
     )
 
     return pool
@@ -128,21 +126,19 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     let logs
 
     debug(`rewardAndOpenNextDraw(${SECRET_HASH}, ${SECRET})`)
+    await pool.lockTokens()
     if (options) {
       logs = (await pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT, options)).logs;
     } else {
       logs = (await pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT)).logs;
     }
 
-    logs.reverse()
+    // console.log(logs.map(log => log.event))
 
-    // console.log(
-    //   logs.map(log => log.event)
-    // )
-
-    const [Opened, Transfer, Minted, Committed, Rewarded] = logs
+    const [Rewarded, FeeCollected, Committed, Opened] = logs
 
     debug('rewardAndOpenNextDraw: ', logs)
+    assert.equal(Opened.event, "Opened")
     assert.equal(Rewarded.event, 'Rewarded')
     assert.equal(Committed.event, 'Committed')  
 

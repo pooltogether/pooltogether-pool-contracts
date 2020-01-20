@@ -1,6 +1,7 @@
 const Pool = artifacts.require('Pool.sol')
 const DrawManager = artifacts.require('DrawManager.sol')
 const FixidityLib = artifacts.require('FixidityLib.sol')
+const Blocklock = artifacts.require('Blocklock.sol')
 const {
   SCD_MCD_MIGRATION_ADDRESS,
   SAI_POOL_ADDRESS
@@ -12,8 +13,10 @@ contract('Pool', (accounts) => {
   beforeEach(async () => {
     let dm = await DrawManager.new()
     let fl = await FixidityLib.new()
+    let bl = await Blocklock.new()
     Pool.link('DrawManager', dm.address)
     Pool.link('FixidityLib', fl.address)
+    Pool.link('Blocklock', bl.address)
     pool = await Pool.new()
   })
 
