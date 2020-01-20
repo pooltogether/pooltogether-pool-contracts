@@ -582,11 +582,9 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @notice Withdraw the sender's entire balance back to them.
    */
   function withdraw() public nonReentrant notLocked {
-    uint256 sponsorshipAndFees = sponsorshipAndFeeBalanceOf(msg.sender);
-    uint256 openBalance = drawState.openBalanceOf(msg.sender);
     uint256 committedBalance = drawState.committedBalanceOf(msg.sender);
 
-    uint balance = balances[msg.sender];
+    uint256 balance = balances[msg.sender];
     // Update their chances of winning
     drawState.withdraw(msg.sender);
     _withdraw(msg.sender, balance);
@@ -595,9 +593,6 @@ contract BasePool is Initializable, ReentrancyGuard {
       poolToken.poolRedeem(msg.sender, committedBalance);
     }
 
-    emit SponsorshipAndFeesWithdrawn(msg.sender, sponsorshipAndFees);
-    emit OpenDepositWithdrawn(msg.sender, openBalance);
-    emit CommittedDepositWithdrawn(msg.sender, committedBalance);
     emit Withdrawn(msg.sender, balance);
   }
 
