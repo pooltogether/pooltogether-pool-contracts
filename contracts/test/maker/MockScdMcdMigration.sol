@@ -32,7 +32,7 @@ contract MockScdMcdMigration {
   }
 
   function swapSaiToDai(
-    uint wad
+    uint256 wad
   ) external {
     // Get wad amount of SAI from user's wallet:
     sai.transferFrom(msg.sender, address(this), wad);
