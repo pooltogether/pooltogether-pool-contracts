@@ -25,7 +25,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 contract CErc20Mock is Initializable, ICErc20 {
   mapping(address => uint256) ownerTokenAmounts;
 
-  uint __supplyRatePerBlock;
+  uint256 __supplyRatePerBlock;
 
   function initialize (address _token, uint256 _supplyRatePerBlock) public initializer {
     require(_token != address(0), "token is not defined");
@@ -33,7 +33,7 @@ contract CErc20Mock is Initializable, ICErc20 {
     __supplyRatePerBlock = _supplyRatePerBlock;
   }
 
-  function mint(uint amount) external returns (uint) {
+  function mint(uint256 amount) external returns (uint) {
     ownerTokenAmounts[msg.sender] = ownerTokenAmounts[msg.sender] + amount;
     require(IERC20(underlying).transferFrom(msg.sender, address(this), amount), "could not transfer tokens");
     return 0;
@@ -43,7 +43,7 @@ contract CErc20Mock is Initializable, ICErc20 {
     return IERC20(underlying).balanceOf(address(this));
   }
 
-  function redeemUnderlying(uint requestedAmount) external returns (uint) {
+  function redeemUnderlying(uint256 requestedAmount) external returns (uint) {
     require(requestedAmount <= ownerTokenAmounts[msg.sender], "insufficient underlying funds");
     ownerTokenAmounts[msg.sender] = ownerTokenAmounts[msg.sender] - requestedAmount;
     require(IERC20(underlying).transfer(msg.sender, requestedAmount), "could not transfer tokens");

@@ -86,8 +86,15 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   // ERC20-allowances
   mapping (address => mapping (address => uint256)) internal _allowances;
 
+  // The Pool that is bound to this token
   BasePool internal _pool;
 
+  /**
+   * @notice Initializes the PoolToken.
+   * @param name The name of the token
+   * @param symbol The token symbol
+   * @param defaultOperators The default operators who are allowed to move tokens
+   */
   function init (
     string memory name,
     string memory symbol,
@@ -112,10 +119,19 @@ contract PoolToken is Initializable, IERC20, IERC777 {
       ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256("ERC20Token"), address(this));
   }
 
+  /**
+   * @notice Returns the address of the Pool contract
+   * @return The address of the pool contract
+   */
   function pool() public view returns (address) {
       return address(_pool);
   }
 
+  /**
+   * @notice Calls the ERC777 transfer hook, and emits Redeemed and Transfer.  Can only be called by the Pool contract.
+   * @param from The address from which to redeem tokens
+   * @param amount The amount of tokens to redeem
+   */
   function poolRedeem(address from, uint256 amount) external onlyPool {
       _callTokensToSend(from, from, address(0), amount, '', '');
 
@@ -468,6 +484,9 @@ contract PoolToken is Initializable, IERC20, IERC777 {
       emit Transfer(from, address(0), amount);
   }
 
+  /**
+   * @notice Moves tokens from one user to another.  Emits Sent and Transfer events.
+   */
   function _move(
       address operator,
       address from,
@@ -484,6 +503,12 @@ contract PoolToken is Initializable, IERC20, IERC777 {
       emit Transfer(from, to, amount);
   }
 
+  /**
+   * Approves of a token spend by a spender for a holder.
+   * @param holder The address from which the tokens are spent
+   * @param spender The address that is spending the tokens
+   * @param value The amount of tokens to spend
+   */
   function _approve(address holder, address spender, uint256 value) private {
       require(spender != address(0), "ERC777: approve to the zero address");
 
@@ -525,6 +550,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     * @param amount uint256 amount of tokens to transfer
     * @param userData bytes extra information provided by the token holder (if any)
     * @param operatorData bytes extra information provided by the operator (if any)
+    * @param requireReceptionAck whether to require that, if the recipient is a contract, it implements IERC777Recipient
     */
   function _callTokensReceived(
       address operator,
@@ -545,11 +571,17 @@ contract PoolToken is Initializable, IERC20, IERC777 {
       }
   }
 
+  /**
+   * @notice Requires the sender to be the pool contract
+   */
   modifier onlyPool() {
     require(msg.sender == address(_pool), "PoolToken/only-pool");
     _;
   }
 
+  /**
+   * @notice Requires the contract to be unlocked
+   */
   modifier notLocked() {
     require(!_pool.isLocked(), "PoolToken/is-locked");
     _;
