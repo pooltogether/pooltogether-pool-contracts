@@ -123,6 +123,10 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
     }
   }
 
+  /**
+   * @notice Returns the address of the PoolSai pool token contract
+   * @return The address of the Sai PoolToken contract
+   */
   function saiPoolToken() internal view returns (PoolToken) {
     if (address(saiPool()) != address(0)) {
       return saiPool().poolToken();
@@ -131,10 +135,18 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
     }
   }
 
+  /**
+   * @notice Returns the address of the Sai token
+   * @return The address of the sai token
+   */
   function saiToken() internal returns (GemLike) {
     return scdMcdMigration().saiJoin().gem();
   }
 
+  /**
+   * @notice Returns the address of the Dai token
+   * @return The address of the Dai token.
+   */
   function daiToken() internal returns (GemLike) {
     return scdMcdMigration().daiJoin().dai();
   }
