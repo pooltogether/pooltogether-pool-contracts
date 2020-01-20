@@ -21,7 +21,7 @@ pragma solidity 0.5.12;
 import "./BasePool.sol";
 import "scd-mcd-migration/src/ScdMcdMigration.sol";
 import { GemLike } from "scd-mcd-migration/src/Interfaces.sol";
-import "@openzeppelin/contracts/contracts/token/ERC777/IERC777Recipient.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 
 /**
  * @title MCDAwarePool
@@ -123,6 +123,10 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
     }
   }
 
+  /**
+   * @notice Returns the address of the PoolSai pool token contract
+   * @return The address of the Sai PoolToken contract
+   */
   function saiPoolToken() internal view returns (PoolToken) {
     if (address(saiPool()) != address(0)) {
       return saiPool().poolToken();
@@ -131,10 +135,18 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
     }
   }
 
+  /**
+   * @notice Returns the address of the Sai token
+   * @return The address of the sai token
+   */
   function saiToken() internal returns (GemLike) {
     return scdMcdMigration().saiJoin().gem();
   }
 
+  /**
+   * @notice Returns the address of the Dai token
+   * @return The address of the Dai token.
+   */
   function daiToken() internal returns (GemLike) {
     return scdMcdMigration().daiJoin().dai();
   }

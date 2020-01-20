@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "@openzeppelin/contracts/contracts/token/ERC777/ERC777.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/ERC777.sol";
 
 /**
  * @dev Extension of {ERC20} that adds a set of accounts with the {MinterRole},
@@ -9,14 +9,6 @@ import "@openzeppelin/contracts/contracts/token/ERC777/ERC777.sol";
  * At construction, the deployer of the contract is the only minter.
  */
 contract ERC777Mintable is ERC777 {
-
-    constructor(
-        string memory name,
-        string memory symbol,
-        address[] memory defaultOperators
-    ) public ERC777(name, symbol, defaultOperators) {
-    }
-
     /**
      * @dev See {ERC20-_mint}.
      *

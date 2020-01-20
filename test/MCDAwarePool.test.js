@@ -33,7 +33,8 @@ contract('MCDAwarePool', (accounts) => {
       let token
 
       beforeEach(async () => {
-        token = await ERC777Mintable.new('toke', 'TK', [])
+        token = await ERC777Mintable.new()
+        await token.initialize('toke', 'TK', [])
       })
 
       it('should fail', async () => {
