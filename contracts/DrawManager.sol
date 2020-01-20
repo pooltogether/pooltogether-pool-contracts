@@ -41,7 +41,7 @@ library DrawManager {
      */
     bytes32 public constant TREE_OF_DRAWS = "TreeOfDraws";
 
-    uint8 public constant MAX_LEAVES = 10;
+    uint8 public constant MAX_BRANCHES_PER_NODE = 10;
 
     /**
      * Stores information for all draws.
@@ -87,7 +87,7 @@ library DrawManager {
     function openNextDraw(State storage self) public returns (uint256) {
         if (self.openDrawIndex == 0) {
             // If there is no previous draw, we must initialize
-            self.sortitionSumTrees.createTree(TREE_OF_DRAWS, MAX_LEAVES);
+            self.sortitionSumTrees.createTree(TREE_OF_DRAWS, MAX_BRANCHES_PER_NODE);
         } else {
             // else add current draw to sortition sum trees
             bytes32 drawId = bytes32(self.openDrawIndex);
@@ -96,7 +96,7 @@ library DrawManager {
         }
         // now create a new draw
         uint256 drawIndex = self.openDrawIndex.add(1);
-        self.sortitionSumTrees.createTree(bytes32(drawIndex), MAX_LEAVES);
+        self.sortitionSumTrees.createTree(bytes32(drawIndex), MAX_BRANCHES_PER_NODE);
         self.openDrawIndex = drawIndex;
 
         return drawIndex;
@@ -332,7 +332,8 @@ library DrawManager {
     }
 
    /**
-     * @notice Selects an address by indexing into the committed tokens using the passed token
+     * @notice Selects an address by indexing into the committed tokens using the passed token.
+     * If there is no committed supply, the zero address is returned.
      * @param self The DrawManager state
      * @param _token The token index to select
      * @return The selected address
