@@ -429,6 +429,22 @@ contract('PoolToken', (accounts) => {
       })
     })
 
+    describe('increaseAllowance()', () => {
+      it('should allow a user to increase their allowance incrementally', async () => {
+        await poolToken.approve(user1, toWei('5'))
+        await poolToken.increaseAllowance(user1, toWei('5'))
+        assert.equal(await poolToken.allowance(owner, user1), toWei('10'))
+      })
+    })
+
+    describe('decreaseAllowance()', () => {
+      it('should allow a user to decrease their allowance incrementally', async () => {
+        await poolToken.approve(user1, toWei('10'))
+        await poolToken.decreaseAllowance(user1, toWei('5'))
+        assert.equal(await poolToken.allowance(owner, user1), toWei('5'))
+      })
+    })
+
     describe('transferFrom()', () => {
       beforeEach(async () => {
         await poolContext.depositPool(toWei('10'))

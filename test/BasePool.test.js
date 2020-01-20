@@ -8,6 +8,7 @@ const Pool = artifacts.require('Pool.sol')
 const {
   SECRET,
   SALT,
+  MAX_NEW_FIXED,
   SECRET_HASH,
   ZERO_ADDRESS,
   TICKET_PRICE
@@ -753,6 +754,38 @@ contract('BasePool', (accounts) => {
       // The user's balance should include the winnings
       assert.equal((await pool.totalBalanceOf(user1)).toString(), web3.utils.toWei('120'))
 
+    })
+  })
+
+  describe('when a pool reward overflows', () => {
+    it('should save the winnings for the next draw', async () => {
+      // Here we create the pool and open the first draw
+      pool = await poolContext.createPool(feeFraction)
+
+      // We deposit into the pool
+      const depositAmount = web3.utils.toWei('100', 'ether')
+      await token.approve(pool.address, depositAmount, { from: user1 })
+      await pool.depositPool(depositAmount, { from: user1 })
+
+      // Now we commit a draw, and open a new draw.  User is committed
+      await poolContext.openNextDraw()
+
+      assert.equal((await pool.totalBalanceOf(user1)).toString(), depositAmount)
+
+      const overflowReward = new BN(MAX_NEW_FIXED).add(new BN(web3.utils.toWei('99', 'ether'))).toString()
+
+      // The pool is awarded max int + 100
+      await moneyMarket.rewardCustom(pool.address, overflowReward)
+
+      // the winnings should cap at the max new fixed value
+      const { Rewarded } = await poolContext.rewardAndOpenNextDraw()
+
+      assert.equal(Rewarded.event, 'Rewarded')
+      assert.equal(Rewarded.args.winnings.toString(), MAX_NEW_FIXED)
+
+      const userNewBalance = new BN(MAX_NEW_FIXED).add(new BN(web3.utils.toWei('100', 'ether'))).toString()
+      // The user's balance should include the *max* int256
+      assert.equal((await pool.totalBalanceOf(user1)).toString(), userNewBalance)
     })
   })
 
