@@ -1,5 +1,7 @@
 pragma solidity 0.5.12;
 
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+
 /**
  * @title Blocklock
  * @author Brendan Asselstine
@@ -7,6 +9,7 @@ pragma solidity 0.5.12;
  * or the lock duration expires.  After the contract is unlocked, it cannot be locked until the cooldown duration expires.
  */
 library Blocklock {
+  using SafeMath for uint256;
 
   struct State {
     uint256 lockedAt;
@@ -79,16 +82,16 @@ library Blocklock {
     uint256 endAt = lockEndAt(self);
     return (
       self.lockedAt == 0 ||
-      blockNumber >= endAt + self.cooldownDuration
+      blockNumber >= endAt.add(self.cooldownDuration)
     );
   }
 
   function cooldownEndAt(State storage self) internal view returns (uint256) {
-    return lockEndAt(self) + self.cooldownDuration;
+    return lockEndAt(self).add(self.cooldownDuration);
   }
 
   function lockEndAt(State storage self) internal view returns (uint256) {
-    uint256 endAt = self.lockedAt + self.lockDuration;
+    uint256 endAt = self.lockedAt.add(self.lockDuration);
     // if we unlocked early
     if (self.unlockedAt >= self.lockedAt && self.unlockedAt < endAt) {
       endAt = self.unlockedAt;

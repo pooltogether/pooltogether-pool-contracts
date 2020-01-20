@@ -485,7 +485,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
 
       _callTokensToSend(operator, from, address(0), amount, data, operatorData);
 
-      _pool.withdrawCommittedDeposit(from, amount);
+      _pool.withdrawCommittedDepositFrom(from, amount);
 
       emit Redeemed(operator, from, amount, data, operatorData);
       emit Transfer(from, address(0), amount);

@@ -120,7 +120,7 @@ library DrawManager {
         uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
         uint256 latestDrawIndex = self.latestDrawIndices[_addr];
 
-        // if this is the users first draw, set it
+        // if this is the user's first draw, set it
         if (consolidatedDrawIndex == 0) {
             self.consolidatedDrawIndices[_addr] = openDrawIndex;
         // otherwise, if the consolidated draw is not this draw
@@ -182,6 +182,12 @@ library DrawManager {
         }
     }
 
+    /**
+     * @notice Withdraw's from a user's open balance
+     * @param self The DrawManager state
+     * @param _addr The user to withdrawn from
+     * @param _amount The amount to withdraw
+     */
     function withdrawOpen(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) onlyNonZero(_addr) {
         bytes32 userId = bytes32(uint256(_addr));
         uint256 openTotal = self.sortitionSumTrees.stakeOf(bytes32(self.openDrawIndex), userId);

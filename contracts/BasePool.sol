@@ -609,15 +609,15 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * Returns the total balance of the users sponsorship and fees
+   * Returns the total balance of the user's sponsorship and fees
    * @param _sender The user whose balance should be returned
    */
   function sponsorshipAndFeeBalanceOf(address _sender) public view returns (uint256) {
-    return balances[_sender] - drawState.balanceOf(_sender);
+    return balances[_sender].sub(drawState.balanceOf(_sender));
   }
 
   /**
-   * Withdraws from the users open deposits
+   * Withdraws from the user's open deposits
    * @param _amount The amount to withdraw
    */
   function withdrawOpenDeposit(uint256 _amount) public {
@@ -628,7 +628,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * Withdraws from the users committed deposits
+   * Withdraws from the user's committed deposits
    * @param _amount The amount to withdraw
    */
   function withdrawCommittedDeposit(uint256 _amount) external notLocked returns (bool)  {
@@ -644,7 +644,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @param _from The user to withdraw from
    * @param _amount The amount to withdraw
    */
-  function withdrawCommittedDeposit(
+  function withdrawCommittedDepositFrom(
     address _from,
     uint256 _amount
   ) external onlyToken notLocked returns (bool)  {
@@ -652,7 +652,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * A function that withdraws committed deposits for a user and emit the corresponding events.
+   * A function that withdraws committed deposits for a user and emits the corresponding events.
    * @param _from User to withdraw for
    * @param _amount The amount to withdraw
    */
@@ -666,7 +666,10 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * Allows the associated PoolToken to move committed tokens from one user to another.
+   * @notice Allows the associated PoolToken to move committed tokens from one user to another.
+   * @param _from The account to move tokens from
+   * @param _to The account that is receiving the tokens
+   * @param _amount The amount of tokens to transfer
    */
   function moveCommitted(
     address _from,
@@ -784,7 +787,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   /**
    * @notice Returns a user's total balance.  This includes their sponsorships, fees, open deposits, and committed deposits.
    * @param _addr The address of the user to check.
-   * @return The users's current balance.
+   * @return The user's current balance.
    */
   function totalBalanceOf(address _addr) external view returns (uint256) {
     return balances[_addr];
@@ -793,7 +796,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   /**
    * @notice Returns a user's committed balance.  This is the balance of their Pool tokens.
    * @param _addr The address of the user to check.
-   * @return The users's current balance.
+   * @return The user's current balance.
    */
   function balanceOf(address _addr) external view returns (uint256) {
     return drawState.committedBalanceOf(_addr);
@@ -1092,7 +1095,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * @notice requires the passed users committed balance to be greater than or equal to the passed amount
+   * @notice requires the passed user's committed balance to be greater than or equal to the passed amount
    * @param _from The user whose committed balance should be checked
    * @param _amount The minimum amount they must have
    */
