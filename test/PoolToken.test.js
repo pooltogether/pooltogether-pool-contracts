@@ -141,6 +141,7 @@ contract('PoolToken', (accounts) => {
       })
 
       it('should work if sending zero', async () => {
+        await poolContext.nextDraw() // ensure committed
         await poolToken.send(user2, toWei('0'), [])
         assert.equal(await poolToken.balanceOf(owner), toWei('0'))
         assert.equal(await poolToken.balanceOf(user2), toWei('0'))
@@ -217,6 +218,7 @@ contract('PoolToken', (accounts) => {
       })
 
       it('should work if transferring zero', async () => {
+        await poolContext.nextDraw() // ensure committed draw
         await poolToken.transfer(user2, toWei('0'))
         assert.equal(await poolToken.balanceOf(owner), toWei('0'))
         assert.equal(await poolToken.balanceOf(user2), toWei('0'))
@@ -229,6 +231,7 @@ contract('PoolToken', (accounts) => {
 
     describe('redeem()', () => {
       it('should be okay to redeem nothing', async () => {
+        await poolContext.nextDraw() // ensure committed draw
         await poolToken.redeem('0', [])
       })
 
@@ -422,6 +425,22 @@ contract('PoolToken', (accounts) => {
 
       it('should return the number of tokens that are approved to spend', async () => {
         await poolToken.approve(user1, toWei('5'))
+        assert.equal(await poolToken.allowance(owner, user1), toWei('5'))
+      })
+    })
+
+    describe('increaseAllowance()', () => {
+      it('should allow a user to increase their allowance incrementally', async () => {
+        await poolToken.approve(user1, toWei('5'))
+        await poolToken.increaseAllowance(user1, toWei('5'))
+        assert.equal(await poolToken.allowance(owner, user1), toWei('10'))
+      })
+    })
+
+    describe('decreaseAllowance()', () => {
+      it('should allow a user to decrease their allowance incrementally', async () => {
+        await poolToken.approve(user1, toWei('10'))
+        await poolToken.decreaseAllowance(user1, toWei('5'))
         assert.equal(await poolToken.allowance(owner, user1), toWei('5'))
       })
     })
