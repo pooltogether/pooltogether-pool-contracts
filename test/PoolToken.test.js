@@ -84,27 +84,15 @@ contract('PoolToken', (accounts) => {
       })
     })
 
-    describe('operatorBurn()', () => {
-      it('should not allow someone to burn the zero address tokens', async () => {
-        let failed = false
-        try {
-          await poolToken.operatorBurn(ZERO_ADDRESS, toWei('10'), [], [])
-        } catch (e) {
-          failed = true
-        }
-        assert.ok(failed, "was able to burn tokens")
+    describe('operatorRedeem()', () => {
+      it('should not allow someone to redeem the zero address tokens', async () => {
+        await chai.assert.isRejected(poolToken.operatorRedeem(ZERO_ADDRESS, toWei('10'), [], []), /ERC777: redeem from the zero address/)
       })
     })
 
     describe('operatorSend()', () => {
       it('should not send tokens from zero address', async () => {
-        let failed = false
-        try {
-          await poolToken.operatorSend(ZERO_ADDRESS, user1, toWei('10'), [], [])
-        } catch (e) {
-          failed = true
-        }
-        assert.ok(failed, "was able to send from zero address")
+        await chai.assert.isRejected(poolToken.operatorSend(ZERO_ADDRESS, user1, toWei('10'), [], []), /ERC777: send from the zero address/)
       })
     })
   })
@@ -149,16 +137,11 @@ contract('PoolToken', (accounts) => {
       it('should revert if sending to the burner address', async () => {
         await poolContext.depositPool(toWei('10'))
         await poolContext.nextDraw()
-        let failed = false
-        try {
-          await poolToken.send(ZERO_ADDRESS, toWei('10'), [])
-        } catch (e) {
-          failed = true
-        }
-        assert.ok(failed, "successfully failed")
+        await chai.assert.isRejected(poolToken.send(ZERO_ADDRESS, toWei('10'), []), /ERC777: send to the zero address/)
       })
 
       it('should work if sending zero', async () => {
+        await poolContext.nextDraw() // ensure committed
         await poolToken.send(user2, toWei('0'), [])
         assert.equal(await poolToken.balanceOf(owner), toWei('0'))
         assert.equal(await poolToken.balanceOf(user2), toWei('0'))
@@ -215,6 +198,11 @@ contract('PoolToken', (accounts) => {
     })
 
     describe('transfer()', () => {
+      it('should fail when the pool is locked', async () => {
+        await pool.lockTokens()
+        await chai.assert.isRejected(poolToken.transfer(user2, toWei('10')), /PoolToken\/is-locked/)
+      })
+
       it('should transfer tokens to another user', async () => {
         await poolContext.depositPool(toWei('10'))
         await poolContext.nextDraw()
@@ -226,42 +214,32 @@ contract('PoolToken', (accounts) => {
       it('should revert if transferring to the burner address', async () => {
         await poolContext.depositPool(toWei('10'))
         await poolContext.nextDraw()
-        let failed = false
-        try {
-          await poolToken.transfer(ZERO_ADDRESS, toWei('10'))
-        } catch (e) {
-          failed = true
-        }
-        assert.ok(failed, "successfully failed")
+        await chai.assert.isRejected(poolToken.transfer(ZERO_ADDRESS, toWei('10')), /ERC777: transfer to the zero address/)
       })
 
       it('should work if transferring zero', async () => {
+        await poolContext.nextDraw() // ensure committed draw
         await poolToken.transfer(user2, toWei('0'))
         assert.equal(await poolToken.balanceOf(owner), toWei('0'))
         assert.equal(await poolToken.balanceOf(user2), toWei('0'))
       })
 
       it('should reject when transferring to zero address', async () => {
-        let failed = false
-        try {
-          await poolToken.transfer(ZERO_ADDRESS, toWei('0'))
-        } catch  (e) {
-          failed = true
-        }
-        assert.ok(failed, "was able to transfer to zero address")
+        await chai.assert.isRejected(poolToken.transfer(ZERO_ADDRESS, toWei('0')), /ERC777: transfer to the zero address/)
       })
     })
 
-    describe('burn()', () => {
-      it('should be okay to burn nothing', async () => {
-        await poolToken.burn('0', [])
+    describe('redeem()', () => {
+      it('should be okay to redeem nothing', async () => {
+        await poolContext.nextDraw() // ensure committed draw
+        await poolToken.redeem('0', [])
       })
 
-      it('should allow a user to burn some of their tokens', async () => {
+      it('should allow a user to redeem some of their tokens', async () => {
         await poolContext.depositPool(toWei('10'))
         await poolContext.nextDraw()
         let beforeBalance = await token.balanceOf(owner)
-        await poolToken.burn(toWei('10'), [])
+        await poolToken.redeem(toWei('10'), [])
         assert.equal(await poolToken.balanceOf(owner), toWei('0'))
         let afterBalance = await token.balanceOf(owner)
 
@@ -385,52 +363,52 @@ contract('PoolToken', (accounts) => {
       })
     })
 
-    describe('operatorBurn()', () => {
-      it('should allow an operator to burn someones tokens', async () => {
+    describe('operatorRedeem()', () => {
+      it('should allow an operator to redeem someones tokens', async () => {
         await poolContext.depositPool(toWei('10'))
         await poolContext.nextDraw()
         await poolToken.authorizeOperator(user1)
         let beforeBalance = await token.balanceOf(owner)
-        await poolToken.operatorBurn(owner, toWei('10'), [], [], { from: user1 })
+        await poolToken.operatorRedeem(owner, toWei('10'), [], [], { from: user1 })
         assert.equal(await poolToken.balanceOf(owner), toWei('0'))
         let afterBalance = await token.balanceOf(owner)
 
         assert.equal(afterBalance, beforeBalance.add(new BN(toWei('10'))).toString())
       })
 
-      it('should not allow an non-authorized operator to burn someones tokens', async () => {
+      it('should not allow an non-authorized operator to redeem someones tokens', async () => {
         await poolContext.depositPool(toWei('10'))
         await poolContext.nextDraw()
         let failed = false
         try {
-          await poolToken.operatorBurn(owner, toWei('10'), [], [], { from: user1 })
+          await poolToken.operatorRedeem(owner, toWei('10'), [], [], { from: user1 })
         } catch (e) {
           failed = true
         }
-        assert.ok(failed, "was able to burn tokens")
+        assert.ok(failed, "was able to redeem tokens")
       })
 
-      it('should not allow someone to burn the zero address tokens', async () => {
+      it('should not allow someone to redeem the zero address tokens', async () => {
         let failed = false
         try {
-          await poolToken.operatorBurn(ZERO_ADDRESS, toWei('10'), [], [], { from: user1 })
+          await poolToken.operatorRedeem(ZERO_ADDRESS, toWei('10'), [], [], { from: user1 })
         } catch (e) {
           failed = true
         }
-        assert.ok(failed, "was able to burn tokens")
+        assert.ok(failed, "was able to redeem tokens")
       })
 
-      it('should not allow the burn to exceed the balance', async () => {
+      it('should not allow the redeem to exceed the balance', async () => {
         await poolContext.depositPool(toWei('10'))
         await poolContext.nextDraw()
         await poolToken.authorizeOperator(user1)
         let failed = false
         try {
-          await poolToken.operatorBurn(owner, toWei('12'), [], [], { from: user1 })
+          await poolToken.operatorRedeem(owner, toWei('12'), [], [], { from: user1 })
         } catch (e) {
           failed = true
         }
-        assert.ok(failed, "was able to burn tokens")
+        assert.ok(failed, "was able to redeem tokens")
       })
     })
 
@@ -447,6 +425,22 @@ contract('PoolToken', (accounts) => {
 
       it('should return the number of tokens that are approved to spend', async () => {
         await poolToken.approve(user1, toWei('5'))
+        assert.equal(await poolToken.allowance(owner, user1), toWei('5'))
+      })
+    })
+
+    describe('increaseAllowance()', () => {
+      it('should allow a user to increase their allowance incrementally', async () => {
+        await poolToken.approve(user1, toWei('5'))
+        await poolToken.increaseAllowance(user1, toWei('5'))
+        assert.equal(await poolToken.allowance(owner, user1), toWei('10'))
+      })
+    })
+
+    describe('decreaseAllowance()', () => {
+      it('should allow a user to decrease their allowance incrementally', async () => {
+        await poolToken.approve(user1, toWei('10'))
+        await poolToken.decreaseAllowance(user1, toWei('5'))
         assert.equal(await poolToken.allowance(owner, user1), toWei('5'))
       })
     })

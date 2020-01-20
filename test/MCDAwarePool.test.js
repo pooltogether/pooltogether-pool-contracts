@@ -33,7 +33,8 @@ contract('MCDAwarePool', (accounts) => {
       let token
 
       beforeEach(async () => {
-        token = await ERC777Mintable.new('toke', 'TK', [])
+        token = await ERC777Mintable.new()
+        await token.initialize('toke', 'TK', [])
       })
 
       it('should fail', async () => {
@@ -95,6 +96,16 @@ contract('MCDAwarePool', (accounts) => {
         assert.equal(await sendingPool.balanceOf(owner), '0')
         assert.equal(await receivingPool.balanceOf(owner), '0')
         assert.equal(await receivingPool.openBalanceOf(owner), toWei('10'))
+      })
+
+      describe('when paused', async () => {
+        beforeEach(async () => {
+          await receivingPool.pauseDeposits()
+        })
+
+        it('should reject the migration', async () => {
+          await chai.assert.isRejected(sendingToken.transfer(receivingPool.address, amount), /Pool\/d-paused/)
+        })
       })
 
       describe('to a non-Dai MCD Pool', () => {

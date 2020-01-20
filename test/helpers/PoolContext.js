@@ -3,7 +3,8 @@ const {
   SALT,
   SECRET,
   SECRET_HASH,
-  SUPPLY_RATE_PER_BLOCK
+  SUPPLY_RATE_PER_BLOCK,
+  MAX_NEW_FIXED
 } = require('./constants')
 const setupERC1820 = require('./setupERC1820')
 
@@ -40,7 +41,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     moneyMarket = await CErc20Mock.new({ from: admin })
     await moneyMarket.initialize(token.address, new BN(SUPPLY_RATE_PER_BLOCK))
 
-    await token.mint(moneyMarket.address, web3.utils.toWei('10000000', 'ether'))
+    await token.mint(moneyMarket.address, new BN(MAX_NEW_FIXED).add(new BN(web3.utils.toWei('10000000', 'ether'))).toString())
     await token.mint(admin, web3.utils.toWei('100000', 'ether'))
 
     return {
@@ -132,7 +133,9 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
       logs = (await pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT)).logs;
     }
 
-    const [Rewarded, Committed, Opened] = logs
+    // console.log(logs.map(log => log.event))
+
+    const [Rewarded, FeeCollected, Committed, Opened] = logs
 
     debug('rewardAndOpenNextDraw: ', logs)
     assert.equal(Opened.event, "Opened")

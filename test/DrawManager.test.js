@@ -223,7 +223,12 @@ contract('DrawManager', (accounts) => {
             await drawManager.openNextDraw()
         })
 
+        it('should fail if there is no committed draw', async () => {
+            await chai.assert.isRejected(drawManager.depositCommitted(user1, toWei('10')), /there is no committed draw/)
+        })
+
         it('should fail if the address is zero', async () => {
+            await drawManager.openNextDraw() // ensure it's committed
             await chai.assert.isRejected(drawManager.depositCommitted(ZERO_ADDRESS, toWei('10')), /address cannot be zero/)
         })
 
@@ -252,6 +257,42 @@ contract('DrawManager', (accounts) => {
         })
     })
 
+    describe('withdrawOpen()', () => {
+        it('should now allow a user to withdraw more', async () => {
+            await chai.assert.isRejected(drawManager.withdrawOpen(user1, toWei('10.00001')), /there is no open draw/)
+        })
+
+        describe('with open draw', () => {
+            beforeEach(async () => {
+                await drawManager.openNextDraw()
+                await drawManager.deposit(user1, toWei('10'))
+            })
+
+            it('should do nothing if the user does not exist', async () => {
+                await drawManager.withdrawOpen(user2, toWei('0'))
+            })
+
+            it('should not allow withdrawing from the zero address', async () => {
+                await chai.assert.isRejected(drawManager.withdrawOpen(ZERO_ADDRESS, toWei('5')), /address cannot be zero/)
+            })
+        
+            it('should allow a user to partially withdraw', async () => {
+                assert.equal(await drawManager.openBalanceOf(user1), toWei('10'))
+                await drawManager.withdrawOpen(user1, toWei('5'))
+                assert.equal(await drawManager.openBalanceOf(user1), toWei('5'))
+            })
+    
+            it('should allow a user to partially withdraw', async () => {
+                await drawManager.withdrawOpen(user1, toWei('10'))
+                assert.equal(await drawManager.openBalanceOf(user1), toWei('0'))
+            })
+    
+            it('should now allow a user to withdraw more', async () => {
+                await chai.assert.isRejected(drawManager.withdrawOpen(user1, toWei('10.00001')), /DrawMan\/exceeds-open/)
+            })
+        })
+    })
+
     describe('withdrawCommitted()', () => {
         beforeEach(async () => {
             await drawManager.openNextDraw()
@@ -259,7 +300,12 @@ contract('DrawManager', (accounts) => {
         })
 
         it('should fail if the address is zero', async () => {
+            await drawManager.openNextDraw() // make committed
             await chai.assert.isRejected(drawManager.withdrawCommitted(ZERO_ADDRESS, toWei('10')), /address cannot be zero/)
+        })
+
+        it('should fail if there is no committed draw', async () => {
+            await chai.assert.isRejected(drawManager.withdrawCommitted(user1, toWei('10')), /there is no committed draw/)
         })
 
         it('should allow a user to withdraw their committed tokens', async () => {

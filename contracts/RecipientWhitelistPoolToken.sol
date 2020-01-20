@@ -20,24 +20,73 @@ pragma solidity 0.5.12;
 
 import "./PoolToken.sol";
 
+/**
+ * @title RecipientWhitelistPoolToken
+ * @author Brendan Asselstine
+ * @notice Allows the pool admins to only allow token transfers to particular addresses.
+ */
 contract RecipientWhitelistPoolToken is PoolToken {
-  bool _recipientWhitelistEnabled;
-  mapping(address => bool) _recipientWhitelist;
+  /**
+   * @notice Whether the whitelist is enabled
+   */
+  bool internal _recipientWhitelistEnabled;
 
+  /**
+   * @notice Whether a recipient has been whitelisted
+   */
+  mapping(address => bool) internal _recipientWhitelist;
+
+  /**
+   * @notice Emitted when the whitelist is enabled or disabled
+   * @param admin The admin who affected the change.
+   * @param enabled Whether the whitelist was enabled.
+   */
+  event WhitelistEnabled(address indexed admin, bool enabled);
+
+  /**
+   * @notice Emitted when a recipient whitelist status changes.
+   * @param admin The admin who affected the change
+   * @param recipient The recipient whose whitelisting status was changed
+   * @param whitelisted Whether the recipient was whitelisted
+   */
+  event RecipientWhitelisted(address indexed admin, address indexed recipient, bool whitelisted);
+
+  /**
+   * @notice Returns whether the whitelist is enabled.  If enabled, recipients must be whitelisted in order to receive tokens.
+   * Otherwise if the whitelist is not enabled anyone is able to receive tokens.
+   * @return True if whitelist enabled, false otherwise.
+   */
   function recipientWhitelistEnabled() public view returns (bool) {
     return _recipientWhitelistEnabled;
   }
 
+  /**
+   * @notice Checks whether a recipient has been whitelisted.  This is irrespective of whether whitelisting is enabled or not.
+   * @return True if the recipient has been whitelisted, false otherwise.
+   */
   function recipientWhitelisted(address _recipient) public view returns (bool) {
     return _recipientWhitelist[_recipient];
   }
 
+  /**
+   * @notice Sets whether recipient whitelisting is enabled.  Only callable by the Pool admin.
+   * @param _enabled True if whitelisting should be enabled, false otherwise
+   */
   function setRecipientWhitelistEnabled(bool _enabled) public onlyAdmin {
     _recipientWhitelistEnabled = _enabled;
+
+    emit WhitelistEnabled(msg.sender, _enabled);
   }
 
+  /**
+   * @notice Sets whether the recipient should be whitelisted.  Only callable by the Pool admin.
+   * @param _recipient The recipient to whitelist
+   * @param _whitelisted True if the recipient should be whitelisted, false otherwise
+   */
   function setRecipientWhitelisted(address _recipient, bool _whitelisted) public onlyAdmin {
     _recipientWhitelist[_recipient] = _whitelisted;
+
+    emit RecipientWhitelisted(msg.sender, _recipient, _whitelisted);
   }
 
   /**
@@ -62,12 +111,12 @@ contract RecipientWhitelistPoolToken is PoolToken {
       if (_recipientWhitelistEnabled) {
         require(to == address(0) || _recipientWhitelist[to], "recipient is not whitelisted");
       }
-      address implementer = ERC1820_REGISTRY.getInterfaceImplementer(from, TOKENS_SENDER_INTERFACE_HASH);
-      if (implementer != address(0)) {
-          IERC777Sender(implementer).tokensToSend(operator, from, to, amount, userData, operatorData);
-      }
+      super._callTokensToSend(operator, from, to, amount, userData, operatorData);
   }
 
+  /**
+   * @notice Requires the caller to be the Pool admin
+   */
   modifier onlyAdmin() {
     require(_pool.isAdmin(msg.sender), "WhitelistToken/is-admin");
     _;
