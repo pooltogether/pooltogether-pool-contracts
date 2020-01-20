@@ -16,12 +16,12 @@ You should have received a copy of the GNU General Public License
 along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 contract ICErc20 {
     address public underlying;
-    function mint(uint mintAmount) external returns (uint);
-    function redeemUnderlying(uint redeemAmount) external returns (uint);
+    function mint(uint256 mintAmount) external returns (uint);
+    function redeemUnderlying(uint256 redeemAmount) external returns (uint);
     function balanceOfUnderlying(address owner) external returns (uint);
     function getCash() external view returns (uint);
     function supplyRatePerBlock() external view returns (uint);

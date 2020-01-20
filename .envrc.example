@@ -1,4 +1,12 @@
 export HDWALLET_MNEMONIC="front ski wolf horse woman mushroom frown fold vacuum alert total sugar"
 export INFURA_PROVIDER_URL=https://ropsten.infura.io/v3/< your api key >
 export INFURA_PROVIDER_URL_MAINNET=https://mainnet.infura.io/v3/< your api key >
+export INFURA_PROVIDER_URL_KOVAN=https://kovan.infura.io/v3/< your api key>
 export ADMIN_ADDRESS=0x51f595ef681c3b3b6b6949fbbb36b7d98daa15bf
+
+export LOCALHOST_URL=http://127.0.0.1:8546 # The URL of the local ganache instance that is forked
+
+# export GANACHE_FORK_URL=http://geth.pooltogether.com:8545 # Should point to the mainnet URL we are pulling against.  Could be the same as INFURA_PROVIDER_URL_MAINNET
+# export GRAPHQL_MAINNET_ENDPOINT_URI=https://api.thegraph.com/subgraphs/name/asselstine/pooltogether
+# export SECRET_SEED=0x1234123412341234123412341234123412341234123412341234123412341234
+# export SALT_SEED=0x1234123412341234123412341234123412341234123412341234123412341235

@@ -1,7 +1,9 @@
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
+const chai = require('./helpers/chai')
 const DrawManager = artifacts.require('DrawManager.sol')
 const ExposedDrawManager = artifacts.require('ExposedDrawManager.sol')
 const toWei = require('./helpers/toWei')
+const fromWei = require('./helpers/fromWei')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -47,7 +49,7 @@ contract('DrawManager', (accounts) => {
         })
     })
 
-    describe('deposit', () => {
+    describe('deposit()', () => {
         it('should fail if there is no current draw', async () => {
             let failed = true
             try {
@@ -61,6 +63,10 @@ contract('DrawManager', (accounts) => {
         describe('when a draw has been opened', () => {
             beforeEach(async () => {
                 await drawManager.openNextDraw()
+            })
+
+            it('should fail if the address is zero', async () => {
+                await chai.assert.isRejected(drawManager.deposit(ZERO_ADDRESS, toWei('10')), /Pool\/not-zero/)
             })
 
             it('should deposit the tokens as open tokens', async () => {
@@ -104,6 +110,13 @@ contract('DrawManager', (accounts) => {
                         assert.equal(await drawManager.openSupply(), toWei('10'))
                         assert.equal(await drawManager.committedBalanceOf(user1), toWei('10'))
                         assert.equal(await drawManager.committedSupply(), toWei('10'))
+
+                        // accept a second deposit into the open draw
+                        await drawManager.deposit(user1, toWei('10'))
+
+                        assert.equal(await drawManager.secondDrawIndex(user1), '2')
+                        assert.equal(await drawManager.openBalanceOf(user1), toWei('20'))
+                        assert.equal(await drawManager.openSupply(), toWei('20'))
                     })
 
                     describe('and the user has deposited, and there is a third open', () => {
@@ -205,11 +218,148 @@ contract('DrawManager', (accounts) => {
         })
     })
 
-    describe('withdraw', () => {
+    describe('depositCommitted()', () => {
+        beforeEach(async () => {
+            await drawManager.openNextDraw()
+        })
+
+        it('should fail if there is no committed draw', async () => {
+            await chai.assert.isRejected(drawManager.depositCommitted(user1, toWei('10')), /Pool\/no-commit/)
+        })
+
+        it('should fail if the address is zero', async () => {
+            await drawManager.openNextDraw() // ensure it's committed
+            await chai.assert.isRejected(drawManager.depositCommitted(ZERO_ADDRESS, toWei('10')), /Pool\/not-zero/)
+        })
+
+        it('should work when recipient already has committed deposits', async () => {
+            await drawManager.deposit(user1, toWei('10'))
+            await drawManager.openNextDraw()
+            await drawManager.depositCommitted(user1, toWei('10'))
+            assert.equal(await drawManager.committedBalanceOf(user1), toWei('20'))
+        })
+
+        it('should work when recipient has no committed deposits', async () => {
+            await drawManager.openNextDraw()
+            await drawManager.deposit(user1, toWei('10'))
+            await drawManager.depositCommitted(user1, toWei('10'))
+            assert.equal(await drawManager.committedBalanceOf(user1), toWei('10'))
+        })
+    })
+
+    describe('withdrawOpen()', () => {
+        it('should now allow a user to withdraw more', async () => {
+            await chai.assert.isRejected(drawManager.withdrawOpen(user1, toWei('10.00001')), /Pool\/no-open/)
+        })
+
+        describe('with open draw', () => {
+            beforeEach(async () => {
+                await drawManager.openNextDraw()
+                await drawManager.deposit(user1, toWei('10'))
+            })
+
+            it('should do nothing if the user does not exist', async () => {
+                await drawManager.withdrawOpen(user2, toWei('0'))
+            })
+
+            it('should not allow withdrawing from the zero address', async () => {
+                await chai.assert.isRejected(drawManager.withdrawOpen(ZERO_ADDRESS, toWei('5')), /Pool\/not-zero/)
+            })
+        
+            it('should allow a user to partially withdraw', async () => {
+                assert.equal(await drawManager.openBalanceOf(user1), toWei('10'))
+                await drawManager.withdrawOpen(user1, toWei('5'))
+                assert.equal(await drawManager.openBalanceOf(user1), toWei('5'))
+            })
+    
+            it('should allow a user to partially withdraw', async () => {
+                await drawManager.withdrawOpen(user1, toWei('10'))
+                assert.equal(await drawManager.openBalanceOf(user1), toWei('0'))
+            })
+    
+            it('should now allow a user to withdraw more', async () => {
+                await chai.assert.isRejected(drawManager.withdrawOpen(user1, toWei('10.00001')), /DrawMan\/exceeds-open/)
+            })
+        })
+    })
+
+    describe('withdrawCommitted()', () => {
+        beforeEach(async () => {
+            await drawManager.openNextDraw()
+            await drawManager.deposit(user1, toWei('10'))
+        })
+
+        it('should fail if the address is zero', async () => {
+            await drawManager.openNextDraw() // make committed
+            await chai.assert.isRejected(drawManager.withdrawCommitted(ZERO_ADDRESS, toWei('10')), /Pool\/not-zero/)
+        })
+
+        it('should fail if there is no committed draw', async () => {
+            await chai.assert.isRejected(drawManager.withdrawCommitted(user1, toWei('10')), /Pool\/no-commit/)
+        })
+
+        it('should allow a user to withdraw their committed tokens', async () => {
+            await drawManager.openNextDraw()
+            await drawManager.withdrawCommitted(user1, toWei('10'))
+
+            assert.equal(await drawManager.openBalanceOf(user1), toWei('0'))
+            assert.equal(await drawManager.committedBalanceOf(user1), toWei('0'))
+        })
+
+        it('should allow a user to withdraw their committed tokens when they also have open tokens', async () => {
+            await drawManager.openNextDraw()
+            await drawManager.deposit(user1, toWei('5'))
+            await drawManager.withdrawCommitted(user1, toWei('10'))
+
+            assert.equal(await drawManager.openBalanceOf(user1), toWei('5'))
+            assert.equal(await drawManager.committedBalanceOf(user1), toWei('0'))
+        })
+
+        it('should allow a user to withdraw partial committed tokens when they have two committed draws', async () => {
+            await drawManager.openNextDraw()
+            await drawManager.deposit(user1, toWei('5'))
+            await drawManager.openNextDraw()
+
+            await drawManager.withdrawCommitted(user1, toWei('1'))
+            assert.equal(await drawManager.committedBalanceOf(user1), toWei('14'))
+            assert.equal(await drawManager.openBalanceOf(user1), toWei('0'))
+
+            await drawManager.withdrawCommitted(user1, toWei('10'))
+            assert.equal(await drawManager.committedBalanceOf(user1), toWei('4'))
+            assert.equal(await drawManager.openBalanceOf(user1), toWei('0'))
+        })
+
+        it('should allow a user to fully withdraw committed tokens when they have two committed draws', async () => {
+            await drawManager.openNextDraw()
+            await drawManager.deposit(user1, toWei('5'))
+            await drawManager.openNextDraw()
+            await drawManager.withdrawCommitted(user1, toWei('15'))
+
+            assert.equal(await drawManager.openBalanceOf(user1), toWei('0'))
+            assert.equal(await drawManager.committedBalanceOf(user1), toWei('0'))
+        })
+
+        it('should not withdraw open tokens', async () => {
+            let failed = true
+            try {
+                await drawManager.withdrawCommitted(user1, toWei('10'))
+                failed = false
+            } catch (e) {}
+            assert.ok(failed, 'should not be able to withdraw zero tokens')
+
+            assert.equal(await drawManager.openBalanceOf(user1), toWei('10'))
+        })
+    })
+
+    describe('withdraw()', () => {
         beforeEach(async () => {
             await drawManager.openNextDraw()
             await drawManager.deposit(user1, toWei('10'))
             assert.equal(await drawManager.openBalanceOf(user1), toWei('10'))
+        })
+
+        it('should fail if the address is zero', async () => {
+            await chai.assert.isRejected(drawManager.withdraw(ZERO_ADDRESS), /Pool\/not-zero/)
         })
 
         it('should allow the user to withdraw their open tokens', async () => {
@@ -242,8 +392,11 @@ contract('DrawManager', (accounts) => {
             beforeEach(async () => {
                 await drawManager.openNextDraw()
                 await drawManager.deposit(user1, toWei('10'))
+                assert.equal(fromWei(await drawManager.openSupply()), '10')
                 await drawManager.deposit(user2, toWei('10'))
+                assert.equal(fromWei(await drawManager.openSupply()), '20')
                 await drawManager.deposit(user3, toWei('10'))
+                assert.equal(fromWei(await drawManager.openSupply()), '30')
             })
 
             it('should return 0', async () => {
@@ -252,7 +405,10 @@ contract('DrawManager', (accounts) => {
 
             describe('and they become eligible', async () => {
                 beforeEach(async () => {
+                    assert.equal(fromWei(await drawManager.openSupply()), '30')
                     await drawManager.openNextDraw()
+                    assert.equal(fromWei(await drawManager.openSupply()), '0')
+                    assert.equal(fromWei(await drawManager.committedSupply()), '30')
                 })
 
                 it('should work', async () => {
@@ -270,8 +426,17 @@ contract('DrawManager', (accounts) => {
 
                 describe('and one withdraws', async () => { 
                     beforeEach(async () => {
+                        // console.log('first draw index: ', await drawManager.firstDrawIndex(user2))
+                        // console.log('second draw index: ', await drawManager.secondDrawIndex(user2))
+                        // console.log('committed balance: ', await drawManager.committedBalanceOf(user2))
                         await drawManager.withdraw(user2)
-                        assert.equal(await drawManager.committedSupply(), toWei('20'))
+                        // console.log('total committed nodes: ', (await drawManager.totalCommittedNodes()).toString())
+                        // console.log('node @ 0: ', fromWei(await drawManager.committedNodeAt(0)))
+                        // console.log('node @ 1: ', fromWei(await drawManager.committedNodeAt(1)))
+                        // console.log('node id @ 0: ', await drawManager.committedNodeIdAt(0))
+                        // console.log('node id @ 1: ', await drawManager.committedNodeIdAt(1))
+                        // console.log('node id @ 2: ', await drawManager.committedNodeIdAt(2))
+                        assert.equal(fromWei(await drawManager.committedSupply()), '20')
                     })
 
                     it('should fail with the previous total', async () => {

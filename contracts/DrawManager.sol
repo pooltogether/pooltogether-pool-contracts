@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 import "./UniformRandomNumber.sol";
 import "@kleros/kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
@@ -41,7 +41,7 @@ library DrawManager {
      */
     bytes32 public constant TREE_OF_DRAWS = "TreeOfDraws";
 
-    uint8 public constant MAX_LEAVES = 10;
+    uint8 public constant MAX_BRANCHES_PER_NODE = 10;
 
     /**
      * Stores information for all draws.
@@ -54,19 +54,19 @@ library DrawManager {
         SortitionSumTreeFactory.SortitionSumTrees sortitionSumTrees;
 
         /**
-         * Stores the first Draw index that an address deposited to.
+         * Stores the consolidated draw index that an address deposited to.
          */
-        mapping(address => uint256) usersFirstDrawIndex;
+        mapping(address => uint256) consolidatedDrawIndices;
 
         /**
          * Stores the last Draw index that an address deposited to.
          */
-        mapping(address => uint256) usersSecondDrawIndex;
+        mapping(address => uint256) latestDrawIndices;
 
         /**
          * Stores a mapping of Draw index => Draw total
          */
-        mapping(uint256 => uint256) drawTotals;
+        mapping(uint256 => uint256) __deprecated__drawTotals;
 
         /**
          * The current open Draw index
@@ -76,7 +76,7 @@ library DrawManager {
         /**
          * The total of committed balances
          */
-        uint256 committedSupply;
+        uint256 __deprecated__committedSupply;
     }
 
     /**
@@ -87,17 +87,16 @@ library DrawManager {
     function openNextDraw(State storage self) public returns (uint256) {
         if (self.openDrawIndex == 0) {
             // If there is no previous draw, we must initialize
-            self.sortitionSumTrees.createTree(TREE_OF_DRAWS, MAX_LEAVES);
+            self.sortitionSumTrees.createTree(TREE_OF_DRAWS, MAX_BRANCHES_PER_NODE);
         } else {
             // else add current draw to sortition sum trees
             bytes32 drawId = bytes32(self.openDrawIndex);
-            uint256 drawTotal = self.drawTotals[self.openDrawIndex];
+            uint256 drawTotal = openSupply(self);
             self.sortitionSumTrees.set(TREE_OF_DRAWS, drawTotal, drawId);
-            self.committedSupply = self.committedSupply.add(drawTotal);
         }
         // now create a new draw
         uint256 drawIndex = self.openDrawIndex.add(1);
-        self.sortitionSumTrees.createTree(bytes32(drawIndex), MAX_LEAVES);
+        self.sortitionSumTrees.createTree(bytes32(drawIndex), MAX_BRANCHES_PER_NODE);
         self.openDrawIndex = drawIndex;
 
         return drawIndex;
@@ -109,7 +108,7 @@ library DrawManager {
      * @param _addr The address to deposit for
      * @param _amount The amount to deposit
      */
-    function deposit(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) {
+    function deposit(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) onlyNonZero(_addr) {
         bytes32 userId = bytes32(uint256(_addr));
         uint256 openDrawIndex = self.openDrawIndex;
 
@@ -118,27 +117,48 @@ library DrawManager {
         currentAmount = currentAmount.add(_amount);
         drawSet(self, openDrawIndex, currentAmount, _addr);
 
-        uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
-        uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
+        uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
+        uint256 latestDrawIndex = self.latestDrawIndices[_addr];
 
         // if this is the users first draw, set it
-        if (firstDrawIndex == 0) {
-            self.usersFirstDrawIndex[_addr] = openDrawIndex;
-        // otherwise, if the first draw is not this draw
-        } else if (firstDrawIndex != openDrawIndex) {
+        if (consolidatedDrawIndex == 0) {
+            self.consolidatedDrawIndices[_addr] = openDrawIndex;
+        // otherwise, if the consolidated draw is not this draw
+        } else if (consolidatedDrawIndex != openDrawIndex) {
             // if a second draw does not exist
-            if (secondDrawIndex == 0) {
+            if (latestDrawIndex == 0) {
                 // set the second draw to the current draw
-                self.usersSecondDrawIndex[_addr] = openDrawIndex;
+                self.latestDrawIndices[_addr] = openDrawIndex;
             // otherwise if a second draw exists but is not the current one
-            } else if (secondDrawIndex != openDrawIndex) {
+            } else if (latestDrawIndex != openDrawIndex) {
                 // merge it into the first draw, and update the second draw index to this one
-                uint256 firstAmount = self.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), userId);
-                uint256 secondAmount = self.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), userId);
-                drawSet(self, firstDrawIndex, firstAmount.add(secondAmount), _addr);
-                drawSet(self, secondDrawIndex, 0, _addr);
-                self.usersSecondDrawIndex[_addr] = openDrawIndex;
+                uint256 consolidatedAmount = self.sortitionSumTrees.stakeOf(bytes32(consolidatedDrawIndex), userId);
+                uint256 latestAmount = self.sortitionSumTrees.stakeOf(bytes32(latestDrawIndex), userId);
+                drawSet(self, consolidatedDrawIndex, consolidatedAmount.add(latestAmount), _addr);
+                drawSet(self, latestDrawIndex, 0, _addr);
+                self.latestDrawIndices[_addr] = openDrawIndex;
             }
+        }
+    }
+
+    /**
+     * @notice Deposits into a user's committed balance, thereby bypassing the open draw.
+     * @param self The DrawManager state
+     * @param _addr The address of the user for whom to deposit
+     * @param _amount The amount to deposit
+     */
+    function depositCommitted(State storage self, address _addr, uint256 _amount) public requireCommittedDraw(self) onlyNonZero(_addr) {
+        bytes32 userId = bytes32(uint256(_addr));
+        uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
+
+        // if they have a committed balance
+        if (consolidatedDrawIndex != 0 && consolidatedDrawIndex != self.openDrawIndex) {
+            uint256 consolidatedAmount = self.sortitionSumTrees.stakeOf(bytes32(consolidatedDrawIndex), userId);
+            drawSet(self, consolidatedDrawIndex, consolidatedAmount.add(_amount), _addr);
+        } else { // they must not have any committed balance
+            self.latestDrawIndices[_addr] = consolidatedDrawIndex;
+            self.consolidatedDrawIndices[_addr] = self.openDrawIndex.sub(1);
+            drawSet(self, self.consolidatedDrawIndices[_addr], _amount, _addr);
         }
     }
 
@@ -147,16 +167,76 @@ library DrawManager {
      * @param self The DrawManager state
      * @param _addr The address whose balance to withdraw
      */
-    function withdraw(State storage self, address _addr) public requireOpenDraw(self) {
-        uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
-        uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
+    function withdraw(State storage self, address _addr) public requireOpenDraw(self) onlyNonZero(_addr) {
+        uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
+        uint256 latestDrawIndex = self.latestDrawIndices[_addr];
 
-        if (firstDrawIndex != 0) {
-            drawSet(self, firstDrawIndex, 0, _addr);
+        if (consolidatedDrawIndex != 0) {
+            drawSet(self, consolidatedDrawIndex, 0, _addr);
+            delete self.consolidatedDrawIndices[_addr];
         }
 
-        if (secondDrawIndex != 0) {
-            drawSet(self, secondDrawIndex, 0, _addr);
+        if (latestDrawIndex != 0) {
+            drawSet(self, latestDrawIndex, 0, _addr);
+            delete self.latestDrawIndices[_addr];
+        }
+    }
+
+    function withdrawOpen(State storage self, address _addr, uint256 _amount) public requireOpenDraw(self) onlyNonZero(_addr) {
+        bytes32 userId = bytes32(uint256(_addr));
+        uint256 openTotal = self.sortitionSumTrees.stakeOf(bytes32(self.openDrawIndex), userId);
+
+        require(_amount <= openTotal, "DrawMan/exceeds-open");
+
+        uint256 remaining = openTotal.sub(_amount);
+
+        drawSet(self, self.openDrawIndex, remaining, _addr);
+    }
+
+    /**
+     * @notice Withdraw's from a user's committed balance.  Fails if the user attempts to take more than available.
+     * @param self The DrawManager state
+     * @param _addr The user to withdraw from
+     * @param _amount The amount to withdraw.
+     */
+    function withdrawCommitted(State storage self, address _addr, uint256 _amount) public requireCommittedDraw(self) onlyNonZero(_addr) {
+        bytes32 userId = bytes32(uint256(_addr));
+        uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
+        uint256 latestDrawIndex = self.latestDrawIndices[_addr];
+
+        uint256 consolidatedAmount = 0;
+        uint256 latestAmount = 0;
+        uint256 total = 0;
+
+        if (latestDrawIndex != 0 && latestDrawIndex != self.openDrawIndex) {
+            latestAmount = self.sortitionSumTrees.stakeOf(bytes32(latestDrawIndex), userId);
+            total = total.add(latestAmount);
+        }
+
+        if (consolidatedDrawIndex != 0 && consolidatedDrawIndex != self.openDrawIndex) {
+            consolidatedAmount = self.sortitionSumTrees.stakeOf(bytes32(consolidatedDrawIndex), userId);
+            total = total.add(consolidatedAmount);
+        }
+
+        require(_amount <= total, "Pool/exceed");
+
+        uint256 remaining = total.sub(_amount);
+
+        // if there was a second amount that needs to be updated
+        if (remaining > consolidatedAmount) {
+            uint256 secondRemaining = remaining.sub(consolidatedAmount);
+            drawSet(self, latestDrawIndex, secondRemaining, _addr);
+        } else if (latestAmount > 0) { // else delete the second amount if it exists
+            delete self.latestDrawIndices[_addr];
+            drawSet(self, latestDrawIndex, 0, _addr);
+        }
+
+        // if the consolidated amount needs to be destroyed
+        if (remaining == 0) {
+            delete self.consolidatedDrawIndices[_addr];
+            drawSet(self, consolidatedDrawIndex, 0, _addr);
+        } else if (remaining < consolidatedAmount) {
+            drawSet(self, consolidatedDrawIndex, remaining, _addr);
         }
     }
 
@@ -176,15 +256,15 @@ library DrawManager {
     function committedBalanceOf(State storage self, address _addr) public view returns (uint256) {
         uint256 balance = 0;
 
-        uint256 firstDrawIndex = self.usersFirstDrawIndex[_addr];
-        uint256 secondDrawIndex = self.usersSecondDrawIndex[_addr];
+        uint256 consolidatedDrawIndex = self.consolidatedDrawIndices[_addr];
+        uint256 latestDrawIndex = self.latestDrawIndices[_addr];
 
-        if (firstDrawIndex != 0 && firstDrawIndex != self.openDrawIndex) {
-            balance = balance.add(self.sortitionSumTrees.stakeOf(bytes32(firstDrawIndex), bytes32(uint256(_addr))));
+        if (consolidatedDrawIndex != 0 && consolidatedDrawIndex != self.openDrawIndex) {
+            balance = self.sortitionSumTrees.stakeOf(bytes32(consolidatedDrawIndex), bytes32(uint256(_addr)));
         }
 
-        if (secondDrawIndex != 0 && secondDrawIndex != self.openDrawIndex) {
-            balance = balance.add(self.sortitionSumTrees.stakeOf(bytes32(secondDrawIndex), bytes32(uint256(_addr))));
+        if (latestDrawIndex != 0 && latestDrawIndex != self.openDrawIndex) {
+            balance = balance.add(self.sortitionSumTrees.stakeOf(bytes32(latestDrawIndex), bytes32(uint256(_addr))));
         }
 
         return balance;
@@ -210,7 +290,16 @@ library DrawManager {
      * @return The open draw total balance
      */
     function openSupply(State storage self) public view returns (uint256) {
-        return self.drawTotals[self.openDrawIndex];
+        return self.sortitionSumTrees.total(bytes32(self.openDrawIndex));
+    }
+
+    /**
+     * @notice Returns the committed balance for the DrawManager
+     * @param self The DrawManager state
+     * @return The total committed balance
+     */
+    function committedSupply(State storage self) public view returns (uint256) {
+        return self.sortitionSumTrees.total(TREE_OF_DRAWS);
     }
 
     /**
@@ -231,53 +320,34 @@ library DrawManager {
             // Update the Draw's balance for that address
             self.sortitionSumTrees.set(drawId, _amount, userId);
 
-            uint256 drawTotal = self.drawTotals[_drawIndex];
-            if (oldAmount > _amount) {
-                // If the amount is less than the old amount
+            // if the draw is committed
+            if (_drawIndex != self.openDrawIndex) {
+                // Get the new draw total
+                uint256 newDrawTotal = self.sortitionSumTrees.total(drawId);
 
-                // Subtract the difference from the Draw total
-                uint256 diffAmount = oldAmount.sub(_amount);
-                drawTotal = drawTotal.sub(diffAmount);
-                if (_drawIndex != self.openDrawIndex) {
-                    // If the Draw is committed, update the root tree and committed supply
-                    self.sortitionSumTrees.set(TREE_OF_DRAWS, drawTotal, drawId);
-                    self.committedSupply = self.committedSupply.sub(diffAmount);
-                }
-            } else { // oldAmount < _amount
-                // if the amount is greater than the old amount
-
-                // Add the difference to the Draw total
-                uint256 diffAmount = _amount.sub(oldAmount);
-                drawTotal = drawTotal.add(diffAmount);
-                if (_drawIndex != self.openDrawIndex) {
-                    // If the Draw is committed, update the root tree and committed supply
-                    self.sortitionSumTrees.set(TREE_OF_DRAWS, drawTotal, drawId);
-                    self.committedSupply = self.committedSupply.add(diffAmount);
-                }
+                // update the draw in the committed tree
+                self.sortitionSumTrees.set(TREE_OF_DRAWS, newDrawTotal, drawId);
             }
-            // Update the Draw total with the new total
-            self.drawTotals[_drawIndex] = drawTotal;
         }
     }
 
    /**
-     * @notice Selects an address by indexing into the committed tokens using the passed token
+     * @notice Selects an address by indexing into the committed tokens using the passed token.
+     * If there is no committed supply, the zero address is returned.
      * @param self The DrawManager state
      * @param _token The token index to select
      * @return The selected address
      */
     function draw(State storage self, uint256 _token) public view returns (address) {
         // If there is no one to select, just return the zero address
-        if (self.committedSupply == 0) {
+        if (committedSupply(self) == 0) {
             return address(0);
         }
-        require(_token < self.committedSupply, "token is beyond the eligible supply");
-        uint256 drawIndex = uint256(self.sortitionSumTrees.draw(TREE_OF_DRAWS, _token));
-        assert(drawIndex != 0);
-        uint256 drawSupply = self.drawTotals[drawIndex];
-        assert(drawSupply > 0);
+        require(_token < committedSupply(self), "Pool/ineligible");
+        bytes32 drawIndex = self.sortitionSumTrees.draw(TREE_OF_DRAWS, _token);
+        uint256 drawSupply = self.sortitionSumTrees.total(drawIndex);
         uint256 drawToken = _token % drawSupply;
-        return address(uint256(self.sortitionSumTrees.draw(bytes32(drawIndex), drawToken)));
+        return address(uint256(self.sortitionSumTrees.draw(drawIndex, drawToken)));
     }
 
     /**
@@ -288,11 +358,28 @@ library DrawManager {
      * @return The selected address
      */
     function drawWithEntropy(State storage self, bytes32 _entropy) public view returns (address) {
-        return draw(self, UniformRandomNumber.uniform(uint256(_entropy), self.committedSupply));
+        uint256 bound = committedSupply(self);
+        address selected;
+        if (bound == 0) {
+            selected = address(0);
+        } else {
+            selected = draw(self, UniformRandomNumber.uniform(uint256(_entropy), bound));
+        }
+        return selected;
     }
 
     modifier requireOpenDraw(State storage self) {
-        require(self.openDrawIndex > 0, "there is no open draw");
+        require(self.openDrawIndex > 0, "Pool/no-open");
+        _;
+    }
+
+    modifier requireCommittedDraw(State storage self) {
+        require(self.openDrawIndex > 1, "Pool/no-commit");
+        _;
+    }
+
+    modifier onlyNonZero(address _addr) {
+        require(_addr != address(0), "Pool/not-zero");
         _;
     }
 }

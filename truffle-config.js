@@ -2,22 +2,24 @@
 
 var HDWalletProvider = require("truffle-hdwallet-provider")
 
+const isCoverage = process.env.COVERAGE === 'true'
+
 module.exports = {
   networks: {
+    // development: {
+    //   host: 'localhost',
+    //   port: 7545,
+    //   gas: 12000000,
+    //   gasPrice: 1 * 1000000000,
+    //   network_id: '5777'
+    // },
+
     local: {
       host: 'localhost',
       port: 8545,
       gas: 6999999,
       gasPrice: 1 * 1000000000,
       network_id: '*'
-    },
-
-    coverage: {
-      host: "localhost",
-      network_id: "*",
-      port: 8555,         // <-- If you change this, also set the port option in .solcover.js.
-      gas: 0xfffffffffff, // <-- Use this high gas value
-      gasPrice: 0x01      // <-- Use this low gas price
     },
 
     rinkeby: {
@@ -30,7 +32,7 @@ module.exports = {
       skipDryRun: true,
       network_id: 4,
       gas: 6980000,
-      gasPrice: 6.001 * 1000000000
+      gasPrice: 2.001 * 1000000000
     },
 
     mainnet: {
@@ -42,25 +44,56 @@ module.exports = {
       ),
       skipDryRun: true,
       network_id: 1,
-      // gas: 1000000,
+      gas: 5000000
+      // gasPrice: 11.101 * 1000000000
+    },
+
+    kovan: {
+      provider: () => new HDWalletProvider(
+        process.env.HDWALLET_MNEMONIC,
+        process.env.INFURA_PROVIDER_URL_KOVAN,
+        0,
+        3
+      ),
+      skipDryRun: true,
+      network_id: 42
+    },
+
+    mainnet_fork: {
+      provider: () => new HDWalletProvider(
+        process.env.HDWALLET_MNEMONIC,
+        process.env.LOCALHOST_URL,
+        0,
+        3
+      ),
+      gas: 7000000,
+      network_id: 999
       // gasPrice: 11.101 * 1000000000
     }
   },
 
+  plugins: ["solidity-coverage"],
+
   compilers: {
     solc: {
-      version: "0.5.10",
+      version: "0.5.12",
+      settings: {
+        evmVersion: 'constantinpole'
+      }
     }
   },
 
+  // optimization breaks code coverage
   solc: {
     optimizer: {
-      enabled: true,
-      runs: 100
+      enabled: !isCoverage,
+      runs: 200
     }
   },
 
-  mocha: {
+  mocha: isCoverage ? {
+    reporter: 'mocha-junit-reporter',
+  } : {
     reporter: 'eth-gas-reporter',
     reporterOptions : {
       currency: 'USD',

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 import "../DrawManager.sol";
 
@@ -33,8 +33,20 @@ contract ExposedDrawManager {
       state.deposit(user, amount);
     }
 
+    function depositCommitted(address _addr, uint256 _amount) public {
+      state.depositCommitted(_addr, _amount);
+    }
+
     function withdraw(address user) public {
       state.withdraw(user);
+    }
+
+    function withdrawOpen(address user, uint256 amount) public {
+      state.withdrawOpen(user, amount);
+    }
+
+    function withdrawCommitted(address user, uint256 amount) public {
+      state.withdrawCommitted(user, amount);
     }
 
     function balanceOf(address user) public view returns (uint256) {
@@ -50,7 +62,7 @@ contract ExposedDrawManager {
     }
 
     function committedSupply() public view returns (uint256) {
-      return state.committedSupply;
+      return state.committedSupply();
     }
 
     function openSupply() public view returns (uint256) {
@@ -66,11 +78,11 @@ contract ExposedDrawManager {
     }
 
     function firstDrawIndex(address user) public view returns (uint256) {
-        return state.usersFirstDrawIndex[user];
+        return state.consolidatedDrawIndices[user];
     }
 
     function secondDrawIndex(address user) public view returns (uint256) {
-        return state.usersSecondDrawIndex[user];
+        return state.latestDrawIndices[user];
     }
 
     function drawWithEntropy(bytes32 entropy) public view returns (address) {

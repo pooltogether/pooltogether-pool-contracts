@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 /**
  * @author Brendan Asselstine
@@ -29,9 +29,7 @@ library UniformRandomNumber {
   /// @param _upperBound The upper bound of the desired number
   /// @return A random number less than the _upperBound
   function uniform(uint256 _entropy, uint256 _upperBound) internal pure returns (uint256) {
-    if (_upperBound == 0) {
-      return 0;
-    }
+    require(_upperBound > 0, "UniformRand/min-bound");
     uint256 min = -_upperBound % _upperBound;
     uint256 random = _entropy;
     while (true) {
