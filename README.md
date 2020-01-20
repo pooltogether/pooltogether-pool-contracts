@@ -1,6 +1,6 @@
 # PoolTogether Contracts
 
-[![CircleCI](https://circleci.com/gh/pooltogether/pooltogether-contracts/tree/v2.x.svg?style=svg)](https://circleci.com/gh/pooltogether/pooltogether-contracts/tree/master)
+[![CircleCI](https://circleci.com/gh/pooltogether/pooltogether-contracts.svg?style=svg)](https://circleci.com/gh/pooltogether/pooltogether-contracts)
 
 [Code Coverage](https://v2.coverage.pooltogether.us/)
 
