@@ -38,6 +38,9 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
   bytes32 constant internal TOKENS_RECIPIENT_INTERFACE_HASH =
       0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
 
+  uint256 internal constant DEFAULT_LOCK_DURATION = 40;
+  uint256 internal constant DEFAULT_COOLDOWN_DURATION = 80;
+
   /**
    * @notice Returns the address of the ScdMcdMigration contract (see https://github.com/makerdao/developerguides/blob/master/mcd/upgrading-to-multi-collateral-dai/upgrading-to-multi-collateral-dai.md#direct-integration-with-smart-contracts)
    */
@@ -75,7 +78,7 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
   }
 
   /**
-   * @notice Used to initialze the BasePool contract after an upgrade.  Registers the MCDAwarePool with the ERC1820 registry so that it can receive tokens, and inits the block lock.
+   * @notice Used to initialize the BasePool contract after an upgrade.  Registers the MCDAwarePool with the ERC1820 registry so that it can receive tokens, and inits the block lock.
    */
   function initMCDAwarePool() public {
     ERC1820_REGISTRY.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));

@@ -228,6 +228,9 @@ contract('BasePool', (accounts) => {
       await poolContext.nextDraw()
       await pool.lockTokens()
       await pool.reward(SECRET, SALT)
+
+      // Trigger the next block (only on testrpc!)
+      await web3.eth.sendTransaction({ to: user1, from: user2, value: 1 })
       await pool.lockTokens()
       await chai.assert.isRejected(pool.reward(SECRET, SALT), /the committed draw has already been rewarded/)
     })
@@ -747,6 +750,9 @@ contract('BasePool', (accounts) => {
 
       // The user's balance should remain the same
       assert.equal((await pool.totalBalanceOf(user1)).toString(), depositAmount.toString())
+
+      // Trigger the next block (only on testrpc!)
+      await web3.eth.sendTransaction({ to: user1, from: user2, value: 1 })
 
       // Now even though there was no reward, the winnings should have carried over
       await poolContext.rewardAndOpenNextDraw()

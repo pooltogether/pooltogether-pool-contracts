@@ -18,7 +18,6 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
 
   const Token = artifacts.require('Token.sol')
   const LocalMCDAwarePool = artifacts.require('LocalMCDAwarePool.sol')
-  const BasePool = artifacts.require('BasePool.sol')
   const CErc20Mock = artifacts.require('CErc20Mock.sol')
   const FixidityLib = artifacts.require('FixidityLib.sol')
   const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
@@ -78,7 +77,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     }
   }
 
-  this.createPool = async (feeFraction = new BN('0'), cooldownDuration = 0) => {
+  this.createPool = async (feeFraction = new BN('0'), cooldownDuration = 1) => {
     pool = await this.createPoolNoOpenDraw(feeFraction, cooldownDuration)
     await this.openNextDraw()
     return pool
@@ -105,7 +104,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     return await LocalMCDAwarePool.new()
   }
 
-  this.createPoolNoOpenDraw = async (feeFraction = new BN('0'), cooldownDuration = 0) => {
+  this.createPoolNoOpenDraw = async (feeFraction = new BN('0'), cooldownDuration = 1) => {
     pool = await this.newPool()
 
     // just long enough to lock then reward

@@ -32,6 +32,7 @@ library Blocklock {
    * @param cooldownDuration The duration of the cooldown, in blocks.
    */
   function setCooldownDuration(State storage self, uint256 cooldownDuration) public {
+    require(cooldownDuration > 0, "Blocklock/cool-min");
     self.cooldownDuration = cooldownDuration;
   }
 
