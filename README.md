@@ -103,7 +103,7 @@ You can visualize the rolling draws like so:
 
 ## Winner Selection
 
-When a Pool administrator opens a new draw, they commit a hash of a secret and salt.  When the Pool administrator rewards a draw, they reveal the secret and salt.  The secret is combined with the hash of the gross winnings to serve as the entropy used to randomly select a winner.
+When a Pool administrator opens a new draw, they commit a hash of a secret and salt.  When the Pool administrator rewards a draw, they reveal the secret and salt.  The secret is then hashed and used to randomly select a winner.
 
 Decentralizing this portion of the protocol is very high on our to-do list.
 
