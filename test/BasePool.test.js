@@ -8,6 +8,7 @@ const Pool = artifacts.require('Pool.sol')
 const {
   SECRET,
   SALT,
+  MAX_NEW_FIXED,
   SECRET_HASH,
   ZERO_ADDRESS,
   TICKET_PRICE
@@ -565,13 +566,13 @@ contract('BasePool', (accounts) => {
         await pool.depositPool(toWei('10'), { from: user1 })
         await poolContext.nextDraw()
 
-        await pool.withdrawCommittedDeposit(toWei('3'), { from: user1 })
+        const { receipt } = await pool.withdrawCommittedDeposit(toWei('3'), { from: user1 })
 
-        const [Burned, Transfer] = await poolToken.getPastEvents({fromBlock: 0, toBlock: 'latest'})
+        const [Redeemed, Transfer] = await poolToken.getPastEvents({fromBlock: receipt.blockNumber, toBlock: 'latest'})
 
-        assert.equal(Burned.event, 'Burned')
-        assert.equal(Burned.args.from, user1)
-        assert.equal(Burned.args.amount, toWei('3'))
+        assert.equal(Redeemed.event, 'Redeemed')
+        assert.equal(Redeemed.args.from, user1)
+        assert.equal(Redeemed.args.amount, toWei('3'))
       })
     })
 
@@ -756,6 +757,38 @@ contract('BasePool', (accounts) => {
     })
   })
 
+  describe('when a pool reward overflows', () => {
+    it('should save the winnings for the next draw', async () => {
+      // Here we create the pool and open the first draw
+      pool = await poolContext.createPool(feeFraction)
+
+      // We deposit into the pool
+      const depositAmount = web3.utils.toWei('100', 'ether')
+      await token.approve(pool.address, depositAmount, { from: user1 })
+      await pool.depositPool(depositAmount, { from: user1 })
+
+      // Now we commit a draw, and open a new draw.  User is committed
+      await poolContext.openNextDraw()
+
+      assert.equal((await pool.totalBalanceOf(user1)).toString(), depositAmount)
+
+      const overflowReward = new BN(MAX_NEW_FIXED).add(new BN(web3.utils.toWei('99', 'ether'))).toString()
+
+      // The pool is awarded max int + 100
+      await moneyMarket.rewardCustom(pool.address, overflowReward)
+
+      // the winnings should cap at the max new fixed value
+      const { Rewarded } = await poolContext.rewardAndOpenNextDraw()
+
+      assert.equal(Rewarded.event, 'Rewarded')
+      assert.equal(Rewarded.args.winnings.toString(), MAX_NEW_FIXED)
+
+      const userNewBalance = new BN(MAX_NEW_FIXED).add(new BN(web3.utils.toWei('100', 'ether'))).toString()
+      // The user's balance should include the *max* int256
+      assert.equal((await pool.totalBalanceOf(user1)).toString(), userNewBalance)
+    })
+  })
+
   describe('setNextFeeFraction()', () => {
     beforeEach(async () => {
       pool = await poolContext.createPool(feeFraction)
@@ -796,30 +829,30 @@ contract('BasePool', (accounts) => {
     })
   })
 
-  describe('pause()', () => {
+  describe('pauseDeposits()', () => {
     beforeEach(async () => {
       pool = await poolContext.createPool(feeFraction)
       await poolContext.nextDraw()
     })
 
     it('should not allow any more deposits', async () => {
-      await pool.pause()
-      await chai.assert.isRejected(poolContext.depositPool(toWei('10'), { from: user2 }), /contract is paused/)
+      await pool.pauseDeposits()
+      await chai.assert.isRejected(poolContext.depositPool(toWei('10'), { from: user2 }), /Pool\/d-paused/)
     })
   })
 
-  describe('unpause()', () => {
+  describe('unpauseDeposits()', () => {
     beforeEach(async () => {
       pool = await poolContext.createPool(feeFraction)
     })
 
     it('should not work unless paused', async () => {
-      await chai.assert.isRejected(pool.unpause(), /contract is not paused/)
+      await chai.assert.isRejected(pool.unpauseDeposits(), /Pool\/d-not-paused/)
     })
 
     it('should allow deposit after unpausing', async () => {
-      await pool.pause()
-      await pool.unpause()
+      await pool.pauseDeposits()
+      await pool.unpauseDeposits()
       await poolContext.depositPool(toWei('10'), { from: user2 })
     })
   })
