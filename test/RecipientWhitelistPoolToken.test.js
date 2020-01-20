@@ -83,9 +83,9 @@ contract('RecipientWhitelistPoolToken', (accounts) => {
         })
       })
 
-      describe('burn()', () => {
+      describe('redeem()', () => {
         it('should work', async () => {
-          await poolToken.burn(toWei('10'), [], { from: user1 })
+          await poolToken.redeem(toWei('10'), [], { from: user1 })
         })
       })
     })

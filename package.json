@@ -33,8 +33,7 @@
   "dependencies": {
     "@kleros/kleros": "DeltaCamp/kleros#ca7fbdcc195cfd1267efb99aae905c3400a5ea5f",
     "@openzeppelin/cli": "2.6.0",
-    "@openzeppelin/contracts": "OpenZeppelin/openzeppelin-contracts#45befe6e9505c457c096c04776dae40a83cff2de",
-    "@openzeppelin/contracts-ethereum-package": "2.2.1",
+    "@openzeppelin/contracts-ethereum-package": "2.4.0",
     "@openzeppelin/upgrades": "2.5.1",
     "apollo-fetch": "^0.7.0",
     "chalk": "2.4.2",
