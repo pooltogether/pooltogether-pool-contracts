@@ -603,9 +603,9 @@ contract('BasePool', (accounts) => {
       })
     })
 
-    describe('withdrawCommittedDeposit(address,uint256)', () => {
+    describe('withdrawCommittedDepositFrom(address,uint256)', () => {
       it('should only be called by the token', async () => {
-        await chai.assert.isRejected(pool.withdrawCommittedDeposit(user1, toWei('0')), /Pool\/only-token/)
+        await chai.assert.isRejected(pool.withdrawCommittedDepositFrom(user1, toWei('0')), /Pool\/only-token/)
       })
     })
 
