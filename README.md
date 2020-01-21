@@ -23,12 +23,12 @@ PoolTogether is a prize-linked savings account built on Ethereum. This project c
 
 | Contract      | Address  |
 | -------       | -------- |
-| PoolSai       | [0xF6e245adb2d4758fC180dAB8B212316C8fBA3c02](https://kovan.etherscan.io/address/0xF6e245adb2d4758fC180dAB8B212316C8fBA3c02) |
-| PoolSaiToken  | [0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84](https://kovan.etherscan.io/address/0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84) |
-| PoolDai       | [0x8Db43b4A833815cF535b89d366B5d84D88e43944](https://kovan.etherscan.io/address/0x8Db43b4A833815cF535b89d366B5d84D88e43944) |
-| PoolDaiToken  | [0xaf4D6cD3409272ac73593E27A4E6298a649baECf](https://kovan.etherscan.io/address/0xaf4D6cD3409272ac73593E27A4E6298a649baECf) |
-| PoolUsdc      | [0x30EE6b6be3C91D8b5D5a04c46b6076a427256436](https://kovan.etherscan.io/address/0x30EE6b6be3C91D8b5D5a04c46b6076a427256436) |
-| PoolUsdcToken | [0x9d3D7471a6DC4D6F19e073788d9a57c492f11Bc1](https://kovan.etherscan.io/address/0x9d3D7471a6DC4D6F19e073788d9a57c492f11Bc1) |
+| PoolSai       | [0x9B80beA68835e8E39b9CeaeF83B7b49e9D41661C](https://kovan.etherscan.io/address/0x9B80beA68835e8E39b9CeaeF83B7b49e9D41661C) |
+| PoolSaiToken  | [0xC9689253a545D0C4dc733620281bBdCbb9FA4A4D](https://kovan.etherscan.io/address/0xC9689253a545D0C4dc733620281bBdCbb9FA4A4D) |
+| PoolDai       | [0xC3a62C8Af55c59642071bC171Ebd05Eb2479B663](https://kovan.etherscan.io/address/0xC3a62C8Af55c59642071bC171Ebd05Eb2479B663) |
+| PoolDaiToken  | [0x1237a9f1664895bc30cfe9eCD1e3f6C2A83700AD](https://kovan.etherscan.io/address/0x1237a9f1664895bc30cfe9eCD1e3f6C2A83700AD) |
+| PoolUsdc      | [0xb073a5a16025c91ae3e9764E5cc5fC4DD2fA99Bc](https://kovan.etherscan.io/address/0xb073a5a16025c91ae3e9764E5cc5fC4DD2fA99Bc) |
+| PoolUsdcToken | [0xDC9A918D43a9E018de904a09d4D04F539Df4ed34](https://kovan.etherscan.io/address/0xDC9A918D43a9E018de904a09d4D04F539Df4ed34) |
 
 # Setup
 

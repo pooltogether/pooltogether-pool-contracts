@@ -5,7 +5,7 @@ const commander = require('commander');
 const { migrate } = require('./migrate')
 
 const program = new commander.Command()
-program.option('-n --network [network]', 'select the network.')
+program.option('-n --network [network]', 'select the network.', 'kovan')
 program.option('-v --verbose', 'make all commands verbose', () => true)
 program.option('-f --force', 'force the OpenZeppelin push command', () => true)
 program.parse(process.argv)
@@ -53,7 +53,7 @@ function loadContext() {
     network: consoleNetwork,
     networkConfig,
     directory: 'build/contracts',
-    verbose: false,
+    verbose: program.verbose,
     mnemonic: process.env.HDWALLET_MNEMONIC
   })
 }
