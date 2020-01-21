@@ -337,6 +337,7 @@ contract BasePool is Initializable, ReentrancyGuard {
       emitCommitted();
     }
     open(nextSecretHash);
+    blocklock.unlock(block.number);
   }
 
   /**
@@ -374,8 +375,6 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @param _salt The salt that was used to conceal the secret
    */
   function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin onlyLocked requireCommittedNoReward nonReentrant {
-    blocklock.unlock(block.number);
-
     // require that there is a committed draw
     // require that the committed draw has not been rewarded
     uint256 drawId = currentCommittedDrawId();
