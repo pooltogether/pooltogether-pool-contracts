@@ -32,8 +32,6 @@ async function withdrawAndDeposit (context, type, count = '5') {
       pool = contracts.PoolSai
   }
 
-  provider.pollingInterval = 500
-
   const users = await fetchUsers(parseInt(count, 10))
 
   // Now ensure we can withdraw the top 5
