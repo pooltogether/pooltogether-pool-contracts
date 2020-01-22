@@ -84,9 +84,7 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
     await context.contracts.PoolSai.setPoolToken(context.contracts.PoolSaiToken.address)
   })
 
-
   console.log(chalk.green('Starting DAI'))
-
 
   await migration.migrate(40, async () => {
     runShell(`oz create PoolDai ${ozOptions} --network ${ozNetworkName} --init init --args '${ownerWallet.address},${cDai},${feeFraction},${ownerWallet.address},${lockDuration},${cooldownDuration}'`)

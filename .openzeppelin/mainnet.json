@@ -1818,6 +1818,24 @@
         "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
         "kind": "Upgradeable"
       }
+    ],
+    "pooltogether/PoolUsdc": [
+      {
+        "address": "0xa17c2cc8D583985018094e43DA37A46775e2037C",
+        "version": "0.2",
+        "implementation": "0x96c9414a23Ee37Fa089e915337949B7ab0F6bf96",
+        "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
+        "kind": "Upgradeable"
+      }
+    ],
+    "pooltogether/PoolUsdcToken": [
+      {
+        "address": "0xE641c54cd0e20c1A19CFb3E45891f42d63D13EF9",
+        "version": "0.2",
+        "implementation": "0xBb5b64924290F0E97FAB36C75Cc27842aE634a98",
+        "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
+        "kind": "Upgradeable"
+      }
     ]
   },
   "manifestVersion": "2.2",
