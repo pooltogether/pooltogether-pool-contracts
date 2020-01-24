@@ -24,8 +24,26 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Mint
  * @author Brendan Asselstine
  * @notice An ERC20 Token contract to be used for testing the Pool contract
  */
-contract Token is ERC20Mintable {
-  string public constant name = "Token";
-  string public constant symbol = "TOK";
-  uint8 public constant decimals = 18;
+contract Token is Initializable, ERC20Mintable {
+  string public name = "Token";
+  string public symbol = "TOK";
+  uint256 public decimals;
+
+  function initialize (string _name, string _symbol, uint256 _decimals) public initializer {
+    if (bytes(_name).length == 0) {
+      _name = "Token";
+    }
+    name = _name;
+
+    if (bytes(_symbol).length == 0) {
+      _symbol = "TOK";
+    }
+    symbol = _symbol;
+
+    if (_decimals == uint256(0)) {
+      _decimals = 18;
+    }
+    decimals = _decimals;
+  }
+
 }
