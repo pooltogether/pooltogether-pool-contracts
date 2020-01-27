@@ -54,9 +54,9 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     }
   }
 
-  this.newToken = async () => {
+  this.newToken = async (decimals = 18) => {
     const token = await Token.new({ from: admin })
-    await token.initialize(owner)
+    await token.initialize(owner, 'Token', 'TOK', decimals)
     await token.mint(owner, web3.utils.toWei('100000', 'ether'))
     await token.mint(user1, web3.utils.toWei('100000', 'ether'))
     await token.mint(user2, web3.utils.toWei('100000', 'ether'))
