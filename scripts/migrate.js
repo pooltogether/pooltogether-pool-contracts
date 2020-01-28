@@ -121,7 +121,7 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
   })
 
   await migration.migrate(70, async () => {
-    runShell(`oz create PoolUsdcToken ${ozOptions} --network ${ozNetworkName} --init init --args '"Pool Usdc","plUsdc",[],${context.contracts.PoolUsdc.address}'`)
+    runShell(`oz create PoolUsdcToken ${ozOptions} --network ${ozNetworkName} --init init --args '"Pool Usdc","plUsdc",[],${context.contracts.PoolUsdc.address},6'`)
     context.reload()
   })
 

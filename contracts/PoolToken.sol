@@ -96,11 +96,16 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   // The Pool that is bound to this token
   BasePool internal _pool;
 
+  // Need to support different decimals depending on the Pool's underlying token.
+  // This is a deviation from the ERC777 spec: https://eips.ethereum.org/EIPS/eip-777#backward-compatibility
+  uint8 internal _decimals;
+
   /**
    * @notice Initializes the PoolToken.
    * @param name The name of the token
    * @param symbol The token symbol
    * @param defaultOperators The default operators who are allowed to move tokens
+   * @param pool The pool to bind to
    */
   function init (
     string memory name,
@@ -108,6 +113,34 @@ contract PoolToken is Initializable, IERC20, IERC777 {
     address[] memory defaultOperators,
     BasePool pool
   ) public initializer {
+      initPoolToken(name, symbol, defaultOperators, pool, 18);
+  }
+
+  /**
+   * @notice Initializes the PoolToken.
+   * @param name The name of the token
+   * @param symbol The token symbol
+   * @param defaultOperators The default operators who are allowed to move tokens
+   * @param pool The pool to bind to
+   * @param decimals The number of decimals the Pool's token uses.
+   */
+  function init (
+    string memory name,
+    string memory symbol,
+    address[] memory defaultOperators,
+    BasePool pool,
+    uint8 decimals
+  ) public initializer {
+      initPoolToken(name, symbol, defaultOperators, pool, decimals);
+  }
+
+  function initPoolToken (
+    string memory name,
+    string memory symbol,
+    address[] memory defaultOperators,
+    BasePool pool,
+    uint8 decimals
+  ) internal {
       require(bytes(name).length != 0, "PoolToken/name");
       require(bytes(symbol).length != 0, "PoolToken/symbol");
       require(address(pool) != address(0), "PoolToken/pool-zero");
@@ -115,6 +148,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
       _name = name;
       _symbol = symbol;
       _pool = pool;
+      _decimals = decimals;
 
       _defaultOperatorsArray = defaultOperators;
       for (uint256 i = 0; i < _defaultOperatorsArray.length; i++) {
@@ -163,11 +197,12 @@ contract PoolToken is Initializable, IERC20, IERC777 {
   /**
     * @dev See {ERC20Detailed-decimals}.
     *
-    * Always returns 18, as per the
+    * Returns the number of decimal places this token should have.  This deviates from the ERC777 spec
+    * because deposits into the Pool may use alternative decimal places (such as USDC)
     * [ERC777 EIP](https://eips.ethereum.org/EIPS/eip-777#backward-compatibility).
     */
-  function decimals() public pure returns (uint8) {
-      return 18;
+  function decimals() public view returns (uint8) {
+      return _decimals;
   }
 
   /**

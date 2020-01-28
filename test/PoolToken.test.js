@@ -54,10 +54,16 @@ contract('PoolToken', (accounts) => {
       await poolToken.init('Foobar', 'FBAR', [owner], pool.address)
       assert.equal(await poolToken.name(), 'Foobar')
       assert.equal(await poolToken.symbol(), 'FBAR')
+      assert.equal(await poolToken.decimals(), '18')
       assert.deepEqual(await poolToken.defaultOperators(), [owner])
       assert.equal(await poolToken.pool(), pool.address)
       assert.ok(await registry.getInterfaceImplementer(poolToken.address, ERC_20_INTERFACE_HASH), poolToken.address)
       assert.ok(await registry.getInterfaceImplementer(poolToken.address, ERC_777_INTERFACE_HASH), poolToken.address)
+    })
+
+    it('should allow the user to set the decimals', async () => {
+      await poolToken.init('Foobar', 'FBAR', [owner], pool.address, 6)
+      assert.equal(await poolToken.decimals(), '6')
     })
   })
 
