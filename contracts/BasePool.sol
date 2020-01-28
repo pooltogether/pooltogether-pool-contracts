@@ -391,7 +391,14 @@ contract BasePool is Initializable, ReentrancyGuard {
 
     // Calculate the gross winnings
     uint256 underlyingBalance = balance();
-    uint256 grossWinnings = capWinnings(underlyingBalance.sub(accountedBalance));
+
+    uint256 grossWinnings;
+
+    // It's possible when the APR is zero that the underlying balance will be slightly lower than the accountedBalance
+    // due to rounding errors in the Compound contract.
+    if (underlyingBalance > accountedBalance) {
+      grossWinnings = capWinnings(underlyingBalance.sub(accountedBalance));
+    }
 
     // Calculate the beneficiary fee
     uint256 fee = calculateFee(draw.feeFraction, grossWinnings);
