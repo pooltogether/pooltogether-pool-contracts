@@ -6915,12 +6915,12 @@ oz-console@1.1.2:
     glob "^7.1.5"
     original-require "^1.0.1"
 
-oz-migrate@^0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/oz-migrate/-/oz-migrate-0.2.2.tgz#9d197fa106713c246d6d5592fed921f4b5926e4f"
-  integrity sha512-0UScIGTdoXdlGyteb03BKupkde00mxojGCiuqdMSyQhNtww/xnUW6qQIo9Vm7QBXREOz1Gi0P7dtg3t9+houug==
+oz-migrate@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/oz-migrate/-/oz-migrate-0.2.4.tgz#bf10ebbc2a16793a9da744399d67e8d16115e837"
+  integrity sha512-i9iYHHA/EpYdm87XdERyYs75fj/f4p4+1VkA4BULPcH2/OddL1UuA5eiLOBpA/OeAi59LkBO0LYk9+M0UDAOFQ==
   dependencies:
-    mkdirp-promise "^5.0.1"
+    mkdirp "^0.5.0"
 
 p-cancelable@^0.3.0:
   version "0.3.0"
