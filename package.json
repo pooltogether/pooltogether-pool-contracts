@@ -34,7 +34,8 @@
     "extract-abis": "oz compile && truffle-extract -o abis",
     "docs": "solidity-docgen -i contracts -d node_modules/@openzeppelin/contracts-ethereum-package/contracts/access/roles/MinterRole.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Mintable.sol,node_modules/@openzeppelin/upgrades/contracts/Initializable.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol,node_modules/@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol,node_modules/@kleros/kleros/contracts/data-structures/SortitionSumTreeFactory.sol,node_modules/fixidity/contracts/FixidityLib.sol -o docs --solc-module=./node_modules/solc --solc-settings='{\"remappings\": [\"contracts/DrawManager.sol:@kleros=node_modules/@kleros\",\":@openzeppelin=node_modules/@openzeppelin\",\":fixidity=node_modules/fixidity\"]}'",
     "solc": "cat solc_input.json | solcjs --standard-json",
-    "prepublishOnly": "rm -rf build && oz compile"
+    "prepublishOnly": "rm -rf build && oz compile",
+    "postpublish" : "PACKAGE_VERSION=$(cat package.json | grep \\\"version\\\" | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]') && git tag v$PACKAGE_VERSION && git push --tags"
   },
   "dependencies": {
     "@kleros/kleros": "DeltaCamp/kleros#ca7fbdcc195cfd1267efb99aae905c3400a5ea5f",
