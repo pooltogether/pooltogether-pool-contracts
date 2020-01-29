@@ -1,11 +1,15 @@
 {
   "name": "@pooltogether/pooltogether-contracts",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
   "homepage": "https://github.com/pooltogether/pooltogether-contracts",
   "repository": "git@github.com:pooltogether/pooltogether-contracts.git",
+  "license": "GPL-3.0",
   "author": "Brendan Asselstine brendan@pooltogether.us",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "truffle test --migrations_directory ./migrations/empty",
     "coverage": "COVERAGE=true truffle run coverage --migrations_directory ./migrations/empty",
