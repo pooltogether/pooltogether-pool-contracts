@@ -693,6 +693,13 @@
     web3-eth-contract "1.2.2"
     web3-utils "1.2.2"
 
+"@pooltogether/oz-migrate@^0.2.5":
+  version "0.2.5"
+  resolved "https://registry.yarnpkg.com/@pooltogether/oz-migrate/-/oz-migrate-0.2.5.tgz#fc729cbfe9dcb65cfd7a324a9b85b5e4ad31f70c"
+  integrity sha512-j3LubUgnyLUAzJPO0GwipRbdJLTI7FTVvFK0OCUk+qgJ+lm1egXJ0FqigkKgg5ZyK+WSUq5fYKbWEvKos7RbNQ==
+  dependencies:
+    mkdirp "^0.5.0"
+
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@protobufjs/aspromise/-/aspromise-1.1.2.tgz#9b8b0cc663d669a7d8f6f5d0893a14d348f30fbf"
@@ -6914,13 +6921,6 @@ oz-console@1.1.2:
     ethers "^4.0.38"
     glob "^7.1.5"
     original-require "^1.0.1"
-
-oz-migrate@^0.2.4:
-  version "0.2.4"
-  resolved "https://registry.yarnpkg.com/oz-migrate/-/oz-migrate-0.2.4.tgz#bf10ebbc2a16793a9da744399d67e8d16115e837"
-  integrity sha512-i9iYHHA/EpYdm87XdERyYs75fj/f4p4+1VkA4BULPcH2/OddL1UuA5eiLOBpA/OeAi59LkBO0LYk9+M0UDAOFQ==
-  dependencies:
-    mkdirp "^0.5.0"
 
 p-cancelable@^0.3.0:
   version "0.3.0"
