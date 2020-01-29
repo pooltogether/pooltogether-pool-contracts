@@ -12,7 +12,7 @@ const debug = require('debug')('PoolContext.js')
 
 module.exports = function PoolContext({ web3, artifacts, accounts }) {
 
-  const [owner, admin, user1, user2] = accounts
+  const [owner, admin, user1, user2, user3] = accounts
 
   const Token = artifacts.require('Token.sol')
   const MCDAwarePool = artifacts.require('MCDAwarePool.sol')
@@ -44,6 +44,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
     await token.mint(owner, web3.utils.toWei('100000', 'ether'))
     await token.mint(user1, web3.utils.toWei('100000', 'ether'))
     await token.mint(user2, web3.utils.toWei('100000', 'ether'))
+    await token.mint(user3, web3.utils.toWei('100000', 'ether'))
     return token
   }
 
