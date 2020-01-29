@@ -12,8 +12,6 @@ const debug = require('debug')('PoolContext.js')
 
 module.exports = function PoolContext({ web3, artifacts, accounts }) {
 
-  let pool, token, moneyMarket, sumTree, drawManager, registry, blocklock,  poolToken
-  
   const [owner, admin, user1, user2] = accounts
 
   const Token = artifacts.require('Token.sol')
@@ -26,32 +24,18 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   const PoolToken = artifacts.require('RecipientWhitelistPoolToken.sol')
 
   this.init = async () => {
-    registry = await setupERC1820({ web3, artifacts, account: owner })
-
-    sumTree = await SortitionSumTreeFactory.new()
-    await DrawManager.link("SortitionSumTreeFactory", sumTree.address)
-    drawManager = await DrawManager.new()
-    await MCDAwarePool.link('DrawManager', drawManager.address)
-    fixidity = await FixidityLib.new({ from: admin })
-
-    blocklock = await Blocklock.new()
-
-    token = await this.newToken()
-
-    moneyMarket = await CErc20Mock.new({ from: admin })
-    await moneyMarket.initialize(token.address, new BN(SUPPLY_RATE_PER_BLOCK))
-
-    await token.mint(moneyMarket.address, new BN(MAX_NEW_FIXED).add(new BN(web3.utils.toWei('10000000', 'ether'))).toString())
-    await token.mint(admin, web3.utils.toWei('100000', 'ether'))
-
-    return {
-      drawManager,
-      fixidity,
-      token,
-      moneyMarket,
-      registry,
-      blocklock
-    }
+    this.registry = await setupERC1820({ web3, artifacts, account: owner })
+    this.sumTree = await SortitionSumTreeFactory.new()
+    await DrawManager.link("SortitionSumTreeFactory", this.sumTree.address)
+    this.drawManager = await DrawManager.new()
+    await MCDAwarePool.link('DrawManager', this.drawManager.address)
+    this.fixidity = await FixidityLib.new({ from: admin })
+    this.blocklock = await Blocklock.new()
+    this.token = await this.newToken()
+    this.moneyMarket = await CErc20Mock.new({ from: admin })
+    await this.moneyMarket.initialize(this.token.address, new BN(SUPPLY_RATE_PER_BLOCK))
+    await this.token.mint(this.moneyMarket.address, new BN(MAX_NEW_FIXED).add(new BN(web3.utils.toWei('10000000', 'ether'))).toString())
+    await this.token.mint(admin, web3.utils.toWei('100000', 'ether'))
   }
 
   this.newToken = async (decimals = 18) => {
@@ -64,73 +48,73 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   }
 
   this.balance = async () => {
-    return (await pool.methods['balance()'].call()).toString()
+    return (await this.pool.methods['balance()'].call()).toString()
   }
 
   this.depositPool = async (amount, options) => {
     if (options) {
-      await token.approve(pool.address, amount, options)
-      await pool.depositPool(amount, options)  
+      await this.token.approve(this.pool.address, amount, options)
+      await this.pool.depositPool(amount, options)  
     } else {
-      await token.approve(pool.address, amount)
-      await pool.depositPool(amount)
+      await this.token.approve(this.pool.address, amount)
+      await this.pool.depositPool(amount)
     }
   }
 
   this.createPool = async (feeFraction = new BN('0'), cooldownDuration = 1) => {
-    pool = await this.createPoolNoOpenDraw(feeFraction, cooldownDuration)
+    this.pool = await this.createPoolNoOpenDraw(feeFraction, cooldownDuration)
     await this.openNextDraw()
-    return pool
+    return this.pool
   }
 
   this.createToken = async () => {
-    poolToken = await PoolToken.new()
-    await poolToken.init(
-      'Prize Dai', 'pzDAI', [], pool.address
+    this.poolToken = await PoolToken.new()
+    await this.poolToken.init(
+      'Prize Dai', 'pzDAI', [], this.pool.address
     )
 
-    assert.equal(await poolToken.pool(), pool.address)
+    assert.equal(await this.poolToken.pool(), this.pool.address)
 
-    await pool.setPoolToken(poolToken.address)
+    await this.pool.setPoolToken(this.poolToken.address)
 
-    return poolToken
+    return this.poolToken
   }
 
   this.newPool = async () => {
-    await MCDAwarePool.link("DrawManager", drawManager.address)
-    await MCDAwarePool.link("FixidityLib", fixidity.address)
-    await MCDAwarePool.link('Blocklock', blocklock.address)
+    await MCDAwarePool.link("DrawManager", this.drawManager.address)
+    await MCDAwarePool.link("FixidityLib", this.fixidity.address)
+    await MCDAwarePool.link('Blocklock', this.blocklock.address)
     
     return await MCDAwarePool.new()
   }
 
   this.createPoolNoOpenDraw = async (feeFraction = new BN('0'), cooldownDuration = 1) => {
-    pool = await this.newPool()
+    this.pool = await this.newPool()
 
     // just long enough to lock then reward
     const lockDuration = 2
     
-    await pool.init(
+    await this.pool.init(
       owner,
-      moneyMarket.address,
+      this.moneyMarket.address,
       feeFraction,
       owner,
       lockDuration,
       cooldownDuration
     )
 
-    return pool
+    return this.pool
   }
 
   this.rewardAndOpenNextDraw = async (options) => {
     let logs
 
     debug(`rewardAndOpenNextDraw(${SECRET_HASH}, ${SECRET})`)
-    await pool.lockTokens()
+    await this.pool.lockTokens()
     if (options) {
-      logs = (await pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT, options)).logs;
+      logs = (await this.pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT, options)).logs;
     } else {
-      logs = (await pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT)).logs;
+      logs = (await this.pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET, SALT)).logs;
     }
 
     // console.log(logs.map(log => log.event))
@@ -147,7 +131,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
 
   this.openNextDraw = async () => {
     debug(`openNextDraw(${SECRET_HASH})`)
-    let logs = (await pool.openNextDraw(SECRET_HASH)).logs
+    let logs = (await this.pool.openNextDraw(SECRET_HASH)).logs
 
     const Committed = logs.find(log => log.event === 'Committed')
     const Opened = logs.find(log => log.event === 'Opened')
@@ -156,21 +140,21 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   }
 
   this.nextDraw = async (options) => {
-    const currentDrawId = await pool.currentCommittedDrawId()
+    const currentDrawId = await this.pool.currentCommittedDrawId()
 
     if (currentDrawId.toString() === '0') {
       return await this.openNextDraw()
     } else {
-      debug(`reward(${pool.address})`)
-      await moneyMarket.reward(pool.address)
+      debug(`reward(${this.pool.address})`)
+      await this.moneyMarket.reward(this.pool.address)
       return await this.rewardAndOpenNextDraw(options)
     }
   }
 
   this.printDrawIds = async () => {
-    const rewardId = await pool.currentRewardedDrawId()
-    const commitId = await pool.currentCommittedDrawId()
-    const openId = await pool.currentOpenDrawId()
+    const rewardId = await this.pool.currentRewardedDrawId()
+    const commitId = await this.pool.currentCommittedDrawId()
+    const openId = await this.pool.currentOpenDrawId()
     console.log({ rewardId, commitId, openId })
   }
 }

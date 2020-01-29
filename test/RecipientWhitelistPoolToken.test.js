@@ -12,7 +12,8 @@ contract('RecipientWhitelistPoolToken', (accounts) => {
 
   beforeEach(async () => {
     feeFraction = new BN('0')
-    result = await poolContext.init()
+    await poolContext.init()
+    result = poolContext
   })
 
   describe('with a fully initialized pool', () => {

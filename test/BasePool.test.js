@@ -30,7 +30,8 @@ contract('BasePool', (accounts) => {
   beforeEach(async () => {
     feeFraction = new BN('0')
     await setupERC1820({ web3, artifacts, account: owner })
-    contracts = await poolContext.init()
+    await poolContext.init()
+    contracts = poolContext
     token = contracts.token
     moneyMarket = contracts.moneyMarket
     await Pool.link("DrawManager", contracts.drawManager.address)

@@ -18,11 +18,11 @@ contract('MCDAwarePool', (accounts) => {
   let sendingContext = new PoolContext({ web3, artifacts, accounts })
   let receivingContext = new PoolContext({ web3, artifacts, accounts })
 
-  let receivingPool, dai, receivingContracts
+  let receivingPool, dai
 
   beforeEach(async () => {
-    receivingContracts = await receivingContext.init()
-    dai = receivingContracts.token
+    await receivingContext.init()
+    dai = receivingContext.token
     receivingPool = await receivingContext.createPool()
   })
 
@@ -53,10 +53,10 @@ contract('MCDAwarePool', (accounts) => {
 
       beforeEach(async () => {
         // Create sending MCDAwarePool
-        const sendingContracts = await sendingContext.init()
-        sai = sendingContracts.token
-        moneyMarket = sendingContracts.moneyMarket
-        registry = sendingContracts.registry
+        await sendingContext.init()
+        sai = sendingContext.token
+        moneyMarket = sendingContext.moneyMarket
+        registry = sendingContext.registry
         sendingPool = await sendingContext.createPool()
         sendingToken = await sendingContext.createToken()
 
@@ -134,7 +134,7 @@ contract('MCDAwarePool', (accounts) => {
       
       await pool.initMCDAwarePool(55, 90)
 
-      assert.equal(await receivingContracts.registry.getInterfaceImplementer(pool.address, TOKENS_RECIPIENT_INTERFACE_HASH), pool.address)
+      assert.equal(await receivingContext.registry.getInterfaceImplementer(pool.address, TOKENS_RECIPIENT_INTERFACE_HASH), pool.address)
       assert.equal(await pool.lockDuration(), '55')
       assert.equal(await pool.cooldownDuration(), '90')
     })

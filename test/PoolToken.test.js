@@ -26,11 +26,11 @@ contract('PoolToken', (accounts) => {
 
   beforeEach(async () => {
     feeFraction = new BN('0')
-    result = await poolContext.init()
+    await poolContext.init()
     pool = await poolContext.createPool()
-    token = result.token
-    moneyMarket = result.moneyMarket
-    registry = result.registry
+    token = poolContext.token
+    moneyMarket = poolContext.moneyMarket
+    registry = poolContext.registry
   })
 
   describe('init()', () => {
