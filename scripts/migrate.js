@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { Project } = require('oz-migrate')
+const { Project } = require('@pooltogether/oz-migrate')
 const chalk = require('chalk')
 const chai = require('chai')
 const { runShell } = require('../fork/runShell')
@@ -43,19 +43,16 @@ async function migrate(context, ozNetworkName, ozOptions = '') {
   }
 
   let {
-    walletAtIndex,
-    ethers
+    walletAtIndex
   } = context
 
   const ownerWallet = await walletAtIndex(0)
 
-  const feeFraction = ethers.utils.parseUnits('0.1', 'ether')
+  const feeFraction = '0'
   const lockDuration = 40
   const cooldownDuration = ozNetworkName === 'mainnet' ? lockDuration : 1
 
   runShell(`oz session ${ozOptions} --network ${ozNetworkName} --from ${process.env.ADMIN_ADDRESS} --expires 3600 --timeout 600`)
-
-  // runShell(`oz push --force`)
 
   let skip20 = false
 

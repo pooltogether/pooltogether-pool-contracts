@@ -2,6 +2,7 @@ node_modules*
 .ganache
 build
 networks/*
+.history
 .DS_Store
 .openzeppelin/.lock
 yarn-error.log

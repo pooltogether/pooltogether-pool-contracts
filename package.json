@@ -20,7 +20,7 @@
     "migrate": "./scripts/run-migrate.js",
     "migrate-kovan": "./scripts/run-migrate.js -n kovan",
     "migrate-rinkeby": "./scripts/run-migrate.js -n rinkeby",
-    "migrate-mainnet": "./scripts/run-migrate.js -n mainnet",
+    "migrate-mainnet": "./scripts/run-migrate.js -n mainnet -v",
     "session": "openzeppelin session --from $ADMIN_ADDRESS --network local --expires 7200 --timeout 3600",
     "session-rinkeby": "openzeppelin session --from $ADMIN_ADDRESS --network rinkeby --expires 7200 --timeout 3600",
     "session-mainnet": "openzeppelin session --from $ADMIN_ADDRESS --network mainnet --expires 7200 --timeout 3600",
