@@ -18,6 +18,8 @@ PoolTogether is a prize-linked savings account built on Ethereum. This project c
 | Pool Sai Token (plSai)  | [0xfE6892654CBB05eB73d28DCc1Ff938f59666Fe9f](https://etherscan.io/address/0xfE6892654CBB05eB73d28DCc1Ff938f59666Fe9f) |
 | Pool Dai                | [0x29fe7D60DdF151E5b52e5FAB4f1325da6b2bD958](https://etherscan.io/address/0x29fe7D60DdF151E5b52e5FAB4f1325da6b2bD958) |
 | Pool Dai Token (plDai)  | [0x49d716DFe60b37379010A75329ae09428f17118d](https://etherscan.io/address/0x49d716DFe60b37379010A75329ae09428f17118d) |
+| Pool Usdc               | [0x0034Ea9808E620A0EF79261c51AF20614B742B24](https://etherscan.io/address/0x0034Ea9808E620A0EF79261c51AF20614B742B24) |
+| Pool Usdc Token (plUsdc)| [0xBD87447F48ad729C5c4b8bcb503e1395F62e8B98](https://etherscan.io/address/0xBD87447F48ad729C5c4b8bcb503e1395F62e8B98) |
 
 ## Kovan
 
