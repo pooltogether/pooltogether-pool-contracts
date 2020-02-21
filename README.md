@@ -1,6 +1,7 @@
 # PoolTogether Contracts
 
 [![CircleCI](https://circleci.com/gh/pooltogether/pooltogether-contracts.svg?style=svg)](https://circleci.com/gh/pooltogether/pooltogether-contracts)
+[![built-with openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-3677FF)](https://docs.openzeppelin.com/)
 
 [Code Coverage](https://v2.coverage.pooltogether.us/)
 
