@@ -176,6 +176,18 @@ contract BasePool is Initializable, ReentrancyGuard {
   );
 
   /**
+   * Emitted when a RewardListener call fails
+   * @param drawId The draw id
+   * @param winner The address that one the draw
+   * @param impl The implementation address of the RewardListener
+   */
+  event RewardListenerFailed(
+    uint256 indexed drawId,
+    address indexed winner,
+    address indexed impl
+  );
+
+  /**
    * Emitted when the fee fraction is changed.  Takes effect on the next draw.
    * @param feeFraction The next fee fraction encoded as a fixed point 18 decimal
    */
@@ -454,7 +466,10 @@ contract BasePool is Initializable, ReentrancyGuard {
   function callRewarded(address winner, uint256 netWinnings, uint256 drawId) internal {
     address impl = ERC1820_REGISTRY.getInterfaceImplementer(winner, REWARD_LISTENER_INTERFACE_HASH);
     if (impl != address(0)) {
-      impl.call.gas(200000)(abi.encodeWithSignature("rewarded(address,uint256,uint256)", winner, netWinnings, drawId));
+      (bool success,) = impl.call.gas(200000)(abi.encodeWithSignature("rewarded(address,uint256,uint256)", winner, netWinnings, drawId));
+      if (!success) {
+        emit RewardListenerFailed(drawId, winner, impl);
+      }
     }
   }
 
