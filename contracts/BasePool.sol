@@ -18,6 +18,7 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.5.12;
 
+import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
@@ -57,6 +58,15 @@ contract BasePool is Initializable, ReentrancyGuard {
   using Blocklock for Blocklock.State;
 
   bytes32 internal constant ROLLED_OVER_ENTROPY_MAGIC_NUMBER = bytes32(uint256(1));
+
+  IERC1820Registry constant internal ERC1820_REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
+
+  // We inline the result of the following hashes because Solidity doesn't resolve them at compile time.
+  // See https://github.com/ethereum/solidity/issues/4024.
+
+  // keccak256("PoolTogetherRewardListener")
+  bytes32 constant internal REWARD_LISTENER_INTERFACE_HASH =
+      0x68f03b0b1a978ee238a70b362091d993343460bc1a2830ab3f708936d9f564a4;
 
   /**
    * Emitted when a user deposits into the Pool.
@@ -419,7 +429,13 @@ contract BasePool is Initializable, ReentrancyGuard {
       // Updated the accounted total
       accountedBalance = underlyingBalance;
 
-      awardWinnings(winningAddress, netWinnings);
+      // Update balance of the winner
+      balances[winningAddress] = balances[winningAddress].add(netWinnings);
+
+      // Enter their winnings into the open draw
+      drawState.deposit(winningAddress, netWinnings);
+
+      callRewarded(winningAddress, netWinnings, drawId);
     } else {
       // Only account for the fee
       accountedBalance = accountedBalance.add(fee);
@@ -435,12 +451,11 @@ contract BasePool is Initializable, ReentrancyGuard {
     emit FeeCollected(draw.feeBeneficiary, fee, drawId);
   }
 
-  function awardWinnings(address winner, uint256 amount) internal {
-    // Update balance of the winner
-    balances[winner] = balances[winner].add(amount);
-
-    // Enter their winnings into the open draw
-    drawState.deposit(winner, amount);
+  function callRewarded(address winner, uint256 netWinnings, uint256 drawId) internal {
+    address impl = ERC1820_REGISTRY.getInterfaceImplementer(winner, REWARD_LISTENER_INTERFACE_HASH);
+    if (impl != address(0)) {
+      impl.call.gas(200000)(abi.encodeWithSignature("rewarded(address,uint256,uint256)", winner, netWinnings, drawId));
+    }
   }
 
   /**
