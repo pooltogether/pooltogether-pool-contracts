@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       - image: circleci/node:8.14
-      - image: circleci/python:3.6.4
+      - image: circleci/python:3.7.7
 
     working_directory: ~/repo
 
@@ -22,22 +22,8 @@ jobs:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
-
-      # Run Coverage Report
-      - run: mkdir ~/junit
-      - run:
-          environment:
-            MOCHA_FILE: ~/junit/test-results.xml
-          command: MOCHA_FILE=~/junit/test-results.xml yarn coverage
-          when: always
-      - store_test_results:
-          path: ~/junit
-      - store_artifacts:
-          path: ~/junit
-
-      # Install mythx-cli
       - run: sudo chown -R circleci:circleci /usr/local/bin
-      - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
+      - run: sudo chown -R circleci:circleci /usr/local/lib/python3.7/site-packages
       - restore_cache: # ensure this step occurs *before* installing dependencies
           key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
       - run:
@@ -49,7 +35,19 @@ jobs:
           paths:
             - ".venv"
             - "/usr/local/bin"
-            - "/usr/local/lib/python3.6/site-packages"
+            - "/usr/local/lib/python3.7/site-packages"
+
+      # # Run Coverage Report
+      # - run: mkdir ~/junit
+      # - run:
+      #     environment:
+      #       MOCHA_FILE: ~/junit/test-results.xml
+      #     command: MOCHA_FILE=~/junit/test-results.xml yarn coverage
+      #     when: always
+      # - store_test_results:
+      #     path: ~/junit
+      # - store_artifacts:
+      #     path: ~/junit
 
       # Verify Contracts
       - run: mythx-cli -y --access-token $MYTHX_API_KEY
