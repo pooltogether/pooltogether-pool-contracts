@@ -71,13 +71,13 @@ contract('DrawManager', (accounts) => {
 
             it('should deposit the tokens as open tokens', async () => {
                 await drawManager.deposit(user1, toWei('10'))
-                assert.equal(await drawManager.firstDrawIndex(user1), '1')
+                assert.equal(await drawManager.consolidatedDrawIndex(user1), '1')
                 assert.equal(await drawManager.openBalanceOf(user1), toWei('10'))
                 assert.equal(await drawManager.committedBalanceOf(user1), toWei('0'))
 
                 // try it a second time
                 await drawManager.deposit(user1, toWei('10'))
-                assert.equal(await drawManager.firstDrawIndex(user1), '1')
+                assert.equal(await drawManager.consolidatedDrawIndex(user1), '1')
                 assert.equal(await drawManager.openBalanceOf(user1), toWei('20'))
                 assert.equal(await drawManager.committedBalanceOf(user1), toWei('0'))
             })
@@ -90,7 +90,7 @@ contract('DrawManager', (accounts) => {
                 it('should allow them to deposit again', async () => {
                     await drawManager.deposit(user1, toWei('10'))
 
-                    assert.equal(await drawManager.firstDrawIndex(user1), '1')
+                    assert.equal(await drawManager.consolidatedDrawIndex(user1), '1')
                     assert.equal(await drawManager.openBalanceOf(user1), toWei('20'))
                     assert.equal(await drawManager.openSupply(), toWei('20'))
                     assert.equal(await drawManager.committedBalanceOf(user1), toWei('0'))
@@ -104,8 +104,8 @@ contract('DrawManager', (accounts) => {
                     it('should make the previous balance eligibile and start a new open balance', async () => {
                         await drawManager.deposit(user1, toWei('10'))
 
-                        assert.equal(await drawManager.firstDrawIndex(user1), '1')
-                        assert.equal(await drawManager.secondDrawIndex(user1), '2')
+                        assert.equal(await drawManager.consolidatedDrawIndex(user1), '1')
+                        assert.equal(await drawManager.latestDrawIndex(user1), '2')
                         assert.equal(await drawManager.openBalanceOf(user1), toWei('10'))
                         assert.equal(await drawManager.openSupply(), toWei('10'))
                         assert.equal(await drawManager.committedBalanceOf(user1), toWei('10'))
@@ -114,7 +114,7 @@ contract('DrawManager', (accounts) => {
                         // accept a second deposit into the open draw
                         await drawManager.deposit(user1, toWei('10'))
 
-                        assert.equal(await drawManager.secondDrawIndex(user1), '2')
+                        assert.equal(await drawManager.latestDrawIndex(user1), '2')
                         assert.equal(await drawManager.openBalanceOf(user1), toWei('20'))
                         assert.equal(await drawManager.openSupply(), toWei('20'))
                     })
@@ -128,8 +128,8 @@ contract('DrawManager', (accounts) => {
                         it('should collapse the previous two draws and update the open draw', async () => {
                             await drawManager.deposit(user1, toWei('10'))
 
-                            assert.equal(await drawManager.firstDrawIndex(user1), '1')
-                            assert.equal(await drawManager.secondDrawIndex(user1), '3')
+                            assert.equal(await drawManager.consolidatedDrawIndex(user1), '1')
+                            assert.equal(await drawManager.latestDrawIndex(user1), '3')
                             assert.equal(await drawManager.openBalanceOf(user1), toWei('10'))
                             assert.equal(await drawManager.openSupply(), toWei('10'))
                             assert.equal(await drawManager.committedBalanceOf(user1), toWei('20'))
@@ -339,6 +339,49 @@ contract('DrawManager', (accounts) => {
             assert.equal(await drawManager.committedBalanceOf(user1), toWei('0'))
         })
 
+        it('should allow a user to withdraw zero', async () => {
+            await drawManager.openNextDraw()
+            await drawManager.deposit(user1, toWei('5'))
+            await drawManager.openNextDraw()
+            await drawManager.withdrawCommitted(user1, toWei('0'))
+
+            assert.equal((await drawManager.openBalanceOf(user1)).toString(), toWei('0'))
+            assert.equal((await drawManager.committedBalanceOf(user1)).toString(), toWei('15'))
+        })
+
+        it('should allow the user to withdraw zero when they have an open deposit', async () => {
+            await drawManager.openNextDraw()
+            await drawManager.openNextDraw()
+            // await printStatus('Step 1')
+    
+            await drawManager.deposit(user2, toWei('1'))
+            // await printStatus('Step 2')
+    
+            await drawManager.withdrawCommitted(user2, toWei('0'))
+            // await printStatus('Step 3')
+    
+            const openBalance = await drawManager.openBalanceOf(user2)
+            chai.assert.equal(openBalance.toString(), toWei('1'))
+        })
+
+        it('should allow the user to withdraw zero when they have an open and committed deposits', async () => {
+            await drawManager.openNextDraw()
+            
+            await drawManager.deposit(user2, toWei('1'))
+
+            await drawManager.openNextDraw()
+            // await printStatus('Step 1')
+
+            await drawManager.deposit(user2, toWei('1'))
+            // await printStatus('Step 2')
+    
+            await drawManager.withdrawCommitted(user2, toWei('0'))
+            // await printStatus('Step 3')
+    
+            const openBalance = await drawManager.openBalanceOf(user2)
+            chai.assert.equal(openBalance.toString(), toWei('1'))
+        })
+
         it('should not withdraw open tokens', async () => {
             let failed = true
             try {
@@ -426,8 +469,8 @@ contract('DrawManager', (accounts) => {
 
                 describe('and one withdraws', async () => { 
                     beforeEach(async () => {
-                        // console.log('first draw index: ', await drawManager.firstDrawIndex(user2))
-                        // console.log('second draw index: ', await drawManager.secondDrawIndex(user2))
+                        // console.log('first draw index: ', await drawManager.consolidatedDrawIndex(user2))
+                        // console.log('second draw index: ', await drawManager.latestDrawIndex(user2))
                         // console.log('committed balance: ', await drawManager.committedBalanceOf(user2))
                         await drawManager.withdraw(user2)
                         // console.log('total committed nodes: ', (await drawManager.totalCommittedNodes()).toString())

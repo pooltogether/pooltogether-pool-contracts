@@ -77,11 +77,11 @@ contract ExposedDrawManager {
       return state.draw(token);
     }
 
-    function firstDrawIndex(address user) public view returns (uint256) {
+    function consolidatedDrawIndex(address user) public view returns (uint256) {
         return state.consolidatedDrawIndices[user];
     }
 
-    function secondDrawIndex(address user) public view returns (uint256) {
+    function latestDrawIndex(address user) public view returns (uint256) {
         return state.latestDrawIndices[user];
     }
 

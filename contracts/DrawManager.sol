@@ -224,6 +224,12 @@ library DrawManager {
             total = total.add(consolidatedAmount);
         }
 
+        // If the total is greater than zero, then consolidated *must* have the committed balance
+        // However, if the total is zero then the consolidated balance may be the open balance
+        if (total == 0) {
+            return;
+        }
+
         require(_amount <= total, "Pool/exceed");
 
         uint256 remaining = total.sub(_amount);
