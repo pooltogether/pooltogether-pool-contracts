@@ -17,6 +17,7 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
       - run: yarn install
+      - run: yarn global add solc
       - save_cache:
           paths:
             - node_modules
@@ -51,4 +52,4 @@ jobs:
             - "/usr/local/lib/python3.6/site-packages"
 
       # Verify Contracts
-      - run: yes | mythx-cli --access-token $MYTHX_API_KEY
+      - run: mythx-cli -y --access-token $MYTHX_API_KEY
