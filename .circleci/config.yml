@@ -11,7 +11,7 @@ executors:
       - image: circleci/python:3.7.7
 
 jobs:
-  node-modules-install:
+  install-node_modules:
     executor: node
     steps:
       - checkout
@@ -93,8 +93,8 @@ workflows:
 
       # - test:
       #     requires:
-      #       - node-modules-install
+      #       - install-node_modules
 
       - verify:
           requires:
-            - node-modules-install
+            - install-node_modules
