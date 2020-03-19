@@ -51,5 +51,4 @@ jobs:
             - "/usr/local/lib/python3.6/site-packages"
 
       # Verify Contracts
-      - run:
-        command: yes | mythx-cli --access-token $MYTHX_API_KEY
+      - run: yes | mythx-cli --access-token $MYTHX_API_KEY
