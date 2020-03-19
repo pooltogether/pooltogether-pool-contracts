@@ -1,19 +1,9 @@
-# Javascript Node CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-javascript/ for more details
-#
 version: 2
 jobs:
   build:
     docker:
-      # specify the version you desire here
       - image: circleci/node:8.14
       - image: circleci/python:3.6.4
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/mongo:3.4.4
 
     working_directory: ~/repo
 
@@ -26,28 +16,25 @@ jobs:
             - v1-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
-
       - run: yarn install
-
       - save_cache:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
+      # Run Coverage Report
       - run: mkdir ~/junit
-
       - run:
           environment:
             MOCHA_FILE: ~/junit/test-results.xml
           command: MOCHA_FILE=~/junit/test-results.xml yarn coverage
           when: always
-
       - store_test_results:
           path: ~/junit
-
       - store_artifacts:
           path: ~/junit
 
+      # Install mythx-cli
       - run: sudo chown -R circleci:circleci /usr/local/bin
       - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
       - restore_cache: # ensure this step occurs *before* installing dependencies
@@ -63,5 +50,6 @@ jobs:
             - "/usr/local/bin"
             - "/usr/local/lib/python3.6/site-packages"
 
+      # Verify Contracts
       - run:
         command: yes | mythx-cli --access-token $MYTHX_API_KEY
