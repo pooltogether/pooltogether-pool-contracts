@@ -1,5 +1,3 @@
-version: 2
-
 jobs:
   test:
     docker:
@@ -59,6 +57,7 @@ jobs:
       - run: mythx-cli -y --access-token $MYTHX_API_KEY
 
 workflows:
+  version: 2
   test_and_verify:
     jobs:
       # - test
