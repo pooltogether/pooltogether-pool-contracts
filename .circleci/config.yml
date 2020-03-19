@@ -1,15 +1,20 @@
 version: 2
 
-jobs:
-  test:
+executors:
+  node:
+    working_directory: ~/repo
     docker:
       - image: circleci/node:8.14
-
+  python:
     working_directory: ~/repo
+    docker:
+      - image: circleci/python:3.7.7
 
+jobs:
+  node-modules-install:
+    executor: node
     steps:
       - checkout
-
       # Download and cache dependencies
       - restore_cache:
           keys:
@@ -21,7 +26,33 @@ jobs:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
+      #
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - abis
+            - fork
+            - migrations
+            - .openzeppelin
+            - test
+            - contracts
+            - utils
+            - Pipfile
+            - .solcover.js
+            - package.json
+            - .nvmrc
+            - scripts
+            - truffle-config.js
+            - .oz-migrate
+            - erc20.json
+            - Pipfile.lock
+            - node_modules
 
+  test:
+    docker:
+      - image: circleci/node:8.14
+
+    steps:
       # Run Coverage Report
       - run: mkdir ~/junit
       - run:
@@ -37,14 +68,8 @@ jobs:
   verify:
     docker:
       - image: circleci/python:3.7.7
-      - image: circleci/node:8.14
-
-    working_directory: ~/repo
 
     steps:
-      - checkout
-
-      # Download and cache dependencies
       # Download and cache dependencies
       - restore_cache:
           keys:
@@ -79,5 +104,10 @@ workflows:
   version: 2
   test_and_verify:
     jobs:
-      # - test
-      - verify
+      # - test:
+      #     requires:
+      #       - node-modules-install
+
+      - verify:
+          requires:
+            - node-modules-install
