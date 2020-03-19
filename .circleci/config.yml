@@ -37,6 +37,7 @@ jobs:
   verify:
     docker:
       - image: circleci/python:3.7.7
+      - image: circleci/node:8.14
 
     working_directory: ~/repo
 
@@ -44,6 +45,18 @@ jobs:
       - checkout
 
       # Download and cache dependencies
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run: yarn install
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
       - run: sudo chown -R circleci:circleci /usr/local/bin
       - run: sudo chown -R circleci:circleci /usr/local/lib/python3.7/site-packages
       - restore_cache: # ensure this step occurs *before* installing dependencies
