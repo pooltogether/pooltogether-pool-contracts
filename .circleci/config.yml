@@ -60,8 +60,7 @@ jobs:
             - "/usr/local/lib/python3.7/site-packages"
 
       # Verify Contracts
-      - run: pipenv shell
-      - run: mythx -y --api-key $MYTHX_API_KEY analyze contracts/*
+      - run: pipenv run mythx -y --api-key $MYTHX_API_KEY analyze contracts/*
 
 workflows:
   version: 2
