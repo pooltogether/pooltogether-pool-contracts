@@ -37,6 +37,11 @@ jobs:
     docker:
       - image: circleci/python:3.6.4
 
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
       # Download and cache dependencies
       - run: sudo chown -R circleci:circleci /usr/local/bin
       - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
