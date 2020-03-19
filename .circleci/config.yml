@@ -87,7 +87,14 @@ jobs:
             - "/usr/local/lib/python3.7/site-packages"
 
       # Verify Contracts
-      - run: pipenv run mythx -y --api-key $MYTHX_API_KEY analyze contracts/*
+      - run:
+          command: |
+            pipenv run mythx -y --api-key=$MYTHX_API_KEY analyze \
+              --remap-import "@openzeppelin/=~/repo/node_modules/@openzeppelin/" \
+              --remap-import "@kleros/=~/repo/node_modules/@kleros/" \
+              --remap-import "fixidity/=~/repo/node_modules/fixidity/" \
+              --remap-import "scd-mcd-migration/=~/repo/node_modules/scd-mcd-migration/" \
+              contracts/*
 
 workflows:
   version: 2
