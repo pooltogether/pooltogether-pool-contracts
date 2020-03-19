@@ -1,3 +1,5 @@
+version: 2
+
 jobs:
   test:
     docker:
@@ -59,7 +61,10 @@ jobs:
             - "/usr/local/lib/python3.7/site-packages"
 
       # Verify Contracts
-      - run: mythx-cli -y --access-token $MYTHX_API_KEY
+      - run:
+          command: |
+            pipenv shell
+            mythx-cli -y --access-token $MYTHX_API_KEY
 
 workflows:
   version: 2
