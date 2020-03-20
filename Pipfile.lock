@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "5e776953de95d6307262462a3e9782e58d2f809abfd184c72a152fa0ee1da3b8"
+            "sha256": "5642226664d3ad9b96a096bcfa8bb6d584150ffe5d6506b3add29fdd39a068cb"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -124,12 +124,9 @@
             "version": "==1.1.1"
         },
         "mythx-cli": {
-            "hashes": [
-                "sha256:ad9f0d5bc9a5a995599d378e3c9fb6008d36eadffb3252b1ce0f30e7b4aefac5",
-                "sha256:ffe7fc5ac69cb4a69a06104613f26fca4a659115e629caf3526a96bb716af3fe"
-            ],
-            "index": "pypi",
-            "version": "==0.6.7"
+            "editable": true,
+            "git": "https://github.com/vbstreetz/mythx-cli.git",
+            "ref": "3774e9ebe42b758520b8d9a941abf47f5e0b6717"
         },
         "mythx-models": {
             "hashes": [
