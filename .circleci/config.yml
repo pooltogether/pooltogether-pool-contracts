@@ -90,10 +90,10 @@ jobs:
       - run:
           command: |
             pipenv run mythx -y --api-key=$MYTHX_API_KEY analyze \
-              --remap-import "@openzeppelin/=~/repo/node_modules/@openzeppelin/" \
-              --remap-import "@kleros/=~/repo/node_modules/@kleros/" \
-              --remap-import "fixidity/=~/repo/node_modules/fixidity/" \
-              --remap-import "scd-mcd-migration/=~/repo/node_modules/scd-mcd-migration/" \
+              --remap-import "@openzeppelin/=/home/circleci/repo/node_modules/@openzeppelin/" \
+              --remap-import "@kleros/=/home/circleci/repo/node_modules/@kleros/" \
+              --remap-import "fixidity/=/home/circleci/repo/node_modules/fixidity/" \
+              --remap-import "scd-mcd-migration/=/home/circleci/repo/node_modules/scd-mcd-migration/" \
               contracts/*
 
 workflows:

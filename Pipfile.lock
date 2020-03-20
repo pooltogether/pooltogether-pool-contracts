@@ -125,11 +125,11 @@
         },
         "mythx-cli": {
             "hashes": [
-                "sha256:4843043982cb214fa070ccac5a56b5033867dad0ad79462e176baf5cd1040747",
-                "sha256:4cc3972c32cb2e148d87ad32b178cd38ede85304a8a51bf8b3e1dd3105da99aa"
+                "sha256:ad9f0d5bc9a5a995599d378e3c9fb6008d36eadffb3252b1ce0f30e7b4aefac5",
+                "sha256:ffe7fc5ac69cb4a69a06104613f26fca4a659115e629caf3526a96bb716af3fe"
             ],
             "index": "pypi",
-            "version": "==0.6.5"
+            "version": "==0.6.7"
         },
         "mythx-models": {
             "hashes": [
