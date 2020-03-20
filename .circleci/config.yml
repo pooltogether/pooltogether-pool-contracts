@@ -94,7 +94,7 @@ jobs:
               --remap-import "@kleros/=/home/circleci/repo/node_modules/@kleros/" \
               --remap-import "fixidity/=/home/circleci/repo/node_modules/fixidity/" \
               --remap-import "scd-mcd-migration/=/home/circleci/repo/node_modules/scd-mcd-migration/" \
-              contracts/PoolToken.sol:PoolToken
+              contracts/PoolToken.sol
 
 workflows:
   version: 2
