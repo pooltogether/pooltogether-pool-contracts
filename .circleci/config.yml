@@ -101,10 +101,9 @@ workflows:
   test_and_verify:
     jobs:
       - install-node_modules
-
       - test:
           requires:
             - install-node_modules
-      # - verify:
-      #     requires:
-      #       - install-node_modules
+      - verify:
+          requires:
+            - install-node_modules
