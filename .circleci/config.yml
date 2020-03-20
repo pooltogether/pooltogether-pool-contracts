@@ -102,10 +102,9 @@ workflows:
     jobs:
       - install-node_modules
 
-      # - test:
-      #     requires:
-      #       - install-node_modules
-
-      - verify:
+      - test:
           requires:
             - install-node_modules
+      # - verify:
+      #     requires:
+      #       - install-node_modules
