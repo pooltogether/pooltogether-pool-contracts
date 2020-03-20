@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-mythx-cli = "*"
+mythx-cli = {editable = true,git = "https://github.com/vbstreetz/mythx-cli.git"}
 
 [requires]
 python_version = "3.7"
