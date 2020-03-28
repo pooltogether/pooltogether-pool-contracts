@@ -39,7 +39,7 @@ library FixedPoint {
         * @param mantissa The Fixed18 number
         * @return An integer that is the result of multiplying the params.
         */
-    function multiplyUintByMantissa(uint256 b, uint256 mantissa) public pure returns (uint256) {
+    function multiplyUintByMantissa(uint256 b, uint256 mantissa) internal pure returns (uint256) {
         uint256 result = mantissa.mul(b);
         result = result.div(SCALE);
         return result;
@@ -52,7 +52,7 @@ library FixedPoint {
     * @param mantissa The fixed point 18 number to serve as the divisor
     * @return An integer that is the result of dividing an integer by a fixed point 18 mantissa
     */
-    function divideUintByMantissa(uint256 dividend, uint256 mantissa) public pure returns (uint256) {
+    function divideUintByMantissa(uint256 dividend, uint256 mantissa) internal pure returns (uint256) {
         uint256 result = SCALE.mul(dividend);
         result = result.div(mantissa);
         return result;

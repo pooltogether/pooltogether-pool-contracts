@@ -155,9 +155,9 @@
     web3-eth-contract "1.2.2"
     web3-utils "1.2.2"
 
-"@pooltogether/uniform-random-number@pooltogether/uniform-random-number#master":
+"@pooltogether/uniform-random-number@pooltogether/uniform-random-number#solidity-0.6":
   version "0.1.0"
-  resolved "https://codeload.github.com/pooltogether/uniform-random-number/tar.gz/ba441fecabae0d84833eec7aa45f64b7d75fcf0f"
+  resolved "https://codeload.github.com/pooltogether/uniform-random-number/tar.gz/fae15110b26db8494531fec2a787f60afb74e688"
 
 "@realitio/realitio-contracts@^2.0.5":
   version "2.1.1"
@@ -3690,9 +3690,9 @@ klaw@^1.0.0:
   optionalDependencies:
     graceful-fs "^4.1.9"
 
-kleros@DeltaCamp/kleros:
+kleros@pooltogether/kleros#solidity-0.6:
   version "0.0.7"
-  resolved "https://codeload.github.com/DeltaCamp/kleros/tar.gz/c594df4fb8f1917e81292518dd46c6dda3be02ea"
+  resolved "https://codeload.github.com/pooltogether/kleros/tar.gz/98f8ec070394e35b697a0644ef6a620760c3dc62"
   dependencies:
     "@kleros/kleros-interaction" "^0.9.0"
     minimetoken "^0.2.0"

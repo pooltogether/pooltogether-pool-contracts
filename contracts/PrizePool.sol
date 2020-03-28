@@ -21,11 +21,11 @@ contract PrizePool is Initializable, IComptroller {
 
     uint256 feeFraction;
     uint256 reserveRateMantissa;
-    uint256 prizePeriodBlocks;
-    uint256 currentPeriodStartBlock;
     uint256 currentPeriodStartCTokenExchangeRate;
 
+    uint256 totalMissingInterest;
     mapping(address => uint256) missingInterestBalances;
+
     mapping(address => uint256) cTokenBalances;
 
     function initialize (
@@ -34,8 +34,7 @@ contract PrizePool is Initializable, IComptroller {
         ICToken _cToken,
         TicketToken _ticketToken,
         uint256 _reserveRateMantissa,
-        uint256 _feeFraction,
-        uint256 _prizePeriodBlocks
+        uint256 _feeFraction
     ) external initializer {
         require(address(_prizeStrategy) != address(0), "prize strategy cannot be zero");
         require(address(_factory) != address(0), "factory cannot be zero");
@@ -45,18 +44,33 @@ contract PrizePool is Initializable, IComptroller {
         require(_reserveRateMantissa > 0, "reserve rate must be greater than zero");
         require(_reserveRateMantissa < 1 ether, "reserve rate must be less than one");
         prizeStrategy = _prizeStrategy;
+        factory = _factory;
         reserveRateMantissa = _reserveRateMantissa;
         feeFraction = _feeFraction;
         ticketToken = _ticketToken;
         cToken = _cToken;
-        prizePeriodBlocks = _prizePeriodBlocks;
-        currentPeriodStartBlock = block.number;
         currentPeriodStartCTokenExchangeRate = cToken.exchangeRateCurrent();
     }
 
-    function awardPrize() external {
-        require(block.number > currentPeriodStartBlock + prizePeriodBlocks, "prize period has not ended");
-        currentPeriodStartBlock = block.number;
+    function calculatePrize() public returns (uint256) {
+        uint256 balance = cToken.balanceOfUnderlying(address(this));
+        uint256 totalAccrued = balance.sub(ticketToken.totalSupply());
+        uint256 reserve = FixedPoint.multiplyUintByMantissa(totalAccrued, reserveRateMantissa);
+        uint256 reserveForPrize;
+        // if the total missing interest is less than the reserve, just capture the missing interest
+        if (totalMissingInterest < reserve) {
+            reserveForPrize = totalMissingInterest;
+        } else { // otherwise max out the reserveForPrize
+            reserveForPrize = reserve;
+        }
+
+        uint256 prize = totalAccrued.sub(reserve).add(reserveForPrize);
+        return prize;
+    }
+
+    function awardPrize() external onlyPrizeStrategy {
+        uint256 prize = calculatePrize();
+        ticketToken.mint(address(prizeStrategy), prize, "", "");
         currentPeriodStartCTokenExchangeRate = cToken.exchangeRateCurrent();
     }
 
@@ -67,6 +81,7 @@ contract PrizePool is Initializable, IComptroller {
         uToken.approve(address(cToken), amount);
         cToken.mint(amount);
 
+        // Mint tickets
         ticketToken.mint(msg.sender, amount, "", "");
     }
 
@@ -100,6 +115,7 @@ contract PrizePool is Initializable, IComptroller {
             require(totalInterest > missingInterestBalances[from], "missing interest must be paid");
 
             // Capture missing interest
+            totalMissingInterest = totalMissingInterest.sub(missingInterestBalances[from]);
             missingInterestBalances[from] = 0;
             uint256 remainingInterest = totalInterest.sub(missingInterestBalances[from]);
             uint256 newTicketBalance = ticketToken.balanceOf(from).sub(tokenAmount);
@@ -114,6 +130,7 @@ contract PrizePool is Initializable, IComptroller {
             // update their missing prize interest
             uint256 missingPrizeInterest = calculateCurrentPrizeInterest(tokenAmount);
             missingInterestBalances[to] = missingInterestBalances[to].add(missingPrizeInterest);
+            totalMissingInterest = totalMissingInterest.add(missingPrizeInterest);
 
             // add to their balance the ctokens
             uint256 cTokens = cTokenValueOf(tokenAmount);
@@ -130,5 +147,10 @@ contract PrizePool is Initializable, IComptroller {
 
     function underlyingToken() internal returns (IERC20) {
         return IERC20(cToken.underlying());
+    }
+
+    modifier onlyPrizeStrategy() {
+        require(msg.sender == address(prizeStrategy), "only prize strategy");
+        _;
     }
 }

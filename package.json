@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "test": "buidler test",
     "compile": "buidler compile"
   },
   "devDependencies": {
@@ -19,7 +20,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^3.0.0-rc.0",
     "@openzeppelin/upgrades": "^2.8.0",
-    "kleros": "DeltaCamp/kleros",
-    "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#master"
+    "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
+    "kleros": "pooltogether/kleros#solidity-0.6"
   }
 }
