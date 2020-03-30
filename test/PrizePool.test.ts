@@ -4,7 +4,7 @@ import PrizePoolFactory from "../build/PrizePoolFactory.json";
 import PrizePool from "../build/PrizePool.json";
 import ERC20Mintable from "../build/ERC20Mintable.json";
 import CTokenMock from "../build/CTokenMock.json";
-import TicketToken from "../build/TicketToken.json";
+import ControlledToken from "../build/ControlledToken.json";
 import SortitionSumTreeFactory from '../build/SortitionSumTreeFactory.json';
 import SingleRandomWinnerPrizeStrategy from "../build/SingleRandomWinnerPrizeStrategy.json";
 import { expect } from 'chai'
@@ -23,6 +23,7 @@ describe("PrizePool contract", function() {
   let prizePool: Contract
   let token: Contract
   let ticketToken: Contract
+  let sponsorshipToken: Contract
   let prizeStrategy: Contract
   let prizePoolFactory: Contract
   let cToken: Contract
@@ -34,10 +35,16 @@ describe("PrizePool contract", function() {
     token = await deployContract(wallet, ERC20Mintable, [])
     cToken = await deployContract(wallet, CTokenMock, [])
     await cToken.initialize(token.address, ethers.utils.parseEther('0.01'))
-    ticketToken = await deployContract(wallet, TicketToken, [
+    ticketToken = await deployContract(wallet, ControlledToken, [
       prizePool.address,
-      "Token",
-      "TOK",
+      "Ticket",
+      "TICK",
+      []
+    ]);
+    sponsorshipToken = await deployContract(wallet, ControlledToken, [
+      prizePool.address,
+      "Sponsorship",
+      "SPON",
       []
     ]);
     const sumTreeFactory = await deployContract(wallet, SortitionSumTreeFactory)
@@ -53,6 +60,7 @@ describe("PrizePool contract", function() {
       prizePoolFactory.address,
       cToken.address,
       ticketToken.address,
+      sponsorshipToken.address,
       ethers.utils.parseEther('0.1'),
       '0'
     )
@@ -69,8 +77,8 @@ describe("PrizePool contract", function() {
     })
   })
 
-  describe("Deployment", function() {
-    it("Should work", async function () {
+  describe("deposit()", function() {
+    it("should give the user tokens", async function () {
       await token.approve(prizePool.address, toWei('1'))
       await prizePool.deposit(toWei('1'))
 

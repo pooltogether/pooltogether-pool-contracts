@@ -4,7 +4,7 @@ import "@openzeppelin/contracts/token/ERC777/ERC777.sol";
 
 import "./IComptroller.sol";
 
-contract TicketToken is ERC777 {
+contract ControlledToken is ERC777 {
 
     IComptroller public comptroller;
 

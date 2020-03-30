@@ -8,7 +8,7 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "./compound/ICToken.sol";
 import "./PrizePoolFactory.sol";
 import "./IPrizeStrategy.sol";
-import "./TicketToken.sol";
+import "./ControlledToken.sol";
 import "./IComptroller.sol";
 
 contract PrizePool is Initializable, IComptroller {
@@ -16,7 +16,8 @@ contract PrizePool is Initializable, IComptroller {
 
     IPrizeStrategy public prizeStrategy;
     PrizePoolFactory public factory;
-    TicketToken public ticketToken;
+    ControlledToken public ticketToken;
+    ControlledToken public sponsorshipToken;
     ICToken public cToken;
 
     uint256 feeFraction;
@@ -32,7 +33,8 @@ contract PrizePool is Initializable, IComptroller {
         IPrizeStrategy _prizeStrategy,
         PrizePoolFactory _factory,
         ICToken _cToken,
-        TicketToken _ticketToken,
+        ControlledToken _ticketToken,
+        ControlledToken _sponsorshipToken,
         uint256 _reserveRateMantissa,
         uint256 _feeFraction
     ) external initializer {
@@ -41,6 +43,10 @@ contract PrizePool is Initializable, IComptroller {
         require(address(_cToken) != address(0), "cToken cannot be zero");
         require(address(_ticketToken) != address(0), "ticket token cannot be zero");
         require(address(_ticketToken.comptroller()) == address(this), "ticket token comptroller must be this contract");
+        require(_ticketToken.totalSupply() == 0, "ticket token has previously minted");
+        require(address(_sponsorshipToken) != address(0), "sponsorship token cannot be zero");
+        require(address(_sponsorshipToken.comptroller()) == address(this), "sponsorship token comptroller must be this contract");
+        require(_sponsorshipToken.totalSupply() == 0, "sponsorship token has previously minted");
         require(_reserveRateMantissa > 0, "reserve rate must be greater than zero");
         require(_reserveRateMantissa < 1 ether, "reserve rate must be less than one");
         prizeStrategy = _prizeStrategy;
@@ -48,13 +54,14 @@ contract PrizePool is Initializable, IComptroller {
         reserveRateMantissa = _reserveRateMantissa;
         feeFraction = _feeFraction;
         ticketToken = _ticketToken;
+        sponsorshipToken = _sponsorshipToken;
         cToken = _cToken;
         currentPeriodStartCTokenExchangeRate = cToken.exchangeRateCurrent();
     }
 
-    function calculatePrize() public returns (uint256) {
+    function calculatePrizeCurrent() public returns (uint256) {
         uint256 balance = cToken.balanceOfUnderlying(address(this));
-        uint256 totalAccrued = balance.sub(ticketToken.totalSupply());
+        uint256 totalAccrued = balance.sub(ticketToken.totalSupply()).sub(sponsorshipToken.totalSupply());
         uint256 reserve = FixedPoint.multiplyUintByMantissa(totalAccrued, reserveRateMantissa);
         uint256 reserveForPrize;
         // if the total missing interest is less than the reserve, just capture the missing interest
@@ -69,8 +76,8 @@ contract PrizePool is Initializable, IComptroller {
     }
 
     function awardPrize() external onlyPrizeStrategy {
-        uint256 prize = calculatePrize();
-        ticketToken.mint(address(prizeStrategy), prize, "", "");
+        uint256 prize = calculatePrizeCurrent();
+        sponsorshipToken.mint(address(prizeStrategy), prize, "", "");
         currentPeriodStartCTokenExchangeRate = cToken.exchangeRateCurrent();
     }
 
@@ -106,7 +113,7 @@ contract PrizePool is Initializable, IComptroller {
         );
     }
 
-    function beforeTransfer(address, address from, address to, uint256 tokenAmount) external override {
+    function beforeTransfer(address, address from, address to, uint256 tokenAmount) external override onlyControlledToken {
         // if it's from a user
         if (from != address(0)) {
             // Check to see that missing interest is covered
@@ -141,6 +148,11 @@ contract PrizePool is Initializable, IComptroller {
         }
     }
 
+    function convertSponsorshipToTickets(address to, uint256 amount) public {
+        sponsorshipToken.burn(msg.sender, amount, "", "");
+        ticketToken.mint(to, amount, "", "");
+    }
+
     function cTokenValueOf(uint256 underlyingAmount) internal returns (uint256) {
         return FixedPoint.multiplyUintByMantissa(underlyingAmount, cToken.exchangeRateCurrent());
     }
@@ -151,6 +163,11 @@ contract PrizePool is Initializable, IComptroller {
 
     modifier onlyPrizeStrategy() {
         require(msg.sender == address(prizeStrategy), "only prize strategy");
+        _;
+    }
+
+    modifier onlyControlledToken() {
+        require(msg.sender == address(ticketToken), "only ticket token");
         _;
     }
 }

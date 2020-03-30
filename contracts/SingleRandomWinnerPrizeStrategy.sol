@@ -40,10 +40,10 @@ contract SingleRandomWinnerPrizeStrategy is IPrizeStrategy {
     }
 
     function award() external onlyPrizePeriodOver {
-        // prizePool.awardPrize();
+        prizePool.awardPrize(); // transfers winnings as sponsorship to this contract
         currentPrizeBlock = block.number;
         address winner = drawUser();
-        // prizePool.ticketToken().transfer(winner, prizePool.ticketToken().balanceOf(address(this)));
+        prizePool.convertSponsorshipToTickets(winner, prizePool.ticketToken().balanceOf(address(this)));
     }
 
     function drawUser() public view returns (address) {
