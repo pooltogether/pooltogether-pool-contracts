@@ -3,13 +3,13 @@ pragma solidity 0.6.4;
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./compound/ICToken.sol";
 import "./PrizePoolFactory.sol";
 import "./IPrizeStrategy.sol";
 import "./TicketToken.sol";
 import "./IComptroller.sol";
-import "./FixedPoint.sol";
 
 contract PrizePool is Initializable, IComptroller {
     using SafeMath for uint256;

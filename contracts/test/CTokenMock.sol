@@ -19,46 +19,70 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-contract CTokenMock is Initializable {
+import "./ERC20Mintable.sol";
+
+contract CTokenMock is Initializable, ERC20 {
     mapping(address => uint256) ownerTokenAmounts;
-    address public underlying;
+    ERC20Mintable public underlying;
 
     uint256 __supplyRatePerBlock;
 
-    function initialize (address _token, uint256 _supplyRatePerBlock) public initializer {
-        require(_token != address(0), "token is not defined");
+    function initialize (
+        ERC20Mintable _token,
+        uint256 _supplyRatePerBlock
+    ) public initializer {
+        require(address(_token) != address(0), "token is not defined");
         underlying = _token;
         __supplyRatePerBlock = _supplyRatePerBlock;
     }
 
     function mint(uint256 amount) external returns (uint) {
-        ownerTokenAmounts[msg.sender] = ownerTokenAmounts[msg.sender] + amount;
-        require(IERC20(underlying).transferFrom(msg.sender, address(this), amount), "could not transfer tokens");
+        uint256 newCTokens;
+        if (totalSupply() == 0) {
+            newCTokens = amount;
+        } else {
+            // they need to hold the same assets as tokens.
+            // Need to calculate the current exchange rate
+            uint256 fractionOfCollateral = FixedPoint.calculateMantissa(amount, underlying.balanceOf(address(this)));
+            newCTokens = FixedPoint.multiplyUintByMantissa(totalSupply(), fractionOfCollateral);
+        }
+        _mint(msg.sender, newCTokens);
+        require(underlying.transferFrom(msg.sender, address(this), amount), "could not transfer tokens");
         return 0;
     }
 
     function getCash() external view returns (uint) {
-        return IERC20(underlying).balanceOf(address(this));
+        return underlying.balanceOf(address(this));
     }
 
     function redeemUnderlying(uint256 requestedAmount) external returns (uint) {
         require(requestedAmount <= ownerTokenAmounts[msg.sender], "insufficient underlying funds");
         ownerTokenAmounts[msg.sender] = ownerTokenAmounts[msg.sender] - requestedAmount;
-        require(IERC20(underlying).transfer(msg.sender, requestedAmount), "could not transfer tokens");
+        require(underlying.transfer(msg.sender, requestedAmount), "could not transfer tokens");
     }
 
-    function reward(address account) external {
-        ownerTokenAmounts[account] = (ownerTokenAmounts[account] * 120) / 100;
+    function accrue() external {
+        uint256 newTokens = (underlying.balanceOf(address(this)) * 120) / 100;
+        underlying.mint(address(this), newTokens);
     }
 
-    function rewardCustom(address account, uint256 amount) external {
-        ownerTokenAmounts[account] = ownerTokenAmounts[account] + amount;
+    function accrueCustom(uint256 amount) external {
+        underlying.mint(address(this), amount);
     }
 
     function balanceOfUnderlying(address account) external view returns (uint) {
-        return ownerTokenAmounts[account];
+        return FixedPoint.multiplyUintByMantissa(balanceOf(account), exchangeRateCurrent());
+    }
+
+    function exchangeRateCurrent() public view returns (uint256) {
+        if (totalSupply() == 0) {
+            return FixedPoint.SCALE;
+        } else {
+            return FixedPoint.calculateMantissa(underlying.balanceOf(address(this)), totalSupply());
+        }
     }
 
     function supplyRatePerBlock() external view returns (uint) {

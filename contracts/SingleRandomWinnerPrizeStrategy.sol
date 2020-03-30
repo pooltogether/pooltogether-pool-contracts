@@ -2,7 +2,7 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
-import "kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
+import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 
 import "./PrizePool.sol";

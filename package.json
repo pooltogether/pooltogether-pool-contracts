@@ -11,6 +11,7 @@
     "@types/mocha": "^7.0.2",
     "@types/node": "^13.9.1",
     "chai": "^4.2.0",
+    "deploy-eip-1820": "^0.1.1",
     "ethereum-waffle": "^2.3.2",
     "ethers": "^4.0.45",
     "solc": "0.6.4",
@@ -20,7 +21,8 @@
   "dependencies": {
     "@openzeppelin/contracts": "^3.0.0-rc.0",
     "@openzeppelin/upgrades": "^2.8.0",
+    "@pooltogether/fixed-point": "^0.1.0",
     "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
-    "kleros": "pooltogether/kleros#solidity-0.6"
+    "sortition-sum-tree-factory": "^0.1.0"
   }
 }

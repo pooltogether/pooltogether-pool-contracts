@@ -29,25 +29,6 @@
     ethers "^4.0.0"
     ganache-core "2.9.0-istanbul.0"
 
-"@kleros/kleros-interaction@^0.9.0":
-  version "0.9.3"
-  resolved "https://registry.yarnpkg.com/@kleros/kleros-interaction/-/kleros-interaction-0.9.3.tgz#c75879a835cc2e8885263ced5a5756d4498f0efa"
-  integrity sha512-DhRCUn/XqRUTgBCeOaTY/RCtDjewdk/NEOXqI7LN0heU+uGP2Q2t2YdQoXtFOp9/wz8iicMNMAwnhPMoXJOKPw==
-  dependencies:
-    "@kleros/kleros" "^0.1.2"
-    "@realitio/realitio-contracts" "^2.0.5"
-    minimetoken "^0.2.0"
-    openzeppelin-solidity "^1.12.0"
-    web3-utils "^1.2.1"
-
-"@kleros/kleros@^0.1.2":
-  version "0.1.3"
-  resolved "https://registry.yarnpkg.com/@kleros/kleros/-/kleros-0.1.3.tgz#e0fe3c0f15ad321d7374466b9acb67f9d1da7b43"
-  integrity sha512-b1HPNmSW7P3mzcu3a6gUuyK+R0dI+T4cD7W3VdK7pamwJaKEgwqMJ80hUImUyjl+ycfPedzs/n4fAvXDg3Y0LA==
-  dependencies:
-    "@kleros/kleros-interaction" "^0.9.0"
-    minimetoken "^0.2.0"
-
 "@nomiclabs/buidler-ethers@^1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@nomiclabs/buidler-ethers/-/buidler-ethers-1.2.0.tgz#069ee095372f43919030e1a3b4079dbf96d14fab"
@@ -155,14 +136,16 @@
     web3-eth-contract "1.2.2"
     web3-utils "1.2.2"
 
+"@pooltogether/fixed-point@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@pooltogether/fixed-point/-/fixed-point-0.1.0.tgz#ee81a2357b76a8398fde6079cfe5e0ae1980413b"
+  integrity sha512-CcTD0wXiBvv4cqkp3aH0Ru2aVunop4Z+FBz8ETER9WKccDGRB4zeY9yqckRqgvJKIWy5RHze+rUk2UGdmcqHXA==
+  dependencies:
+    "@openzeppelin/contracts" "^3.0.0-rc.0"
+
 "@pooltogether/uniform-random-number@pooltogether/uniform-random-number#solidity-0.6":
   version "0.1.0"
   resolved "https://codeload.github.com/pooltogether/uniform-random-number/tar.gz/fae15110b26db8494531fec2a787f60afb74e688"
-
-"@realitio/realitio-contracts@^2.0.5":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@realitio/realitio-contracts/-/realitio-contracts-2.1.1.tgz#070a3a27a98fae6b9066056316d446ee637c10e4"
-  integrity sha512-4Hlvix6/8bgN4yd/iSIaOxY/cyFF1Yy0zuTMNy2UUZvkVOetGowEcApD+wDNKelx7PtfehSV3kx3fP/AtpC48A==
 
 "@resolver-engine/core@^0.2.1":
   version "0.2.1"
@@ -1900,6 +1883,11 @@ depd@~1.1.2:
   resolved "https://registry.yarnpkg.com/depd/-/depd-1.1.2.tgz#9bcd52e14c097763e749b274c4346ed2e560b5a9"
   integrity sha1-m81S4UwJd2PnSbJ0xDRu0uVgtak=
 
+deploy-eip-1820@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/deploy-eip-1820/-/deploy-eip-1820-0.1.1.tgz#05269ad9f2470dc27765842eeedc16ca808739f7"
+  integrity sha512-DJRcimhyjmpMYABLwkQVwSWu83RrjrArZxaeTwuwrjRs9QNJ4uwIc0hFTtiVO/2YQnWHca3nS39anWdSzgoE3A==
+
 des.js@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/des.js/-/des.js-1.0.1.tgz#5382142e1bdc53f85d86d53e5f4aa7deb91e0843"
@@ -2152,13 +2140,6 @@ eth-block-tracker@^3.0.0:
     json-rpc-engine "^3.6.0"
     pify "^2.3.0"
     tape "^4.6.3"
-
-eth-contract-class@0.0.6:
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/eth-contract-class/-/eth-contract-class-0.0.6.tgz#398b8952149cc747cb959fa8b5d480288c7a8bce"
-  integrity sha1-OYuJUhScx0fLlZ+otdSAKIx6i84=
-  dependencies:
-    web3-core-promievent "^1.0.0-beta.21"
 
 eth-ens-namehash@2.0.8:
   version "2.0.8"
@@ -3690,13 +3671,6 @@ klaw@^1.0.0:
   optionalDependencies:
     graceful-fs "^4.1.9"
 
-kleros@pooltogether/kleros#solidity-0.6:
-  version "0.0.7"
-  resolved "https://codeload.github.com/pooltogether/kleros/tar.gz/98f8ec070394e35b697a0644ef6a620760c3dc62"
-  dependencies:
-    "@kleros/kleros-interaction" "^0.9.0"
-    minimetoken "^0.2.0"
-
 level-codec@^9.0.0:
   version "9.0.1"
   resolved "https://registry.yarnpkg.com/level-codec/-/level-codec-9.0.1.tgz#042f4aa85e56d4328ace368c950811ba802b7247"
@@ -4060,13 +4034,6 @@ minimatch@3.0.4, minimatch@^3.0.4:
   dependencies:
     brace-expansion "^1.1.7"
 
-minimetoken@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/minimetoken/-/minimetoken-0.2.0.tgz#c182231eae93e752e5d8801c2967e6d6ef6a0e6f"
-  integrity sha512-oRwMg4tbr4sAznQ8+eS6ZQbrIQNt2Qn0wTFHQJVlPCCQ1cgq24h1B2KIaUtqIUu/eKZi7a5NE1MOcv0tZQxYFQ==
-  dependencies:
-    eth-contract-class "0.0.6"
-
 minimist@0.0.8:
   version "0.0.8"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-0.0.8.tgz#857fcabfc3397d2625b8228262e86aa7a011b05d"
@@ -4301,11 +4268,6 @@ onetime@^5.1.0:
   integrity sha512-5NcSkPHhwTVFIQN+TUqXoS5+dlElHXdpAWu9I0HP20YOtIi+aZ0Ct82jdlILDxjLEAWwvm+qj1m6aEtsDVmm6Q==
   dependencies:
     mimic-fn "^2.1.0"
-
-openzeppelin-solidity@^1.12.0:
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/openzeppelin-solidity/-/openzeppelin-solidity-1.12.0.tgz#7b9c55975e73370d4541e3442b30cb3d91ac973a"
-  integrity sha512-WlorzMXIIurugiSdw121RVD5qA3EfSI7GybTn+/Du0mPNgairjt29NpVTAaH8eLjAeAwlw46y7uQKy0NYem/gA==
 
 os-homedir@^1.0.0:
   version "1.0.2"
@@ -5179,6 +5141,24 @@ sort-keys@^2.0.0:
   dependencies:
     is-plain-obj "^1.0.0"
 
+sortition-sum-tree-factory@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/sortition-sum-tree-factory/-/sortition-sum-tree-factory-0.1.0.tgz#4ce45b70644b36a548275d16732c0322f96e2797"
+  integrity sha512-9pm9JySkXguzoZ+SIwHxWR7tRekQdvshPnG1wCNTDAKejjXZqrqRaCNXPx2M+B9roT+NTZno5DEDciScAGgKBw==
+  dependencies:
+    "@nomiclabs/buidler" "^1.2.0"
+    "@nomiclabs/buidler-ethers" "^1.2.0"
+    "@nomiclabs/buidler-waffle" "^1.2.0"
+    "@types/chai" "^4.2.10"
+    "@types/mocha" "^7.0.2"
+    "@types/node" "^13.9.1"
+    chai "^4.2.0"
+    ethereum-waffle "^2.3.2"
+    ethers "^4.0.45"
+    solc "0.6.4"
+    ts-node "^8.6.2"
+    typescript "^3.8.3"
+
 source-map-support@0.5.12:
   version "0.5.12"
   resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.12.tgz#b4f3b10d51857a5af0138d3ce8003b201613d599"
@@ -5860,14 +5840,6 @@ web3-core-promievent@1.2.4:
     any-promise "1.3.0"
     eventemitter3 "3.1.2"
 
-web3-core-promievent@^1.0.0-beta.21:
-  version "1.2.6"
-  resolved "https://registry.yarnpkg.com/web3-core-promievent/-/web3-core-promievent-1.2.6.tgz#b1550a3a4163e48b8b704c1fe4b0084fc2dad8f5"
-  integrity sha512-km72kJef/qtQNiSjDJJVHIZvoVOm6ytW3FCYnOcCs7RIkviAb5JYlPiye0o4pJOLzCXYID7DK7Q9bhY8qWb1lw==
-  dependencies:
-    any-promise "1.3.0"
-    eventemitter3 "3.1.2"
-
 web3-core-requestmanager@1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/web3-core-requestmanager/-/web3-core-requestmanager-1.2.1.tgz#fa2e2206c3d738db38db7c8fe9c107006f5c6e3d"
@@ -6437,20 +6409,6 @@ web3-utils@1.2.4:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/web3-utils/-/web3-utils-1.2.4.tgz#96832a39a66b05bf8862a5b0bdad2799d709d951"
   integrity sha512-+S86Ip+jqfIPQWvw2N/xBQq5JNqCO0dyvukGdJm8fEWHZbckT4WxSpHbx+9KLEWY4H4x9pUwnoRkK87pYyHfgQ==
-  dependencies:
-    bn.js "4.11.8"
-    eth-lib "0.2.7"
-    ethereum-bloom-filters "^1.0.6"
-    ethjs-unit "0.1.6"
-    number-to-bn "1.7.0"
-    randombytes "^2.1.0"
-    underscore "1.9.1"
-    utf8 "3.0.0"
-
-web3-utils@^1.2.1:
-  version "1.2.6"
-  resolved "https://registry.yarnpkg.com/web3-utils/-/web3-utils-1.2.6.tgz#b9a25432da00976457fcc1094c4af8ac6d486db9"
-  integrity sha512-8/HnqG/l7dGmKMgEL9JeKPTtjScxOePTzopv5aaKFExPfaBrYRkgoMqhoowCiAl/s16QaTn4DoIF1QC4YsT7Mg==
   dependencies:
     bn.js "4.11.8"
     eth-lib "0.2.7"
