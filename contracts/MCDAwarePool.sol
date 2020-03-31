@@ -1,5 +1,5 @@
 /**
-Copyright 2019 PoolTogether LLC
+Copyright 2020 PoolTogether Inc.
 
 This file is part of PoolTogether.
 
