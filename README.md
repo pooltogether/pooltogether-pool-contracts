@@ -1,4 +1,4 @@
-# PoolTogether Contracts
+# PoolTogether V2 Contracts
 
 [![CircleCI](https://circleci.com/gh/pooltogether/pooltogether-contracts.svg?style=svg)](https://circleci.com/gh/pooltogether/pooltogether-contracts)
 [![built-with openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-3677FF)](https://docs.openzeppelin.com/)
@@ -10,6 +10,8 @@ PoolTogether is a prize-linked savings account built on Ethereum. This project c
 **If you want to run PoolTogether locally in an isolated test environment check out the [PoolTogether Mock](https://github.com/pooltogether/pooltogether-contracts-mock) project**
 
 # Ethereum Networks
+
+PoolTogether V2 is an upgradeable system.  Each deployed contract is actually a "Proxy" that points to an "Implementation" contract.  When making calls on any contract make sure to use the Proxy address, not the implementation.
 
 ## Mainnet
 
@@ -32,7 +34,6 @@ PoolTogether is a prize-linked savings account built on Ethereum. This project c
 | PoolDaiToken  | [0x1237a9f1664895bc30cfe9eCD1e3f6C2A83700AD](https://kovan.etherscan.io/address/0x1237a9f1664895bc30cfe9eCD1e3f6C2A83700AD) | [0xAe2065e2298C6940d5bd59cD1c7bB6264c772c6A](https://kovan.etherscan.io/address/0xAe2065e2298C6940d5bd59cD1c7bB6264c772c6A) |
 | PoolUsdc      | [0xb073a5a16025c91ae3e9764E5cc5fC4DD2fA99Bc](https://kovan.etherscan.io/address/0xb073a5a16025c91ae3e9764E5cc5fC4DD2fA99Bc) | [0x22DF31Ffdaa436bDCCb136c0f127634895893b60](https://kovan.etherscan.io/address/0x22DF31Ffdaa436bDCCb136c0f127634895893b60) |
 | PoolUsdcToken | [0xDC9A918D43a9E018de904a09d4D04F539Df4ed34](https://kovan.etherscan.io/address/0xDC9A918D43a9E018de904a09d4D04F539Df4ed34) | [0x9eC8c34D418eDF89f587642D34dB5204508D13Ee](https://kovan.etherscan.io/address/0x9eC8c34D418eDF89f587642D34dB5204508D13Ee) |
-
 
 # Setup
 
