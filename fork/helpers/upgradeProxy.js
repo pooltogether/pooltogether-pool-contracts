@@ -1,4 +1,5 @@
 const chai = require('chai')
+const chalk = require('chalk')
 const expect = chai.expect
 const MultisigAbi = require('../GnosisMultisigAbi')
 
@@ -33,9 +34,11 @@ async function upgradeProxy(context, proxyAddress, implementationAddress, postUp
     upgradeData = interfaces.ProxyAdmin.functions.upgrade.encode([proxyAddress, implementationAddress])
   }
 
+  console.log(chalk.yellow(`Submitting first multisig tx from ${multisigSigner1._address}....`))
   await ms1.submitTransaction(contracts.ProxyAdmin.address, 0, upgradeData, overrides)
   const lastTxId = parseInt((await ms1.transactionCount()).toString())
   // have the second signer confirm
+  console.log(chalk.yellow(`Confirming multisig tx from ${multisigSigner2._address}....`))
   const confirmTx = await ms2.confirmTransaction(lastTxId-1, overrides)
   receipt = await provider.waitForTransaction(confirmTx.hash)
 
