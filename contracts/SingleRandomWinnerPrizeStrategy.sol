@@ -63,7 +63,11 @@ contract SingleRandomWinnerPrizeStrategy is IPrizeStrategy {
         return sortitionSumTrees.total(TREE_KEY);
     }
 
-    function updateBalanceOf(address user, uint256 amount) external override {
+    function chanceOf(address user) public view returns (uint256) {
+        return sortitionSumTrees.stakeOf(TREE_KEY, bytes32(uint256(user)));
+    }
+
+    function afterBalanceChanged(address user, uint256 amount) external override {
         sortitionSumTrees.set(TREE_KEY, amount, bytes32(uint256(user)));
     }
 

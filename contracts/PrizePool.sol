@@ -20,14 +20,14 @@ contract PrizePool is Initializable, IComptroller {
     ControlledToken public sponsorshipToken;
     ICToken public cToken;
 
-    uint256 feeFraction;
-    uint256 reserveRateMantissa;
-    uint256 currentPeriodStartCTokenExchangeRate;
+    uint256 public feeFraction;
+    uint256 public reserveRateMantissa;
+    uint256 public lastPrizeExchangeRate;
 
-    uint256 totalMissingInterest;
-    mapping(address => uint256) missingInterestBalances;
+    uint256 public totalMissingInterest;
+    mapping(address => uint256) public balanceOfMissingInterest;
 
-    mapping(address => uint256) cTokenBalances;
+    mapping(address => uint256) cTokenBalanceOf;
 
     function initialize (
         IPrizeStrategy _prizeStrategy,
@@ -56,7 +56,7 @@ contract PrizePool is Initializable, IComptroller {
         ticketToken = _ticketToken;
         sponsorshipToken = _sponsorshipToken;
         cToken = _cToken;
-        currentPeriodStartCTokenExchangeRate = cToken.exchangeRateCurrent();
+        lastPrizeExchangeRate = cToken.exchangeRateCurrent();
     }
 
     function calculatePrizeCurrent() public returns (uint256) {
@@ -78,7 +78,7 @@ contract PrizePool is Initializable, IComptroller {
     function awardPrize() external onlyPrizeStrategy {
         uint256 prize = calculatePrizeCurrent();
         sponsorshipToken.mint(address(prizeStrategy), prize, "", "");
-        currentPeriodStartCTokenExchangeRate = cToken.exchangeRateCurrent();
+        lastPrizeExchangeRate = cToken.exchangeRateCurrent();
     }
 
     function deposit(uint256 amount) public {
@@ -93,58 +93,66 @@ contract PrizePool is Initializable, IComptroller {
     }
 
     function reserveInterestOf(address user) public returns (uint256) {
-        uint256 underlyingBalance = FixedPoint.divideUintByMantissa(cTokenBalances[user], cToken.exchangeRateCurrent());
+        uint256 underlyingBalance = FixedPoint.divideUintByMantissa(cTokenBalanceOf[user], cToken.exchangeRateCurrent());
         return underlyingBalance.sub(ticketToken.balanceOf(user));
     }
 
-    function calculateCurrentPrizeInterest(uint256 _deposit) public returns (uint256) {
+    function calculateCurrentPrizeInterest(uint256 _deposit) public view returns (uint256) {
         // calculate their missing interest
         // D = T * (1 - R) * (1 - I/F)
 
         // if AD = T * (1 - R) = T - TR
-        uint256 depositLessReserve = _deposit.sub(FixedPoint.divideUintByMantissa(_deposit, reserveRateMantissa));
+        uint256 depositLessReserve = _deposit.sub(FixedPoint.multiplyUintByMantissa(_deposit, reserveRateMantissa));
 
-        // then D = AD - (I * AD) / F
-        return depositLessReserve.sub(
-            FixedPoint.divideUintByMantissa(
-                FixedPoint.multiplyUintByMantissa(depositLessReserve, currentPeriodStartCTokenExchangeRate),
-                cToken.exchangeRateCurrent()
-            )
+        uint256 iDivFMantissa = FixedPoint.calculateMantissa(
+            exchangeRateCurrent(),
+            lastPrizeExchangeRate
+        );
+
+        // // then D = AD * (1 - I/F)
+        return FixedPoint.multiplyUintByMantissa(
+            depositLessReserve,
+            iDivFMantissa.sub(FixedPoint.SCALE)
         );
     }
 
-    function beforeTransfer(address, address from, address to, uint256 tokenAmount) external override onlyControlledToken {
+    function beforeTransfer(address, address from, address to, uint256 tokenAmount) external override onlyTicketOrSponsorshipTokens {
+        // ignore the sponsorship tokens
+        if (msg.sender != address(ticketToken)) {
+            return;
+        }
+
         // if it's from a user
         if (from != address(0)) {
             // Check to see that missing interest is covered
             uint256 prizeInterest = calculateCurrentPrizeInterest(ticketToken.balanceOf(from));
             uint256 totalInterest = prizeInterest.add(reserveInterestOf(from));
-            require(totalInterest > missingInterestBalances[from], "missing interest must be paid");
+            require(totalInterest > balanceOfMissingInterest[from], "missing interest must be paid");
 
             // Capture missing interest
-            totalMissingInterest = totalMissingInterest.sub(missingInterestBalances[from]);
-            missingInterestBalances[from] = 0;
-            uint256 remainingInterest = totalInterest.sub(missingInterestBalances[from]);
+            totalMissingInterest = totalMissingInterest.sub(balanceOfMissingInterest[from]);
+            balanceOfMissingInterest[from] = 0;
+            uint256 remainingInterest = totalInterest.sub(balanceOfMissingInterest[from]);
             uint256 newTicketBalance = ticketToken.balanceOf(from).sub(tokenAmount);
             uint256 newCTokenBalance = cTokenValueOf(newTicketBalance.add(remainingInterest));
-            cTokenBalances[from] = newCTokenBalance;
+            cTokenBalanceOf[from] = newCTokenBalance;
 
             // update chances
-            prizeStrategy.updateBalanceOf(from, newTicketBalance);
+            prizeStrategy.afterBalanceChanged(from, newTicketBalance);
         }
 
         if (to != address(0)) {
             // update their missing prize interest
             uint256 missingPrizeInterest = calculateCurrentPrizeInterest(tokenAmount);
-            missingInterestBalances[to] = missingInterestBalances[to].add(missingPrizeInterest);
+            balanceOfMissingInterest[to] = balanceOfMissingInterest[to].add(missingPrizeInterest);
             totalMissingInterest = totalMissingInterest.add(missingPrizeInterest);
 
             // add to their balance the ctokens
             uint256 cTokens = cTokenValueOf(tokenAmount);
-            cTokenBalances[to] = cTokenBalances[to].add(cTokens);
+            cTokenBalanceOf[to] = cTokenBalanceOf[to].add(cTokens);
 
-            uint256 newTicketBalance = ticketToken.balanceOf(from).add(tokenAmount);
-            prizeStrategy.updateBalanceOf(to, newTicketBalance);
+            uint256 newTicketBalance = ticketToken.balanceOf(to).add(tokenAmount);
+            prizeStrategy.afterBalanceChanged(to, newTicketBalance);
         }
     }
 
@@ -157,6 +165,12 @@ contract PrizePool is Initializable, IComptroller {
         return FixedPoint.multiplyUintByMantissa(underlyingAmount, cToken.exchangeRateCurrent());
     }
 
+    function exchangeRateCurrent() public view returns (uint256) {
+        (bool success, bytes memory data) = address(cToken).staticcall(abi.encodeWithSignature("exchangeRateCurrent()", ""));
+        require(success, "exchange rate failed");
+        return abi.decode(data, (uint256));
+    }
+
     function underlyingToken() internal returns (IERC20) {
         return IERC20(cToken.underlying());
     }
@@ -166,8 +180,8 @@ contract PrizePool is Initializable, IComptroller {
         _;
     }
 
-    modifier onlyControlledToken() {
-        require(msg.sender == address(ticketToken), "only ticket token");
+    modifier onlyTicketOrSponsorshipTokens() {
+        require(msg.sender == address(ticketToken) || msg.sender == address(sponsorshipToken), "only ticket or sponsorship tokens");
         _;
     }
 }

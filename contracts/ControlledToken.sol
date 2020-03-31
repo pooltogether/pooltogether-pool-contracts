@@ -28,6 +28,7 @@ contract ControlledToken is ERC777 {
         bytes calldata userData,
         bytes calldata operatorData
     ) external onlyComptroller {
+        _beforeTokenTransfer(msg.sender, address(0), account, amount);
         _mint(account, amount, userData, operatorData);
     }
 
@@ -37,6 +38,7 @@ contract ControlledToken is ERC777 {
         bytes calldata data,
         bytes calldata operatorData
     ) external onlyComptroller {
+        _beforeTokenTransfer(msg.sender, from, address(0), amount);
         _burn(from, amount, data, operatorData);
     }
 
