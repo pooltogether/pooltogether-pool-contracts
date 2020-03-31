@@ -3,7 +3,7 @@
   "contracts": {
     "PoolSaiToken": "RecipientWhitelistPoolToken",
     "PoolDaiToken": "RecipientWhitelistPoolToken",
-    "PoolUsdcToken": "RecipientWhitelistPoolToken",
+    "PoolUsdcToken": "RecipientWhitelistPoolTokenDecimals",
     "PoolSai": "MCDAwarePool",
     "PoolDai": "MCDAwarePool",
     "PoolUsdc": "MCDAwarePool"

@@ -146,11 +146,11 @@ contract MCDAwarePool is BasePool, IERC777Recipient {
    * @notice Returns the address of the PoolSai pool token contract
    * @return The address of the Sai PoolToken contract
    */
-  function saiPoolToken() internal view returns (PoolToken) {
+  function saiPoolToken() internal view returns (IPoolToken) {
     if (address(saiPool) != address(0)) {
       return saiPool.poolToken();
     } else {
-      return PoolToken(0);
+      return IPoolToken(0);
     }
   }
 

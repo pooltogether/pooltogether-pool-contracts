@@ -28,7 +28,7 @@ import "./DrawManager.sol";
 import "fixidity/contracts/FixidityLib.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./Blocklock.sol";
-import "./PoolToken.sol";
+import "./IPoolToken.sol";
 
 /**
  * @title The Pool contract
@@ -272,7 +272,7 @@ contract BasePool is Initializable, ReentrancyGuard {
 
   Blocklock.State internal blocklock;
 
-  PoolToken public poolToken;
+  IPoolToken public poolToken;
 
   /**
    * @notice Initializes a new Pool contract.
@@ -298,7 +298,7 @@ contract BasePool is Initializable, ReentrancyGuard {
     initBlocklock(_lockDuration, _cooldownDuration);
   }
 
-  function setPoolToken(PoolToken _poolToken) external onlyAdmin {
+  function setIPoolToken(IPoolToken _poolToken) external onlyAdmin {
     require(address(poolToken) == address(0), "Pool/token-was-set");
     require(_poolToken.pool() == address(this), "Pool/token-mismatch");
     poolToken = _poolToken;
@@ -558,7 +558,7 @@ contract BasePool is Initializable, ReentrancyGuard {
    * proportional to the total committed balance of all users.
    * @param _amount The amount of the token underlying the cToken to deposit.
    */
-  function depositPool(uint256 _amount) public requireOpenDraw unlessDepositsPaused nonReentrant {
+  function depositPool(uint256 _amount) public requireOpenDraw unlessDepositsPaused nonReentrant notLocked {
     // Transfer the tokens into this contract
     require(token().transferFrom(msg.sender, address(this), _amount), "Pool/t-fail");
 
@@ -685,7 +685,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * Allows the associated PoolToken to withdraw for a user; useful when redeeming through the token.
+   * Allows the associated IPoolToken to withdraw for a user; useful when redeeming through the token.
    * @param _from The user to withdraw from
    * @param _amount The amount to withdraw
    */
@@ -711,7 +711,7 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
-   * @notice Allows the associated PoolToken to move committed tokens from one user to another.
+   * @notice Allows the associated IPoolToken to move committed tokens from one user to another.
    * @param _from The account to move tokens from
    * @param _to The account that is receiving the tokens
    * @param _amount The amount of tokens to transfer
