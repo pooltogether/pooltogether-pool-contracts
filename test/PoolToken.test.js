@@ -194,11 +194,13 @@ contract('PoolToken', (accounts) => {
           assert.equal(await poolToken.balanceOf(user2), toWei('10'))
         })
 
-        it('should fail for contract addresses without ERC777Recipient interfaces', async () => {
+        // notice that here we relax the ERC777 restrictions
+        it('should NOT fail for contract addresses without ERC777Recipient interfaces', async () => {
           let recipient = await MockERC777Recipient.new()
           await poolContext.depositPool(toWei('10'))
           await poolContext.nextDraw()
-          await chai.assert.isRejected(poolToken.send(recipient.address, toWei('10'), []), /PoolToken\/no-recip-inter/)
+          await poolToken.send(recipient.address, toWei('10'), [])
+          assert.equal(await poolToken.balanceOf(recipient.address), toWei('10'))
         })
       })
     })

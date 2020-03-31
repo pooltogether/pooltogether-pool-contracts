@@ -496,7 +496,7 @@ contract PoolToken is Initializable, IERC20, IERC777 {
 
       _move(operator, from, to, amount, userData, operatorData);
 
-      _callTokensReceived(operator, from, to, amount, userData, operatorData, true);
+      _callTokensReceived(operator, from, to, amount, userData, operatorData, false);
   }
 
   /**
