@@ -463,6 +463,15 @@ contract BasePool is Initializable, ReentrancyGuard {
     emit FeeCollected(draw.feeBeneficiary, fee, drawId);
   }
 
+  /**
+   * @notice Calls the reward listener for the winner, if a listener exists.
+   * @dev Checks for a listener using the ERC1820 registry.  The listener is given a gas stipend of 200,000 to run the function.
+   * The number 200,000 was selected because it's safely above the gas requirements for PoolTogether [Pod](https://github.com/pooltogether/pods) contract.
+   *
+   * @param winner The winner.  If they have a listener registered in the ERC1820 registry it will be called.
+   * @param netWinnings The amount that was won.
+   * @param drawId The draw id that was won.
+   */
   function callRewarded(address winner, uint256 netWinnings, uint256 drawId) internal {
     address impl = ERC1820_REGISTRY.getInterfaceImplementer(winner, REWARD_LISTENER_INTERFACE_HASH);
     if (impl != address(0)) {
