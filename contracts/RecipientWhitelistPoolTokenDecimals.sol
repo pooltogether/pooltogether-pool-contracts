@@ -21,7 +21,7 @@ pragma solidity 0.5.12;
 import "./PoolTokenDecimals.sol";
 
 /**
- * @title RecipientWhitelistPoolTokenDecimals
+ * @title RecipientWhitelistPoolToken
  * @author Brendan Asselstine
  * @notice Allows the pool admins to only allow token transfers to particular addresses.
  */
@@ -118,7 +118,7 @@ contract RecipientWhitelistPoolTokenDecimals is PoolTokenDecimals {
    * @notice Requires the caller to be the Pool admin
    */
   modifier onlyAdmin() {
-    require(_pool.isAdmin(msg.sender), "WhitelistToken/is-admin");
+    require(pool().isAdmin(msg.sender), "WhitelistToken/is-admin");
     _;
   }
 }

@@ -10,7 +10,7 @@ const {
   TOKENS_RECIPIENT_INTERFACE_HASH
 } = require('./helpers/constants')
 
-const PoolToken = artifacts.require('PoolToken.sol')
+const PoolToken = artifacts.require('PoolTokenDecimals.sol')
 const MockERC777Sender = artifacts.require('MockERC777Sender.sol')
 const MockERC777Recipient = artifacts.require('MockERC777Recipient.sol')
 

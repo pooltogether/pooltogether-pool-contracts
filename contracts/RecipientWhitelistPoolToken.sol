@@ -118,7 +118,7 @@ contract RecipientWhitelistPoolToken is PoolToken {
    * @notice Requires the caller to be the Pool admin
    */
   modifier onlyAdmin() {
-    require(_pool.isAdmin(msg.sender), "WhitelistToken/is-admin");
+    require(pool().isAdmin(msg.sender), "WhitelistToken/is-admin");
     _;
   }
 }

@@ -298,7 +298,7 @@ contract BasePool is Initializable, ReentrancyGuard {
     initBlocklock(_lockDuration, _cooldownDuration);
   }
 
-  function setIPoolToken(IPoolToken _poolToken) external onlyAdmin {
+  function setPoolToken(IPoolToken _poolToken) external onlyAdmin {
     require(address(poolToken) == address(0), "Pool/token-was-set");
     require(_poolToken.pool() == address(this), "Pool/token-mismatch");
     poolToken = _poolToken;

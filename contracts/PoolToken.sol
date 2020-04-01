@@ -47,7 +47,7 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
  * is not possible.
  *
  */
-contract PoolToken is Initializable, IERC20, IERC777, IPoolToken {
+contract PoolToken is Initializable, IERC20, IERC777 {
   using SafeMath for uint256;
   using Address for address;
 
@@ -130,8 +130,8 @@ contract PoolToken is Initializable, IERC20, IERC777, IPoolToken {
    * @notice Returns the address of the Pool contract
    * @return The address of the pool contract
    */
-  function pool() public view returns (address) {
-      return address(_pool);
+  function pool() public view returns (BasePool) {
+      return _pool;
   }
 
   /**
@@ -166,7 +166,7 @@ contract PoolToken is Initializable, IERC20, IERC777, IPoolToken {
     * Always returns 18, as per the
     * [ERC777 EIP](https://eips.ethereum.org/EIPS/eip-777#backward-compatibility).
     */
-  function decimals() public pure returns (uint8) {
+  function decimals() public view returns (uint8) {
       return 18;
   }
 

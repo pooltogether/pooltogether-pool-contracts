@@ -21,7 +21,7 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory.sol')
   const DrawManager = artifacts.require('DrawManager.sol')
   const Blocklock = artifacts.require('Blocklock.sol')
-  const PoolToken = artifacts.require('RecipientWhitelistPoolToken.sol')
+  const PoolToken = artifacts.require('RecipientWhitelistPoolTokenDecimals.sol')
 
   this.init = async () => {
     this.registry = await setupERC1820({ web3, artifacts, account: owner })
