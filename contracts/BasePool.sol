@@ -624,6 +624,38 @@ contract BasePool is Initializable, ReentrancyGuard {
   }
 
   /**
+   * Withdraws the given amount from the user's deposits.  It first withdraws from their sponsorship,
+   * then their open deposits, then their committed deposits.
+   *
+   * @param amount The amount to withdraw.
+   */
+  function withdraw(uint256 amount) public nonReentrant notLocked {
+    uint256 remainingAmount = amount;
+    // first sponsorship
+    uint256 sponsorshipAndFeesBalance = sponsorshipAndFeeBalanceOf(msg.sender);
+    if (sponsorshipAndFeesBalance < remainingAmount) {
+      withdrawSponsorshipAndFee(sponsorshipAndFeesBalance);
+      remainingAmount = remainingAmount.sub(sponsorshipAndFeesBalance);
+    } else {
+      withdrawSponsorshipAndFee(remainingAmount);
+      return;
+    }
+
+    // now pending
+    uint256 pendingBalance = drawState.openBalanceOf(msg.sender);
+    if (pendingBalance < remainingAmount) {
+      _withdrawOpenDeposit(msg.sender, pendingBalance);
+      remainingAmount = remainingAmount.sub(pendingBalance);
+    } else {
+      _withdrawOpenDeposit(msg.sender, remainingAmount);
+      return;
+    }
+
+    // now committed.  remainingAmount should not be greater than committed balance.
+    _withdrawCommittedDeposit(msg.sender, remainingAmount);
+  }
+
+  /**
    * @notice Withdraw the sender's entire balance back to them.
    */
   function withdraw() public nonReentrant notLocked {
@@ -665,23 +697,31 @@ contract BasePool is Initializable, ReentrancyGuard {
    * Withdraws from the user's open deposits
    * @param _amount The amount to withdraw
    */
-  function withdrawOpenDeposit(uint256 _amount) public {
-    drawState.withdrawOpen(msg.sender, _amount);
-    _withdraw(msg.sender, _amount);
+  function withdrawOpenDeposit(uint256 _amount) public nonReentrant notLocked {
+    _withdrawOpenDeposit(msg.sender, _amount);
+  }
 
-    emit OpenDepositWithdrawn(msg.sender, _amount);
+  function _withdrawOpenDeposit(address sender, uint256 _amount) internal {
+    drawState.withdrawOpen(sender, _amount);
+    _withdraw(sender, _amount);
+
+    emit OpenDepositWithdrawn(sender, _amount);
   }
 
   /**
    * Withdraws from the user's committed deposits
    * @param _amount The amount to withdraw
    */
-  function withdrawCommittedDeposit(uint256 _amount) external notLocked returns (bool)  {
-    _withdrawCommittedDepositAndEmit(msg.sender, _amount);
-    if (address(poolToken) != address(0)) {
-      poolToken.poolRedeem(msg.sender, _amount);
-    }
+  function withdrawCommittedDeposit(uint256 _amount) public nonReentrant notLocked returns (bool)  {
+    _withdrawCommittedDeposit(msg.sender, _amount);
     return true;
+  }
+
+  function _withdrawCommittedDeposit(address sender, uint256 _amount) internal {
+    _withdrawCommittedDepositAndEmit(sender, _amount);
+    if (address(poolToken) != address(0)) {
+      poolToken.poolRedeem(sender, _amount);
+    }
   }
 
   /**
