@@ -32,8 +32,8 @@ PoolTogether V2 is an upgradeable system.  Each deployed contract is actually a 
 | PoolSaiToken  | [0xC9689253a545D0C4dc733620281bBdCbb9FA4A4D](https://kovan.etherscan.io/address/0xC9689253a545D0C4dc733620281bBdCbb9FA4A4D) | [0x55d462dB374D0D96EDB3aa603a4D8B8617bBdAA1](https://kovan.etherscan.io/address/0x55d462dB374D0D96EDB3aa603a4D8B8617bBdAA1) |
 | PoolDai       | [0xC3a62C8Af55c59642071bC171Ebd05Eb2479B663](https://kovan.etherscan.io/address/0xC3a62C8Af55c59642071bC171Ebd05Eb2479B663) | [0x662Aa47D4b9B4CFC4DB8f6dac0381fFFd2faC342](https://kovan.etherscan.io/address/0x662Aa47D4b9B4CFC4DB8f6dac0381fFFd2faC342) |
 | PoolDaiToken  | [0x1237a9f1664895bc30cfe9eCD1e3f6C2A83700AD](https://kovan.etherscan.io/address/0x1237a9f1664895bc30cfe9eCD1e3f6C2A83700AD) | [0xAe2065e2298C6940d5bd59cD1c7bB6264c772c6A](https://kovan.etherscan.io/address/0xAe2065e2298C6940d5bd59cD1c7bB6264c772c6A) |
-| PoolUsdc      | [0xb073a5a16025c91ae3e9764E5cc5fC4DD2fA99Bc](https://kovan.etherscan.io/address/0xb073a5a16025c91ae3e9764E5cc5fC4DD2fA99Bc) | [0x22DF31Ffdaa436bDCCb136c0f127634895893b60](https://kovan.etherscan.io/address/0x22DF31Ffdaa436bDCCb136c0f127634895893b60) |
-| PoolUsdcToken | [0xDC9A918D43a9E018de904a09d4D04F539Df4ed34](https://kovan.etherscan.io/address/0xDC9A918D43a9E018de904a09d4D04F539Df4ed34) | [0x9eC8c34D418eDF89f587642D34dB5204508D13Ee](https://kovan.etherscan.io/address/0x9eC8c34D418eDF89f587642D34dB5204508D13Ee) |
+| PoolUsdc      | [0xa0B2A98d0B769886ec06562ee9bB3572Fa4f3aAb](https://kovan.etherscan.io/address/0xa0B2A98d0B769886ec06562ee9bB3572Fa4f3aAb) | [0xa05a7065a257DF3A0531298dc15CBCb0Ce5a3Ff5](https://kovan.etherscan.io/address/0xa05a7065a257DF3A0531298dc15CBCb0Ce5a3Ff5) |
+| PoolUsdcToken | [0xf08d73ABC5E46811649380cCb02bF1aDCc37E59c](https://kovan.etherscan.io/address/0xf08d73ABC5E46811649380cCb02bF1aDCc37E59c) | [0x6C5492664df0ED36f29D654Fd62e9C3A3F6279A3](https://kovan.etherscan.io/address/0x6C5492664df0ED36f29D654Fd62e9C3A3F6279A3) |
 
 # Setup
 
