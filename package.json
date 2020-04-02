@@ -63,7 +63,7 @@
     "ganache-cli": "6.7.0",
     "mkdirp": "^0.5.1",
     "mocha-junit-reporter": "1.23.1",
-    "oz-console": "1.1.2",
+    "oz-console": "1.1.3",
     "shelljs": "0.8.3",
     "solc": "0.5.12",
     "solidity-coverage": "0.7.0-beta.2",
