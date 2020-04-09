@@ -7,8 +7,6 @@ PrizePoolFactory: Configures and creates Pools.
 
 When a Pool is created it is configured with:
 - Prize Distribution Strategy
-- Reserve Rate
-- Fee Fraction
 - Compound cToken
 
 A Prize Distribution Strategy is a contract that has permission to distribute a Pool's prize.
@@ -21,5 +19,10 @@ When a SingleRandomWinnerStrategy is created it is configured with:
 Available RNG Services:
 
 - Blockhash Strategy (weak security, free)
-- VeeDo Strategy (high security, expensive)
 - ChainLink VRF Strategy (? security, ?)
+- VeeDo Strategy (high security, expensive)
+
+
+
+
+
