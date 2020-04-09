@@ -5,19 +5,19 @@ import "../PrizePool.sol";
 
 contract MockPrizeStrategy is IPrizeStrategy {
 
-    mapping(address => uint256) public lastAfterBalanceChanged;
+  mapping(address => uint256) public lastAfterBalanceChanged;
 
-    PrizePool public prizePool;
+  PrizePool public prizePool;
 
-    constructor (PrizePool _prizePool) public {
-        prizePool = _prizePool;
-    }
+  constructor (PrizePool _prizePool) public {
+    prizePool = _prizePool;
+  }
 
-    function award() external {
-        prizePool.awardPrize();
-    }
+  function award() external {
+    prizePool.mintPrize(address(this));
+  }
 
-    function afterBalanceChanged(address user, uint256 amount) external override {
-        lastAfterBalanceChanged[user] = amount;
-    }
+  function afterBalanceChanged(address user, uint256 amount) external override {
+    lastAfterBalanceChanged[user] = amount;
+  }
 }

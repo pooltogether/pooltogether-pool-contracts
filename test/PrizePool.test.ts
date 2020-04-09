@@ -36,16 +36,14 @@ describe('PrizePool contract', () => {
     cToken = await deployContract(wallet, CTokenMock, [])
     await cToken.initialize(token.address, ethers.utils.parseEther('0.01'))
     ticketToken = await deployContract(wallet, ControlledToken, [
-      prizePool.address,
       'Ticket',
       'TICK',
-      []
+      prizePool.address
     ])
     sponsorshipToken = await deployContract(wallet, ControlledToken, [
-      prizePool.address,
       'Sponsorship',
       'SPON',
-      []
+      prizePool.address
     ])
     const sumTreeFactory = await deployContract(wallet, SortitionSumTreeFactory)
     MockPrizeStrategy.bytecode = linkLibraries(MockPrizeStrategy.bytecode, [
@@ -55,13 +53,11 @@ describe('PrizePool contract', () => {
       prizePool.address
     ])
     await prizePool.initialize(
-      prizeStrategy.address,
       prizePoolFactory.address,
       cToken.address,
       ticketToken.address,
       sponsorshipToken.address,
-      ethers.utils.parseEther('0.1'),
-      '0'
+      prizeStrategy.address
     )
 
     await token.mint(wallet.address, ethers.utils.parseEther('100000'))
@@ -71,19 +67,15 @@ describe('PrizePool contract', () => {
     it('should set all the vars', async () => {
       expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
       expect(await prizePool.factory()).to.equal(prizePoolFactory.address)
-      expect(await prizePool.ticketToken()).to.equal(ticketToken.address)
+      expect(await prizePool.vouchers()).to.equal(ticketToken.address)
       expect(await prizePool.cToken()).to.equal(cToken.address)
-
-      expect(await prizePool.feeFraction()).to.equal('0')
-      expect(await prizePool.reserveRateMantissa()).to.equal(toWei('0.1'))
-      expect(await prizePool.lastPrizeExchangeRate()).to.equal(toWei('1'))
     })
   })
 
-  describe('deposit()', () => {
+  describe('mintVouchers()', () => {
     it('should give the first depositer tokens at the initial exchange rate', async function () {
-      await token.approve(prizePool.address, toWei('1'))
-      await prizePool.deposit(toWei('1'))
+      await token.approve(prizePool.address, toWei('2'))
+      await prizePool.mintVouchers(toWei('1'))
 
       // cToken should hold the tokens
       expect(await token.balanceOf(cToken.address)).to.equal(toWei('1'))
@@ -91,10 +83,6 @@ describe('PrizePool contract', () => {
       expect(await cToken.balanceOf(prizePool.address)).to.equal(toWei('1'))
       // ticket holder should have their share
       expect(await ticketToken.balanceOf(wallet.address)).to.equal(toWei('1'))
-      // ensure prize strategy was notified
-      expect(await prizeStrategy.lastAfterBalanceChanged(wallet.address)).to.equal(toWei('1'))
-      // ensure that missing interest was zero
-      expect(await prizePool.balanceOfMissingInterest(wallet.address)).to.equal('0')
     })
   })
 
@@ -105,27 +93,41 @@ describe('PrizePool contract', () => {
 
     it('should return the correct exchange rate', async () => {
       await token.approve(prizePool.address, toWei('1'))
-      await prizePool.deposit(toWei('1'))
+      await prizePool.mintVouchers(toWei('1'))
       await cToken.accrueCustom(toWei('0.5'))
 
       expect(await prizePool.exchangeRateCurrent()).to.equal(toWei('1.5'))
     })
   })
 
-  describe('calculateCurrentPrizeInterest()', () => {
+  describe('valueOfCTokens()', () => {
+    it('should calculate correctly', async () => {
+      await token.approve(prizePool.address, toWei('1'))
+      await prizePool.mintVouchers(toWei('1'))
+      await cToken.accrueCustom(toWei('0.5'))
+      
+      expect(await prizePool.valueOfCTokens(toWei('1'))).to.equal(toWei('1.5'))
+      expect(await prizePool.cTokenValueOf(toWei('1.5'))).to.equal(toWei('1'))
+    })
+  })
+
+  describe('currentInterest()', () => {
     it('should return zero when no interest has accrued', async () => {
-      expect((await prizePool.calculateCurrentPrizeInterest(toWei('1'))).toString()).to.equal(toWei('0'))
+      expect((await prizePool.currentInterest(toWei('1'))).toString()).to.equal(toWei('0'))
     })
 
     it('should return the correct missed interest', async () => {
       await token.approve(prizePool.address, toWei('1'))
-      await prizePool.deposit(toWei('1'))
+      await prizePool.mintVouchers(toWei('1'))
       await cToken.accrueCustom(toWei('0.5'))
 
+      expect(await cToken.balanceOfUnderlying(prizePool.address)).to.equal(toWei('1.5'))
       expect(await prizePool.exchangeRateCurrent()).to.equal(toWei('1.5'))
+      expect(await ticketToken.totalSupply()).to.equal(toWei('1'))
+      expect(await prizePool.voucherCTokens()).to.equal(toWei('1'))
 
-      // interest is 50%.  2 Dai less the 10% reserve rate is 1.8.  50% of 1.8 is 0.9
-      expect((await prizePool.calculateCurrentPrizeInterest(toWei('2'))).toString()).to.equal(toWei('0.9'))
+      // interest is 50% on the single dai.  2 Dai will need 1 dai
+      expect((await prizePool.currentInterest(toWei('2'))).toString()).to.equal(toWei('1'))
     })
   })
 })

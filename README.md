@@ -22,7 +22,7 @@ Available RNG Services:
 - ChainLink VRF Strategy (? security, ?)
 - VeeDo Strategy (high security, expensive)
 
-
-
-
-
+Timelock
+  - Track missing interest per user.
+  - When user attempts to transfer or withdraw tokens, add a check to see if they've covered their interest.
+  - if the user has not covered their interest, convert the tickets to timelocked sponsorship.

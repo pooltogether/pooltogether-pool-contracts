@@ -16,11 +16,11 @@ contract PrizePool is Initializable {
 
   PrizePoolFactory public factory;
   ICToken public cToken;
-  ControlledToken vouchers;
-  ControlledToken sponsorship;
-  IPrizeStrategy prizeStrategy;
+  ControlledToken public vouchers;
+  ControlledToken public sponsorship;
+  IPrizeStrategy public prizeStrategy;
 
-  uint256 voucherCTokens;
+  uint256 public voucherCTokens;
 
   function initialize (
     PrizePoolFactory _factory,
@@ -41,23 +41,35 @@ contract PrizePool is Initializable {
     prizeStrategy = _prizeStrategy;
   }
 
-  function calculateCurrentPrize(uint256 collateral) public returns (uint256) {
+  function calculateCurrentPrize() public returns (uint256) {
     uint256 balance = cToken.balanceOfUnderlying(address(this));
     uint256 totalAccrued = balance.sub(vouchers.totalSupply()).sub(sponsorship.totalSupply());
     uint256 fee = calculateFee(totalAccrued);
     return totalAccrued.sub(fee);
   }
 
-  function mintVouchers(uint256 amount) {
-    uint256 interest = requiredInterest(amount);
+  function mintVouchers(uint256 amount) external {
+    uint256 interest = currentInterest(amount);
     uint256 total = amount.add(interest);
     _transferToCToken(total);
-    _mintVouchers(prizeStrategy, amount);
+    _mintVouchers(msg.sender, amount);
   }
 
-  function mintSponsorship(uint256 amount) {
+  function redeemVouchers(uint256 amount) external {
+    uint256 interest = currentInterest(amount);
+    uint256 total = amount.add(interest);
+    _transferFromCToken(msg.sender, total);
+    _redeemVouchers(msg.sender, amount);
+  }
+
+  function mintSponsorship(uint256 amount) external {
     _transferToCToken(amount);
     sponsorship.mint(msg.sender, amount);
+  }
+
+  function redeemSponsorship(uint256 amount) external {
+    _transferFromCToken(msg.sender, amount);
+    sponsorship.burn(msg.sender, amount);
   }
 
   function _transferToCToken(uint256 amount) internal {
@@ -67,52 +79,61 @@ contract PrizePool is Initializable {
     cToken.mint(amount);
   }
 
-  function requiredInterest(uint256 deposit) public view returns (uint256) {
+  function _transferFromCToken(address to, uint256 amount) internal {
+    cToken.redeemUnderlying(amount);
+    IERC20 token = underlyingToken();
+    token.transfer(to, amount);
+  }
+
+  function currentInterest(uint256 deposit) public view returns (uint256) {
     // We need to know the portion of the interest that is the vouchers.  How much have the voucher cTokens accrued value?
     // total voucher interest = underlyingValue(voucher cTokens) - vouchers
     // interest / deposit = total voucher interest / vouchers => interest = deposit * total voucher interest / vouchers
     uint256 interest;
     uint256 supply = vouchers.totalSupply();
     if (supply > 0) {
-      interest = deposit.mul(FixedPoint.newMantissa(totalVoucherInterest(), supply);
+      interest = FixedPoint.multiplyUintByMantissa(deposit, FixedPoint.calculateMantissa(totalVoucherInterest(), supply));
     }
     return interest;
   }
 
   function totalVoucherInterest() public view returns (uint256) {
     // total voucher interest = underlyingValue(voucher cTokens) - vouchers
-    return cToken.balanceOfUnderlying(voucherCTokens).sub(vouchers.totalSupply());
+    return valueOfCTokens(voucherCTokens).sub(vouchers.totalSupply());
   }
 
   function calculateFee(uint256 totalInterestAccrued) public view returns (uint256) {
     uint256 fee;
     uint256 feeFractionMantissa = factory.feeFractionMantissa();
-    if (factory.feeTo() != address(0) && feeFractionMantissa > 0) {
+    if (factory.feeTo() != address(0) && feeFractionMantissa > 0 && totalInterestAccrued > 0) {
       fee = FixedPoint.multiplyUintByMantissa(totalInterestAccrued, feeFractionMantissa);
     }
     return fee;
   }
 
-  function deposit(uint256 amount) external onlyComptroller {
-    IERC20 uToken = underlyingToken();
-    uToken.transferFrom(msg.sender, address(this), amount);
-    uToken.approve(address(cToken), amount);
-    cToken.mint(amount);
-  }
-
-  function mintPrize() external onlyPrizeStrategy returns (uint256 prize) {
+  function mintPrize(address to) external onlyPrizeStrategy returns (uint256 prize) {
     prize = calculateCurrentPrize();
-    _mintVouchers(prizeStrategy, prize);
+    _mintVouchers(to, prize);
   }
 
-  function _mintVouchers(address to, uint256 amount) {
+  function _mintVouchers(address to, uint256 amount) internal {
     uint256 cTokens = cTokenValueOf(amount);
     voucherCTokens = voucherCTokens.add(cTokens);
-    voucher.mint(prizeStrategy, voucherCTokens);
+    vouchers.mint(to, amount);
   }
 
-  function cTokenValueOf(uint256 underlyingAmount) internal returns (uint256) {
-    return FixedPoint.multiplyUintByMantissa(underlyingAmount, cToken.exchangeRateCurrent());
+  function _redeemVouchers(address from, uint256 amount) internal {
+    uint256 cTokens = cTokenValueOf(amount);
+    voucherCTokens = voucherCTokens.sub(cTokens);
+    vouchers.burn(from, amount);
+  }
+
+  function cTokenValueOf(uint256 underlyingAmount) public view returns (uint256) {
+    return FixedPoint.divideUintByMantissa(underlyingAmount, exchangeRateCurrent());
+  }
+
+  function valueOfCTokens(uint256 cTokens) public view returns (uint256) {
+    return FixedPoint.multiplyUintByMantissa(cTokens, exchangeRateCurrent());
   }
 
   function exchangeRateCurrent() public view returns (uint256) {
