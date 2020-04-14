@@ -6,15 +6,15 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./compound/ICToken.sol";
-import "./PrizePoolFactory.sol";
+import "./GovernanceFee.sol";
 import "./IPrizeStrategy.sol";
 import "./ControlledToken.sol";
-import "./IComptroller.sol";
+import "./ITokenController.sol";
 
 contract PrizePool is Initializable {
   using SafeMath for uint256;
 
-  PrizePoolFactory public factory;
+  GovernanceFee public factory;
   ICToken public cToken;
   ControlledToken public vouchers;
   ControlledToken public sponsorship;
@@ -23,7 +23,7 @@ contract PrizePool is Initializable {
   uint256 public voucherCTokens;
 
   function initialize (
-    PrizePoolFactory _factory,
+    GovernanceFee _factory,
     ICToken _cToken,
     ControlledToken _vouchers,
     ControlledToken _sponsorship,

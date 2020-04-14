@@ -1,6 +1,6 @@
 import { deployContract, link } from 'ethereum-waffle'
 import { waffle } from '@nomiclabs/buidler'
-import PrizePoolFactory from '../build/PrizePoolFactory.json'
+import GovernanceFee from '../build/GovernanceFee.json'
 import PrizePool from '../build/PrizePool.json'
 import ERC20Mintable from '../build/ERC20Mintable.json'
 import CTokenMock from '../build/CTokenMock.json'
@@ -25,12 +25,12 @@ describe('PrizePool contract', () => {
   let ticketToken: Contract
   let sponsorshipToken: Contract
   let prizeStrategy: Contract
-  let prizePoolFactory: Contract
+  let governanceFee: Contract
   let cToken: Contract
 
   beforeEach(async () => {
     await deploy1820(wallet)
-    prizePoolFactory = await deployContract(wallet, PrizePoolFactory, [])
+    governanceFee = await deployContract(wallet, GovernanceFee, [])
     prizePool = await deployContract(wallet, PrizePool, [])
     token = await deployContract(wallet, ERC20Mintable, [])
     cToken = await deployContract(wallet, CTokenMock, [])
@@ -53,7 +53,7 @@ describe('PrizePool contract', () => {
       prizePool.address
     ])
     await prizePool.initialize(
-      prizePoolFactory.address,
+      governanceFee.address,
       cToken.address,
       ticketToken.address,
       sponsorshipToken.address,
@@ -66,7 +66,7 @@ describe('PrizePool contract', () => {
   describe('initialize()', () => {
     it('should set all the vars', async () => {
       expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
-      expect(await prizePool.factory()).to.equal(prizePoolFactory.address)
+      expect(await prizePool.factory()).to.equal(governanceFee.address)
       expect(await prizePool.vouchers()).to.equal(ticketToken.address)
       expect(await prizePool.cToken()).to.equal(cToken.address)
     })
