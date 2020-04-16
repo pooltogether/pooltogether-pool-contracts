@@ -5,6 +5,7 @@ const {
 const { runShell } = require('./runShell')
 
 const {
+  POOL_ADMIN,
   BINANCE_ADDRESS,
   SAI_BUDDY,
   HD_FIRST_ADDRESS,
@@ -24,6 +25,7 @@ async function startFork() {
   const users = await fetchUsers()
 
   const unlockedAccounts = users.map(user => user.address).concat([
+    POOL_ADMIN,
     BINANCE_ADDRESS,
     HD_FIRST_ADDRESS,
     process.env.ADMIN_ADDRESS,

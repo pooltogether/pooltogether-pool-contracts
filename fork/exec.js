@@ -5,7 +5,7 @@ async function exec(provider, txPromise) {
   let tx, receipt
   try {
     tx = await txPromise
-    console.log(chalk.dim(`Transaction hash: ${tx.hash}`))
+    console.log(chalk.dim(`Transaction hash: ${tx.hash} @ ${tx.blockNumber}`), )
     await provider.waitForTransaction(tx.hash)
     receipt = await provider.getTransactionReceipt(tx.hash)
     assert.equal(receipt.status, '1')

@@ -24,6 +24,7 @@ const { context } = require('./context')
 const { rollover } = require('./rollover')
 const { transfer } = require('./transfer')
 const { burn } = require('./burn')
+const { transferDai } = require('./transferDai')
 
 const program = new commander.Command()
 program.description('Handles fork scripting.  Start a mainnet fork then run scripts against it.')
@@ -111,6 +112,18 @@ program
     for (let i = 0; i < count; i++) {
       await rewardAndOpen(c, type)
     }
+  })
+
+program
+  .command('transfer-dai [recipient] [amount]')
+  .description('Transfer [amount] dai to [recipient]')
+  .action(async (recipient, amount) => {
+    ranAction = true
+    if (!amount) {
+      amount = 10
+    }
+    const c = await callContext()
+    await transferDai(c, recipient, amount)
   })
 
 program

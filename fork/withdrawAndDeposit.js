@@ -3,13 +3,10 @@ const assert = require('assert')
 const chalk = require('chalk')
 const { fetchUsers } = require('./fetchUsers')
 const { exec } = require('./exec')
-
-const {
-  BINANCE_ADDRESS
-} = require('./helpers/constants')
+const ethers = require('ethers')
 
 const overrides = {
-  gasLimit: 2000000
+  gasLimit: ethers.utils.bigNumberify("2000000")
 }
 
 async function withdrawAndDeposit (context, type, count = '5') {
@@ -54,7 +51,7 @@ async function withdrawAndDeposit (context, type, count = '5') {
 
     if (balance.gt('0x0')) {
       console.log(chalk.yellow(`Withdrawing ${ethers.utils.formatEther(balance)} from ${address}...`))
-      await exec(provider, signingPool.withdraw(overrides))
+      await exec(provider, signingPool['withdraw()'](overrides))
       console.log(chalk.green(`Withdrew ${ethers.utils.formatEther(balance)} from ${address}`))
     } else {
       console.log(chalk.dim(`Skipping withdraw because ${address} has no Pool ${type} balance`))
