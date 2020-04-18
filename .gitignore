@@ -5,3 +5,5 @@ artifacts
 build
 node_modules
 dist
+coverage
+coverage.json

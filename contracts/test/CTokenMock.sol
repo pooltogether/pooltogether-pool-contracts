@@ -59,8 +59,8 @@ contract CTokenMock is Initializable, ERC20 {
     }
 
     function redeemUnderlying(uint256 requestedAmount) external returns (uint) {
-        require(requestedAmount <= ownerTokenAmounts[msg.sender], "insufficient underlying funds");
-        ownerTokenAmounts[msg.sender] = ownerTokenAmounts[msg.sender] - requestedAmount;
+        uint256 cTokens = cTokenValueOf(requestedAmount);
+        _burn(msg.sender, cTokens);
         require(underlying.transfer(msg.sender, requestedAmount), "could not transfer tokens");
     }
 
@@ -71,6 +71,10 @@ contract CTokenMock is Initializable, ERC20 {
 
     function accrueCustom(uint256 amount) external {
         underlying.mint(address(this), amount);
+    }
+
+    function cTokenValueOf(uint256 tokens) public view returns (uint256) {
+        return FixedPoint.multiplyUintByMantissa(tokens, exchangeRateCurrent());
     }
 
     function balanceOfUnderlying(address account) external view returns (uint) {

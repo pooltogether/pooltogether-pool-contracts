@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import "./InterestPool.sol";
+import "./IInterestPool.sol";
 import "./Timelock.sol";
 import "./ITokenController.sol";
 import "./Ticket.sol";
@@ -21,14 +21,14 @@ contract TicketPool is Initializable, ITokenController {
   // keccak256("ERC777TokensRecipient")
   bytes32 constant internal TOKENS_RECIPIENT_INTERFACE_HASH = 0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
 
-  InterestPool public interestPool;
+  IInterestPool public interestPool;
   Ticket public ticketToken;
   IPrizeStrategy public prizeStrategy;
   mapping(address => Timelock.State) timelocks;
 
   function initialize (
     Ticket _ticketToken,
-    InterestPool _interestPool,
+    IInterestPool _interestPool,
     IPrizeStrategy _prizeStrategy
   ) public initializer {
     require(address(_ticketToken) != address(0), "ticketToken must not be zero");
@@ -40,14 +40,14 @@ contract TicketPool is Initializable, ITokenController {
     prizeStrategy = _prizeStrategy;
   }
 
-  function calculateCurrentPrize() external view returns (uint256) {
-    return interestPool.calculateCurrentInterest();
+  function currentPrize() external view returns (uint256) {
+    return interestPool.availableInterest();
   }
 
   function mintTickets(uint256 tickets) external {
     // Transfer deposit
     IERC20 token = interestPool.underlyingToken();
-    require(token.allowance(msg.sender, address(this)) > tickets, "insuff");
+    require(token.allowance(msg.sender, address(this)) >= tickets, "insuff");
     token.transferFrom(msg.sender, address(this), tickets);
 
     // Deposit into pool
@@ -97,9 +97,9 @@ contract TicketPool is Initializable, ITokenController {
     revert("not implemented");
   }
 
-  function award(address winner) external onlyPrizeStrategy {
-    uint256 prize = interestPool.mintInterest(address(this));
-    ticketToken.mint(winner, prize);
+  function award(address winner, uint256 amount) external onlyPrizeStrategy {
+    interestPool.allocateInterest(address(this), amount);
+    ticketToken.mint(winner, amount);
   }
 
   modifier onlyPrizeStrategy() {

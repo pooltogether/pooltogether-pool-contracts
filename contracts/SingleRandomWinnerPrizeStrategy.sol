@@ -1,14 +1,9 @@
 pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/introspection/IERC1820Registry.sol";
-import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./TicketPool.sol";
-import "./Timelock.sol";
-import "./ITokenController.sol";
-import "./Ticket.sol";
 import "./IPrizeStrategy.sol";
 
 contract SingleRandomWinnerPrizeStrategy is IPrizeStrategy {
@@ -40,7 +35,7 @@ contract SingleRandomWinnerPrizeStrategy is IPrizeStrategy {
   }
 
   function estimatePrize() public view returns (uint256) {
-    return ticketPool.calculateCurrentPrize().add(estimateRemainingPrize());
+    return ticketPool.currentPrize().add(estimateRemainingPrize());
   }
 
   function estimateRemainingPrize() public view returns (uint256) {
@@ -58,7 +53,8 @@ contract SingleRandomWinnerPrizeStrategy is IPrizeStrategy {
 
   function award() external onlyPrizePeriodOver {
     address winner = drawUser();
-    ticketPool.award(winner);
+    uint256 total = ticketPool.currentPrize();
+    ticketPool.award(winner, total);
     currentPrizeBlock = block.number;
   }
 
