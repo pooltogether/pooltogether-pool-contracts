@@ -3,7 +3,7 @@
 ## Architecture
 
 PrizePool: Base primitive.  Autonomous prize-linked savings account
-PrizePoolFactory: Configures and creates Pools.
+GovernanceFee: Configures and creates Pools.
 
 When a Pool is created it is configured with:
 - Prize Distribution Strategy

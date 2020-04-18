@@ -6,23 +6,23 @@ import "./ITokenController.sol";
 
 contract ControlledToken is ERC20 {
 
-  ITokenController public comptroller;
+  ITokenController public controller;
   string public name;
   string public symbol;
 
   constructor(
     string memory _name,
     string memory _symbol,
-    ITokenController _comptroller
+    ITokenController _controller
   ) public {
-    require(address(_comptroller) != address(0), "comptroller cannot be zero");
+    require(address(_controller) != address(0), "controller cannot be zero");
     name = _name;
     symbol = _symbol;
-    comptroller = _comptroller;
+    controller = _controller;
   }
 
-  function _beforeTokenTransfer(address from, address to, uint256 tokenAmount) internal override {
-    // comptroller.beforeTokenTransfer(from, to, tokenAmount);
+  function _beforeTokenTransfer(address from, address to, uint256 tokenAmount) internal virtual override {
+    controller.beforeTokenTransfer(from, to, tokenAmount);
   }
 
   function mint(
@@ -40,7 +40,7 @@ contract ControlledToken is ERC20 {
   }
 
   modifier onlyComptroller() {
-    require(_msgSender() == address(comptroller), "only comptroller");
+    require(_msgSender() == address(controller), "only controller");
     _;
   }
 }

@@ -1,5 +1,6 @@
 pragma solidity ^0.6.4;
 
 interface IPrizeStrategy {
-    function afterBalanceChanged(address user, uint256 amount) external;
+  function calculateExitFee(address user, uint256 tickets) external view returns (uint256);
+  function calculateUnlockBlock(address user, uint256 tickets) external view returns (uint256);
 }

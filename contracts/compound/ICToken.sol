@@ -3,7 +3,7 @@ pragma solidity 0.6.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract ICToken is IERC20 {
-    function underlying() external virtual returns (address);
+    function underlying() external virtual view returns (address);
     function balanceOfUnderlying(address owner) external virtual returns (uint256);
     function supplyRatePerBlock() external virtual view returns (uint256);
     function exchangeRateCurrent() external virtual returns (uint256);
