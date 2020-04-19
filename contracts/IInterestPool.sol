@@ -4,6 +4,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IInterestPool {
   function availableInterest() external view returns (uint256);
+  function estimateAccruedInterest(uint256 principal, uint256 blocks) external view returns (uint256);
   function allocateInterest(address to, uint256 amount) external;
   function supplyRatePerBlock() external view returns (uint256);
   function accountedBalance() external view returns (uint256);

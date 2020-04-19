@@ -39,7 +39,7 @@ contract InterestPool is Initializable, ITokenController, IInterestPool {
     return balance.sub(accountedBalance());
   }
 
-  function estimateAccruedInterest(uint256 principal, uint256 blocks) public view returns (uint256) {
+  function estimateAccruedInterest(uint256 principal, uint256 blocks) public view override returns (uint256) {
     // estimated = principal * supply rate per block * blocks
     uint256 multiplier = principal.mul(blocks);
     return FixedPoint.multiplyUintByMantissa(multiplier, supplyRatePerBlock());

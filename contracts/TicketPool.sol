@@ -80,8 +80,15 @@ contract TicketPool is Initializable, ITokenController {
     // burn the tickets
     ticketToken.burn(msg.sender, tickets);
 
-    // allocate tickets for the msg.sender.
-    (uint256 change,) = timelocks[msg.sender].deposit(tickets, unlockBlock);
+    uint256 change;
+    if (block.number >= unlockBlock) {
+      // just transfer old funds, if any
+      (change,) = timelocks[msg.sender].withdrawAt(unlockBlock);
+      // add the new funds
+      change = change.add(tickets);
+    } else {
+      (change,) = timelocks[msg.sender].deposit(tickets, unlockBlock);
+    }
 
     // if there is change, withdraw the change and transfer
     if (change > 0) {
@@ -93,8 +100,37 @@ contract TicketPool is Initializable, ITokenController {
     return unlockBlock;
   }
 
-  function sweepUnlockedFunds(address[] calldata) external pure returns (uint256) {
-    revert("not implemented");
+  function lockedBalanceOf(address user) external view returns (uint256) {
+    return timelocks[user].amount;
+  }
+
+  function lockedBalanceAvailableAt(address user) external view returns (uint256) {
+    return timelocks[user].unlockBlock;
+  }
+
+  function sweepTimelockFunds(address[] calldata users) external returns (uint256) {
+    uint256 totalWithdrawal;
+
+    // first gather the total withdrawal and fee
+    uint256 i;
+    for (i = 0; i < users.length; i++) {
+      address user = users[i];
+      (uint256 tickets,) = timelocks[user].balanceAt(block.number);
+      totalWithdrawal = totalWithdrawal.add(tickets);
+    }
+
+    // pull out the collateral
+    if (totalWithdrawal > 0) {
+      interestPool.redeemCollateral(totalWithdrawal);
+    }
+
+    for (i = 0; i < users.length; i++) {
+      address user = users[i];
+      (uint256 tickets,) = timelocks[user].withdrawAt(block.number);
+      if (tickets > 0) {
+        interestPool.underlyingToken().transfer(user, tickets);
+      }
+    }
   }
 
   function award(address winner, uint256 amount) external onlyPrizeStrategy {

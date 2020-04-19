@@ -23,6 +23,10 @@ contract MockInterestPool is IInterestPool, ITokenController {
     return _availableInterest;
   }
 
+  function estimateAccruedInterest(uint256 principal, uint256 blocks) external view override returns (uint256) {
+    return 45;
+  }
+
   function accountedBalance() external view override returns (uint256) {
     return token.totalSupply();
   }

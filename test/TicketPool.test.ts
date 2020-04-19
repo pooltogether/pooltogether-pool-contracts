@@ -9,8 +9,17 @@ import { expect } from 'chai'
 import { ethers, Contract } from 'ethers'
 import { deploy1820 } from 'deploy-eip-1820'
 const buidler = require("@nomiclabs/buidler")
+const chalk = require('chalk')
 
 const toWei = ethers.utils.parseEther
+
+async function printGas(transaction: any, name: string) {
+  // console.log({ transaction })
+  const tx = await transaction
+  const receipt = (await buidler.ethers.provider.getTransactionReceipt(tx.hash))
+  console.log(chalk.yellow(`${name}: ${receipt.gasUsed.toString()}`))
+  return tx
+}
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('TicketPool contract', () => {
@@ -33,6 +42,7 @@ describe('TicketPool contract', () => {
     ticketPool = await deployContract(wallet, TicketPool, [])
     token = await deployContract(wallet, ERC20Mintable, [])
     mockPrizeStrategy = await deployContract(wallet, MockPrizeStrategy, [])
+    await mockPrizeStrategy.setTicketPool(ticketPool.address)
     mockInterestPool = await deployContract(wallet, MockInterestPool, [])
     collateralToken = await deployContract(wallet, ControlledToken, [
       'Ticket',
@@ -57,7 +67,7 @@ describe('TicketPool contract', () => {
   })
 
   describe('initialize()', () => {
-    xit('should set all the vars', async () => {
+    it('should set all the vars', async () => {
       expect(await ticketPool.ticketToken()).to.equal(ticketToken.address)
       expect(await ticketPool.interestPool()).to.equal(mockInterestPool.address)
       expect(await ticketPool.prizeStrategy()).to.equal(mockPrizeStrategy.address)
@@ -65,14 +75,14 @@ describe('TicketPool contract', () => {
   })
 
   describe('currentPrize()', () => {
-    xit('should return the available interest from the prize pool', async () => {
+    it('should return the available interest from the prize pool', async () => {
       await mockInterestPool.setAvailableInterest(toWei('100'))
       expect(await ticketPool.currentPrize()).to.equal(toWei('100'))
     })
   })
 
   describe('mintTickets()', () => {
-    xit('should create tickets', async () => {
+    it('should create tickets', async () => {
       await token.approve(ticketPool.address, toWei('10'))
       await ticketPool.mintTickets(toWei('10'))
 
@@ -98,7 +108,7 @@ describe('TicketPool contract', () => {
 
       await ticketPool.redeemTicketsInstantly(toWei('10'))
 
-      // tickets are gone
+      // tickets are burned
       expect(await ticketToken.totalSupply()).to.equal(toWei('0'))
 
       // collateral is destroyed
@@ -110,14 +120,89 @@ describe('TicketPool contract', () => {
   })
 
   describe('redeemTicketsWithTimelock()', () => {
+    it('should lock the users funds', async () => {
+      await token.approve(ticketPool.address, toWei('10'))
+      const tx = await ticketPool.mintTickets(toWei('10'))
 
+      const unlockBlock = tx.blockNumber + 3
+      await mockPrizeStrategy.setUnlockBlock(unlockBlock)
+
+      await ticketPool.redeemTicketsWithTimelock(toWei('10'))
+
+      // Tickets are burned
+      expect(await ticketToken.balanceOf(wallet._address)).to.equal('0')
+      
+      // Locked balance is recorded
+      expect(await ticketPool.lockedBalanceOf(wallet._address)).to.equal(toWei('10'))
+      expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal(unlockBlock)
+    })
+
+    it('should instantly redeem funds if unlockBlock is now or in the past', async () => {
+      await token.approve(ticketPool.address, toWei('10'))
+      let tx = await ticketPool.mintTickets(toWei('10'))
+      let unlockBlock = tx.blockNumber + 2
+      let userBalance = await token.balanceOf(wallet._address)
+      await mockPrizeStrategy.setUnlockBlock(unlockBlock)
+      tx = await ticketPool.redeemTicketsWithTimelock(toWei('4'))
+      // Tickets are transferred
+      expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('4'))
+      expect(await ticketPool.lockedBalanceOf(wallet._address)).to.equal('0')
+      expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal('0')
+    })
+
+    it('should sweep old locked deposits', async () => {
+      await token.approve(ticketPool.address, toWei('10'))
+      let tx = await ticketPool.mintTickets(toWei('10'))
+
+      let userBalance = await token.balanceOf(wallet._address)
+
+      await mockPrizeStrategy.setUnlockBlock(tx.blockNumber + 3)
+
+      tx = await ticketPool.redeemTicketsWithTimelock(toWei('4'))
+      
+      // Tickets are burned
+      expect(await ticketToken.balanceOf(wallet._address)).to.equal(toWei('6'))
+
+      let secondUnlockBlock = tx.blockNumber + 3
+      await mockPrizeStrategy.setUnlockBlock(secondUnlockBlock)
+
+      await ticketPool.redeemTicketsWithTimelock(toWei('6'))
+
+      // Tickets are transferred
+      expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('4'))
+
+      // Remaining tickets are burned
+      expect(await ticketToken.balanceOf(wallet._address)).to.equal(toWei('0'))
+
+      // Locked balance is recorded
+      expect(await ticketPool.lockedBalanceOf(wallet._address)).to.equal(toWei('6'))
+      expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal(secondUnlockBlock)
+    })
   })
 
   describe('sweepUnlockedFunds()', () => {
+    it('should return any timelocked funds that are now open', async () => {
+      await token.approve(ticketPool.address, toWei('4'))
+      let tx = await printGas(ticketPool.mintTickets(toWei('4')), 'TicketPool#mintTickets')
+      let userBalance = await token.balanceOf(wallet._address)
+      await mockPrizeStrategy.setUnlockBlock(tx.blockNumber + 3)
+      tx = await printGas(ticketPool.redeemTicketsWithTimelock(toWei('4')), 'TicketPool#redeemTicketsWithTimelock')
+      // will be available next block
+      expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal(tx.blockNumber + 1)
 
+      await ticketPool.sweepTimelockFunds([wallet._address])
+
+      expect(await ticketPool.lockedBalanceOf(wallet._address)).to.equal(toWei('0'))      
+
+      expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('4'))
+    })
   })
 
   describe('award()', () => {
-
+    it('should allocate available interest as tickets to a user', async () => {
+      await mockPrizeStrategy.award(wallet._address, toWei('10'))
+      expect(await ticketToken.balanceOf(wallet._address)).to.equal(toWei('10'))
+      expect(await collateralToken.balanceOf(ticketPool.address)).to.equal(toWei('10'))
+    })
   })
 })

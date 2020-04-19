@@ -28,6 +28,7 @@ library Timelock {
       previousAmount = self.amount;
       previousUnlockBlock = self.unlockBlock;
       self.amount = amount;
+      self.unlockBlock = unlockBlock;
     }
   }
 
@@ -37,6 +38,13 @@ library Timelock {
       previousUnlockBlock = self.unlockBlock;
       self.amount = 0;
       self.unlockBlock = 0;
+    }
+  }
+
+  function balanceAt(State storage self, uint256 blockNumber) internal view returns (uint256 amount, uint256 unlockBlock) {
+    if (self.unlockBlock <= blockNumber) {
+      amount = self.amount;
+      unlockBlock = self.unlockBlock;
     }
   }
 }
