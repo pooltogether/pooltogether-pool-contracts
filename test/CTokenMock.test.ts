@@ -6,33 +6,35 @@ import { ethers, Contract } from 'ethers'
 import { expect } from 'chai'
 const buidler = require("@nomiclabs/buidler")
 
-const provider = waffle.provider;
-const [wallet, otherWallet] = buidler.ethers.signers()
-
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('CTokenMock contract', function() {
 
     let token: Contract
     let cTokenMock: Contract
 
+    let wallet: any
+    let otherWallet: any
+
     beforeEach(async () => {
+        [wallet, otherWallet] = await buidler.ethers.getSigners()
+
         token = await deployContract(wallet, ERC20Mintable, [])
         cTokenMock = await deployContract(wallet, CTokenMock, [])
         await cTokenMock.initialize(token.address, ethers.utils.parseEther('0.01'))
     })
 
     describe('mint()', function() {
-        xit('Should work', async function() {
-            await token.mint(wallet.address, '1000')
+        it('Should work', async function() {
+            await token.mint(wallet._address, '1000')
             await token.approve(cTokenMock.address, '100')
             await cTokenMock.mint('100')
 
-            expect(await cTokenMock.balanceOf(wallet.address)).to.equal('100')
-            expect(await cTokenMock.balanceOfUnderlying(wallet.address)).to.equal('100')
+            expect(await cTokenMock.balanceOf(wallet._address)).to.equal('100')
+            expect(await cTokenMock.balanceOfUnderlying(wallet._address)).to.equal('100')
         });
 
-        xit('should work twice', async () => {
-            await token.mint(wallet.address, '1000')
+        it('should work twice', async () => {
+            await token.mint(wallet._address, '1000')
 
             await token.approve(cTokenMock.address, '100')
             await cTokenMock.mint('100')
@@ -40,19 +42,19 @@ describe('CTokenMock contract', function() {
             await token.approve(cTokenMock.address, '300')
             await cTokenMock.mint('300')
 
-            expect(await cTokenMock.balanceOf(wallet.address)).to.equal('400')
-            expect(await cTokenMock.balanceOfUnderlying(wallet.address)).to.equal('400')
+            expect(await cTokenMock.balanceOf(wallet._address)).to.equal('400')
+            expect(await cTokenMock.balanceOfUnderlying(wallet._address)).to.equal('400')
         })
 
-        xit('should ensure that a user owns the interest', async () => {
-            await token.mint(wallet.address, '1000')
+        it('should ensure that a user owns the interest', async () => {
+            await token.mint(wallet._address, '1000')
 
             await token.approve(cTokenMock.address, '100')
             await cTokenMock.mint('100')
 
             await cTokenMock.accrueCustom('100')
 
-            expect(await cTokenMock.balanceOfUnderlying(wallet.address)).to.equal('200')
+            expect(await cTokenMock.balanceOfUnderlying(wallet._address)).to.equal('200')
             expect(await cTokenMock.exchangeRateCurrent()).to.equal('2000000000000000000')
         })
     });

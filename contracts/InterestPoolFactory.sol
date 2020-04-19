@@ -5,13 +5,17 @@ import "./ControlledToken.sol";
 import "./compound/ICToken.sol";
 
 contract InterestPoolFactory {
+
+  event InterestPoolCreated(address indexed interestPool);
+
   function createInterestPool(
     ICToken _cToken,
     ControlledToken _collateralTokens,
     address _allocator
   ) external returns (InterestPool) {
-    InterestPool ip = new InterestPool();
-    ip.initialize(_cToken, _collateralTokens, _allocator);
-    return ip;
+    InterestPool interestPool = new InterestPool();
+    interestPool.initialize(_cToken, _collateralTokens, _allocator);
+    emit InterestPoolCreated(address(interestPool));
+    return interestPool;
   }
 }

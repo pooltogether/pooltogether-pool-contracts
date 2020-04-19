@@ -9,10 +9,12 @@ contract MockInterestPool is InterestPoolInterface, TokenControllerInterface {
   uint256 _availableInterest;
   IERC20 public _underlyingToken;
   ControlledToken public token;
+  uint256 public override supplyRatePerBlock;
 
   function initialize (IERC20 underlyingToken, ControlledToken _token) external {
     token = _token;
     _underlyingToken = underlyingToken;
+    supplyRatePerBlock = 100 wei;
   }
 
   function setAvailableInterest(uint256 amount) external {
@@ -35,8 +37,8 @@ contract MockInterestPool is InterestPoolInterface, TokenControllerInterface {
     token.mint(to, amount);
   }
 
-  function supplyRatePerBlock() public view override returns (uint256) {
-    return 100 wei;
+  function setSupplyRatePerBlock(uint256 _supplyRatePerBlock) public {
+    supplyRatePerBlock = _supplyRatePerBlock;
   }
 
   function underlyingToken() external override view returns (IERC20) {

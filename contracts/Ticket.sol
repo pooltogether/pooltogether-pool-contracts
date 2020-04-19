@@ -13,11 +13,12 @@ contract Ticket is ControlledToken {
   bytes32 constant private TREE_KEY = keccak256("PoolTogether/Ticket");
   uint256 constant private MAX_TREE_LEAVES = 5;
 
-  constructor (
+  function initialize (
     string memory _name,
     string memory _symbol,
     TokenControllerInterface _controller
-  ) public ControlledToken(_name, _symbol, _controller) {
+  ) public override initializer {
+    super.initialize(_name, _symbol, _controller);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
   }
 

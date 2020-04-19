@@ -11,8 +11,9 @@ import "./Timelock.sol";
 import "./TokenControllerInterface.sol";
 import "./Ticket.sol";
 import "./PrizeStrategyInterface.sol";
+import "./TicketPoolInterface.sol";
 
-contract TicketPool is Initializable, TokenControllerInterface {
+contract TicketPool is Initializable, TokenControllerInterface, TicketPoolInterface {
   using SafeMath for uint256;
   using Timelock for Timelock.State;
 
@@ -21,8 +22,8 @@ contract TicketPool is Initializable, TokenControllerInterface {
   // keccak256("ERC777TokensRecipient")
   bytes32 constant internal TOKENS_RECIPIENT_INTERFACE_HASH = 0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
 
-  InterestPoolInterface public interestPool;
-  Ticket public ticketToken;
+  InterestPoolInterface public override interestPool;
+  Ticket public override ticketToken;
   PrizeStrategyInterface public prizeStrategy;
   mapping(address => Timelock.State) timelocks;
 
@@ -40,7 +41,7 @@ contract TicketPool is Initializable, TokenControllerInterface {
     prizeStrategy = _prizeStrategy;
   }
 
-  function currentPrize() external view returns (uint256) {
+  function currentPrize() external view override returns (uint256) {
     return interestPool.availableInterest();
   }
 
@@ -133,7 +134,7 @@ contract TicketPool is Initializable, TokenControllerInterface {
     }
   }
 
-  function award(address winner, uint256 amount) external onlyPrizeStrategy {
+  function award(address winner, uint256 amount) external override onlyPrizeStrategy {
     interestPool.allocateInterest(address(this), amount);
     ticketToken.mint(winner, amount);
   }

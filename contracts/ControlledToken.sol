@@ -1,20 +1,21 @@
 pragma solidity ^0.6.4;
 
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./TokenControllerInterface.sol";
 
-contract ControlledToken is ERC20 {
+contract ControlledToken is Initializable, ERC20 {
 
   TokenControllerInterface public controller;
   string public name;
   string public symbol;
 
-  constructor(
+  function initialize (
     string memory _name,
     string memory _symbol,
     TokenControllerInterface _controller
-  ) public {
+  ) public virtual initializer {
     require(address(_controller) != address(0), "controller cannot be zero");
     name = _name;
     symbol = _symbol;

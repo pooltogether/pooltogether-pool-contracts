@@ -5,14 +5,18 @@ import "./InterestPoolInterface.sol";
 import "./ControlledToken.sol";
 import "./compound/ICToken.sol";
 
-contract TicketPoolFactory {
+contract TicketPoolFactory is Initializable {
+
+  event TicketPoolCreated(address indexed ticketPool);
+
   function createTicketPool(
     Ticket _ticketToken,
     InterestPoolInterface _interestPool,
     PrizeStrategyInterface _prizeStrategy
   ) external returns (TicketPool) {
-    TicketPool ip = new TicketPool();
-    ip.initialize(_ticketToken, _interestPool, _prizeStrategy);
-    return ip;
+    TicketPool ticketPool = new TicketPool();
+    ticketPool.initialize(_ticketToken, _interestPool, _prizeStrategy);
+    emit TicketPoolCreated(address(ticketPool));
+    return ticketPool;
   }
 }

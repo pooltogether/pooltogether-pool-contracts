@@ -3,23 +3,16 @@ import MockInterestPool from '../build/MockInterestPool.json'
 import MockPrizeStrategy from '../build/MockPrizeStrategy.json'
 import TicketPool from '../build/TicketPool.json'
 import ERC20Mintable from '../build/ERC20Mintable.json'
-import CTokenMock from '../build/CTokenMock.json'
 import ControlledToken from '../build/ControlledToken.json'
 import { expect } from 'chai'
 import { ethers, Contract } from 'ethers'
 import { deploy1820 } from 'deploy-eip-1820'
+
+import { printGas } from './helpers/printGas'
+
 const buidler = require("@nomiclabs/buidler")
-const chalk = require('chalk')
 
 const toWei = ethers.utils.parseEther
-
-async function printGas(transaction: any, name: string) {
-  // console.log({ transaction })
-  const tx = await transaction
-  const receipt = (await buidler.ethers.provider.getTransactionReceipt(tx.hash))
-  console.log(chalk.yellow(`${name}: ${receipt.gasUsed.toString()}`))
-  return tx
-}
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('TicketPool contract', () => {
@@ -44,16 +37,18 @@ describe('TicketPool contract', () => {
     mockPrizeStrategy = await deployContract(wallet, MockPrizeStrategy, [])
     await mockPrizeStrategy.setTicketPool(ticketPool.address)
     mockInterestPool = await deployContract(wallet, MockInterestPool, [])
-    collateralToken = await deployContract(wallet, ControlledToken, [
+    collateralToken = await deployContract(wallet, ControlledToken, [])
+    await collateralToken.initialize(
       'Ticket',
       'TICK',
       mockInterestPool.address
-    ])
-    ticketToken = await deployContract(wallet, ControlledToken, [
+    )
+    ticketToken = await deployContract(wallet, ControlledToken, [])
+    await ticketToken.initialize(
       'Ticket',
       'TICK',
       ticketPool.address
-    ])
+    )
     await mockInterestPool.initialize(
       token.address,
       collateralToken.address
@@ -106,7 +101,7 @@ describe('TicketPool contract', () => {
 
       let userBalance = await token.balanceOf(wallet._address)
 
-      await ticketPool.redeemTicketsInstantly(toWei('10'))
+      await printGas(ticketPool.redeemTicketsInstantly(toWei('10')), "TicketPool#redeemTicketsInstantly")
 
       // tickets are burned
       expect(await ticketToken.totalSupply()).to.equal(toWei('0'))

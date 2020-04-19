@@ -2,6 +2,7 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+// import "@nomiclabs/buidler/console.sol";
 
 import "./TicketPool.sol";
 import "./PrizeStrategyInterface.sol";
@@ -25,9 +26,9 @@ contract SingleRandomWinnerPrizeStrategy is PrizeStrategyInterface {
   }
 
   function calculateExitFee(address, uint256 tickets) public view override returns (uint256) {
-    uint256 tokenFractionMantissa = FixedPoint.calculateMantissa(tickets, ticketToken().totalSupply());
-    // now we need the estimate remaining prize
-    return FixedPoint.multiplyUintByMantissa(estimateRemainingPrize(), tokenFractionMantissa);
+    uint256 remainingBlocks = remainingBlocksToPrize();
+    // console.log("remaining blocks: %s", remainingBlocks);
+    return estimateAccruedInterest(tickets, remainingBlocks);
   }
 
   function calculateUnlockBlock(address, uint256) public view override returns (uint256) {
@@ -39,10 +40,16 @@ contract SingleRandomWinnerPrizeStrategy is PrizeStrategyInterface {
   }
 
   function estimateRemainingPrize() public view returns (uint256) {
+    return estimateAccruedInterest(ticketPool.interestPool().accountedBalance(), remainingBlocksToPrize());
+  }
+
+  function remainingBlocksToPrize() public view returns (uint256) {
     uint256 finalBlock = prizePeriodEndBlock();
-    require(block.number < finalBlock, "after block");
-    uint256 remainingBlocks = finalBlock - block.number;
-    return estimateAccruedInterest(ticketPool.interestPool().accountedBalance(), remainingBlocks);
+    if (block.number > finalBlock) {
+      return 0;
+    } else {
+      return finalBlock - block.number;
+    }
   }
 
   function estimateAccruedInterest(uint256 principal, uint256 blocks) public view returns (uint256) {
@@ -52,15 +59,10 @@ contract SingleRandomWinnerPrizeStrategy is PrizeStrategyInterface {
   }
 
   function award() external onlyPrizePeriodOver {
-    address winner = drawUser();
+    address winner = ticketToken().draw(uint256(blockhash(1)));
     uint256 total = ticketPool.currentPrize();
     ticketPool.award(winner, total);
     currentPrizeBlock = block.number;
-  }
-
-  function drawUser() public view returns (address) {
-    bytes32 entropy = blockhash(1);
-    return ticketToken().draw(uint256(entropy));
   }
 
   function prizePeriodEndBlock() public view returns (uint256) {
@@ -72,7 +74,7 @@ contract SingleRandomWinnerPrizeStrategy is PrizeStrategyInterface {
   }
 
   modifier onlyPrizePeriodOver() {
-    require(block.number > prizePeriodEndBlock(), "prize period not over");
+    require(block.number >= prizePeriodEndBlock(), "prize period not over");
     _;
   }
 }

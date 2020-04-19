@@ -31,11 +31,12 @@ describe('InterestPool contract', () => {
     token = await deployContract(wallet, ERC20Mintable, [])
     cToken = await deployContract(wallet, CTokenMock, [])
     await cToken.initialize(token.address, ethers.utils.parseEther('0.01'))
-    collateralToken = await deployContract(wallet, ControlledToken, [
+    collateralToken = await deployContract(wallet, ControlledToken, [])
+    await collateralToken.initialize(
       'Ticket',
       'TICK',
       interestPool.address
-    ])
+    )
     await interestPool.initialize(
       cToken.address,
       collateralToken.address,
