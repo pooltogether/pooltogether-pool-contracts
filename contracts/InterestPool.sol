@@ -7,14 +7,14 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./compound/ICToken.sol";
 import "./ControlledToken.sol";
-import "./ITokenController.sol";
-import "./IInterestPool.sol";
+import "./TokenControllerInterface.sol";
+import "./InterestPoolInterface.sol";
 
 /**
  * Wraps a cToken with a collateral token.  The collateral token represents how much underlying principal a user holds.
  * The interest can be minted as new collateral tokens by the allocator.
  */
-contract InterestPool is Initializable, ITokenController, IInterestPool {
+contract InterestPool is Initializable, TokenControllerInterface, InterestPoolInterface {
   using SafeMath for uint256;
 
   ICToken public cToken;

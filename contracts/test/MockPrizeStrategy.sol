@@ -1,9 +1,9 @@
 pragma solidity ^0.6.4;
 
-import "../IPrizeStrategy.sol";
+import "../PrizeStrategyInterface.sol";
 import "../TicketPool.sol";
 
-contract MockPrizeStrategy is IPrizeStrategy {
+contract MockPrizeStrategy is PrizeStrategyInterface {
   uint256 public exitFee;
   uint256 public unlockBlock;
   TicketPool public ticketPool;

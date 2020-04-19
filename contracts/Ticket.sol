@@ -16,7 +16,7 @@ contract Ticket is ControlledToken {
   constructor (
     string memory _name,
     string memory _symbol,
-    ITokenController _controller
+    TokenControllerInterface _controller
   ) public ControlledToken(_name, _symbol, _controller) {
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
   }

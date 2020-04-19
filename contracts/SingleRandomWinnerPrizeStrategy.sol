@@ -4,9 +4,9 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./TicketPool.sol";
-import "./IPrizeStrategy.sol";
+import "./PrizeStrategyInterface.sol";
 
-contract SingleRandomWinnerPrizeStrategy is IPrizeStrategy {
+contract SingleRandomWinnerPrizeStrategy is PrizeStrategyInterface {
   using SafeMath for uint256;
 
   TicketPool ticketPool;

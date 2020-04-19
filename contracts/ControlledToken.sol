@@ -2,18 +2,18 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "./ITokenController.sol";
+import "./TokenControllerInterface.sol";
 
 contract ControlledToken is ERC20 {
 
-  ITokenController public controller;
+  TokenControllerInterface public controller;
   string public name;
   string public symbol;
 
   constructor(
     string memory _name,
     string memory _symbol,
-    ITokenController _controller
+    TokenControllerInterface _controller
   ) public {
     require(address(_controller) != address(0), "controller cannot be zero");
     name = _name;

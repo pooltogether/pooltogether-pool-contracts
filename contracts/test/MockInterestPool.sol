@@ -1,10 +1,10 @@
 pragma solidity ^0.6.4;
 
-import "../IInterestPool.sol";
+import "../InterestPoolInterface.sol";
 import "../ControlledToken.sol";
-import "../ITokenController.sol";
+import "../TokenControllerInterface.sol";
 
-contract MockInterestPool is IInterestPool, ITokenController {
+contract MockInterestPool is InterestPoolInterface, TokenControllerInterface {
 
   uint256 _availableInterest;
   IERC20 public _underlyingToken;
