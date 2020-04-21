@@ -1,6 +1,6 @@
 {
   "name": "@pooltogether/pooltogether-contracts",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
   "homepage": "https://github.com/pooltogether/pooltogether-contracts",
@@ -44,7 +44,7 @@
     "postpublish": "PACKAGE_VERSION=$(./scripts/package-version.sh) && git tag -ae v$PACKAGE_VERSION && git push --tags"
   },
   "dependencies": {
-    "@kleros/kleros": "DeltaCamp/kleros#ca7fbdcc195cfd1267efb99aae905c3400a5ea5f",
+    "@deltacamp/kleros": "DeltaCamp/kleros#ca7fbdcc195cfd1267efb99aae905c3400a5ea5f",
     "@openzeppelin/contracts-ethereum-package": "2.4.0",
     "@openzeppelin/upgrades": "2.5.1",
     "fixidity": "DeltaCamp/Fixidity#edf533f77df43b16a7b92f17af7a8930db01f293",

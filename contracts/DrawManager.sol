@@ -19,7 +19,7 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.5.12;
 
 import "./UniformRandomNumber.sol";
-import "@kleros/kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
+import "@deltacamp/kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 /**

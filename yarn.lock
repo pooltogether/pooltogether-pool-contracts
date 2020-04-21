@@ -208,6 +208,13 @@
   dependencies:
     regenerator-runtime "^0.13.2"
 
+"@deltacamp/kleros@DeltaCamp/kleros#ca7fbdcc195cfd1267efb99aae905c3400a5ea5f":
+  version "0.0.7"
+  resolved "https://codeload.github.com/DeltaCamp/kleros/tar.gz/ca7fbdcc195cfd1267efb99aae905c3400a5ea5f"
+  dependencies:
+    "@kleros/kleros-interaction" "^0.9.0"
+    minimetoken "^0.2.0"
+
 "@firebase/app-types@0.4.3":
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/@firebase/app-types/-/app-types-0.4.3.tgz#80d2b6e5ee43ac99892329ab02301ee7ed82da45"
@@ -394,13 +401,6 @@
     "@realitio/realitio-contracts" "^2.0.5"
     minimetoken "^0.2.0"
     openzeppelin-solidity "^1.12.0"
-
-"@kleros/kleros@DeltaCamp/kleros#ca7fbdcc195cfd1267efb99aae905c3400a5ea5f":
-  version "0.0.7"
-  resolved "https://codeload.github.com/DeltaCamp/kleros/tar.gz/ca7fbdcc195cfd1267efb99aae905c3400a5ea5f"
-  dependencies:
-    "@kleros/kleros-interaction" "^0.9.0"
-    minimetoken "^0.2.0"
 
 "@ledgerhq/devices@^4.78.0":
   version "4.78.0"
