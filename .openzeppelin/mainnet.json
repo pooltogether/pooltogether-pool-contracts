@@ -1911,7 +1911,7 @@
       {
         "address": "0xb7896fce748396EcFC240F5a0d3Cc92ca42D7d84",
         "version": "0.2",
-        "implementation": "0xdD581eB0779196C43f64084a84f98DD496626b71",
+        "implementation": "0x7c0d5A979852B7CE3a4AC4FE04A8416Af52EA0b7",
         "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
         "kind": "Upgradeable"
       }
@@ -1920,7 +1920,7 @@
       {
         "address": "0xfE6892654CBB05eB73d28DCc1Ff938f59666Fe9f",
         "version": "0.2",
-        "implementation": "0xbACF2e665B37F713C159705F59f5349F78858C2d",
+        "implementation": "0xB9C269A7d0B2A500661eAD67e035526245BA4fa1",
         "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
         "kind": "Upgradeable"
       }
@@ -1929,7 +1929,7 @@
       {
         "address": "0x29fe7D60DdF151E5b52e5FAB4f1325da6b2bD958",
         "version": "0.2",
-        "implementation": "0x932773aE4B661029704e731722CF8129e1B32494",
+        "implementation": "0xA125841831B4645F22c1c4cCb6e1df0842E60040",
         "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
         "kind": "Upgradeable"
       }
@@ -1938,7 +1938,7 @@
       {
         "address": "0x49d716DFe60b37379010A75329ae09428f17118d",
         "version": "0.2",
-        "implementation": "0x5d6bdEb18BA6E2be5Cb87C7cFAee9CD07d000428",
+        "implementation": "0x23ca306C621a9D6F3CADe4fa05A4b702dFEAFDF2",
         "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
         "kind": "Upgradeable"
       }
@@ -1947,7 +1947,7 @@
       {
         "address": "0x0034Ea9808E620A0EF79261c51AF20614B742B24",
         "version": "0.2",
-        "implementation": "0x1b9cf2bDaeCD0c597391943f3ff8ba771A692D41",
+        "implementation": "0xF9F6a4366FE7a54ca0e7F1974fef009AFf765F01",
         "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
         "kind": "Upgradeable"
       }
@@ -1956,7 +1956,7 @@
       {
         "address": "0xBD87447F48ad729C5c4b8bcb503e1395F62e8B98",
         "version": "0.2",
-        "implementation": "0x7acBE5d1d45A6494828bdEB7bF0a3116353efaD6",
+        "implementation": "0xfa1263f0009FCd99CD043f51beE83148961b4E39",
         "admin": "0x332C822F3E95DF42010512012A913973b959b71E",
         "kind": "Upgradeable"
       }
