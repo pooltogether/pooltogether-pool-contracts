@@ -45,7 +45,7 @@ module.exports = {
       skipDryRun: true,
       network_id: 1,
       gas: 7000000,
-      gasPrice: 2.01 * 1000000000
+      gasPrice: 3.01 * 1000000000
     },
 
     kovan: {
