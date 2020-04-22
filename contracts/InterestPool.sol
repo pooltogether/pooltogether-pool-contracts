@@ -18,19 +18,19 @@ contract InterestPool is Initializable, TokenControllerInterface, InterestPoolIn
   using SafeMath for uint256;
 
   ICToken public cToken;
-  ControlledToken public collateralTokens;
+  ControlledToken public override collateralToken;
   address public allocator;
 
   function initialize (
     ICToken _cToken,
-    ControlledToken _collateralTokens,
+    ControlledToken _collateralToken,
     address _allocator
   ) external initializer {
     require(address(_cToken) != address(0), "cToken cannot be zero");
-    require(address(_collateralTokens) != address(0), "collateralTokens cannot be zero");
+    require(address(_collateralToken) != address(0), "collateralToken cannot be zero");
     require(address(_allocator) != address(0), "prize strategy cannot be zero");
     cToken = _cToken;
-    collateralTokens = _collateralTokens;
+    collateralToken = _collateralToken;
     allocator = _allocator;
   }
 
@@ -46,17 +46,17 @@ contract InterestPool is Initializable, TokenControllerInterface, InterestPoolIn
   }
 
   function accountedBalance() public view override returns (uint256) {
-    return collateralTokens.totalSupply();
+    return collateralToken.totalSupply();
   }
 
   function supplyCollateral(uint256 amount) external override {
     _transferToCToken(amount);
-    collateralTokens.mint(msg.sender, amount);
+    collateralToken.mint(msg.sender, amount);
   }
 
   function redeemCollateral(uint256 amount) external override {
     _transferFromCToken(msg.sender, amount);
-    collateralTokens.burn(msg.sender, amount);
+    collateralToken.burn(msg.sender, amount);
   }
 
   function _transferToCToken(uint256 amount) internal {
@@ -74,7 +74,7 @@ contract InterestPool is Initializable, TokenControllerInterface, InterestPoolIn
 
   function allocateInterest(address to, uint256 amount) external override onlyAllocator {
     require(amount <= availableInterest(), "exceed-interest");
-    collateralTokens.mint(to, amount);
+    collateralToken.mint(to, amount);
   }
 
   function cTokenValueOf(uint256 underlyingAmount) external view returns (uint256) {

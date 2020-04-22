@@ -1,5 +1,6 @@
 pragma solidity ^0.6.4;
 
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 // import "@nomiclabs/buidler/console.sol";
@@ -7,17 +8,17 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "./TicketPool.sol";
 import "./PrizeStrategyInterface.sol";
 
-contract SingleRandomWinnerPrizeStrategy is PrizeStrategyInterface {
+contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterface {
   using SafeMath for uint256;
 
-  TicketPool ticketPool;
+  TicketPool public ticketPool;
   uint256 currentPrizeBlock;
   uint256 prizePeriodBlocks;
 
-  constructor (
+  function initialize (
     TicketPool _ticketPool,
     uint256 _prizePeriodBlocks
-  ) public {
+  ) public initializer {
     require(address(_ticketPool) != address(0), "prize pool must not be zero");
     require(_prizePeriodBlocks > 0, "prize period must be greater than zero");
     ticketPool = _ticketPool;
@@ -58,6 +59,10 @@ contract SingleRandomWinnerPrizeStrategy is PrizeStrategyInterface {
     return FixedPoint.multiplyUintByMantissa(multiplier, ticketPool.interestPool().supplyRatePerBlock());
   }
 
+  function canAward() public view returns (bool) {
+    return block.number >= prizePeriodEndBlock();
+  }
+
   function award() external onlyPrizePeriodOver {
     address winner = ticketToken().draw(uint256(blockhash(1)));
     uint256 total = ticketPool.currentPrize();
@@ -74,7 +79,7 @@ contract SingleRandomWinnerPrizeStrategy is PrizeStrategyInterface {
   }
 
   modifier onlyPrizePeriodOver() {
-    require(block.number >= prizePeriodEndBlock(), "prize period not over");
+    require(canAward(), "prize period not over");
     _;
   }
 }

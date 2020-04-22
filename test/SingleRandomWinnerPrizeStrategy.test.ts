@@ -60,10 +60,11 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
 
     await mockInterestPool.setSupplyRatePerBlock(toWei('0.01')) // 1% per block
 
-    prizeStrategy = await deployContract(wallet, SingleRandomWinnerPrizeStrategy, [
+    prizeStrategy = await deployContract(wallet, SingleRandomWinnerPrizeStrategy, [])
+    await prizeStrategy.initialize(
       mockTicketPool.address,
       prizePeriod
-    ])
+    )
     prizePeriodStart = await buidler.ethers.provider.getBlockNumber()
   })
 

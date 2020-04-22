@@ -8,11 +8,11 @@ contract MockInterestPool is InterestPoolInterface, TokenControllerInterface {
 
   uint256 _availableInterest;
   IERC20 public _underlyingToken;
-  ControlledToken public token;
+  ControlledToken public override collateralToken;
   uint256 public override supplyRatePerBlock;
 
-  function initialize (IERC20 underlyingToken, ControlledToken _token) external {
-    token = _token;
+  function initialize (IERC20 underlyingToken, ControlledToken _collateralToken) external {
+    collateralToken = _collateralToken;
     _underlyingToken = underlyingToken;
     supplyRatePerBlock = 100 wei;
   }
@@ -25,16 +25,16 @@ contract MockInterestPool is InterestPoolInterface, TokenControllerInterface {
     return _availableInterest;
   }
 
-  function estimateAccruedInterest(uint256 principal, uint256 blocks) external view override returns (uint256) {
+  function estimateAccruedInterest(uint256, uint256) external view override returns (uint256) {
     return 45;
   }
 
   function accountedBalance() external view override returns (uint256) {
-    return token.totalSupply();
+    return collateralToken.totalSupply();
   }
 
   function allocateInterest(address to, uint256 amount) external override {
-    token.mint(to, amount);
+    collateralToken.mint(to, amount);
   }
 
   function setSupplyRatePerBlock(uint256 _supplyRatePerBlock) public {
@@ -46,11 +46,11 @@ contract MockInterestPool is InterestPoolInterface, TokenControllerInterface {
   }
 
   function supplyCollateral(uint256 amount) external override {
-    token.mint(msg.sender, amount);
+    collateralToken.mint(msg.sender, amount);
   }
 
   function redeemCollateral(uint256 amount) external override {
-    token.burn(msg.sender, amount);
+    collateralToken.burn(msg.sender, amount);
   }
 
   function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {}

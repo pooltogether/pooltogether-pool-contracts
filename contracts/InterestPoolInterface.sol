@@ -2,6 +2,8 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "./ControlledToken.sol";
+
 interface InterestPoolInterface {
   function availableInterest() external view returns (uint256);
   function estimateAccruedInterest(uint256 principal, uint256 blocks) external view returns (uint256);
@@ -9,6 +11,7 @@ interface InterestPoolInterface {
   function supplyRatePerBlock() external view returns (uint256);
   function accountedBalance() external view returns (uint256);
   function underlyingToken() external view returns (IERC20);
+  function collateralToken() external view returns (ControlledToken);
   function supplyCollateral(uint256 amount) external;
   function redeemCollateral(uint256 amount) external;
 }

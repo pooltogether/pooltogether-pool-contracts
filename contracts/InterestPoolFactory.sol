@@ -8,13 +8,8 @@ contract InterestPoolFactory {
 
   event InterestPoolCreated(address indexed interestPool);
 
-  function createInterestPool(
-    ICToken _cToken,
-    ControlledToken _collateralTokens,
-    address _allocator
-  ) external returns (InterestPool) {
+  function createInterestPool() external returns (InterestPool) {
     InterestPool interestPool = new InterestPool();
-    interestPool.initialize(_cToken, _collateralTokens, _allocator);
     emit InterestPoolCreated(address(interestPool));
     return interestPool;
   }

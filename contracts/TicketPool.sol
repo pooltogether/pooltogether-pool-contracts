@@ -17,11 +17,6 @@ contract TicketPool is Initializable, TokenControllerInterface, TicketPoolInterf
   using SafeMath for uint256;
   using Timelock for Timelock.State;
 
-  IERC1820Registry constant internal ERC1820_REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
-
-  // keccak256("ERC777TokensRecipient")
-  bytes32 constant internal TOKENS_RECIPIENT_INTERFACE_HASH = 0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
-
   InterestPoolInterface public override interestPool;
   Ticket public override ticketToken;
   PrizeStrategyInterface public prizeStrategy;
@@ -36,7 +31,6 @@ contract TicketPool is Initializable, TokenControllerInterface, TicketPoolInterf
     require(address(_interestPool) != address(0), "prize pool must not be zero");
     require(address(_prizeStrategy) != address(0), "prizeStrategy must not be zero");
     ticketToken = _ticketToken;
-    ERC1820_REGISTRY.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
     interestPool = _interestPool;
     prizeStrategy = _prizeStrategy;
   }

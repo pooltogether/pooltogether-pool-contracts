@@ -47,7 +47,7 @@ describe('InterestPool contract', () => {
 
   describe('initialize()', () => {
     it('should set all the vars', async () => {
-      expect(await interestPool.collateralTokens()).to.equal(collateralToken.address)
+      expect(await interestPool.collateralToken()).to.equal(collateralToken.address)
       expect(await interestPool.cToken()).to.equal(cToken.address)
     })
   })
