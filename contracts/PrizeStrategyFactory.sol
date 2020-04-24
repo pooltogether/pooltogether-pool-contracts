@@ -2,7 +2,7 @@ pragma solidity ^0.6.4;
 
 import "./SingleRandomWinnerPrizeStrategy.sol";
 import "./ControlledToken.sol";
-import "./compound/ICToken.sol";
+import "./InterestToken.sol";
 
 contract PrizeStrategyFactory {
 

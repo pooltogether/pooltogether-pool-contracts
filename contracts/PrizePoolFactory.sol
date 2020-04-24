@@ -2,7 +2,7 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import "./compound/ICToken.sol";
+import "./InterestToken.sol";
 import "./ControlledTokenFactory.sol";
 import "./PrizeStrategyFactory.sol";
 import "./InterestPoolFactory.sol";
@@ -25,7 +25,7 @@ contract PrizePoolFactory is Initializable {
   TicketFactory public ticketFactory;
   ControlledTokenFactory public controlledTokenFactory;
   PrizeStrategyFactory public prizeStrategyFactory;
-  ICToken public cToken;
+  InterestToken public cToken;
 
   function initialize (
     InterestPoolFactory _interestPoolFactory,
@@ -33,7 +33,7 @@ contract PrizePoolFactory is Initializable {
     TicketFactory _ticketFactory,
     ControlledTokenFactory _controlledTokenFactory,
     PrizeStrategyFactory _prizeStrategyFactory,
-    ICToken _cToken
+    InterestToken _cToken
   ) public initializer {
     interestPoolFactory = _interestPoolFactory;
     ticketPoolFactory = _ticketPoolFactory;
@@ -57,14 +57,6 @@ contract PrizePoolFactory is Initializable {
     prizeStrategy.initialize(
       ticketPool,
       prizePeriodInBlocks
-    );
-
-    emit PrizePoolCreated(
-      address(ticketPool.interestPool()),
-      address(ticketPool),
-      address(prizeStrategy),
-      address(ticketPool.interestPool().collateralToken()),
-      address(ticketPool.ticketToken())
     );
 
     return ticketPool;
@@ -99,6 +91,14 @@ contract PrizePoolFactory is Initializable {
       ticket,
       interestPool,
       _prizeStrategy
+    );
+
+    emit PrizePoolCreated(
+      address(interestPool),
+      address(ticketPool),
+      address(_prizeStrategy),
+      address(collateral),
+      address(ticket)
     );
 
     return ticketPool;

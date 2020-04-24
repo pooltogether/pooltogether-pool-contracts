@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-import "./compound/ICToken.sol";
+import "./InterestToken.sol";
 import "./ControlledToken.sol";
 import "./TokenControllerInterface.sol";
 import "./InterestPoolInterface.sol";
@@ -17,12 +17,12 @@ import "./InterestPoolInterface.sol";
 contract InterestPool is Initializable, TokenControllerInterface, InterestPoolInterface {
   using SafeMath for uint256;
 
-  ICToken public cToken;
+  InterestToken public cToken;
   ControlledToken public override collateralToken;
   address public allocator;
 
   function initialize (
-    ICToken _cToken,
+    InterestToken _cToken,
     ControlledToken _collateralToken,
     address _allocator
   ) external initializer {

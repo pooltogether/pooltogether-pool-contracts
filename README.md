@@ -26,3 +26,10 @@ Timelock
   - Track missing interest per user.
   - When user attempts to transfer or withdraw tokens, add a check to see if they've covered their interest.
   - if the user has not covered their interest, convert the tickets to timelocked sponsorship.
+
+## Participation
+
+How do we measure how much each user has contributed?
+We could measure how long they've had assets in the system.
+
+Participation is minted when they need it?
