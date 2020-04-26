@@ -5,10 +5,11 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-import "./InterestToken.sol";
+import "./compound/CTokenInterface.sol";
+import "./InterestPoolInterface.sol";
 import "./ControlledToken.sol";
 import "./TokenControllerInterface.sol";
-import "./InterestPoolInterface.sol";
+import "./compound/CTokenInterface.sol";
 
 /**
  * Wraps a cToken with a collateral token.  The collateral token represents how much underlying principal a user holds.
@@ -17,72 +18,85 @@ import "./InterestPoolInterface.sol";
 contract InterestPool is Initializable, TokenControllerInterface, InterestPoolInterface {
   using SafeMath for uint256;
 
-  InterestToken public cToken;
-  ControlledToken public override collateralToken;
+  // Seconds per block
+  uint256 public constant SECONDS_PER_BLOCK = 12;
+
+  event CollateralSupplied(address from, uint256 amount);
+  event CollateralRedeemed(address to, uint256 amount);
+  event CollateralAllocated(address to, uint256 amount);
+
+  CTokenInterface public cToken;
+  ControlledToken public override collateral;
   address public allocator;
+  IERC20 public override underlying;
 
   function initialize (
-    InterestToken _cToken,
-    ControlledToken _collateralToken,
+    CTokenInterface _cToken,
+    ControlledToken _collateral,
     address _allocator
   ) external initializer {
     require(address(_cToken) != address(0), "cToken cannot be zero");
-    require(address(_collateralToken) != address(0), "collateralToken cannot be zero");
+    require(address(_collateral) != address(0), "collateral cannot be zero");
     require(address(_allocator) != address(0), "prize strategy cannot be zero");
     cToken = _cToken;
-    collateralToken = _collateralToken;
+    underlying = IERC20(_cToken.underlying());
+    collateral = _collateral;
     allocator = _allocator;
   }
 
   function availableInterest() public view override returns (uint256) {
-    uint256 balance = balanceOfUnderlying(address(this));
+    uint256 balance = cToken.balanceOfUnderlying(address(this));
     return balance.sub(accountedBalance());
   }
 
-  function estimateAccruedInterest(uint256 principal, uint256 blocks) public view override returns (uint256) {
-    // estimated = principal * supply rate per block * blocks
-    uint256 multiplier = principal.mul(blocks);
-    return FixedPoint.multiplyUintByMantissa(multiplier, supplyRatePerBlock());
-  }
-
   function accountedBalance() public view override returns (uint256) {
-    return collateralToken.totalSupply();
+    return collateral.totalSupply();
   }
 
-  function supplyCollateral(uint256 amount) external override {
+  function supply(uint256 amount) external override {
     _transferToCToken(amount);
-    collateralToken.mint(msg.sender, amount);
+    collateral.mint(msg.sender, amount);
+
+    emit CollateralSupplied(msg.sender, amount);
   }
 
-  function redeemCollateral(uint256 amount) external override {
+  function redeem(uint256 amount) external override {
     _transferFromCToken(msg.sender, amount);
-    collateralToken.burn(msg.sender, amount);
+    collateral.burn(msg.sender, amount);
+
+    emit CollateralRedeemed(msg.sender, amount);
   }
 
   function _transferToCToken(uint256 amount) internal {
-    IERC20 token = underlyingToken();
-    token.transferFrom(msg.sender, address(this), amount);
-    token.approve(address(cToken), amount);
+    underlying.transferFrom(msg.sender, address(this), amount);
+    underlying.approve(address(cToken), amount);
     cToken.mint(amount);
   }
 
   function _transferFromCToken(address to, uint256 amount) internal {
     cToken.redeemUnderlying(amount);
-    IERC20 token = underlyingToken();
-    token.transfer(to, amount);
+    underlying.transfer(to, amount);
   }
 
   function allocateInterest(address to, uint256 amount) external override onlyAllocator {
     require(amount <= availableInterest(), "exceed-interest");
-    collateralToken.mint(to, amount);
+    collateral.mint(to, amount);
+
+    emit CollateralAllocated(to, amount);
   }
 
-  function cTokenValueOf(uint256 underlyingAmount) external view returns (uint256) {
+  function estimateAccruedInterestOverBlocks(uint256 principal, uint256 blocks) public view override returns (uint256) {
+    // estimated = principal * supply rate per block * blocks
+    uint256 multiplier = principal.mul(blocks);
+    return FixedPoint.multiplyUintByMantissa(multiplier, supplyRatePerBlock());
+  }
+
+  function interestTokenValueOf(uint256 underlyingAmount) external view returns (uint256) {
     return FixedPoint.divideUintByMantissa(underlyingAmount, exchangeRateCurrent());
   }
 
-  function valueOfCTokens(uint256 cTokens) external view returns (uint256) {
-    return FixedPoint.multiplyUintByMantissa(cTokens, exchangeRateCurrent());
+  function valueOfCTokens(uint256 interestTokens) external view returns (uint256) {
+    return FixedPoint.multiplyUintByMantissa(interestTokens, exchangeRateCurrent());
   }
 
   function exchangeRateCurrent() public view returns (uint256) {
@@ -91,7 +105,7 @@ contract InterestPool is Initializable, TokenControllerInterface, InterestPoolIn
     return abi.decode(data, (uint256));
   }
 
-  function supplyRatePerBlock() public view override returns (uint256) {
+  function supplyRatePerBlock() public view returns (uint256) {
     (bool success, bytes memory data) = address(cToken).staticcall(abi.encodeWithSignature("supplyRatePerBlock()"));
     require(success, "supplyRatePerBlock failed");
     return abi.decode(data, (uint256));
@@ -101,10 +115,6 @@ contract InterestPool is Initializable, TokenControllerInterface, InterestPoolIn
     (bool success, bytes memory data) = address(cToken).staticcall(abi.encodeWithSignature("balanceOfUnderlying(address)", user));
     require(success, "balanceOfUnderlying failed");
     return abi.decode(data, (uint256));
-  }
-
-  function underlyingToken() public view override returns (IERC20) {
-    return IERC20(cToken.underlying());
   }
 
   function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {}

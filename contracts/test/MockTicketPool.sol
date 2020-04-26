@@ -8,25 +8,24 @@ import "../TokenControllerInterface.sol";
 
 contract MockTicketPool is Initializable, TicketPoolInterface, TokenControllerInterface {
 
-  Ticket public override ticketToken;
+  Ticket public override ticket;
   InterestPoolInterface public override interestPool;
-  uint256 public override currentPrize;
 
   function initialize (
-    Ticket _ticketToken,
+    Ticket _ticket,
     InterestPoolInterface _interestPool
   ) public initializer {
-    require(address(_ticketToken.controller()) == address(this), "controller matches");
-    ticketToken = _ticketToken;
+    require(address(_ticket.controller()) == address(this), "controller matches");
+    ticket = _ticket;
     interestPool = _interestPool;
   }
 
-  function setCurrentPrize(uint256 _currentPrize) external {
-    currentPrize = _currentPrize;
+  function currentPrize() external view override returns (uint256) {
+    return interestPool.availableInterest();
   }
 
   function award(address user, uint256 tickets) external override {
-    ticketToken.mint(user, tickets);
+    ticket.mint(user, tickets);
   }
 
   function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {}

@@ -5,15 +5,15 @@ import "../TicketPool.sol";
 
 contract MockPrizeStrategy is PrizeStrategyInterface {
   uint256 public exitFee;
-  uint256 public unlockBlock;
+  uint256 public unlockTimestamp;
   TicketPool public ticketPool;
 
   function setExitFee(uint256 _exitFee) external {
     exitFee = _exitFee;
   }
 
-  function setUnlockBlock(uint256 _unlockBlock) external {
-    unlockBlock = _unlockBlock;
+  function setUnlockTimestamp(uint256 _unlockTimestamp) external {
+    unlockTimestamp = _unlockTimestamp;
   }
 
   function setTicketPool(TicketPool _ticketPool) external {
@@ -24,8 +24,8 @@ contract MockPrizeStrategy is PrizeStrategyInterface {
     return exitFee;
   }
 
-  function calculateUnlockBlock(address, uint256) external view override returns (uint256) {
-    return unlockBlock;
+  function calculateUnlockTimestamp(address, uint256) external view override returns (uint256) {
+    return unlockTimestamp;
   }
 
   function award(address user, uint256 amount) external {

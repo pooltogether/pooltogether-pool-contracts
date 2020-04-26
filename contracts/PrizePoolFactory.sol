@@ -2,13 +2,14 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import "./InterestToken.sol";
+import "./InterestTokenInterface.sol";
 import "./ControlledTokenFactory.sol";
 import "./PrizeStrategyFactory.sol";
 import "./InterestPoolFactory.sol";
 import "./TicketFactory.sol";
 import "./TicketPoolFactory.sol";
 import "./PrizeStrategyInterface.sol";
+import "./compound/CTokenInterface.sol";
 
 contract PrizePoolFactory is Initializable {
 
@@ -25,7 +26,7 @@ contract PrizePoolFactory is Initializable {
   TicketFactory public ticketFactory;
   ControlledTokenFactory public controlledTokenFactory;
   PrizeStrategyFactory public prizeStrategyFactory;
-  InterestToken public cToken;
+  InterestTokenInterface public interestToken;
 
   function initialize (
     InterestPoolFactory _interestPoolFactory,
@@ -33,26 +34,27 @@ contract PrizePoolFactory is Initializable {
     TicketFactory _ticketFactory,
     ControlledTokenFactory _controlledTokenFactory,
     PrizeStrategyFactory _prizeStrategyFactory,
-    InterestToken _cToken
+    InterestTokenInterface _interestToken
   ) public initializer {
     interestPoolFactory = _interestPoolFactory;
     ticketPoolFactory = _ticketPoolFactory;
     ticketFactory = _ticketFactory;
     controlledTokenFactory = _controlledTokenFactory;
     prizeStrategyFactory = _prizeStrategyFactory;
-    cToken = _cToken;
+    interestToken = _interestToken;
   }
 
   function createSingleRandomWinnerTicketPool(
-    string calldata _interestName,
-    string calldata _interestSymbol,
+    CTokenInterface cToken,
+    string calldata _collateralName,
+    string calldata _collateralSymbol,
     string calldata _ticketName,
     string calldata _ticketSymbol,
     uint256 prizePeriodInBlocks
   ) external returns (TicketPool) {
 
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
-    TicketPool ticketPool = createTicketPool(prizeStrategy, _interestName, _interestSymbol, _ticketName, _ticketSymbol);
+    TicketPool ticketPool = createTicketPool(cToken, prizeStrategy, _collateralName, _collateralSymbol, _ticketName, _ticketSymbol);
 
     prizeStrategy.initialize(
       ticketPool,
@@ -63,9 +65,10 @@ contract PrizePoolFactory is Initializable {
   }
 
   function createTicketPool(
+    CTokenInterface cToken,
     PrizeStrategyInterface _prizeStrategy,
-    string memory _interestName,
-    string memory _interestSymbol,
+    string memory _collateralName,
+    string memory _collateralSymbol,
     string memory _ticketName,
     string memory _ticketSymbol
   ) public returns (TicketPool) {
@@ -73,7 +76,7 @@ contract PrizePoolFactory is Initializable {
     InterestPool interestPool = interestPoolFactory.createInterestPool();
     TicketPool ticketPool = ticketPoolFactory.createTicketPool();
     Ticket ticket = ticketFactory.createTicket();
-    ControlledToken collateral = controlledTokenFactory.createControlledToken(_interestName, _interestSymbol, interestPool);
+    ControlledToken collateral = controlledTokenFactory.createControlledToken(_collateralName, _collateralSymbol, interestPool);
 
     interestPool.initialize(
       cToken,

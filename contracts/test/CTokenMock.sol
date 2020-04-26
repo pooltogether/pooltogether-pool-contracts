@@ -25,75 +25,75 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "./ERC20Mintable.sol";
 
 contract CTokenMock is Initializable, ERC20 {
-    mapping(address => uint256) ownerTokenAmounts;
-    ERC20Mintable public underlying;
+  mapping(address => uint256) ownerTokenAmounts;
+  ERC20Mintable public underlying;
 
-    uint256 __supplyRatePerBlock;
+  uint256 __supplyRatePerBlock;
 
-    function initialize (
-        ERC20Mintable _token,
-        uint256 _supplyRatePerBlock
-    ) public initializer {
-        require(address(_token) != address(0), "token is not defined");
-        underlying = _token;
-        __supplyRatePerBlock = _supplyRatePerBlock;
+  function initialize (
+    ERC20Mintable _token,
+    uint256 _supplyRatePerBlock
+  ) public initializer {
+    require(address(_token) != address(0), "token is not defined");
+    underlying = _token;
+    __supplyRatePerBlock = _supplyRatePerBlock;
+  }
+
+  function mint(uint256 amount) external returns (uint) {
+    uint256 newCTokens;
+    if (totalSupply() == 0) {
+      newCTokens = amount;
+    } else {
+      // they need to hold the same assets as tokens.
+      // Need to calculate the current exchange rate
+      uint256 fractionOfCollateral = FixedPoint.calculateMantissa(amount, underlying.balanceOf(address(this)));
+      newCTokens = FixedPoint.multiplyUintByMantissa(totalSupply(), fractionOfCollateral);
     }
+    _mint(msg.sender, newCTokens);
+    require(underlying.transferFrom(msg.sender, address(this), amount), "could not transfer tokens");
+    return 0;
+  }
 
-    function mint(uint256 amount) external returns (uint) {
-        uint256 newCTokens;
-        if (totalSupply() == 0) {
-            newCTokens = amount;
-        } else {
-            // they need to hold the same assets as tokens.
-            // Need to calculate the current exchange rate
-            uint256 fractionOfCollateral = FixedPoint.calculateMantissa(amount, underlying.balanceOf(address(this)));
-            newCTokens = FixedPoint.multiplyUintByMantissa(totalSupply(), fractionOfCollateral);
-        }
-        _mint(msg.sender, newCTokens);
-        require(underlying.transferFrom(msg.sender, address(this), amount), "could not transfer tokens");
-        return 0;
-    }
+  function getCash() external view returns (uint) {
+    return underlying.balanceOf(address(this));
+  }
 
-    function getCash() external view returns (uint) {
-        return underlying.balanceOf(address(this));
-    }
+  function redeemUnderlying(uint256 requestedAmount) external returns (uint) {
+    uint256 cTokens = cTokenValueOf(requestedAmount);
+    _burn(msg.sender, cTokens);
+    require(underlying.transfer(msg.sender, requestedAmount), "could not transfer tokens");
+  }
 
-    function redeemUnderlying(uint256 requestedAmount) external returns (uint) {
-        uint256 cTokens = cTokenValueOf(requestedAmount);
-        _burn(msg.sender, cTokens);
-        require(underlying.transfer(msg.sender, requestedAmount), "could not transfer tokens");
-    }
+  function accrue() external {
+    uint256 newTokens = (underlying.balanceOf(address(this)) * 120) / 100;
+    underlying.mint(address(this), newTokens);
+  }
 
-    function accrue() external {
-        uint256 newTokens = (underlying.balanceOf(address(this)) * 120) / 100;
-        underlying.mint(address(this), newTokens);
-    }
+  function accrueCustom(uint256 amount) external {
+    underlying.mint(address(this), amount);
+  }
 
-    function accrueCustom(uint256 amount) external {
-        underlying.mint(address(this), amount);
-    }
+  function cTokenValueOf(uint256 tokens) public view returns (uint256) {
+    return FixedPoint.multiplyUintByMantissa(tokens, exchangeRateCurrent());
+  }
 
-    function cTokenValueOf(uint256 tokens) public view returns (uint256) {
-        return FixedPoint.multiplyUintByMantissa(tokens, exchangeRateCurrent());
-    }
+  function balanceOfUnderlying(address account) external view returns (uint) {
+    return FixedPoint.multiplyUintByMantissa(balanceOf(account), exchangeRateCurrent());
+  }
 
-    function balanceOfUnderlying(address account) external view returns (uint) {
-        return FixedPoint.multiplyUintByMantissa(balanceOf(account), exchangeRateCurrent());
+  function exchangeRateCurrent() public view returns (uint256) {
+    if (totalSupply() == 0) {
+      return FixedPoint.SCALE;
+    } else {
+      return FixedPoint.calculateMantissa(underlying.balanceOf(address(this)), totalSupply());
     }
+  }
 
-    function exchangeRateCurrent() public view returns (uint256) {
-        if (totalSupply() == 0) {
-            return FixedPoint.SCALE;
-        } else {
-            return FixedPoint.calculateMantissa(underlying.balanceOf(address(this)), totalSupply());
-        }
-    }
+  function supplyRatePerBlock() external view returns (uint) {
+    return __supplyRatePerBlock;
+  }
 
-    function supplyRatePerBlock() external view returns (uint) {
-        return __supplyRatePerBlock;
-    }
-
-    function setSupplyRateMantissa(uint256 _supplyRatePerBlock) external {
-        __supplyRatePerBlock = _supplyRatePerBlock;
-    }
+  function setSupplyRateMantissa(uint256 _supplyRatePerBlock) external {
+    __supplyRatePerBlock = _supplyRatePerBlock;
+  }
 }

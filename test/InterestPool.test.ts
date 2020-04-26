@@ -1,5 +1,4 @@
 import { deployContract } from 'ethereum-waffle'
-import { waffle } from '@nomiclabs/buidler'
 import InterestPool from '../build/InterestPool.json'
 import ERC20Mintable from '../build/ERC20Mintable.json'
 import CTokenMock from '../build/CTokenMock.json'
@@ -47,31 +46,31 @@ describe('InterestPool contract', () => {
 
   describe('initialize()', () => {
     it('should set all the vars', async () => {
-      expect(await interestPool.collateralToken()).to.equal(collateralToken.address)
+      expect(await interestPool.collateral()).to.equal(collateralToken.address)
       expect(await interestPool.cToken()).to.equal(cToken.address)
     })
   })
 
-  describe('supplyCollateral()', () => {
+  describe('supply()', () => {
     it('should give the first depositer tokens at the initial exchange rate', async function () {
       await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supplyCollateral(toWei('1'))
+      await interestPool.supply(toWei('1'))
 
       expect(await collateralToken.balanceOf(wallet._address)).to.equal(toWei('1'))
       expect(await collateralToken.totalSupply()).to.equal(toWei('1'))
     })
   })
 
-  describe('redeemCollateral()', () => {
+  describe('redeem()', () => {
     it('should allow a user to withdraw their collateral', async function () {
       let startBalance = await token.balanceOf(wallet._address)
       await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supplyCollateral(toWei('1'))
+      await interestPool.supply(toWei('1'))
 
       expect(await collateralToken.balanceOf(wallet._address)).to.equal(toWei('1'))
       expect(startBalance.sub(await token.balanceOf(wallet._address))).to.equal(toWei('1'))
 
-      await interestPool.redeemCollateral(toWei('1'))
+      await interestPool.redeem(toWei('1'))
 
       expect(await collateralToken.balanceOf(wallet._address)).to.equal('0')
       expect(await token.balanceOf(wallet._address)).to.equal(startBalance)
@@ -85,7 +84,8 @@ describe('InterestPool contract', () => {
 
     it('should return the amount of interest available', async function () {
       await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supplyCollateral(toWei('1'))
+      await interestPool.supply(toWei('1'))
+      expect(await cToken.balanceOf(interestPool.address)).to.equal(toWei('1'))
       await cToken.accrueCustom(toWei('2'))
       expect(await interestPool.availableInterest()).to.equal(toWei('2'))
     })
@@ -94,7 +94,7 @@ describe('InterestPool contract', () => {
   describe('allocateInterest()', () => {
     it('should allow the allocator to give people interest', async () => {
       await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supplyCollateral(toWei('1'))
+      await interestPool.supply(toWei('1'))
       await cToken.accrueCustom(toWei('2'))
       expect((await interestPool.availableInterest()).toString()).to.equal(toWei('2'))
       await interestPool.connect(allocator).allocateInterest(wallet._address, toWei('2'))
@@ -104,14 +104,14 @@ describe('InterestPool contract', () => {
 
     it('cannot allocate more interest than available', async () => {
       await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supplyCollateral(toWei('1'))
+      await interestPool.supply(toWei('1'))
       await cToken.accrueCustom(toWei('1'))
       await expect(interestPool.connect(allocator).allocateInterest(wallet._address, toWei('2'))).to.be.revertedWith('exceed-interest')
     })
 
     it('should only allow the allocator to allocate', async () => {
       await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supplyCollateral(toWei('1'))
+      await interestPool.supply(toWei('1'))
       await cToken.accrueCustom(toWei('1'))
       await expect(interestPool.allocateInterest(wallet._address, toWei('1'))).to.be.revertedWith('only the allocator')
     })
@@ -120,7 +120,7 @@ describe('InterestPool contract', () => {
   describe('accountedBalance()', () => {
     it('should return the balance that has been allocated or supplied', async () => {
       await token.approve(interestPool.address, toWei('2'))
-      await interestPool.supplyCollateral(toWei('2'))
+      await interestPool.supply(toWei('2'))
       expect(await interestPool.accountedBalance()).to.equal(toWei('2'))
     })
   })
@@ -132,21 +132,10 @@ describe('InterestPool contract', () => {
 
     it('should return the correct exchange rate', async () => {
       await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supplyCollateral(toWei('1'))
+      await interestPool.supply(toWei('1'))
       await cToken.accrueCustom(toWei('0.5'))
 
       expect(await interestPool.exchangeRateCurrent()).to.equal(toWei('1.5'))
-    })
-  })
-
-  describe('valueOfCTokens()', () => {
-    it('should calculate correctly', async () => {
-      await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supplyCollateral(toWei('1'))
-      await cToken.accrueCustom(toWei('0.5'))
-      
-      expect(await interestPool.valueOfCTokens(toWei('1'))).to.equal(toWei('1.5'))
-      expect(await interestPool.cTokenValueOf(toWei('1.5'))).to.equal(toWei('1'))
     })
   })
 })

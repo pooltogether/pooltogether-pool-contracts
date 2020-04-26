@@ -3,7 +3,7 @@ pragma solidity ^0.6.4;
 import "./TicketPool.sol";
 import "./InterestPoolInterface.sol";
 import "./ControlledToken.sol";
-import "./InterestToken.sol";
+import "./InterestTokenInterface.sol";
 
 contract TicketPoolFactory is Initializable {
 

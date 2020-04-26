@@ -7,75 +7,105 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./TicketPool.sol";
 import "./PrizeStrategyInterface.sol";
+import "./InterestTokenInterface.sol";
 
+/* solium-disable security/no-block-members */
 contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterface {
   using SafeMath for uint256;
 
   TicketPool public ticketPool;
-  uint256 currentPrizeBlock;
-  uint256 prizePeriodBlocks;
+  uint256 currentPrizeStartedAt;
+  uint256 prizePeriodSeconds;
+  uint256 previousPrize;
 
   function initialize (
     TicketPool _ticketPool,
-    uint256 _prizePeriodBlocks
+    uint256 _prizePeriodSeconds
   ) public initializer {
     require(address(_ticketPool) != address(0), "prize pool must not be zero");
-    require(_prizePeriodBlocks > 0, "prize period must be greater than zero");
+    require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
     ticketPool = _ticketPool;
-    prizePeriodBlocks = _prizePeriodBlocks;
-    currentPrizeBlock = block.number;
+    prizePeriodSeconds = _prizePeriodSeconds;
+    currentPrizeStartedAt = block.timestamp;
   }
 
   function calculateExitFee(address, uint256 tickets) public view override returns (uint256) {
-    uint256 remainingBlocks = remainingBlocksToPrize();
-    // console.log("remaining blocks: %s", remainingBlocks);
-    return estimateAccruedInterest(tickets, remainingBlocks);
+    uint256 totalSupply = ticketPool.ticket().totalSupply();
+    if (totalSupply == 0) {
+      return 0;
+    }
+    return FixedPoint.multiplyUintByMantissa(
+      multiplyByRemainingTimeFraction(previousPrize),
+      FixedPoint.calculateMantissa(tickets, totalSupply)
+    );
   }
 
-  function calculateUnlockBlock(address, uint256) public view override returns (uint256) {
-    return prizePeriodEndBlock();
+  function multiplyByRemainingTimeFraction(uint256 value) public view returns (uint256) {
+    return FixedPoint.multiplyUintByMantissa(
+      value,
+      FixedPoint.calculateMantissa(remainingSecondsToPrize(), prizePeriodSeconds)
+    );
   }
 
-  function estimatePrize() public view returns (uint256) {
-    return ticketPool.currentPrize().add(estimateRemainingPrize());
+  function calculateUnlockTimestamp(address, uint256) public view override returns (uint256) {
+    return prizePeriodEndAt();
+  }
+
+  function estimatePrize(uint256 secondsPerBlockFixedPoint18) external view returns (uint256) {
+    return ticketPool.currentPrize().add(estimateRemainingPrizeWithBlockTime(secondsPerBlockFixedPoint18));
   }
 
   function estimateRemainingPrize() public view returns (uint256) {
-    return estimateAccruedInterest(ticketPool.interestPool().accountedBalance(), remainingBlocksToPrize());
+    return estimateRemainingPrizeWithBlockTime(13 ether);
   }
 
-  function remainingBlocksToPrize() public view returns (uint256) {
-    uint256 finalBlock = prizePeriodEndBlock();
-    if (block.number > finalBlock) {
+  function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {
+    InterestPoolInterface interestPool = ticketPool.interestPool();
+    return interestPool.estimateAccruedInterestOverBlocks(
+      interestPool.accountedBalance(),
+      estimateRemainingBlocksToPrize(secondsPerBlockFixedPoint18)
+    );
+  }
+
+  function estimateRemainingBlocksToPrize(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {
+    return FixedPoint.divideUintByMantissa(
+      remainingSecondsToPrize(),
+      secondsPerBlockFixedPoint18
+    );
+  }
+
+  function remainingSecondsToPrize() public view returns (uint256) {
+    uint256 endAt = prizePeriodEndAt();
+    if (block.timestamp > endAt) {
       return 0;
     } else {
-      return finalBlock - block.number;
+      return endAt - block.timestamp;
     }
   }
 
-  function estimateAccruedInterest(uint256 principal, uint256 blocks) public view returns (uint256) {
-    // estimated = principal * supply rate per block * blocks
-    uint256 multiplier = principal.mul(blocks);
-    return FixedPoint.multiplyUintByMantissa(multiplier, ticketPool.interestPool().supplyRatePerBlock());
-  }
-
   function canAward() public view returns (bool) {
-    return block.number >= prizePeriodEndBlock();
+    return block.timestamp > prizePeriodEndAt();
   }
 
   function award() external onlyPrizePeriodOver {
-    address winner = ticketToken().draw(uint256(blockhash(1)));
+    address winner = ticket().draw(uint256(blockhash(1)));
     uint256 total = ticketPool.currentPrize();
+    previousPrize = total;
     ticketPool.award(winner, total);
-    currentPrizeBlock = block.number;
+    currentPrizeStartedAt = block.timestamp;
   }
 
-  function prizePeriodEndBlock() public view returns (uint256) {
-    return currentPrizeBlock + prizePeriodBlocks;
+  function prizePeriodEndAt() public view returns (uint256) {
+    // current prize started at is non-inclusive, so add one
+    return currentPrizeStartedAt + prizePeriodSeconds;
   }
 
-  function ticketToken() public view returns (Ticket) {
-    return ticketPool.ticketToken();
+  function blockTime() public view returns (uint256) {
+    return block.timestamp;
+  }
+
+  function ticket() public view returns (Ticket) {
+    return ticketPool.ticket();
   }
 
   modifier onlyPrizePeriodOver() {

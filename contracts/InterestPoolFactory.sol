@@ -2,7 +2,6 @@ pragma solidity ^0.6.4;
 
 import "./InterestPool.sol";
 import "./ControlledToken.sol";
-import "./InterestToken.sol";
 
 contract InterestPoolFactory {
 

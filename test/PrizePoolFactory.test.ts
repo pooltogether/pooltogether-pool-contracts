@@ -76,7 +76,7 @@ describe('PrizePoolFactory contract', () => {
 
   describe('createPrizePool()', () => {
     it('should create a new prize pool', async () => {
-      let tx = await prizePoolFactory.createSingleRandomWinnerTicketPool('Sponsorship', 'SPON', 'Ticket', 'TICK', 10)
+      let tx = await prizePoolFactory.createSingleRandomWinnerTicketPool(cToken.address, 'Sponsorship', 'SPON', 'Ticket', 'TICK', 10)
 
       let receipt = await provider.getTransactionReceipt(tx.hash)
       // @ts-ignore
@@ -93,7 +93,7 @@ describe('PrizePoolFactory contract', () => {
       // } = description
 
       let interestPool = await buidler.ethers.getContractAt('InterestPool', event.interestPool, wallet)
-      expect(await interestPool.underlyingToken()).to.equal(token.address)
+      expect(await interestPool.underlying()).to.equal(token.address)
 
       let ticketPool = await buidler.ethers.getContractAt('TicketPool', event.ticketPool, wallet)
       expect(await ticketPool.interestPool()).to.equal(interestPool.address)

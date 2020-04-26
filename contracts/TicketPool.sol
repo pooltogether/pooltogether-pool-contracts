@@ -13,24 +13,28 @@ import "./Ticket.sol";
 import "./PrizeStrategyInterface.sol";
 import "./TicketPoolInterface.sol";
 
+/* solium-disable security/no-block-members */
 contract TicketPool is Initializable, TokenControllerInterface, TicketPoolInterface {
   using SafeMath for uint256;
   using Timelock for Timelock.State;
 
+  event TicketsRedeemedInstantly(address to, uint256 amount, uint256 fee);
+  event TicketsRedeemedWithTimelock(address to, uint256 amount, uint256 unlockTimestamp);
+
   InterestPoolInterface public override interestPool;
-  Ticket public override ticketToken;
+  Ticket public override ticket;
   PrizeStrategyInterface public prizeStrategy;
   mapping(address => Timelock.State) timelocks;
 
   function initialize (
-    Ticket _ticketToken,
+    Ticket _ticket,
     InterestPoolInterface _interestPool,
     PrizeStrategyInterface _prizeStrategy
   ) public initializer {
-    require(address(_ticketToken) != address(0), "ticketToken must not be zero");
+    require(address(_ticket) != address(0), "ticket must not be zero");
     require(address(_interestPool) != address(0), "prize pool must not be zero");
     require(address(_prizeStrategy) != address(0), "prizeStrategy must not be zero");
-    ticketToken = _ticketToken;
+    ticket = _ticket;
     interestPool = _interestPool;
     prizeStrategy = _prizeStrategy;
   }
@@ -41,58 +45,58 @@ contract TicketPool is Initializable, TokenControllerInterface, TicketPoolInterf
 
   function mintTickets(uint256 tickets) external {
     // Transfer deposit
-    IERC20 token = interestPool.underlyingToken();
+    IERC20 token = interestPool.underlying();
     require(token.allowance(msg.sender, address(this)) >= tickets, "insuff");
     token.transferFrom(msg.sender, address(this), tickets);
 
     // Deposit into pool
-    interestPool.supplyCollateral(tickets);
+    interestPool.supply(tickets);
 
     // Mint tickets
-    ticketToken.mint(msg.sender, tickets);
+    ticket.mint(msg.sender, tickets);
   }
 
   function redeemTicketsInstantly(uint256 tickets) external returns (uint256) {
     uint256 exitFee = prizeStrategy.calculateExitFee(msg.sender, tickets);
 
     // burn the tickets
-    ticketToken.burn(msg.sender, tickets);
+    ticket.burn(msg.sender, tickets);
 
     // redeem the collateral
-    interestPool.redeemCollateral(tickets);
+    interestPool.redeem(tickets);
 
     // transfer tickets less fee
     uint256 balance = tickets.sub(exitFee);
-    interestPool.underlyingToken().transfer(msg.sender, balance);
+    interestPool.underlying().transfer(msg.sender, balance);
 
     // return the amount that was transferred
     return balance;
   }
 
   function redeemTicketsWithTimelock(uint256 tickets) external returns (uint256) {
-    uint256 unlockBlock = prizeStrategy.calculateUnlockBlock(msg.sender, tickets);
+    uint256 unlockTimestamp = prizeStrategy.calculateUnlockTimestamp(msg.sender, tickets);
 
     // burn the tickets
-    ticketToken.burn(msg.sender, tickets);
+    ticket.burn(msg.sender, tickets);
 
     uint256 change;
-    if (block.number >= unlockBlock) {
+    if (block.timestamp >= unlockTimestamp) {
       // just transfer old funds, if any
-      (change,) = timelocks[msg.sender].withdrawAt(unlockBlock);
+      (change,) = timelocks[msg.sender].withdrawAt(unlockTimestamp);
       // add the new funds
       change = change.add(tickets);
     } else {
-      (change,) = timelocks[msg.sender].deposit(tickets, unlockBlock);
+      (change,) = timelocks[msg.sender].deposit(tickets, unlockTimestamp);
     }
 
     // if there is change, withdraw the change and transfer
     if (change > 0) {
-      interestPool.redeemCollateral(change);
-      interestPool.underlyingToken().transfer(msg.sender, change);
+      interestPool.redeem(change);
+      interestPool.underlying().transfer(msg.sender, change);
     }
 
     // return the block at which the funds will be available
-    return unlockBlock;
+    return unlockTimestamp;
   }
 
   function lockedBalanceOf(address user) external view returns (uint256) {
@@ -100,7 +104,7 @@ contract TicketPool is Initializable, TokenControllerInterface, TicketPoolInterf
   }
 
   function lockedBalanceAvailableAt(address user) external view returns (uint256) {
-    return timelocks[user].unlockBlock;
+    return timelocks[user].timestamp;
   }
 
   function sweepTimelockFunds(address[] calldata users) external returns (uint256) {
@@ -110,27 +114,27 @@ contract TicketPool is Initializable, TokenControllerInterface, TicketPoolInterf
     uint256 i;
     for (i = 0; i < users.length; i++) {
       address user = users[i];
-      (uint256 tickets,) = timelocks[user].balanceAt(block.number);
+      (uint256 tickets,) = timelocks[user].balanceAt(block.timestamp);
       totalWithdrawal = totalWithdrawal.add(tickets);
     }
 
     // pull out the collateral
     if (totalWithdrawal > 0) {
-      interestPool.redeemCollateral(totalWithdrawal);
+      interestPool.redeem(totalWithdrawal);
     }
 
     for (i = 0; i < users.length; i++) {
       address user = users[i];
-      (uint256 tickets,) = timelocks[user].withdrawAt(block.number);
+      (uint256 tickets,) = timelocks[user].withdrawAt(block.timestamp);
       if (tickets > 0) {
-        interestPool.underlyingToken().transfer(user, tickets);
+        interestPool.underlying().transfer(user, tickets);
       }
     }
   }
 
   function award(address winner, uint256 amount) external override onlyPrizeStrategy {
     interestPool.allocateInterest(address(this), amount);
-    ticketToken.mint(winner, amount);
+    ticket.mint(winner, amount);
   }
 
   modifier onlyPrizeStrategy() {

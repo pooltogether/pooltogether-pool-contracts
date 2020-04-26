@@ -7,44 +7,44 @@ library Timelock {
 
   struct State {
     uint256 amount;
-    uint256 unlockBlock;
+    uint256 timestamp;
   }
 
   /**
    * Deposits into the timelock the given amount and the unlock block.
    * @param self The state
    * @param amount The amount to lock
-   * @param unlockBlock The block at which to unlock the funds
+   * @param timestamp The timestamp at which to unlock the funds
    */
   function deposit(
     State storage self,
     uint256 amount,
-    uint256 unlockBlock
-  ) internal returns (uint256 previousAmount, uint256 previousUnlockBlock) {
-    require(unlockBlock >= self.unlockBlock, "Timelock/forward");
-    if (self.unlockBlock == unlockBlock) {
+    uint256 timestamp
+  ) internal returns (uint256 previousAmount, uint256 previousTimestamp) {
+    require(timestamp >= self.timestamp, "Timelock/forward");
+    if (self.timestamp == timestamp) {
       self.amount = self.amount.add(amount);
     } else {
       previousAmount = self.amount;
-      previousUnlockBlock = self.unlockBlock;
+      previousTimestamp = self.timestamp;
       self.amount = amount;
-      self.unlockBlock = unlockBlock;
+      self.timestamp = timestamp;
     }
   }
 
-  function withdrawAt(State storage self, uint256 blockNumber) internal returns (uint256 previousAmount, uint256 previousUnlockBlock) {
-    if (self.unlockBlock <= blockNumber) {
+  function withdrawAt(State storage self, uint256 currentTimestamp) internal returns (uint256 previousAmount, uint256 previousTimestamp) {
+    if (self.timestamp <= currentTimestamp) {
       previousAmount = self.amount;
-      previousUnlockBlock = self.unlockBlock;
+      previousTimestamp = self.timestamp;
       self.amount = 0;
-      self.unlockBlock = 0;
+      self.timestamp = 0;
     }
   }
 
-  function balanceAt(State storage self, uint256 blockNumber) internal view returns (uint256 amount, uint256 unlockBlock) {
-    if (self.unlockBlock <= blockNumber) {
+  function balanceAt(State storage self, uint256 currentTimestamp) internal view returns (uint256 amount, uint256 timestamp) {
+    if (self.timestamp <= currentTimestamp) {
       amount = self.amount;
-      unlockBlock = self.unlockBlock;
+      timestamp = self.timestamp;
     }
   }
 }

@@ -1,15 +1,14 @@
 import { usePlugin } from "@nomiclabs/buidler/config";
 
 usePlugin("@nomiclabs/buidler-waffle");
+usePlugin("buidler-gas-reporter");
 usePlugin("solidity-coverage");
-
-const enableCoverage = false
 
 export default {
   solc: {
     version: "0.6.4",
     optimizer: {
-      enabled: !enableCoverage,
+      enabled: false,
       runs: 200
     },
     evmVersion: "constantinople"
@@ -17,9 +16,17 @@ export default {
   paths: {
     artifacts: "./build"
   },
+  networks: {
+    coverage: {
+      url: 'http://127.0.0.1:8555'
+    },
+    local: {
+      url: 'http://127.0.0.1:8565'
+    }
+  },
   gasReporter: {
     currency: 'CHF',
     gasPrice: 21,
-    enabled: enableCoverage
+    enabled: (process.env.REPORT_GAS) ? true : false
   }
 };

@@ -7,6 +7,7 @@ import ControlledToken from '../build/ControlledToken.json'
 import { expect } from 'chai'
 import { ethers, Contract } from 'ethers'
 import { deploy1820 } from 'deploy-eip-1820'
+import { increaseTime } from './helpers/increaseTime'
 
 import { printGas } from './helpers/printGas'
 
@@ -19,7 +20,7 @@ describe('TicketPool contract', () => {
   
   let ticketPool: Contract
   let token: Contract
-  let ticketToken: Contract
+  let ticket: Contract
   let collateralToken: Contract
   let mockInterestPool: Contract
   let mockPrizeStrategy: Contract
@@ -43,8 +44,8 @@ describe('TicketPool contract', () => {
       'TICK',
       mockInterestPool.address
     )
-    ticketToken = await deployContract(wallet, ControlledToken, [])
-    await ticketToken.initialize(
+    ticket = await deployContract(wallet, ControlledToken, [])
+    await ticket.initialize(
       'Ticket',
       'TICK',
       ticketPool.address
@@ -54,7 +55,7 @@ describe('TicketPool contract', () => {
       collateralToken.address
     )
     await ticketPool.initialize(
-      ticketToken.address,
+      ticket.address,
       mockInterestPool.address,
       mockPrizeStrategy.address
     )
@@ -63,7 +64,7 @@ describe('TicketPool contract', () => {
 
   describe('initialize()', () => {
     it('should set all the vars', async () => {
-      expect(await ticketPool.ticketToken()).to.equal(ticketToken.address)
+      expect(await ticketPool.ticket()).to.equal(ticket.address)
       expect(await ticketPool.interestPool()).to.equal(mockInterestPool.address)
       expect(await ticketPool.prizeStrategy()).to.equal(mockPrizeStrategy.address)
     })
@@ -88,7 +89,7 @@ describe('TicketPool contract', () => {
       expect(await collateralToken.balanceOf(ticketPool.address)).to.equal(toWei('10'))
 
       // ticket pool minted tickets for the depositor
-      expect(await ticketToken.balanceOf(wallet._address)).to.equal(toWei('10'))
+      expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('10'))
     })
   })
 
@@ -104,7 +105,7 @@ describe('TicketPool contract', () => {
       await printGas(ticketPool.redeemTicketsInstantly(toWei('10')), "TicketPool#redeemTicketsInstantly")
 
       // tickets are burned
-      expect(await ticketToken.totalSupply()).to.equal(toWei('0'))
+      expect(await ticket.totalSupply()).to.equal(toWei('0'))
 
       // collateral is destroyed
       expect(await collateralToken.balanceOf(ticketPool.address)).to.equal(toWei('0'))
@@ -117,19 +118,20 @@ describe('TicketPool contract', () => {
   describe('redeemTicketsWithTimelock()', () => {
     it('should lock the users funds', async () => {
       await token.approve(ticketPool.address, toWei('10'))
-      const tx = await ticketPool.mintTickets(toWei('10'))
+      await ticketPool.mintTickets(toWei('10'))
+      const block = await buidler.ethers.provider.getBlock('latest')
 
-      const unlockBlock = tx.blockNumber + 3
-      await mockPrizeStrategy.setUnlockBlock(unlockBlock)
+      const unlockTimestamp = block.timestamp + 3
+      await mockPrizeStrategy.setUnlockTimestamp(`${unlockTimestamp}`)
 
       await ticketPool.redeemTicketsWithTimelock(toWei('10'))
 
       // Tickets are burned
-      expect(await ticketToken.balanceOf(wallet._address)).to.equal('0')
+      expect(await ticket.balanceOf(wallet._address)).to.equal('0')
       
       // Locked balance is recorded
       expect(await ticketPool.lockedBalanceOf(wallet._address)).to.equal(toWei('10'))
-      expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal(unlockBlock)
+      expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal(unlockTimestamp)
     })
 
     it('should instantly redeem funds if unlockBlock is now or in the past', async () => {
@@ -137,7 +139,7 @@ describe('TicketPool contract', () => {
       let tx = await ticketPool.mintTickets(toWei('10'))
       let unlockBlock = tx.blockNumber + 2
       let userBalance = await token.balanceOf(wallet._address)
-      await mockPrizeStrategy.setUnlockBlock(unlockBlock)
+      await mockPrizeStrategy.setUnlockTimestamp(unlockBlock)
       tx = await ticketPool.redeemTicketsWithTimelock(toWei('4'))
       // Tickets are transferred
       expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('4'))
@@ -146,44 +148,49 @@ describe('TicketPool contract', () => {
     })
 
     it('should sweep old locked deposits', async () => {
+      // create tickets
       await token.approve(ticketPool.address, toWei('10'))
-      let tx = await ticketPool.mintTickets(toWei('10'))
-
+      await ticketPool.mintTickets(toWei('10'))
+      let block = await buidler.ethers.provider.getBlock('latest')
       let userBalance = await token.balanceOf(wallet._address)
 
-      await mockPrizeStrategy.setUnlockBlock(tx.blockNumber + 3)
-
-      tx = await ticketPool.redeemTicketsWithTimelock(toWei('4'))
+      // set the unlock time far enough into the future so we can control it
+      await mockPrizeStrategy.setUnlockTimestamp(block.timestamp + 60)
+      // now redeem tickets
+      await ticketPool.redeemTicketsWithTimelock(toWei('4'))
+      block = await buidler.ethers.provider.getBlock('latest')
+      // tickets should be burned
+      expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('6'))
       
-      // Tickets are burned
-      expect(await ticketToken.balanceOf(wallet._address)).to.equal(toWei('6'))
+      // now let's progress time so that the previous funds are unlocked
+      await increaseTime(60)
 
-      let secondUnlockBlock = tx.blockNumber + 3
-      await mockPrizeStrategy.setUnlockBlock(secondUnlockBlock)
-
+      let secondUnlockTimestamp = block.timestamp + 120
+      await mockPrizeStrategy.setUnlockTimestamp(secondUnlockTimestamp)
       await ticketPool.redeemTicketsWithTimelock(toWei('6'))
-
-      // Tickets are transferred
-      expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('4'))
-
       // Remaining tickets are burned
-      expect(await ticketToken.balanceOf(wallet._address)).to.equal(toWei('0'))
+      expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
+
+      // First set of redeemed tokens have been transferred
+      expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('4'))
 
       // Locked balance is recorded
       expect(await ticketPool.lockedBalanceOf(wallet._address)).to.equal(toWei('6'))
-      expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal(secondUnlockBlock)
+      expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal(secondUnlockTimestamp)
     })
   })
 
   describe('sweepUnlockedFunds()', () => {
     it('should return any timelocked funds that are now open', async () => {
       await token.approve(ticketPool.address, toWei('4'))
-      let tx = await printGas(ticketPool.mintTickets(toWei('4')), 'TicketPool#mintTickets')
+      await printGas(ticketPool.mintTickets(toWei('4')), 'TicketPool#mintTickets')
+      let block = await buidler.ethers.provider.getBlock('latest')
       let userBalance = await token.balanceOf(wallet._address)
-      await mockPrizeStrategy.setUnlockBlock(tx.blockNumber + 3)
-      tx = await printGas(ticketPool.redeemTicketsWithTimelock(toWei('4')), 'TicketPool#redeemTicketsWithTimelock')
+      let unlockTimestamp = block.timestamp + 3
+      await mockPrizeStrategy.setUnlockTimestamp(unlockTimestamp)
+      await printGas(ticketPool.redeemTicketsWithTimelock(toWei('4')), 'TicketPool#redeemTicketsWithTimelock')
       // will be available next block
-      expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal(tx.blockNumber + 1)
+      expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal(unlockTimestamp)
 
       await ticketPool.sweepTimelockFunds([wallet._address])
 
@@ -196,7 +203,7 @@ describe('TicketPool contract', () => {
   describe('award()', () => {
     it('should allocate available interest as tickets to a user', async () => {
       await mockPrizeStrategy.award(wallet._address, toWei('10'))
-      expect(await ticketToken.balanceOf(wallet._address)).to.equal(toWei('10'))
+      expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('10'))
       expect(await collateralToken.balanceOf(ticketPool.address)).to.equal(toWei('10'))
     })
   })

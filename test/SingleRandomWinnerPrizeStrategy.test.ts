@@ -9,9 +9,11 @@ import { expect } from 'chai'
 import { ethers, Contract } from 'ethers'
 import { deploy1820 } from 'deploy-eip-1820'
 
+import { increaseTime } from './helpers/increaseTime'
 import { printGas } from './helpers/printGas'
+import { BaseProvider, JsonRpcProvider } from 'ethers/providers'
 
-const buidler = require("@nomiclabs/buidler")
+import buidler from "@nomiclabs/buidler"
 
 const toWei = ethers.utils.parseEther
 
@@ -30,6 +32,8 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
   let prizePeriodStart: any
 
   let prizePeriod = 10
+
+  let provider: JsonRpcProvider
 
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
@@ -58,6 +62,8 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
       mockInterestPool.address
     )
 
+    provider = buidler.ethers.provider
+
     await mockInterestPool.setSupplyRatePerBlock(toWei('0.01')) // 1% per block
 
     prizeStrategy = await deployContract(wallet, SingleRandomWinnerPrizeStrategy, [])
@@ -65,95 +71,136 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
       mockTicketPool.address,
       prizePeriod
     )
-    prizePeriodStart = await buidler.ethers.provider.getBlockNumber()
+    let block = await buidler.ethers.provider.getBlock('latest')
+    prizePeriodStart = block.timestamp
   })
 
-  describe('remainingBlocksToPrize()', () => {
-    it('should calculate the number of blocks', async () => {
-      expect(await prizeStrategy.remainingBlocksToPrize()).to.equal('9')
+  describe('multiplyByRemainingTimeFraction()', () => {
+    it('should calculate as a fraction of the time remaining', async () => {
+      // 9 seconds left
+      expect(await prizeStrategy.multiplyByRemainingTimeFraction(toWei('1'))).to.equal(toWei('0.9'))
+
+      // increment 4
+      await increaseTime(4)
+      
+      // now should be half
+      expect(await prizeStrategy.multiplyByRemainingTimeFraction(toWei('1'))).to.equal(toWei('0.5'))
     })
   })
 
+  describe('remainingSecondsToPrize()', () => {
+    it('should calculate the number of blocks', async () => {
+      expect(await prizeStrategy.remainingSecondsToPrize()).to.equal('9')
 
-  describe('prizePeriodEndBlock()', () => {
+      // increment 4
+      await increaseTime(4)
+
+      expect(await prizeStrategy.remainingSecondsToPrize()).to.equal('5')
+    })
+  })
+
+  describe('prizePeriodEndAt()', () => {
     it('should be correct', async () => {
-      expect(await prizeStrategy.prizePeriodEndBlock()).to.equal(prizePeriodStart + 10)
+      expect(await prizeStrategy.prizePeriodEndAt()).to.equal(prizePeriodStart + 10)
     })    
   })
 
   describe('calculateExitFee(address, uint256 tickets)', () => {
     it('should calculate', async () => {
-      let exitFee = await prizeStrategy.calculateExitFee(wallet._address, toWei('10'))
+      // ensure there is interest
+      await mockInterestPool.setAvailableInterest(toWei('1'))
+      // ensure the wallet is a user
+      await mockTicketPool.award(wallet._address, toWei('10'))
       
-      // 9 remaining blocks, so total interest will be 9 * 0.01 = 0.09 so interest = 0.09 * 10 = 0.9
+      await increaseTime(10)
+
+      // award the prize.  will be 1 new ticket
+      await prizeStrategy.award()
+
+      // 9 seconds left until next prize
+      expect(await prizeStrategy.remainingSecondsToPrize()).to.equal('9')
+
+      expect(await ticket.totalSupply()).to.equal(toWei('11'))
+
+      // increase time by half a period
+      // await provider.send('evm_increaseTime', [ 0 ])
+
+      // now post-prize we want to check the fee
+      let exitFee = await prizeStrategy.calculateExitFee(wallet._address, toWei('11'))
+      
+      // last prize was 1, and we have 9 seconds left out of 10. 9/10 of 1 is 0.9
       expect(exitFee).to.equal(toWei('0.9'))
     })
   })
 
-  describe('calculateUnlockBlock(address, uint256)', () => {
+  describe('calculateUnlockTimestamp(address, uint256)', () => {
     it('should calculate the prize period end', async () => {
-      expect(await prizeStrategy.calculateUnlockBlock(wallet._address, '0')).to.equal(prizePeriodStart + 10)
+      expect(await prizeStrategy.calculateUnlockTimestamp(wallet._address, '0')).to.equal(prizePeriodStart + 10)
     })
   })
 
   describe('estimatePrize()', () => {
     it('should calculate the prize', async () => {
-      await mockTicketPool.setCurrentPrize(toWei('1'))
-      // 1 ether + 
-      // bump collateral to 10
-      await mockInterestPool.supplyCollateral(toWei('10'))
-
-      // 2 blocks down, 7 left
-
-      // total will be 7 blocks @ 0.01 = 0.9 + 1
-      expect(await prizeStrategy.estimatePrize()).to.equal(toWei('1.7'))
+      await mockInterestPool.setAvailableInterest(toWei('1'))
+      await mockInterestPool.supply(toWei('10'))
+      // should be current prize + estimated remaining
+      expect(await prizeStrategy.estimatePrize('1')).to.equal('1000000000000000045')
     })
   })
 
   describe('estimateRemainingPrize()', () => {
     it('should estimate the remaining prize', async () => {
-      // 1 ether + 
-      // bump collateral to 10
-      await mockInterestPool.supplyCollateral(toWei('10'))
-
-      // 1 block down, 8 left
-
-      // total will be 8 blocks @ 0.01 = 0.9 + 1
-      expect(await prizeStrategy.estimatePrize()).to.equal(toWei('0.8'))
+      expect(await prizeStrategy.estimateRemainingPrize()).to.equal('45')
     })
   })
 
-  describe('estimateAccruedInterest(uint256 principal, uint256 blocks)', () => {
-    it('should estimate the remaining prize', async () => {
-      expect(await prizeStrategy.estimateAccruedInterest(toWei('10'), '8')).to.equal(toWei('0.8'))
+  describe('estimateRemainingPrizeWithBlockTime(uint256)', () => { 
+    it('should estimate the prize given the seconds per block', async () => {
+      expect(await prizeStrategy.estimateRemainingPrizeWithBlockTime(toWei('10'))).to.equal('45')
+    })
+  })
+
+  describe('estimateRemainingBlocksToPrize(uint256)', () => {
+    it('should estimate the number of remaining blocks', async () => {
+      // assuming here there are 9 seconds remaining to prize
+      expect(await prizeStrategy.remainingSecondsToPrize()).to.equal('9')
+
+      // 2 seconds per block means there are 9 / 2 ~ 4 blocks left
+      expect(await prizeStrategy.estimateRemainingBlocksToPrize(toWei('2'))).to.equal(('4'))
+
+      // 9 seconds per block means 9 / 9 = 1
+      expect(await prizeStrategy.estimateRemainingBlocksToPrize(toWei('9'))).to.equal(('1'))
+
+      // 10 seconds per block means 9 / 10 = 0
+      expect(await prizeStrategy.estimateRemainingBlocksToPrize(toWei('10'))).to.equal(('0'))
     })
   })
 
   describe('award()', () => {
+    it('should not be called before the prize period is over', async () => {
+      await expect(prizeStrategy.award()).to.be.revertedWith('prize period not over')
+    })
+
     it('should draw a winner and allocate prize', async () => {
       // ensure the wallet can be selected
       await mockTicketPool.award(wallet._address, toWei('10'))
 
-      // make up a prize
-      await mockTicketPool.setCurrentPrize(toWei('1'))
+      await mockInterestPool.setAvailableInterest(toWei('1'))
 
-      // 7 blocks left! Let's kill 'em
-      for (var i = 0; i < 7; i++) {
-        await mockTicketPool.setCurrentPrize(toWei('1'))
-      }
-
-      let tx = await prizeStrategy.award()
+      await increaseTime(9)
+      await prizeStrategy.award()
+      let block = await buidler.ethers.provider.getBlock('latest')
 
       expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('11'))
 
       // new prize period end block
-      expect(await prizeStrategy.prizePeriodEndBlock()).to.equal(tx.blockNumber + 10)
+      expect(await prizeStrategy.prizePeriodEndAt()).to.equal(block.timestamp + 10)
     })
   })
 
-  describe('ticketToken()', () => {
+  describe('ticket()', () => {
     it('should return the ticket token', async () => {
-      expect(await prizeStrategy.ticketToken()).to.equal(ticket.address)
+      expect(await prizeStrategy.ticket()).to.equal(ticket.address)
     })
   })
 })
