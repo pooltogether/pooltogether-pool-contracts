@@ -3,7 +3,7 @@
     "test": "buidler test",
     "compile": "buidler compile",
     "start": "buidler node --port 8565",
-    "coverage": "buidler coverage --network local",
+    "coverage": "buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network local"
   },
   "devDependencies": {
