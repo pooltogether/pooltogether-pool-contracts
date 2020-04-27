@@ -1,11 +1,11 @@
 {
   "contracts": {
     "InterestPoolFactory": {
-      "address": "0xd9083FAdC5B730AbADDF3413F2079c8FC4db35F4",
-      "constructorCode": "608060405234801561001057600080fd5b506126c7806100206000396000f3fe",
-      "bodyBytecodeHash": "6da4667fd137fd62690777547ca632071f4a204515be83279865373660f6b766",
-      "localBytecodeHash": "69b1ae85cc6364bf1628ec217cd6d27b9dd024dfb5eddc48fe531cd3ce0db3a5",
-      "deployedBytecodeHash": "69b1ae85cc6364bf1628ec217cd6d27b9dd024dfb5eddc48fe531cd3ce0db3a5",
+      "address": "0xb740e3c81a353D4bc654B0EcF96737142a7BeCD7",
+      "constructorCode": "608060405234801561001057600080fd5b506127ef806100206000396000f3fe",
+      "bodyBytecodeHash": "1a895b7446671166195480c907e1b25d47bb298fb2233a3510a89e787a9eee0a",
+      "localBytecodeHash": "64b33137aec10d2b04ac01f68d0fcb8853aa92a335e62f417fab6a0869f7ca60",
+      "deployedBytecodeHash": "64b33137aec10d2b04ac01f68d0fcb8853aa92a335e62f417fab6a0869f7ca60",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -59,7 +59,7 @@
           "contract": "InterestPoolFactory",
           "path": "contracts/InterestPoolFactory.sol",
           "label": "instance",
-          "astId": 1813,
+          "astId": 1828,
           "type": "t_address",
           "src": "303:28:13"
         }
@@ -75,15 +75,17 @@
           "token/ERC20/ERC20.sol",
           "GSN/Context.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "TicketPoolFactory": {
-      "address": "0x6420e0D31f83857bf5b64D01c8b70ebEa306f965",
+      "address": "0x421dA2F4c61587aB9D793E9965639288406CF6b2",
       "constructorCode": "608060405234801561001057600080fd5b506126b3806100206000396000f3fe",
-      "bodyBytecodeHash": "8f52bd548a0b5bd7fbda213bd31922b67e4d4dd0a3a2d9df0c388d2d66b83959",
-      "localBytecodeHash": "4a7df4b8901978e79e85ee3c97d4d3b2feb84c4f2251c9945b3cc4645b281fe3",
-      "deployedBytecodeHash": "4a7df4b8901978e79e85ee3c97d4d3b2feb84c4f2251c9945b3cc4645b281fe3",
+      "bodyBytecodeHash": "cf4447f3239019a052beb0a63848c039c5ff984139c11af2173f8d8d47cb27ca",
+      "localBytecodeHash": "cacb74fa58b1ef44fd3d75e43e11b3de1e8c11c205a9e0c1bc87488427a54f9e",
+      "deployedBytecodeHash": "cacb74fa58b1ef44fd3d75e43e11b3de1e8c11c205a9e0c1bc87488427a54f9e",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -137,7 +139,7 @@
           "contract": "TicketPoolFactory",
           "path": "contracts/TicketPoolFactory.sol",
           "label": "instance",
-          "astId": 3332,
+          "astId": 3338,
           "type": "t_address",
           "src": "333:26:24"
         }
@@ -155,15 +157,17 @@
           "token/ERC20/ERC20.sol",
           "GSN/Context.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "TicketFactory": {
-      "address": "0xB9C269A7d0B2A500661eAD67e035526245BA4fa1",
+      "address": "0x9f540623877Afc365E3491bFc44C7c4c32EfaA19",
       "constructorCode": "608060405234801561001057600080fd5b50613008806100206000396000f3fe",
-      "bodyBytecodeHash": "7f4ee97cfbab992301985d015485c174f325393b77d4ba87a274c9af4c41b1ea",
-      "localBytecodeHash": "e960295243346bf52629d22402029468744ad0a510ba251a0c85c1571a93c9d2",
-      "deployedBytecodeHash": "e960295243346bf52629d22402029468744ad0a510ba251a0c85c1571a93c9d2",
+      "bodyBytecodeHash": "032302454a775902b357ad95bcb569eff6a4258e1d4c52e811af69fc8128c7f2",
+      "localBytecodeHash": "8e371bd7a438f9cdb686da329e7eda04ee874b31eca516abebd31700932ad46e",
+      "deployedBytecodeHash": "8e371bd7a438f9cdb686da329e7eda04ee874b31eca516abebd31700932ad46e",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -217,7 +221,7 @@
           "contract": "TicketFactory",
           "path": "contracts/TicketFactory.sol",
           "label": "instance",
-          "astId": 2761,
+          "astId": 2767,
           "type": "t_address",
           "src": "247:22:21"
         }
@@ -233,15 +237,17 @@
           "token/ERC20/IERC20.sol",
           "math/SafeMath.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "ControlledTokenFactory": {
-      "address": "0xfa1263f0009FCd99CD043f51beE83148961b4E39",
+      "address": "0x852137a51a0B1d1408665f41A4E9e5f54Be34A8E",
       "constructorCode": "608060405234801561001057600080fd5b50612738806100206000396000f3fe",
-      "bodyBytecodeHash": "b273114c0858f61ea2af7e6b27469ff8dbf81fd5a3d5d3670e96608d7e3a24f6",
-      "localBytecodeHash": "1c8b9ae803a8815297b78fa55ee65a5e77d93c6bc463b92fdcc0248374c037bd",
-      "deployedBytecodeHash": "1c8b9ae803a8815297b78fa55ee65a5e77d93c6bc463b92fdcc0248374c037bd",
+      "bodyBytecodeHash": "6536d1040aa3854f80aade260a19c9251f78b136a1a9ace95c22c9949d1ff119",
+      "localBytecodeHash": "0c747834608735e3ae6da9aa92d211a0365544051ee8692bca3659819439fed2",
+      "deployedBytecodeHash": "0c747834608735e3ae6da9aa92d211a0365544051ee8692bca3659819439fed2",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -311,15 +317,17 @@
           "token/ERC20/IERC20.sol",
           "math/SafeMath.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "PrizeStrategyFactory": {
-      "address": "0xA125841831B4645F22c1c4cCb6e1df0842E60040",
-      "constructorCode": "608060405234801561001057600080fd5b50611910806100206000396000f3fe",
-      "bodyBytecodeHash": "1da03564b17b0afb9ffe9722032e2135835094026b2c879562073561f388b20f",
-      "localBytecodeHash": "172f39463da196f3721bb816a5d426e1171732a1a66db119705eb9bf84188a67",
-      "deployedBytecodeHash": "172f39463da196f3721bb816a5d426e1171732a1a66db119705eb9bf84188a67",
+      "address": "0xdd34277bd4997eEC410BA2c0B557e4D40Ca021e9",
+      "constructorCode": "608060405234801561001057600080fd5b506118df806100206000396000f3fe",
+      "bodyBytecodeHash": "6d8f99ff80968e90a369eb694235635803a753f63a2d25e48a552ca5d6e7cea0",
+      "localBytecodeHash": "7e1457dac490f727e1ce415d1fc2f8600a656fb734edcb5f3c696001c4d2ce54",
+      "deployedBytecodeHash": "7e1457dac490f727e1ce415d1fc2f8600a656fb734edcb5f3c696001c4d2ce54",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -373,7 +381,7 @@
           "contract": "PrizeStrategyFactory",
           "path": "contracts/PrizeStrategyFactory.sol",
           "label": "instance",
-          "astId": 2132,
+          "astId": 2147,
           "type": "t_address",
           "src": "325:47:16"
         }
@@ -391,15 +399,17 @@
           "token/ERC20/ERC20.sol",
           "GSN/Context.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "PrizePoolFactory": {
-      "address": "0xf6e22edBB535323161aaaf4FE5C4119270cd2027",
+      "address": "0x5aC1284b6151fa2777adF8ED8A471A51b55Cf085",
       "constructorCode": "608060405234801561001057600080fd5b506115b7806100206000396000f3fe",
-      "bodyBytecodeHash": "01ee025c4ea0e0bb804dabb431b05654d47f32de9304ca9285226cfff40ac998",
-      "localBytecodeHash": "2be7d050b4d293e24bcfc7698868107e5ff4a06f095d5f0b219991fb565255b3",
-      "deployedBytecodeHash": "2be7d050b4d293e24bcfc7698868107e5ff4a06f095d5f0b219991fb565255b3",
+      "bodyBytecodeHash": "d9768c0d988eb815d56e3afd57c6741df514b210131bbdb9525d0a906f475961",
+      "localBytecodeHash": "0e90cfbd5a1a36327acff56b89182449404d78b5041162529f1d15a2f3914aa6",
+      "deployedBytecodeHash": "0e90cfbd5a1a36327acff56b89182449404d78b5041162529f1d15a2f3914aa6",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -453,7 +463,7 @@
           "contract": "PrizePoolFactory",
           "path": "contracts/PrizePoolFactory.sol",
           "label": "interestPoolFactory",
-          "astId": 1930,
+          "astId": 1945,
           "type": "t_address",
           "src": "584:46:15"
         },
@@ -461,7 +471,7 @@
           "contract": "PrizePoolFactory",
           "path": "contracts/PrizePoolFactory.sol",
           "label": "ticketPoolFactory",
-          "astId": 1932,
+          "astId": 1947,
           "type": "t_address",
           "src": "634:42:15"
         },
@@ -469,7 +479,7 @@
           "contract": "PrizePoolFactory",
           "path": "contracts/PrizePoolFactory.sol",
           "label": "ticketFactory",
-          "astId": 1934,
+          "astId": 1949,
           "type": "t_address",
           "src": "680:34:15"
         },
@@ -477,7 +487,7 @@
           "contract": "PrizePoolFactory",
           "path": "contracts/PrizePoolFactory.sol",
           "label": "controlledTokenFactory",
-          "astId": 1936,
+          "astId": 1951,
           "type": "t_address",
           "src": "718:52:15"
         },
@@ -485,7 +495,7 @@
           "contract": "PrizePoolFactory",
           "path": "contracts/PrizePoolFactory.sol",
           "label": "prizeStrategyFactory",
-          "astId": 1938,
+          "astId": 1953,
           "type": "t_address",
           "src": "774:48:15"
         }
@@ -503,7 +513,9 @@
           "introspection/IERC1820Registry.sol",
           "token/ERC777/IERC777Recipient.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     }
   },
@@ -513,7 +525,7 @@
       {
         "address": "0x4De59Aeaec9B9471423fbA078456D9Ef8Ec83bF8",
         "version": "0.3.0",
-        "implementation": "0xd9083FAdC5B730AbADDF3413F2079c8FC4db35F4",
+        "implementation": "0xb740e3c81a353D4bc654B0EcF96737142a7BeCD7",
         "admin": "0x554eAADdABf976Fb29C4cf8a6e99f348f2e35195",
         "kind": "Upgradeable"
       }
@@ -522,7 +534,7 @@
       {
         "address": "0x7d159fC60B8D67580223D080Dbd742c623cF51e6",
         "version": "0.3.0",
-        "implementation": "0x6420e0D31f83857bf5b64D01c8b70ebEa306f965",
+        "implementation": "0x421dA2F4c61587aB9D793E9965639288406CF6b2",
         "admin": "0x554eAADdABf976Fb29C4cf8a6e99f348f2e35195",
         "kind": "Upgradeable"
       }
@@ -531,7 +543,7 @@
       {
         "address": "0x23ca306C621a9D6F3CADe4fa05A4b702dFEAFDF2",
         "version": "0.3.0",
-        "implementation": "0xB9C269A7d0B2A500661eAD67e035526245BA4fa1",
+        "implementation": "0x9f540623877Afc365E3491bFc44C7c4c32EfaA19",
         "admin": "0x554eAADdABf976Fb29C4cf8a6e99f348f2e35195",
         "kind": "Upgradeable"
       }
@@ -540,7 +552,7 @@
       {
         "address": "0x7c0d5A979852B7CE3a4AC4FE04A8416Af52EA0b7",
         "version": "0.3.0",
-        "implementation": "0xfa1263f0009FCd99CD043f51beE83148961b4E39",
+        "implementation": "0x852137a51a0B1d1408665f41A4E9e5f54Be34A8E",
         "admin": "0x554eAADdABf976Fb29C4cf8a6e99f348f2e35195",
         "kind": "Upgradeable"
       }
@@ -549,7 +561,7 @@
       {
         "address": "0xF9F6a4366FE7a54ca0e7F1974fef009AFf765F01",
         "version": "0.3.0",
-        "implementation": "0xA125841831B4645F22c1c4cCb6e1df0842E60040",
+        "implementation": "0xdd34277bd4997eEC410BA2c0B557e4D40Ca021e9",
         "admin": "0x554eAADdABf976Fb29C4cf8a6e99f348f2e35195",
         "kind": "Upgradeable"
       }
@@ -558,7 +570,7 @@
       {
         "address": "0xABa33af3fcc6f4FA97112D25C57b84EB9470aA78",
         "version": "0.3.0",
-        "implementation": "0xf6e22edBB535323161aaaf4FE5C4119270cd2027",
+        "implementation": "0x5aC1284b6151fa2777adF8ED8A471A51b55Cf085",
         "admin": "0x554eAADdABf976Fb29C4cf8a6e99f348f2e35195",
         "kind": "Upgradeable"
       }

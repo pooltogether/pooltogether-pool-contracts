@@ -6,6 +6,7 @@
     "coverage": "rm -rf cache && buidler compile && buidler coverage --network coverage --temp build && rm -rf cache",
     "gas": "REPORT_GAS=true buidler test --network local",
     "deploy-kovan": "./scripts/migrate.js",
+    "session-kovan": "oz session --network kovan --from $ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50",
     "clean": "rm -rf build && rm -rf cache"
   },
   "devDependencies": {
