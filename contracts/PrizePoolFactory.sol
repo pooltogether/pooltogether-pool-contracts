@@ -44,7 +44,7 @@ contract PrizePoolFactory {
     string calldata _collateralSymbol,
     string calldata _ticketName,
     string calldata _ticketSymbol,
-    uint256 prizePeriodInBlocks
+    uint256 prizePeriodInSeconds
   ) external returns (TicketPool) {
 
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
@@ -52,7 +52,7 @@ contract PrizePoolFactory {
 
     prizeStrategy.initialize(
       ticketPool,
-      prizePeriodInBlocks
+      prizePeriodInSeconds
     );
 
     return ticketPool;
