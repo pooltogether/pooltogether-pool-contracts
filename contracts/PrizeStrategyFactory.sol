@@ -2,7 +2,6 @@ pragma solidity ^0.6.4;
 
 import "./SingleRandomWinnerPrizeStrategy.sol";
 import "./ControlledToken.sol";
-import "./InterestTokenInterface.sol";
 import "./ProxyFactory.sol";
 
 contract PrizeStrategyFactory is ProxyFactory {

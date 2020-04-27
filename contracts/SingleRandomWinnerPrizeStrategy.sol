@@ -7,7 +7,6 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./TicketPool.sol";
 import "./PrizeStrategyInterface.sol";
-import "./InterestTokenInterface.sol";
 
 /* solium-disable security/no-block-members */
 contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterface {

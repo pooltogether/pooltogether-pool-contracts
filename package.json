@@ -4,19 +4,25 @@
     "compile": "buidler compile",
     "start": "buidler node --port 8565",
     "coverage": "buidler coverage --network coverage --temp build",
-    "gas": "REPORT_GAS=true buidler test --network local"
+    "gas": "REPORT_GAS=true buidler test --network local",
+    "deploy-kovan": "buidler run scripts/deploy.js --network kovan"
   },
   "devDependencies": {
+    "@openzeppelin/cli": "^2.8.1",
     "@nomiclabs/buidler": "^1.2.0",
     "@nomiclabs/buidler-ethers": "^1.2.0",
     "@nomiclabs/buidler-waffle": "^1.2.0",
     "@types/chai": "^4.2.10",
     "@types/mocha": "^7.0.2",
     "@types/node": "^13.9.1",
+    "buidler-gas-reporter": "^0.1.3",
     "chai": "^4.2.0",
+    "chalk": "^4.0.0",
     "deploy-eip-1820": "^0.1.1",
     "ethereum-waffle": "^2.3.2",
     "ethers": "^4.0.45",
+    "shelljs": "0.8.3",
+    "solidity-coverage": "^0.7.4",
     "solc": "0.6.4",
     "ts-node": "^8.6.2",
     "typescript": "^3.8.3"
@@ -25,9 +31,8 @@
     "@openzeppelin/contracts": "^3.0.0-rc.0",
     "@openzeppelin/upgrades": "^2.8.0",
     "@pooltogether/fixed-point": "^0.1.0",
+    "@pooltogether/oz-migrate": "^0.2.5",
     "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
-    "buidler-gas-reporter": "^0.1.3",
-    "solidity-coverage": "^0.7.4",
     "sortition-sum-tree-factory": "^0.1.0"
   }
 }

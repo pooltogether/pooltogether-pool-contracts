@@ -22,7 +22,14 @@ export default {
     },
     local: {
       url: 'http://127.0.0.1:8565'
-    }
+    },
+    kovan: {
+      accounts: {
+        mnemonic: process.env.HDWALLET_MNEMONIC
+      },
+      url: process.env.INFURA_PROVIDER_URL_KOVAN,
+      chainId: 42
+    },
   },
   gasReporter: {
     currency: 'CHF',

@@ -3,7 +3,6 @@ pragma solidity ^0.6.4;
 import "./TicketPool.sol";
 import "./InterestPoolInterface.sol";
 import "./ControlledToken.sol";
-import "./InterestTokenInterface.sol";
 import "./ProxyFactory.sol";
 
 contract TicketPoolFactory is ProxyFactory {

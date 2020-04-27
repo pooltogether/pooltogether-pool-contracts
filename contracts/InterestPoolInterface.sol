@@ -3,7 +3,6 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./ControlledToken.sol";
-import "./InterestTokenInterface.sol";
 
 interface InterestPoolInterface {
   function availableInterest() external view returns (uint256);
