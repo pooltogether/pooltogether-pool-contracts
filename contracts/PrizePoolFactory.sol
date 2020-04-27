@@ -1,5 +1,7 @@
 pragma solidity ^0.6.4;
 
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+
 import "./ControlledTokenFactory.sol";
 import "./PrizeStrategyFactory.sol";
 import "./InterestPoolFactory.sol";
@@ -8,7 +10,7 @@ import "./TicketPoolFactory.sol";
 import "./PrizeStrategyInterface.sol";
 import "./compound/CTokenInterface.sol";
 
-contract PrizePoolFactory {
+contract PrizePoolFactory is Initializable {
 
   event PrizePoolCreated(
     address indexed interestPool,
@@ -24,13 +26,13 @@ contract PrizePoolFactory {
   ControlledTokenFactory public controlledTokenFactory;
   PrizeStrategyFactory public prizeStrategyFactory;
 
-  constructor (
+  function initialize (
     InterestPoolFactory _interestPoolFactory,
     TicketPoolFactory _ticketPoolFactory,
     TicketFactory _ticketFactory,
     ControlledTokenFactory _controlledTokenFactory,
     PrizeStrategyFactory _prizeStrategyFactory
-  ) public {
+  ) public initializer {
     interestPoolFactory = _interestPoolFactory;
     ticketPoolFactory = _ticketPoolFactory;
     ticketFactory = _ticketFactory;

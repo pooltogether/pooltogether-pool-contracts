@@ -1,16 +1,18 @@
 pragma solidity ^0.6.4;
 
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+
 import "./SingleRandomWinnerPrizeStrategy.sol";
 import "./ControlledToken.sol";
 import "./ProxyFactory.sol";
 
-contract PrizeStrategyFactory is ProxyFactory {
+contract PrizeStrategyFactory is Initializable, ProxyFactory {
 
   event PrizeStrategyCreated(address indexed prizeStrategy);
 
   SingleRandomWinnerPrizeStrategy public instance;
 
-  constructor () public {
+  function initialize () public initializer {
     instance = new SingleRandomWinnerPrizeStrategy();
   }
 

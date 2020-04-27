@@ -1,15 +1,17 @@
 pragma solidity ^0.6.4;
 
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+
 import "./ControlledToken.sol";
 import "./ProxyFactory.sol";
 
-contract ControlledTokenFactory is ProxyFactory {
+contract ControlledTokenFactory is Initializable, ProxyFactory {
 
   event ControlledTokenCreated(address indexed controlledToken);
 
   ControlledToken public instance;
 
-  constructor () public {
+  function initialize () public initializer {
     instance = new ControlledToken();
   }
 

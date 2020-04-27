@@ -1,0 +1,41 @@
+{
+  "manifestVersion": "2.2",
+  "contracts": {
+    "PrizePoolFactory": "PrizePoolFactory",
+    "InterestPoolFactory": "InterestPoolFactory",
+    "TicketPoolFactory": "TicketPoolFactory",
+    "TicketFactory": "TicketFactory",
+    "ControlledTokenFactory": "ControlledTokenFactory",
+    "PrizeStrategyFactory": "PrizeStrategyFactory"
+  },
+  "dependencies": {},
+  "name": "PoolTogether3",
+  "version": "0.3.0",
+  "compiler": {
+    "compiler": {
+      "manager": "openzeppelin",
+      "compilerSettings": {
+        "optimizer": {
+          "enabled": true,
+          "runs": "200"
+        },
+        "evmVersion": "constantinople"
+      },
+      "solcVersion": "0.6.4"
+    },
+    "typechain": {
+      "enabled": false
+    },
+    "manager": "openzeppelin",
+    "solcVersion": "0.6.4",
+    "artifactsDir": "build/contracts",
+    "contractsDir": "contracts",
+    "compilerSettings": {
+      "optimizer": {
+        "enabled": false,
+        "runs": "200"
+      }
+    }
+  },
+  "telemetryOptIn": false
+}

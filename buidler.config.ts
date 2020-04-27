@@ -3,6 +3,7 @@ import { usePlugin } from "@nomiclabs/buidler/config";
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("buidler-gas-reporter");
 usePlugin("solidity-coverage");
+usePlugin("@nomiclabs/buidler-etherscan");
 
 export default {
   solc: {
@@ -15,6 +16,14 @@ export default {
   },
   paths: {
     artifacts: "./build"
+  },
+  etherscan: {
+    // The url for the Etherscan API you want to use.
+    // For example, here we're using the one for the Ropsten test network
+    url: process.env.ETHERSCAN_API_URL,
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
   networks: {
     coverage: {

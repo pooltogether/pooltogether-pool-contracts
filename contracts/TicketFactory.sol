@@ -1,15 +1,17 @@
 pragma solidity ^0.6.4;
 
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+
 import "./Ticket.sol";
 import "./ProxyFactory.sol";
 
-contract TicketFactory is ProxyFactory {
+contract TicketFactory is Initializable, ProxyFactory {
 
   event TicketCreated(address indexed ticket);
 
   Ticket public instance;
 
-  constructor () public {
+  function initialize () public initializer {
     instance = new Ticket();
   }
 

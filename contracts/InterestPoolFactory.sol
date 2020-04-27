@@ -1,16 +1,18 @@
 pragma solidity ^0.6.4;
 
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+
 import "./InterestPool.sol";
 import "./ControlledToken.sol";
 import "./ProxyFactory.sol";
 
-contract InterestPoolFactory is ProxyFactory {
+contract InterestPoolFactory is Initializable, ProxyFactory {
 
   event InterestPoolCreated(address indexed interestPool);
 
   InterestPool public instance;
 
-  constructor () public {
+  function initialize () public initializer {
     instance = new InterestPool();
   }
 
