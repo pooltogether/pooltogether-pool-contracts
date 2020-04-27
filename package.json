@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "buidler test",
+    "test": "buidler compile && buidler test",
     "compile": "buidler compile",
     "start": "buidler node --port 8565",
     "coverage": "buidler coverage --network coverage --temp build",
