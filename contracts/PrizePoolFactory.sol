@@ -42,12 +42,12 @@ contract PrizePoolFactory is Initializable {
 
   function createSingleRandomWinnerTicketPool(
     CTokenInterface cToken,
+    uint256 prizePeriodInSeconds,
     string calldata _collateralName,
     string calldata _collateralSymbol,
     string calldata _ticketName,
-    string calldata _ticketSymbol,
-    uint256 prizePeriodInSeconds
-  ) external returns (TicketPool) {
+    string calldata _ticketSymbol
+  ) external returns (SingleRandomWinnerPrizeStrategy) {
 
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
     TicketPool ticketPool = createTicketPool(cToken, prizeStrategy, _collateralName, _collateralSymbol, _ticketName, _ticketSymbol);
@@ -57,7 +57,7 @@ contract PrizePoolFactory is Initializable {
       prizePeriodInSeconds
     );
 
-    return ticketPool;
+    return prizeStrategy;
   }
 
   function createTicketPool(

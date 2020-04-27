@@ -26,11 +26,17 @@ export default {
     apiKey: process.env.ETHERSCAN_API_KEY
   },
   networks: {
+    buidlerevm: {
+      blockGasLimit: 20000000
+    },
     coverage: {
-      url: 'http://127.0.0.1:8555'
+      url: 'http://127.0.0.1:8555',
+      gas: 20000000
     },
     local: {
-      url: 'http://127.0.0.1:8565'
+      url: 'http://127.0.0.1:8565',
+      gas: 20000000,
+      blockGasLimit: 20000000
     },
     kovan: {
       accounts: {

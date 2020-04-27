@@ -99,10 +99,6 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
     return currentPrizeStartedAt + prizePeriodSeconds;
   }
 
-  function blockTime() public view returns (uint256) {
-    return block.timestamp;
-  }
-
   function ticket() public view returns (Ticket) {
     return ticketPool.ticket();
   }

@@ -29,18 +29,18 @@ contract ControlledToken is Initializable, ERC20 {
   function mint(
     address account,
     uint256 amount
-  ) external onlyComptroller {
+  ) external onlyController {
     _mint(account, amount);
   }
 
   function burn(
     address from,
     uint256 amount
-  ) external onlyComptroller {
+  ) external onlyController {
     _burn(from, amount);
   }
 
-  modifier onlyComptroller() {
+  modifier onlyController() {
     require(_msgSender() == address(controller), "only controller");
     _;
   }

@@ -3,7 +3,7 @@
     "test": "buidler compile && buidler test",
     "compile": "buidler compile",
     "start": "buidler node --port 8565",
-    "coverage": "buidler coverage --network coverage --temp build",
+    "coverage": "rm -rf cache && buidler compile && buidler coverage --network coverage --temp build && rm -rf cache",
     "gas": "REPORT_GAS=true buidler test --network local",
     "deploy-kovan": "./scripts/migrate.js",
     "clean": "rm -rf build && rm -rf cache"

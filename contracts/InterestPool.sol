@@ -38,6 +38,7 @@ contract InterestPool is Initializable, TokenControllerInterface, InterestPoolIn
     require(address(_cToken) != address(0), "cToken cannot be zero");
     require(address(_collateral) != address(0), "collateral cannot be zero");
     require(address(_allocator) != address(0), "prize strategy cannot be zero");
+    require(address(_collateral.controller()) == address(this), "collateral controller does not match");
     cToken = _cToken;
     underlying = IERC20(_cToken.underlying());
     collateral = _collateral;

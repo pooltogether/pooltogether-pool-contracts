@@ -14,7 +14,6 @@ import { expect } from 'chai'
 import { ethers, Contract } from 'ethers'
 import { deploy1820 } from 'deploy-eip-1820'
 
-import { printGas } from './helpers/printGas'
 import { Provider } from 'ethers/providers'
 
 const buidler = require("@nomiclabs/buidler")
@@ -51,17 +50,23 @@ describe('PrizePoolFactory contract', () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
     provider = buidler.ethers.provider
 
-    await deploy1820(wallet)
-
     token = await deployContract(wallet, ERC20Mintable, [])
     cToken = await deployContract(wallet, CTokenMock, [])    
     await cToken.initialize(token.address, ethers.utils.parseEther('0.01'))
 
     interestPoolFactory = await deployContract(wallet, InterestPoolFactory, [])
-    ticketPoolFactory = await deployContract(wallet, TicketPoolFactory, [])
+    await interestPoolFactory.initialize()
+
+    ticketPoolFactory = await deployContract(wallet, TicketPoolFactory, [], { gasLimit: 20000000 })
+
+    await ticketPoolFactory.initialize()
+
     ticketFactory = await deployContract(wallet, TicketFactory, [])
+    await ticketFactory.initialize()
     controlledTokenFactory = await deployContract(wallet, ControlledTokenFactory, [])
+    await controlledTokenFactory.initialize()
     prizeStrategyFactory = await deployContract(wallet, PrizeStrategyFactory, [])
+    await prizeStrategyFactory.initialize()
     
     prizePoolFactory = await deployContract(wallet, PrizePoolFactory, [])
     await prizePoolFactory.initialize(
@@ -69,14 +74,13 @@ describe('PrizePoolFactory contract', () => {
       ticketPoolFactory.address,
       ticketFactory.address,
       controlledTokenFactory.address,
-      prizeStrategyFactory.address,
-      cToken.address
+      prizeStrategyFactory.address
     )
   })
 
   describe('createPrizePool()', () => {
     it('should create a new prize pool', async () => {
-      let tx = await prizePoolFactory.createSingleRandomWinnerTicketPool(cToken.address, 'Sponsorship', 'SPON', 'Ticket', 'TICK', 10)
+      let tx = await prizePoolFactory.createSingleRandomWinnerTicketPool(cToken.address, 10, 'Sponsorship', 'SPON', 'Ticket', 'TICK')
 
       let receipt = await provider.getTransactionReceipt(tx.hash)
       // @ts-ignore
@@ -84,15 +88,10 @@ describe('PrizePoolFactory contract', () => {
 
       let event = prizePoolFactory.interface.events.PrizePoolCreated.decode(lastLog.data, lastLog.topics)
 
-      // let {
-      //   interestPool,
-      //   ticketPool,
-      //   prizeStrategy,
-      //   interestPoolToken,
-      //   ticketPoolToken
-      // } = description
+      // console.log({ event })
 
       let interestPool = await buidler.ethers.getContractAt('InterestPool', event.interestPool, wallet)
+
       expect(await interestPool.underlying()).to.equal(token.address)
 
       let ticketPool = await buidler.ethers.getContractAt('TicketPool', event.ticketPool, wallet)
@@ -100,14 +99,6 @@ describe('PrizePoolFactory contract', () => {
 
       let prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerPrizeStrategy', event.prizeStrategy, wallet)
       expect(await prizeStrategy.ticketPool()).to.equal(ticketPool.address)
-
-      // let interestPoolToken = await buidler.ethers.getContractAt('TicketPool', event.interestPoolToken, wallet)
-      // expect(await interestPoolToken.underlyingToken()).to.equal(token.address)
-
-      // let ticketPoolToken = await buidler.ethers.getContractAt('TicketPool', event.ticketPoolToken, wallet)
-      // expect(await ticketPoolToken.underlyingToken()).to.equal(token.address)
-
-      // prizePoolFactory.interface.events.PrizePoolCreated
     })
   })
 })

@@ -9,8 +9,6 @@ import { ethers, Contract } from 'ethers'
 import { deploy1820 } from 'deploy-eip-1820'
 import { increaseTime } from './helpers/increaseTime'
 
-import { printGas } from './helpers/printGas'
-
 const buidler = require("@nomiclabs/buidler")
 
 const toWei = ethers.utils.parseEther
@@ -102,7 +100,7 @@ describe('TicketPool contract', () => {
 
       let userBalance = await token.balanceOf(wallet._address)
 
-      await printGas(ticketPool.redeemTicketsInstantly(toWei('10')), "TicketPool#redeemTicketsInstantly")
+      await ticketPool.redeemTicketsInstantly(toWei('10'))
 
       // tickets are burned
       expect(await ticket.totalSupply()).to.equal(toWei('0'))
@@ -182,15 +180,21 @@ describe('TicketPool contract', () => {
 
   describe('sweepUnlockedFunds()', () => {
     it('should return any timelocked funds that are now open', async () => {
+      // deposit
       await token.approve(ticketPool.address, toWei('4'))
-      await printGas(ticketPool.mintTickets(toWei('4')), 'TicketPool#mintTickets')
+      await ticketPool.mintTickets(toWei('4'))
+
+      // redeem with timelock.  Will be ~ ten seconds in future
       let block = await buidler.ethers.provider.getBlock('latest')
       let userBalance = await token.balanceOf(wallet._address)
-      let unlockTimestamp = block.timestamp + 3
+      let unlockTimestamp = block.timestamp + 10
       await mockPrizeStrategy.setUnlockTimestamp(unlockTimestamp)
-      await printGas(ticketPool.redeemTicketsWithTimelock(toWei('4')), 'TicketPool#redeemTicketsWithTimelock')
-      // will be available next block
+      await ticketPool.redeemTicketsWithTimelock(toWei('4'))
+
       expect(await ticketPool.lockedBalanceAvailableAt(wallet._address)).to.equal(unlockTimestamp)
+
+      // now progress time
+      await increaseTime(10)
 
       await ticketPool.sweepTimelockFunds([wallet._address])
 
