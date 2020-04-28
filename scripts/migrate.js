@@ -6,6 +6,7 @@ const { runShell } = require('./runShell')
 
 const ProjectFile = require('@openzeppelin/cli/lib/models/files/ProjectFile').default
 const NetworkFile = require('@openzeppelin/cli/lib/models/files/NetworkFile').default
+const ConfigManager = require("@openzeppelin/cli/lib/models/config/ConfigManager").default
 
 const program = new commander.Command()
 program.description('Deploys the PoolTogether smart contracts')
@@ -27,7 +28,7 @@ program
     })
 
     await migration.migrate(20, async () => {
-      runShell(`oz create TicketPoolFactory --force --init initialize`)
+      runShell(`oz create PrizePoolFactory --force --init initialize`)
     })
 
     await migration.migrate(30, async () => {
@@ -39,22 +40,34 @@ program
     })
 
     await migration.migrate(50, async () => {
-      runShell(`oz create PrizeStrategyFactory --force --init initialize`)
+      runShell(`oz create SingleRandomWinnerPrizeStrategyFactory --force --init initialize`)
     })
 
     const projectFile = new ProjectFile()
-    const networkFile = new NetworkFile(projectFile, program.network)
+    const networkConfig = await ConfigManager.initNetworkConfiguration({
+      network: program.network
+    });
 
+    let networkFile = new NetworkFile(projectFile, networkConfig.network)
     const {
       InterestPoolFactory,
-      TicketPoolFactory,
+      PrizePoolFactory,
       TicketFactory,
       ControlledTokenFactory,
-      PrizeStrategyFactory
+      SingleRandomWinnerPrizeStrategyFactory
     } = networkFile.contracts
 
     await migration.migrate(60, async () => {
-      runShell(`oz create PrizePoolFactory --force --init initialize --args ${InterestPoolFactory.address},${TicketPoolFactory.address},${TicketFactory.address},${ControlledTokenFactory.address},${PrizeStrategyFactory.address}`)
+      runShell(`oz create PrizePoolBuilder --force --init initialize --args ${InterestPoolFactory.address},${PrizePoolFactory.address},${TicketFactory.address},${ControlledTokenFactory.address}`)
+    })
+
+    networkFile = new NetworkFile(projectFile, networkConfig.network)
+    const {
+      PrizePoolBuilder
+    } = networkFile.contracts
+
+    await migration.migrate(70, async () => {
+      runShell(`oz create SingleRandomWinnerPrizePoolBuilder --force --init initialize --args ${PrizePoolBuilder.address},${SingleRandomWinnerPrizeStrategyFactory.address}`)
     })
 
     console.log(chalk.green(`Completed deployment.`))

@@ -1,12 +1,12 @@
 pragma solidity ^0.6.4;
 
 import "../PrizeStrategyInterface.sol";
-import "../TicketPool.sol";
+import "../PrizePoolInterface.sol";
 
 contract MockPrizeStrategy is PrizeStrategyInterface {
   uint256 public exitFee;
   uint256 public unlockTimestamp;
-  TicketPool public ticketPool;
+  PrizePoolInterface public override prizePool;
 
   function setExitFee(uint256 _exitFee) external {
     exitFee = _exitFee;
@@ -16,8 +16,8 @@ contract MockPrizeStrategy is PrizeStrategyInterface {
     unlockTimestamp = _unlockTimestamp;
   }
 
-  function setTicketPool(TicketPool _ticketPool) external {
-    ticketPool = _ticketPool;
+  function setPrizePool(PrizePoolInterface _prizePool) external {
+    prizePool = _prizePool;
   }
 
   function calculateExitFee(address, uint256) external view override returns (uint256) {
@@ -29,6 +29,6 @@ contract MockPrizeStrategy is PrizeStrategyInterface {
   }
 
   function award(address user, uint256 amount) external {
-    ticketPool.award(user, amount);
+    prizePool.award(user, amount);
   }
 }

@@ -11,10 +11,10 @@ import "./Timelock.sol";
 import "./TokenControllerInterface.sol";
 import "./Ticket.sol";
 import "./PrizeStrategyInterface.sol";
-import "./TicketPoolInterface.sol";
+import "./PrizePoolInterface.sol";
 
 /* solium-disable security/no-block-members */
-contract TicketPool is Initializable, TokenControllerInterface, TicketPoolInterface {
+contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterface {
   using SafeMath for uint256;
   using Timelock for Timelock.State;
 

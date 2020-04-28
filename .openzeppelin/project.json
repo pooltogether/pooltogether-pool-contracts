@@ -2,11 +2,12 @@
   "manifestVersion": "2.2",
   "contracts": {
     "PrizePoolFactory": "PrizePoolFactory",
+    "PrizePoolBuilder": "PrizePoolBuilder",
     "InterestPoolFactory": "InterestPoolFactory",
-    "TicketPoolFactory": "TicketPoolFactory",
     "TicketFactory": "TicketFactory",
     "ControlledTokenFactory": "ControlledTokenFactory",
-    "PrizeStrategyFactory": "PrizeStrategyFactory"
+    "SingleRandomWinnerPrizePoolBuilder": "SingleRandomWinnerPrizePoolBuilder",
+    "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory"
   },
   "dependencies": {},
   "name": "PoolTogether3",

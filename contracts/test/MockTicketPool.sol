@@ -2,11 +2,11 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import "../TicketPoolInterface.sol";
+import "../PrizePoolInterface.sol";
 import "../Ticket.sol";
 import "../TokenControllerInterface.sol";
 
-contract MockTicketPool is Initializable, TicketPoolInterface, TokenControllerInterface {
+contract MockPrizePool is Initializable, PrizePoolInterface, TokenControllerInterface {
 
   Ticket public override ticket;
   InterestPoolInterface public override interestPool;

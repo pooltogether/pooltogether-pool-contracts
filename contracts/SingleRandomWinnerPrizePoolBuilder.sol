@@ -1,0 +1,54 @@
+pragma solidity ^0.6.4;
+
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+
+import "./ControlledTokenFactory.sol";
+import "./SingleRandomWinnerPrizeStrategyFactory.sol";
+import "./InterestPoolFactory.sol";
+import "./TicketFactory.sol";
+import "./PrizePoolFactory.sol";
+import "./PrizeStrategyInterface.sol";
+import "./compound/CTokenInterface.sol";
+import "./PrizePoolBuilder.sol";
+
+contract SingleRandomWinnerPrizePoolBuilder is Initializable {
+
+  PrizePoolBuilder public prizePoolBuilder;
+  SingleRandomWinnerPrizeStrategyFactory public prizeStrategyFactory;
+
+  function initialize (
+    PrizePoolBuilder _prizePoolBuilder,
+    SingleRandomWinnerPrizeStrategyFactory _prizeStrategyFactory
+  ) public initializer {
+    prizePoolBuilder = _prizePoolBuilder;
+    prizeStrategyFactory = _prizeStrategyFactory;
+  }
+
+  function createSingleRandomWinnerPrizePool(
+    CTokenInterface cToken,
+    uint256 prizePeriodInSeconds,
+    string calldata _collateralName,
+    string calldata _collateralSymbol,
+    string calldata _ticketName,
+    string calldata _ticketSymbol
+  ) external returns (SingleRandomWinnerPrizeStrategy) {
+
+    SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
+
+    PrizePool prizePool = prizePoolBuilder.createPrizePool(
+      cToken,
+      prizeStrategy,
+      _collateralName,
+      _collateralSymbol,
+      _ticketName,
+      _ticketSymbol
+    );
+
+    prizeStrategy.initialize(
+      prizePool,
+      prizePeriodInSeconds
+    );
+
+    return prizeStrategy;
+  }
+}

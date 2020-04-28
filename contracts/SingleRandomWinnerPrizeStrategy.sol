@@ -5,31 +5,31 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 // import "@nomiclabs/buidler/console.sol";
 
-import "./TicketPool.sol";
+import "./PrizePool.sol";
 import "./PrizeStrategyInterface.sol";
 
 /* solium-disable security/no-block-members */
 contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterface {
   using SafeMath for uint256;
 
-  TicketPool public ticketPool;
+  PrizePoolInterface public override prizePool;
   uint256 currentPrizeStartedAt;
   uint256 prizePeriodSeconds;
   uint256 previousPrize;
 
   function initialize (
-    TicketPool _ticketPool,
+    PrizePool _prizePool,
     uint256 _prizePeriodSeconds
   ) public initializer {
-    require(address(_ticketPool) != address(0), "prize pool must not be zero");
+    require(address(_prizePool) != address(0), "prize pool must not be zero");
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
-    ticketPool = _ticketPool;
+    prizePool = _prizePool;
     prizePeriodSeconds = _prizePeriodSeconds;
     currentPrizeStartedAt = block.timestamp;
   }
 
   function calculateExitFee(address, uint256 tickets) public view override returns (uint256) {
-    uint256 totalSupply = ticketPool.ticket().totalSupply();
+    uint256 totalSupply = prizePool.ticket().totalSupply();
     if (totalSupply == 0) {
       return 0;
     }
@@ -51,7 +51,7 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
   }
 
   function estimatePrize(uint256 secondsPerBlockFixedPoint18) external view returns (uint256) {
-    return ticketPool.currentPrize().add(estimateRemainingPrizeWithBlockTime(secondsPerBlockFixedPoint18));
+    return prizePool.currentPrize().add(estimateRemainingPrizeWithBlockTime(secondsPerBlockFixedPoint18));
   }
 
   function estimateRemainingPrize() public view returns (uint256) {
@@ -59,7 +59,7 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
   }
 
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {
-    InterestPoolInterface interestPool = ticketPool.interestPool();
+    InterestPoolInterface interestPool = prizePool.interestPool();
     return interestPool.estimateAccruedInterestOverBlocks(
       interestPool.accountedBalance(),
       estimateRemainingBlocksToPrize(secondsPerBlockFixedPoint18)
@@ -88,9 +88,9 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
 
   function award() external onlyPrizePeriodOver {
     address winner = ticket().draw(uint256(blockhash(1)));
-    uint256 total = ticketPool.currentPrize();
+    uint256 total = prizePool.currentPrize();
     previousPrize = total;
-    ticketPool.award(winner, total);
+    prizePool.award(winner, total);
     currentPrizeStartedAt = block.timestamp;
   }
 
@@ -100,7 +100,7 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
   }
 
   function ticket() public view returns (Ticket) {
-    return ticketPool.ticket();
+    return prizePool.ticket();
   }
 
   modifier onlyPrizePeriodOver() {

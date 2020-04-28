@@ -5,7 +5,8 @@
     "start": "buidler node --port 8565",
     "coverage": "rm -rf cache && buidler compile && buidler coverage --network coverage --temp build && rm -rf cache",
     "gas": "REPORT_GAS=true buidler test --network local",
-    "deploy-kovan": "./scripts/migrate.js",
+    "migrate": "./scripts/migrate.js",
+    "migrate-local": "./scripts/migrate.js start -n local -a 0xc783df8a850f42e7f7e57013759c285caa701eb6",
     "session-kovan": "oz session --network kovan --from $ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50",
     "clean": "rm -rf build && rm -rf cache"
   },

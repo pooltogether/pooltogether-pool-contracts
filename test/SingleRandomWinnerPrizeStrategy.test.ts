@@ -1,5 +1,5 @@
 import { deployContract } from 'ethereum-waffle'
-import MockTicketPool from '../build/MockTicketPool.json'
+import MockPrizePool from '../build/MockPrizePool.json'
 import MockInterestPool from '../build/MockInterestPool.json'
 import Timestamp from '../build/Timestamp.json'
 import ERC20Mintable from '../build/ERC20Mintable.json'
@@ -21,7 +21,7 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
   
   let ticket: Contract
   let mockInterestPool: Contract
-  let mockTicketPool: Contract
+  let mockPrizePool: Contract
   let prizeStrategy: Contract
   let collateralToken: Contract
   let token: Contract
@@ -56,13 +56,13 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
       token.address,
       collateralToken.address
     )
-    mockTicketPool = await deployContract(wallet, MockTicketPool, [])
+    mockPrizePool = await deployContract(wallet, MockPrizePool, [])
     await ticket.initialize(
       "ticket",
       "tick",
-      mockTicketPool.address
+      mockPrizePool.address
     )
-    await mockTicketPool.initialize(
+    await mockPrizePool.initialize(
       ticket.address,
       mockInterestPool.address
     )
@@ -73,7 +73,7 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
 
     prizeStrategy = await deployContract(wallet, SingleRandomWinnerPrizeStrategy, [])
     let tx = await prizeStrategy.initialize(
-      mockTicketPool.address,
+      mockPrizePool.address,
       prizePeriod
     )
     let block = await buidler.ethers.provider.getBlock(tx.blockHash)
@@ -126,7 +126,7 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
       // ensure there is interest
       await mockInterestPool.setAvailableInterest(toWei('1'))
       // ensure the wallet is a user
-      await mockTicketPool.award(wallet._address, toWei('10'))
+      await mockPrizePool.award(wallet._address, toWei('10'))
       
       await increaseTime(11)
 
@@ -197,7 +197,7 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
 
     it('should draw a winner and allocate prize', async () => {
       // ensure the wallet can be selected
-      await mockTicketPool.award(wallet._address, toWei('10'))
+      await mockPrizePool.award(wallet._address, toWei('10'))
 
       await mockInterestPool.setAvailableInterest(toWei('1'))
 

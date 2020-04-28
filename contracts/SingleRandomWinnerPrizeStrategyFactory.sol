@@ -6,7 +6,7 @@ import "./SingleRandomWinnerPrizeStrategy.sol";
 import "./ControlledToken.sol";
 import "./ProxyFactory.sol";
 
-contract PrizeStrategyFactory is Initializable, ProxyFactory {
+contract SingleRandomWinnerPrizeStrategyFactory is Initializable, ProxyFactory {
 
   event PrizeStrategyCreated(address indexed prizeStrategy);
 
