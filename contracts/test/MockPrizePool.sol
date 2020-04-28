@@ -28,5 +28,18 @@ contract MockPrizePool is Initializable, PrizePoolInterface, TokenControllerInte
     ticket.mint(user, tickets);
   }
 
+  function mintTickets(uint256 tickets) external override {}
+
+  function redeemTicketsInstantly(uint256 tickets) external override returns (uint256) {}
+
+  function redeemTicketsWithTimelock(uint256 tickets) external override returns (uint256) {}
+
+  function lockedBalanceOf(address user) external override view returns (uint256) {}
+
+  function lockedBalanceAvailableAt(address user) external override view returns (uint256) {}
+
+  function sweepTimelockFunds(address[] calldata users) external override returns (uint256) {}
+  
+
   function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {}
 }

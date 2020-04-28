@@ -43,7 +43,7 @@ contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterfac
     return interestPool.availableInterest();
   }
 
-  function mintTickets(uint256 tickets) external {
+  function mintTickets(uint256 tickets) external override {
     // Transfer deposit
     IERC20 token = interestPool.underlying();
     require(token.allowance(msg.sender, address(this)) >= tickets, "insuff");
@@ -56,7 +56,7 @@ contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterfac
     ticket.mint(msg.sender, tickets);
   }
 
-  function redeemTicketsInstantly(uint256 tickets) external returns (uint256) {
+  function redeemTicketsInstantly(uint256 tickets) external override returns (uint256) {
     uint256 exitFee = prizeStrategy.calculateExitFee(msg.sender, tickets);
 
     // burn the tickets
@@ -73,7 +73,7 @@ contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterfac
     return balance;
   }
 
-  function redeemTicketsWithTimelock(uint256 tickets) external returns (uint256) {
+  function redeemTicketsWithTimelock(uint256 tickets) external override returns (uint256) {
     uint256 unlockTimestamp = prizeStrategy.calculateUnlockTimestamp(msg.sender, tickets);
 
     // burn the tickets
@@ -99,15 +99,15 @@ contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterfac
     return unlockTimestamp;
   }
 
-  function lockedBalanceOf(address user) external view returns (uint256) {
+  function lockedBalanceOf(address user) external view override returns (uint256) {
     return timelocks[user].amount;
   }
 
-  function lockedBalanceAvailableAt(address user) external view returns (uint256) {
+  function lockedBalanceAvailableAt(address user) external view override returns (uint256) {
     return timelocks[user].timestamp;
   }
 
-  function sweepTimelockFunds(address[] calldata users) external returns (uint256) {
+  function sweepTimelockFunds(address[] calldata users) external override returns (uint256) {
     uint256 totalWithdrawal;
 
     // first gather the total withdrawal and fee

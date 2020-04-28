@@ -8,5 +8,6 @@ dist
 coverage
 coverage.json
 .envrc
-
+.openzeppelin/dev-*
 .openzeppelin/.session
+.oz-migrate/dev-*

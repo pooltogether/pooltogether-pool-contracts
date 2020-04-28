@@ -18,8 +18,13 @@ program
   .action(async () => {
     console.log(chalk.dim(`Starting deployment to ${program.network}....`))
 
+    const projectFile = new ProjectFile()
+    const networkConfig = await ConfigManager.initNetworkConfiguration({
+      network: program.network
+    });
+
     const project = new Project('.oz-migrate')
-    const migration = await project.migrationForNetwork(program.network)
+    const migration = await project.migrationForNetwork(networkConfig.network)
 
     runShell(`oz session --network ${program.network} --from ${program.address} --expires 3600 --timeout 600 --blockTimeout 50`)
 
@@ -42,11 +47,6 @@ program
     await migration.migrate(50, async () => {
       runShell(`oz create SingleRandomWinnerPrizeStrategyFactory --force --init initialize`)
     })
-
-    const projectFile = new ProjectFile()
-    const networkConfig = await ConfigManager.initNetworkConfiguration({
-      network: program.network
-    });
 
     let networkFile = new NetworkFile(projectFile, networkConfig.network)
     const {
