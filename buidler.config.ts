@@ -12,7 +12,7 @@ export default {
       enabled: false,
       runs: 200
     },
-    evmVersion: "constantinople"
+    evmVersion: "istanbul"
   },
   paths: {
     artifacts: "./build"

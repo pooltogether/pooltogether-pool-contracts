@@ -13,17 +13,6 @@
   "name": "PoolTogether3",
   "version": "0.3.0",
   "compiler": {
-    "compiler": {
-      "manager": "openzeppelin",
-      "compilerSettings": {
-        "optimizer": {
-          "enabled": true,
-          "runs": "200"
-        },
-        "evmVersion": "constantinople"
-      },
-      "solcVersion": "0.6.4"
-    },
     "typechain": {
       "enabled": false
     },
@@ -35,7 +24,8 @@
       "optimizer": {
         "enabled": false,
         "runs": "200"
-      }
+      },
+      "evmVersion": "istanbul"
     }
   },
   "telemetryOptIn": false
