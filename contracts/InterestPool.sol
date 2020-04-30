@@ -18,9 +18,6 @@ import "./compound/CTokenInterface.sol";
 contract InterestPool is Initializable, TokenControllerInterface, InterestPoolInterface {
   using SafeMath for uint256;
 
-  // Seconds per block
-  uint256 public constant SECONDS_PER_BLOCK = 12;
-
   event CollateralSupplied(address from, uint256 amount);
   event CollateralRedeemed(address to, uint256 amount);
   event CollateralAllocated(address to, uint256 amount);
@@ -46,7 +43,7 @@ contract InterestPool is Initializable, TokenControllerInterface, InterestPoolIn
   }
 
   function availableInterest() public view override returns (uint256) {
-    uint256 balance = cToken.balanceOfUnderlying(address(this));
+    uint256 balance = balanceOfUnderlying(address(this));
     return balance.sub(accountedBalance());
   }
 
@@ -92,27 +89,13 @@ contract InterestPool is Initializable, TokenControllerInterface, InterestPoolIn
     return FixedPoint.multiplyUintByMantissa(multiplier, supplyRatePerBlock());
   }
 
-  function interestTokenValueOf(uint256 underlyingAmount) external view returns (uint256) {
-    return FixedPoint.divideUintByMantissa(underlyingAmount, exchangeRateCurrent());
-  }
-
-  function valueOfCTokens(uint256 interestTokens) external view returns (uint256) {
-    return FixedPoint.multiplyUintByMantissa(interestTokens, exchangeRateCurrent());
-  }
-
-  function exchangeRateCurrent() public view returns (uint256) {
-    (bool success, bytes memory data) = address(cToken).staticcall(abi.encodeWithSignature("exchangeRateCurrent()"));
-    require(success, "exchangeRateCurrent failed");
-    return abi.decode(data, (uint256));
-  }
-
   function supplyRatePerBlock() public view returns (uint256) {
     (bool success, bytes memory data) = address(cToken).staticcall(abi.encodeWithSignature("supplyRatePerBlock()"));
     require(success, "supplyRatePerBlock failed");
     return abi.decode(data, (uint256));
   }
 
-  function balanceOfUnderlying(address user) public view returns (uint256) {
+  function balanceOfUnderlying(address user) internal view returns (uint256) {
     (bool success, bytes memory data) = address(cToken).staticcall(abi.encodeWithSignature("balanceOfUnderlying(address)", user));
     require(success, "balanceOfUnderlying failed");
     return abi.decode(data, (uint256));

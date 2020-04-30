@@ -6,10 +6,11 @@
     "coverage": "rm -rf cache && buidler compile && buidler coverage --network coverage --temp build && rm -rf cache",
     "gas": "REPORT_GAS=true buidler test --network local",
     "migrate": "./scripts/migrate.js",
-    "migrate-local": "./scripts/migrate.js start -n local -a 0xc783df8a850f42e7f7e57013759c285caa701eb6",
+    "migrate-local": "./scripts/migrate.js start -n local -a $LOCAL_ADMIN_ADDRESS",
     "migrate-kovan": "./scripts/migrate.js start -n kovan",
     "console-kovan": "oz-console -n kovan",
     "session-kovan": "oz session --network kovan --from $ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50",
+    "session-local": "oz session --network local --from $LOCAL_ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50",
     "clean": "rm -rf build && rm -rf cache",
     "verify-kovan": "oz verify -n kovan --remote etherscan --api-key $ETHERSCAN_API_KEY"
   },
