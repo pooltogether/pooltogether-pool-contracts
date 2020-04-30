@@ -19,8 +19,9 @@ describe('CTokenMock contract', function() {
         [wallet, otherWallet] = await buidler.ethers.getSigners()
 
         token = await deployContract(wallet, ERC20Mintable, [])
-        cTokenMock = await deployContract(wallet, CTokenMock, [])
-        await cTokenMock.initialize(token.address, ethers.utils.parseEther('0.01'))
+        cTokenMock = await deployContract(wallet, CTokenMock, [
+            token.address, ethers.utils.parseEther('0.01')
+        ])
     })
 
     describe('mint()', function() {

@@ -9,6 +9,7 @@ function runShell(cmd) {
     console.error(chalk.red(cmd))
     throw new Error(`Could not run ${cmd}:`, result)
   }
+  return result
 }
 
 module.exports = {

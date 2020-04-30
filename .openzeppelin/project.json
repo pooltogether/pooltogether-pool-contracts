@@ -22,7 +22,7 @@
     "contractsDir": "contracts",
     "compilerSettings": {
       "optimizer": {
-        "enabled": false,
+        "enabled": true,
         "runs": "200"
       },
       "evmVersion": "istanbul"

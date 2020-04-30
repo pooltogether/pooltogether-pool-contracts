@@ -20,6 +20,8 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
     PrizePoolBuilder _prizePoolBuilder,
     SingleRandomWinnerPrizeStrategyFactory _prizeStrategyFactory
   ) public initializer {
+    require(address(_prizePoolBuilder) != address(0), "prize pool builder must be defined");
+    require(address(_prizeStrategyFactory) != address(0), "prize strategy factory must be defined");
     prizePoolBuilder = _prizePoolBuilder;
     prizeStrategyFactory = _prizeStrategyFactory;
   }
@@ -44,10 +46,10 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
       _ticketSymbol
     );
 
-    prizeStrategy.initialize(
-      prizePool,
-      prizePeriodInSeconds
-    );
+    // prizeStrategy.initialize(
+    //   prizePool,
+    //   prizePeriodInSeconds
+    // );
 
     return prizeStrategy;
   }

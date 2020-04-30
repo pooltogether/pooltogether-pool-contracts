@@ -31,6 +31,10 @@ contract PrizePoolBuilder is Initializable {
     TicketFactory _ticketFactory,
     ControlledTokenFactory _controlledTokenFactory
   ) public initializer {
+    require(address(_interestPoolFactory) != address(0), "interest pool factory is not defined");
+    require(address(_prizePoolFactory) != address(0), "prize pool factory is not defined");
+    require(address(_ticketFactory) != address(0), "ticket factory is not defined");
+    require(address(_controlledTokenFactory) != address(0), "controlled token factory is not defined");
     interestPoolFactory = _interestPoolFactory;
     prizePoolFactory = _prizePoolFactory;
     ticketFactory = _ticketFactory;
@@ -47,36 +51,36 @@ contract PrizePoolBuilder is Initializable {
   ) public returns (PrizePool) {
 
     InterestPool interestPool = interestPoolFactory.createInterestPool();
-    PrizePool prizePool = prizePoolFactory.createPrizePool();
-    Ticket ticket = ticketFactory.createTicket();
-    ControlledToken collateral = controlledTokenFactory.createControlledToken(_collateralName, _collateralSymbol, interestPool);
+    // PrizePool prizePool = prizePoolFactory.createPrizePool();
+    // Ticket ticket = ticketFactory.createTicket();
+    // ControlledToken collateral = controlledTokenFactory.createControlledToken(_collateralName, _collateralSymbol, interestPool);
 
-    interestPool.initialize(
-      cToken,
-      collateral,
-      address(prizePool)
-    );
+    // interestPool.initialize(
+    //   cToken,
+    //   collateral,
+    //   address(prizePool)
+    // );
 
-    ticket.initialize(
-      _ticketName,
-      _ticketSymbol,
-      prizePool
-    );
+    // ticket.initialize(
+    //   _ticketName,
+    //   _ticketSymbol,
+    //   prizePool
+    // );
 
-    prizePool.initialize(
-      ticket,
-      interestPool,
-      _prizeStrategy
-    );
+    // prizePool.initialize(
+    //   ticket,
+    //   interestPool,
+    //   _prizeStrategy
+    // );
 
-    emit PrizePoolCreated(
-      address(interestPool),
-      address(prizePool),
-      address(_prizeStrategy),
-      address(collateral),
-      address(ticket)
-    );
+    // emit PrizePoolCreated(
+    //   address(interestPool),
+    //   address(prizePool),
+    //   address(_prizeStrategy),
+    //   address(collateral),
+    //   address(ticket)
+    // );
 
-    return prizePool;
+    return PrizePool(0);
   }
 }

@@ -536,7 +536,7 @@
     safe-buffer "^5.1.1"
     util.promisify "^1.0.0"
 
-"@openzeppelin/cli@^2.8.1":
+"@openzeppelin/cli@^2.8.2":
   version "2.8.2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/cli/-/cli-2.8.2.tgz#b569c55f8c291ac4c7a16ca1b584ee2b4063a7f2"
   integrity sha512-K0m1UAywnweAwzbwwmqI+JSezDRnqDRWkKQMI2VV6T03LOXcG/L9oqO9KRORI8md+KbxBW9v5rmNV63wGQIRlA==
@@ -3707,7 +3707,7 @@ ethers@4.0.0-beta.3:
     uuid "2.0.1"
     xmlhttprequest "1.8.0"
 
-ethers@^4.0.0, ethers@^4.0.45:
+ethers@^4.0.0:
   version "4.0.45"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-4.0.45.tgz#8d4cd764d7c7690836b583d4849203c225eb56e2"
   integrity sha512-N/Wmc6Mw4pQO+Sss1HnKDCSS6KSCx0luoBMiPNq+1GbOaO3YaZOyplBEhj+NEoYsizZYODtkITg2oecPeNnidQ==
@@ -3737,7 +3737,7 @@ ethers@^4.0.20, ethers@^4.0.32, ethers@^4.0.40:
     uuid "2.0.1"
     xmlhttprequest "1.8.0"
 
-ethers@^4.0.38:
+ethers@^4.0.45, ethers@^4.0.47:
   version "4.0.47"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-4.0.47.tgz#91b9cd80473b1136dd547095ff9171bd1fc68c85"
   integrity sha512-hssRYhngV4hiDNeZmVU/k5/E8xmLG8UpcNUzg6mb7lqhgpFPH/t7nuv20RjRrEf0gblzvi2XwR5Te+V3ZFc9pQ==
@@ -6088,15 +6088,15 @@ os-tmpdir@^1.0.1, os-tmpdir@~1.0.2:
   resolved "https://registry.yarnpkg.com/os-tmpdir/-/os-tmpdir-1.0.2.tgz#bbe67406c79aa85c5cfec766fe5734555dfa1274"
   integrity sha1-u+Z0BseaqFxc/sdm/lc0VV36EnQ=
 
-oz-console@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/oz-console/-/oz-console-2.0.0.tgz#6a4376924fec572227128d4c9ffca599309a0d2e"
-  integrity sha512-h3VFU9xqMxVLrF7oxtpD1rnMKmgsoX3OAk+CJXes93dkAFZXEJQuBT5ZQC/aUoE8pEwBi7NnvV0CrQKoH8E4rQ==
+oz-console@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/oz-console/-/oz-console-2.0.1.tgz#ac16114b5ebbd84ecc39b3485d85724a1398d5e8"
+  integrity sha512-KzGMhf/gQDmmsnBs/jZcW+J7bDovREnodLhhBrjoWPKglzpN/XY75yrdCDJ34/zSm1Yi/Yb8Z1rIW57zLa7YRg==
   dependencies:
     async-repl "^0.4.0"
     chalk "^2.4.2"
     commander "^3.0.2"
-    ethers "^4.0.38"
+    ethers "^4.0.47"
     glob "^7.1.5"
     original-require "^1.0.1"
 

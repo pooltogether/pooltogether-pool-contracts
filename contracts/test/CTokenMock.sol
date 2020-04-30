@@ -18,22 +18,21 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.6.4;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./ERC20Mintable.sol";
 
-contract CTokenMock is Initializable, ERC20 {
+contract CTokenMock is ERC20 {
   mapping(address => uint256) ownerTokenAmounts;
   ERC20Mintable public underlying;
 
   uint256 __supplyRatePerBlock;
 
-  function initialize (
+  constructor (
     ERC20Mintable _token,
     uint256 _supplyRatePerBlock
-  ) public initializer {
+  ) public {
     require(address(_token) != address(0), "token is not defined");
     underlying = _token;
     __supplyRatePerBlock = _supplyRatePerBlock;

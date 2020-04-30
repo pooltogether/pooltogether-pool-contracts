@@ -39,8 +39,9 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
     provider = buidler.ethers.provider
 
     token = await deployContract(wallet, ERC20Mintable, [])
-    cToken = await deployContract(wallet, CTokenMock, [])    
-    await cToken.initialize(token.address, ethers.utils.parseEther('0.01'))
+    cToken = await deployContract(wallet, CTokenMock, [
+      token.address, ethers.utils.parseEther('0.01')
+    ])
 
     interestPoolFactory = await deployContract(wallet, InterestPoolFactory, [])
     await interestPoolFactory.initialize()
