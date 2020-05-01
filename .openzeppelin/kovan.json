@@ -742,13 +742,6 @@
     ],
     "PoolTogether3/SingleRandomWinnerPrizePoolBuilder": [
       {
-        "address": "0x8D5a7e6a1C3bD572D8c518927a817300600de4FF",
-        "version": "0.3.0",
-        "implementation": "0x9eE74C31A5DB48FAF5163Cb921496B74d6C1A399",
-        "admin": "0xEcB35dc152eC656916C1d67729180DE9DD1cffa5",
-        "kind": "Upgradeable"
-      },
-      {
         "address": "0x3ea5e0536Fd7751Fc2D4DD641afA0032F1720064",
         "version": "0.3.0",
         "implementation": "0x04cC15FC08526654948D7c6b05c55342C1883739",
