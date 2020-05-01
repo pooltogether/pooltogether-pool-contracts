@@ -1,6 +1,7 @@
 import { deployContract } from 'ethereum-waffle'
 import MockPrizePool from '../build/MockPrizePool.json'
 import MockInterestPool from '../build/MockInterestPool.json'
+import RNGBlockhash from '../build/RNGBlockhash.json'
 import Timestamp from '../build/Timestamp.json'
 import ERC20Mintable from '../build/ERC20Mintable.json'
 import SingleRandomWinnerPrizeStrategy from '../build/SingleRandomWinnerPrizeStrategy.json'
@@ -42,6 +43,7 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
     await deploy1820(wallet)
+    let blockhash = await deployContract(wallet, RNGBlockhash, [])
     ticket = await deployContract(wallet, Ticket, [])
     mockInterestPool = await deployContract(wallet, MockInterestPool, [])
     timestamp = await deployContract(wallet, Timestamp, [])
@@ -74,7 +76,8 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
     prizeStrategy = await deployContract(wallet, SingleRandomWinnerPrizeStrategy, [])
     let tx = await prizeStrategy.initialize(
       mockPrizePool.address,
-      prizePeriod
+      prizePeriod,
+      blockhash.address
     )
     let block = await buidler.ethers.provider.getBlock(tx.blockHash)
     prizePeriodStart = block.timestamp
@@ -131,7 +134,8 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
       await increaseTime(11)
 
       // award the prize.  will be 1 new ticket
-      await prizeStrategy.award()
+      await prizeStrategy.startAward()
+      await prizeStrategy.completeAward()
 
       expect(await ticket.totalSupply()).to.equal(toWei('11'))
 
@@ -190,9 +194,9 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
     })
   })
 
-  describe('award()', () => {
+  describe('startAward()', () => {
     it('should not be called before the prize period is over', async () => {
-      await expect(prizeStrategy.award()).to.be.revertedWith('prize period not over')
+      await expect(prizeStrategy.startAward()).to.be.revertedWith('prize period not over')
     })
 
     it('should draw a winner and allocate prize', async () => {
@@ -202,7 +206,8 @@ describe('SingleRandomWinnerPrizeStrategy contract', () => {
       await mockInterestPool.setAvailableInterest(toWei('1'))
 
       await increaseTime(11)
-      await prizeStrategy.award()
+      await prizeStrategy.startAward()
+      await prizeStrategy.completeAward()
       let block = await buidler.ethers.provider.getBlock('latest')
 
       expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('11'))

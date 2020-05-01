@@ -66,13 +66,18 @@ program
       runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${InterestPoolFactory.address},${PrizePoolFactory.address},${TicketFactory.address},${ControlledTokenFactory.address}`)
     })
 
+    await migration.migrate(70, async () => {
+      runShell(`oz create RNGBlockhash --force ${flags}`)
+    })
+
     context = await buildContext({ network: program.network, address: program.address })
     const {
-      PrizePoolBuilder
+      PrizePoolBuilder,
+      RNGBlockhash
     } = context.contracts
 
-    await migration.migrate(70, async () => {
-      runShell(`oz create SingleRandomWinnerPrizePoolBuilder --force ${flags} --init initialize --args ${PrizePoolBuilder.address},${SingleRandomWinnerPrizeStrategyFactory.address}`)
+    await migration.migrate(80, async () => {
+      runShell(`oz create SingleRandomWinnerPrizePoolBuilder --force ${flags} --init initialize --args ${PrizePoolBuilder.address},${SingleRandomWinnerPrizeStrategyFactory.address},${RNGBlockhash.address}`)
     })
 
     console.log(chalk.green(`Completed deployment.`))

@@ -5,6 +5,7 @@
     "PrizePoolBuilder": "PrizePoolBuilder",
     "InterestPoolFactory": "InterestPoolFactory",
     "TicketFactory": "TicketFactory",
+    "RNGBlockhash": "RNGBlockhash",
     "ControlledTokenFactory": "ControlledTokenFactory",
     "SingleRandomWinnerPrizePoolBuilder": "SingleRandomWinnerPrizePoolBuilder",
     "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory"

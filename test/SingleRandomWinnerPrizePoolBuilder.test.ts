@@ -1,5 +1,6 @@
 import { deployContract } from 'ethereum-waffle'
 import PrizePoolFactory from '../build/PrizePoolFactory.json'
+import RNGBlockhash from '../build/RNGBlockhash.json'
 import InterestPoolFactory from '../build/InterestPoolFactory.json'
 import PrizePoolBuilder from '../build/PrizePoolBuilder.json'
 import SingleRandomWinnerPrizePoolBuilder from '../build/SingleRandomWinnerPrizePoolBuilder.json'
@@ -9,7 +10,7 @@ import SingleRandomWinnerPrizeStrategyFactory from '../build/SingleRandomWinnerP
 import CTokenMock from '../build/CTokenMock.json'
 import ERC20Mintable from '../build/ERC20Mintable.json'
 import { expect } from 'chai'
-import { ethers, Contract } from 'ethers'
+import { ethers } from 'ethers'
 
 import { Provider } from 'ethers/providers'
 
@@ -31,12 +32,15 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
   let prizeStrategyFactory: any
   let prizePoolBuilder: any
   let singleRandomWinnerPrizePoolBuilder: any
+  let rng: any
 
   let provider: Provider
 
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
     provider = buidler.ethers.provider
+
+    rng = await deployContract(wallet, RNGBlockhash, [])
 
     token = await deployContract(wallet, ERC20Mintable, [])
     cToken = await deployContract(wallet, CTokenMock, [
@@ -68,7 +72,8 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
     singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [])
     await singleRandomWinnerPrizePoolBuilder.initialize(
       prizePoolBuilder.address,
-      prizeStrategyFactory.address
+      prizeStrategyFactory.address,
+      rng.address
     )
   })
 
@@ -99,6 +104,7 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
 
       let prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerPrizeStrategy', prizePoolCreatedEvent.prizeStrategy, wallet)
       expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
+      expect(await prizeStrategy.rng()).to.equal(rng.address)
     })
   })
 })

@@ -31,4 +31,12 @@ contract MockPrizeStrategy is PrizeStrategyInterface {
   function award(address user, uint256 amount) external {
     prizePool.award(user, amount);
   }
+
+  function canAward() external override view returns (bool) {
+    return true;
+  }
+
+  function startAward() external override {}
+
+  function completeAward() external override {}
 }
