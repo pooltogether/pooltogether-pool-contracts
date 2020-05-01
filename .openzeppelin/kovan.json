@@ -79,11 +79,11 @@
       }
     },
     "PrizePoolFactory": {
-      "address": "0x8b1668376304dE0d6F28f448650eA83ED9485aC5",
+      "address": "0x46a7Cc18411a34a9D2aF6eB51254646E65a71f30",
       "constructorCode": "608060405234801561001057600080fd5b506117d4806100206000396000f3fe",
-      "bodyBytecodeHash": "707eb1f95baade7b9f648c55fa405d8bfeda70cefe5c59a6fa16e1d39c4da7a5",
-      "localBytecodeHash": "7ad422b69f5e53e5394ee4c604be4e631b3bb2f527b0e1d297a249872db39006",
-      "deployedBytecodeHash": "7ad422b69f5e53e5394ee4c604be4e631b3bb2f527b0e1d297a249872db39006",
+      "bodyBytecodeHash": "670e1337383158c6dd7a97a979ae26a368169aeae59b0342f4cfb8529b55dd99",
+      "localBytecodeHash": "8714112b2ab8cbe2365499e52af550b33ed473fdf2e653b559980efc464b42b0",
+      "deployedBytecodeHash": "8714112b2ab8cbe2365499e52af550b33ed473fdf2e653b559980efc464b42b0",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -137,9 +137,9 @@
           "contract": "PrizePoolFactory",
           "path": "contracts/PrizePoolFactory.sol",
           "label": "instance",
-          "astId": 2521,
+          "astId": 2875,
           "type": "t_address",
-          "src": "329:25:17"
+          "src": "329:25:18"
         }
       ],
       "warnings": {
@@ -155,7 +155,9 @@
           "token/ERC20/ERC20.sol",
           "GSN/Context.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "TicketFactory": {
@@ -315,11 +317,11 @@
       }
     },
     "SingleRandomWinnerPrizeStrategyFactory": {
-      "address": "0x459986aF5B3383dB650bd0AAf9354491599b242F",
-      "constructorCode": "608060405234801561001057600080fd5b5061114a806100206000396000f3fe",
-      "bodyBytecodeHash": "a896916151bedc99af90275c4af645c48a1241ddbba3b7d46f878902d925b5b7",
-      "localBytecodeHash": "cdfd0b16a9309c2ef04ca6ea3c62db174ea063e1598d66463e0428111f1d0044",
-      "deployedBytecodeHash": "cdfd0b16a9309c2ef04ca6ea3c62db174ea063e1598d66463e0428111f1d0044",
+      "address": "0x38d556F27398234BE56F21F6d7d280Dc79501Df4",
+      "constructorCode": "608060405234801561001057600080fd5b506115c4806100206000396000f3fe",
+      "bodyBytecodeHash": "b9e2e9e96c7d9c81df363c0b9105ab4cb3251f8fff27a19ad2ea87acc3706425",
+      "localBytecodeHash": "f674afe68f5a064d996599507e06d3fc9f42674aac9cddaa7eb22703bd8cb496",
+      "deployedBytecodeHash": "f674afe68f5a064d996599507e06d3fc9f42674aac9cddaa7eb22703bd8cb496",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -373,9 +375,9 @@
           "contract": "SingleRandomWinnerPrizeStrategyFactory",
           "path": "contracts/SingleRandomWinnerPrizeStrategyFactory.sol",
           "label": "instance",
-          "astId": 3134,
+          "astId": 3512,
           "type": "t_address",
-          "src": "343:47:23"
+          "src": "343:47:26"
         }
       ],
       "warnings": {
@@ -391,7 +393,9 @@
           "token/ERC20/ERC20.sol",
           "GSN/Context.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "PrizePoolBuilder": {
@@ -699,7 +703,7 @@
       {
         "address": "0xE34D964B424a5fD0EF19fF7960925d590Ac83Da1",
         "version": "0.3.0",
-        "implementation": "0x8b1668376304dE0d6F28f448650eA83ED9485aC5",
+        "implementation": "0x46a7Cc18411a34a9D2aF6eB51254646E65a71f30",
         "admin": "0xEcB35dc152eC656916C1d67729180DE9DD1cffa5",
         "kind": "Upgradeable"
       }
@@ -726,7 +730,7 @@
       {
         "address": "0x3c879312F603F34Bc2EEBD232D019e14D1735BEb",
         "version": "0.3.0",
-        "implementation": "0x459986aF5B3383dB650bd0AAf9354491599b242F",
+        "implementation": "0x38d556F27398234BE56F21F6d7d280Dc79501Df4",
         "admin": "0xEcB35dc152eC656916C1d67729180DE9DD1cffa5",
         "kind": "Upgradeable"
       }
