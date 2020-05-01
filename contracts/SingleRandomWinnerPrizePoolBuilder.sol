@@ -16,6 +16,8 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
   PrizePoolBuilder public prizePoolBuilder;
   SingleRandomWinnerPrizeStrategyFactory public prizeStrategyFactory;
 
+  event SingleRandomWinnerPrizePoolCreated(address indexed creator, address indexed prizePool, address indexed singleRandomWinnerPrizeStrategy);
+
   function initialize (
     PrizePoolBuilder _prizePoolBuilder,
     SingleRandomWinnerPrizeStrategyFactory _prizeStrategyFactory
@@ -46,10 +48,12 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
       _ticketSymbol
     );
 
-    // prizeStrategy.initialize(
-    //   prizePool,
-    //   prizePeriodInSeconds
-    // );
+    prizeStrategy.initialize(
+      prizePool,
+      prizePeriodInSeconds
+    );
+
+    emit SingleRandomWinnerPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizeStrategy;
   }

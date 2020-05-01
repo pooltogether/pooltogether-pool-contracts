@@ -16,12 +16,12 @@ const toWei = ethers.utils.parseEther
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('PrizePool contract', () => {
   
-  let prizePool: Contract
-  let token: Contract
-  let ticket: Contract
-  let collateralToken: Contract
-  let mockInterestPool: Contract
-  let mockPrizeStrategy: Contract
+  let prizePool: any
+  let token: any
+  let ticket: any
+  let collateralToken: any
+  let mockInterestPool: any
+  let mockPrizeStrategy: any
 
   let wallet: any
   let allocator: any

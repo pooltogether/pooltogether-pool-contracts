@@ -17,8 +17,8 @@ const buidler = require("@nomiclabs/buidler")
 
 describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
   
-  let token: Contract
-  let cToken: Contract
+  let token: any
+  let cToken: any
 
   let wallet: any
   let allocator: any
@@ -77,18 +77,27 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
       let tx = await singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(cToken.address, 10, 'Sponsorship', 'SPON', 'Ticket', 'TICK')
 
       let receipt = await provider.getTransactionReceipt(tx.hash)
+
+      // @ts-ignore
+      expect(receipt.logs.length).to.gt(2)
+      
+      // @ts-ignore
+      let secondToLastLog = receipt.logs[receipt.logs.length - 2]
       // @ts-ignore
       let lastLog = receipt.logs[receipt.logs.length - 1]
 
-      let event = prizePoolBuilder.interface.events.PrizePoolCreated.decode(lastLog.data, lastLog.topics)
+      let prizePoolCreatedEvent = prizePoolBuilder.interface.events.PrizePoolCreated.decode(secondToLastLog.data, secondToLastLog.topics)
+      let singleRandomWinnerCreatedEvent = singleRandomWinnerPrizePoolBuilder.interface.events.SingleRandomWinnerPrizePoolCreated.decode(lastLog.data, lastLog.topics)
 
-      let interestPool = await buidler.ethers.getContractAt('InterestPool', event.interestPool, wallet)
+      expect(singleRandomWinnerCreatedEvent.creator).to.equal(wallet._address)
+
+      let interestPool = await buidler.ethers.getContractAt('InterestPool', prizePoolCreatedEvent.interestPool, wallet)
       expect(await interestPool.underlying()).to.equal(token.address)
 
-      let prizePool = await buidler.ethers.getContractAt('PrizePool', event.prizePool, wallet)
+      let prizePool = await buidler.ethers.getContractAt('PrizePool', prizePoolCreatedEvent.prizePool, wallet)
       expect(await prizePool.interestPool()).to.equal(interestPool.address)
 
-      let prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerPrizeStrategy', event.prizeStrategy, wallet)
+      let prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerPrizeStrategy', prizePoolCreatedEvent.prizeStrategy, wallet)
       expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
     })
   })

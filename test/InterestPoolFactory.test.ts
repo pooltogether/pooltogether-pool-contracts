@@ -10,10 +10,7 @@ const toWei = ethers.utils.parseEther
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('InterestPool contract', () => {
   
-  let interestPoolFactory: Contract
-  let token: Contract
-  let collateralToken: Contract
-  let cToken: Contract
+  let interestPoolFactory: any
 
   let wallet: any
   let allocator: any

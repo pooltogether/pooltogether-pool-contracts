@@ -19,12 +19,12 @@ const toWei = ethers.utils.parseEther
 
 describe('SingleRandomWinnerPrizeStrategy contract', () => {
   
-  let ticket: Contract
-  let mockInterestPool: Contract
-  let mockPrizePool: Contract
-  let prizeStrategy: Contract
-  let collateralToken: Contract
-  let token: Contract
+  let ticket: any
+  let mockInterestPool: any
+  let mockPrizePool: any
+  let prizeStrategy: any
+  let collateralToken: any
+  let token: any
 
   let wallet: any
   let allocator: any

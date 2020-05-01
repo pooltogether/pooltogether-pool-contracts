@@ -395,11 +395,11 @@
       }
     },
     "PrizePoolBuilder": {
-      "address": "0x4cd8E3196f3A81745D5C11D26bc871dBb5665840",
-      "constructorCode": "608060405234801561001057600080fd5b506106e8806100206000396000f3fe",
-      "bodyBytecodeHash": "d425a88b87c9c012de3e92827436b9294e0b67e77d93482713691cc12aefee37",
-      "localBytecodeHash": "c03fee9d00567fac23912dea7a03a425a3e62ae0fb6df1d4b880f4c524fc7851",
-      "deployedBytecodeHash": "c03fee9d00567fac23912dea7a03a425a3e62ae0fb6df1d4b880f4c524fc7851",
+      "address": "0x78FbFfCd8AE10E6e6480DA7Cdf76AAE39D106a35",
+      "constructorCode": "608060405234801561001057600080fd5b50610bcf806100206000396000f3fe",
+      "bodyBytecodeHash": "c144597bede0faf197200ac8b0b24a5407dffa343ab977818a0e4e1582cd08c8",
+      "localBytecodeHash": "662afb013b8c472da8916fb0b486da51f22e589052cd78a876bac09c5cd4a465",
+      "deployedBytecodeHash": "662afb013b8c472da8916fb0b486da51f22e589052cd78a876bac09c5cd4a465",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -495,7 +495,9 @@
           "introspection/IERC1820Registry.sol",
           "token/ERC777/IERC777Recipient.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "SingleRandomWinnerPrizePoolBuilder": {
@@ -638,7 +640,7 @@
       {
         "address": "0x130aACd0a36a5857cC9a9241048e2550c72144E5",
         "version": "0.3.0",
-        "implementation": "0x4cd8E3196f3A81745D5C11D26bc871dBb5665840",
+        "implementation": "0x78FbFfCd8AE10E6e6480DA7Cdf76AAE39D106a35",
         "admin": "0xEcB35dc152eC656916C1d67729180DE9DD1cffa5",
         "kind": "Upgradeable"
       }

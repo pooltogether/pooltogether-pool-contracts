@@ -13,10 +13,10 @@ const toWei = ethers.utils.parseEther
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('InterestPool contract', () => {
   
-  let interestPool: Contract
-  let token: Contract
-  let collateralToken: Contract
-  let cToken: Contract
+  let interestPool: any
+  let token: any
+  let collateralToken: any
+  let cToken: any
 
   let wallet: any
   let allocator: any
@@ -123,20 +123,6 @@ describe('InterestPool contract', () => {
       await token.approve(interestPool.address, toWei('2'))
       await interestPool.supply(toWei('2'))
       expect(await interestPool.accountedBalance()).to.equal(toWei('2'))
-    })
-  })
-
-  describe('exchangeRateCurrent()', () => {
-    it('should return 1e18 when no tokens or accrual', async () => {
-      expect(await interestPool.exchangeRateCurrent()).to.equal(toWei('1'))
-    })
-
-    it('should return the correct exchange rate', async () => {
-      await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supply(toWei('1'))
-      await cToken.accrueCustom(toWei('0.5'))
-
-      expect(await interestPool.exchangeRateCurrent()).to.equal(toWei('1.5'))
     })
   })
 })

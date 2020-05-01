@@ -13,9 +13,10 @@ import "./compound/CTokenInterface.sol";
 contract PrizePoolBuilder is Initializable {
 
   event PrizePoolCreated(
-    address indexed interestPool,
+    address indexed creator,
     address indexed prizePool,
     address indexed prizeStrategy,
+    address interestPool,
     address collateral,
     address ticket
   );
@@ -51,36 +52,37 @@ contract PrizePoolBuilder is Initializable {
   ) public returns (PrizePool) {
 
     InterestPool interestPool = interestPoolFactory.createInterestPool();
-    // PrizePool prizePool = prizePoolFactory.createPrizePool();
-    // Ticket ticket = ticketFactory.createTicket();
-    // ControlledToken collateral = controlledTokenFactory.createControlledToken(_collateralName, _collateralSymbol, interestPool);
+    PrizePool prizePool = prizePoolFactory.createPrizePool();
+    Ticket ticket = ticketFactory.createTicket();
+    ControlledToken collateral = controlledTokenFactory.createControlledToken(_collateralName, _collateralSymbol, interestPool);
 
-    // interestPool.initialize(
-    //   cToken,
-    //   collateral,
-    //   address(prizePool)
-    // );
+    interestPool.initialize(
+      cToken,
+      collateral,
+      address(prizePool)
+    );
 
-    // ticket.initialize(
-    //   _ticketName,
-    //   _ticketSymbol,
-    //   prizePool
-    // );
+    ticket.initialize(
+      _ticketName,
+      _ticketSymbol,
+      prizePool
+    );
 
-    // prizePool.initialize(
-    //   ticket,
-    //   interestPool,
-    //   _prizeStrategy
-    // );
+    prizePool.initialize(
+      ticket,
+      interestPool,
+      _prizeStrategy
+    );
 
-    // emit PrizePoolCreated(
-    //   address(interestPool),
-    //   address(prizePool),
-    //   address(_prizeStrategy),
-    //   address(collateral),
-    //   address(ticket)
-    // );
+    emit PrizePoolCreated(
+      msg.sender,
+      address(prizePool),
+      address(_prizeStrategy),
+      address(interestPool),
+      address(collateral),
+      address(ticket)
+    );
 
-    return PrizePool(0);
+    return prizePool;
   }
 }

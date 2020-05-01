@@ -9,8 +9,8 @@ const buidler = require("@nomiclabs/buidler")
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('CTokenMock contract', function() {
 
-    let token: Contract
-    let cTokenMock: Contract
+    let token: any
+    let cTokenMock: any
 
     let wallet: any
     let otherWallet: any
