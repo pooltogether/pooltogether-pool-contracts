@@ -395,11 +395,11 @@
       }
     },
     "PrizePoolBuilder": {
-      "address": "0x78FbFfCd8AE10E6e6480DA7Cdf76AAE39D106a35",
-      "constructorCode": "608060405234801561001057600080fd5b50610bcf806100206000396000f3fe",
-      "bodyBytecodeHash": "c144597bede0faf197200ac8b0b24a5407dffa343ab977818a0e4e1582cd08c8",
-      "localBytecodeHash": "662afb013b8c472da8916fb0b486da51f22e589052cd78a876bac09c5cd4a465",
-      "deployedBytecodeHash": "662afb013b8c472da8916fb0b486da51f22e589052cd78a876bac09c5cd4a465",
+      "address": "0xea81C1A635DCbe3eD22930458F2F1a2cE6b94A7B",
+      "constructorCode": "608060405234801561001057600080fd5b50610ba2806100206000396000f3fe",
+      "bodyBytecodeHash": "8c3f9ce527b2f1392c52a76afdd822641e25ed2e7ca45c194d4aba3a8000e87a",
+      "localBytecodeHash": "5b483865d104cdb1bb236d1d012796f706963654c71b8f1abccc8400a3036899",
+      "deployedBytecodeHash": "5b483865d104cdb1bb236d1d012796f706963654c71b8f1abccc8400a3036899",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -453,33 +453,33 @@
           "contract": "PrizePoolBuilder",
           "path": "contracts/PrizePoolBuilder.sol",
           "label": "interestPoolFactory",
-          "astId": 2387,
+          "astId": 2389,
           "type": "t_address",
-          "src": "584:46:16"
+          "src": "605:46:16"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/PrizePoolBuilder.sol",
           "label": "prizePoolFactory",
-          "astId": 2389,
+          "astId": 2391,
           "type": "t_address",
-          "src": "634:40:16"
+          "src": "655:40:16"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/PrizePoolBuilder.sol",
           "label": "ticketFactory",
-          "astId": 2391,
+          "astId": 2393,
           "type": "t_address",
-          "src": "678:34:16"
+          "src": "699:34:16"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/PrizePoolBuilder.sol",
           "label": "controlledTokenFactory",
-          "astId": 2393,
+          "astId": 2395,
           "type": "t_address",
-          "src": "716:52:16"
+          "src": "737:52:16"
         }
       ],
       "warnings": {
@@ -501,11 +501,11 @@
       }
     },
     "SingleRandomWinnerPrizePoolBuilder": {
-      "address": "0xfBfBB4feA88DF1F1bab1dA5566d546A7513F9151",
-      "constructorCode": "608060405234801561001057600080fd5b5061065c806100206000396000f3fe",
-      "bodyBytecodeHash": "6e0aadd6c85ae0d118e1aeda88f42ad1152498e6178ebaf14108a8bd0a57603f",
-      "localBytecodeHash": "1896ff69023b403602ff1c2c4c3e7bceccdf69a2a07931f2abd5458006bace39",
-      "deployedBytecodeHash": "1896ff69023b403602ff1c2c4c3e7bceccdf69a2a07931f2abd5458006bace39",
+      "address": "0x9eE74C31A5DB48FAF5163Cb921496B74d6C1A399",
+      "constructorCode": "608060405234801561001057600080fd5b5061071e806100206000396000f3fe",
+      "bodyBytecodeHash": "e06c8f154d3a51156c1070ae8f14b9a15f360ebf1bc6f4859d8f5fb871722de4",
+      "localBytecodeHash": "8e854dea6b0e90d9cc88513ae80bb2cad8d28a9829ffe343c6b33520a9d2e896",
+      "deployedBytecodeHash": "8e854dea6b0e90d9cc88513ae80bb2cad8d28a9829ffe343c6b33520a9d2e896",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -559,7 +559,7 @@
           "contract": "SingleRandomWinnerPrizePoolBuilder",
           "path": "contracts/SingleRandomWinnerPrizePoolBuilder.sol",
           "label": "prizePoolBuilder",
-          "astId": 2721,
+          "astId": 2794,
           "type": "t_address",
           "src": "460:40:21"
         },
@@ -567,7 +567,7 @@
           "contract": "SingleRandomWinnerPrizePoolBuilder",
           "path": "contracts/SingleRandomWinnerPrizePoolBuilder.sol",
           "label": "prizeStrategyFactory",
-          "astId": 2723,
+          "astId": 2796,
           "type": "t_address",
           "src": "504:66:21"
         }
@@ -585,7 +585,9 @@
           "introspection/IERC1820Registry.sol",
           "token/ERC777/IERC777Recipient.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     }
   },
@@ -638,18 +640,18 @@
     ],
     "PoolTogether3/PrizePoolBuilder": [
       {
-        "address": "0x130aACd0a36a5857cC9a9241048e2550c72144E5",
+        "address": "0xE997122D560686073086d77cfb13d0F71980ef1A",
         "version": "0.3.0",
-        "implementation": "0x78FbFfCd8AE10E6e6480DA7Cdf76AAE39D106a35",
+        "implementation": "0xea81C1A635DCbe3eD22930458F2F1a2cE6b94A7B",
         "admin": "0xEcB35dc152eC656916C1d67729180DE9DD1cffa5",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/SingleRandomWinnerPrizePoolBuilder": [
       {
-        "address": "0x9Da27d0B01d65D92d69d043526c15a25344c4016",
+        "address": "0x8D5a7e6a1C3bD572D8c518927a817300600de4FF",
         "version": "0.3.0",
-        "implementation": "0xfBfBB4feA88DF1F1bab1dA5566d546A7513F9151",
+        "implementation": "0x9eE74C31A5DB48FAF5163Cb921496B74d6C1A399",
         "admin": "0xEcB35dc152eC656916C1d67729180DE9DD1cffa5",
         "kind": "Upgradeable"
       }
