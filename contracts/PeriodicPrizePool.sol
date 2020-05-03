@@ -3,33 +3,31 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-// import "@nomiclabs/buidler/console.sol";
 
 import "./PrizePool.sol";
-import "./PrizeStrategyInterface.sol";
 
 /* solium-disable security/no-block-members */
-abstract contract PeriodicPrizeStrategy is Initializable, PrizeStrategyInterface {
+contract PeriodicPrizePool is PrizePool {
   using SafeMath for uint256;
 
-  PrizePoolInterface public override prizePool;
   uint256 currentPrizeStartedAt;
   uint256 prizePeriodSeconds;
   uint256 previousPrize;
 
   function initialize (
-    PrizePool _prizePool,
+    Ticket _ticket,
+    InterestPoolInterface _interestPool,
+    DistributionStrategyInterface _distributionStrategy,
     uint256 _prizePeriodSeconds
   ) public initializer {
-    require(address(_prizePool) != address(0), "prize pool must not be zero");
+    super.initialize(_ticket, _interestPool, _distributionStrategy);
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
-    prizePool = _prizePool;
     prizePeriodSeconds = _prizePeriodSeconds;
     currentPrizeStartedAt = block.timestamp;
   }
 
   function calculateExitFee(address, uint256 tickets) public view override returns (uint256) {
-    uint256 totalSupply = prizePool.ticket().totalSupply();
+    uint256 totalSupply = ticket.totalSupply();
     if (totalSupply == 0) {
       return 0;
     }
@@ -51,7 +49,7 @@ abstract contract PeriodicPrizeStrategy is Initializable, PrizeStrategyInterface
   }
 
   function estimatePrize(uint256 secondsPerBlockFixedPoint18) external view returns (uint256) {
-    return prizePool.currentPrize().add(estimateRemainingPrizeWithBlockTime(secondsPerBlockFixedPoint18));
+    return currentPrize().add(estimateRemainingPrizeWithBlockTime(secondsPerBlockFixedPoint18));
   }
 
   function estimateRemainingPrize() public view returns (uint256) {
@@ -59,9 +57,8 @@ abstract contract PeriodicPrizeStrategy is Initializable, PrizeStrategyInterface
   }
 
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {
-    InterestPoolInterface interestPool = prizePool.interestPool();
     return interestPool.estimateAccruedInterestOverBlocks(
-      interestPool.accountedBalance(),
+      interestPool.principal().totalSupply(),
       estimateRemainingBlocksToPrize(secondsPerBlockFixedPoint18)
     );
   }
@@ -86,17 +83,21 @@ abstract contract PeriodicPrizeStrategy is Initializable, PrizeStrategyInterface
     return block.timestamp > prizePeriodEndAt();
   }
 
-  function endPrizePeriod() internal {
+  function startAward() external override {
+    distributionStrategy.startAward();
+  }
+
+  function completeAward() external override {
+    uint256 prize = interestPool.balanceOfUnderlying(address(this)).sub(interestPool.principal().balanceOf(address(this)));
+    interestPool.mintPrincipal(prize);
+    interestPool.principal().approve(address(distributionStrategy), prize);
     currentPrizeStartedAt = block.timestamp;
+    distributionStrategy.completeAward(prize);
   }
 
   function prizePeriodEndAt() public view returns (uint256) {
     // current prize started at is non-inclusive, so add one
     return currentPrizeStartedAt + prizePeriodSeconds;
-  }
-
-  function ticket() public view returns (Ticket) {
-    return prizePool.ticket();
   }
 
   modifier onlyPrizePeriodOver() {

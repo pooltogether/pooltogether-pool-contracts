@@ -4,9 +4,8 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import "./ControlledTokenFactory.sol";
 import "./SingleRandomWinnerPrizeStrategyFactory.sol";
-import "./InterestPoolFactory.sol";
+import "./CompoundInterestPoolFactory.sol";
 import "./TicketFactory.sol";
-import "./PrizePoolFactory.sol";
 import "./PrizeStrategyInterface.sol";
 import "./compound/CTokenInterface.sol";
 import "./PrizePoolBuilder.sol";
@@ -35,26 +34,21 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
   function createSingleRandomWinnerPrizePool(
     CTokenInterface cToken,
     uint256 prizePeriodInSeconds,
-    string calldata _collateralName,
-    string calldata _collateralSymbol,
     string calldata _ticketName,
     string calldata _ticketSymbol
   ) external returns (SingleRandomWinnerPrizeStrategy) {
 
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
 
-    PrizePool prizePool = prizePoolBuilder.createPrizePool(
+    PrizePool prizePool = prizePoolBuilder.createPeriodicPrizePool(
       cToken,
       prizeStrategy,
-      _collateralName,
-      _collateralSymbol,
+      prizePeriodInSeconds,
       _ticketName,
       _ticketSymbol
     );
 
     prizeStrategy.initialize(
-      prizePool,
-      prizePeriodInSeconds,
       rng
     );
 

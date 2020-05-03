@@ -5,47 +5,49 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./RNGInterface.sol";
-import "./PeriodicPrizeStrategy.sol";
+import "./DistributionStrategyInterface.sol";
+import "./PrizePoolInterface.sol";
 
 /* solium-disable security/no-block-members */
-contract SingleRandomWinnerPrizeStrategy is PeriodicPrizeStrategy {
+contract SingleRandomWinnerPrizeStrategy is Initializable, DistributionStrategyInterface {
   using SafeMath for uint256;
 
   RNGInterface public rng;
 
-  uint256 rngRequestId;
+  mapping(address => uint256) rngRequestIds;
 
   function initialize(
-    PrizePool _prizePool,
-    uint256 _prizePeriodSeconds,
     RNGInterface _rng
   ) public initializer {
     require(address(_rng) != address(0), "rng cannot be zero");
-    super.initialize(_prizePool, _prizePeriodSeconds);
     rng = _rng;
   }
 
-  function startAward() external override onlyPrizePeriodOver notRequestingRN {
-    rngRequestId = rng.requestRandomNumber(address(0),0);
+  function startAward() external override {
+    rngRequestIds[msg.sender] = rng.requestRandomNumber(address(0),0);
   }
 
-  function completeAward() external override onlyRngRequestComplete {
-    require(rng.isRequestComplete(rngRequestId), "rng request not complete");
-    address winner = ticket().draw(uint256(rng.randomNumber(rngRequestId)));
-    uint256 total = prizePool.currentPrize();
-    previousPrize = total;
-    rngRequestId = 0;
-    prizePool.award(winner, total);
-    currentPrizeStartedAt = block.timestamp;
+  function completeAward(uint256 prize) external override onlyRngRequestComplete(msg.sender) {
+    PrizePoolInterface prizePool = PrizePoolInterface(msg.sender);
+    uint256 requestId = rngRequestIds[msg.sender];
+    address winner = prizePool.ticket().draw(uint256(rng.randomNumber(requestId)));
+    // Reset the request
+    rngRequestIds[msg.sender] = 0;
+    // Transfer the winnings to the winner
+    prizePool.ticket().transfer(winner, prize);
   }
 
-  modifier onlyRngRequestComplete() {
-    require(rng.isRequestComplete(rngRequestId), "rng request has not completed");
+  function requestIdOf(address sender) public view returns (uint256) {
+    return rngRequestIds[sender];
+  }
+
+  modifier onlyRngRequestComplete(address sender) {
+    require(rng.isRequestComplete(rngRequestIds[sender]), "rng request has not completed");
     _;
   }
 
-  modifier notRequestingRN() {
-    require(rngRequestId == 0, "rng is being requested");
+  modifier notRequestingRN(address sender) {
+    require(rngRequestIds[sender] == 0, "rng request is in flight");
     _;
   }
 }

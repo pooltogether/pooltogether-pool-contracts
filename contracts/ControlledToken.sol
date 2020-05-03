@@ -16,9 +16,15 @@ contract ControlledToken is Initializable, ERC20 {
     string memory _symbol,
     TokenControllerInterface _controller
   ) public virtual initializer {
-    require(address(_controller) != address(0), "controller cannot be zero");
+    initialize(_controller);
     name = _name;
     symbol = _symbol;
+  }
+
+  function initialize (
+    TokenControllerInterface _controller
+  ) public virtual initializer {
+    require(address(_controller) != address(0), "controller cannot be zero");
     controller = _controller;
   }
 

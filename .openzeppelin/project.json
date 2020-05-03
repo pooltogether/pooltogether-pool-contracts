@@ -1,7 +1,7 @@
 {
   "manifestVersion": "2.2",
   "contracts": {
-    "PrizePoolFactory": "PrizePoolFactory",
+    "PeriodicPrizePoolFactory": "PeriodicPrizePoolFactory",
     "PrizePoolBuilder": "PrizePoolBuilder",
     "InterestPoolFactory": "InterestPoolFactory",
     "TicketFactory": "TicketFactory",

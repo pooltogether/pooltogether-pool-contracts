@@ -12,58 +12,85 @@ import "./TokenControllerInterface.sol";
 import "./Ticket.sol";
 import "./PrizeStrategyInterface.sol";
 import "./PrizePoolInterface.sol";
+import "./DistributionStrategyInterface.sol";
 
 /* solium-disable security/no-block-members */
-contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterface {
+abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterface {
   using SafeMath for uint256;
   using Timelock for Timelock.State;
 
-  event TicketsRedeemedInstantly(address to, uint256 amount, uint256 fee);
-  event TicketsRedeemedWithTimelock(address to, uint256 amount, uint256 unlockTimestamp);
+  event TicketsRedeemedInstantly(address indexed to, uint256 amount, uint256 fee);
+  event TicketsRedeemedWithTimelock(address indexed to, uint256 amount, uint256 unlockTimestamp);
 
   InterestPoolInterface public override interestPool;
   Ticket public override ticket;
-  PrizeStrategyInterface public prizeStrategy;
+  DistributionStrategyInterface public distributionStrategy;
   mapping(address => Timelock.State) timelocks;
 
   function initialize (
     Ticket _ticket,
     InterestPoolInterface _interestPool,
-    PrizeStrategyInterface _prizeStrategy
+    DistributionStrategyInterface _distributionStrategy
   ) public initializer {
     require(address(_ticket) != address(0), "ticket must not be zero");
     require(address(_interestPool) != address(0), "prize pool must not be zero");
-    require(address(_prizeStrategy) != address(0), "prizeStrategy must not be zero");
+    require(address(_distributionStrategy) != address(0), "distributionStrategy must not be zero");
     ticket = _ticket;
     interestPool = _interestPool;
-    prizeStrategy = _prizeStrategy;
+    distributionStrategy = _distributionStrategy;
   }
 
-  function currentPrize() external view override returns (uint256) {
-    return interestPool.availableInterest();
+  function currentPrize() public view override returns (uint256) {
+    return interestPool.balanceOfUnderlying(address(this));
   }
 
-  function mintTickets(uint256 tickets) external override {
+  function mintTickets(uint256 amount) external override {
+    _mintTickets(msg.sender, amount);
+  }
+
+  function mintTicketsTo(address to, uint256 amount) external override {
+    _mintTickets(to, amount);
+  }
+
+  function _mintTickets(address to, uint256 amount) internal {
     // Transfer deposit
-    IERC20 token = interestPool.underlying();
-    require(token.allowance(msg.sender, address(this)) >= tickets, "insuff");
-    token.transferFrom(msg.sender, address(this), tickets);
+    IERC20 underlying = interestPool.underlying();
+    require(underlying.allowance(msg.sender, address(this)) >= amount, "insuff");
+    underlying.transferFrom(msg.sender, address(this), amount);
+    
+    // Mint tickets
+    ticket.mint(to, amount);
 
     // Deposit into pool
-    interestPool.supply(tickets);
+    interestPool.supplyUnderlying(amount);
+  }
+
+  function mintTicketsWithPrincipal(uint256 amount) external override {
+    _mintTicketsWithPrincipal(msg.sender, amount);
+  }
+
+  function mintTicketsWithPrincipalTo(address to, uint256 amount) external override {
+    _mintTicketsWithPrincipal(to, amount);
+  }
+
+  function _mintTicketsWithPrincipal(address to, uint256 amount) internal {
+    // Transfer deposit
+    IERC20 principal = interestPool.principal();
+    require(principal.allowance(msg.sender, address(this)) >= amount, "insuff");
+    principal.transferFrom(msg.sender, address(this), amount);
 
     // Mint tickets
-    ticket.mint(msg.sender, tickets);
+    ticket.mint(to, amount);
   }
 
   function redeemTicketsInstantly(uint256 tickets) external override returns (uint256) {
-    uint256 exitFee = prizeStrategy.calculateExitFee(msg.sender, tickets);
+    uint256 exitFee = calculateExitFee(msg.sender, tickets);
 
     // burn the tickets
     ticket.burn(msg.sender, tickets);
 
     // redeem the collateral
-    interestPool.redeem(tickets);
+    interestPool.redeemUnderlying(tickets);
 
     // transfer tickets less fee
     uint256 balance = tickets.sub(exitFee);
@@ -74,7 +101,7 @@ contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterfac
   }
 
   function redeemTicketsWithTimelock(uint256 tickets) external override returns (uint256) {
-    uint256 unlockTimestamp = prizeStrategy.calculateUnlockTimestamp(msg.sender, tickets);
+    uint256 unlockTimestamp = calculateUnlockTimestamp(msg.sender, tickets);
 
     // burn the tickets
     ticket.burn(msg.sender, tickets);
@@ -91,7 +118,7 @@ contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterfac
 
     // if there is change, withdraw the change and transfer
     if (change > 0) {
-      interestPool.redeem(change);
+      interestPool.redeemUnderlying(change);
       interestPool.underlying().transfer(msg.sender, change);
     }
 
@@ -120,7 +147,7 @@ contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterfac
 
     // pull out the collateral
     if (totalWithdrawal > 0) {
-      interestPool.redeem(totalWithdrawal);
+      interestPool.redeemUnderlying(totalWithdrawal);
     }
 
     for (i = 0; i < users.length; i++) {
@@ -132,15 +159,8 @@ contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterfac
     }
   }
 
-  function award(address winner, uint256 amount) external override onlyPrizeStrategy {
-    interestPool.allocateInterest(address(this), amount);
-    ticket.mint(winner, amount);
-  }
-
-  modifier onlyPrizeStrategy() {
-    require(msg.sender == address(prizeStrategy), "only prizeStrategy");
-    _;
-  }
-
   function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {}
+
+  function calculateExitFee(address sender, uint256 tickets) public virtual override view returns (uint256);
+  function calculateUnlockTimestamp(address sender, uint256 tickets) public virtual override view returns (uint256);
 }

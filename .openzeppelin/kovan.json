@@ -57,7 +57,7 @@
         },
         {
           "contract": "InterestPoolFactory",
-          "path": "contracts/InterestPoolFactory.sol",
+          "path": "contracts/CompoundInterestPoolFactory.sol",
           "label": "instance",
           "astId": 1760,
           "type": "t_address",
