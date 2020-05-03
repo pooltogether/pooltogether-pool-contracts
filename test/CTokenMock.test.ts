@@ -1,8 +1,7 @@
 import { deployContract } from 'ethereum-waffle';
-import { waffle } from '@nomiclabs/buidler';
 import ERC20Mintable from '../build/ERC20Mintable.json';
 import CTokenMock from '../build/CTokenMock.json';
-import { ethers, Contract } from 'ethers'
+import { ethers } from 'ethers'
 import { expect } from 'chai'
 const buidler = require("@nomiclabs/buidler")
 
@@ -26,6 +25,7 @@ describe('CTokenMock contract', function() {
 
     describe('mint()', function() {
         it('Should work', async function() {
+            // mint a bunch of tokens to the wallet and deposit
             await token.mint(wallet._address, '1000')
             await token.approve(cTokenMock.address, '100')
             await cTokenMock.mint('100')

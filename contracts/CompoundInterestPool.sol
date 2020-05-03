@@ -11,6 +11,8 @@ import "./ControlledToken.sol";
 import "./TokenControllerInterface.sol";
 import "./compound/CTokenInterface.sol";
 
+import "@nomiclabs/buidler/console.sol";
+
 /**
  * Wraps a cToken with a principal token.  The principal token represents how much underlying principal a user holds.
  * The interest can be minted as new principal tokens by the allocator.
@@ -51,18 +53,24 @@ contract CompoundInterestPool is Initializable, TokenControllerInterface, Intere
   function supplyUnderlying(uint256 amount) external override {
     underlying.transferFrom(msg.sender, address(this), amount);
     underlying.approve(address(cToken), amount);
-    uint256 cTokenBalance = balanceOfUnderlying(address(this));
+    uint256 cTokenBalance = cToken.balanceOf(address(this));
     cToken.mint(amount);
+    uint256 difference = cToken.balanceOf(address(this)).sub(cTokenBalance);
     principal.mint(msg.sender, amount);
-    cTokenBalances[msg.sender] = cTokenBalances[msg.sender].add(balanceOfUnderlying(address(this)).sub(cTokenBalance));
+    cTokenBalances[msg.sender] = cTokenBalances[msg.sender].add(difference);
 
     emit PrincipalSupplied(msg.sender, amount);
   }
 
+  function cTokenBalanceOf(address user) external view returns (uint256) {
+    return cTokenBalances[user];
+  }
+
   function redeemUnderlying(uint256 amount) external override {
-    uint256 cTokenBalance = balanceOfUnderlying(address(this));
+    uint256 cTokenBalance = cToken.balanceOf(address(this));
     cToken.redeemUnderlying(amount);
-    cTokenBalances[msg.sender] = cTokenBalances[msg.sender].sub(balanceOfUnderlying(address(this)).sub(cTokenBalance));
+    uint256 difference = cTokenBalance.sub(cToken.balanceOf(address(this)));
+    cTokenBalances[msg.sender] = cTokenBalances[msg.sender].sub(difference);
     underlying.transfer(msg.sender, amount);
     principal.burn(msg.sender, amount);
 
