@@ -6,47 +6,41 @@ import "../TokenControllerInterface.sol";
 
 contract MockInterestPool is InterestPoolInterface, TokenControllerInterface {
 
-  uint256 _balanceOfUnderlying;
-  IERC20 public _underlyingToken;
-  ControlledToken public override principal;
+  uint256 _balanceOf;
+  ControlledToken _token;
   uint256 public supplyRatePerBlock;
 
-  function initialize (IERC20 underlyingToken, ControlledToken _principal) external {
-    principal = _principal;
-    _underlyingToken = underlyingToken;
+  function initialize (ControlledToken token) external {
+    _token = token;
     supplyRatePerBlock = 100 wei;
   }
 
-  function setBalanceOfUnderlying(uint256 amount) external {
-    _balanceOfUnderlying = amount;
+  function setBalanceOf(uint256 amount) external {
+    _balanceOf = amount;
   }
 
-  function balanceOfUnderlying(address user) external view override returns (uint256) {
-    return _balanceOfUnderlying;
+  function balanceOf(address user) external view override returns (uint256) {
+    return _balanceOf;
   }
 
   function estimateAccruedInterestOverBlocks(uint256, uint256) external view override returns (uint256) {
     return 45;
   }
 
-  function mintPrincipal(uint256 amount) external override {
-    principal.mint(msg.sender, amount);
-  }
-
   function setSupplyRatePerBlock(uint256 _supplyRatePerBlock) public {
     supplyRatePerBlock = _supplyRatePerBlock;
   }
 
-  function underlying() external override view returns (IERC20) {
-    return _underlyingToken;
+  function token() external override view returns (IERC20) {
+    return _token;
   }
 
-  function supplyUnderlying(uint256 amount) external override {
-    principal.mint(msg.sender, amount);
+  function supply(uint256 amount) external override {
+    _token.transferFrom(msg.sender, address(this), amount);
   }
 
-  function redeemUnderlying(uint256 amount) external override {
-    principal.burn(msg.sender, amount);
+  function redeem(uint256 amount) external override {
+    _token.transfer(msg.sender, amount);
   }
 
   function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {}

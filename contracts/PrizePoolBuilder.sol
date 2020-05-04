@@ -46,12 +46,15 @@ contract PrizePoolBuilder is Initializable {
     DistributionStrategyInterface _distributionStrategy,
     uint256 prizePeriodSeconds,
     string memory _ticketName,
-    string memory _ticketSymbol
+    string memory _ticketSymbol,
+    string memory _sponsorshipName,
+    string memory _sponsorshipSymbol
   ) public returns (PrizePool) {
 
     CompoundInterestPool interestPool = compoundInterestPoolBuilder.createCompoundInterestPool(cToken);
     PeriodicPrizePool prizePool = periodicPrizePoolFactory.createPeriodicPrizePool();
     Ticket ticket = ticketFactory.createTicket();
+    ControlledToken sponsorship = controlledTokenFactory.createControlledToken();
 
     ticket.initialize(
       _ticketName,
@@ -59,8 +62,15 @@ contract PrizePoolBuilder is Initializable {
       prizePool
     );
 
+    sponsorship.initialize(
+      _sponsorshipName,
+      _sponsorshipSymbol,
+      prizePool
+    );
+
     prizePool.initialize(
       ticket,
+      sponsorship,
       interestPool,
       _distributionStrategy,
       prizePeriodSeconds

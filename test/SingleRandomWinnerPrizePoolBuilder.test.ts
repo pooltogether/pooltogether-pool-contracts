@@ -65,8 +65,7 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
 
     compoundInterestPoolBuilder = await deployContract(wallet, CompoundInterestPoolBuilder, [])
     await compoundInterestPoolBuilder.initialize(
-      interestPoolFactory.address,
-      controlledTokenFactory.address
+      interestPoolFactory.address
     )
 
     prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [])
@@ -87,7 +86,7 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
 
   describe('createSingleRandomWinnerPrizePool()', () => {
     it('should create a new prize pool', async () => {
-      let tx = await singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(cToken.address, 10, 'Ticket', 'TICK')
+      let tx = await singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(cToken.address, 10, 'Ticket', 'TICK', 'Sponsorship', 'SPON')
 
       let receipt = await provider.getTransactionReceipt(tx.hash)
 
@@ -107,7 +106,7 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
       debug(`loading up CompoundInterestPool...`)
 
       let interestPool = await buidler.ethers.getContractAt('CompoundInterestPool', prizePoolCreatedEvent.interestPool, wallet)
-      expect(await interestPool.underlying()).to.equal(token.address)
+      expect(await interestPool.token()).to.equal(token.address)
 
       debug(`loading up PeriodicPrizePool...`)
 

@@ -35,7 +35,9 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
     CTokenInterface cToken,
     uint256 prizePeriodInSeconds,
     string calldata _ticketName,
-    string calldata _ticketSymbol
+    string calldata _ticketSymbol,
+    string calldata _sponsorshipName,
+    string calldata _sponsorshipSymbol
   ) external returns (SingleRandomWinnerPrizeStrategy) {
 
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
@@ -45,7 +47,9 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
       prizeStrategy,
       prizePeriodInSeconds,
       _ticketName,
-      _ticketSymbol
+      _ticketSymbol,
+      _sponsorshipName,
+      _sponsorshipSymbol
     );
 
     prizeStrategy.initialize(

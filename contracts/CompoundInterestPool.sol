@@ -5,19 +5,16 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-import "./compound/CTokenInterface.sol";
 import "./InterestPoolInterface.sol";
 import "./ControlledToken.sol";
 import "./TokenControllerInterface.sol";
 import "./compound/CTokenInterface.sol";
 
-import "@nomiclabs/buidler/console.sol";
-
 /**
  * Wraps a cToken with a principal token.  The principal token represents how much underlying principal a user holds.
  * The interest can be minted as new principal tokens by the allocator.
  */
-contract CompoundInterestPool is Initializable, TokenControllerInterface, InterestPoolInterface {
+contract CompoundInterestPool is Initializable, InterestPoolInterface {
   using SafeMath for uint256;
 
   event PrincipalSupplied(address from, uint256 amount);
@@ -25,38 +22,26 @@ contract CompoundInterestPool is Initializable, TokenControllerInterface, Intere
   event PrincipalMinted(address to, uint256 amount);
 
   CTokenInterface public cToken;
-  ControlledToken public override principal;
-  IERC20 public override underlying;
 
   mapping(address => uint256) cTokenBalances;
 
   function initialize (
-    CTokenInterface _cToken,
-    ControlledToken _principal
+    CTokenInterface _cToken
   ) external initializer {
     require(address(_cToken) != address(0), "cToken cannot be zero");
-    require(address(_principal) != address(0), "principal cannot be zero");
-    require(address(_principal.controller()) == address(this), "principal controller does not match");
     cToken = _cToken;
-    underlying = IERC20(_cToken.underlying());
-    principal = _principal;
   }
 
-  function balanceOfUnderlying(address user) public view override returns (uint256) {
+  function balanceOf(address user) public view override returns (uint256) {
     return FixedPoint.multiplyUintByMantissa(cTokenBalances[user], exchangeRateCurrent());
   }
 
-  function balanceOfInterest(address user) public view returns (uint256) {
-    return balanceOfUnderlying(user).sub(principal.balanceOf(user));
-  }
-
-  function supplyUnderlying(uint256 amount) external override {
-    underlying.transferFrom(msg.sender, address(this), amount);
-    underlying.approve(address(cToken), amount);
+  function supply(uint256 amount) external override {
+    token().transferFrom(msg.sender, address(this), amount);
+    token().approve(address(cToken), amount);
     uint256 cTokenBalance = cToken.balanceOf(address(this));
     cToken.mint(amount);
     uint256 difference = cToken.balanceOf(address(this)).sub(cTokenBalance);
-    principal.mint(msg.sender, amount);
     cTokenBalances[msg.sender] = cTokenBalances[msg.sender].add(difference);
 
     emit PrincipalSupplied(msg.sender, amount);
@@ -66,21 +51,14 @@ contract CompoundInterestPool is Initializable, TokenControllerInterface, Intere
     return cTokenBalances[user];
   }
 
-  function redeemUnderlying(uint256 amount) external override {
+  function redeem(uint256 amount) external override {
     uint256 cTokenBalance = cToken.balanceOf(address(this));
     cToken.redeemUnderlying(amount);
     uint256 difference = cTokenBalance.sub(cToken.balanceOf(address(this)));
     cTokenBalances[msg.sender] = cTokenBalances[msg.sender].sub(difference);
-    underlying.transfer(msg.sender, amount);
-    principal.burn(msg.sender, amount);
+    token().transfer(msg.sender, amount);
 
     emit PrincipalRedeemed(msg.sender, amount);
-  }
-
-  function mintPrincipal(uint256 amount) external override {
-    require(amount <= balanceOfInterest(msg.sender), "exceed-interest");
-    principal.mint(msg.sender, amount);
-    emit PrincipalMinted(msg.sender, amount);
   }
 
   function estimateAccruedInterestOverBlocks(uint256 principalAmount, uint256 blocks) public view override returns (uint256) {
@@ -101,15 +79,7 @@ contract CompoundInterestPool is Initializable, TokenControllerInterface, Intere
     return abi.decode(data, (uint256));
   }
 
-  function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {
-    // burn and mint are handled elsewhere.
-    if (from == address(0) || to == address(0)) {
-      return;
-    }
-
-    uint256 cTokenAmount = FixedPoint.multiplyUintByMantissa(tokenAmount, cToken.exchangeRateCurrent());
-
-    cTokenBalances[from] = cTokenBalances[from].sub(cTokenAmount);
-    cTokenBalances[to] = cTokenBalances[to].add(cTokenAmount);
+  function token() public view override returns (IERC20) {
+    return IERC20(cToken.underlying());
   }
 }

@@ -17,11 +17,12 @@ contract PeriodicPrizePool is PrizePool {
 
   function initialize (
     Ticket _ticket,
+    ControlledToken _sponsorship,
     InterestPoolInterface _interestPool,
     DistributionStrategyInterface _distributionStrategy,
     uint256 _prizePeriodSeconds
   ) public initializer {
-    super.initialize(_ticket, _interestPool, _distributionStrategy);
+    super.initialize(_ticket, _sponsorship, _interestPool, _distributionStrategy);
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
     prizePeriodSeconds = _prizePeriodSeconds;
     currentPrizeStartedAt = block.timestamp;
@@ -59,7 +60,7 @@ contract PeriodicPrizePool is PrizePool {
 
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {
     return interestPool.estimateAccruedInterestOverBlocks(
-      interestPool.principal().totalSupply(),
+      ticket.totalSupply(),
       estimateRemainingBlocksToPrize(secondsPerBlockFixedPoint18)
     );
   }
@@ -89,9 +90,9 @@ contract PeriodicPrizePool is PrizePool {
   }
 
   function completeAward() external override {
-    uint256 prize = interestPool.balanceOfUnderlying(address(this)).sub(interestPool.principal().balanceOf(address(this)));
-    interestPool.mintPrincipal(prize);
-    interestPool.principal().approve(address(distributionStrategy), prize);
+    uint256 prize = currentPrize();
+    sponsorship.mint(address(this), prize);
+    sponsorship.approve(address(distributionStrategy), prize);
     currentPrizeStartedAt = block.timestamp;
     distributionStrategy.completeAward(prize);
     previousPrize = prize;

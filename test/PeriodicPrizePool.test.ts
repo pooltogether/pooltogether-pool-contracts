@@ -20,7 +20,7 @@ describe('PeriodicPrizePool contract', () => {
   let prizePool: any
   let token: any
   let ticket: any
-  let principal: any
+  let sponsorship: any
   let mockInterestPool: any
   let mockPrizeStrategy: any
 
@@ -43,11 +43,7 @@ describe('PeriodicPrizePool contract', () => {
     mockPrizeStrategy = await deployContract(wallet, MockPrizeStrategy, [], overrides)
     mockInterestPool = await deployContract(wallet, MockInterestPool, [], overrides)
     debug('Deploying ControlledToken...')
-    principal = await deployContract(wallet, ControlledToken, [], overrides)
     prizePeriodSeconds = 10
-    await principal['initialize(address)'](
-      mockInterestPool.address
-    )
 
     debug('Deploying ControlledToken...')
 
@@ -58,14 +54,22 @@ describe('PeriodicPrizePool contract', () => {
       prizePool.address
     )
 
+    sponsorship = await deployContract(wallet, ControlledToken, [], overrides)
+    await sponsorship.initialize(
+      'Ticket',
+      'TICK',
+      prizePool.address
+    )
+
     debug('Deploying ControlledToken...')
 
     await mockInterestPool.initialize(
-      token.address,
-      principal.address
+      token.address
     )
-    let tx = await prizePool['initialize(address,address,address,uint256)'](
+
+    let tx = await prizePool['initialize(address,address,address,address,uint256)'](
       ticket.address,
+      sponsorship.address,
       mockInterestPool.address,
       mockPrizeStrategy.address,
       prizePeriodSeconds
@@ -86,7 +90,7 @@ describe('PeriodicPrizePool contract', () => {
 
   describe('currentPrize()', () => {
     it('should return the available interest from the prize pool', async () => {
-      await mockInterestPool.setBalanceOfUnderlying(toWei('100'))
+      await mockInterestPool.setBalanceOf(toWei('100'))
       expect(await prizePool.currentPrize()).to.equal(toWei('100'))
     })
   })
@@ -94,13 +98,17 @@ describe('PeriodicPrizePool contract', () => {
   describe('mintTickets()', () => {
     it('should create tickets', async () => {
       await token.approve(prizePool.address, toWei('10'))
+
+      expect(await token.balanceOf(prizePool.address)).to.equal(toWei('0'))
+
       await prizePool.mintTickets(toWei('10'))
 
-      // underlying assets were moved to ticketpool
-      expect(await token.balanceOf(prizePool.address)).to.equal(toWei('10'))
+      debug('checking token balance')
+
+      // underlying assets were moved to interestPool
+      expect(await token.balanceOf(mockInterestPool.address)).to.equal(toWei('10'))
       
-      // interest pool minted collateral tickets to the ticket pool
-      expect(await principal.balanceOf(prizePool.address)).to.equal(toWei('10'))
+      debug('checking ticket balance')
 
       // ticket pool minted tickets for the depositor
       expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('10'))
@@ -115,13 +123,15 @@ describe('PeriodicPrizePool contract', () => {
       let userBalance = await token.balanceOf(wallet._address)
 
       // prize of 10
-      await mockInterestPool.setBalanceOfUnderlying(toWei('20')) 
+      await mockInterestPool.setBalanceOf(toWei('20')) 
 
       await increaseTime(prizePeriodSeconds)
 
       await prizePool.startAward()
       await prizePool.completeAward()
 
+      debug(`checking previous prize...`)
+    
       expect(await prizePool.previousPrize()).to.equal(toWei('10'))
 
       await increaseTime(4)
@@ -253,7 +263,7 @@ describe('PeriodicPrizePool contract', () => {
   describe('calculateExitFee(address, uint256 tickets)', () => {
     it('should calculate', async () => {
       // ensure there is interest
-      await mockInterestPool.setBalanceOfUnderlying(toWei('11'))
+      await mockInterestPool.setBalanceOf(toWei('11'))
       
       // create tickets
       await token.approve(prizePool.address, toWei('10'))
@@ -265,7 +275,12 @@ describe('PeriodicPrizePool contract', () => {
       await prizePool.startAward()
       await prizePool.completeAward()
 
-      expect(await principal.totalSupply()).to.equal(toWei('11'))
+      debug('checking total sponsorship supply...')
+
+      // The winnings became sponsorship
+      expect(await sponsorship.totalSupply()).to.equal(toWei('1'))
+
+      debug('calculating exit fee...')
 
       // now post-prize we want to check the fee.  Note that there are still only 10 tickets
       let exitFee = await prizePool.calculateExitFee(wallet._address, toWei('10'))
@@ -286,8 +301,9 @@ describe('PeriodicPrizePool contract', () => {
 
   describe('estimatePrize()', () => {
     it('should calculate the prize', async () => {
-      await mockInterestPool.setBalanceOfUnderlying(toWei('1'))
-      await mockInterestPool.supplyUnderlying(toWei('10'))
+      await mockInterestPool.setBalanceOf(toWei('1'))
+      await token.approve(mockInterestPool.address, toWei('10'))
+      await mockInterestPool.supply(toWei('10'))
       // should be current prize + estimated remaining
       expect(await prizePool.estimatePrize('1')).to.equal('1000000000000000045')
     })
@@ -324,7 +340,7 @@ describe('PeriodicPrizePool contract', () => {
       await token.approve(prizePool.address, toWei('10'))
       await prizePool.mintTickets(toWei('10'))
 
-      await mockInterestPool.setBalanceOfUnderlying(toWei('20'))
+      await mockInterestPool.setBalanceOf(toWei('20'))
 
       await increaseTime(11)
       await prizePool.startAward()
@@ -332,10 +348,11 @@ describe('PeriodicPrizePool contract', () => {
       let block = await buidler.ethers.provider.getBlock('latest')
 
       expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('10'))
-      // Ensure winnings have been minted
-      expect(await principal.balanceOf(prizePool.address)).to.equal(toWei('20'))
+      
+      // Ensure winnings have been minted as sponsorship
+      expect(await sponsorship.balanceOf(prizePool.address)).to.equal(toWei('10'))
       // Ensure allowance has been made for strategy
-      expect(await principal.allowance(prizePool.address, mockPrizeStrategy.address)).to.equal(toWei('10'))
+      expect(await sponsorship.allowance(prizePool.address, mockPrizeStrategy.address)).to.equal(toWei('10'))
 
       // new prize period end block
       expect(await prizePool.prizePeriodEndAt()).to.equal(block.timestamp + 10)
