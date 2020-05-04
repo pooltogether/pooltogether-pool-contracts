@@ -10,20 +10,25 @@ import "./PrizePool.sol";
 contract PeriodicPrizePool is PrizePool {
   using SafeMath for uint256;
 
+  RNGInterface public rng;
   uint256 public currentPrizeStartedAt;
   uint256 prizePeriodSeconds;
   uint256 public previousPrize;
   uint256 public feeScaleMantissa;
+  uint256 public rngRequestId;
 
   function initialize (
     Ticket _ticket,
     ControlledToken _sponsorship,
     InterestPoolInterface _interestPool,
     DistributionStrategyInterface _distributionStrategy,
+    RNGInterface _rng,
     uint256 _prizePeriodSeconds
   ) public initializer {
     super.initialize(_ticket, _sponsorship, _interestPool, _distributionStrategy);
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
+    require(address(_rng) != address(0), "rng cannot be zero");
+    rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
     currentPrizeStartedAt = block.timestamp;
   }
@@ -86,7 +91,7 @@ contract PeriodicPrizePool is PrizePool {
   }
 
   function startAward() external override onlyPrizePeriodOver {
-    distributionStrategy.startAward();
+    rngRequestId = rng.requestRandomNumber(address(0),0);
   }
 
   function completeAward() external override {
@@ -94,7 +99,7 @@ contract PeriodicPrizePool is PrizePool {
     sponsorship.mint(address(this), prize);
     sponsorship.approve(address(distributionStrategy), prize);
     currentPrizeStartedAt = block.timestamp;
-    distributionStrategy.completeAward(prize);
+    distributionStrategy.distribute(uint256(rng.randomNumber(rngRequestId)), prize);
     previousPrize = prize;
   }
 
@@ -105,6 +110,16 @@ contract PeriodicPrizePool is PrizePool {
 
   modifier onlyPrizePeriodOver() {
     require(canAward(), "prize period not over");
+    _;
+  }
+
+  modifier onlyRngRequestComplete() {
+    require(rng.isRequestComplete(rngRequestId), "rng request has not completed");
+    _;
+  }
+
+  modifier notRequestingRN(address sender) {
+    require(rngRequestId == 0, "rng request is in flight");
     _;
   }
 }

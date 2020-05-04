@@ -1,5 +1,6 @@
 import { deployContract } from 'ethereum-waffle'
 import MockInterestPool from '../build/MockInterestPool.json'
+import RNGBlockhash from '../build/RNGBlockhash.json'
 import MockPrizeStrategy from '../build/MockPrizeStrategy.json'
 import PeriodicPrizePool from '../build/PeriodicPrizePool.json'
 import ERC20Mintable from '../build/ERC20Mintable.json'
@@ -9,6 +10,7 @@ import { expect } from 'chai'
 import { ethers } from './helpers/ethers'
 import { increaseTime } from './helpers/increaseTime'
 import buidler from './helpers/buidler'
+
 
 const toWei = ethers.utils.parseEther
 
@@ -23,6 +25,7 @@ describe('PeriodicPrizePool contract', () => {
   let sponsorship: any
   let mockInterestPool: any
   let mockPrizeStrategy: any
+  let rng: any
 
   let wallet: any
   let allocator: any
@@ -37,6 +40,9 @@ describe('PeriodicPrizePool contract', () => {
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
 
+    ethers.errors.setLogLevel('error')
+
+    rng = await deployContract(wallet, RNGBlockhash, [])
     prizePool = await deployContract(wallet, PeriodicPrizePool, [], overrides)
     token = await deployContract(wallet, ERC20Mintable, [], overrides)
     debug('Deploying MockPrizeStrategy...')
@@ -67,11 +73,12 @@ describe('PeriodicPrizePool contract', () => {
       token.address
     )
 
-    let tx = await prizePool['initialize(address,address,address,address,uint256)'](
+    let tx = await prizePool['initialize(address,address,address,address,address,uint256)'](
       ticket.address,
       sponsorship.address,
       mockInterestPool.address,
       mockPrizeStrategy.address,
+      rng.address,
       prizePeriodSeconds
     )
     let block = await buidler.ethers.provider.getBlock(tx.blockHash)

@@ -4,14 +4,11 @@ import "../DistributionStrategyInterface.sol";
 import "../PrizePoolInterface.sol";
 
 contract MockPrizeStrategy is DistributionStrategyInterface {
-  bool public awardStarted;
+  uint256 public randomNumber;
   uint256 public prize;
 
-  function startAward() external override {
-    awardStarted = true;
-  }
-
-  function completeAward(uint256 _prize) external override {
+  function distribute(uint256 _randomNumber, uint256 _prize) external override {
     prize = _prize;
+    randomNumber = _randomNumber;
   }
 }

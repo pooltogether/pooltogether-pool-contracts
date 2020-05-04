@@ -14,21 +14,17 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
 
   PrizePoolBuilder public prizePoolBuilder;
   SingleRandomWinnerPrizeStrategyFactory public prizeStrategyFactory;
-  RNGInterface public rng;
 
   event SingleRandomWinnerPrizePoolCreated(address indexed creator, address indexed prizePool, address indexed singleRandomWinnerPrizeStrategy);
 
   function initialize (
     PrizePoolBuilder _prizePoolBuilder,
-    SingleRandomWinnerPrizeStrategyFactory _prizeStrategyFactory,
-    RNGInterface _rng
+    SingleRandomWinnerPrizeStrategyFactory _prizeStrategyFactory
   ) public initializer {
     require(address(_prizePoolBuilder) != address(0), "prize pool builder must be defined");
     require(address(_prizeStrategyFactory) != address(0), "prize strategy factory must be defined");
-    require(address(_rng) != address(0), "rng cannot be zero");
     prizePoolBuilder = _prizePoolBuilder;
     prizeStrategyFactory = _prizeStrategyFactory;
-    rng = _rng;
   }
 
   function createSingleRandomWinnerPrizePool(
@@ -50,10 +46,6 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
       _ticketSymbol,
       _sponsorshipName,
       _sponsorshipSymbol
-    );
-
-    prizeStrategy.initialize(
-      rng
     );
 
     emit SingleRandomWinnerPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));

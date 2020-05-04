@@ -15,9 +15,23 @@ contract TicketFactory is Initializable, ProxyFactory {
     instance = new Ticket();
   }
 
-  function createTicket() external returns (Ticket) {
+  function createTicket() public returns (Ticket) {
     Ticket ticket = Ticket(deployMinimal(address(instance), ""));
     emit TicketCreated(address(ticket));
     return ticket;
+  }
+
+  function createTicket(
+    string memory _interestName,
+    string memory _interestSymbol,
+    TokenControllerInterface controller
+  ) public returns (Ticket) {
+    Ticket token = createTicket();
+    token.initialize(
+      _interestName,
+      _interestSymbol,
+      controller
+    );
+    return token;
   }
 }

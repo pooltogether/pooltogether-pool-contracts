@@ -74,13 +74,13 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
       prizePoolFactory.address,
       ticketFactory.address,
       controlledTokenFactory.address,
+      rng.address
     )
 
     singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [])
     await singleRandomWinnerPrizePoolBuilder.initialize(
       prizePoolBuilder.address,
-      prizeStrategyFactory.address,
-      rng.address
+      prizeStrategyFactory.address
     )
   })
 
@@ -112,11 +112,6 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
 
       let prizePool = await buidler.ethers.getContractAt('PeriodicPrizePool', prizePoolCreatedEvent.prizePool, wallet)
       expect(await prizePool.interestPool()).to.equal(interestPool.address)
-
-      debug(`loading up SingleRandomWinnerPrizeStrategy...`)
-
-      let prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerPrizeStrategy', prizePoolCreatedEvent.distributionStrategy, wallet)
-      expect(await prizeStrategy.rng()).to.equal(rng.address)
     })
   })
 })

@@ -14,6 +14,7 @@ import "./Ticket.sol";
 import "./PrizeStrategyInterface.sol";
 import "./PrizePoolInterface.sol";
 import "./DistributionStrategyInterface.sol";
+import "./RNGInterface.sol";
 
 /* solium-disable security/no-block-members */
 abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterface {
@@ -27,6 +28,7 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
   Ticket public override ticket;
   ControlledToken public override sponsorship;
   DistributionStrategyInterface public distributionStrategy;
+  
   mapping(address => Timelock.State) timelocks;
 
   function initialize (
