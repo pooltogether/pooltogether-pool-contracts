@@ -10,9 +10,10 @@ import "./PrizePool.sol";
 contract PeriodicPrizePool is PrizePool {
   using SafeMath for uint256;
 
-  uint256 currentPrizeStartedAt;
+  uint256 public currentPrizeStartedAt;
   uint256 prizePeriodSeconds;
-  uint256 previousPrize;
+  uint256 public previousPrize;
+  uint256 public feeScaleMantissa;
 
   function initialize (
     Ticket _ticket,
@@ -83,7 +84,7 @@ contract PeriodicPrizePool is PrizePool {
     return block.timestamp > prizePeriodEndAt();
   }
 
-  function startAward() external override {
+  function startAward() external override onlyPrizePeriodOver {
     distributionStrategy.startAward();
   }
 
@@ -93,6 +94,7 @@ contract PeriodicPrizePool is PrizePool {
     interestPool.principal().approve(address(distributionStrategy), prize);
     currentPrizeStartedAt = block.timestamp;
     distributionStrategy.completeAward(prize);
+    previousPrize = prize;
   }
 
   function prizePeriodEndAt() public view returns (uint256) {

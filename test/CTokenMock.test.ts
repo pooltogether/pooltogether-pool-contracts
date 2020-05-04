@@ -1,9 +1,9 @@
 import { deployContract } from 'ethereum-waffle';
 import ERC20Mintable from '../build/ERC20Mintable.json';
 import CTokenMock from '../build/CTokenMock.json';
-import { ethers } from 'ethers'
+import { ethers } from './helpers/ethers'
 import { expect } from 'chai'
-const buidler = require("@nomiclabs/buidler")
+import buidler from './helpers/buidler'
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('CTokenMock contract', function() {

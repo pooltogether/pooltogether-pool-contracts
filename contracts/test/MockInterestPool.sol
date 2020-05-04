@@ -6,7 +6,7 @@ import "../TokenControllerInterface.sol";
 
 contract MockInterestPool is InterestPoolInterface, TokenControllerInterface {
 
-  uint256 _availableInterest;
+  uint256 _balanceOfUnderlying;
   IERC20 public _underlyingToken;
   ControlledToken public override principal;
   uint256 public supplyRatePerBlock;
@@ -17,12 +17,12 @@ contract MockInterestPool is InterestPoolInterface, TokenControllerInterface {
     supplyRatePerBlock = 100 wei;
   }
 
-  function setAvailableInterest(uint256 amount) external {
-    _availableInterest = amount;
+  function setBalanceOfUnderlying(uint256 amount) external {
+    _balanceOfUnderlying = amount;
   }
 
   function balanceOfUnderlying(address user) external view override returns (uint256) {
-    return _availableInterest;
+    return _balanceOfUnderlying;
   }
 
   function estimateAccruedInterestOverBlocks(uint256, uint256) external view override returns (uint256) {

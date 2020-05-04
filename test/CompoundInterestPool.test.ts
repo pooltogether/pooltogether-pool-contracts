@@ -4,8 +4,8 @@ import ERC20Mintable from '../build/ERC20Mintable.json'
 import CTokenMock from '../build/CTokenMock.json'
 import ControlledToken from '../build/ControlledToken.json'
 import { expect } from 'chai'
-import { ethers } from 'ethers'
-const buidler = require("@nomiclabs/buidler")
+import { ethers } from './helpers/ethers'
+import buidler from './helpers/buidler'
 
 const toWei = ethers.utils.parseEther
 

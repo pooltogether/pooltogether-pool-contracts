@@ -16,6 +16,7 @@ contract PrizePoolBuilder is Initializable {
     address indexed prizePool,
     address interestPool,
     address ticket,
+    address distributionStrategy,
     uint256 prizePeriodSeconds
   );
 
@@ -70,6 +71,7 @@ contract PrizePoolBuilder is Initializable {
       address(prizePool),
       address(interestPool),
       address(ticket),
+      address(_distributionStrategy),
       prizePeriodSeconds
     );
 

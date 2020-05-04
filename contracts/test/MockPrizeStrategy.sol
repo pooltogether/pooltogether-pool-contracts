@@ -1,38 +1,17 @@
 pragma solidity ^0.6.4;
 
-import "../PrizeStrategyInterface.sol";
+import "../DistributionStrategyInterface.sol";
 import "../PrizePoolInterface.sol";
 
-contract MockPrizeStrategy is PrizeStrategyInterface {
-  uint256 public exitFee;
-  uint256 public unlockTimestamp;
-  PrizePoolInterface public override prizePool;
+contract MockPrizeStrategy is DistributionStrategyInterface {
+  bool public awardStarted;
+  uint256 public prize;
 
-  function setExitFee(uint256 _exitFee) external {
-    exitFee = _exitFee;
+  function startAward() external override {
+    awardStarted = true;
   }
 
-  function setUnlockTimestamp(uint256 _unlockTimestamp) external {
-    unlockTimestamp = _unlockTimestamp;
+  function completeAward(uint256 _prize) external override {
+    prize = _prize;
   }
-
-  function setPrizePool(PrizePoolInterface _prizePool) external {
-    prizePool = _prizePool;
-  }
-
-  function calculateExitFee(address, uint256) external view override returns (uint256) {
-    return exitFee;
-  }
-
-  function calculateUnlockTimestamp(address, uint256) external view override returns (uint256) {
-    return unlockTimestamp;
-  }
-
-  function canAward() external override view returns (bool) {
-    return true;
-  }
-
-  function startAward() external override {}
-
-  function completeAward() external override {}
 }
