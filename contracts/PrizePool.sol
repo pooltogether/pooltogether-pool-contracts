@@ -83,6 +83,14 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
     _mintTicketsWithSponsorship(to, amount);
   }
 
+  function mintTicketsWithTimelock(uint256 amount) external override {
+    // Subtract timelocked funds
+    timelocks[msg.sender].amount = timelocks[msg.sender].amount.sub(amount);
+
+    // Mint tickets
+    ticket.mint(msg.sender, amount);
+  }
+
   function _mintTicketsWithSponsorship(address to, uint256 amount) internal {
     // Burn sponsorship
     sponsorship.burn(to, amount);

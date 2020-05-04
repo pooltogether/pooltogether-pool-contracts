@@ -9,6 +9,7 @@ interface PrizePoolInterface {
   function mintTicketsTo(address to, uint256 tickets) external;
   function mintTicketsWithSponsorship(uint256 tickets) external;
   function mintTicketsWithSponsorshipTo(address to, uint256 tickets) external;
+  function mintTicketsWithTimelock(uint256 tickets) external;
   function redeemTicketsInstantly(uint256 tickets) external returns (uint256);
   function redeemTicketsWithTimelock(uint256 tickets) external returns (uint256);
   function lockedBalanceOf(address user) external view returns (uint256);
