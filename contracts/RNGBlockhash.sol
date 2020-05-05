@@ -7,8 +7,6 @@ import "./RNGInterface.sol";
 contract RNGBlockhash is RNGInterface {
   using SafeMath for uint256;
 
-  event RandomNumberRequested(uint256 indexed id, address indexed sender, address token, uint256 budget);
-
   uint256 public requestCount;
   mapping(uint256 => bool) public completed;
   mapping(uint256 => bytes32) public randomNumbers;
@@ -19,6 +17,7 @@ contract RNGBlockhash is RNGInterface {
     randomNumbers[requestId] = blockhash(1);
 
     emit RandomNumberRequested(requestId, msg.sender, token, budget);
+    emit RandomNumberCompleted(requestId, randomNumbers[requestId]);
     return requestId;
   }
 
