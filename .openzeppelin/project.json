@@ -8,7 +8,8 @@
     "ControlledTokenFactory": "ControlledTokenFactory",
     "SingleRandomWinnerPrizePoolBuilder": "SingleRandomWinnerPrizePoolBuilder",
     "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory",
-    "CompoundInterestPoolFactory": "CompoundInterestPoolFactory"
+    "CompoundInterestPoolFactory": "CompoundInterestPoolFactory",
+    "CompoundInterestPoolBuilder": "CompoundInterestPoolBuilder"
   },
   "dependencies": {},
   "name": "PoolTogether3",
