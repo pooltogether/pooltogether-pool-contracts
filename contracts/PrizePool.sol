@@ -11,9 +11,8 @@ import "./InterestPoolInterface.sol";
 import "./Timelock.sol";
 import "./TokenControllerInterface.sol";
 import "./Ticket.sol";
-import "./PrizeStrategyInterface.sol";
 import "./PrizePoolInterface.sol";
-import "./DistributionStrategyInterface.sol";
+import "./PrizeStrategyInterface.sol";
 import "./RNGInterface.sol";
 
 /* solium-disable security/no-block-members */
@@ -27,7 +26,7 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
   InterestPoolInterface public override interestPool;
   Ticket public override ticket;
   ControlledToken public override sponsorship;
-  DistributionStrategyInterface public distributionStrategy;
+  PrizeStrategyInterface public prizeStrategy;
   
   mapping(address => Timelock.State) timelocks;
 
@@ -35,17 +34,17 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
     Ticket _ticket,
     ControlledToken _sponsorship,
     InterestPoolInterface _interestPool,
-    DistributionStrategyInterface _distributionStrategy
+    PrizeStrategyInterface _prizeStrategy
   ) public initializer {
     require(address(_ticket) != address(0), "ticket must not be zero");
     require(address(_ticket.controller()) == address(this), "ticket controller does not match");
     require(address(_sponsorship) != address(0), "sponsorship must not be zero");
     require(address(_sponsorship.controller()) == address(this), "sponsorship controller does not match");
     require(address(_interestPool) != address(0), "prize pool must not be zero");
-    require(address(_distributionStrategy) != address(0), "distributionStrategy must not be zero");
+    require(address(_prizeStrategy) != address(0), "prizeStrategy must not be zero");
     ticket = _ticket;
     interestPool = _interestPool;
-    distributionStrategy = _distributionStrategy;
+    prizeStrategy = _prizeStrategy;
     sponsorship = _sponsorship;
   }
 

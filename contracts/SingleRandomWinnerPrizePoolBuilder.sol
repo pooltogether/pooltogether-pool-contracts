@@ -6,7 +6,6 @@ import "./ControlledTokenFactory.sol";
 import "./SingleRandomWinnerPrizeStrategyFactory.sol";
 import "./CompoundInterestPoolFactory.sol";
 import "./TicketFactory.sol";
-import "./PrizeStrategyInterface.sol";
 import "./compound/CTokenInterface.sol";
 import "./PrizePoolBuilder.sol";
 

@@ -21,11 +21,11 @@ contract PeriodicPrizePool is PrizePool {
     Ticket _ticket,
     ControlledToken _sponsorship,
     InterestPoolInterface _interestPool,
-    DistributionStrategyInterface _distributionStrategy,
+    PrizeStrategyInterface _prizeStrategy,
     RNGInterface _rng,
     uint256 _prizePeriodSeconds
   ) public initializer {
-    super.initialize(_ticket, _sponsorship, _interestPool, _distributionStrategy);
+    super.initialize(_ticket, _sponsorship, _interestPool, _prizeStrategy);
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
     require(address(_rng) != address(0), "rng cannot be zero");
     rng = _rng;
@@ -97,9 +97,9 @@ contract PeriodicPrizePool is PrizePool {
   function completeAward() external override {
     uint256 prize = currentPrize();
     sponsorship.mint(address(this), prize);
-    sponsorship.approve(address(distributionStrategy), prize);
+    sponsorship.approve(address(prizeStrategy), prize);
     currentPrizeStartedAt = block.timestamp;
-    distributionStrategy.distribute(uint256(rng.randomNumber(rngRequestId)), prize);
+    prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
     previousPrize = prize;
   }
 

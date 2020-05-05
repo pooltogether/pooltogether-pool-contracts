@@ -3,12 +3,12 @@
   "contracts": {
     "PeriodicPrizePoolFactory": "PeriodicPrizePoolFactory",
     "PrizePoolBuilder": "PrizePoolBuilder",
-    "InterestPoolFactory": "InterestPoolFactory",
     "TicketFactory": "TicketFactory",
     "RNGBlockhash": "RNGBlockhash",
     "ControlledTokenFactory": "ControlledTokenFactory",
     "SingleRandomWinnerPrizePoolBuilder": "SingleRandomWinnerPrizePoolBuilder",
-    "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory"
+    "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory",
+    "CompoundInterestPoolFactory": "CompoundInterestPoolFactory"
   },
   "dependencies": {},
   "name": "PoolTogether3",

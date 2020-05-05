@@ -34,11 +34,11 @@ program
     }
 
     await migration.migrate(10, async () => {
-      runShell(`oz create InterestPoolFactory --force ${flags} --init initialize`)
+      runShell(`oz create CompoundInterestPoolFactory --force ${flags} --init initialize`)
     })
 
     await migration.migrate(20, async () => {
-      runShell(`oz create PrizePoolFactory --force ${flags} --init initialize`)
+      runShell(`oz create PeriodicPrizePoolFactory --force ${flags} --init initialize`)
     })
 
     await migration.migrate(30, async () => {
@@ -53,31 +53,31 @@ program
       runShell(`oz create SingleRandomWinnerPrizeStrategyFactory --force ${flags} --init initialize`)
     })
 
-    context = await buildContext({ network: program.network, address: program.address })
-    const {
-      InterestPoolFactory,
-      PrizePoolFactory,
-      TicketFactory,
-      ControlledTokenFactory,
-      SingleRandomWinnerPrizeStrategyFactory
-    } = context.contracts
-
-    await migration.migrate(60, async () => {
-      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${InterestPoolFactory.address},${PrizePoolFactory.address},${TicketFactory.address},${ControlledTokenFactory.address}`)
-    })
-
-    await migration.migrate(70, async () => {
+    await migration.migrate(55, async () => {
       runShell(`oz create RNGBlockhash --force ${flags}`)
     })
 
     context = await buildContext({ network: program.network, address: program.address })
     const {
-      PrizePoolBuilder,
+      CompoundInterestPoolFactory,
+      PeriodicPrizePoolFactory,
+      TicketFactory,
+      ControlledTokenFactory,
+      SingleRandomWinnerPrizeStrategyFactory,
       RNGBlockhash
     } = context.contracts
 
+    await migration.migrate(60, async () => {
+      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${CompoundInterestPoolFactory.address},${PeriodicPrizePoolFactory.address},${TicketFactory.address},${ControlledTokenFactory.address},${RNGBlockhash.address}`)
+    })
+
+    context = await buildContext({ network: program.network, address: program.address })
+    const {
+      PrizePoolBuilder,
+    } = context.contracts
+
     await migration.migrate(80, async () => {
-      runShell(`oz create SingleRandomWinnerPrizePoolBuilder --force ${flags} --init initialize --args ${PrizePoolBuilder.address},${SingleRandomWinnerPrizeStrategyFactory.address},${RNGBlockhash.address}`)
+      runShell(`oz create SingleRandomWinnerPrizePoolBuilder --force ${flags} --init initialize --args ${PrizePoolBuilder.address},${SingleRandomWinnerPrizeStrategyFactory.address}`)
     })
 
     console.log(chalk.green(`Completed deployment.`))

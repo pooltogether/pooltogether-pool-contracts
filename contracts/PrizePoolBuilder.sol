@@ -6,7 +6,6 @@ import "./ControlledTokenFactory.sol";
 import "./PeriodicPrizePoolFactory.sol";
 import "./CompoundInterestPoolBuilder.sol";
 import "./TicketFactory.sol";
-import "./PrizeStrategyInterface.sol";
 import "./compound/CTokenInterface.sol";
 
 contract PrizePoolBuilder is Initializable {
@@ -47,7 +46,7 @@ contract PrizePoolBuilder is Initializable {
 
   function createPeriodicPrizePool(
     CTokenInterface cToken,
-    DistributionStrategyInterface _distributionStrategy,
+    PrizeStrategyInterface _prizeStrategy,
     uint256 prizePeriodSeconds,
     string memory _ticketName,
     string memory _ticketSymbol,
@@ -60,7 +59,7 @@ contract PrizePoolBuilder is Initializable {
       ticketFactory.createTicket(_ticketName, _ticketSymbol, prizePool),
       controlledTokenFactory.createControlledToken(_sponsorshipName, _sponsorshipSymbol, prizePool),
       compoundInterestPoolBuilder.createCompoundInterestPool(cToken),
-      _distributionStrategy,
+      _prizeStrategy,
       rng,
       prizePeriodSeconds
     );
@@ -70,7 +69,7 @@ contract PrizePoolBuilder is Initializable {
       address(prizePool),
       address(prizePool.interestPool()),
       address(prizePool.ticket()),
-      address(_distributionStrategy),
+      address(_prizeStrategy),
       prizePeriodSeconds
     );
 
