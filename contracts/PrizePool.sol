@@ -98,6 +98,39 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
     ticket.mint(to, amount);
   }
 
+  function mintSponsorship(uint256 amount) external override {
+    _mintSponsorship(msg.sender, amount);
+  }
+
+  function mintSponsorshipTo(address to, uint256 amount) external override {
+    _mintSponsorship(to, amount);
+  }
+
+  function _mintSponsorship(address to, uint256 amount) internal {
+    // Transfer deposit
+    IERC20 token = interestPool.token();
+    require(token.allowance(msg.sender, address(this)) >= amount, "insuff");
+    token.transferFrom(msg.sender, address(this), amount);
+
+    // create the sponsorship
+    sponsorship.mint(to, amount);
+
+    // Deposit into pool
+    token.approve(address(interestPool), amount);
+    interestPool.supply(amount);
+  }
+
+  function redeemSponsorship(uint256 amount) external override {
+    // burn the sponsorship
+    sponsorship.burn(msg.sender, amount);
+
+    // redeem the collateral
+    interestPool.redeem(amount);
+
+    // transfer back to user
+    IERC20(interestPool.token()).transfer(msg.sender, amount);
+  }
+
   function redeemTicketsInstantly(uint256 tickets) external override returns (uint256) {
     uint256 exitFee = calculateExitFee(msg.sender, tickets);
 
