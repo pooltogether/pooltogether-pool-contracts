@@ -6,7 +6,7 @@
   "scripts": {
     "test": "buidler test",
     "compile": "buidler compile",
-    "start": "buidler node --port 8545",
+    "start": "buidler node --port $LOCAL_BUIDLEREVM_PORT",
     "coverage": "rm -rf build cache && buidler compile && buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network local",
     "migrate": "./scripts/migrate.js",

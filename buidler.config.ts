@@ -34,7 +34,7 @@ export default {
       gas: 20000000
     },
     local: {
-      url: 'http://127.0.0.1:8545',
+      url: 'http://127.0.0.1:' + process.env.LOCAL_BUIDLEREVM_PORT,
       gas: 20000000,
       blockGasLimit: 20000000
     },

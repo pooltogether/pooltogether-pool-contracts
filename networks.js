@@ -13,7 +13,7 @@ module.exports = {
     },
     local: {
       host: 'localhost',
-      port: 8545,
+      port: process.env.LOCAL_BUIDLEREVM_PORT,
       gas: 20000000,
       gasPrice: 1 * 1000000000,
       network_id: '*'
