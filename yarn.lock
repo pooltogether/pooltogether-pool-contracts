@@ -7685,6 +7685,13 @@ truffle-error@^0.0.5:
   resolved "https://registry.yarnpkg.com/truffle-error/-/truffle-error-0.0.5.tgz#6b5740c9f3aac74f47b85d654fff7fe2c1fc5e0e"
   integrity sha512-JpzPLMPSCE0vaZ3vH5NO5u42GpMj/Y1SRBkQ6b69PSw3xMSH1umApN32cEcg1nnh8q5FNYc5FnKu0m4tiBffyQ==
 
+truffle-extract@pooltogether/truffle-extract:
+  version "1.0.0"
+  resolved "https://codeload.github.com/pooltogether/truffle-extract/tar.gz/2a57b6e63a8a2057aad0fec63ba255cd46e9ff1d"
+  dependencies:
+    chalk "^2.4.2"
+    commander "^3.0.2"
+
 truffle-flattener@^1.4.0:
   version "1.4.4"
   resolved "https://registry.yarnpkg.com/truffle-flattener/-/truffle-flattener-1.4.4.tgz#747a99204001f7d6dce43ea92771e1ff6ac3eafb"
