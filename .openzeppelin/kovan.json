@@ -1,11 +1,11 @@
 {
   "contracts": {
-    "InterestPoolFactory": {
-      "address": "0x613eC9bA2F82C032cE3CC335cAe669156d87F9d2",
-      "constructorCode": "608060405234801561001057600080fd5b506115b7806100206000396000f3fe",
-      "bodyBytecodeHash": "1b2fc90bf3eaff4fe0a2d33fd3e84028454d1e922c54a429c5bf165077a32a44",
-      "localBytecodeHash": "98ed6a6eb3dacef0a77e449b3fe8483a6b6ce921319f095e051e38ca10f110d5",
-      "deployedBytecodeHash": "98ed6a6eb3dacef0a77e449b3fe8483a6b6ce921319f095e051e38ca10f110d5",
+    "CompoundInterestPoolFactory": {
+      "address": "0x506191BC158117c099fC69Da6BA37e3aF3f08C59",
+      "constructorCode": "608060405234801561001057600080fd5b5061137e806100206000396000f3fe",
+      "bodyBytecodeHash": "635aad683d0bb8eac36c3a1d88d63f1f0cc8729ab49f2d0a180a29e49d425f5a",
+      "localBytecodeHash": "25c3dbdd436b1c5d249baa5543faa2030020237a2626bad9544da87fa6e4beb0",
+      "deployedBytecodeHash": "25c3dbdd436b1c5d249baa5543faa2030020237a2626bad9544da87fa6e4beb0",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -35,33 +35,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 853,
+          "astId": 10815,
           "type": "t_bool",
-          "src": "757:24:6"
+          "src": "757:24:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 855,
+          "astId": 10817,
           "type": "t_bool",
-          "src": "876:25:6"
+          "src": "876:25:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 920,
+          "astId": 10882,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:6"
+          "src": "1982:29:7"
         },
         {
-          "contract": "InterestPoolFactory",
+          "contract": "CompoundInterestPoolFactory",
           "path": "contracts/CompoundInterestPoolFactory.sol",
           "label": "instance",
-          "astId": 1760,
+          "astId": 11474,
           "type": "t_address",
-          "src": "303:28:13"
+          "src": "327:36:12"
         }
       ],
       "warnings": {
@@ -78,12 +78,12 @@
         "uninitializedBaseContracts": []
       }
     },
-    "PrizePoolFactory": {
-      "address": "0xCE1B3A0bD099e038ee6436391cb284919D29F2e8",
-      "constructorCode": "608060405234801561001057600080fd5b506117d4806100206000396000f3fe",
-      "bodyBytecodeHash": "670e1337383158c6dd7a97a979ae26a368169aeae59b0342f4cfb8529b55dd99",
-      "localBytecodeHash": "8714112b2ab8cbe2365499e52af550b33ed473fdf2e653b559980efc464b42b0",
-      "deployedBytecodeHash": "8714112b2ab8cbe2365499e52af550b33ed473fdf2e653b559980efc464b42b0",
+    "PeriodicPrizePoolFactory": {
+      "address": "0xeF5f9dae5297C00aBfEEb5e758E8A7012578084c",
+      "constructorCode": "608060405234801561001057600080fd5b50612b2c806100206000396000f3fe",
+      "bodyBytecodeHash": "a9870ecf33a783c578ad1a07bee23726c106e81cbec738917457e2a080a88269",
+      "localBytecodeHash": "d283260bef0d9ba355ce0779c41af2b64615c6159792ddbb5763bfe9ed6f53e5",
+      "deployedBytecodeHash": "d283260bef0d9ba355ce0779c41af2b64615c6159792ddbb5763bfe9ed6f53e5",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -113,33 +113,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 853,
+          "astId": 10815,
           "type": "t_bool",
-          "src": "757:24:6"
+          "src": "757:24:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 855,
+          "astId": 10817,
           "type": "t_bool",
-          "src": "876:25:6"
+          "src": "876:25:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 920,
+          "astId": 10882,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:6"
+          "src": "1982:29:7"
         },
         {
-          "contract": "PrizePoolFactory",
-          "path": "contracts/PrizePoolFactory.sol",
+          "contract": "PeriodicPrizePoolFactory",
+          "path": "contracts/PeriodicPrizePoolFactory.sol",
           "label": "instance",
-          "astId": 2875,
+          "astId": 12187,
           "type": "t_address",
-          "src": "329:25:18"
+          "src": "353:33:18"
         }
       ],
       "warnings": {
@@ -159,11 +159,11 @@
       }
     },
     "TicketFactory": {
-      "address": "0x628B95D3dD28d0f674D028440e1C457B8aA08002",
-      "constructorCode": "608060405234801561001057600080fd5b50611f0e806100206000396000f3fe",
-      "bodyBytecodeHash": "b5e8cd156b93f1ad78e23885e2e267769131b93d8ca7cdeec0f85a5648b0ea7e",
-      "localBytecodeHash": "e38d9c06a46054c45bf783b60675a2f1048f968cc35f48e94e9cde4a823911b7",
-      "deployedBytecodeHash": "e38d9c06a46054c45bf783b60675a2f1048f968cc35f48e94e9cde4a823911b7",
+      "address": "0xe1D8d09D72F159149e45541cbB0573D5033AA3A9",
+      "constructorCode": "608060405234801561001057600080fd5b50612278806100206000396000f3fe",
+      "bodyBytecodeHash": "d96b38a8041f4415102d538982192a84a93c5c6c2be1dbd7f770aac545575420",
+      "localBytecodeHash": "d3d9ce7ef08afff6a6918f7eb80c59580a091a9eb7b7896c16d705130f2d87dc",
+      "deployedBytecodeHash": "d3d9ce7ef08afff6a6918f7eb80c59580a091a9eb7b7896c16d705130f2d87dc",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -193,33 +193,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 853,
+          "astId": 10815,
           "type": "t_bool",
-          "src": "757:24:6"
+          "src": "757:24:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 855,
+          "astId": 10817,
           "type": "t_bool",
-          "src": "876:25:6"
+          "src": "876:25:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 920,
+          "astId": 10882,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:6"
+          "src": "1982:29:7"
         },
         {
           "contract": "TicketFactory",
           "path": "contracts/TicketFactory.sol",
           "label": "instance",
-          "astId": 3750,
+          "astId": 14050,
           "type": "t_address",
-          "src": "247:22:28"
+          "src": "247:22:31"
         }
       ],
       "warnings": {
@@ -237,11 +237,11 @@
       }
     },
     "ControlledTokenFactory": {
-      "address": "0x596a4900f33EEB662e1b7B3Ac4708D9e3d12F9f0",
-      "constructorCode": "608060405234801561001057600080fd5b50611913806100206000396000f3fe",
-      "bodyBytecodeHash": "0bd58d7470737e1b5cc8d9b815a8e677dea452fa2383fcf0af38d7867f2a0349",
-      "localBytecodeHash": "0adb54e580f0970b01a5984d77ca5282ae86fa70abcbb5ab18d2dca85e74fdec",
-      "deployedBytecodeHash": "0adb54e580f0970b01a5984d77ca5282ae86fa70abcbb5ab18d2dca85e74fdec",
+      "address": "0x8F9BFc47dc42fE8EB7101AD285c71c9Cdd93BaA6",
+      "constructorCode": "608060405234801561001057600080fd5b506119ef806100206000396000f3fe",
+      "bodyBytecodeHash": "a041fe1bcba8e85bf5d41330da62de04797fd4a5c80e953d63f66927744f4dae",
+      "localBytecodeHash": "ae04cdea1cd51ebf6fb3610909cb56c28acbdd750b9bbb065a461dc8a7231cbc",
+      "deployedBytecodeHash": "ae04cdea1cd51ebf6fb3610909cb56c28acbdd750b9bbb065a461dc8a7231cbc",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -271,33 +271,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 853,
+          "astId": 10815,
           "type": "t_bool",
-          "src": "757:24:6"
+          "src": "757:24:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 855,
+          "astId": 10817,
           "type": "t_bool",
-          "src": "876:25:6"
+          "src": "876:25:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 920,
+          "astId": 10882,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:6"
+          "src": "1982:29:7"
         },
         {
           "contract": "ControlledTokenFactory",
           "path": "contracts/ControlledTokenFactory.sol",
           "label": "instance",
-          "astId": 1203,
+          "astId": 11658,
           "type": "t_address",
-          "src": "283:31:10"
+          "src": "283:31:14"
         }
       ],
       "warnings": {
@@ -315,11 +315,11 @@
       }
     },
     "SingleRandomWinnerPrizeStrategyFactory": {
-      "address": "0xd9F38A1A745F4905dbd6C5F5739B84C1362B696f",
-      "constructorCode": "608060405234801561001057600080fd5b506115c4806100206000396000f3fe",
-      "bodyBytecodeHash": "b9e2e9e96c7d9c81df363c0b9105ab4cb3251f8fff27a19ad2ea87acc3706425",
-      "localBytecodeHash": "f674afe68f5a064d996599507e06d3fc9f42674aac9cddaa7eb22703bd8cb496",
-      "deployedBytecodeHash": "f674afe68f5a064d996599507e06d3fc9f42674aac9cddaa7eb22703bd8cb496",
+      "address": "0x26657C94d87A69E9e7EaE6B87c4428bA08789Fa5",
+      "constructorCode": "608060405234801561001057600080fd5b50610797806100206000396000f3fe",
+      "bodyBytecodeHash": "0a84954956baf8f63cf65cbbbc103fdb313795da9813cfe160f9e626461de34c",
+      "localBytecodeHash": "0fcddd1dec2b448a5026f50fdbc590d8c9b755bcc83ec943a859f9424d84d3b6",
+      "deployedBytecodeHash": "0fcddd1dec2b448a5026f50fdbc590d8c9b755bcc83ec943a859f9424d84d3b6",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -349,33 +349,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 853,
+          "astId": 10815,
           "type": "t_bool",
-          "src": "757:24:6"
+          "src": "757:24:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 855,
+          "astId": 10817,
           "type": "t_bool",
-          "src": "876:25:6"
+          "src": "876:25:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 920,
+          "astId": 10882,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:6"
+          "src": "1982:29:7"
         },
         {
           "contract": "SingleRandomWinnerPrizeStrategyFactory",
           "path": "contracts/SingleRandomWinnerPrizeStrategyFactory.sol",
           "label": "instance",
-          "astId": 3512,
+          "astId": 13812,
           "type": "t_address",
-          "src": "343:47:26"
+          "src": "343:47:29"
         }
       ],
       "warnings": {
@@ -385,8 +385,6 @@
         "hasInitialValuesInDeclarations": false,
         "importsVanillaContracts": [
           "math/SafeMath.sol",
-          "introspection/IERC1820Registry.sol",
-          "token/ERC777/IERC777Recipient.sol",
           "token/ERC20/IERC20.sol",
           "token/ERC20/ERC20.sol",
           "GSN/Context.sol"
@@ -394,116 +392,12 @@
         "uninitializedBaseContracts": []
       }
     },
-    "PrizePoolBuilder": {
-      "address": "0x8128d72859400BfD3138cD69D5EC7552D68B0FFD",
-      "constructorCode": "608060405234801561001057600080fd5b50610ba2806100206000396000f3fe",
-      "bodyBytecodeHash": "8c3f9ce527b2f1392c52a76afdd822641e25ed2e7ca45c194d4aba3a8000e87a",
-      "localBytecodeHash": "5b483865d104cdb1bb236d1d012796f706963654c71b8f1abccc8400a3036899",
-      "deployedBytecodeHash": "5b483865d104cdb1bb236d1d012796f706963654c71b8f1abccc8400a3036899",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_address": {
-          "id": "t_address",
-          "kind": "elementary",
-          "label": "address"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 853,
-          "type": "t_bool",
-          "src": "757:24:6"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 855,
-          "type": "t_bool",
-          "src": "876:25:6"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 920,
-          "type": "t_array:50<t_uint256>",
-          "src": "1982:29:6"
-        },
-        {
-          "contract": "PrizePoolBuilder",
-          "path": "contracts/PrizePoolBuilder.sol",
-          "label": "interestPoolFactory",
-          "astId": 2670,
-          "type": "t_address",
-          "src": "605:46:17"
-        },
-        {
-          "contract": "PrizePoolBuilder",
-          "path": "contracts/PrizePoolBuilder.sol",
-          "label": "prizePoolFactory",
-          "astId": 2672,
-          "type": "t_address",
-          "src": "655:40:17"
-        },
-        {
-          "contract": "PrizePoolBuilder",
-          "path": "contracts/PrizePoolBuilder.sol",
-          "label": "ticketFactory",
-          "astId": 2674,
-          "type": "t_address",
-          "src": "699:34:17"
-        },
-        {
-          "contract": "PrizePoolBuilder",
-          "path": "contracts/PrizePoolBuilder.sol",
-          "label": "controlledTokenFactory",
-          "astId": 2676,
-          "type": "t_address",
-          "src": "737:52:17"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "importsVanillaContracts": [
-          "token/ERC20/ERC20.sol",
-          "GSN/Context.sol",
-          "token/ERC20/IERC20.sol",
-          "math/SafeMath.sol",
-          "introspection/IERC1820Registry.sol",
-          "token/ERC777/IERC777Recipient.sol"
-        ],
-        "uninitializedBaseContracts": []
-      }
-    },
     "RNGBlockhash": {
-      "address": "0x79bE8CBc151487e5D9eb02DB062A54f6eA47A26C",
-      "constructorCode": "608060405234801561001057600080fd5b506102ab806100206000396000f3fe",
-      "bodyBytecodeHash": "cccbc7eefa838733a928cd8c05967fa79e4ccfdcbcc72169a36711bfc1987c23",
-      "localBytecodeHash": "ab51c9d5824c416a7466dd19596e9c492a23abf3605cda4a6437c821af202e7c",
-      "deployedBytecodeHash": "ab51c9d5824c416a7466dd19596e9c492a23abf3605cda4a6437c821af202e7c",
+      "address": "0x3F6fcC01307819e03Ff32ba45238e62C694a402F",
+      "constructorCode": "608060405234801561001057600080fd5b506102f0806100206000396000f3fe",
+      "bodyBytecodeHash": "1c534a5c051925f9fae78d6b73500f56483de51443b7f4d2c596565a61f00729",
+      "localBytecodeHash": "d9292299ff1f8f0d02e78cfaa62c8f7aabc1c516d0df724dc1eeb21cd613558a",
+      "deployedBytecodeHash": "d9292299ff1f8f0d02e78cfaa62c8f7aabc1c516d0df724dc1eeb21cd613558a",
       "types": {
         "t_uint256": {
           "id": "t_uint256",
@@ -538,25 +432,25 @@
           "contract": "RNGBlockhash",
           "path": "contracts/RNGBlockhash.sol",
           "label": "requestCount",
-          "astId": 3092,
+          "astId": 13486,
           "type": "t_uint256",
-          "src": "288:27:22"
+          "src": "181:27:25"
         },
         {
           "contract": "RNGBlockhash",
           "path": "contracts/RNGBlockhash.sol",
           "label": "completed",
-          "astId": 3096,
+          "astId": 13490,
           "type": "t_mapping<t_bool>",
-          "src": "319:41:22"
+          "src": "212:41:25"
         },
         {
           "contract": "RNGBlockhash",
           "path": "contracts/RNGBlockhash.sol",
           "label": "randomNumbers",
-          "astId": 3100,
+          "astId": 13494,
           "type": "t_mapping<t_bytes32>",
-          "src": "364:48:22"
+          "src": "257:48:25"
         }
       ],
       "warnings": {
@@ -570,12 +464,12 @@
         "uninitializedBaseContracts": []
       }
     },
-    "SingleRandomWinnerPrizePoolBuilder": {
-      "address": "0x85c9c57AE122b44D9Fcee5819C390c28899b17E8",
-      "constructorCode": "608060405234801561001057600080fd5b506107d7806100206000396000f3fe",
-      "bodyBytecodeHash": "478125d8d3611d4cf0d4f0e10b3b43f3a2087ea01b333753ad2cad849733676d",
-      "localBytecodeHash": "9874a2bfa8790161e4325091f39739d0b945c8bfeb975ca86015be24ff8e03b5",
-      "deployedBytecodeHash": "9874a2bfa8790161e4325091f39739d0b945c8bfeb975ca86015be24ff8e03b5",
+    "CompoundInterestPoolBuilder": {
+      "address": "0xa759c419770790690161b95762e3e18d30D7fa1c",
+      "constructorCode": "608060405234801561001057600080fd5b506103a9806100206000396000f3fe",
+      "bodyBytecodeHash": "c11eb0b94ee1d27b4f304562cb5f723f88314dfa788e525741f9708e39226542",
+      "localBytecodeHash": "c9cfbfe54b6da51a504f65392012aba0078bc87c31fa300b2c958691cc04070c",
+      "deployedBytecodeHash": "c9cfbfe54b6da51a504f65392012aba0078bc87c31fa300b2c958691cc04070c",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -605,49 +499,239 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 853,
+          "astId": 10815,
           "type": "t_bool",
-          "src": "757:24:6"
+          "src": "757:24:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 855,
+          "astId": 10817,
           "type": "t_bool",
-          "src": "876:25:6"
+          "src": "876:25:7"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 920,
+          "astId": 10882,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:6"
+          "src": "1982:29:7"
+        },
+        {
+          "contract": "CompoundInterestPoolBuilder",
+          "path": "contracts/CompoundInterestPoolBuilder.sol",
+          "label": "compoundInterestPoolFactory",
+          "astId": 11387,
+          "type": "t_address",
+          "src": "271:62:11"
+        },
+        {
+          "contract": "CompoundInterestPoolBuilder",
+          "path": "contracts/CompoundInterestPoolBuilder.sol",
+          "label": "controlledTokenFactory",
+          "astId": 11389,
+          "type": "t_address",
+          "src": "337:52:11"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "importsVanillaContracts": [
+          "token/ERC20/ERC20.sol",
+          "GSN/Context.sol",
+          "token/ERC20/IERC20.sol",
+          "math/SafeMath.sol"
+        ],
+        "uninitializedBaseContracts": []
+      }
+    },
+    "PrizePoolBuilder": {
+      "address": "0x6C07c9E2ced586B1A60C98C47824C697422F2979",
+      "constructorCode": "608060405234801561001057600080fd5b50610c9a806100206000396000f3fe",
+      "bodyBytecodeHash": "fccd09466858286361864a7d42264950708500a49f4f0f8d40d4800f9986ed9c",
+      "localBytecodeHash": "9cf0e948e90cd650f42db1d89bff50bf6ca697c3fb86c7e17b04cfc13c254629",
+      "deployedBytecodeHash": "9cf0e948e90cd650f42db1d89bff50bf6ca697c3fb86c7e17b04cfc13c254629",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 10815,
+          "type": "t_bool",
+          "src": "757:24:7"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 10817,
+          "type": "t_bool",
+          "src": "876:25:7"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 10882,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:7"
+        },
+        {
+          "contract": "PrizePoolBuilder",
+          "path": "contracts/PrizePoolBuilder.sol",
+          "label": "compoundInterestPoolBuilder",
+          "astId": 13090,
+          "type": "t_address",
+          "src": "534:62:21"
+        },
+        {
+          "contract": "PrizePoolBuilder",
+          "path": "contracts/PrizePoolBuilder.sol",
+          "label": "periodicPrizePoolFactory",
+          "astId": 13092,
+          "type": "t_address",
+          "src": "600:56:21"
+        },
+        {
+          "contract": "PrizePoolBuilder",
+          "path": "contracts/PrizePoolBuilder.sol",
+          "label": "ticketFactory",
+          "astId": 13094,
+          "type": "t_address",
+          "src": "660:34:21"
+        },
+        {
+          "contract": "PrizePoolBuilder",
+          "path": "contracts/PrizePoolBuilder.sol",
+          "label": "controlledTokenFactory",
+          "astId": 13096,
+          "type": "t_address",
+          "src": "698:52:21"
+        },
+        {
+          "contract": "PrizePoolBuilder",
+          "path": "contracts/PrizePoolBuilder.sol",
+          "label": "rng",
+          "astId": 13098,
+          "type": "t_address",
+          "src": "754:23:21"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "importsVanillaContracts": [
+          "token/ERC20/ERC20.sol",
+          "GSN/Context.sol",
+          "token/ERC20/IERC20.sol",
+          "math/SafeMath.sol",
+          "introspection/IERC1820Registry.sol",
+          "token/ERC777/IERC777Recipient.sol"
+        ],
+        "uninitializedBaseContracts": []
+      }
+    },
+    "SingleRandomWinnerPrizePoolBuilder": {
+      "address": "0x8680C1Cb0A31080440EDA910911CD3CA9dfb0635",
+      "constructorCode": "608060405234801561001057600080fd5b506106a1806100206000396000f3fe",
+      "bodyBytecodeHash": "6e9ebb9ff53168023d3f6267af8257d75e358216c140fecc5a04f778a5c7217b",
+      "localBytecodeHash": "a64e62cdabd253da314e07df649628d3e0e9d8a3c537fd28564658b6ac1e433b",
+      "deployedBytecodeHash": "a64e62cdabd253da314e07df649628d3e0e9d8a3c537fd28564658b6ac1e433b",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 10815,
+          "type": "t_bool",
+          "src": "757:24:7"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 10817,
+          "type": "t_bool",
+          "src": "876:25:7"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 10882,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:7"
         },
         {
           "contract": "SingleRandomWinnerPrizePoolBuilder",
           "path": "contracts/SingleRandomWinnerPrizePoolBuilder.sol",
           "label": "prizePoolBuilder",
-          "astId": 3210,
+          "astId": 13625,
           "type": "t_address",
-          "src": "460:40:24"
+          "src": "396:40:27"
         },
         {
           "contract": "SingleRandomWinnerPrizePoolBuilder",
           "path": "contracts/SingleRandomWinnerPrizePoolBuilder.sol",
           "label": "prizeStrategyFactory",
-          "astId": 3212,
+          "astId": 13627,
           "type": "t_address",
-          "src": "504:66:24"
-        },
-        {
-          "contract": "SingleRandomWinnerPrizePoolBuilder",
-          "path": "contracts/SingleRandomWinnerPrizePoolBuilder.sol",
-          "label": "rng",
-          "astId": 3214,
-          "type": "t_address",
-          "src": "574:23:24"
+          "src": "440:66:27"
         }
       ],
       "warnings": {
@@ -669,75 +753,84 @@
   },
   "solidityLibs": {},
   "proxies": {
-    "PoolTogether3/InterestPoolFactory": [
+    "PoolTogether3/CompoundInterestPoolFactory": [
       {
-        "address": "0x32626b5Aa51Ce1CdAFa128eaf5E8f205FF947Fc1",
+        "address": "0x682fDC1EE7c37BC81be514B1042Bcbf99753F289",
         "version": "0.3.0",
-        "implementation": "0x613eC9bA2F82C032cE3CC335cAe669156d87F9d2",
-        "admin": "0xf2aebd8B2d1d4b8965ba82962432FB98dE11c100",
+        "implementation": "0x506191BC158117c099fC69Da6BA37e3aF3f08C59",
+        "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
     ],
-    "PoolTogether3/PrizePoolFactory": [
+    "PoolTogether3/PeriodicPrizePoolFactory": [
       {
-        "address": "0x95159C5df71462ACcFBc496F091E9A21E90629C4",
+        "address": "0xBC90026C07bb44ea67cDf64bb64495114Ea44013",
         "version": "0.3.0",
-        "implementation": "0xCE1B3A0bD099e038ee6436391cb284919D29F2e8",
-        "admin": "0xf2aebd8B2d1d4b8965ba82962432FB98dE11c100",
+        "implementation": "0xeF5f9dae5297C00aBfEEb5e758E8A7012578084c",
+        "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/TicketFactory": [
       {
-        "address": "0xDd71Ae163b924cAD8A376466B0C47b235a9a924e",
+        "address": "0xf947aCf3E9A975C6b462cDF7DeaB56EfCE170171",
         "version": "0.3.0",
-        "implementation": "0x628B95D3dD28d0f674D028440e1C457B8aA08002",
-        "admin": "0xf2aebd8B2d1d4b8965ba82962432FB98dE11c100",
+        "implementation": "0xe1D8d09D72F159149e45541cbB0573D5033AA3A9",
+        "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/ControlledTokenFactory": [
       {
-        "address": "0x51BD18A5758d29f1cbD4BAe8dfa916735B885900",
+        "address": "0x41AC97eB084073e21e82426ea6EF64E4c93c1520",
         "version": "0.3.0",
-        "implementation": "0x596a4900f33EEB662e1b7B3Ac4708D9e3d12F9f0",
-        "admin": "0xf2aebd8B2d1d4b8965ba82962432FB98dE11c100",
+        "implementation": "0x8F9BFc47dc42fE8EB7101AD285c71c9Cdd93BaA6",
+        "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/SingleRandomWinnerPrizeStrategyFactory": [
       {
-        "address": "0x09993e132aCAD6e2839F4f2966c69243434Eb38D",
+        "address": "0xF43c59EFa3A38AE5f09B145A4B9c2E19b3C60eb3",
         "version": "0.3.0",
-        "implementation": "0xd9F38A1A745F4905dbd6C5F5739B84C1362B696f",
-        "admin": "0xf2aebd8B2d1d4b8965ba82962432FB98dE11c100",
-        "kind": "Upgradeable"
-      }
-    ],
-    "PoolTogether3/PrizePoolBuilder": [
-      {
-        "address": "0x5B36ec371d119eEC8944A0B968C90AEA0df1d542",
-        "version": "0.3.0",
-        "implementation": "0x8128d72859400BfD3138cD69D5EC7552D68B0FFD",
-        "admin": "0xf2aebd8B2d1d4b8965ba82962432FB98dE11c100",
+        "implementation": "0x26657C94d87A69E9e7EaE6B87c4428bA08789Fa5",
+        "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/RNGBlockhash": [
       {
-        "address": "0xd6A9c50D68357B2e85a2Cf5e9eD9825D8a150531",
+        "address": "0x44B1AE30b3A38f0551C32Da3A8507DAB8b6A89D9",
         "version": "0.3.0",
-        "implementation": "0x79bE8CBc151487e5D9eb02DB062A54f6eA47A26C",
-        "admin": "0xf2aebd8B2d1d4b8965ba82962432FB98dE11c100",
+        "implementation": "0x3F6fcC01307819e03Ff32ba45238e62C694a402F",
+        "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
+        "kind": "Upgradeable"
+      }
+    ],
+    "PoolTogether3/CompoundInterestPoolBuilder": [
+      {
+        "address": "0xf33adaC2001Ab5B8cf838979CE0A9869C10339BA",
+        "version": "0.3.0",
+        "implementation": "0xa759c419770790690161b95762e3e18d30D7fa1c",
+        "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
+        "kind": "Upgradeable"
+      }
+    ],
+    "PoolTogether3/PrizePoolBuilder": [
+      {
+        "address": "0x9A0c1F3B4565e903397d32Be7b32f8b5e7478EE3",
+        "version": "0.3.0",
+        "implementation": "0x6C07c9E2ced586B1A60C98C47824C697422F2979",
+        "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/SingleRandomWinnerPrizePoolBuilder": [
       {
-        "address": "0xE8e29B1F9A1dBCA484eCBD82e76b1ae58250a73E",
+        "address": "0x63b71d4171893B781b0A38b3853D405846Ce2A38",
         "version": "0.3.0",
-        "implementation": "0x85c9c57AE122b44D9Fcee5819C390c28899b17E8",
-        "admin": "0xf2aebd8B2d1d4b8965ba82962432FB98dE11c100",
+        "implementation": "0x8680C1Cb0A31080440EDA910911CD3CA9dfb0635",
+        "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
     ]
@@ -745,6 +838,6 @@
   "manifestVersion": "2.2",
   "version": "0.3.0",
   "proxyAdmin": {
-    "address": "0xf2aebd8B2d1d4b8965ba82962432FB98dE11c100"
+    "address": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96"
   }
 }
