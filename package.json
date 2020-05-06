@@ -1,6 +1,6 @@
 {
   "name": "@pooltogether/pooltogether-contracts",
-  "version": "3.0.0-alpha.0",
+  "version": "3.0.0-alpha.1",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
   "license": "GPL-3.0",
