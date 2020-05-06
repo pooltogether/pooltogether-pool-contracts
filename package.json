@@ -46,7 +46,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^3.0.0-rc.0",
+    "@openzeppelin/contracts": "^3.0.1",
     "@openzeppelin/upgrades": "^2.8.0",
     "@pooltogether/fixed-point": "^0.1.0",
     "@pooltogether/oz-migrate": "^0.2.5",

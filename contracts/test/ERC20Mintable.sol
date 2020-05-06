@@ -9,6 +9,10 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * At construction, the deployer of the contract is the only minter.
  */
 contract ERC20Mintable is ERC20 {
+
+    constructor() public ERC20("","") {
+    }
+
     /**
      * @dev See {ERC20-_mint}.
      *

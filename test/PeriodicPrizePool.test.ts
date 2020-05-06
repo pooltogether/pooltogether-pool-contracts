@@ -6,6 +6,7 @@ import PeriodicPrizePool from '../build/PeriodicPrizePool.json'
 import ERC20Mintable from '../build/ERC20Mintable.json'
 import ControlledToken from '../build/ControlledToken.json'
 import Ticket from '../build/Ticket.json'
+import { deploy1820 } from 'deploy-eip-1820'
 import { expect } from 'chai'
 import { ethers } from './helpers/ethers'
 import { increaseTime } from './helpers/increaseTime'
@@ -41,6 +42,8 @@ describe('PeriodicPrizePool contract', () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
 
     ethers.errors.setLogLevel('error')
+
+    await deploy1820(wallet)
 
     rng = await deployContract(wallet, RNGBlockhash, [])
     prizePool = await deployContract(wallet, PeriodicPrizePool, [], overrides)
@@ -90,7 +93,7 @@ describe('PeriodicPrizePool contract', () => {
     it('should set all the vars', async () => {
       expect(await prizePool.ticket()).to.equal(ticket.address)
       expect(await prizePool.interestPool()).to.equal(mockInterestPool.address)
-      expect(await prizePool.distributionStrategy()).to.equal(mockPrizeStrategy.address)
+      expect(await prizePool.prizeStrategy()).to.equal(mockPrizeStrategy.address)
       expect(await prizePool.currentPrizeStartedAt()).to.equal(startTime)
     })
   })

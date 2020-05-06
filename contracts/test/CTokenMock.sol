@@ -32,7 +32,7 @@ contract CTokenMock is ERC20 {
   constructor (
     ERC20Mintable _token,
     uint256 _supplyRatePerBlock
-  ) public {
+  ) public ERC20("", "") {
     require(address(_token) != address(0), "token is not defined");
     underlying = _token;
     __supplyRatePerBlock = _supplyRatePerBlock;

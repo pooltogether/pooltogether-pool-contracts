@@ -34,7 +34,7 @@ contract Ticket is ControlledToken {
     return selected;
   }
 
-  function _beforeTokenTransfer(address from, address to, uint256 tokenAmount) internal override {
+  function _beforeTokenTransfer(address from, address to, uint256 tokenAmount) internal virtual override {
     controller.beforeTokenTransfer(from, to, tokenAmount);
     if (from != address(0)) {
       uint256 fromBalance = balanceOf(from);

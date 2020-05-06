@@ -1,4 +1,5 @@
 import { deployContract } from 'ethereum-waffle'
+import { deploy1820 } from 'deploy-eip-1820'
 import PeriodicPrizePoolFactory from '../build/PeriodicPrizePoolFactory.json'
 import RNGBlockhash from '../build/RNGBlockhash.json'
 import CompoundInterestPoolFactory from '../build/CompoundInterestPoolFactory.json'
@@ -41,6 +42,8 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
     provider = buidler.ethers.provider
+
+    await deploy1820(wallet)
 
     rng = await deployContract(wallet, RNGBlockhash, [])
 
