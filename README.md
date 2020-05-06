@@ -4,7 +4,17 @@ The [PoolTogether](https://www.pooltogether.com/) Prize Savings Protocol Ethereu
 
 See the [API documentation](https://docs.pooltogether.com/)
 
-# Setup
+# Usage
+
+If you need an ABI or to depend on the contracts, you can use NPM:
+
+```bash
+$ yarn add @pooltogether/pooltogether-contracts@alpha
+```
+
+Notice the `alpha` tag: this is needed 
+
+# Development
 
 First clone this repository and enter the directory.
 
