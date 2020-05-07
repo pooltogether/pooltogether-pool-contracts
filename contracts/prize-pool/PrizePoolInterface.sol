@@ -27,7 +27,8 @@ interface PrizePoolInterface {
   function timelock() external view returns (ControlledToken);
   function ticket() external view returns (Ticket);
   function prizeStrategy() external view returns (PrizeStrategyInterface);
-  function canAward() external view returns (bool);
+  function canStartAward() external view returns (bool);
   function startAward() external;
+  function canCompleteAward() external view returns (bool);
   function completeAward() external;
 }

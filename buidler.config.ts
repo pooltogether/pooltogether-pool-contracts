@@ -27,7 +27,8 @@ export default {
   },
   networks: {
     buidlerevm: {
-      blockGasLimit: 20000000
+      blockGasLimit: 20000000,
+      gas: 20000000
     },
     coverage: {
       url: 'http://127.0.0.1:8555',

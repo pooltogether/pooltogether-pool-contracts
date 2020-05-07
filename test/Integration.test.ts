@@ -47,6 +47,8 @@ describe('Integration Test', () => {
   let ticket: Contract
   let yieldService: Contract
 
+  let overrides = { gasLimit: 20000000 }
+
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
     provider = buidler.ethers.provider
@@ -60,12 +62,16 @@ describe('Integration Test', () => {
       token.address, ethers.utils.parseEther('0.01')
     ])
 
-    yieldServiceFactory = await deployContract(wallet, CompoundYieldServiceFactory, [])
-    await yieldServiceFactory.initialize()
+    debug('7')
 
-    prizePoolFactory = await deployContract(wallet, PeriodicPrizePoolFactory, [], { gasLimit: 20000000 })
+    yieldServiceFactory = await deployContract(wallet, CompoundYieldServiceFactory, [], overrides)
+    await yieldServiceFactory.initialize(overrides)
 
-    await prizePoolFactory.initialize()
+    prizePoolFactory = await deployContract(wallet, PeriodicPrizePoolFactory, [], overrides)
+
+    await prizePoolFactory.initialize(overrides)
+
+    debug('8')
 
     ticketFactory = await deployContract(wallet, TicketFactory, [])
     await ticketFactory.initialize()
@@ -78,6 +84,7 @@ describe('Integration Test', () => {
     await compoundYieldServiceBuilder.initialize(
       yieldServiceFactory.address
     )
+    debug('9')
 
     prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [])
     await prizePoolBuilder.initialize(
@@ -94,7 +101,9 @@ describe('Integration Test', () => {
       prizeStrategyFactory.address
     )
 
-    let tx = await singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(cToken.address, 10, 'Ticket', 'TICK', 'Sponsorship', 'SPON')
+    debug('10')
+
+    let tx = await singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(cToken.address, 10, 'Ticket', 'TICK', 'Sponsorship', 'SPON', overrides)
     let receipt = await provider.getTransactionReceipt(tx.hash)
     // @ts-ignore
     let lastLog = receipt.logs[receipt.logs.length - 1]
@@ -146,6 +155,9 @@ describe('Integration Test', () => {
       debug('Minting tickets...')
       await token.approve(prizePool.address, toWei('100'))
       await prizePool.mintTickets(toWei('100'))
+
+      debug('accruing...')
+
       await cToken.accrueCustom(toWei('22'))
 
       await increaseTime(4)

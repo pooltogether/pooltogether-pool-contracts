@@ -1,6 +1,5 @@
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
@@ -87,21 +86,38 @@ contract PeriodicPrizePool is PrizePool {
     }
   }
 
-  function canAward() public view override returns (bool) {
+  function isPrizePeriodOver() public view returns (bool) {
     return block.timestamp > prizePeriodEndAt();
   }
 
-  function startAward() external override onlyPrizePeriodOver {
+  function isRngRequested() public view returns (bool) {
+    return rngRequestId != 0;
+  }
+
+  function isRngCompleted() public view returns (bool) {
+    return rng.isRequestComplete(rngRequestId);
+  }
+
+  function canStartAward() public view override returns (bool) {
+    return isPrizePeriodOver() && !isRngRequested();
+  }
+
+  function canCompleteAward() public view override returns (bool) {
+    return isRngRequested() && isRngCompleted();
+  }
+
+  function startAward() external override requireCanStartAward nonReentrant {
     rngRequestId = rng.requestRandomNumber(address(0),0);
   }
 
-  function completeAward() external override {
+  function completeAward() external override requireCanCompleteAward nonReentrant {
     uint256 prize = currentPrize();
     sponsorship.mint(address(this), prize);
     sponsorship.approve(address(prizeStrategy), prize);
     currentPrizeStartedAt = block.timestamp;
     prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
     previousPrize = prize;
+    rngRequestId = 0;
   }
 
   function prizePeriodEndAt() public view returns (uint256) {
@@ -109,17 +125,19 @@ contract PeriodicPrizePool is PrizePool {
     return currentPrizeStartedAt + prizePeriodSeconds;
   }
 
-  modifier onlyPrizePeriodOver() {
-    require(canAward(), "prize period not over");
+  modifier requireCanStartAward() {
+    require(isPrizePeriodOver(), "prize period not over");
+    require(!isRngRequested(), "rng has already been requested");
     _;
   }
 
-  modifier onlyRngRequestComplete() {
-    require(rng.isRequestComplete(rngRequestId), "rng request has not completed");
+  modifier requireCanCompleteAward() {
+    require(isRngRequested(), "no rng request has been made");
+    require(isRngCompleted(), "rng request has not completed");
     _;
   }
 
-  modifier notRequestingRN(address sender) {
+  modifier notRequestingRN() {
     require(rngRequestId == 0, "rng request is in flight");
     _;
   }
