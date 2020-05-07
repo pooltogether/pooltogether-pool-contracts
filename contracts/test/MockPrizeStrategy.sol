@@ -1,7 +1,7 @@
 pragma solidity ^0.6.4;
 
-import "../PrizeStrategyInterface.sol";
-import "../PrizePoolInterface.sol";
+import "../prize-strategy/PrizeStrategyInterface.sol";
+import "../prize-pool/PrizePoolInterface.sol";
 
 contract MockPrizeStrategy is PrizeStrategyInterface {
   uint256 public randomNumber;

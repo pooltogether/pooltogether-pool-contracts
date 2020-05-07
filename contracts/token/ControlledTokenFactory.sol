@@ -3,7 +3,7 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import "./ControlledToken.sol";
-import "./ProxyFactory.sol";
+import "../external/openzeppelin/ProxyFactory.sol";
 
 contract ControlledTokenFactory is Initializable, ProxyFactory {
 

@@ -2,8 +2,8 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import "./compound/CTokenInterface.sol";
-import "./ControlledTokenFactory.sol";
+import "../external/compound/CTokenInterface.sol";
+import "../token/ControlledTokenFactory.sol";
 import "./CompoundYieldServiceFactory.sol";
 
 contract CompoundYieldServiceBuilder is Initializable {

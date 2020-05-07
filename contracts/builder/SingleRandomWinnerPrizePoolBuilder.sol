@@ -2,11 +2,11 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import "./ControlledTokenFactory.sol";
-import "./SingleRandomWinnerPrizeStrategyFactory.sol";
-import "./CompoundYieldServiceFactory.sol";
-import "./TicketFactory.sol";
-import "./compound/CTokenInterface.sol";
+import "../token/ControlledTokenFactory.sol";
+import "../prize-strategy/SingleRandomWinnerPrizeStrategyFactory.sol";
+import "../yield-service/CompoundYieldServiceFactory.sol";
+import "../token/TicketFactory.sol";
+import "../external/compound/CTokenInterface.sol";
 import "./PrizePoolBuilder.sol";
 
 contract SingleRandomWinnerPrizePoolBuilder is Initializable {

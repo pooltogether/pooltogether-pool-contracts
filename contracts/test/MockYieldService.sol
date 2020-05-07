@@ -1,8 +1,8 @@
 pragma solidity ^0.6.4;
 
-import "../YieldServiceInterface.sol";
-import "../ControlledToken.sol";
-import "../TokenControllerInterface.sol";
+import "../yield-service/YieldServiceInterface.sol";
+import "../token/ControlledToken.sol";
+import "../token/TokenControllerInterface.sol";
 
 contract MockYieldService is YieldServiceInterface, TokenControllerInterface {
 

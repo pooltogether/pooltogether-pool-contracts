@@ -1,7 +1,7 @@
 pragma solidity ^0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "./openzeppelin/ERC20.sol";
+import "../external/openzeppelin/ERC20.sol";
 
 import "./TokenControllerInterface.sol";
 

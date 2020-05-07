@@ -4,9 +4,9 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-import "./RNGInterface.sol";
+import "../rng/RNGInterface.sol";
 import "./PrizeStrategyInterface.sol";
-import "./PrizePoolInterface.sol";
+import "../prize-pool/PrizePoolInterface.sol";
 
 /* solium-disable security/no-block-members */
 contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterface {

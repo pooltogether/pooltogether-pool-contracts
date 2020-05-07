@@ -3,8 +3,8 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import "./SingleRandomWinnerPrizeStrategy.sol";
-import "./ControlledToken.sol";
-import "./ProxyFactory.sol";
+import "../token/ControlledToken.sol";
+import "../external/openzeppelin/ProxyFactory.sol";
 
 contract SingleRandomWinnerPrizeStrategyFactory is Initializable, ProxyFactory {
 

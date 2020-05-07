@@ -1,9 +1,9 @@
 pragma solidity ^0.6.4;
 
-import "./YieldServiceInterface.sol";
-import "./Ticket.sol";
-import "./ControlledToken.sol";
-import "./PrizeStrategyInterface.sol";
+import "../yield-service/YieldServiceInterface.sol";
+import "../token/Ticket.sol";
+import "../token/ControlledToken.sol";
+import "../prize-strategy/PrizeStrategyInterface.sol";
 
 interface PrizePoolInterface {
   function mintTickets(uint256 tickets) external;

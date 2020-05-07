@@ -7,12 +7,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "./YieldServiceInterface.sol";
-import "./TokenControllerInterface.sol";
-import "./Ticket.sol";
+import "../yield-service/YieldServiceInterface.sol";
+import "../token/TokenControllerInterface.sol";
+import "../token/Ticket.sol";
 import "./PrizePoolInterface.sol";
-import "./PrizeStrategyInterface.sol";
-import "./RNGInterface.sol";
+import "../prize-strategy/PrizeStrategyInterface.sol";
+import "../rng/RNGInterface.sol";
 
 /* solium-disable security/no-block-members */
 abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterface {

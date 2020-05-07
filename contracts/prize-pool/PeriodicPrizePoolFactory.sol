@@ -3,9 +3,9 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import "./PeriodicPrizePool.sol";
-import "./YieldServiceInterface.sol";
-import "./ControlledToken.sol";
-import "./ProxyFactory.sol";
+import "../yield-service/YieldServiceInterface.sol";
+import "../token/ControlledToken.sol";
+import "../external/openzeppelin/ProxyFactory.sol";
 
 contract PeriodicPrizePoolFactory is Initializable, ProxyFactory {
 

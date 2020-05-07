@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./YieldServiceInterface.sol";
-import "./ControlledToken.sol";
-import "./TokenControllerInterface.sol";
-import "./compound/CTokenInterface.sol";
+import "../token/ControlledToken.sol";
+import "../token/TokenControllerInterface.sol";
+import "../external/compound/CTokenInterface.sol";
 
 /**
  * Wraps a cToken with a principal token.  The principal token represents how much underlying principal a user holds.

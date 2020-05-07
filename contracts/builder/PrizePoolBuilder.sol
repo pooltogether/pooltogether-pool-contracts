@@ -2,11 +2,11 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import "./ControlledTokenFactory.sol";
-import "./PeriodicPrizePoolFactory.sol";
-import "./CompoundYieldServiceBuilder.sol";
-import "./TicketFactory.sol";
-import "./compound/CTokenInterface.sol";
+import "../token/ControlledTokenFactory.sol";
+import "../prize-pool/PeriodicPrizePoolFactory.sol";
+import "../yield-service/CompoundYieldServiceBuilder.sol";
+import "../token/TicketFactory.sol";
+import "../external/compound/CTokenInterface.sol";
 
 contract PrizePoolBuilder is Initializable {
 
