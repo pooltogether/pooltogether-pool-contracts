@@ -18,7 +18,7 @@
     "session-local": "oz session --network local --from $LOCAL_ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50",
     "console-local": "oz-console -n local -a $LOCAL_ADMIN_ADDRESS_2",
     "deploy-ctoken-local": "./scripts/deployCTokenMock.js -n local -a $LOCAL_ADMIN_ADDRESS",
-    "clean": "rm -rf build cache",
+    "clean": "rm -rf build cache abis",
     "verify-kovan": "oz verify -n kovan --remote etherscan --api-key $ETHERSCAN_API_KEY",
     "clean-local": "rm .oz-migrate/dev-31337; rm .openzeppelin/dev-31337.json",
     "prepack": "rm -rf build cache && oz compile && truffle-extract -o abis",
