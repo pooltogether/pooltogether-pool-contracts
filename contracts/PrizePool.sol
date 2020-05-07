@@ -25,7 +25,7 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
   Ticket public override ticket;
   ControlledToken public override sponsorship;
   ControlledToken public override timelock;
-  PrizeStrategyInterface public prizeStrategy;
+  PrizeStrategyInterface public override prizeStrategy;
   
   mapping(address => uint256) unlockTimestamps;
 
