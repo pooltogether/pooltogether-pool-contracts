@@ -3,7 +3,7 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import "./PeriodicPrizePool.sol";
-import "./InterestPoolInterface.sol";
+import "./YieldServiceInterface.sol";
 import "./ControlledToken.sol";
 import "./ProxyFactory.sol";
 

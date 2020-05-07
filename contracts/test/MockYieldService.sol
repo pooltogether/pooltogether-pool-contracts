@@ -1,10 +1,10 @@
 pragma solidity ^0.6.4;
 
-import "../InterestPoolInterface.sol";
+import "../YieldServiceInterface.sol";
 import "../ControlledToken.sol";
 import "../TokenControllerInterface.sol";
 
-contract MockInterestPool is InterestPoolInterface, TokenControllerInterface {
+contract MockYieldService is YieldServiceInterface, TokenControllerInterface {
 
   uint256 _balanceOf;
   ControlledToken _token;

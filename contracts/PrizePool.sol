@@ -7,8 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "./InterestPoolInterface.sol";
-import "./Timelock.sol";
+import "./YieldServiceInterface.sol";
 import "./TokenControllerInterface.sol";
 import "./Ticket.sol";
 import "./PrizePoolInterface.sol";
@@ -18,38 +17,51 @@ import "./RNGInterface.sol";
 /* solium-disable security/no-block-members */
 abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoolInterface {
   using SafeMath for uint256;
-  using Timelock for Timelock.State;
 
   event TicketsRedeemedInstantly(address indexed to, uint256 amount, uint256 fee);
   event TicketsRedeemedWithTimelock(address indexed to, uint256 amount, uint256 unlockTimestamp);
 
-  InterestPoolInterface public override interestPool;
+  YieldServiceInterface public override yieldService;
   Ticket public override ticket;
   ControlledToken public override sponsorship;
+  ControlledToken public override timelock;
   PrizeStrategyInterface public prizeStrategy;
   
-  mapping(address => Timelock.State) timelocks;
+  mapping(address => uint256) unlockTimestamps;
 
   function initialize (
     Ticket _ticket,
     ControlledToken _sponsorship,
-    InterestPoolInterface _interestPool,
+    ControlledToken _timelock,
+    YieldServiceInterface _yieldService,
     PrizeStrategyInterface _prizeStrategy
   ) public initializer {
     require(address(_ticket) != address(0), "ticket must not be zero");
     require(address(_ticket.controller()) == address(this), "ticket controller does not match");
     require(address(_sponsorship) != address(0), "sponsorship must not be zero");
     require(address(_sponsorship.controller()) == address(this), "sponsorship controller does not match");
-    require(address(_interestPool) != address(0), "prize pool must not be zero");
+    require(address(_timelock) != address(0), "timelock must not be zero");
+    require(address(_timelock.controller()) == address(this), "timelock controller does not match");
+    require(address(_yieldService) != address(0), "prize pool must not be zero");
     require(address(_prizeStrategy) != address(0), "prizeStrategy must not be zero");
     ticket = _ticket;
-    interestPool = _interestPool;
+    yieldService = _yieldService;
     prizeStrategy = _prizeStrategy;
     sponsorship = _sponsorship;
+    timelock = _timelock;
   }
 
   function currentPrize() public view override returns (uint256) {
-    return interestPool.balanceOf(address(this)).sub(ticket.totalSupply()).sub(sponsorship.totalSupply());
+    return yieldService.balanceOf(address(this))
+      .sub(
+        ticket.totalSupply()
+      )
+      .sub(
+        sponsorship.totalSupply()
+      )
+      .sub(
+        timelock.totalSupply()
+      );
   }
 
   function mintTickets(uint256 amount) external override {
@@ -62,7 +74,7 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
 
   function _mintTickets(address to, uint256 amount) internal {
     // Transfer deposit
-    IERC20 token = interestPool.token();
+    IERC20 token = yieldService.token();
     require(token.allowance(msg.sender, address(this)) >= amount, "insuff");
     token.transferFrom(msg.sender, address(this), amount);
     
@@ -70,8 +82,8 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
     ticket.mint(to, amount);
 
     // Deposit into pool
-    token.approve(address(interestPool), amount);
-    interestPool.supply(amount);
+    token.approve(address(yieldService), amount);
+    yieldService.supply(amount);
   }
 
   function mintTicketsWithSponsorship(uint256 amount) external override {
@@ -84,7 +96,7 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
 
   function mintTicketsWithTimelock(uint256 amount) external override {
     // Subtract timelocked funds
-    timelocks[msg.sender].amount = timelocks[msg.sender].amount.sub(amount);
+    timelock.burn(msg.sender, amount);
 
     // Mint tickets
     ticket.mint(msg.sender, amount);
@@ -92,7 +104,7 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
 
   function _mintTicketsWithSponsorship(address to, uint256 amount) internal {
     // Burn sponsorship
-    sponsorship.burn(to, amount);
+    sponsorship.burn(msg.sender, amount);
 
     // Mint tickets
     ticket.mint(to, amount);
@@ -108,7 +120,7 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
 
   function _mintSponsorship(address to, uint256 amount) internal {
     // Transfer deposit
-    IERC20 token = interestPool.token();
+    IERC20 token = yieldService.token();
     require(token.allowance(msg.sender, address(this)) >= amount, "insuff");
     token.transferFrom(msg.sender, address(this), amount);
 
@@ -116,8 +128,8 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
     sponsorship.mint(to, amount);
 
     // Deposit into pool
-    token.approve(address(interestPool), amount);
-    interestPool.supply(amount);
+    token.approve(address(yieldService), amount);
+    yieldService.supply(amount);
   }
 
   function redeemSponsorship(uint256 amount) external override {
@@ -125,10 +137,10 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
     sponsorship.burn(msg.sender, amount);
 
     // redeem the collateral
-    interestPool.redeem(amount);
+    yieldService.redeem(amount);
 
     // transfer back to user
-    IERC20(interestPool.token()).transfer(msg.sender, amount);
+    IERC20(yieldService.token()).transfer(msg.sender, amount);
   }
 
   function redeemTicketsInstantly(uint256 tickets) external override returns (uint256) {
@@ -138,11 +150,11 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
     ticket.burn(msg.sender, tickets);
 
     // redeem the collateral
-    interestPool.redeem(tickets);
+    yieldService.redeem(tickets);
 
     // transfer tickets less fee
     uint256 balance = tickets.sub(exitFee);
-    IERC20(interestPool.token()).transfer(msg.sender, balance);
+    IERC20(yieldService.token()).transfer(msg.sender, balance);
 
     // return the amount that was transferred
     return balance;
@@ -154,20 +166,28 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
     // burn the tickets
     ticket.burn(msg.sender, tickets);
 
-    uint256 change;
-    if (block.timestamp >= unlockTimestamp) {
-      // just transfer old funds, if any
-      (change,) = timelocks[msg.sender].withdrawAt(unlockTimestamp);
-      // add the new funds
-      change = change.add(tickets);
-    } else {
-      (change,) = timelocks[msg.sender].deposit(tickets, unlockTimestamp);
+    uint256 transferChange;
+
+    // See if we need to sweep the old balance
+    uint256 balance = timelock.balanceOf(msg.sender);
+    if (unlockTimestamps[msg.sender] <= block.timestamp && balance > 0) {
+      transferChange = balance;
+      timelock.burn(msg.sender, balance);
+    }
+
+    // if we are locking these funds for the future
+    if (unlockTimestamp > block.timestamp) {
+      // time lock new tokens
+      timelock.mint(msg.sender, tickets);
+      unlockTimestamps[msg.sender] = unlockTimestamp;
+    } else { // add funds to change
+      transferChange = transferChange.add(tickets);
     }
 
     // if there is change, withdraw the change and transfer
-    if (change > 0) {
-      interestPool.redeem(change);
-      IERC20(interestPool.token()).transfer(msg.sender, change);
+    if (transferChange > 0) {
+      yieldService.redeem(transferChange);
+      IERC20(yieldService.token()).transfer(msg.sender, transferChange);
     }
 
     // return the block at which the funds will be available
@@ -175,11 +195,11 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
   }
 
   function lockedBalanceOf(address user) external view override returns (uint256) {
-    return timelocks[user].amount;
+    return timelock.balanceOf(user);
   }
 
   function lockedBalanceAvailableAt(address user) external view override returns (uint256) {
-    return timelocks[user].timestamp;
+    return unlockTimestamps[user];
   }
 
   function sweepTimelockFunds(address[] calldata users) external override returns (uint256) {
@@ -189,25 +209,33 @@ abstract contract PrizePool is Initializable, TokenControllerInterface, PrizePoo
     uint256 i;
     for (i = 0; i < users.length; i++) {
       address user = users[i];
-      (uint256 tickets,) = timelocks[user].balanceAt(block.timestamp);
-      totalWithdrawal = totalWithdrawal.add(tickets);
+      if (unlockTimestamps[user] <= block.timestamp) {
+        totalWithdrawal = timelock.balanceOf(user);
+      }
     }
 
     // pull out the collateral
     if (totalWithdrawal > 0) {
-      interestPool.redeem(totalWithdrawal);
+      yieldService.redeem(totalWithdrawal);
     }
 
     for (i = 0; i < users.length; i++) {
       address user = users[i];
-      (uint256 tickets,) = timelocks[user].withdrawAt(block.timestamp);
-      if (tickets > 0) {
-        IERC20(interestPool.token()).transfer(user, tickets);
+      if (unlockTimestamps[user] <= block.timestamp) {
+        uint256 balance = timelock.balanceOf(user);
+        if (balance > 0) {
+          timelock.burn(user, balance);
+          IERC20(yieldService.token()).transfer(user, balance);
+        }
       }
     }
   }
 
-  function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {}
+  function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {
+    if (msg.sender == address(timelock)) {
+      require(from == address(0) || to == address(0), "only minting or burning is allowed");
+    }
+  }
 
   function calculateExitFee(address sender, uint256 tickets) public virtual override view returns (uint256);
   function calculateUnlockTimestamp(address sender, uint256 tickets) public virtual override view returns (uint256);

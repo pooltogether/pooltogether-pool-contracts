@@ -73,10 +73,10 @@ contract CTokenMock is ERC20 {
   }
 
   function cTokenValueOf(uint256 tokens) public view returns (uint256) {
-    return FixedPoint.multiplyUintByMantissa(tokens, exchangeRateCurrent());
+    return FixedPoint.divideUintByMantissa(tokens, exchangeRateCurrent());
   }
 
-  function balanceOfUnderlying(address account) external view returns (uint) {
+  function balanceOfUnderlying(address account) public view returns (uint) {
     return FixedPoint.multiplyUintByMantissa(balanceOf(account), exchangeRateCurrent());
   }
 

@@ -13,10 +13,12 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
   using SafeMath for uint256;
 
   function award(uint256 randomNumber, uint256 prize) external override {
-    PrizePoolInterface prizePool = PrizePoolInterface(msg.sender);
-    prizePool.sponsorship().transferFrom(address(prizePool), address(this), prize);
-    address winner = prizePool.ticket().draw(randomNumber);
-    // Convert the sponsorship to winnings
-    prizePool.mintTicketsWithSponsorshipTo(winner, prize);
+    if (prize > 0) {
+      PrizePoolInterface prizePool = PrizePoolInterface(msg.sender);
+      prizePool.sponsorship().transferFrom(address(prizePool), address(this), prize);
+      address winner = prizePool.ticket().draw(randomNumber);
+      // Convert the sponsorship to winnings
+      prizePool.mintTicketsWithSponsorshipTo(winner, prize);
+    }
   }
 }

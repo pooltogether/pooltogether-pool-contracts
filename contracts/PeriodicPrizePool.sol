@@ -20,12 +20,13 @@ contract PeriodicPrizePool is PrizePool {
   function initialize (
     Ticket _ticket,
     ControlledToken _sponsorship,
-    InterestPoolInterface _interestPool,
+    ControlledToken _timelock,
+    YieldServiceInterface _yieldService,
     PrizeStrategyInterface _prizeStrategy,
     RNGInterface _rng,
     uint256 _prizePeriodSeconds
   ) public initializer {
-    super.initialize(_ticket, _sponsorship, _interestPool, _prizeStrategy);
+    super.initialize(_ticket, _sponsorship, _timelock, _yieldService, _prizeStrategy);
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
     require(address(_rng) != address(0), "rng cannot be zero");
     rng = _rng;
@@ -64,7 +65,7 @@ contract PeriodicPrizePool is PrizePool {
   }
 
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {
-    return interestPool.estimateAccruedInterestOverBlocks(
+    return yieldService.estimateAccruedInterestOverBlocks(
       ticket.totalSupply(),
       estimateRemainingBlocksToPrize(secondsPerBlockFixedPoint18)
     );

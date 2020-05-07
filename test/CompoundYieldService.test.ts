@@ -1,5 +1,5 @@
 import { deployContract } from 'ethereum-waffle'
-import CompoundInterestPool from '../build/CompoundInterestPool.json'
+import CompoundYieldService from '../build/CompoundYieldService.json'
 import ERC20Mintable from '../build/ERC20Mintable.json'
 import CTokenMock from '../build/CTokenMock.json'
 import ControlledToken from '../build/ControlledToken.json'
@@ -9,12 +9,12 @@ import buidler from './helpers/buidler'
 
 const toWei = ethers.utils.parseEther
 
-const debug = require('debug')('ptv3:CompoundInterestPool.test')
+const debug = require('debug')('ptv3:CompoundYieldService.test')
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
-describe('InterestPool contract', () => {
+describe('YieldService contract', () => {
   
-  let interestPool: any
+  let yieldService: any
   let token: any
   let cToken: any
 
@@ -25,12 +25,12 @@ describe('InterestPool contract', () => {
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
 
-    interestPool = await deployContract(wallet, CompoundInterestPool, [])
+    yieldService = await deployContract(wallet, CompoundYieldService, [])
     token = await deployContract(wallet, ERC20Mintable, [])
     cToken = await deployContract(wallet, CTokenMock, [
       token.address, ethers.utils.parseEther('0.01')
     ])
-    await interestPool.initialize(
+    await yieldService.initialize(
       cToken.address
     )
     await token.mint(wallet._address, ethers.utils.parseEther('100000'))
@@ -38,16 +38,16 @@ describe('InterestPool contract', () => {
 
   describe('initialize()', () => {
     it('should set all the vars', async () => {
-      expect(await interestPool.cToken()).to.equal(cToken.address)
+      expect(await yieldService.cToken()).to.equal(cToken.address)
     })
   })
 
   describe('supply()', () => {
     it('should give the first depositer tokens at the initial exchange rate', async function () {
-      await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supply(toWei('1'))
+      await token.approve(yieldService.address, toWei('1'))
+      await yieldService.supply(toWei('1'))
 
-      expect(await cToken.balanceOf(interestPool.address)).to.equal(toWei('1'))
+      expect(await cToken.balanceOf(yieldService.address)).to.equal(toWei('1'))
       expect(await cToken.totalSupply()).to.equal(toWei('1'))
     })
   })
@@ -55,10 +55,10 @@ describe('InterestPool contract', () => {
   describe('redeemUnderlying()', () => {
     it('should allow a user to withdraw their principal', async function () {
       let startBalance = await token.balanceOf(wallet._address)
-      await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supply(toWei('1'))
+      await token.approve(yieldService.address, toWei('1'))
+      await yieldService.supply(toWei('1'))
 
-      await interestPool.redeem(toWei('1'))
+      await yieldService.redeem(toWei('1'))
 
       expect(await cToken.balanceOf(wallet._address)).to.equal('0')
       expect(await token.balanceOf(wallet._address)).to.equal(startBalance)
@@ -67,25 +67,25 @@ describe('InterestPool contract', () => {
 
   describe('balanceOf()', () => {
     it('should return zero when no interest has accrued', async () => {
-      expect((await interestPool.balanceOf(wallet._address)).toString()).to.equal(toWei('0'))
+      expect((await yieldService.balanceOf(wallet._address)).toString()).to.equal(toWei('0'))
     })
 
     it('should return the amount of interest available', async function () {
-      await token.approve(interestPool.address, toWei('1'))
-      await interestPool.supply(toWei('1'))
+      await token.approve(yieldService.address, toWei('1'))
+      await yieldService.supply(toWei('1'))
       
-      expect(await cToken.balanceOf(interestPool.address)).to.equal(toWei('1'))
-      expect(await interestPool.cTokenBalanceOf(wallet._address)).to.equal(toWei('1'))
+      expect(await cToken.balanceOf(yieldService.address)).to.equal(toWei('1'))
+      expect(await yieldService.cTokenBalanceOf(wallet._address)).to.equal(toWei('1'))
 
       await cToken.accrueCustom(toWei('2'))
 
       debug('checking cToken balance...')
       // console.log('check balance of interest pool')
-      expect(await cToken.balanceOf(interestPool.address)).to.equal(toWei('1'))
+      expect(await cToken.balanceOf(yieldService.address)).to.equal(toWei('1'))
 
-      debug('checking interestPool balance...')
+      debug('checking yieldService balance...')
       // console.log('check balance of wallet')
-      expect(await interestPool.balanceOf(wallet._address)).to.equal(toWei('3'))
+      expect(await yieldService.balanceOf(wallet._address)).to.equal(toWei('3'))
     })
   })
 })

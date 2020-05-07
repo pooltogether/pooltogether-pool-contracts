@@ -34,4 +34,14 @@ contract ControlledTokenFactory is Initializable, ProxyFactory {
     );
     return token;
   }
+
+  function createControlledToken(
+    TokenControllerInterface controller
+  ) public returns (ControlledToken) {
+    ControlledToken token = createControlledToken();
+    token.initialize(
+      controller
+    );
+    return token;
+  }
 }

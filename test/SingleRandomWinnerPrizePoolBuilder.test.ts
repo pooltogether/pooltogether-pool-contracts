@@ -2,8 +2,8 @@ import { deployContract } from 'ethereum-waffle'
 import { deploy1820 } from 'deploy-eip-1820'
 import PeriodicPrizePoolFactory from '../build/PeriodicPrizePoolFactory.json'
 import RNGBlockhash from '../build/RNGBlockhash.json'
-import CompoundInterestPoolFactory from '../build/CompoundInterestPoolFactory.json'
-import CompoundInterestPoolBuilder from '../build/CompoundInterestPoolBuilder.json'
+import CompoundYieldServiceFactory from '../build/CompoundYieldServiceFactory.json'
+import CompoundYieldServiceBuilder from '../build/CompoundYieldServiceBuilder.json'
 import PrizePoolBuilder from '../build/PrizePoolBuilder.json'
 import SingleRandomWinnerPrizePoolBuilder from '../build/SingleRandomWinnerPrizePoolBuilder.json'
 import TicketFactory from '../build/TicketFactory.json'
@@ -27,14 +27,14 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
   let allocator: any
   let otherWallet: any
 
-  let interestPoolFactory: any
+  let yieldServiceFactory: any
   let prizePoolFactory: any
   let ticketFactory: any
   let controlledTokenFactory: any
   let prizeStrategyFactory: any
   let prizePoolBuilder: any
   let singleRandomWinnerPrizePoolBuilder: any
-  let compoundInterestPoolBuilder: any
+  let compoundYieldServiceBuilder: any
   let rng: any
 
   let provider: Provider
@@ -52,8 +52,8 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
       token.address, ethers.utils.parseEther('0.01')
     ])
 
-    interestPoolFactory = await deployContract(wallet, CompoundInterestPoolFactory, [])
-    await interestPoolFactory.initialize()
+    yieldServiceFactory = await deployContract(wallet, CompoundYieldServiceFactory, [])
+    await yieldServiceFactory.initialize()
 
     prizePoolFactory = await deployContract(wallet, PeriodicPrizePoolFactory, [], { gasLimit: 20000000 })
 
@@ -66,14 +66,14 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
     prizeStrategyFactory = await deployContract(wallet, SingleRandomWinnerPrizeStrategyFactory, [])
     await prizeStrategyFactory.initialize()
 
-    compoundInterestPoolBuilder = await deployContract(wallet, CompoundInterestPoolBuilder, [])
-    await compoundInterestPoolBuilder.initialize(
-      interestPoolFactory.address
+    compoundYieldServiceBuilder = await deployContract(wallet, CompoundYieldServiceBuilder, [])
+    await compoundYieldServiceBuilder.initialize(
+      yieldServiceFactory.address
     )
 
     prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [])
     await prizePoolBuilder.initialize(
-      compoundInterestPoolBuilder.address,
+      compoundYieldServiceBuilder.address,
       prizePoolFactory.address,
       ticketFactory.address,
       controlledTokenFactory.address,
@@ -105,16 +105,17 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
       let singleRandomWinnerCreatedEvent = singleRandomWinnerPrizePoolBuilder.interface.events.SingleRandomWinnerPrizePoolCreated.decode(lastLog.data, lastLog.topics)
 
       expect(singleRandomWinnerCreatedEvent.creator).to.equal(wallet._address)
+      expect(singleRandomWinnerCreatedEvent.prizePool).to.equal(prizePoolCreatedEvent.prizePool)
 
-      debug(`loading up CompoundInterestPool...`)
+      debug(`loading up CompoundYieldService...`)
 
-      let interestPool = await buidler.ethers.getContractAt('CompoundInterestPool', prizePoolCreatedEvent.interestPool, wallet)
-      expect(await interestPool.token()).to.equal(token.address)
+      let yieldService = await buidler.ethers.getContractAt('CompoundYieldService', prizePoolCreatedEvent.yieldService, wallet)
+      expect(await yieldService.token()).to.equal(token.address)
 
       debug(`loading up PeriodicPrizePool...`)
 
       let prizePool = await buidler.ethers.getContractAt('PeriodicPrizePool', prizePoolCreatedEvent.prizePool, wallet)
-      expect(await prizePool.interestPool()).to.equal(interestPool.address)
+      expect(await prizePool.yieldService()).to.equal(yieldService.address)
     })
   })
 })

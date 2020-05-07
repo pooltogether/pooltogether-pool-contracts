@@ -4,7 +4,7 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import "./ControlledTokenFactory.sol";
 import "./SingleRandomWinnerPrizeStrategyFactory.sol";
-import "./CompoundInterestPoolFactory.sol";
+import "./CompoundYieldServiceFactory.sol";
 import "./TicketFactory.sol";
 import "./compound/CTokenInterface.sol";
 import "./PrizePoolBuilder.sol";

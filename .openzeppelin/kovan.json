@@ -1,11 +1,11 @@
 {
   "contracts": {
-    "CompoundInterestPoolFactory": {
-      "address": "0x506191BC158117c099fC69Da6BA37e3aF3f08C59",
+    "CompoundYieldServiceFactory": {
+      "address": "0xDafD229d750d4f4cfe0e8d58c6dd1F077f4D60d2",
       "constructorCode": "608060405234801561001057600080fd5b5061137e806100206000396000f3fe",
-      "bodyBytecodeHash": "635aad683d0bb8eac36c3a1d88d63f1f0cc8729ab49f2d0a180a29e49d425f5a",
-      "localBytecodeHash": "25c3dbdd436b1c5d249baa5543faa2030020237a2626bad9544da87fa6e4beb0",
-      "deployedBytecodeHash": "25c3dbdd436b1c5d249baa5543faa2030020237a2626bad9544da87fa6e4beb0",
+      "bodyBytecodeHash": "d9f1bc5bfd8e656b18910f1c73a79fa742c20d31b5d177aa27d38eee194ce0e0",
+      "localBytecodeHash": "cbc6dfe3f6c5d6afc8b95cf55f3be67ea9300a8654ce0a036560acba3005291e",
+      "deployedBytecodeHash": "cbc6dfe3f6c5d6afc8b95cf55f3be67ea9300a8654ce0a036560acba3005291e",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -35,33 +35,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 10815,
+          "astId": 11127,
           "type": "t_bool",
-          "src": "757:24:7"
+          "src": "757:24:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 10817,
+          "astId": 11129,
           "type": "t_bool",
-          "src": "876:25:7"
+          "src": "876:25:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 10882,
+          "astId": 11194,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:7"
+          "src": "1982:29:10"
         },
         {
-          "contract": "CompoundInterestPoolFactory",
-          "path": "contracts/CompoundInterestPoolFactory.sol",
+          "contract": "CompoundYieldServiceFactory",
+          "path": "contracts/CompoundYieldServiceFactory.sol",
           "label": "instance",
-          "astId": 11474,
+          "astId": 11786,
           "type": "t_address",
-          "src": "327:36:12"
+          "src": "327:36:15"
         }
       ],
       "warnings": {
@@ -72,18 +72,20 @@
         "importsVanillaContracts": [
           "math/SafeMath.sol",
           "token/ERC20/IERC20.sol",
-          "token/ERC20/ERC20.sol",
-          "GSN/Context.sol"
+          "GSN/Context.sol",
+          "utils/Address.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "PeriodicPrizePoolFactory": {
-      "address": "0xeF5f9dae5297C00aBfEEb5e758E8A7012578084c",
-      "constructorCode": "608060405234801561001057600080fd5b50612b2c806100206000396000f3fe",
-      "bodyBytecodeHash": "a9870ecf33a783c578ad1a07bee23726c106e81cbec738917457e2a080a88269",
-      "localBytecodeHash": "d283260bef0d9ba355ce0779c41af2b64615c6159792ddbb5763bfe9ed6f53e5",
-      "deployedBytecodeHash": "d283260bef0d9ba355ce0779c41af2b64615c6159792ddbb5763bfe9ed6f53e5",
+      "address": "0x852c9A92009e08781B91FD23775b2f32b2068A77",
+      "constructorCode": "608060405234801561001057600080fd5b50612ff8806100206000396000f3fe",
+      "bodyBytecodeHash": "f3f43d6b0a9c46f85ec67058458d9dd8a5825655cae4f2f6e47a4d5e9e1a0278",
+      "localBytecodeHash": "62406df025ca05b83fa370cd6610cb9a79686a5017fad5fef088b6e1d54b8b51",
+      "deployedBytecodeHash": "62406df025ca05b83fa370cd6610cb9a79686a5017fad5fef088b6e1d54b8b51",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -113,33 +115,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 10815,
+          "astId": 11127,
           "type": "t_bool",
-          "src": "757:24:7"
+          "src": "757:24:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 10817,
+          "astId": 11129,
           "type": "t_bool",
-          "src": "876:25:7"
+          "src": "876:25:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 10882,
+          "astId": 11194,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:7"
+          "src": "1982:29:10"
         },
         {
           "contract": "PeriodicPrizePoolFactory",
           "path": "contracts/PeriodicPrizePoolFactory.sol",
           "label": "instance",
-          "astId": 12187,
+          "astId": 12481,
           "type": "t_address",
-          "src": "353:33:18"
+          "src": "353:33:20"
         }
       ],
       "warnings": {
@@ -152,18 +154,20 @@
           "introspection/IERC1820Registry.sol",
           "token/ERC777/IERC777Recipient.sol",
           "token/ERC20/IERC20.sol",
-          "token/ERC20/ERC20.sol",
-          "GSN/Context.sol"
+          "GSN/Context.sol",
+          "utils/Address.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "TicketFactory": {
-      "address": "0xe1D8d09D72F159149e45541cbB0573D5033AA3A9",
-      "constructorCode": "608060405234801561001057600080fd5b50612278806100206000396000f3fe",
-      "bodyBytecodeHash": "d96b38a8041f4415102d538982192a84a93c5c6c2be1dbd7f770aac545575420",
-      "localBytecodeHash": "d3d9ce7ef08afff6a6918f7eb80c59580a091a9eb7b7896c16d705130f2d87dc",
-      "deployedBytecodeHash": "d3d9ce7ef08afff6a6918f7eb80c59580a091a9eb7b7896c16d705130f2d87dc",
+      "address": "0x22853d757a53Ea206301FE69709922Ba9Eb31f73",
+      "constructorCode": "608060405234801561001057600080fd5b506124a1806100206000396000f3fe",
+      "bodyBytecodeHash": "bee4001ce827e35f1a6cd24f5c71a11807e6cc5c9e3bd23d5d5003643dcbe4e7",
+      "localBytecodeHash": "b27106ee3f1d27823e2b2e6c4bb480e450ad9d9d237b9d52f6b50feb578757d7",
+      "deployedBytecodeHash": "b27106ee3f1d27823e2b2e6c4bb480e450ad9d9d237b9d52f6b50feb578757d7",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -193,33 +197,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 10815,
+          "astId": 11127,
           "type": "t_bool",
-          "src": "757:24:7"
+          "src": "757:24:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 10817,
+          "astId": 11129,
           "type": "t_bool",
-          "src": "876:25:7"
+          "src": "876:25:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 10882,
+          "astId": 11194,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:7"
+          "src": "1982:29:10"
         },
         {
           "contract": "TicketFactory",
           "path": "contracts/TicketFactory.sol",
           "label": "instance",
-          "astId": 14050,
+          "astId": 14450,
           "type": "t_address",
-          "src": "247:22:31"
+          "src": "247:22:33"
         }
       ],
       "warnings": {
@@ -228,20 +232,22 @@
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
         "importsVanillaContracts": [
-          "token/ERC20/ERC20.sol",
           "GSN/Context.sol",
           "token/ERC20/IERC20.sol",
-          "math/SafeMath.sol"
+          "math/SafeMath.sol",
+          "utils/Address.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "ControlledTokenFactory": {
-      "address": "0x8F9BFc47dc42fE8EB7101AD285c71c9Cdd93BaA6",
-      "constructorCode": "608060405234801561001057600080fd5b506119ef806100206000396000f3fe",
-      "bodyBytecodeHash": "a041fe1bcba8e85bf5d41330da62de04797fd4a5c80e953d63f66927744f4dae",
-      "localBytecodeHash": "ae04cdea1cd51ebf6fb3610909cb56c28acbdd750b9bbb065a461dc8a7231cbc",
-      "deployedBytecodeHash": "ae04cdea1cd51ebf6fb3610909cb56c28acbdd750b9bbb065a461dc8a7231cbc",
+      "address": "0x6F1bB2fB591dF07c7971584D162e72074C0890ef",
+      "constructorCode": "608060405234801561001057600080fd5b50611ce9806100206000396000f3fe",
+      "bodyBytecodeHash": "d3c0a98657451a8b7b5fa2bc009f2b054b802ce7f7a87a18e1918857872e5cb7",
+      "localBytecodeHash": "0ef01539014e8fa81573c983e1466ef374ed5125fbdbac3fe0690b1078d01b03",
+      "deployedBytecodeHash": "0ef01539014e8fa81573c983e1466ef374ed5125fbdbac3fe0690b1078d01b03",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -271,33 +277,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 10815,
+          "astId": 11127,
           "type": "t_bool",
-          "src": "757:24:7"
+          "src": "757:24:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 10817,
+          "astId": 11129,
           "type": "t_bool",
-          "src": "876:25:7"
+          "src": "876:25:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 10882,
+          "astId": 11194,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:7"
+          "src": "1982:29:10"
         },
         {
           "contract": "ControlledTokenFactory",
           "path": "contracts/ControlledTokenFactory.sol",
           "label": "instance",
-          "astId": 11658,
+          "astId": 11963,
           "type": "t_address",
-          "src": "283:31:14"
+          "src": "283:31:17"
         }
       ],
       "warnings": {
@@ -306,20 +312,22 @@
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
         "importsVanillaContracts": [
-          "token/ERC20/ERC20.sol",
           "GSN/Context.sol",
           "token/ERC20/IERC20.sol",
-          "math/SafeMath.sol"
+          "math/SafeMath.sol",
+          "utils/Address.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "SingleRandomWinnerPrizeStrategyFactory": {
-      "address": "0x26657C94d87A69E9e7EaE6B87c4428bA08789Fa5",
-      "constructorCode": "608060405234801561001057600080fd5b50610797806100206000396000f3fe",
-      "bodyBytecodeHash": "0a84954956baf8f63cf65cbbbc103fdb313795da9813cfe160f9e626461de34c",
-      "localBytecodeHash": "0fcddd1dec2b448a5026f50fdbc590d8c9b755bcc83ec943a859f9424d84d3b6",
-      "deployedBytecodeHash": "0fcddd1dec2b448a5026f50fdbc590d8c9b755bcc83ec943a859f9424d84d3b6",
+      "address": "0x2cF725996847b9855Fd5E077F4B745e443761060",
+      "constructorCode": "608060405234801561001057600080fd5b5061079e806100206000396000f3fe",
+      "bodyBytecodeHash": "6fdfd1903b3ac1501fe0f515d86a341630844446bee58d6375f8a420140bea78",
+      "localBytecodeHash": "d6229f96fcc51d33e902b11def006f3338bd4db4569d675bcb36f2e75e5ef776",
+      "deployedBytecodeHash": "d6229f96fcc51d33e902b11def006f3338bd4db4569d675bcb36f2e75e5ef776",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -349,33 +357,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 10815,
+          "astId": 11127,
           "type": "t_bool",
-          "src": "757:24:7"
+          "src": "757:24:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 10817,
+          "astId": 11129,
           "type": "t_bool",
-          "src": "876:25:7"
+          "src": "876:25:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 10882,
+          "astId": 11194,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:7"
+          "src": "1982:29:10"
         },
         {
           "contract": "SingleRandomWinnerPrizeStrategyFactory",
           "path": "contracts/SingleRandomWinnerPrizeStrategyFactory.sol",
           "label": "instance",
-          "astId": 13812,
+          "astId": 14212,
           "type": "t_address",
-          "src": "343:47:29"
+          "src": "343:47:31"
         }
       ],
       "warnings": {
@@ -386,10 +394,12 @@
         "importsVanillaContracts": [
           "math/SafeMath.sol",
           "token/ERC20/IERC20.sol",
-          "token/ERC20/ERC20.sol",
-          "GSN/Context.sol"
+          "GSN/Context.sol",
+          "utils/Address.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "RNGBlockhash": {
@@ -464,12 +474,12 @@
         "uninitializedBaseContracts": []
       }
     },
-    "CompoundInterestPoolBuilder": {
-      "address": "0xa759c419770790690161b95762e3e18d30D7fa1c",
+    "CompoundYieldServiceBuilder": {
+      "address": "0x49Dfb09ED8602e0Ae220E63Aadd593d1510D3FD2",
       "constructorCode": "608060405234801561001057600080fd5b506103a9806100206000396000f3fe",
-      "bodyBytecodeHash": "c11eb0b94ee1d27b4f304562cb5f723f88314dfa788e525741f9708e39226542",
-      "localBytecodeHash": "c9cfbfe54b6da51a504f65392012aba0078bc87c31fa300b2c958691cc04070c",
-      "deployedBytecodeHash": "c9cfbfe54b6da51a504f65392012aba0078bc87c31fa300b2c958691cc04070c",
+      "bodyBytecodeHash": "e5393bac2d7dc94eedd2c3aae9d4488309527db025969c10ecdecb090116bfb8",
+      "localBytecodeHash": "71ad67127078e76dc043c077217a2442c0fe376242cf4322212cf7e535390988",
+      "deployedBytecodeHash": "71ad67127078e76dc043c077217a2442c0fe376242cf4322212cf7e535390988",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -499,41 +509,41 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 10815,
+          "astId": 11127,
           "type": "t_bool",
-          "src": "757:24:7"
+          "src": "757:24:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 10817,
+          "astId": 11129,
           "type": "t_bool",
-          "src": "876:25:7"
+          "src": "876:25:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 10882,
+          "astId": 11194,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:7"
+          "src": "1982:29:10"
         },
         {
-          "contract": "CompoundInterestPoolBuilder",
-          "path": "contracts/CompoundInterestPoolBuilder.sol",
-          "label": "compoundInterestPoolFactory",
-          "astId": 11387,
+          "contract": "CompoundYieldServiceBuilder",
+          "path": "contracts/CompoundYieldServiceBuilder.sol",
+          "label": "compoundYieldServiceFactory",
+          "astId": 11699,
           "type": "t_address",
-          "src": "271:62:11"
+          "src": "271:62:14"
         },
         {
-          "contract": "CompoundInterestPoolBuilder",
-          "path": "contracts/CompoundInterestPoolBuilder.sol",
+          "contract": "CompoundYieldServiceBuilder",
+          "path": "contracts/CompoundYieldServiceBuilder.sol",
           "label": "controlledTokenFactory",
-          "astId": 11389,
+          "astId": 11701,
           "type": "t_address",
-          "src": "337:52:11"
+          "src": "337:52:14"
         }
       ],
       "warnings": {
@@ -542,20 +552,22 @@
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
         "importsVanillaContracts": [
-          "token/ERC20/ERC20.sol",
           "GSN/Context.sol",
           "token/ERC20/IERC20.sol",
-          "math/SafeMath.sol"
+          "math/SafeMath.sol",
+          "utils/Address.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "PrizePoolBuilder": {
-      "address": "0x6C07c9E2ced586B1A60C98C47824C697422F2979",
-      "constructorCode": "608060405234801561001057600080fd5b50610c9a806100206000396000f3fe",
-      "bodyBytecodeHash": "fccd09466858286361864a7d42264950708500a49f4f0f8d40d4800f9986ed9c",
-      "localBytecodeHash": "9cf0e948e90cd650f42db1d89bff50bf6ca697c3fb86c7e17b04cfc13c254629",
-      "deployedBytecodeHash": "9cf0e948e90cd650f42db1d89bff50bf6ca697c3fb86c7e17b04cfc13c254629",
+      "address": "0x00fA8ce1E55ea2BcCfFF31a4a26464c3d19Fc12c",
+      "constructorCode": "608060405234801561001057600080fd5b50610d1d806100206000396000f3fe",
+      "bodyBytecodeHash": "4fbe033f4b18de8ab7670b49e2333180c6ca520f4c8b1b42a8e74280bbf6c5ac",
+      "localBytecodeHash": "ba4896aed9e71a6474ca2e89390edf30bfdf001a354e38dde75310a1a23cccee",
+      "deployedBytecodeHash": "ba4896aed9e71a6474ca2e89390edf30bfdf001a354e38dde75310a1a23cccee",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -585,65 +597,65 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 10815,
+          "astId": 11127,
           "type": "t_bool",
-          "src": "757:24:7"
+          "src": "757:24:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 10817,
+          "astId": 11129,
           "type": "t_bool",
-          "src": "876:25:7"
+          "src": "876:25:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 10882,
+          "astId": 11194,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:7"
+          "src": "1982:29:10"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/PrizePoolBuilder.sol",
-          "label": "compoundInterestPoolBuilder",
-          "astId": 13090,
+          "label": "compoundYieldServiceBuilder",
+          "astId": 13476,
           "type": "t_address",
-          "src": "534:62:21"
+          "src": "534:62:23"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/PrizePoolBuilder.sol",
           "label": "periodicPrizePoolFactory",
-          "astId": 13092,
+          "astId": 13478,
           "type": "t_address",
-          "src": "600:56:21"
+          "src": "600:56:23"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/PrizePoolBuilder.sol",
           "label": "ticketFactory",
-          "astId": 13094,
+          "astId": 13480,
           "type": "t_address",
-          "src": "660:34:21"
+          "src": "660:34:23"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/PrizePoolBuilder.sol",
           "label": "controlledTokenFactory",
-          "astId": 13096,
+          "astId": 13482,
           "type": "t_address",
-          "src": "698:52:21"
+          "src": "698:52:23"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/PrizePoolBuilder.sol",
           "label": "rng",
-          "astId": 13098,
+          "astId": 13484,
           "type": "t_address",
-          "src": "754:23:21"
+          "src": "754:23:23"
         }
       ],
       "warnings": {
@@ -652,14 +664,16 @@
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
         "importsVanillaContracts": [
-          "token/ERC20/ERC20.sol",
           "GSN/Context.sol",
           "token/ERC20/IERC20.sol",
           "math/SafeMath.sol",
+          "utils/Address.sol",
           "introspection/IERC1820Registry.sol",
           "token/ERC777/IERC777Recipient.sol"
         ],
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "SingleRandomWinnerPrizePoolBuilder": {
@@ -753,11 +767,11 @@
   },
   "solidityLibs": {},
   "proxies": {
-    "PoolTogether3/CompoundInterestPoolFactory": [
+    "PoolTogether3/CompoundYieldServiceFactory": [
       {
         "address": "0x682fDC1EE7c37BC81be514B1042Bcbf99753F289",
         "version": "0.3.0",
-        "implementation": "0x506191BC158117c099fC69Da6BA37e3aF3f08C59",
+        "implementation": "0xDafD229d750d4f4cfe0e8d58c6dd1F077f4D60d2",
         "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
@@ -766,7 +780,7 @@
       {
         "address": "0xBC90026C07bb44ea67cDf64bb64495114Ea44013",
         "version": "0.3.0",
-        "implementation": "0xeF5f9dae5297C00aBfEEb5e758E8A7012578084c",
+        "implementation": "0x852c9A92009e08781B91FD23775b2f32b2068A77",
         "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
@@ -775,7 +789,7 @@
       {
         "address": "0xf947aCf3E9A975C6b462cDF7DeaB56EfCE170171",
         "version": "0.3.0",
-        "implementation": "0xe1D8d09D72F159149e45541cbB0573D5033AA3A9",
+        "implementation": "0x22853d757a53Ea206301FE69709922Ba9Eb31f73",
         "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
@@ -784,7 +798,7 @@
       {
         "address": "0x41AC97eB084073e21e82426ea6EF64E4c93c1520",
         "version": "0.3.0",
-        "implementation": "0x8F9BFc47dc42fE8EB7101AD285c71c9Cdd93BaA6",
+        "implementation": "0x6F1bB2fB591dF07c7971584D162e72074C0890ef",
         "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
@@ -793,7 +807,7 @@
       {
         "address": "0xF43c59EFa3A38AE5f09B145A4B9c2E19b3C60eb3",
         "version": "0.3.0",
-        "implementation": "0x26657C94d87A69E9e7EaE6B87c4428bA08789Fa5",
+        "implementation": "0x2cF725996847b9855Fd5E077F4B745e443761060",
         "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
@@ -807,11 +821,11 @@
         "kind": "Upgradeable"
       }
     ],
-    "PoolTogether3/CompoundInterestPoolBuilder": [
+    "PoolTogether3/CompoundYieldServiceBuilder": [
       {
         "address": "0xf33adaC2001Ab5B8cf838979CE0A9869C10339BA",
         "version": "0.3.0",
-        "implementation": "0xa759c419770790690161b95762e3e18d30D7fa1c",
+        "implementation": "0x49Dfb09ED8602e0Ae220E63Aadd593d1510D3FD2",
         "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }
@@ -820,7 +834,7 @@
       {
         "address": "0x9A0c1F3B4565e903397d32Be7b32f8b5e7478EE3",
         "version": "0.3.0",
-        "implementation": "0x6C07c9E2ced586B1A60C98C47824C697422F2979",
+        "implementation": "0x00fA8ce1E55ea2BcCfFF31a4a26464c3d19Fc12c",
         "admin": "0x6a3954bA7963ddAf724E2080bd0FaB46895E6E96",
         "kind": "Upgradeable"
       }

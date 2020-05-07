@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-import "./InterestPoolInterface.sol";
+import "./YieldServiceInterface.sol";
 import "./ControlledToken.sol";
 import "./TokenControllerInterface.sol";
 import "./compound/CTokenInterface.sol";
@@ -14,7 +14,7 @@ import "./compound/CTokenInterface.sol";
  * Wraps a cToken with a principal token.  The principal token represents how much underlying principal a user holds.
  * The interest can be minted as new principal tokens by the allocator.
  */
-contract CompoundInterestPool is Initializable, InterestPoolInterface {
+contract CompoundYieldService is Initializable, YieldServiceInterface {
   using SafeMath for uint256;
 
   event PrincipalSupplied(address from, uint256 amount);

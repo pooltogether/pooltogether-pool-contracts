@@ -1,6 +1,6 @@
 pragma solidity ^0.6.4;
 
-import "./InterestPoolInterface.sol";
+import "./YieldServiceInterface.sol";
 import "./Ticket.sol";
 import "./ControlledToken.sol";
 
@@ -20,9 +20,10 @@ interface PrizePoolInterface {
   function sweepTimelockFunds(address[] calldata users) external returns (uint256);
   function calculateExitFee(address sender, uint256 tickets) external view returns (uint256);
   function calculateUnlockTimestamp(address sender, uint256 tickets) external view returns (uint256);
-  function interestPool() external view returns (InterestPoolInterface);
+  function yieldService() external view returns (YieldServiceInterface);
   function currentPrize() external view returns (uint256);
   function sponsorship() external view returns (ControlledToken);
+  function timelock() external view returns (ControlledToken);
   function ticket() external view returns (Ticket);
   function canAward() external view returns (bool);
   function startAward() external;
