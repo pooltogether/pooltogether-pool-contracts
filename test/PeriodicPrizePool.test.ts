@@ -180,8 +180,8 @@ describe('PeriodicPrizePool contract', () => {
       expect(await ticket.balanceOf(wallet._address)).to.equal('0')
       
       // Locked balance is recorded
-      expect(await prizePool.lockedBalanceOf(wallet._address)).to.equal(toWei('10'))
-      expect(await prizePool.lockedBalanceAvailableAt(wallet._address)).to.equal(unlockTimestamp)
+      expect(await timelock.balanceOf(wallet._address)).to.equal(toWei('10'))
+      expect(await prizePool.timelockBalanceAvailableAt(wallet._address)).to.equal(unlockTimestamp)
     })
 
 
@@ -196,8 +196,8 @@ describe('PeriodicPrizePool contract', () => {
       tx = await prizePool.redeemTicketsWithTimelock(toWei('4'))
       // Tickets are transferred
       expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('4'))
-      expect(await prizePool.lockedBalanceOf(wallet._address)).to.equal('0')
-      expect(await prizePool.lockedBalanceAvailableAt(wallet._address)).to.equal('0')
+      expect(await timelock.balanceOf(wallet._address)).to.equal('0')
+      expect(await prizePool.timelockBalanceAvailableAt(wallet._address)).to.equal('0')
     })
 
     it('should sweep old locked deposits', async () => {
@@ -227,7 +227,7 @@ describe('PeriodicPrizePool contract', () => {
       expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('10'))
 
       // Locked balance is recorded
-      expect(await prizePool.lockedBalanceOf(wallet._address)).to.equal(toWei('0'))
+      expect(await timelock.balanceOf(wallet._address)).to.equal(toWei('0'))
     })
   })
 
@@ -241,14 +241,14 @@ describe('PeriodicPrizePool contract', () => {
 
       await prizePool.redeemTicketsWithTimelock(toWei('4'))
 
-      expect(await prizePool.lockedBalanceAvailableAt(wallet._address)).to.equal(startTime + 10)
+      expect(await prizePool.timelockBalanceAvailableAt(wallet._address)).to.equal(startTime + 10)
 
       // now progress time
       await increaseTime(10)
 
       await prizePool.sweepTimelockFunds([wallet._address])
 
-      expect(await prizePool.lockedBalanceOf(wallet._address)).to.equal(toWei('0'))      
+      expect(await timelock.balanceOf(wallet._address)).to.equal(toWei('0'))      
 
       expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('4'))
     })

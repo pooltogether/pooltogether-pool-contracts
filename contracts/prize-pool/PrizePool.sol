@@ -199,11 +199,7 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
     return unlockTimestamp;
   }
 
-  function lockedBalanceOf(address user) external view override returns (uint256) {
-    return timelock.balanceOf(user);
-  }
-
-  function lockedBalanceAvailableAt(address user) external view override returns (uint256) {
+  function timelockBalanceAvailableAt(address user) external view override returns (uint256) {
     return unlockTimestamps[user];
   }
 

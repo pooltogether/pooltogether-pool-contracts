@@ -16,8 +16,7 @@ interface PrizePoolInterface {
   function redeemSponsorship(uint256 tickets) external;
   function redeemTicketsInstantly(uint256 tickets) external returns (uint256);
   function redeemTicketsWithTimelock(uint256 tickets) external returns (uint256);
-  function lockedBalanceOf(address user) external view returns (uint256);
-  function lockedBalanceAvailableAt(address user) external view returns (uint256);
+  function timelockBalanceAvailableAt(address user) external view returns (uint256);
   function sweepTimelockFunds(address[] calldata users) external returns (uint256);
   function calculateExitFee(address sender, uint256 tickets) external view returns (uint256);
   function calculateUnlockTimestamp(address sender, uint256 tickets) external view returns (uint256);
