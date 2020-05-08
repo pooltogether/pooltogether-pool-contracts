@@ -33,6 +33,20 @@ program
       flags = '-v'
     }
 
+    await migration.migrate(5, async () => {
+      if (program.network == 'local') {
+        runShell(`oz deploy -n ${program.network} -k regular Forwarder`)
+      }
+    })
+
+    let trustedForwarder
+    if (program.network == 'kovan') {
+      trustedForwarder = '0x6453D37248Ab2C16eBd1A8f782a2CBC65860E60B'
+    } else {
+      context = await buildContext({ network: program.network, address: program.address })
+      trustedForwarder = context.networkFile.data.proxies['PoolTogether3/Forwarder'][0].address
+    }
+
     await migration.migrate(10, async () => {
       runShell(`oz create CompoundYieldServiceFactory --force ${flags} --init initialize`)
     })
@@ -77,7 +91,7 @@ program
     } = context.contracts
 
     await migration.migrate(60, async () => {
-      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${CompoundYieldServiceBuilder.address},${PeriodicPrizePoolFactory.address},${TicketFactory.address},${ControlledTokenFactory.address},${RNGBlockhash.address}`)
+      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${CompoundYieldServiceBuilder.address},${PeriodicPrizePoolFactory.address},${TicketFactory.address},${ControlledTokenFactory.address},${RNGBlockhash.address},${trustedForwarder}`)
     })
 
     context = await buildContext({ network: program.network, address: program.address })
