@@ -22,10 +22,11 @@ contract PeriodicPrizePool is PrizePool {
     ControlledToken _timelock,
     YieldServiceInterface _yieldService,
     PrizeStrategyInterface _prizeStrategy,
+    address _trustedForwarder,
     RNGInterface _rng,
     uint256 _prizePeriodSeconds
   ) public initializer {
-    super.initialize(_ticket, _sponsorship, _timelock, _yieldService, _prizeStrategy);
+    super.initialize(_ticket, _sponsorship, _timelock, _yieldService, _prizeStrategy, _trustedForwarder);
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
     require(address(_rng) != address(0), "rng cannot be zero");
     rng = _rng;

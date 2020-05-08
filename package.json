@@ -45,11 +45,12 @@
     "shelljs": "0.8.3",
     "solc": "0.6.4",
     "solidity-coverage": "^0.7.4",
+    "truffle-extract": "pooltogether/truffle-extract",
     "ts-node": "^8.6.2",
-    "typescript": "^3.8.3",
-    "truffle-extract": "pooltogether/truffle-extract"
+    "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@opengsn/gsn": "^0.9.0",
     "@openzeppelin/contracts": "^3.0.1",
     "@openzeppelin/upgrades": "^2.8.0",
     "@pooltogether/fixed-point": "^0.1.0",

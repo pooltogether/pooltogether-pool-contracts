@@ -4,6 +4,7 @@ import PeriodicPrizePoolFactory from '../build/PeriodicPrizePoolFactory.json'
 import RNGBlockhash from '../build/RNGBlockhash.json'
 import CompoundYieldServiceFactory from '../build/CompoundYieldServiceFactory.json'
 import CompoundYieldServiceBuilder from '../build/CompoundYieldServiceBuilder.json'
+import Forwarder from '../build/Forwarder.json'
 import PrizePoolBuilder from '../build/PrizePoolBuilder.json'
 import SingleRandomWinnerPrizePoolBuilder from '../build/SingleRandomWinnerPrizePoolBuilder.json'
 import TicketFactory from '../build/TicketFactory.json'
@@ -40,6 +41,7 @@ describe('Integration Test', () => {
   let singleRandomWinnerPrizePoolBuilder: any
   let compoundYieldServiceBuilder: any
   let rng: any
+  let forwarder: any
 
   let provider: Provider
 
@@ -56,7 +58,7 @@ describe('Integration Test', () => {
     await deploy1820(wallet)
 
     rng = await deployContract(wallet, RNGBlockhash, [])
-
+    forwarder = await deployContract(wallet, Forwarder, [])
     token = await deployContract(wallet, ERC20Mintable, [])
     cToken = await deployContract(wallet, CTokenMock, [
       token.address, ethers.utils.parseEther('0.01')
@@ -92,7 +94,8 @@ describe('Integration Test', () => {
       prizePoolFactory.address,
       ticketFactory.address,
       controlledTokenFactory.address,
-      rng.address
+      rng.address,
+      forwarder.address
     )
 
     singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [])

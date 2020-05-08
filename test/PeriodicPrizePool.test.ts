@@ -4,6 +4,7 @@ import RNGBlockhash from '../build/RNGBlockhash.json'
 import MockPrizeStrategy from '../build/MockPrizeStrategy.json'
 import PeriodicPrizePool from '../build/PeriodicPrizePool.json'
 import ERC20Mintable from '../build/ERC20Mintable.json'
+import Forwarder from '../build/Forwarder.json'
 import ControlledToken from '../build/ControlledToken.json'
 import Ticket from '../build/Ticket.json'
 import { deploy1820 } from 'deploy-eip-1820'
@@ -27,6 +28,7 @@ describe('PeriodicPrizePool contract', () => {
   let mockYieldService: any
   let mockPrizeStrategy: any
   let rng: any
+  let forwarder: any
 
   let wallet: any
   let allocator: any
@@ -46,47 +48,58 @@ describe('PeriodicPrizePool contract', () => {
     await deploy1820(wallet)
 
     rng = await deployContract(wallet, RNGBlockhash, [])
+    forwarder = await deployContract(wallet, Forwarder, [])
     prizePool = await deployContract(wallet, PeriodicPrizePool, [], overrides)
     token = await deployContract(wallet, ERC20Mintable, [], overrides)
     debug('Deploying MockPrizeStrategy...')
     mockPrizeStrategy = await deployContract(wallet, MockPrizeStrategy, [], overrides)
     mockYieldService = await deployContract(wallet, MockYieldService, [], overrides)
-    debug('Deploying ControlledToken...')
     prizePeriodSeconds = 10
 
-    debug('Deploying ControlledToken...')
+    debug('Deploying Ticket...')
 
     ticket = await deployContract(wallet, Ticket, [], overrides)
-    await ticket.initialize(
+
+    debug('Initializing Ticket...')
+
+    await ticket['initialize(string,string,address,address)'](
       'Ticket',
       'TICK',
-      prizePool.address
+      prizePool.address,
+      forwarder.address
     )
+
+    debug('Deploying Sponsorship...')
 
     sponsorship = await deployContract(wallet, ControlledToken, [], overrides)
-    await sponsorship.initialize(
+    await sponsorship['initialize(string,string,address,address)'](
       'Ticket',
       'TICK',
-      prizePool.address
+      prizePool.address,
+      forwarder.address
     )
+
+    debug('Deploying Timelock...')
 
     timelock = await deployContract(wallet, ControlledToken, [], overrides)
-    await timelock['initialize(address)'](
-      prizePool.address
+    await timelock['initialize(address,address)'](
+      prizePool.address,
+      forwarder.address
     )
 
-    debug('Deploying ControlledToken...')
+    debug('Deploying MockYieldService...')
 
     await mockYieldService.initialize(
       token.address
     )
 
-    let tx = await prizePool['initialize(address,address,address,address,address,address,uint256)'](
+    let tx = await prizePool['initialize(address,address,address,address,address,address,address,uint256)'](
       ticket.address,
       sponsorship.address,
       timelock.address,
       mockYieldService.address,
       mockPrizeStrategy.address,
+      forwarder.address,
       rng.address,
       prizePeriodSeconds
     )

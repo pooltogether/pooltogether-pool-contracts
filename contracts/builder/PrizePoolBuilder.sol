@@ -24,13 +24,15 @@ contract PrizePoolBuilder is Initializable {
   TicketFactory public ticketFactory;
   ControlledTokenFactory public controlledTokenFactory;
   RNGInterface public rng;
+  address public trustedForwarder;
 
   function initialize (
     CompoundYieldServiceBuilder _compoundYieldServiceBuilder,
     PeriodicPrizePoolFactory _periodicPrizePoolFactory,
     TicketFactory _ticketFactory,
     ControlledTokenFactory _controlledTokenFactory,
-    RNGInterface _rng
+    RNGInterface _rng,
+    address _trustedForwarder
   ) public initializer {
     require(address(_compoundYieldServiceBuilder) != address(0), "interest pool factory is not defined");
     require(address(_periodicPrizePoolFactory) != address(0), "prize pool factory is not defined");
@@ -42,6 +44,7 @@ contract PrizePoolBuilder is Initializable {
     ticketFactory = _ticketFactory;
     controlledTokenFactory = _controlledTokenFactory;
     rng = _rng;
+    trustedForwarder = _trustedForwarder;
   }
 
   function createPeriodicPrizePool(
@@ -56,11 +59,12 @@ contract PrizePoolBuilder is Initializable {
     PeriodicPrizePool prizePool = periodicPrizePoolFactory.createPeriodicPrizePool();
 
     prizePool.initialize(
-      ticketFactory.createTicket(_ticketName, _ticketSymbol, prizePool),
-      controlledTokenFactory.createControlledToken(_sponsorshipName, _sponsorshipSymbol, prizePool),
-      controlledTokenFactory.createControlledToken(prizePool),
+      ticketFactory.createTicket(_ticketName, _ticketSymbol, prizePool, trustedForwarder),
+      controlledTokenFactory.createControlledToken(_sponsorshipName, _sponsorshipSymbol, prizePool, trustedForwarder),
+      controlledTokenFactory.createControlledToken(prizePool, trustedForwarder),
       compoundYieldServiceBuilder.createCompoundYieldService(cToken),
       _prizeStrategy,
+      trustedForwarder,
       rng,
       prizePeriodSeconds
     );

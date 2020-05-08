@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@nomiclabs/buidler/console.sol";
+import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 
 import "../external/openzeppelin/ReentrancyGuard.sol";
 import "../yield-service/YieldServiceInterface.sol";
@@ -16,7 +17,7 @@ import "../prize-strategy/PrizeStrategyInterface.sol";
 import "../rng/RNGInterface.sol";
 
 /* solium-disable security/no-block-members */
-abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizePoolInterface {
+abstract contract PrizePool is ReentrancyGuard, BaseRelayRecipient, TokenControllerInterface, PrizePoolInterface {
   using SafeMath for uint256;
 
   event TicketsRedeemedInstantly(address indexed to, uint256 amount, uint256 fee);
@@ -37,7 +38,8 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
     ControlledToken _sponsorship,
     ControlledToken _timelock,
     YieldServiceInterface _yieldService,
-    PrizeStrategyInterface _prizeStrategy
+    PrizeStrategyInterface _prizeStrategy,
+    address _trustedForwarder
   ) public initializer {
     ReentrancyGuard.initialize();
     require(address(_ticket) != address(0), "ticket must not be zero");
@@ -53,6 +55,7 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
     prizeStrategy = _prizeStrategy;
     sponsorship = _sponsorship;
     timelock = _timelock;
+    trustedForwarder = _trustedForwarder;
   }
 
   function currentPrize() public view override returns (uint256) {
@@ -70,7 +73,7 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
   }
 
   function mintTickets(uint256 amount) external override nonReentrant {
-    _mintTickets(msg.sender, amount);
+    _mintTickets(_msgSender(), amount);
   }
 
   function mintTicketsTo(address to, uint256 amount) external override nonReentrant {
@@ -80,8 +83,8 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
   function _mintTickets(address to, uint256 amount) internal {
     // Transfer deposit
     IERC20 token = yieldService.token();
-    require(token.allowance(msg.sender, address(this)) >= amount, "insuff");
-    token.transferFrom(msg.sender, address(this), amount);
+    require(token.allowance(_msgSender(), address(this)) >= amount, "insuff");
+    token.transferFrom(_msgSender(), address(this), amount);
     
     // Mint tickets
     ticket.mint(to, amount);
@@ -92,7 +95,7 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
   }
 
   function mintTicketsWithSponsorship(uint256 amount) external override {
-    _mintTicketsWithSponsorship(msg.sender, amount);
+    _mintTicketsWithSponsorship(_msgSender(), amount);
   }
 
   function mintTicketsWithSponsorshipTo(address to, uint256 amount) external override {
@@ -101,22 +104,22 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
 
   function mintTicketsWithTimelock(uint256 amount) external override {
     // Subtract timelocked funds
-    timelock.burn(msg.sender, amount);
+    timelock.burn(_msgSender(), amount);
 
     // Mint tickets
-    ticket.mint(msg.sender, amount);
+    ticket.mint(_msgSender(), amount);
   }
 
   function _mintTicketsWithSponsorship(address to, uint256 amount) internal {
     // Burn sponsorship
-    sponsorship.burn(msg.sender, amount);
+    sponsorship.burn(_msgSender(), amount);
 
     // Mint tickets
     ticket.mint(to, amount);
   }
 
   function mintSponsorship(uint256 amount) external override nonReentrant {
-    _mintSponsorship(msg.sender, amount);
+    _mintSponsorship(_msgSender(), amount);
   }
 
   function mintSponsorshipTo(address to, uint256 amount) external override nonReentrant {
@@ -126,8 +129,8 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
   function _mintSponsorship(address to, uint256 amount) internal {
     // Transfer deposit
     IERC20 token = yieldService.token();
-    require(token.allowance(msg.sender, address(this)) >= amount, "insuff");
-    token.transferFrom(msg.sender, address(this), amount);
+    require(token.allowance(_msgSender(), address(this)) >= amount, "insuff");
+    token.transferFrom(_msgSender(), address(this), amount);
 
     // create the sponsorship
     sponsorship.mint(to, amount);
@@ -139,52 +142,52 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
 
   function redeemSponsorship(uint256 amount) external override nonReentrant {
     // burn the sponsorship
-    sponsorship.burn(msg.sender, amount);
+    sponsorship.burn(_msgSender(), amount);
 
     // redeem the collateral
     yieldService.redeem(amount);
 
     // transfer back to user
-    IERC20(yieldService.token()).transfer(msg.sender, amount);
+    IERC20(yieldService.token()).transfer(_msgSender(), amount);
   }
 
   function redeemTicketsInstantly(uint256 tickets) external override nonReentrant returns (uint256) {
-    uint256 exitFee = calculateExitFee(msg.sender, tickets);
+    uint256 exitFee = calculateExitFee(_msgSender(), tickets);
 
     // burn the tickets
-    ticket.burn(msg.sender, tickets);
+    ticket.burn(_msgSender(), tickets);
 
     // redeem the collateral
     yieldService.redeem(tickets);
 
     // transfer tickets less fee
     uint256 balance = tickets.sub(exitFee);
-    IERC20(yieldService.token()).transfer(msg.sender, balance);
+    IERC20(yieldService.token()).transfer(_msgSender(), balance);
 
     // return the amount that was transferred
     return balance;
   }
 
   function redeemTicketsWithTimelock(uint256 tickets) external override nonReentrant returns (uint256) {
-    uint256 unlockTimestamp = calculateUnlockTimestamp(msg.sender, tickets);
+    uint256 unlockTimestamp = calculateUnlockTimestamp(_msgSender(), tickets);
 
     // burn the tickets
-    ticket.burn(msg.sender, tickets);
+    ticket.burn(_msgSender(), tickets);
 
     uint256 transferChange;
 
     // See if we need to sweep the old balance
-    uint256 balance = timelock.balanceOf(msg.sender);
-    if (unlockTimestamps[msg.sender] <= block.timestamp && balance > 0) {
+    uint256 balance = timelock.balanceOf(_msgSender());
+    if (unlockTimestamps[_msgSender()] <= block.timestamp && balance > 0) {
       transferChange = balance;
-      timelock.burn(msg.sender, balance);
+      timelock.burn(_msgSender(), balance);
     }
 
     // if we are locking these funds for the future
     if (unlockTimestamp > block.timestamp) {
       // time lock new tokens
-      timelock.mint(msg.sender, tickets);
-      unlockTimestamps[msg.sender] = unlockTimestamp;
+      timelock.mint(_msgSender(), tickets);
+      unlockTimestamps[_msgSender()] = unlockTimestamp;
     } else { // add funds to change
       transferChange = transferChange.add(tickets);
     }
@@ -192,7 +195,7 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
     // if there is change, withdraw the change and transfer
     if (transferChange > 0) {
       yieldService.redeem(transferChange);
-      IERC20(yieldService.token()).transfer(msg.sender, transferChange);
+      IERC20(yieldService.token()).transfer(_msgSender(), transferChange);
     }
 
     // return the block at which the funds will be available
@@ -233,7 +236,7 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
   }
 
   function beforeTokenTransfer(address from, address to, uint256) external override {
-    if (msg.sender == address(timelock)) {
+    if (_msgSender() == address(timelock)) {
       require(from == address(0) || to == address(0), "only minting or burning is allowed");
     }
   }

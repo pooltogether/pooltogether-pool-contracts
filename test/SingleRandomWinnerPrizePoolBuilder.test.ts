@@ -2,6 +2,7 @@ import { deployContract } from 'ethereum-waffle'
 import { deploy1820 } from 'deploy-eip-1820'
 import PeriodicPrizePoolFactory from '../build/PeriodicPrizePoolFactory.json'
 import RNGBlockhash from '../build/RNGBlockhash.json'
+import Forwarder from '../build/Forwarder.json'
 import CompoundYieldServiceFactory from '../build/CompoundYieldServiceFactory.json'
 import CompoundYieldServiceBuilder from '../build/CompoundYieldServiceBuilder.json'
 import PrizePoolBuilder from '../build/PrizePoolBuilder.json'
@@ -36,6 +37,7 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
   let singleRandomWinnerPrizePoolBuilder: any
   let compoundYieldServiceBuilder: any
   let rng: any
+  let forwarder: any
 
   let provider: Provider
 
@@ -46,7 +48,7 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
     await deploy1820(wallet)
 
     rng = await deployContract(wallet, RNGBlockhash, [])
-
+    forwarder = await deployContract(wallet, Forwarder, [])
     token = await deployContract(wallet, ERC20Mintable, [])
     cToken = await deployContract(wallet, CTokenMock, [
       token.address, ethers.utils.parseEther('0.01')
@@ -77,7 +79,8 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
       prizePoolFactory.address,
       ticketFactory.address,
       controlledTokenFactory.address,
-      rng.address
+      rng.address,
+      forwarder.address
     )
 
     singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [])

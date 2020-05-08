@@ -24,23 +24,27 @@ contract ControlledTokenFactory is Initializable, ProxyFactory {
   function createControlledToken(
     string memory _interestName,
     string memory _interestSymbol,
-    TokenControllerInterface controller
+    TokenControllerInterface controller,
+    address _trustedForwarder
   ) public returns (ControlledToken) {
     ControlledToken token = createControlledToken();
     token.initialize(
       _interestName,
       _interestSymbol,
-      controller
+      controller,
+      _trustedForwarder
     );
     return token;
   }
 
   function createControlledToken(
-    TokenControllerInterface controller
+    TokenControllerInterface controller,
+    address _trustedForwarder
   ) public returns (ControlledToken) {
     ControlledToken token = createControlledToken();
     token.initialize(
-      controller
+      controller,
+      _trustedForwarder
     );
     return token;
   }

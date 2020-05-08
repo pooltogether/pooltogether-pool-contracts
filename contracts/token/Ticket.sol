@@ -16,9 +16,10 @@ contract Ticket is ControlledToken {
   function initialize (
     string memory _name,
     string memory _symbol,
-    TokenControllerInterface _controller
+    TokenControllerInterface _controller,
+    address _trustedForwarder
   ) public override initializer {
-    super.initialize(_name, _symbol, _controller);
+    super.initialize(_name, _symbol, _controller, _trustedForwarder);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
   }
 

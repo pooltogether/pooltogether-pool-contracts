@@ -22,9 +22,10 @@ contract Loyalty is ControlledToken {
     string memory _name,
     string memory _symbol,
     TokenControllerInterface _controller,
+    address _trustedForwarder,
     uint256 _loyaltyRatePerSecondMantissa
   ) public virtual initializer {
-    super.initialize(_name, _symbol, _controller);
+    super.initialize(_name, _symbol, _controller, _trustedForwarder);
     loyaltyRatePerSecondMantissa = _loyaltyRatePerSecondMantissa;
   }
 
