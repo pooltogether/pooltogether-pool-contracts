@@ -112,8 +112,10 @@ contract PeriodicPrizePool is PrizePool {
 
   function completeAward() external override requireCanCompleteAward nonReentrant {
     uint256 prize = currentPrize();
-    sponsorship.mint(address(this), prize);
-    sponsorship.approve(address(prizeStrategy), prize);
+    if (prize > 0) {
+      sponsorship.mint(address(this), prize);
+      sponsorship.approve(address(prizeStrategy), prize);
+    }
     currentPrizeStartedAt = block.timestamp;
     prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
     previousPrize = prize;

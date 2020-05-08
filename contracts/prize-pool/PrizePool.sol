@@ -57,16 +57,17 @@ abstract contract PrizePool is ReentrancyGuard, TokenControllerInterface, PrizeP
   }
 
   function currentPrize() public view override returns (uint256) {
-    return yieldService.balanceOf(address(this))
-      .sub(
-        ticket.totalSupply()
-      )
-      .sub(
-        sponsorship.totalSupply()
-      )
-      .sub(
-        timelock.totalSupply()
-      );
+    uint256 yieldBalance = yieldService.balanceOf(address(this));
+    uint256 supply = accountedSupply();
+    uint256 prize;
+    if (yieldBalance > supply) {
+      prize = yieldBalance.sub(supply);
+    }
+    return prize;
+  }
+
+  function accountedSupply() public view override returns (uint256) {
+    return ticket.totalSupply().add(sponsorship.totalSupply()).add(timelock.totalSupply());
   }
 
   function mintTickets(uint256 amount) external override nonReentrant {
