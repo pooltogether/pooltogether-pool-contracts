@@ -32,14 +32,14 @@ contract ControlledToken is ERC20 {
   function mint(
     address account,
     uint256 amount
-  ) external onlyController {
+  ) external virtual onlyController {
     _mint(account, amount);
   }
 
   function burn(
     address from,
     uint256 amount
-  ) external onlyController {
+  ) external virtual onlyController {
     _burn(from, amount);
   }
 

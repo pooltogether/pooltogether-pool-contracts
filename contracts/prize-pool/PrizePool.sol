@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-// import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../external/openzeppelin/ReentrancyGuard.sol";
