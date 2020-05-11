@@ -21,7 +21,7 @@ interface PrizePoolInterface {
   function calculateExitFee(address sender, uint256 tickets) external view returns (uint256);
   function calculateUnlockTimestamp(address sender, uint256 tickets) external view returns (uint256);
   function yieldService() external view returns (YieldServiceInterface);
-  function currentPrize() external view returns (uint256);
+  function currentPrize() external returns (uint256);
   function accountedSupply() external view returns (uint256);
   function sponsorship() external view returns (ControlledToken);
   function timelock() external view returns (ControlledToken);

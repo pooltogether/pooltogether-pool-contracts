@@ -1,11 +1,11 @@
 {
   "contracts": {
     "CompoundYieldServiceFactory": {
-      "address": "0xC08c1004cC33Af64D678C5b27D2EF3ad5A681696",
-      "constructorCode": "608060405234801561001057600080fd5b5061137e806100206000396000f3fe",
-      "bodyBytecodeHash": "773132fb143a591464eb096d1fe9b891292e36997133615d26403466d9b5636e",
-      "localBytecodeHash": "ecfcf4556a86b49bae1f307e7df8d981bee54bcbf780251daa796f2dea84cfd8",
-      "deployedBytecodeHash": "ecfcf4556a86b49bae1f307e7df8d981bee54bcbf780251daa796f2dea84cfd8",
+      "address": "0x2dF19216C2B548E601a9f16443EB726f4C44d518",
+      "constructorCode": "608060405234801561001057600080fd5b506112ab806100206000396000f3fe",
+      "bodyBytecodeHash": "16178736af3265bef7c77b9228f02566b44708da1d02c5415805a6d520e6bdea",
+      "localBytecodeHash": "69c0958183190c3875c66f786c5042b24aae99f83de017af0dd34f79f8843810",
+      "deployedBytecodeHash": "69c0958183190c3875c66f786c5042b24aae99f83de017af0dd34f79f8843810",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -35,33 +35,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11127,
+          "astId": 12235,
           "type": "t_bool",
-          "src": "757:24:10"
+          "src": "757:24:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11129,
+          "astId": 12237,
           "type": "t_bool",
-          "src": "876:25:10"
+          "src": "876:25:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11194,
+          "astId": 12302,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:10"
+          "src": "1982:29:19"
         },
         {
           "contract": "CompoundYieldServiceFactory",
           "path": "contracts/yield-service/CompoundYieldServiceFactory.sol",
           "label": "instance",
-          "astId": 16789,
+          "astId": 18111,
           "type": "t_address",
-          "src": "357:36:44"
+          "src": "357:36:55"
         }
       ],
       "warnings": {
@@ -79,11 +79,11 @@
       }
     },
     "PeriodicPrizePoolFactory": {
-      "address": "0xA65b66D7799816d54E2c0E223dEDBeE290fa18E4",
-      "constructorCode": "608060405234801561001057600080fd5b506136e2806100206000396000f3fe",
-      "bodyBytecodeHash": "b846c75202cb7bd86c7aafc3cc20c9f366c7af7a5c4e53558f18126a156eb514",
-      "localBytecodeHash": "245d57d1d35c133c1d61953867378010118e50b5d3d3130cacd741e293d56fff",
-      "deployedBytecodeHash": "245d57d1d35c133c1d61953867378010118e50b5d3d3130cacd741e293d56fff",
+      "address": "0x0D3227cFEFA66d106d0113086e7130Af2E843ba3",
+      "constructorCode": "608060405234801561001057600080fd5b50613977806100206000396000f3fe",
+      "bodyBytecodeHash": "da9e9ce0efc95a8d4647c237c41d735dac5db5d7b6ccc5aa0659bcaa00d768f7",
+      "localBytecodeHash": "d0adc6043332cbebcdd40f5c5dc4e540b80c377aa19a671aaf4131ca8f000388",
+      "deployedBytecodeHash": "d0adc6043332cbebcdd40f5c5dc4e540b80c377aa19a671aaf4131ca8f000388",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -113,33 +113,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11127,
+          "astId": 12235,
           "type": "t_bool",
-          "src": "757:24:10"
+          "src": "757:24:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11129,
+          "astId": 12237,
           "type": "t_bool",
-          "src": "876:25:10"
+          "src": "876:25:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11194,
+          "astId": 12302,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:10"
+          "src": "1982:29:19"
         },
         {
           "contract": "PeriodicPrizePoolFactory",
           "path": "contracts/prize-pool/PeriodicPrizePoolFactory.sol",
           "label": "instance",
-          "astId": 13928,
+          "astId": 15056,
           "type": "t_address",
-          "src": "398:33:22"
+          "src": "398:33:31"
         }
       ],
       "warnings": {
@@ -159,11 +159,11 @@
       }
     },
     "TicketFactory": {
-      "address": "0x1f327C2597177C82A03B826D26eb4E9761F6FB60",
-      "constructorCode": "608060405234801561001057600080fd5b506124a1806100206000396000f3fe",
-      "bodyBytecodeHash": "f0065b8803f632c5ee25a626198c1c39ee83d2e81345c219a12af0b2caf67a09",
-      "localBytecodeHash": "0fb4759cc651dca687ce8a8577b32a7968f0cb77ba67495d5e8e949a3484c93b",
-      "deployedBytecodeHash": "0fb4759cc651dca687ce8a8577b32a7968f0cb77ba67495d5e8e949a3484c93b",
+      "address": "0x6d3900bDa2284b0E1Ed55621855F22D1237c4B85",
+      "constructorCode": "608060405234801561001057600080fd5b50612720806100206000396000f3fe",
+      "bodyBytecodeHash": "b150d36a63faf86b72645fe50860a0416db7588cf61732810246ad4e4b1e96ea",
+      "localBytecodeHash": "e30d5a8fe18694672553dd37c8dfaadc75cec6c8773dcbfcb6fa43f94cb19457",
+      "deployedBytecodeHash": "e30d5a8fe18694672553dd37c8dfaadc75cec6c8773dcbfcb6fa43f94cb19457",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -193,33 +193,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11127,
+          "astId": 12235,
           "type": "t_bool",
-          "src": "757:24:10"
+          "src": "757:24:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11129,
+          "astId": 12237,
           "type": "t_bool",
-          "src": "876:25:10"
+          "src": "876:25:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11194,
+          "astId": 12302,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:10"
+          "src": "1982:29:19"
         },
         {
           "contract": "TicketFactory",
           "path": "contracts/token/TicketFactory.sol",
           "label": "instance",
-          "astId": 16259,
+          "astId": 17611,
           "type": "t_address",
-          "src": "270:22:39"
+          "src": "270:22:50"
         }
       ],
       "warnings": {
@@ -237,11 +237,11 @@
       }
     },
     "ControlledTokenFactory": {
-      "address": "0x973Dd9b14E98c8CF51b5180e6937bB30690Ac148",
-      "constructorCode": "608060405234801561001057600080fd5b50611ce9806100206000396000f3fe",
-      "bodyBytecodeHash": "15aebff3f645cedcdb35946f0270ebabeaf2e3aa0cea0cebc04ee92f4e8dca87",
-      "localBytecodeHash": "309e0fcb4644bac12dbaadd13c8c9d398605ca1d5f60748e1c16dd437cb3e3bb",
-      "deployedBytecodeHash": "309e0fcb4644bac12dbaadd13c8c9d398605ca1d5f60748e1c16dd437cb3e3bb",
+      "address": "0x89F4e4d3376A054b5eb779F451A39Bf539b262dd",
+      "constructorCode": "608060405234801561001057600080fd5b50611f51806100206000396000f3fe",
+      "bodyBytecodeHash": "10a4e9bda3c129566d379332620662b14745a38cf0c3564471fa071f58c81747",
+      "localBytecodeHash": "2c2a1a2ad65971246ae701091920d264440112e046c71f92e43628de8107260a",
+      "deployedBytecodeHash": "2c2a1a2ad65971246ae701091920d264440112e046c71f92e43628de8107260a",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -271,33 +271,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11127,
+          "astId": 12235,
           "type": "t_bool",
-          "src": "757:24:10"
+          "src": "757:24:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11129,
+          "astId": 12237,
           "type": "t_bool",
-          "src": "876:25:10"
+          "src": "876:25:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11194,
+          "astId": 12302,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:10"
+          "src": "1982:29:19"
         },
         {
           "contract": "ControlledTokenFactory",
           "path": "contracts/token/ControlledTokenFactory.sol",
           "label": "instance",
-          "astId": 15973,
+          "astId": 17166,
           "type": "t_address",
-          "src": "306:31:37"
+          "src": "306:31:47"
         }
       ],
       "warnings": {
@@ -315,11 +315,11 @@
       }
     },
     "SingleRandomWinnerPrizeStrategyFactory": {
-      "address": "0x619b965161dF91ae2beC96d8c969313bdFc379f1",
+      "address": "0x5b335A75459541A45608d1e1561fb4566e621328",
       "constructorCode": "608060405234801561001057600080fd5b5061079e806100206000396000f3fe",
-      "bodyBytecodeHash": "2e1df185868b4e7405732ebdb955d2535117d2040efeb698a9ce8487bae931d5",
-      "localBytecodeHash": "7c386b0a481c2adfb72d899d36afa3553c6e7f615ad26111dc223d02cfa8fc84",
-      "deployedBytecodeHash": "7c386b0a481c2adfb72d899d36afa3553c6e7f615ad26111dc223d02cfa8fc84",
+      "bodyBytecodeHash": "b8219258896dc30f03a2c0879492a11ea4e7cb20bd3607c5ddc13998a10c1190",
+      "localBytecodeHash": "429de41ada2bd841b00d6860d03510fd49fa04b29acd2d347b50da53a852966e",
+      "deployedBytecodeHash": "429de41ada2bd841b00d6860d03510fd49fa04b29acd2d347b50da53a852966e",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -349,33 +349,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11127,
+          "astId": 12235,
           "type": "t_bool",
-          "src": "757:24:10"
+          "src": "757:24:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11129,
+          "astId": 12237,
           "type": "t_bool",
-          "src": "876:25:10"
+          "src": "876:25:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11194,
+          "astId": 12302,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:10"
+          "src": "1982:29:19"
         },
         {
           "contract": "SingleRandomWinnerPrizeStrategyFactory",
           "path": "contracts/prize-strategy/SingleRandomWinnerPrizeStrategyFactory.sol",
           "label": "instance",
-          "astId": 15174,
+          "astId": 16325,
           "type": "t_address",
-          "src": "373:47:28"
+          "src": "373:47:37"
         }
       ],
       "warnings": {
@@ -393,7 +393,7 @@
       }
     },
     "RNGBlockhash": {
-      "address": "0x6891718d16bfbec79947aE37b4642Aa3D751e919",
+      "address": "0xCb93df2a95a0D84f57f897E1295b08C7160C3AaA",
       "constructorCode": "608060405234801561001057600080fd5b506102f0806100206000396000f3fe",
       "bodyBytecodeHash": "1c534a5c051925f9fae78d6b73500f56483de51443b7f4d2c596565a61f00729",
       "localBytecodeHash": "d9292299ff1f8f0d02e78cfaa62c8f7aabc1c516d0df724dc1eeb21cd613558a",
@@ -432,25 +432,25 @@
           "contract": "RNGBlockhash",
           "path": "contracts/rng/RNGBlockhash.sol",
           "label": "requestCount",
-          "astId": 15225,
+          "astId": 16376,
           "type": "t_uint256",
-          "src": "181:27:29"
+          "src": "181:27:38"
         },
         {
           "contract": "RNGBlockhash",
           "path": "contracts/rng/RNGBlockhash.sol",
           "label": "completed",
-          "astId": 15229,
+          "astId": 16380,
           "type": "t_mapping<t_bool>",
-          "src": "212:41:29"
+          "src": "212:41:38"
         },
         {
           "contract": "RNGBlockhash",
           "path": "contracts/rng/RNGBlockhash.sol",
           "label": "randomNumbers",
-          "astId": 15233,
+          "astId": 16384,
           "type": "t_mapping<t_bytes32>",
-          "src": "257:48:29"
+          "src": "257:48:38"
         }
       ],
       "warnings": {
@@ -465,7 +465,7 @@
       }
     },
     "CompoundYieldServiceBuilder": {
-      "address": "0x8ee2F98a460ca6228Fce2FFa090d6d013f8f3E72",
+      "address": "0xF5Ce84F3f7B58Fd65C5De8F57C24242A5651b895",
       "constructorCode": "608060405234801561001057600080fd5b506103a9806100206000396000f3fe",
       "bodyBytecodeHash": "e5393bac2d7dc94eedd2c3aae9d4488309527db025969c10ecdecb090116bfb8",
       "localBytecodeHash": "71ad67127078e76dc043c077217a2442c0fe376242cf4322212cf7e535390988",
@@ -499,41 +499,41 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11127,
+          "astId": 12235,
           "type": "t_bool",
-          "src": "757:24:10"
+          "src": "757:24:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11129,
+          "astId": 12237,
           "type": "t_bool",
-          "src": "876:25:10"
+          "src": "876:25:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11194,
+          "astId": 12302,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:10"
+          "src": "1982:29:19"
         },
         {
           "contract": "CompoundYieldServiceBuilder",
           "path": "contracts/yield-service/CompoundYieldServiceBuilder.sol",
           "label": "compoundYieldServiceFactory",
-          "astId": 16702,
+          "astId": 18024,
           "type": "t_address",
-          "src": "288:62:43"
+          "src": "288:62:54"
         },
         {
           "contract": "CompoundYieldServiceBuilder",
           "path": "contracts/yield-service/CompoundYieldServiceBuilder.sol",
           "label": "controlledTokenFactory",
-          "astId": 16704,
+          "astId": 18026,
           "type": "t_address",
-          "src": "354:52:43"
+          "src": "354:52:54"
         }
       ],
       "warnings": {
@@ -551,11 +551,11 @@
       }
     },
     "PrizePoolBuilder": {
-      "address": "0xf6F0D57569e09209F18B97A5E875E0F3816a5E03",
-      "constructorCode": "608060405234801561001057600080fd5b50610d1d806100206000396000f3fe",
-      "bodyBytecodeHash": "4fbe033f4b18de8ab7670b49e2333180c6ca520f4c8b1b42a8e74280bbf6c5ac",
-      "localBytecodeHash": "ba4896aed9e71a6474ca2e89390edf30bfdf001a354e38dde75310a1a23cccee",
-      "deployedBytecodeHash": "ba4896aed9e71a6474ca2e89390edf30bfdf001a354e38dde75310a1a23cccee",
+      "address": "0x9C43dD45e6C0084D7F9b229542b452fC68E427A0",
+      "constructorCode": "608060405234801561001057600080fd5b50610d87806100206000396000f3fe",
+      "bodyBytecodeHash": "873094d719fff70a152080c90bb97598bf2e9be477745dc9e9e27e9140d31f26",
+      "localBytecodeHash": "54b18d0f4ce55c76e008345a267b1905cc2048f74d107c05f87fbbea299ec51b",
+      "deployedBytecodeHash": "54b18d0f4ce55c76e008345a267b1905cc2048f74d107c05f87fbbea299ec51b",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -585,65 +585,73 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11127,
+          "astId": 12235,
           "type": "t_bool",
-          "src": "757:24:10"
+          "src": "757:24:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11129,
+          "astId": 12237,
           "type": "t_bool",
-          "src": "876:25:10"
+          "src": "876:25:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11194,
+          "astId": 12302,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:10"
+          "src": "1982:29:19"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "compoundYieldServiceBuilder",
-          "astId": 11416,
+          "astId": 12524,
           "type": "t_address",
-          "src": "585:62:14"
+          "src": "585:62:23"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "periodicPrizePoolFactory",
-          "astId": 11418,
+          "astId": 12526,
           "type": "t_address",
-          "src": "651:56:14"
+          "src": "651:56:23"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "ticketFactory",
-          "astId": 11420,
+          "astId": 12528,
           "type": "t_address",
-          "src": "711:34:14"
+          "src": "711:34:23"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "controlledTokenFactory",
-          "astId": 11422,
+          "astId": 12530,
           "type": "t_address",
-          "src": "749:52:14"
+          "src": "749:52:23"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "rng",
-          "astId": 11424,
+          "astId": 12532,
           "type": "t_address",
-          "src": "805:23:14"
+          "src": "805:23:23"
+        },
+        {
+          "contract": "PrizePoolBuilder",
+          "path": "contracts/builder/PrizePoolBuilder.sol",
+          "label": "trustedForwarder",
+          "astId": 12534,
+          "type": "t_address",
+          "src": "832:31:23"
         }
       ],
       "warnings": {
@@ -663,7 +671,7 @@
       }
     },
     "SingleRandomWinnerPrizePoolBuilder": {
-      "address": "0x58934acF23507bd5387Da0c3aB9AD08582055128",
+      "address": "0x3DB82DCBC3b3ce68C05fDC2773779328Dba0F27E",
       "constructorCode": "608060405234801561001057600080fd5b506106a1806100206000396000f3fe",
       "bodyBytecodeHash": "6e9ebb9ff53168023d3f6267af8257d75e358216c140fecc5a04f778a5c7217b",
       "localBytecodeHash": "a64e62cdabd253da314e07df649628d3e0e9d8a3c537fd28564658b6ac1e433b",
@@ -697,41 +705,41 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11127,
+          "astId": 12235,
           "type": "t_bool",
-          "src": "757:24:10"
+          "src": "757:24:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11129,
+          "astId": 12237,
           "type": "t_bool",
-          "src": "876:25:10"
+          "src": "876:25:19"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11194,
+          "astId": 12302,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:10"
+          "src": "1982:29:19"
         },
         {
           "contract": "SingleRandomWinnerPrizePoolBuilder",
           "path": "contracts/builder/SingleRandomWinnerPrizePoolBuilder.sol",
           "label": "prizePoolBuilder",
-          "astId": 11621,
+          "astId": 12741,
           "type": "t_address",
-          "src": "451:40:15"
+          "src": "451:40:24"
         },
         {
           "contract": "SingleRandomWinnerPrizePoolBuilder",
           "path": "contracts/builder/SingleRandomWinnerPrizePoolBuilder.sol",
           "label": "prizeStrategyFactory",
-          "astId": 11623,
+          "astId": 12743,
           "type": "t_address",
-          "src": "495:66:15"
+          "src": "495:66:24"
         }
       ],
       "warnings": {
@@ -755,82 +763,82 @@
   "proxies": {
     "PoolTogether3/CompoundYieldServiceFactory": [
       {
-        "address": "0xa92AA267dD0B183e7b618cAF0856d0fC0208206e",
+        "address": "0x150092EAdA5aD619840854CBdaafb758c5bD0174",
         "version": "0.3.0",
-        "implementation": "0xC08c1004cC33Af64D678C5b27D2EF3ad5A681696",
-        "admin": "0xf2732eeCb20249e432f1dC623f891B1f6caced1A",
+        "implementation": "0x2dF19216C2B548E601a9f16443EB726f4C44d518",
+        "admin": "0x47157A34fCCCD52056219A87481CD7fdC0116ab3",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/PeriodicPrizePoolFactory": [
       {
-        "address": "0x727717fd42b2a9164FEf12cDb6aDb42CabF19D9B",
+        "address": "0x7e87d14239E0949AFFA970f638ed24D97886ef19",
         "version": "0.3.0",
-        "implementation": "0xA65b66D7799816d54E2c0E223dEDBeE290fa18E4",
-        "admin": "0xf2732eeCb20249e432f1dC623f891B1f6caced1A",
+        "implementation": "0x0D3227cFEFA66d106d0113086e7130Af2E843ba3",
+        "admin": "0x47157A34fCCCD52056219A87481CD7fdC0116ab3",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/TicketFactory": [
       {
-        "address": "0xBa2ded8be0b2Cd7D22DAa25aA5a1dBB70525dBC4",
+        "address": "0x0d9c57F3025D60713e5Ebc3AfC1ae761b895DeCC",
         "version": "0.3.0",
-        "implementation": "0x1f327C2597177C82A03B826D26eb4E9761F6FB60",
-        "admin": "0xf2732eeCb20249e432f1dC623f891B1f6caced1A",
+        "implementation": "0x6d3900bDa2284b0E1Ed55621855F22D1237c4B85",
+        "admin": "0x47157A34fCCCD52056219A87481CD7fdC0116ab3",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/ControlledTokenFactory": [
       {
-        "address": "0xE39702609cbB587E212D93aa61388788bDF22177",
+        "address": "0xDcbD4955B05e3224101259981F92801d15358530",
         "version": "0.3.0",
-        "implementation": "0x973Dd9b14E98c8CF51b5180e6937bB30690Ac148",
-        "admin": "0xf2732eeCb20249e432f1dC623f891B1f6caced1A",
+        "implementation": "0x89F4e4d3376A054b5eb779F451A39Bf539b262dd",
+        "admin": "0x47157A34fCCCD52056219A87481CD7fdC0116ab3",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/SingleRandomWinnerPrizeStrategyFactory": [
       {
-        "address": "0x3b0c520333Ec4b17c327Cc66121DC60D4c9D173F",
+        "address": "0x9182d32387687df1da55020077Ed0736396fc4B5",
         "version": "0.3.0",
-        "implementation": "0x619b965161dF91ae2beC96d8c969313bdFc379f1",
-        "admin": "0xf2732eeCb20249e432f1dC623f891B1f6caced1A",
+        "implementation": "0x5b335A75459541A45608d1e1561fb4566e621328",
+        "admin": "0x47157A34fCCCD52056219A87481CD7fdC0116ab3",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/RNGBlockhash": [
       {
-        "address": "0x1dEF59d66776898EA7bF1173FEe1F52Cd97C5E95",
+        "address": "0xaF845Fa9de58257aacF6926Fe47121254394893B",
         "version": "0.3.0",
-        "implementation": "0x6891718d16bfbec79947aE37b4642Aa3D751e919",
-        "admin": "0xf2732eeCb20249e432f1dC623f891B1f6caced1A",
+        "implementation": "0xCb93df2a95a0D84f57f897E1295b08C7160C3AaA",
+        "admin": "0x47157A34fCCCD52056219A87481CD7fdC0116ab3",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/CompoundYieldServiceBuilder": [
       {
-        "address": "0x4c233e2a3c591714Dcc54dEB6CaDba49B6a38C43",
+        "address": "0x164184f545fac35f6ee8aaF043468FCE17E2c6F4",
         "version": "0.3.0",
-        "implementation": "0x8ee2F98a460ca6228Fce2FFa090d6d013f8f3E72",
-        "admin": "0xf2732eeCb20249e432f1dC623f891B1f6caced1A",
+        "implementation": "0xF5Ce84F3f7B58Fd65C5De8F57C24242A5651b895",
+        "admin": "0x47157A34fCCCD52056219A87481CD7fdC0116ab3",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/PrizePoolBuilder": [
       {
-        "address": "0xE791feea14895a0a074CADb51761A3D2e172F429",
+        "address": "0x9aedf5D6E592D6e9a3eeD4d701e94BBB356F535C",
         "version": "0.3.0",
-        "implementation": "0xf6F0D57569e09209F18B97A5E875E0F3816a5E03",
-        "admin": "0xf2732eeCb20249e432f1dC623f891B1f6caced1A",
+        "implementation": "0x9C43dD45e6C0084D7F9b229542b452fC68E427A0",
+        "admin": "0x47157A34fCCCD52056219A87481CD7fdC0116ab3",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/SingleRandomWinnerPrizePoolBuilder": [
       {
-        "address": "0xD7346845e27E54531784Ac71771c80EfD99cb3B0",
+        "address": "0x77630a2Eb1C0753b589cD7fB6413170fB33B7a81",
         "version": "0.3.0",
-        "implementation": "0x58934acF23507bd5387Da0c3aB9AD08582055128",
-        "admin": "0xf2732eeCb20249e432f1dC623f891B1f6caced1A",
+        "implementation": "0x3DB82DCBC3b3ce68C05fDC2773779328Dba0F27E",
+        "admin": "0x47157A34fCCCD52056219A87481CD7fdC0116ab3",
         "kind": "Upgradeable"
       }
     ]
@@ -838,6 +846,6 @@
   "manifestVersion": "2.2",
   "version": "0.3.0",
   "proxyAdmin": {
-    "address": "0xf2732eeCb20249e432f1dC623f891B1f6caced1A"
+    "address": "0x47157A34fCCCD52056219A87481CD7fdC0116ab3"
   }
 }

@@ -5,6 +5,7 @@ import CTokenMock from '../build/CTokenMock.json'
 import ControlledToken from '../build/ControlledToken.json'
 import { expect } from 'chai'
 import { ethers } from './helpers/ethers'
+import { balanceOf } from './helpers/balanceOf'
 import buidler from './helpers/buidler'
 
 const toWei = ethers.utils.parseEther
@@ -47,7 +48,7 @@ describe('YieldService contract', () => {
       await token.approve(yieldService.address, toWei('1'))
       await yieldService.supply(toWei('1'))
 
-      expect(await cToken.balanceOf(yieldService.address)).to.equal(toWei('1'))
+      expect(await balanceOf(cToken, yieldService.address)).to.equal(toWei('1'))
       expect(await cToken.totalSupply()).to.equal(toWei('1'))
     })
   })
@@ -67,7 +68,7 @@ describe('YieldService contract', () => {
 
   describe('balanceOf()', () => {
     it('should return zero when no interest has accrued', async () => {
-      expect((await yieldService.balanceOf(wallet._address)).toString()).to.equal(toWei('0'))
+      expect((await balanceOf(yieldService, wallet._address)).toString()).to.equal(toWei('0'))
     })
 
     it('should return the amount of interest available', async function () {
@@ -85,7 +86,7 @@ describe('YieldService contract', () => {
 
       debug('checking yieldService balance...')
       // console.log('check balance of wallet')
-      expect(await yieldService.balanceOf(wallet._address)).to.equal(toWei('3'))
+      expect(await balanceOf(yieldService, wallet._address)).to.equal(toWei('3'))
     })
   })
 })

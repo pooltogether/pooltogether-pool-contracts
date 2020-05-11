@@ -11,11 +11,26 @@ import { deploy1820 } from 'deploy-eip-1820'
 import { expect } from 'chai'
 import { ethers } from './helpers/ethers'
 import { increaseTime } from './helpers/increaseTime'
+import { balanceOf } from './helpers/balanceOf'
 import buidler from './helpers/buidler'
 
 const toWei = ethers.utils.parseEther
 
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
+
+async function prizePoolCurrentPrize(prizePoolContract: any) {
+  let fxn = prizePoolContract.interface.functions.currentPrize
+  let data = fxn.encode([])
+  let result = await prizePoolContract.provider.call({ to: prizePoolContract.address, data })
+  return fxn.decode(result)[0]
+}
+
+async function prizePoolEstimatePrize(prizePoolContract: any, secondsPerBlock: any) {
+  let fxn = prizePoolContract.interface.functions.estimatePrize
+  let data = fxn.encode([secondsPerBlock])
+  let result = await prizePoolContract.provider.call({ to: prizePoolContract.address, data })
+  return fxn.decode(result)[0]
+}
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('PeriodicPrizePool contract', () => {
@@ -120,7 +135,7 @@ describe('PeriodicPrizePool contract', () => {
   describe('currentPrize()', () => {
     it('should return the available interest from the prize pool', async () => {
       await mockYieldService.setBalanceOf(toWei('100'))
-      expect(await prizePool.currentPrize()).to.equal(toWei('100'))
+      expect(await prizePoolCurrentPrize(prizePool)).to.equal(toWei('100'))
     })
   })
 
@@ -334,7 +349,7 @@ describe('PeriodicPrizePool contract', () => {
       await token.approve(mockYieldService.address, toWei('10'))
       await mockYieldService.supply(toWei('10'))
       // should be current prize + estimated remaining
-      expect(await prizePool.estimatePrize('1')).to.equal('1000000000000000045')
+      expect(await prizePoolEstimatePrize(prizePool, '1')).to.equal('1000000000000000045')
     })
   })
 

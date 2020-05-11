@@ -32,8 +32,8 @@ contract CompoundYieldService is Initializable, YieldServiceInterface {
     cToken = _cToken;
   }
 
-  function balanceOf(address user) public view override returns (uint256) {
-    return FixedPoint.multiplyUintByMantissa(cTokenBalances[user], exchangeRateCurrent());
+  function balanceOf(address user) public override returns (uint256) {
+    return FixedPoint.multiplyUintByMantissa(cTokenBalances[user], cToken.exchangeRateCurrent());
   }
 
   function supply(uint256 amount) external override {
@@ -65,12 +65,6 @@ contract CompoundYieldService is Initializable, YieldServiceInterface {
     // estimated = principalAmount * supply rate per block * blocks
     uint256 multiplier = principalAmount.mul(blocks);
     return FixedPoint.multiplyUintByMantissa(multiplier, supplyRatePerBlock());
-  }
-
-  function exchangeRateCurrent() public view returns (uint256) {
-    (bool success, bytes memory data) = address(cToken).staticcall(abi.encodeWithSignature("exchangeRateCurrent()"));
-    require(success, "exchangeRateCurrent() failed");
-    return abi.decode(data, (uint256));
   }
 
   function supplyRatePerBlock() public view returns (uint256) {

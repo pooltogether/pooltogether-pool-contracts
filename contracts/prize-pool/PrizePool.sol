@@ -58,7 +58,7 @@ abstract contract PrizePool is ReentrancyGuard, BaseRelayRecipient, TokenControl
     trustedForwarder = _trustedForwarder;
   }
 
-  function currentPrize() public view override returns (uint256) {
+  function currentPrize() public override returns (uint256) {
     uint256 yieldBalance = yieldService.balanceOf(address(this));
     uint256 supply = accountedSupply();
     uint256 prize;

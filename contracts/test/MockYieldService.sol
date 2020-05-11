@@ -19,7 +19,7 @@ contract MockYieldService is YieldServiceInterface, TokenControllerInterface {
     _balanceOf = amount;
   }
 
-  function balanceOf(address user) external view override returns (uint256) {
+  function balanceOf(address) external override returns (uint256) {
     return _balanceOf;
   }
 

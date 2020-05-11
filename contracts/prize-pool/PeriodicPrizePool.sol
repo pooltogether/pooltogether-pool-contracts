@@ -56,7 +56,7 @@ contract PeriodicPrizePool is PrizePool {
     return prizePeriodEndAt();
   }
 
-  function estimatePrize(uint256 secondsPerBlockFixedPoint18) external view returns (uint256) {
+  function estimatePrize(uint256 secondsPerBlockFixedPoint18) external returns (uint256) {
     return currentPrize().add(estimateRemainingPrizeWithBlockTime(secondsPerBlockFixedPoint18));
   }
 
