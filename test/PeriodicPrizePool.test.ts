@@ -1,5 +1,6 @@
 import { deployContract } from 'ethereum-waffle'
 import MockYieldService from '../build/MockYieldService.json'
+import ControlledTokenFactory from '../build/ControlledTokenFactory.json'
 import RNGBlockhash from '../build/RNGBlockhash.json'
 import MockPrizeStrategy from '../build/MockPrizeStrategy.json'
 import PeriodicPrizePool from '../build/PeriodicPrizePool.json'
@@ -63,6 +64,10 @@ describe('PeriodicPrizePool contract', () => {
     await deploy1820(wallet)
 
     rng = await deployContract(wallet, RNGBlockhash, [])
+
+    let controlledTokenFactory = await deployContract(wallet, ControlledTokenFactory, [])
+    await controlledTokenFactory.initialize()
+
     forwarder = await deployContract(wallet, Forwarder, [])
     prizePool = await deployContract(wallet, PeriodicPrizePool, [], overrides)
     token = await deployContract(wallet, ERC20Mintable, [], overrides)
@@ -96,12 +101,6 @@ describe('PeriodicPrizePool contract', () => {
 
     debug('Deploying Timelock...')
 
-    timelock = await deployContract(wallet, ControlledToken, [], overrides)
-    await timelock['initialize(address,address)'](
-      prizePool.address,
-      forwarder.address
-    )
-
     debug('Deploying MockYieldService...')
 
     await mockYieldService.initialize(
@@ -111,7 +110,7 @@ describe('PeriodicPrizePool contract', () => {
     let tx = await prizePool['initialize(address,address,address,address,address,address,address,uint256)'](
       ticket.address,
       sponsorship.address,
-      timelock.address,
+      controlledTokenFactory.address,
       mockYieldService.address,
       mockPrizeStrategy.address,
       forwarder.address,
@@ -121,6 +120,8 @@ describe('PeriodicPrizePool contract', () => {
     let block = await buidler.ethers.provider.getBlock(tx.blockHash)
     startTime = block.timestamp
     await token.mint(wallet._address, ethers.utils.parseEther('100000'))
+    
+    timelock = await buidler.ethers.getContractAt('ControlledToken', (await prizePool.timelock()), wallet)
   })
 
   describe('initialize()', () => {

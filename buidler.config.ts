@@ -27,17 +27,18 @@ export default {
   },
   networks: {
     buidlerevm: {
-      blockGasLimit: 20000000,
-      gas: 20000000
+      blockGasLimit: 200000000,
+      gas: 200000000,
+      allowUnlimitedContractSize: true
     },
     coverage: {
       url: 'http://127.0.0.1:8555',
-      gas: 20000000
+      gas: 200000000
     },
     local: {
       url: 'http://127.0.0.1:' + process.env.LOCAL_BUIDLEREVM_PORT,
-      gas: 20000000,
-      blockGasLimit: 20000000
+      gas: 200000000,
+      blockGasLimit: 200000000
     },
     kovan: {
       accounts: {

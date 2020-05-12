@@ -4,6 +4,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./PrizePool.sol";
+import "../token/ControlledTokenFactory.sol";
 
 /* solium-disable security/no-block-members */
 contract PeriodicPrizePool is PrizePool {
@@ -19,14 +20,14 @@ contract PeriodicPrizePool is PrizePool {
   function initialize (
     Ticket _ticket,
     ControlledToken _sponsorship,
-    ControlledToken _timelock,
+    ControlledTokenFactory controlledTokenFactory,
     YieldServiceInterface _yieldService,
     PrizeStrategyInterface _prizeStrategy,
     address _trustedForwarder,
     RNGInterface _rng,
     uint256 _prizePeriodSeconds
   ) public initializer {
-    super.initialize(_ticket, _sponsorship, _timelock, _yieldService, _prizeStrategy, _trustedForwarder);
+    super.initialize(_ticket, _sponsorship, controlledTokenFactory, _yieldService, _prizeStrategy, _trustedForwarder);
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
     require(address(_rng) != address(0), "rng cannot be zero");
     rng = _rng;

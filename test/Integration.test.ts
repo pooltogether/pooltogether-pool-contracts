@@ -47,15 +47,18 @@ describe('Integration Test', () => {
 
   let prizePool: Contract
   let ticket: Contract
-  let yieldService: Contract
 
-  let overrides = { gasLimit: 20000000 }
+  let overrides = { gasLimit: 40000000 }
 
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
     provider = buidler.ethers.provider
 
+    debug('5')
+
     await deploy1820(wallet)
+
+    debug('6')
 
     rng = await deployContract(wallet, RNGBlockhash, [])
     forwarder = await deployContract(wallet, Forwarder, [])
@@ -67,9 +70,16 @@ describe('Integration Test', () => {
     debug('7')
 
     yieldServiceFactory = await deployContract(wallet, CompoundYieldServiceFactory, [], overrides)
+
+    debug('7.1')
+
     await yieldServiceFactory.initialize(overrides)
 
+    debug('7.2')
+
     prizePoolFactory = await deployContract(wallet, PeriodicPrizePoolFactory, [], overrides)
+
+    debug('7.3')
 
     await prizePoolFactory.initialize(overrides)
 

@@ -4,7 +4,7 @@ import "../yield-service/YieldServiceInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 
-contract MockYieldService is YieldServiceInterface, TokenControllerInterface {
+contract MockYieldService is YieldServiceInterface {
 
   uint256 _balanceOf;
   ControlledToken _token;
@@ -42,6 +42,4 @@ contract MockYieldService is YieldServiceInterface, TokenControllerInterface {
   function redeem(uint256 amount) external override {
     _token.transfer(msg.sender, amount);
   }
-
-  function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {}
 }

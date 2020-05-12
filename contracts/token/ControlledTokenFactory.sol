@@ -24,7 +24,7 @@ contract ControlledTokenFactory is Initializable, ProxyFactory {
   function createControlledToken(
     string memory _interestName,
     string memory _interestSymbol,
-    TokenControllerInterface controller,
+    address controller,
     address _trustedForwarder
   ) public returns (ControlledToken) {
     ControlledToken token = createControlledToken();
@@ -38,7 +38,7 @@ contract ControlledTokenFactory is Initializable, ProxyFactory {
   }
 
   function createControlledToken(
-    TokenControllerInterface controller,
+    address controller,
     address _trustedForwarder
   ) public returns (ControlledToken) {
     ControlledToken token = createControlledToken();

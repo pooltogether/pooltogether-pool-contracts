@@ -15,9 +15,11 @@ import "../token/Ticket.sol";
 import "./PrizePoolInterface.sol";
 import "../prize-strategy/PrizeStrategyInterface.sol";
 import "../rng/RNGInterface.sol";
+import "../util/ERC1820Helper.sol";
+import "../token/ControlledTokenFactory.sol";
 
 /* solium-disable security/no-block-members */
-abstract contract PrizePool is ReentrancyGuard, BaseRelayRecipient, TokenControllerInterface, PrizePoolInterface {
+abstract contract PrizePool is ReentrancyGuard, BaseRelayRecipient, TokenControllerInterface, PrizePoolInterface, ERC1820Helper {
   using SafeMath for uint256;
 
   event TicketsRedeemedInstantly(address indexed to, uint256 amount, uint256 fee);
@@ -27,6 +29,7 @@ abstract contract PrizePool is ReentrancyGuard, BaseRelayRecipient, TokenControl
   Ticket public override ticket;
   ControlledToken public override sponsorship;
   ControlledToken public override timelock;
+  ControlledToken public override loyalty;
   PrizeStrategyInterface public override prizeStrategy;
   
   mapping(address => uint256) unlockTimestamps;
@@ -36,7 +39,7 @@ abstract contract PrizePool is ReentrancyGuard, BaseRelayRecipient, TokenControl
   function initialize (
     Ticket _ticket,
     ControlledToken _sponsorship,
-    ControlledToken _timelock,
+    ControlledTokenFactory _controlledTokenFactory,
     YieldServiceInterface _yieldService,
     PrizeStrategyInterface _prizeStrategy,
     address _trustedForwarder
@@ -46,16 +49,17 @@ abstract contract PrizePool is ReentrancyGuard, BaseRelayRecipient, TokenControl
     require(address(_ticket.controller()) == address(this), "ticket controller does not match");
     require(address(_sponsorship) != address(0), "sponsorship must not be zero");
     require(address(_sponsorship.controller()) == address(this), "sponsorship controller does not match");
-    require(address(_timelock) != address(0), "timelock must not be zero");
-    require(address(_timelock.controller()) == address(this), "timelock controller does not match");
+    require(address(_controlledTokenFactory) != address(0), "_controlledTokenFactory must not be zero");
     require(address(_yieldService) != address(0), "prize pool must not be zero");
     require(address(_prizeStrategy) != address(0), "prizeStrategy must not be zero");
     ticket = _ticket;
     yieldService = _yieldService;
     prizeStrategy = _prizeStrategy;
     sponsorship = _sponsorship;
-    timelock = _timelock;
+    timelock = _controlledTokenFactory.createControlledToken(address(this), _trustedForwarder);
+    loyalty = _controlledTokenFactory.createControlledToken(address(this), _trustedForwarder);
     trustedForwarder = _trustedForwarder;
+    _ERC1820_REGISTRY.setInterfaceImplementer(address(this), ERC1820_TOKEN_CONTROLLER_INTERFACE_HASH, address(this));
   }
 
   function currentPrize() public override returns (uint256) {
@@ -236,7 +240,10 @@ abstract contract PrizePool is ReentrancyGuard, BaseRelayRecipient, TokenControl
   }
 
   function beforeTokenTransfer(address from, address to, uint256) external override {
-    if (_msgSender() == address(timelock)) {
+    if (
+      _msgSender() == address(timelock) ||
+      _msgSender() == address(loyalty)
+    ) {
       require(from == address(0) || to == address(0), "only minting or burning is allowed");
     }
   }

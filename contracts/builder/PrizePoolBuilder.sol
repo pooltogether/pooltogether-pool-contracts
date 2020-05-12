@@ -15,7 +15,7 @@ contract PrizePoolBuilder is Initializable {
     address indexed prizePool,
     address yieldService,
     address ticket,
-    address distributionStrategy,
+    address prizeStrategy,
     uint256 prizePeriodSeconds
   );
 
@@ -59,9 +59,9 @@ contract PrizePoolBuilder is Initializable {
     PeriodicPrizePool prizePool = periodicPrizePoolFactory.createPeriodicPrizePool();
 
     prizePool.initialize(
-      ticketFactory.createTicket(_ticketName, _ticketSymbol, prizePool, trustedForwarder),
-      controlledTokenFactory.createControlledToken(_sponsorshipName, _sponsorshipSymbol, prizePool, trustedForwarder),
-      controlledTokenFactory.createControlledToken(prizePool, trustedForwarder),
+      ticketFactory.createTicket(_ticketName, _ticketSymbol, address(prizePool), trustedForwarder),
+      controlledTokenFactory.createControlledToken(_sponsorshipName, _sponsorshipSymbol, address(prizePool), trustedForwarder),
+      controlledTokenFactory,
       compoundYieldServiceBuilder.createCompoundYieldService(cToken),
       _prizeStrategy,
       trustedForwarder,

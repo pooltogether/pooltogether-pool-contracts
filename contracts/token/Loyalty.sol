@@ -9,62 +9,41 @@ import "./ControlledToken.sol";
 contract Loyalty is ControlledToken {
   using SafeMath for uint256;
 
-  // mint loyalty tokens.  X amount of tokens will be minted.
-  // underlying value of tokens increases over time.  Updated every time.
+  uint256 public collateral;
 
-  uint256 public constant ETHER_MANTISSA = 1 ether;
-
-  uint256 exchangeRateMantissa;
-  uint256 loyaltyRatePerSecondMantissa;
-  uint256 lastExchangeRateUpdateTimestamp;
-
-  function initialize (
-    string memory _name,
-    string memory _symbol,
-    TokenControllerInterface _controller,
-    address _trustedForwarder,
-    uint256 _loyaltyRatePerSecondMantissa
-  ) public virtual initializer {
-    super.initialize(_name, _symbol, _controller, _trustedForwarder);
-    loyaltyRatePerSecondMantissa = _loyaltyRatePerSecondMantissa;
-  }
-
-  function updateExchangeRate() public {
-    /*
-      A = P(1 + rt)
-
-      A	=	final amount
-      P	=	initial principal balance
-      r	=	annual interest rate
-      t	=	time (in years)
-    */
-    uint256 secsMantissa = block.timestamp.sub(lastExchangeRateUpdateTimestamp).mul(1 ether);
-    exchangeRateMantissa = FixedPoint.multiplyUintByMantissa(
-      exchangeRateMantissa,
-      ETHER_MANTISSA.add(FixedPoint.multiplyUintByMantissa(secsMantissa, loyaltyRatePerSecondMantissa))
-    );
-  }
+  uint256 internal constant INITIAL_EXCHANGE_RATE_MANTISSA = 1 ether;
 
   function supply(
     address account,
     uint256 amount
   ) external onlyController {
-    updateExchangeRate();
-    uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa);
+    uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa());
+    collateral = collateral.add(amount);
     _mint(account, tokens);
   }
 
-  function balanceOfUnderlying(address user) external returns (uint256) {
-    updateExchangeRate();
-    return FixedPoint.multiplyUintByMantissa(balanceOf(user), exchangeRateMantissa);
+  function balanceOfUnderlying(address user) external view returns (uint256) {
+    return FixedPoint.multiplyUintByMantissa(balanceOf(user), exchangeRateMantissa());
+  }
+
+  function increaseCollateral(uint256 amount) external onlyController {
+    collateral = collateral.add(amount);
   }
 
   function redeem(
     address from,
     uint256 amount
   ) external onlyController {
-    updateExchangeRate();
-    uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa);
+    uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa());
+    collateral = collateral.sub(amount);
     _burn(from, tokens);
+  }
+
+  function exchangeRateMantissa() public view returns (uint256) {
+    if (totalSupply() == 0) {
+      return INITIAL_EXCHANGE_RATE_MANTISSA;
+    } else {
+      return FixedPoint.calculateMantissa(collateral, totalSupply());
+    }
   }
 }

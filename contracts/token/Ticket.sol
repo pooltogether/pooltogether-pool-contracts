@@ -16,7 +16,7 @@ contract Ticket is ControlledToken {
   function initialize (
     string memory _name,
     string memory _symbol,
-    TokenControllerInterface _controller,
+    address _controller,
     address _trustedForwarder
   ) public override initializer {
     super.initialize(_name, _symbol, _controller, _trustedForwarder);
@@ -36,7 +36,7 @@ contract Ticket is ControlledToken {
   }
 
   function _beforeTokenTransfer(address from, address to, uint256 tokenAmount) internal virtual override {
-    controller.beforeTokenTransfer(from, to, tokenAmount);
+    super._beforeTokenTransfer(from, to, tokenAmount);
     if (from != address(0)) {
       uint256 fromBalance = balanceOf(from);
       sortitionSumTrees.set(TREE_KEY, fromBalance.sub(tokenAmount), bytes32(uint256(from)));

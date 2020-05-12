@@ -4,17 +4,16 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 
 import "../external/openzeppelin/ERC20.sol";
-
+import "../util/ERC1820Helper.sol";
 import "./TokenControllerInterface.sol";
 
-contract ControlledToken is BaseRelayRecipient, ERC20 {
-
-  TokenControllerInterface public controller;
+contract ControlledToken is BaseRelayRecipient, ERC20, ERC1820Helper {
+  address public controller;
 
   function initialize (
     string memory _name,
     string memory _symbol,
-    TokenControllerInterface _controller,
+    address _controller,
     address _trustedForwarder
   ) public virtual initializer {
     super.initialize(_name, _symbol);
@@ -22,7 +21,7 @@ contract ControlledToken is BaseRelayRecipient, ERC20 {
   }
 
   function initialize (
-    TokenControllerInterface _controller,
+    address _controller,
     address _trustedForwarder
   ) public virtual initializer {
     require(address(_controller) != address(0), "controller cannot be zero");
@@ -32,7 +31,10 @@ contract ControlledToken is BaseRelayRecipient, ERC20 {
   }
 
   function _beforeTokenTransfer(address from, address to, uint256 tokenAmount) internal virtual override {
-    controller.beforeTokenTransfer(from, to, tokenAmount);
+    address tokenController = _ERC1820_REGISTRY.getInterfaceImplementer(controller, ERC1820_TOKEN_CONTROLLER_INTERFACE_HASH);
+    if (tokenController != address(0)) {
+      TokenControllerInterface(tokenController).beforeTokenTransfer(from, to, tokenAmount);
+    }
   }
 
   function mint(

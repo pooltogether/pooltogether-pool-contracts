@@ -24,7 +24,7 @@ contract TicketFactory is Initializable, ProxyFactory {
   function createTicket(
     string memory _interestName,
     string memory _interestSymbol,
-    TokenControllerInterface controller,
+    address controller,
     address _trustedForwarder
   ) public returns (Ticket) {
     Ticket token = createTicket();
