@@ -43,6 +43,8 @@ contract ControlledTokenFactory is Initializable, ProxyFactory {
   ) public returns (ControlledToken) {
     ControlledToken token = createControlledToken();
     token.initialize(
+      "",
+      "",
       controller,
       _trustedForwarder
     );

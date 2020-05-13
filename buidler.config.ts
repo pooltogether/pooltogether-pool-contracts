@@ -9,7 +9,7 @@ export default {
   solc: {
     version: "0.6.4",
     optimizer: {
-      enabled: false,
+      enabled: true,
       runs: 200
     },
     evmVersion: "istanbul"

@@ -19,7 +19,7 @@ contract Loyalty is ControlledToken {
   ) external onlyController {
     uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa());
     collateral = collateral.add(amount);
-    _mint(account, tokens);
+    _mint(account, tokens, "", "");
   }
 
   function balanceOfUnderlying(address user) external view returns (uint256) {
@@ -36,7 +36,7 @@ contract Loyalty is ControlledToken {
   ) external onlyController {
     uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa());
     collateral = collateral.sub(amount);
-    _burn(from, tokens);
+    _burn(from, tokens, "", "");
   }
 
   function exchangeRateMantissa() public view returns (uint256) {

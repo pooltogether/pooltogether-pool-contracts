@@ -18,7 +18,7 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
       prizePool.sponsorship().transferFrom(address(prizePool), address(this), prize);
       address winner = prizePool.ticket().draw(randomNumber);
       // Convert the sponsorship to winnings
-      prizePool.mintTicketsWithSponsorshipTo(winner, prize);
+      prizePool.ticket().mintTicketsWithSponsorshipTo(winner, prize);
     }
   }
 }

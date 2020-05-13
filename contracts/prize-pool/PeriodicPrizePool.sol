@@ -1,15 +1,38 @@
 pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/introspection/IERC1820Registry.sol";
+import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@nomiclabs/buidler/console.sol";
+import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-import "./PrizePool.sol";
+import "../token/ControlledTokenFactory.sol";
+import "../external/openzeppelin/ReentrancyGuard.sol";
+import "../yield-service/YieldServiceInterface.sol";
+import "../token/TokenControllerInterface.sol";
+import "../token/Sponsorship.sol";
+import "../token/Loyalty.sol";
+import "./PrizePoolInterface.sol";
+import "../prize-strategy/PrizeStrategyInterface.sol";
+import "../rng/RNGInterface.sol";
+import "../util/ERC1820Helper.sol";
 import "../token/ControlledTokenFactory.sol";
 
 /* solium-disable security/no-block-members */
-contract PeriodicPrizePool is PrizePool {
+contract PeriodicPrizePool is ReentrancyGuard, BaseRelayRecipient, PrizePoolInterface, ERC1820Helper {
   using SafeMath for uint256;
 
+  event TicketsRedeemedInstantly(address indexed to, uint256 amount, uint256 fee);
+  event TicketsRedeemedWithTimelock(address indexed to, uint256 amount, uint256 unlockTimestamp);
+
+  YieldServiceInterface public override yieldService;
+  Ticket public override ticket;
+  Sponsorship public override sponsorship;
+  PrizeStrategyInterface public override prizeStrategy;
+  
   RNGInterface public rng;
   uint256 public currentPrizeStartedAt;
   uint256 prizePeriodSeconds;
@@ -17,33 +40,81 @@ contract PeriodicPrizePool is PrizePool {
   uint256 public feeScaleMantissa;
   uint256 public rngRequestId;
 
+  constructor() public ReentrancyGuard() {}
+
   function initialize (
+    address _trustedForwarder,
+    Sponsorship _sponsorship,
     Ticket _ticket,
-    ControlledToken _sponsorship,
-    ControlledTokenFactory controlledTokenFactory,
     YieldServiceInterface _yieldService,
     PrizeStrategyInterface _prizeStrategy,
-    address _trustedForwarder,
     RNGInterface _rng,
     uint256 _prizePeriodSeconds
   ) public initializer {
-    super.initialize(_ticket, _sponsorship, controlledTokenFactory, _yieldService, _prizeStrategy, _trustedForwarder);
+    ReentrancyGuard.initialize();
+    require(address(_sponsorship) != address(0), "sponsorship must not be zero");
+    require(address(_sponsorship.controller()) == address(this), "sponsorship controller does not match");
+    require(address(_ticket) != address(0), "ticket is not zero");
+    require(address(_ticket.prizePool()) == address(this), "ticket is not for this prize pool");
+    require(address(_yieldService) != address(0), "yield service must not be zero");
+    require(address(_prizeStrategy) != address(0), "prize strategy must not be zero");
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
     require(address(_rng) != address(0), "rng cannot be zero");
+    yieldService = _yieldService;
+    ticket = _ticket;
+    prizeStrategy = _prizeStrategy;
+    sponsorship = _sponsorship;
+    trustedForwarder = _trustedForwarder;
     rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
     currentPrizeStartedAt = block.timestamp;
   }
 
-  function calculateExitFee(address, uint256 tickets) public view override returns (uint256) {
-    uint256 totalSupply = ticket.totalSupply();
-    if (totalSupply == 0) {
-      return 0;
+  function currentPrize() public override returns (uint256) {
+    uint256 yieldBalance = yieldService.balanceOf(address(this));
+    uint256 supply = sponsorship.totalSupply();
+    uint256 prize;
+    if (yieldBalance > supply) {
+      prize = yieldBalance.sub(supply);
     }
-    return FixedPoint.multiplyUintByMantissa(
-      multiplyByRemainingTimeFraction(previousPrize),
-      FixedPoint.calculateMantissa(tickets, totalSupply)
-    );
+    return prize;
+  }
+
+  function mintSponsorship(uint256 amount) external override nonReentrant {
+    _mintSponsorship(_msgSender(), amount);
+  }
+
+  function mintSponsorshipTo(address to, uint256 amount) external override nonReentrant {
+    _mintSponsorship(to, amount);
+  }
+
+  function _mintSponsorship(address to, uint256 amount) internal {
+    // Transfer deposit
+    IERC20 token = yieldService.token();
+    require(token.allowance(_msgSender(), address(this)) >= amount, "insuff");
+    token.transferFrom(_msgSender(), address(this), amount);
+
+    // create the sponsorship
+    sponsorship.mint(to, amount);
+
+    // Deposit into pool
+    token.approve(address(yieldService), amount);
+    yieldService.supply(amount);
+  }
+
+  function redeemSponsorship(uint256 amount) external override nonReentrant {
+    // burn the sponsorship
+    sponsorship.burn(_msgSender(), amount);
+
+    // redeem the collateral
+    yieldService.redeem(amount);
+
+    // transfer back to user
+    IERC20(yieldService.token()).transfer(_msgSender(), amount);
+  }
+
+  function calculateRemainingPreviousPrize() public view override returns (uint256) {
+    return multiplyByRemainingTimeFraction(previousPrize);
   }
 
   function multiplyByRemainingTimeFraction(uint256 value) public view returns (uint256) {
@@ -67,7 +138,7 @@ contract PeriodicPrizePool is PrizePool {
 
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {
     return yieldService.estimateAccruedInterestOverBlocks(
-      ticket.totalSupply(),
+      sponsorship.totalSupply(),
       estimateRemainingBlocksToPrize(secondsPerBlockFixedPoint18)
     );
   }
@@ -122,6 +193,10 @@ contract PeriodicPrizePool is PrizePool {
     prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
     previousPrize = prize;
     rngRequestId = 0;
+  }
+
+  function token() external override view returns (IERC20) {
+    return yieldService.token();
   }
 
   function prizePeriodEndAt() public view returns (uint256) {
