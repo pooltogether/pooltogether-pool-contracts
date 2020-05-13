@@ -8,7 +8,7 @@ import "../external/openzeppelin/ProxyFactory.sol";
 
 contract SponsorshipFactory is Initializable, ProxyFactory {
 
-  event SponsorshipCreated(address indexed controlledToken);
+  event SponsorshipCreated(address indexed sponsorship);
 
   Sponsorship public instance;
   LoyaltyFactory public loyaltyFactory;

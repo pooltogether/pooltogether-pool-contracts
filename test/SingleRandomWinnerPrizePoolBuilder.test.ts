@@ -6,8 +6,10 @@ import Forwarder from '../build/Forwarder.json'
 import CompoundYieldServiceFactory from '../build/CompoundYieldServiceFactory.json'
 import CompoundYieldServiceBuilder from '../build/CompoundYieldServiceBuilder.json'
 import PrizePoolBuilder from '../build/PrizePoolBuilder.json'
+import LoyaltyFactory from '../build/LoyaltyFactory.json'
 import SingleRandomWinnerPrizePoolBuilder from '../build/SingleRandomWinnerPrizePoolBuilder.json'
 import TicketFactory from '../build/TicketFactory.json'
+import SponsorshipFactory from '../build/SponsorshipFactory.json'
 import ControlledTokenFactory from '../build/ControlledTokenFactory.json'
 import SingleRandomWinnerPrizeStrategyFactory from '../build/SingleRandomWinnerPrizeStrategyFactory.json'
 import CTokenMock from '../build/CTokenMock.json'
@@ -31,6 +33,7 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
   let yieldServiceFactory: any
   let prizePoolFactory: any
   let ticketFactory: any
+  let sponsorshipFactory: any
   let controlledTokenFactory: any
   let prizeStrategyFactory: any
   let prizePoolBuilder: any
@@ -41,11 +44,15 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
 
   let provider: Provider
 
+  let overrides = { gasLimit: 20000000 }
+
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
     provider = buidler.ethers.provider
 
     await deploy1820(wallet)
+
+    debug('beforeEach deploy rng, forwarder etc...')
 
     rng = await deployContract(wallet, RNGBlockhash, [])
     forwarder = await deployContract(wallet, Forwarder, [])
@@ -54,34 +61,61 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
       token.address, ethers.utils.parseEther('0.01')
     ])
 
+    debug('1')
+
     yieldServiceFactory = await deployContract(wallet, CompoundYieldServiceFactory, [])
     await yieldServiceFactory.initialize()
 
-    prizePoolFactory = await deployContract(wallet, PeriodicPrizePoolFactory, [], { gasLimit: 20000000 })
+    debug('2')
+
+    prizePoolFactory = await deployContract(wallet, PeriodicPrizePoolFactory, [], overrides)
 
     await prizePoolFactory.initialize()
 
-    ticketFactory = await deployContract(wallet, TicketFactory, [])
-    await ticketFactory.initialize()
+    debug('3')
+
     controlledTokenFactory = await deployContract(wallet, ControlledTokenFactory, [])
     await controlledTokenFactory.initialize()
+    
+    debug('4')
+
+    ticketFactory = await deployContract(wallet, TicketFactory, [], overrides)
+    await ticketFactory.initialize(controlledTokenFactory.address)
+    
+    debug('5')
+
     prizeStrategyFactory = await deployContract(wallet, SingleRandomWinnerPrizeStrategyFactory, [])
     await prizeStrategyFactory.initialize()
+    
+    debug('6')
 
     compoundYieldServiceBuilder = await deployContract(wallet, CompoundYieldServiceBuilder, [])
     await compoundYieldServiceBuilder.initialize(
       yieldServiceFactory.address
     )
 
+    debug('7')
+
+    let loyaltyFactory = await deployContract(wallet, LoyaltyFactory, [])
+    await loyaltyFactory.initialize()
+    sponsorshipFactory = await deployContract(wallet, SponsorshipFactory, [])
+    await sponsorshipFactory.initialize(
+      loyaltyFactory.address
+    )
+
+    debug('8')
+
     prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [])
     await prizePoolBuilder.initialize(
       compoundYieldServiceBuilder.address,
       prizePoolFactory.address,
       ticketFactory.address,
-      controlledTokenFactory.address,
+      sponsorshipFactory.address,
       rng.address,
       forwarder.address
     )
+    
+    debug('9')
 
     singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [])
     await singleRandomWinnerPrizePoolBuilder.initialize(

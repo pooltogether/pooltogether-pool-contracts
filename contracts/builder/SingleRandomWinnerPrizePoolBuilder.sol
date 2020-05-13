@@ -36,6 +36,7 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
   ) external returns (SingleRandomWinnerPrizeStrategy) {
 
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
+    prizeStrategy.initialize();
 
     PrizePoolInterface prizePool = prizePoolBuilder.createPeriodicPrizePool(
       cToken,

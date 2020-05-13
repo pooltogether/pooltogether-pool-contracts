@@ -7,6 +7,8 @@ import CompoundYieldServiceBuilder from '../build/CompoundYieldServiceBuilder.js
 import Forwarder from '../build/Forwarder.json'
 import PrizePoolBuilder from '../build/PrizePoolBuilder.json'
 import SingleRandomWinnerPrizePoolBuilder from '../build/SingleRandomWinnerPrizePoolBuilder.json'
+import LoyaltyFactory from '../build/LoyaltyFactory.json'
+import SponsorshipFactory from '../build/SponsorshipFactory.json'
 import TicketFactory from '../build/TicketFactory.json'
 import ControlledTokenFactory from '../build/ControlledTokenFactory.json'
 import SingleRandomWinnerPrizeStrategyFactory from '../build/SingleRandomWinnerPrizeStrategyFactory.json'
@@ -35,6 +37,7 @@ describe('Integration Test', () => {
   let yieldServiceFactory: any
   let prizePoolFactory: any
   let ticketFactory: any
+  let sponsorshipFactory: any
   let controlledTokenFactory: any
   let prizeStrategyFactory: any
   let prizePoolBuilder: any
@@ -60,9 +63,9 @@ describe('Integration Test', () => {
 
     debug('6')
 
-    rng = await deployContract(wallet, RNGBlockhash, [])
-    forwarder = await deployContract(wallet, Forwarder, [])
-    token = await deployContract(wallet, ERC20Mintable, [])
+    rng = await deployContract(wallet, RNGBlockhash, [], overrides)
+    forwarder = await deployContract(wallet, Forwarder, [], overrides)
+    token = await deployContract(wallet, ERC20Mintable, [], overrides)
     cToken = await deployContract(wallet, CTokenMock, [
       token.address, ethers.utils.parseEther('0.01')
     ])
@@ -78,43 +81,67 @@ describe('Integration Test', () => {
     debug('7.2')
 
     prizePoolFactory = await deployContract(wallet, PeriodicPrizePoolFactory, [], overrides)
-
-    debug('7.3')
-
     await prizePoolFactory.initialize(overrides)
+    
+    debug('6')
 
-    debug('8')
-
-    ticketFactory = await deployContract(wallet, TicketFactory, [])
-    await ticketFactory.initialize()
-    controlledTokenFactory = await deployContract(wallet, ControlledTokenFactory, [])
-    await controlledTokenFactory.initialize()
-    prizeStrategyFactory = await deployContract(wallet, SingleRandomWinnerPrizeStrategyFactory, [])
-    await prizeStrategyFactory.initialize()
-
-    compoundYieldServiceBuilder = await deployContract(wallet, CompoundYieldServiceBuilder, [])
+    compoundYieldServiceBuilder = await deployContract(wallet, CompoundYieldServiceBuilder, [], overrides)
     await compoundYieldServiceBuilder.initialize(
       yieldServiceFactory.address
     )
+
+    debug('7')
+
+    let loyaltyFactory = await deployContract(wallet, LoyaltyFactory, [], overrides)
+    await loyaltyFactory.initialize()
+    sponsorshipFactory = await deployContract(wallet, SponsorshipFactory, [], overrides)
+    await sponsorshipFactory.initialize(
+      loyaltyFactory.address
+    )
+
+    debug('8')
+
+    controlledTokenFactory = await deployContract(wallet, ControlledTokenFactory, [], overrides)
+    await controlledTokenFactory.initialize()
+    
+    debug('8.1')
+
+    ticketFactory = await deployContract(wallet, TicketFactory, [], overrides)
+    await ticketFactory.initialize(controlledTokenFactory.address, overrides)
+
+    debug('8.2')
+
+    prizeStrategyFactory = await deployContract(wallet, SingleRandomWinnerPrizeStrategyFactory, [], overrides)
+    await prizeStrategyFactory.initialize()
+
+    debug('8.3')
+
+    compoundYieldServiceBuilder = await deployContract(wallet, CompoundYieldServiceBuilder, [], overrides)
+    await compoundYieldServiceBuilder.initialize(
+      yieldServiceFactory.address
+    )
+
     debug('9')
 
-    prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [])
+    prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [], overrides)
     await prizePoolBuilder.initialize(
       compoundYieldServiceBuilder.address,
       prizePoolFactory.address,
       ticketFactory.address,
-      controlledTokenFactory.address,
+      sponsorshipFactory.address,
       rng.address,
       forwarder.address
     )
+    
+    debug('10')
 
-    singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [])
+    singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [], overrides)
     await singleRandomWinnerPrizePoolBuilder.initialize(
       prizePoolBuilder.address,
       prizeStrategyFactory.address
     )
 
-    debug('10')
+    debug('11')
 
     let tx = await singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(cToken.address, 10, 'Ticket', 'TICK', 'Sponsorship', 'SPON', overrides)
     let receipt = await provider.getTransactionReceipt(tx.hash)
@@ -131,15 +158,23 @@ describe('Integration Test', () => {
   describe('Mint tickets', () => {
     it('should support timelocked withdrawals', async () => {
       debug('Minting tickets...')
-      await token.approve(prizePool.address, toWei('100'))
-      await prizePool.mintTickets(toWei('100'))
+      await token.approve(ticket.address, toWei('100'))
+      await ticket.mintTickets(toWei('100'))
       await cToken.accrueCustom(toWei('22'))
 
       debug('First award...')
 
       await increaseTime(10)
+      
+      debug('starting award...')
+
       await prizePool.startAward()
+
+      debug('completing award...')
+
       await prizePool.completeAward()
+
+      debug('completed award')
 
       expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('122'))
 
@@ -147,7 +182,7 @@ describe('Integration Test', () => {
 
       debug('Redeem tickets with timelock...')
 
-      await prizePool.redeemTicketsWithTimelock(toWei('122'))
+      await ticket.redeemTicketsWithTimelock(toWei('122'))
 
       debug('Second award...')
 
@@ -157,7 +192,7 @@ describe('Integration Test', () => {
 
       debug('Sweep timelocked funds...')
 
-      await prizePool.sweepTimelockFunds([wallet._address])
+      await ticket.sweepTimelock([wallet._address])
 
       let balanceAfterWithdrawal = await token.balanceOf(wallet._address)
 
@@ -166,8 +201,8 @@ describe('Integration Test', () => {
 
     it('should support instant redemption', async () => {
       debug('Minting tickets...')
-      await token.approve(prizePool.address, toWei('100'))
-      await prizePool.mintTickets(toWei('100'))
+      await token.approve(ticket.address, toWei('100'))
+      await ticket.mintTickets(toWei('100'))
 
       debug('accruing...')
 
@@ -177,7 +212,7 @@ describe('Integration Test', () => {
 
       let balanceBeforeWithdrawal = await token.balanceOf(wallet._address)
 
-      await prizePool.redeemTicketsInstantly(toWei('100'))
+      await ticket.redeemTicketsInstantly(toWei('100'))
 
       let balanceAfterWithdrawal = await token.balanceOf(wallet._address)
 
@@ -187,8 +222,8 @@ describe('Integration Test', () => {
 
     it('should take a fee when instantly redeeming after a prize', async () => {
       debug('Minting tickets...')
-      await token.approve(prizePool.address, toWei('100'))
-      await prizePool.mintTickets(toWei('100'))
+      await token.approve(ticket.address, toWei('100'))
+      await ticket.mintTickets(toWei('100'))
       await cToken.accrueCustom(toWei('22'))
 
       await increaseTime(10)
@@ -197,7 +232,7 @@ describe('Integration Test', () => {
 
       let balanceBeforeWithdrawal = await token.balanceOf(wallet._address)
 
-      await prizePool.redeemTicketsInstantly(toWei('100'))
+      await ticket.redeemTicketsInstantly(toWei('100'))
 
       let balanceAfterWithdrawal = await token.balanceOf(wallet._address)
 

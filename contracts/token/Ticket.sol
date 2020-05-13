@@ -4,6 +4,7 @@ import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@nomiclabs/buidler/console.sol";
 
 import "./Meta777.sol";
 import "./ControlledToken.sol";
@@ -36,7 +37,9 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
     super.initialize(_name, _symbol, _trustedForwarder);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
     prizePool = _prizePool;
-    _ERC1820_REGISTRY.setInterfaceImplementer(address(this), ERC1820_TOKEN_CONTROLLER_INTERFACE_HASH, address(this));
+    timelock = _timelock;
+    ERC1820_REGISTRY.setInterfaceImplementer(address(this), ERC1820_TOKEN_CONTROLLER_INTERFACE_HASH, address(this));
+    ERC1820_REGISTRY.setInterfaceImplementer(address(this), ERC1820_TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
   function calculateExitFee(address, uint256 tickets) public view returns (uint256) {
@@ -50,11 +53,11 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
     );
   }
 
-  function mint(uint256 amount) external nonReentrant {
+  function mintTickets(uint256 amount) external nonReentrant {
     _transferAndMint(_msgSender(), amount);
   }
 
-  function mintTo(address to, uint256 amount) external nonReentrant {
+  function operatorMintTickets(address to, uint256 amount) external nonReentrant {
     _transferAndMint(to, amount);
   }
 
@@ -63,17 +66,21 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
     timelock.burn(_msgSender(), amount);
 
     // Mint tickets
-    _mint(_msgSender(), amount, "", "");
+    _mint(_msgSender(), amount);
   }
 
   function _transferAndMint(address to, uint256 amount) internal {
     // Transfer deposit
     IERC20 token = prizePool.token();
-    require(token.allowance(_msgSender(), address(this)) >= amount, "insuff");
+
+    uint256 allowance = token.allowance(_msgSender(), address(this));
+
+    require(allowance >= amount, "insuff");
+
     token.transferFrom(_msgSender(), address(this), amount);
 
     // Mint tickets
-    _mint(to, amount, "", "");
+    _mint(to, amount);
 
     // Deposit into pool
     token.approve(address(prizePool), amount);
@@ -92,7 +99,8 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
     return selected;
   }
 
-  function _beforeTokenTransfer(address, address from, address to, uint256 tokenAmount) internal virtual override {
+  function _beforeTokenTransfer(address operator, address from, address to, uint256 tokenAmount) internal virtual override {
+    super._beforeTokenTransfer(operator, from, to, tokenAmount);
     if (from != address(0)) {
       uint256 fromBalance = balanceOf(from);
       sortitionSumTrees.set(TREE_KEY, fromBalance.sub(tokenAmount), bytes32(uint256(from)));
@@ -108,7 +116,7 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
     uint256 exitFee = calculateExitFee(_msgSender(), tickets);
 
     // burn the tickets
-    _burn(_msgSender(), tickets, "", "");
+    _burn(_msgSender(), tickets);
 
     // redeem the collateral
     prizePool.redeemSponsorship(tickets);
@@ -123,23 +131,24 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
 
   function redeemTicketsWithTimelock(uint256 tickets) external nonReentrant returns (uint256) {
     // burn the tickets
-    _burn(_msgSender(), tickets, "", "");
+    address sender = _msgSender();
+    _burn(sender, tickets);
 
-    uint256 unlockTimestamp = prizePool.calculateUnlockTimestamp(_msgSender(), tickets);
+    uint256 unlockTimestamp = prizePool.calculateUnlockTimestamp(sender, tickets);
     uint256 transferChange;
 
     // See if we need to sweep the old balance
-    uint256 balance = timelock.balanceOf(_msgSender());
-    if (unlockTimestamps[_msgSender()] <= block.timestamp && balance > 0) {
+    uint256 balance = timelock.balanceOf(sender);
+    if (unlockTimestamps[sender] <= block.timestamp && balance > 0) {
       transferChange = balance;
-      timelock.burn(_msgSender(), balance);
+      timelock.burn(sender, balance);
     }
 
     // if we are locking these funds for the future
     if (unlockTimestamp > block.timestamp) {
       // time lock new tokens
-      timelock.mint(_msgSender(), tickets);
-      unlockTimestamps[_msgSender()] = unlockTimestamp;
+      timelock.mint(sender, tickets);
+      unlockTimestamps[sender] = unlockTimestamp;
     } else { // add funds to change
       transferChange = transferChange.add(tickets);
     }
@@ -147,7 +156,7 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
     // if there is change, withdraw the change and transfer
     if (transferChange > 0) {
       prizePool.redeemSponsorship(transferChange);
-      IERC20(prizePool.token()).transfer(_msgSender(), transferChange);
+      IERC20(prizePool.token()).transfer(sender, transferChange);
     }
 
     // return the block at which the funds will be available
@@ -158,7 +167,42 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
     return unlockTimestamps[user];
   }
 
-  function beforeTokenTransfer(address from, address to, uint256) external override {
+  function sweepTimelock(address[] calldata users) external nonReentrant returns (uint256) {
+    uint256 totalWithdrawal;
+
+    // first gather the total withdrawal and fee
+    uint256 i;
+    for (i = 0; i < users.length; i++) {
+      address user = users[i];
+      if (unlockTimestamps[user] <= block.timestamp) {
+        totalWithdrawal = totalWithdrawal.add(timelock.balanceOf(user));
+        // console.log("sweepTimelock: totalWithdrawal %s", totalWithdrawal);
+      }
+    }
+
+    // pull out the collateral
+    if (totalWithdrawal > 0) {
+      // console.log("sweepTimelock: redeemsponsorship %s", totalWithdrawal);
+      uint256 outbalance = prizePool.sponsorship().balanceOf(address(this));
+      // console.log("sweepTimelock: redeemsponsorship balance %s", outbalance);
+      prizePool.redeemSponsorship(totalWithdrawal);
+    }
+
+    // console.log("sweepTimelock: starting burn...");
+    for (i = 0; i < users.length; i++) {
+      address user = users[i];
+      if (unlockTimestamps[user] <= block.timestamp) {
+        uint256 balance = timelock.balanceOf(user);
+        if (balance > 0) {
+          // console.log("sweepTimelock: Burning %s", balance);
+          timelock.burn(user, balance);
+          IERC20(prizePool.token()).transfer(user, balance);
+        }
+      }
+    }
+  }
+
+  function beforeTokenTransfer(address, address from, address to, uint256) external override {
     if (
       _msgSender() == address(timelock)
     ) {
@@ -171,11 +215,13 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
   }
 
   function _mintTicketsWithSponsorship(address to, uint256 amount) internal {
+    // console.log("_mintTicketsWithSponsorship: transferfrom: %s", amount);
     // Transfer sponsorship
     prizePool.sponsorship().transferFrom(_msgSender(), address(this), amount);
 
+    // console.log("_mintTicketsWithSponsorship: minting...", amount);
     // Mint draws
-    _mint(to, amount, "", "");
+    _mint(to, amount);
   }
 
   function tokensReceived(
@@ -186,7 +232,14 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
     bytes calldata userData,
     bytes calldata operatorData
   ) external override {
-    if (_msgSender() == address(prizePool.sponsorship())) {
+    // If we have been transferred sponsorship by someone else
+    if (
+      _msgSender() == address(prizePool.sponsorship()) &&
+      operator != address(this) && // we didn't do it
+      from != address(0) &&
+      from != address(this)
+    ) {
+      // console.log("TOKENS RECEEEIVED");
       _mintTicketsWithSponsorship(from, amount);
     }
   }

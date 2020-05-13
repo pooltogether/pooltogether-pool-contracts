@@ -8,6 +8,8 @@ import buidler from './helpers/buidler'
 
 const toWei = ethers.utils.parseEther
 
+const debug = require('debug')('ptv3:Loyalty.test')
+
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('Loyalty contract', function() {
 
@@ -22,11 +24,13 @@ describe('Loyalty contract', function() {
     await deploy1820(wallet)
     forwarder = await deployContract(wallet, Forwarder, [])
     token = await deployContract(wallet, Loyalty, [])
-    await token.initialize(wallet._address, forwarder.address)
+    debug('initializing...')
+    await token['initialize(string,string,address,address)']("", "", wallet._address, forwarder.address)
   })
 
   describe('supply', () => {
     it('should give a user tokens', async () => {
+      debug('supplying...')
       await token.supply(otherWallet._address, toWei('100'))
       // starts at parity
       expect(await token.balanceOf(otherWallet._address)).to.equal(toWei('100'))

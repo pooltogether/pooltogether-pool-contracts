@@ -5,9 +5,9 @@ import "@openzeppelin/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "@nomiclabs/buidler/console.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@nomiclabs/buidler/console.sol";
 
 import "../token/ControlledTokenFactory.sol";
 import "../external/openzeppelin/ReentrancyGuard.sol";
@@ -22,7 +22,7 @@ import "../util/ERC1820Helper.sol";
 import "../token/ControlledTokenFactory.sol";
 
 /* solium-disable security/no-block-members */
-contract PeriodicPrizePool is ReentrancyGuard, BaseRelayRecipient, PrizePoolInterface, ERC1820Helper {
+contract PeriodicPrizePool is ReentrancyGuard, BaseRelayRecipient, PrizePoolInterface, ERC1820Helper, IERC777Recipient {
   using SafeMath for uint256;
 
   event TicketsRedeemedInstantly(address indexed to, uint256 amount, uint256 fee);
@@ -68,6 +68,7 @@ contract PeriodicPrizePool is ReentrancyGuard, BaseRelayRecipient, PrizePoolInte
     rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
     currentPrizeStartedAt = block.timestamp;
+    ERC1820_REGISTRY.setInterfaceImplementer(address(this), ERC1820_TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
   function currentPrize() public override returns (uint256) {
@@ -103,6 +104,8 @@ contract PeriodicPrizePool is ReentrancyGuard, BaseRelayRecipient, PrizePoolInte
   }
 
   function redeemSponsorship(uint256 amount) external override nonReentrant {
+    uint256 bal = sponsorship.balanceOf(_msgSender());
+
     // burn the sponsorship
     sponsorship.burn(_msgSender(), amount);
 
@@ -184,13 +187,20 @@ contract PeriodicPrizePool is ReentrancyGuard, BaseRelayRecipient, PrizePoolInte
   }
 
   function completeAward() external override requireCanCompleteAward nonReentrant {
+
     uint256 prize = currentPrize();
     if (prize > 0) {
+
       sponsorship.mint(address(this), prize);
+
       sponsorship.approve(address(prizeStrategy), prize);
     }
+
+    sponsorship.rewardLoyalty(prize);
+
     currentPrizeStartedAt = block.timestamp;
     prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
+
     previousPrize = prize;
     rngRequestId = 0;
   }
@@ -202,6 +212,16 @@ contract PeriodicPrizePool is ReentrancyGuard, BaseRelayRecipient, PrizePoolInte
   function prizePeriodEndAt() public view returns (uint256) {
     // current prize started at is non-inclusive, so add one
     return currentPrizeStartedAt + prizePeriodSeconds;
+  }
+
+  function tokensReceived(
+    address operator,
+    address from,
+    address to,
+    uint256 amount,
+    bytes calldata userData,
+    bytes calldata operatorData
+  ) external override {
   }
 
   modifier requireCanStartAward() {

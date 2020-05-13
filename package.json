@@ -5,7 +5,7 @@
   "main": "index.js",
   "license": "GPL-3.0",
   "scripts": {
-    "test": "DEBUG=ptv3:* buidler test",
+    "test": "buidler test",
     "compile": "buidler compile",
     "start": "buidler node --port $LOCAL_BUIDLEREVM_PORT",
     "coverage": "rm -rf build cache && buidler compile && buidler coverage --network coverage --temp build",
