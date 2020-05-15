@@ -1,6 +1,6 @@
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
 import "../token/ControlledTokenFactory.sol";
 import "../token/SponsorshipFactory.sol";
@@ -59,12 +59,14 @@ contract PrizePoolBuilder is Initializable {
     string memory _sponsorshipSymbol
   ) public returns (PeriodicPrizePool) {
     PeriodicPrizePool prizePool = periodicPrizePoolFactory.createPeriodicPrizePool();
+    prizePool.construct();
+
+    prizePool.enableModule(compoundYieldServiceBuilder.createCompoundYieldService(cToken));
 
     prizePool.initialize(
       trustedForwarder,
       sponsorshipFactory.createSponsorship(_sponsorshipName, _sponsorshipSymbol, address(prizePool), trustedForwarder),
       ticketFactory.createTicket(_ticketName, _ticketSymbol, prizePool, trustedForwarder),
-      compoundYieldServiceBuilder.createCompoundYieldService(cToken),
       _prizeStrategy,
       rng,
       prizePeriodSeconds

@@ -651,10 +651,10 @@
     fs-extra "^8.1.0"
     try-require "^1.2.1"
 
-"@openzeppelin/contracts@^3.0.0-rc.0", "@openzeppelin/contracts@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.0.1.tgz#2f327f77d16b43f14674086b2b634bda38cb0838"
-  integrity sha512-uSrD7hZ0ViuHGqHZbeHawZBi/uy7aBiNramXAt2dFFuSuoU4u9insS3V3zdVfOnYSPreUo636xSOuQIFN4//HA==
+"@openzeppelin/contracts-ethereum-package@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-ethereum-package/-/contracts-ethereum-package-3.0.0.tgz#d5db971a177c3b37733db2ee4ebdb79c67575d64"
+  integrity sha512-Xg33RtX7FGbSK/YnroLhcGNAvH30/C84NRW8KvbSdXXYiLA8YqM1bOA9sAeLjmQxXqYUn/YL4AUVTgDnG51NOw==
 
 "@openzeppelin/fuzzy-solidity-import-parser@^0.1.2":
   version "0.1.2"
@@ -677,7 +677,7 @@
     web3 "^1.2.1"
     web3-utils "^1.2.1"
 
-"@openzeppelin/upgrades@2.8.0", "@openzeppelin/upgrades@^2.8.0":
+"@openzeppelin/upgrades@2.8.0":
   version "2.8.0"
   resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades/-/upgrades-2.8.0.tgz#8086ab9c99d9f8dac7205030b0f9e7e4a280c4a3"
   integrity sha512-LzjTQPeljPsgHDPdZyH9cMCbIHZILgd2cpNcYEkdsC2IylBYRHShlbEDXJV9snnqg9JWfzPiKIqyj3XVliwtqQ==
@@ -698,12 +698,12 @@
     web3-eth-contract "1.2.2"
     web3-utils "1.2.2"
 
-"@pooltogether/fixed-point@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@pooltogether/fixed-point/-/fixed-point-0.1.0.tgz#ee81a2357b76a8398fde6079cfe5e0ae1980413b"
-  integrity sha512-CcTD0wXiBvv4cqkp3aH0Ru2aVunop4Z+FBz8ETER9WKccDGRB4zeY9yqckRqgvJKIWy5RHze+rUk2UGdmcqHXA==
+"@pooltogether/fixed-point@^0.1.0-upgradeable.1":
+  version "0.1.0-upgradeable.1"
+  resolved "https://registry.yarnpkg.com/@pooltogether/fixed-point/-/fixed-point-0.1.0-upgradeable.1.tgz#5c2330a199af6e70d80c2aa58621679e904fdd24"
+  integrity sha512-pIzkVRYbPx2Alh2uQzNipm3Re0xzUgJ7mPBp+JAk+knfWZdxtjglRDF6ant17I84jKcp0sTtgI6c8hLK1Z/Qqw==
   dependencies:
-    "@openzeppelin/contracts" "^3.0.0-rc.0"
+    "@openzeppelin/contracts-ethereum-package" "^3.0.0"
 
 "@pooltogether/oz-migrate@^0.2.5":
   version "0.2.5"
@@ -3982,15 +3982,7 @@ ethereumjs-abi@0.6.7:
     bn.js "^4.11.8"
     ethereumjs-util "^6.0.0"
 
-ethereumjs-abi@0.6.8, ethereumjs-abi@^0.6.8:
-  version "0.6.8"
-  resolved "https://registry.yarnpkg.com/ethereumjs-abi/-/ethereumjs-abi-0.6.8.tgz#71bc152db099f70e62f108b7cdfca1b362c6fcae"
-  integrity sha512-Tx0r/iXI6r+lRsdvkFDlut0N08jWMnKRZ6Gkq+Nmw75lZe4e6o3EkSnkaBP5NF6+m5PTGAr9JP43N3LyeoglsA==
-  dependencies:
-    bn.js "^4.11.8"
-    ethereumjs-util "^6.0.0"
-
-"ethereumjs-abi@git+https://github.com/ethereumjs/ethereumjs-abi.git":
+ethereumjs-abi@0.6.8, ethereumjs-abi@^0.6.8, "ethereumjs-abi@git+https://github.com/ethereumjs/ethereumjs-abi.git":
   version "0.6.8"
   resolved "git+https://github.com/ethereumjs/ethereumjs-abi.git#1cfbb13862f90f0b391d8a699544d5fe4dfb8c7b"
   dependencies:

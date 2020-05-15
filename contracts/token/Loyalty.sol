@@ -1,7 +1,7 @@
 pragma solidity ^0.6.4;
 
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 import "./ControlledToken.sol";
 

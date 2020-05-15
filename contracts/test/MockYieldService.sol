@@ -4,13 +4,20 @@ import "../yield-service/YieldServiceInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 
-contract MockYieldService is YieldServiceInterface {
+import "../base/ModuleM.sol";
+
+contract MockYieldService is YieldServiceInterface, ModuleM {
 
   uint256 _balanceOf;
   ControlledToken _token;
   uint256 public supplyRatePerBlock;
 
-  function initialize (ControlledToken token) external {
+  function hashName() public view override returns (bytes32) {
+    return ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH;
+  }
+
+  function initialize (ControlledToken token) external initializer {
+    super.construct();
     _token = token;
     supplyRatePerBlock = 100 wei;
   }

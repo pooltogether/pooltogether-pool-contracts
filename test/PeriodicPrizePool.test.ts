@@ -76,6 +76,7 @@ describe('PeriodicPrizePool contract', () => {
 
     forwarder = await deployContract(wallet, Forwarder, [])
     prizePool = await deployContract(wallet, PeriodicPrizePool, [], overrides)
+    await prizePool.construct()
     token = await deployContract(wallet, ERC20Mintable, [], overrides)
     debug('Deploying MockPrizeStrategy...')
     mockPrizeStrategy = await deployContract(wallet, MockPrizeStrategy, [], overrides)
@@ -132,8 +133,8 @@ describe('PeriodicPrizePool contract', () => {
     await mockYieldService.initialize(
       token.address
     )
+    await mockYieldService.setManager(prizePool.address)
 
-    debug('Initializing PeriodicPrizePool...')
 
     debug({
       forwarder: forwarder.address,
@@ -144,11 +145,16 @@ describe('PeriodicPrizePool contract', () => {
       rng: rng.address
     })
 
-    tx = await prizePool['initialize(address,address,address,address,address,address,uint256)'](
+    debug('Enabling yield service module...')
+
+    await prizePool.enableModule(mockYieldService.address)
+
+    debug('Initializing PeriodicPrizePool...')
+
+    tx = await prizePool['initialize(address,address,address,address,address,uint256)'](
       forwarder.address,
       sponsorship.address,
       ticket.address,
-      mockYieldService.address,
       mockPrizeStrategy.address,
       rng.address,
       prizePeriodSeconds

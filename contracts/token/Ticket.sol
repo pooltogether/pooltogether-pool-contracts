@@ -2,7 +2,7 @@ pragma solidity 0.6.4;
 
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
-import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
@@ -10,6 +10,7 @@ import "./Meta777.sol";
 import "./ControlledToken.sol";
 import "../prize-pool/PrizePoolInterface.sol";
 import "./TokenControllerInterface.sol";
+import "../util/ERC1820Constants.sol";
 
 /* solium-disable security/no-block-members */
 contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
@@ -38,8 +39,8 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient {
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
     prizePool = _prizePool;
     timelock = _timelock;
-    ERC1820_REGISTRY.setInterfaceImplementer(address(this), ERC1820_TOKEN_CONTROLLER_INTERFACE_HASH, address(this));
-    ERC1820_REGISTRY.setInterfaceImplementer(address(this), ERC1820_TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+    ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKEN_CONTROLLER_INTERFACE_HASH, address(this));
+    ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
   function calculateExitFee(address, uint256 tickets) public view returns (uint256) {

@@ -1,20 +1,22 @@
 pragma solidity 0.6.4;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./YieldServiceInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../external/compound/CTokenInterface.sol";
+import "../base/ModuleM.sol";
+import "./YieldServiceConstants.sol";
 
 /**
  * Wraps a cToken with a principal token.  The principal token represents how much underlying principal a user holds.
  * The interest can be minted as new principal tokens by the allocator.
  */
-contract CompoundYieldService is Initializable, YieldServiceInterface {
+contract CompoundYieldService is Initializable, YieldServiceInterface, ModuleM {
   using SafeMath for uint256;
 
   event PrincipalSupplied(address from, uint256 amount);
@@ -24,6 +26,10 @@ contract CompoundYieldService is Initializable, YieldServiceInterface {
   CTokenInterface public cToken;
 
   mapping(address => uint256) cTokenBalances;
+
+  function hashName() public view override returns (bytes32) {
+    return YieldServiceConstants.ERC1820_YIELD_SERVICE_INTERFACE_HASH;
+  }
 
   function initialize (
     CTokenInterface _cToken

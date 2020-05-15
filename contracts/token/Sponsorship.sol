@@ -1,10 +1,11 @@
 pragma solidity ^0.6.4;
 
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@nomiclabs/buidler/console.sol";
 import "../token/TokenControllerInterface.sol";
 
+import "../util/ERC1820Constants.sol";
 import "./ControlledToken.sol";
 import "./Loyalty.sol";
 
@@ -27,8 +28,8 @@ contract Sponsorship is ControlledToken, TokenControllerInterface {
     super.initialize(_name, _symbol, _trustedForwarder);
     controller = _controller;
     loyalty = _loyalty;
-    ERC1820_REGISTRY.setInterfaceImplementer(address(this), ERC1820_TOKEN_CONTROLLER_INTERFACE_HASH, address(this));
-    ERC1820_REGISTRY.setInterfaceImplementer(address(this), ERC1820_TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+    ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKEN_CONTROLLER_INTERFACE_HASH, address(this));
+    ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
   function rewardLoyalty(uint256 amount) external onlyController nonReentrant {
