@@ -7,9 +7,11 @@ import "../token/ControlledToken.sol";
 import "../prize-strategy/PrizeStrategyInterface.sol";
 
 interface PrizePoolInterface {
+  /*
   function mintSponsorship(uint256 tickets) external;
   function mintSponsorshipTo(address to, uint256 tickets) external;
   function redeemSponsorship(uint256 tickets) external;
+  */
   function calculateUnlockTimestamp(address sender, uint256 tickets) external view returns (uint256);
   function calculateRemainingPreviousPrize() external view returns (uint256);
   function yieldService() external view returns (YieldServiceInterface);

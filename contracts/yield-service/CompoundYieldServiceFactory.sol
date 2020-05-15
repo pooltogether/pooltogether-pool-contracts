@@ -19,6 +19,7 @@ contract CompoundYieldServiceFactory is Initializable, ProxyFactory {
   function createCompoundYieldService() external returns (CompoundYieldService) {
     CompoundYieldService yieldService = CompoundYieldService(deployMinimal(address(instance), ""));
     emit CompoundYieldServiceCreated(address(yieldService));
+    yieldService.transferOwnership(msg.sender);
     return yieldService;
   }
 }

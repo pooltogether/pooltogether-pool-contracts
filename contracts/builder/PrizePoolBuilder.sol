@@ -61,12 +61,12 @@ contract PrizePoolBuilder is Initializable {
     PeriodicPrizePool prizePool = periodicPrizePoolFactory.createPeriodicPrizePool();
     prizePool.construct();
 
-    prizePool.enableModule(compoundYieldServiceBuilder.createCompoundYieldService(cToken));
+    createCompoundYieldServiceModule(prizePool, cToken);
+    createTicketModule(prizePool, _ticketName, _ticketSymbol);
+    createSponsorshipModule(prizePool, _sponsorshipName, _sponsorshipSymbol);
 
     prizePool.initialize(
       trustedForwarder,
-      sponsorshipFactory.createSponsorship(_sponsorshipName, _sponsorshipSymbol, address(prizePool), trustedForwarder),
-      ticketFactory.createTicket(_ticketName, _ticketSymbol, prizePool, trustedForwarder),
       _prizeStrategy,
       rng,
       prizePeriodSeconds
@@ -82,5 +82,31 @@ contract PrizePoolBuilder is Initializable {
     );
 
     return prizePool;
+  }
+
+  function createCompoundYieldServiceModule(ModuleManager moduleManager, CTokenInterface cToken) internal {
+    CompoundYieldService yieldService = compoundYieldServiceBuilder.createCompoundYieldService(cToken);
+    yieldService.setManager(moduleManager);
+    moduleManager.enableModule(yieldService);
+  }
+
+  function createTicketModule(
+    ModuleManager moduleManager,
+    string memory _ticketName,
+    string memory _ticketSymbol
+  ) internal {
+    Ticket ticket = ticketFactory.createTicket(_ticketName, _ticketSymbol, trustedForwarder);
+    ticket.setManager(moduleManager);
+    moduleManager.enableModule(ticket);
+  }
+
+  function createSponsorshipModule(
+    ModuleManager moduleManager,
+    string memory _sponsorshipName,
+    string memory _sponsorshipSymbol
+  ) internal {
+    Sponsorship sponsorship = sponsorshipFactory.createSponsorship(_sponsorshipName, _sponsorshipSymbol, trustedForwarder);
+    sponsorship.setManager(moduleManager);
+    moduleManager.enableModule(sponsorship);
   }
 }

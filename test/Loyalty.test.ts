@@ -25,7 +25,8 @@ describe('Loyalty contract', function() {
     forwarder = await deployContract(wallet, Forwarder, [])
     token = await deployContract(wallet, Loyalty, [])
     debug('initializing...')
-    await token['initialize(string,string,address,address)']("", "", wallet._address, forwarder.address)
+    await token['initialize(string,string,address)']("", "", forwarder.address)
+    await token.setManager(wallet._address)
   })
 
   describe('supply', () => {
@@ -50,12 +51,12 @@ describe('Loyalty contract', function() {
     })
   })
 
-  describe('increaseCollateral', async () => {
+  describe('reward', async () => {
     it('should increase for all users', async () => {
       await token.supply(otherWallet._address, toWei('100'))
       await token.supply(wallet._address, toWei('100'))
 
-      await token.increaseCollateral(toWei('200'))
+      await token.reward(toWei('200'))
 
       // starts at parity
       expect(await token.collateral()).to.equal(toWei('400'))

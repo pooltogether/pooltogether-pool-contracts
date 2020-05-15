@@ -8,45 +8,45 @@ import "../token/TokenControllerInterface.sol";
 import "../util/ERC1820Constants.sol";
 import "./ControlledToken.sol";
 import "./Loyalty.sol";
+import "../base/Module.sol";
 
 // solium-disable security/no-block-members
-contract Sponsorship is ControlledToken, TokenControllerInterface {
+contract Sponsorship is Meta777, Module {
   using SafeMath for uint256;
-
-  Loyalty public loyalty;
 
   function initialize (
     string memory _name,
     string memory _symbol,
-    address _controller,
-    address _trustedForwarder,
-    Loyalty _loyalty
-  ) public virtual initializer {
-    require(address(_controller) != address(0), "controller cannot be zero");
-    require(address(_loyalty) != address(0), "loyalty must not be zero");
-    require(address(_loyalty.controller()) == address(this), "loyalty controller does not match");
-    super.initialize(_name, _symbol, _trustedForwarder);
-    controller = _controller;
-    loyalty = _loyalty;
-    ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKEN_CONTROLLER_INTERFACE_HASH, address(this));
+    address _trustedForwarder
+  ) public override initializer {
+    Module.construct();
+    Meta777.initialize(_name, _symbol, _trustedForwarder);
     ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
-  function rewardLoyalty(uint256 amount) external onlyController nonReentrant {
-    loyalty.increaseCollateral(amount);
+  function mint(
+    address account,
+    uint256 amount
+  ) external virtual authorized {
+    _mint(account, amount, "", "");
   }
 
-  function _beforeTokenTransfer(address operator, address from, address to, uint256 tokenAmount) internal virtual override {
-    super._beforeTokenTransfer(operator, from, to, tokenAmount);
-    if (from != address(0)) {
-      loyalty.redeem(from, tokenAmount);
-    }
-    if (to != address(0)) {
-      loyalty.supply(to, tokenAmount);
-    }
+  function burn(
+    address from,
+    uint256 amount
+  ) external virtual authorized {
+    _burn(from, amount, "", "");
   }
 
-  function beforeTokenTransfer(address, address from, address to, uint256) external override {
-    require(from == address(0) || to == address(0), "no transfer allowed");
+  function testme() public pure returns (string memory) {
+    return "HELLo this iS a teSt";
+  }
+
+  function hashName() public view override returns (bytes32) {
+    return ERC1820Constants.SPONSORSHIP_INTERFACE_HASH;
+  }
+
+  function _msgSender() internal override(Meta777, ContextUpgradeSafe) virtual view returns (address payable) {
+    return BaseRelayRecipient._msgSender();
   }
 }

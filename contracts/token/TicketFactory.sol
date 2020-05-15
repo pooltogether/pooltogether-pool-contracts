@@ -30,7 +30,6 @@ contract TicketFactory is Initializable, ProxyFactory {
   function createTicket(
     string memory _name,
     string memory _symbol,
-    PrizePoolInterface _prizePool,
     address _trustedForwarder
   ) public returns (Ticket) {
     Ticket token = createTicket();
@@ -38,10 +37,10 @@ contract TicketFactory is Initializable, ProxyFactory {
     token.initialize(
       _name,
       _symbol,
-      _prizePool,
       timelock,
       _trustedForwarder
     );
+    token.transferOwnership(msg.sender);
     return token;
   }
 }

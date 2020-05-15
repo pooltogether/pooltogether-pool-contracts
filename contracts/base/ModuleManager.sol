@@ -1,22 +1,28 @@
 pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@nomiclabs/buidler/console.sol";
 
-import "./ModuleM.sol";
+import "./Module.sol";
 import "./Executor.sol";
 import "../util/ERC1820Constants.sol";
 
 /// Copied from https://github.com/gnosis/safe-contracts/blob/development/contracts/base/ModuleManager.sol
 
 contract ModuleManager is Executor, OwnableUpgradeSafe {
-  event EnabledModule(ModuleM module);
-  event DisabledModule(ModuleM module);
+  event EnabledModule(Module module);
+  event DisabledModule(Module module);
   event ExecutionFromModuleSuccess(address indexed module);
   event ExecutionFromModuleFailure(address indexed module);
 
   address internal constant SENTINEL_MODULES = address(0x1);
 
   mapping (address => address) internal modules;
+
+  function construct () public virtual initializer {
+    __Ownable_init();
+    setupModules(address(0), "");
+  }
 
   function setupModules(address to, bytes memory data)
     internal
@@ -31,17 +37,27 @@ contract ModuleManager is Executor, OwnableUpgradeSafe {
   /// @dev Allows to add a module to the whitelist.
   ///   This can only be done via a Safe transaction.
   /// @param module Module to be whitelisted.
-  function enableModule(ModuleM module)
+  function enableModule(Module module)
     public
     onlyOwner
   {
+    console.log("enableModule: %s", address(module));
     // Module address cannot be null or sentinel.
     require(address(module) != address(0) && address(module) != SENTINEL_MODULES, "Invalid module address provided");
     // Module cannot be added twice.
     require(modules[address(module)] == address(0), "Module has already been added");
+    console.log("ENTERED 2");
     modules[address(module)] = modules[SENTINEL_MODULES];
+    console.log("ENTERED 3");
     modules[SENTINEL_MODULES] = address(module);
-    ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), module.hashName(), address(module));
+
+    (bool success, bytes32 name) = hashName(module);
+    if (success) {
+      console.log("set implementer: %s, %s, %s", address(this), uint256(name), address(module));
+      ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), name, address(module));
+    }
+
+    console.log("enableModule done: modules[]: %s, isModuleEnabled: %s", modules[address(module)], isModuleEnabled(module));
     emit EnabledModule(module);
   }
 
@@ -53,19 +69,34 @@ contract ModuleManager is Executor, OwnableUpgradeSafe {
   ///   This can only be done via a Safe transaction.
   /// @param prevModule Module that pointed to the module to be removed in the linked list
   /// @param module Module to be removed.
-  function disableModule(ModuleM prevModule, ModuleM module)
+  function disableModule(Module prevModule, Module module)
     public
     onlyOwner
   {
+    console.log("disableModule %s", address(module));
     // Validate module address and check that it corresponds to module index.
     require(address(module) != address(0) && address(module) != SENTINEL_MODULES, "Invalid module address provided");
     require(modules[address(prevModule)] == address(module), "Invalid prevModule, module pair provided");
     modules[address(prevModule)] = modules[address(module)];
     modules[address(module)] = address(0);
-    ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), module.hashName(), address(0));
+    (bool success, bytes32 name) = hashName(module);
+    if (success) {
+      ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), name, address(0));
+    }
     emit DisabledModule(module);
   }
 
+  function hashName(Module m) internal view returns (bool success, bytes32 name) {
+    // console.log("checking hashName");
+    (bool s, bytes memory data) = address(m).staticcall(abi.encodeWithSignature("hashName()"));
+    success = s && data.length > 0;
+    if (success) {
+      name = abi.decode(data, (bytes32));
+      // console.log("success");
+    } else {
+      // console.log("failure");
+    }
+  }
   /// @dev Allows a Module to execute a Safe transaction without any further confirmations.
   /// @param to Destination address of module transaction.
   /// @param value Ether value of module transaction.
@@ -111,11 +142,12 @@ contract ModuleManager is Executor, OwnableUpgradeSafe {
 
   /// @dev Returns if an module is enabled
   /// @return True if the module is enabled
-  function isModuleEnabled(ModuleM module)
+  function isModuleEnabled(Module module)
     public
     view
     returns (bool)
   {
+    console.log("isModuleEnabled: %s", address(module));
     return SENTINEL_MODULES != address(module) && modules[address(module)] != address(0);
   }
 

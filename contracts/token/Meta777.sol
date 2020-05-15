@@ -12,7 +12,7 @@ contract Meta777 is Initializable, ReentrancyGuardUpgradeSafe, ERC777UpgradeSafe
     string memory name,
     string memory symbol,
     address _trustedForwarder
-  ) public initializer {
+  ) public virtual initializer {
     require(_trustedForwarder != address(0), "forwarder is not zero");
     __ReentrancyGuard_init();
     address[] memory defaultOperators;

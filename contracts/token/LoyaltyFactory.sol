@@ -24,16 +24,15 @@ contract LoyaltyFactory is Initializable, ProxyFactory {
   function createLoyalty(
     string memory _name,
     string memory _symbol,
-    address _controller,
     address _trustedForwarder
   ) public returns (Loyalty) {
     Loyalty token = createLoyalty();
     token.initialize(
       _name,
       _symbol,
-      _controller,
       _trustedForwarder
     );
+    token.transferOwnership(msg.sender);
     return token;
   }
 }

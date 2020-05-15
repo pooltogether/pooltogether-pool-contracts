@@ -24,4 +24,16 @@ library ERC1820Constants {
   // keccak256(abi.encodePacked("ERC1820_ACCEPT_MAGIC"));
   bytes32 public constant ACCEPT_MAGIC =
   0xa2ef4600d742022d532d4747cb3547474667d6f13804902513b2ec01c848f4b4;
+
+  // keccak256("PoolTogetherV3/TicketInterface")
+  bytes32 public constant TICKET_INTERFACE_HASH =
+  0xf22dc5a0b79862d03b1bd7a85ef07c37d8ab6be34838cd9c393ec1d671b9c818;
+
+  // keccak256("PoolTogetherV3/LoyaltyInterface")
+  bytes32 public constant LOYALTY_INTERFACE_HASH =
+  0x21adbc49851dc9a5421ef4d78427664813502289b1576200510e09bc637502d9;
+
+  // keccak256("PoolTogetherV3/SponsorshipInterface")
+  bytes32 public constant SPONSORSHIP_INTERFACE_HASH =
+  0xfdba083ea3843dc5ff273fd3f7fbc2e59baa10a2c2af369fca115112fda76d95;
 }
