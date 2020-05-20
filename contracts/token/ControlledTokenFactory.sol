@@ -7,8 +7,6 @@ import "../external/openzeppelin/ProxyFactory.sol";
 
 contract ControlledTokenFactory is Initializable, ProxyFactory {
 
-  event ControlledTokenCreated(address indexed controlledToken);
-
   ControlledToken public instance;
 
   function initialize () public initializer {
@@ -17,7 +15,6 @@ contract ControlledTokenFactory is Initializable, ProxyFactory {
 
   function createControlledToken() public returns (ControlledToken) {
     ControlledToken controlledToken = ControlledToken(deployMinimal(address(instance), ""));
-    emit ControlledTokenCreated(address(controlledToken));
     return controlledToken;
   }
 

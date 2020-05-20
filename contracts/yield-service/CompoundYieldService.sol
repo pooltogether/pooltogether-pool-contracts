@@ -3,20 +3,21 @@ pragma solidity 0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./YieldServiceInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../external/compound/CTokenInterface.sol";
-import "../base/Module.sol";
+import "../base/NamedModule.sol";
 import "./YieldServiceConstants.sol";
 
 /**
  * Wraps a cToken with a principal token.  The principal token represents how much underlying principal a user holds.
  * The interest can be minted as new principal tokens by the allocator.
  */
-contract CompoundYieldService is Initializable, YieldServiceInterface, Module {
+contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModule, OwnableUpgradeSafe {
   using SafeMath for uint256;
 
   event PrincipalSupplied(address operator, address from, uint256 amount);
@@ -32,11 +33,14 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, Module {
   }
 
   function initialize (
+    ModuleManager manager,
     CTokenInterface _cToken
   ) external initializer {
-    Module.construct();
+    setManager(manager);
+    __Ownable_init();
     require(address(_cToken) != address(0), "cToken cannot be zero");
     cToken = _cToken;
+    enableInterface();
   }
 
   function balance() public override returns (uint256) {
@@ -56,7 +60,7 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, Module {
     return msg.sender;
   }
 
-  function supply(address from, uint256 amount) external override authorized {
+  function supply(address from, uint256 amount) external override onlyManagerOrModule {
     // first execute transfer from user to the pool
     bytes memory transferFrom = abi.encodeWithSignature("transferFrom(address,address,uint256)", from, address(manager), amount);
     manager.execTransactionFromModule(address(token()), 0, transferFrom, Enum.Operation.Call);
@@ -74,7 +78,7 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, Module {
     emit PrincipalSupplied(msg.sender, from, amount);
   }
 
-  function redeem(address to, uint256 amount) external override authorized {
+  function redeem(address to, uint256 amount) external override onlyManagerOrModule {
     // first redeem underlying
     bytes memory redeemUnderlying = abi.encodeWithSignature("redeemUnderlying(uint256)", amount);
     manager.execTransactionFromModule(address(cToken), 0, redeemUnderlying, Enum.Operation.Call);
@@ -88,7 +92,7 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, Module {
     emit PrincipalRedeemed(msg.sender, to, amount);
   }
 
-  function capture(uint256 amount) external override authorized {
+  function capture(uint256 amount) external override onlyManagerOrModule {
     require(amount <= unaccountedBalance(), "insuff");
     accountedBalance = accountedBalance.add(amount);
 

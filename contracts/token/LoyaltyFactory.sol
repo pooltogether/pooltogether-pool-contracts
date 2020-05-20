@@ -16,23 +16,6 @@ contract LoyaltyFactory is Initializable, ProxyFactory {
   }
 
   function createLoyalty() public returns (Loyalty) {
-    Loyalty controlledToken = Loyalty(deployMinimal(address(instance), ""));
-    emit LoyaltyCreated(address(controlledToken));
-    return controlledToken;
-  }
-
-  function createLoyalty(
-    string memory _name,
-    string memory _symbol,
-    address _trustedForwarder
-  ) public returns (Loyalty) {
-    Loyalty token = createLoyalty();
-    token.initialize(
-      _name,
-      _symbol,
-      _trustedForwarder
-    );
-    token.transferOwnership(msg.sender);
-    return token;
+    return Loyalty(deployMinimal(address(instance), ""));
   }
 }

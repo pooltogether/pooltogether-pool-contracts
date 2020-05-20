@@ -8,39 +8,13 @@ import "../external/openzeppelin/ProxyFactory.sol";
 
 contract TicketFactory is Initializable, ProxyFactory {
 
-  event TicketCreated(address indexed ticket);
-
   Ticket public instance;
-  ControlledTokenFactory public controlledTokenFactory;
 
-  function initialize (
-    ControlledTokenFactory _controlledTokenFactory
-  ) public initializer {
-    require(address(_controlledTokenFactory) != address(0), "controlledTokenFactory cannot be zero");
-    controlledTokenFactory = _controlledTokenFactory;
+  function initialize () public initializer {
     instance = new Ticket();
   }
 
   function createTicket() public returns (Ticket) {
-    Ticket ticket = Ticket(deployMinimal(address(instance), ""));
-    emit TicketCreated(address(ticket));
-    return ticket;
-  }
-
-  function createTicket(
-    string memory _name,
-    string memory _symbol,
-    address _trustedForwarder
-  ) public returns (Ticket) {
-    Ticket token = createTicket();
-    ControlledToken timelock = controlledTokenFactory.createControlledToken("", "", address(token), _trustedForwarder);
-    token.initialize(
-      _name,
-      _symbol,
-      timelock,
-      _trustedForwarder
-    );
-    token.transferOwnership(msg.sender);
-    return token;
+    return Ticket(deployMinimal(address(instance), ""));
   }
 }

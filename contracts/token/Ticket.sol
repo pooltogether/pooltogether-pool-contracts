@@ -3,6 +3,7 @@ pragma solidity 0.6.4;
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
@@ -11,11 +12,11 @@ import "./ControlledToken.sol";
 import "../prize-pool/PrizePoolInterface.sol";
 import "./TokenControllerInterface.sol";
 import "../util/ERC1820Constants.sol";
-import "../base/Module.sol";
+import "../base/NamedModule.sol";
 import "../yield-service/YieldServiceInterface.sol";
 
 /* solium-disable security/no-block-members */
-contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient, Module {
+contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient, NamedModule {
   using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
 
   SortitionSumTreeFactory.SortitionSumTrees sortitionSumTrees;
@@ -27,23 +28,21 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient, Module {
   uint256 constant private MAX_TREE_LEAVES = 5;
 
   function initialize (
+    ModuleManager _manager,
     string memory _name,
     string memory _symbol,
     ControlledToken _timelock,
     address _trustedForwarder
   ) public initializer {
-    Module.construct();
     require(address(_timelock) != address(0), "timelock must not be zero");
     require(address(_timelock.controller()) == address(this), "timelock controller does not match");
+    setManager(_manager);
+    enableInterface();
     super.initialize(_name, _symbol, _trustedForwarder);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
     timelock = _timelock;
     ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKEN_CONTROLLER_INTERFACE_HASH, address(this));
     ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
-  }
-
-  function _msgSender() internal override(Meta777, ContextUpgradeSafe) virtual view returns (address payable) {
-    return BaseRelayRecipient._msgSender();
   }
 
   function hashName() public view override returns (bytes32) {
@@ -239,7 +238,7 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient, Module {
   }
 
   function yieldService() public view returns (YieldServiceInterface) {
-    return YieldServiceInterface(manager.getModuleByHashName(ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH));
+    return YieldServiceInterface(getInterfaceImplementer(ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH));
   }
 
   function prizePool() public view returns (PrizePoolInterface) {

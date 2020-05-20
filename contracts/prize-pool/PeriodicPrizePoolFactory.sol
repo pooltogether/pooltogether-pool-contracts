@@ -9,8 +9,6 @@ import "../external/openzeppelin/ProxyFactory.sol";
 
 contract PeriodicPrizePoolFactory is Initializable, ProxyFactory {
 
-  event PeriodicPrizePoolCreated(address indexed prizePool);
-
   PeriodicPrizePool public instance;
 
   function initialize () public initializer {
@@ -18,8 +16,6 @@ contract PeriodicPrizePoolFactory is Initializable, ProxyFactory {
   }
 
   function createPeriodicPrizePool() external returns (PeriodicPrizePool) {
-    PeriodicPrizePool prizePool = PeriodicPrizePool(deployMinimal(address(instance), ""));
-    emit PeriodicPrizePoolCreated(address(prizePool));
-    return prizePool;
+    return PeriodicPrizePool(deployMinimal(address(instance), ""));
   }
 }

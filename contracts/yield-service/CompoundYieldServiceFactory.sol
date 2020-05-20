@@ -8,8 +8,6 @@ import "../external/openzeppelin/ProxyFactory.sol";
 
 contract CompoundYieldServiceFactory is Initializable, ProxyFactory {
 
-  event CompoundYieldServiceCreated(address indexed yieldService);
-
   CompoundYieldService public instance;
 
   function initialize () public initializer {
@@ -17,9 +15,6 @@ contract CompoundYieldServiceFactory is Initializable, ProxyFactory {
   }
 
   function createCompoundYieldService() external returns (CompoundYieldService) {
-    CompoundYieldService yieldService = CompoundYieldService(deployMinimal(address(instance), ""));
-    emit CompoundYieldServiceCreated(address(yieldService));
-    yieldService.transferOwnership(msg.sender);
-    return yieldService;
+    return CompoundYieldService(deployMinimal(address(instance), ""));
   }
 }

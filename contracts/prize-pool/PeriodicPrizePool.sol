@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC182
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
@@ -23,7 +24,7 @@ import "../util/ERC1820Constants.sol";
 import "../token/ControlledTokenFactory.sol";
 
 /* solium-disable security/no-block-members */
-contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, BaseRelayRecipient, PrizePoolInterface, IERC777Recipient, ModuleManager {
+contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, BaseRelayRecipient, PrizePoolInterface, IERC777Recipient, ModuleManager {
   using SafeMath for uint256;
 
   event TicketsRedeemedInstantly(address indexed to, uint256 amount, uint256 fee);
@@ -38,20 +39,18 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, BaseRelayRecipient, Pr
   uint256 public feeScaleMantissa;
   uint256 public rngRequestId;
 
-  function construct () public virtual override initializer {
-    super.construct();
-    __ReentrancyGuard_init();
-  }
-
   function initialize (
     address _trustedForwarder,
     PrizeStrategyInterface _prizeStrategy,
     RNGInterface _rng,
     uint256 _prizePeriodSeconds
-  ) public onlyOwner {
+  ) public initializer {
     require(address(_prizeStrategy) != address(0), "prize strategy must not be zero");
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
     require(address(_rng) != address(0), "rng cannot be zero");
+    setupModules(address(0), "");
+    __Ownable_init();
+    __ReentrancyGuard_init();
     prizeStrategy = _prizeStrategy;
     trustedForwarder = _trustedForwarder;
     rng = _rng;
@@ -171,24 +170,28 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, BaseRelayRecipient, Pr
   ) external override {
   }
 
+  function getInterfaceImplementer(bytes32 name) public view returns (address) {
+    return ERC1820Constants.REGISTRY.getInterfaceImplementer(address(this), name);
+  }
+
   function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
     return BaseRelayRecipient._msgSender();
   }
 
   function loyalty() public view returns (LoyaltyInterface) {
-    return LoyaltyInterface(getModuleByHashName(ERC1820Constants.LOYALTY_INTERFACE_HASH));
+    return LoyaltyInterface(getInterfaceImplementer(ERC1820Constants.LOYALTY_INTERFACE_HASH));
   }
 
   function sponsorship() public view override returns (Sponsorship) {
-    return Sponsorship(getModuleByHashName(ERC1820Constants.SPONSORSHIP_INTERFACE_HASH));
+    return Sponsorship(getInterfaceImplementer(ERC1820Constants.SPONSORSHIP_INTERFACE_HASH));
   }
 
   function yieldService() public view override returns (YieldServiceInterface) {
-    return YieldServiceInterface(getModuleByHashName(ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH));
+    return YieldServiceInterface(getInterfaceImplementer(ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH));
   }
 
   function ticket() public view override returns (Ticket) {
-    return Ticket(getModuleByHashName(ERC1820Constants.TICKET_INTERFACE_HASH));
+    return Ticket(getInterfaceImplementer(ERC1820Constants.TICKET_INTERFACE_HASH));
   }
 
   modifier requireCanStartAward() {

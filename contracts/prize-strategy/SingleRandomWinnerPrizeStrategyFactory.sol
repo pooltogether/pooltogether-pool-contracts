@@ -8,8 +8,6 @@ import "../external/openzeppelin/ProxyFactory.sol";
 
 contract SingleRandomWinnerPrizeStrategyFactory is Initializable, ProxyFactory {
 
-  event PrizeStrategyCreated(address indexed prizeStrategy);
-
   SingleRandomWinnerPrizeStrategy public instance;
 
   function initialize () public initializer {
@@ -17,8 +15,6 @@ contract SingleRandomWinnerPrizeStrategyFactory is Initializable, ProxyFactory {
   }
 
   function createSingleRandomWinner() external returns (SingleRandomWinnerPrizeStrategy) {
-    SingleRandomWinnerPrizeStrategy prizeStrategy = SingleRandomWinnerPrizeStrategy(deployMinimal(address(instance), ""));
-    emit PrizeStrategyCreated(address(prizeStrategy));
-    return prizeStrategy;
+    return SingleRandomWinnerPrizeStrategy(deployMinimal(address(instance), ""));
   }
 }

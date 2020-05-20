@@ -106,10 +106,9 @@ describe('PeriodicPrizePool contract', () => {
     let logs = await getEvents(ticketFactory, tx.hash)
     debug({ logs })
 
-    ticket = await buidler.ethers.getContractAt('Ticket', logs[1].values.ticket, wallet)
+    ticket = await buidler.ethers.getContractAt('Ticket', logs[0].values.proxy, wallet)
 
     debug('Setting ticket manager...')
-
     
     debug('Enabling ticket module...')
     

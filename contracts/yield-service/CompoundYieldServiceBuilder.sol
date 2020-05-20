@@ -5,11 +5,11 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "../external/compound/CTokenInterface.sol";
 import "../token/ControlledTokenFactory.sol";
 import "./CompoundYieldServiceFactory.sol";
+import "../base/ModuleManager.sol";
 
 contract CompoundYieldServiceBuilder is Initializable {
 
   CompoundYieldServiceFactory public compoundYieldServiceFactory;
-  ControlledTokenFactory public controlledTokenFactory;
 
   event CompoundYieldServiceBuilt(address indexed creator, address indexed compoundYieldService, address indexed cToken);
 
@@ -21,10 +21,12 @@ contract CompoundYieldServiceBuilder is Initializable {
   }
 
   function createCompoundYieldService(
+    ModuleManager moduleManager,
     CTokenInterface cToken
   ) external returns (CompoundYieldService) {
     CompoundYieldService yieldService = compoundYieldServiceFactory.createCompoundYieldService();
-    yieldService.initialize(cToken);
+    moduleManager.enableModule(yieldService);
+    yieldService.initialize(moduleManager, cToken);
 
     emit CompoundYieldServiceBuilt(msg.sender, address(yieldService), address(cToken));
 

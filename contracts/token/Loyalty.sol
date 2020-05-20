@@ -2,14 +2,15 @@ pragma solidity ^0.6.4;
 
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
 import "./Meta777.sol";
 import "./LoyaltyInterface.sol";
-import "../base/Module.sol";
+import "../base/NamedModule.sol";
 import "../util/ERC1820Constants.sol";
 
 // solium-disable security/no-block-members
-contract Loyalty is LoyaltyInterface, Meta777, Module {
+contract Loyalty is LoyaltyInterface, Meta777, NamedModule {
   using SafeMath for uint256;
 
   uint256 public collateral;
@@ -17,12 +18,14 @@ contract Loyalty is LoyaltyInterface, Meta777, Module {
   uint256 internal constant INITIAL_EXCHANGE_RATE_MANTISSA = 1 ether;
 
   function initialize(
+    ModuleManager _manager,
     string memory name,
     string memory symbol,
     address _trustedForwarder
-  ) public virtual override initializer {
-    Module.construct();
+  ) public virtual initializer {
+    setManager(_manager);
     super.initialize(name, symbol, _trustedForwarder);
+    enableInterface();
   }
 
   function hashName() public view override returns (bytes32) {
@@ -32,7 +35,7 @@ contract Loyalty is LoyaltyInterface, Meta777, Module {
   function supply(
     address account,
     uint256 amount
-  ) external override authorized {
+  ) external override onlyManagerOrModule {
     uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa());
     collateral = collateral.add(amount);
     _mint(account, tokens);
@@ -42,14 +45,14 @@ contract Loyalty is LoyaltyInterface, Meta777, Module {
     return FixedPoint.multiplyUintByMantissa(balanceOf(user), exchangeRateMantissa());
   }
 
-  function reward(uint256 amount) external override authorized {
+  function reward(uint256 amount) external override onlyManagerOrModule {
     collateral = collateral.add(amount);
   }
 
   function redeem(
     address from,
     uint256 amount
-  ) external override authorized {
+  ) external override onlyManagerOrModule {
     uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa());
     collateral = collateral.sub(amount);
     _burn(from, tokens);
@@ -65,9 +68,5 @@ contract Loyalty is LoyaltyInterface, Meta777, Module {
 
   function _beforeTokenTransfer(address, address from, address to, uint256) internal override {
     require(from == address(0) || to == address(0), "no transfer allowed");
-  }
-
-  function _msgSender() internal override(Meta777, ContextUpgradeSafe) virtual view returns (address payable) {
-    return BaseRelayRecipient._msgSender();
   }
 }
