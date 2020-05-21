@@ -1,48 +1,48 @@
-import { deployContract } from 'ethereum-waffle'
-import { deploy1820 } from 'deploy-eip-1820'
-import PeriodicPrizePoolFactory from '../build/PeriodicPrizePoolFactory.json'
-import RNGBlockhash from '../build/RNGBlockhash.json'
-import Forwarder from '../build/Forwarder.json'
-import CompoundYieldServiceFactory from '../build/CompoundYieldServiceFactory.json'
-import CompoundYieldServiceBuilder from '../build/CompoundYieldServiceBuilder.json'
-import PrizePoolBuilder from '../build/PrizePoolBuilder.json'
-import LoyaltyFactory from '../build/LoyaltyFactory.json'
-import SingleRandomWinnerPrizePoolBuilder from '../build/SingleRandomWinnerPrizePoolBuilder.json'
-import TicketFactory from '../build/TicketFactory.json'
-import SponsorshipFactory from '../build/SponsorshipFactory.json'
-import ControlledTokenFactory from '../build/ControlledTokenFactory.json'
-import SingleRandomWinnerPrizeStrategyFactory from '../build/SingleRandomWinnerPrizeStrategyFactory.json'
-import CTokenMock from '../build/CTokenMock.json'
-import ERC20Mintable from '../build/ERC20Mintable.json'
-import { expect } from 'chai'
-import { ethers } from './helpers/ethers'
-import { Provider } from 'ethers/providers'
-import buidler from './helpers/buidler'
+const { deployContract } = require('ethereum-waffle')
+const { deploy1820 } = require('deploy-eip-1820')
+const PeriodicPrizePoolFactory = require('../build/PeriodicPrizePoolFactory.json')
+const RNGBlockhash = require('../build/RNGBlockhash.json')
+const Forwarder = require('../build/Forwarder.json')
+const CompoundYieldServiceFactory = require('../build/CompoundYieldServiceFactory.json')
+const CompoundYieldServiceBuilder = require('../build/CompoundYieldServiceBuilder.json')
+const PrizePoolBuilder = require('../build/PrizePoolBuilder.json')
+const LoyaltyFactory = require('../build/LoyaltyFactory.json')
+const SingleRandomWinnerPrizePoolBuilder = require('../build/SingleRandomWinnerPrizePoolBuilder.json')
+const TicketFactory = require('../build/TicketFactory.json')
+const SponsorshipFactory = require('../build/SponsorshipFactory.json')
+const ControlledTokenFactory = require('../build/ControlledTokenFactory.json')
+const SingleRandomWinnerPrizeStrategyFactory = require('../build/SingleRandomWinnerPrizeStrategyFactory.json')
+const CTokenMock = require('../build/CTokenMock.json')
+const ERC20Mintable = require('../build/ERC20Mintable.json')
+const { expect } = require('chai')
+const { ethers } = require('./helpers/ethers')
+const { Provider } = require('ethers/providers')
+const buidler = require('./helpers/buidler')
 
 const debug = require('debug')('ptv3:SingleRandomWinnerPrizePoolBuilder.test')
 
 describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
   
-  let token: any
-  let cToken: any
+  let token
+  let cToken
 
-  let wallet: any
-  let allocator: any
-  let otherWallet: any
+  let wallet
+  let allocator
+  let otherWallet
 
-  let yieldServiceFactory: any
-  let prizePoolFactory: any
-  let ticketFactory: any
-  let sponsorshipFactory: any
-  let controlledTokenFactory: any
-  let prizeStrategyFactory: any
-  let prizePoolBuilder: any
-  let singleRandomWinnerPrizePoolBuilder: any
-  let compoundYieldServiceBuilder: any
-  let rng: any
-  let forwarder: any
+  let yieldServiceFactory
+  let prizePoolFactory
+  let ticketFactory
+  let sponsorshipFactory
+  let controlledTokenFactory
+  let prizeStrategyFactory
+  let prizePoolBuilder
+  let singleRandomWinnerPrizePoolBuilder
+  let compoundYieldServiceBuilder
+  let rng
+  let forwarder
 
-  let provider: Provider
+  let provider
 
   let overrides = { gasLimit: 20000000 }
 
@@ -80,7 +80,7 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
     debug('4')
 
     ticketFactory = await deployContract(wallet, TicketFactory, [], overrides)
-    await ticketFactory.initialize(controlledTokenFactory.address)
+    await ticketFactory.initialize()
     
     debug('5')
 
@@ -99,9 +99,7 @@ describe('SingleRandomWinnerPrizePoolBuilder contract', () => {
     let loyaltyFactory = await deployContract(wallet, LoyaltyFactory, [])
     await loyaltyFactory.initialize()
     sponsorshipFactory = await deployContract(wallet, SponsorshipFactory, [])
-    await sponsorshipFactory.initialize(
-      loyaltyFactory.address
-    )
+    await sponsorshipFactory.initialize()
 
     debug('8')
 

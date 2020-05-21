@@ -24,8 +24,8 @@ contract Loyalty is LoyaltyInterface, Meta777, NamedModule {
     address _trustedForwarder
   ) public virtual initializer {
     setManager(_manager);
-    super.initialize(name, symbol, _trustedForwarder);
     enableInterface();
+    super.initialize(name, symbol, _trustedForwarder);
   }
 
   function hashName() public view override returns (bytes32) {

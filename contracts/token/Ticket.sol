@@ -137,12 +137,14 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient, NamedMod
     if (unlockTimestamps[sender] <= block.timestamp && balance > 0) {
       transferChange = balance;
       timelock.burn(sender, balance);
+      // console.log("burning timelock");
     }
 
     // if we are locking these funds for the future
     if (unlockTimestamp > block.timestamp) {
       // time lock new tokens
       timelock.mint(sender, tickets);
+      // console.log("minting timelock %s %s", tickets, unlockTimestamp);
       unlockTimestamps[sender] = unlockTimestamp;
     } else { // add funds to change
       transferChange = transferChange.add(tickets);
@@ -150,6 +152,7 @@ contract Ticket is Meta777, TokenControllerInterface, IERC777Recipient, NamedMod
 
     // if there is change, withdraw the change and transfer
     if (transferChange > 0) {
+      // console.log("withdraw change %s", transferChange);
       yieldService().redeem(sender, transferChange);
     }
 

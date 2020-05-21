@@ -1,18 +1,18 @@
-import { deployContract } from 'ethereum-waffle';
-import ERC20Mintable from '../build/ERC20Mintable.json';
-import CTokenMock from '../build/CTokenMock.json';
-import { ethers } from './helpers/ethers'
-import { expect } from 'chai'
-import buidler from './helpers/buidler'
+const { deployContract } = require('ethereum-waffle')
+const ERC20Mintable = require('../build/ERC20Mintable.json')
+const CTokenMock = require('../build/CTokenMock.json')
+const { ethers } = require('./helpers/ethers')
+const { expect } = require('chai')
+const buidler = require('./helpers/buidler')
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('CTokenMock contract', function() {
 
-    let token: any
-    let cTokenMock: any
+    let token
+    let cTokenMock
 
-    let wallet: any
-    let otherWallet: any
+    let wallet
+    let otherWallet
 
     beforeEach(async () => {
         [wallet, otherWallet] = await buidler.ethers.getSigners()

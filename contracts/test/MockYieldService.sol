@@ -22,6 +22,7 @@ contract MockYieldService is Initializable, YieldServiceInterface, NamedModule {
     setManager(_manager);
     _token = token;
     supplyRatePerBlock = 100 wei;
+    enableInterface();
   }
 
   function setBalanceOf(uint256 amount) external {

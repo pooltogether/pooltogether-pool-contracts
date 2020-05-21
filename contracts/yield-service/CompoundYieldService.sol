@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@nomiclabs/buidler/console.sol";
 
 import "./YieldServiceInterface.sol";
 import "../token/ControlledToken.sol";
@@ -33,10 +34,10 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
   }
 
   function initialize (
-    ModuleManager manager,
+    ModuleManager _manager,
     CTokenInterface _cToken
   ) external initializer {
-    setManager(manager);
+    setManager(_manager);
     __Ownable_init();
     require(address(_cToken) != address(0), "cToken cannot be zero");
     cToken = _cToken;
@@ -44,11 +45,11 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
   }
 
   function balance() public override returns (uint256) {
-    return cToken.balanceOf(address(manager));
+    return cToken.balanceOfUnderlying(address(manager));
   }
 
   function unaccountedBalance() public override returns (uint256) {
-    uint256 underlying = cToken.balanceOfUnderlying(address(this));
+    uint256 underlying = cToken.balanceOfUnderlying(address(manager));
     if (underlying >= accountedBalance) {
       return underlying.sub(accountedBalance);
     } else {
@@ -63,15 +64,28 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
   function supply(address from, uint256 amount) external override onlyManagerOrModule {
     // first execute transfer from user to the pool
     bytes memory transferFrom = abi.encodeWithSignature("transferFrom(address,address,uint256)", from, address(manager), amount);
-    manager.execTransactionFromModule(address(token()), 0, transferFrom, Enum.Operation.Call);
+    require(
+      manager.execTransactionFromModule(address(token()), 0, transferFrom, Enum.Operation.Call),
+      "could not transferFrom"
+    );
 
     // approve of ctoken spend
     bytes memory approve = abi.encodeWithSignature("approve(address,uint256)", address(cToken), amount);
-    manager.execTransactionFromModule(address(token()), 0, approve, Enum.Operation.Call);
+    require(
+      manager.execTransactionFromModule(address(token()), 0, approve, Enum.Operation.Call),
+      "could not approve"
+    );
 
     // now mint to cToken
     bytes memory mint = abi.encodeWithSignature("mint(uint256)", amount);
-    manager.execTransactionFromModule(address(cToken), 0, mint, Enum.Operation.Call);
+    require(
+      manager.execTransactionFromModule(address(cToken), 0, mint, Enum.Operation.Call),
+      "could not mint"
+    );
+
+    // console.log("minted %s for token %s", amount, address(cToken));
+
+    // console.log("total supply is now %s", cToken.totalSupply());
 
     accountedBalance = accountedBalance.add(amount);
 
@@ -81,11 +95,17 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
   function redeem(address to, uint256 amount) external override onlyManagerOrModule {
     // first redeem underlying
     bytes memory redeemUnderlying = abi.encodeWithSignature("redeemUnderlying(uint256)", amount);
-    manager.execTransactionFromModule(address(cToken), 0, redeemUnderlying, Enum.Operation.Call);
+    require(
+      manager.execTransactionFromModule(address(cToken), 0, redeemUnderlying, Enum.Operation.Call),
+      "could not redeemUnderlying"
+    );
 
     // transfer
     bytes memory transfer = abi.encodeWithSignature("transfer(address,uint256)", to, amount);
-    manager.execTransactionFromModule(address(token()), 0, transfer, Enum.Operation.Call);
+    require(
+      manager.execTransactionFromModule(address(token()), 0, transfer, Enum.Operation.Call),
+      "could not transfer"
+    );
 
     accountedBalance = accountedBalance.sub(amount);
 

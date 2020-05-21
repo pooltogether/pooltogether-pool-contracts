@@ -1,87 +1,105 @@
-import { deployContract } from 'ethereum-waffle'
-import MockYieldService from '../build/MockYieldService.json'
-import SponsorshipFactory from '../build/SponsorshipFactory.json'
-import ControlledTokenFactory from '../build/ControlledTokenFactory.json'
-import TicketFactory from '../build/TicketFactory.json'
-import LoyaltyFactory from '../build/LoyaltyFactory.json'
-import RNGBlockhash from '../build/RNGBlockhash.json'
-import MockPrizeStrategy from '../build/MockPrizeStrategy.json'
-import PeriodicPrizePool from '../build/PeriodicPrizePool.json'
-import ERC20Mintable from '../build/ERC20Mintable.json'
-import Forwarder from '../build/Forwarder.json'
-import { deploy1820 } from 'deploy-eip-1820'
-import { expect } from 'chai'
-import { ethers } from './helpers/ethers'
-import { increaseTime } from './helpers/increaseTime'
-import buidler from './helpers/buidler'
-import { AddressZero } from 'ethers/constants'
+const { deployContract } = require('ethereum-waffle')
+const MockYieldService = require('../build/MockYieldService.json')
+const SponsorshipFactory = require('../build/SponsorshipFactory.json')
+const ControlledTokenFactory = require('../build/ControlledTokenFactory.json')
+const ControlledToken = require('../build/ControlledToken.json')
+const TicketFactory = require('../build/TicketFactory.json')
+const LoyaltyFactory = require('../build/LoyaltyFactory.json')
+const RNGBlockhash = require('../build/RNGBlockhash.json')
+const MockPrizeStrategy = require('../build/MockPrizeStrategy.json')
+const PeriodicPrizePool = require('../build/PeriodicPrizePool.json')
+const ERC20Mintable = require('../build/ERC20Mintable.json')
+const Forwarder = require('../build/Forwarder.json')
+const { deploy1820 } = require('deploy-eip-1820')
+const { expect } = require('chai')
+const { ethers } = require('./helpers/ethers')
+const { increaseTime } = require('./helpers/increaseTime')
+const buidler = require('./helpers/buidler')
+const { AddressZero } = require('ethers/constants')
 
 const toWei = ethers.utils.parseEther
 
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
-async function prizePoolCurrentPrize(prizePoolContract: any) {
+async function prizePoolCurrentPrize(prizePoolContract) {
   let fxn = prizePoolContract.interface.functions.currentPrize
   let data = fxn.encode([])
   let result = await prizePoolContract.provider.call({ to: prizePoolContract.address, data })
   return fxn.decode(result)[0]
 }
 
-async function prizePoolEstimatePrize(prizePoolContract: any, secondsPerBlock: any) {
+async function prizePoolEstimatePrize(prizePoolContract, secondsPerBlock) {
   let fxn = prizePoolContract.interface.functions.estimatePrize
   let data = fxn.encode([secondsPerBlock])
   let result = await prizePoolContract.provider.call({ to: prizePoolContract.address, data })
   return fxn.decode(result)[0]
 }
 
-async function getEvents(contract: any, txHash: any) {
+async function getEvents(contract, txHash) {
   let provider = contract.provider
   let tx = await provider.getTransactionReceipt(txHash)
   let filter = { blockHash: tx.blockHash }
   let logs = await provider.getLogs(filter)
-  let parsedLogs = logs.map((log: any) => contract.interface.parseLog(log))
+  let parsedLogs = logs.map((log) => contract.interface.parseLog(log))
   return parsedLogs
 }
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('PeriodicPrizePool contract', () => {
   
-  let prizePool: any
-  let token: any
-  let ticket: any
-  let sponsorship: any
-  let timelock: any
-  let mockYieldService: any
-  let mockPrizeStrategy: any
-  let rng: any
-  let forwarder: any
+  let prizePool
+  let token
+  let ticket
+  let sponsorship
+  let timelock
+  let mockYieldService
+  let mockPrizeStrategy
+  let rng
+  let forwarder
 
-  let wallet: any
-  let allocator: any
-  let otherWallet: any
+  let wallet
+  let allocator
+  let otherWallet
 
-  let startTime: any
+  let startTime
 
-  let prizePeriodSeconds: any
+  let prizePeriodSeconds
 
   const overrides = { gasLimit: 20000000 }
 
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
 
+    prizePeriodSeconds = 10
+    let tx
+
     ethers.errors.setLogLevel('error')
 
     await deploy1820(wallet)
 
     rng = await deployContract(wallet, RNGBlockhash, [])
-
     forwarder = await deployContract(wallet, Forwarder, [])
-    prizePool = await deployContract(wallet, PeriodicPrizePool, [], overrides)
-    await prizePool.construct()
-    token = await deployContract(wallet, ERC20Mintable, [], overrides)
+
     debug('Deploying MockPrizeStrategy...')
+
     mockPrizeStrategy = await deployContract(wallet, MockPrizeStrategy, [], overrides)
     await mockPrizeStrategy.initialize()
+
+    debug('Initializing PeriodicPrizePool...')
+
+    prizePool = await deployContract(wallet, PeriodicPrizePool, [], overrides)
+
+    tx = await prizePool['initialize(address,address,address,uint256)'](
+      forwarder.address,
+      mockPrizeStrategy.address,
+      rng.address,
+      prizePeriodSeconds
+    )
+    let block = await buidler.ethers.provider.getBlock(tx.blockHash)
+    startTime = block.timestamp
+
+    token = await deployContract(wallet, ERC20Mintable, [], overrides)
+    
     mockYieldService = await deployContract(wallet, MockYieldService, [], overrides)
 
     debug('ControlledTokenFactory...')
@@ -92,78 +110,85 @@ describe('PeriodicPrizePool contract', () => {
     debug('TicketFactory...')
 
     let ticketFactory = await deployContract(wallet, TicketFactory, [], overrides)
-    await ticketFactory.initialize(controlledTokenFactory.address)
-
-    prizePeriodSeconds = 10
+    await ticketFactory.initialize()
 
     debug('Deploying Ticket...')
 
-    let tx = await ticketFactory['createTicket(string,string,address)'](
-      'Ticket',
-      'TICK',
-      forwarder.address
-    )
+    
+
+    tx = await ticketFactory.createTicket()
     let logs = await getEvents(ticketFactory, tx.hash)
     debug({ logs })
-
     ticket = await buidler.ethers.getContractAt('Ticket', logs[0].values.proxy, wallet)
 
-    debug('Setting ticket manager...')
-    
-    debug('Enabling ticket module...')
-    
-    await ticket.setManager(prizePool.address)    
-    await prizePool.enableModule(ticket.address)
+    timelock = await deployContract(wallet, ControlledToken, [])
+    await timelock['initialize(string,string,address,address)']('timelock', 'TIME', ticket.address, forwarder.address)
 
+    debug('Enabling ticket module...')
+
+    await prizePool.enableModule(ticket.address)
+    await ticket['initialize(address,string,string,address,address)'](
+      prizePool.address,
+      'Ticket',
+      'TICK',
+      timelock.address,
+      forwarder.address
+    )
+
+    // console.log('TIMELOCK: ', timelock.address)
+    
     debug('Deploying Loyalty...')
 
     let loyaltyFactory = await deployContract(wallet, LoyaltyFactory, [])
     await loyaltyFactory.initialize()
-    tx = await loyaltyFactory['createLoyalty(string,string,address)'](
-      'Loyalty',
-      'LOYL',
-      forwarder.address
-    )
+
+    tx = await loyaltyFactory.createLoyalty()
     logs = await getEvents(loyaltyFactory, tx.hash)
     debug({ logs: logs[0].values })
     let loyalty = await buidler.ethers.getContractAt('Loyalty', logs[0].values.proxy, wallet)
-
-    debug('setting loyalty manager...')
-
-    await loyalty.setManager(prizePool.address)
 
     debug('enabling loyalty module...')
 
     await prizePool.enableModule(loyalty.address)
 
+    await loyalty['initialize(address,string,string,address)'](
+      prizePool.address,
+      'Loyalty',
+      'LOYL',
+      forwarder.address
+    )
+
     debug('Deploying Sponsorship...')
 
     let sponsorshipFactory = await deployContract(wallet, SponsorshipFactory, [])
     await sponsorshipFactory.initialize()
-    tx = await sponsorshipFactory['createSponsorship(string,string,address)'](
-      'Sponsorship',
-      'SPON',
-      forwarder.address
-    )
+    tx = await sponsorshipFactory.createSponsorship()
     logs = await getEvents(sponsorshipFactory, tx.hash)
     debug({ logs: logs[0].values })
 
     debug('setting sponsorship manager')
 
     sponsorship = await buidler.ethers.getContractAt('Sponsorship', logs[0].values.proxy, wallet)
-    await sponsorship.setManager(prizePool.address)
-
-    debug('enabling sponsorship module: ', sponsorship.address)
 
     await prizePool.enableModule(sponsorship.address)
 
+    await sponsorship['initialize(address,string,string,address)'](
+      prizePool.address,
+      'Sponsorship',
+      'SPON',
+      forwarder.address
+    )
+
+    debug('enabling sponsorship module: ', sponsorship.address)
+
     debug('Deploying MockYieldService...')
 
+    await prizePool.enableModule(mockYieldService.address)
+
     await mockYieldService.initialize(
+      prizePool.address,
       token.address
     )
-    await mockYieldService.setManager(prizePool.address)
-    await prizePool.enableModule(mockYieldService.address)
 
     debug({
       forwarder: forwarder.address,
@@ -176,19 +201,11 @@ describe('PeriodicPrizePool contract', () => {
 
     debug('Enabling yield service module...')
 
-    debug('Initializing PeriodicPrizePool...')
-
-    tx = await prizePool['initialize(address,address,address,uint256)'](
-      forwarder.address,
-      mockPrizeStrategy.address,
-      rng.address,
-      prizePeriodSeconds
-    )
-    let block = await buidler.ethers.provider.getBlock(tx.blockHash)
-    startTime = block.timestamp
     await token.mint(wallet._address, ethers.utils.parseEther('100000'))
-    
-    timelock = await buidler.ethers.getContractAt('ControlledToken', (await ticket.timelock()), wallet)
+
+    await increaseTime(10)
+    await prizePool.startAward()
+    await prizePool.completeAward()
   })
 
   describe('initialize()', () => {
@@ -279,6 +296,11 @@ describe('PeriodicPrizePool contract', () => {
 
       let startedAt = await prizePool.currentPrizeStartedAt()
       const unlockTimestamp = startedAt.toNumber() + 10
+      expect(await prizePool.prizePeriodEndAt()).to.equal(unlockTimestamp)
+
+      let testTimestamp = await prizePool.calculateUnlockTimestamp(wallet._address, toWei('10'));
+
+      expect(testTimestamp).to.equal(unlockTimestamp)
 
       debug('redeem tickets with timelock...')
 
@@ -287,11 +309,11 @@ describe('PeriodicPrizePool contract', () => {
       // Tickets are burned
       expect(await ticket.balanceOf(wallet._address)).to.equal('0')
       
-      debug('check timelock...')
+      debug('check timelock...', timelock.address)
 
       // Locked balance is recorded
-      expect(await timelock.balanceOf(wallet._address)).to.equal(toWei('10'))
       expect(await ticket.timelockBalanceAvailableAt(wallet._address)).to.equal(unlockTimestamp)
+      expect(await timelock.balanceOf(wallet._address)).to.equal(toWei('10'))
     })
 
     it('should instantly redeem funds if unlockBlock is now or in the past', async () => {

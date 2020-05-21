@@ -210,4 +210,9 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
     require(rngRequestId == 0, "rng request is in flight");
     _;
   }
+
+  modifier authorized() override {
+    require(msg.sender == address(this) || msg.sender == owner(), "only self or owner");
+    _;
+  }
 }

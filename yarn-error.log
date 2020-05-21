@@ -1,5 +1,5 @@
 Arguments: 
-  /Users/brendan/.nvm/versions/node/v10.20.1/bin/node /usr/local/Cellar/yarn/1.22.4/libexec/bin/yarn.js add openzeppelin-contracts-ethereum-package
+  /Users/brendan/.nvm/versions/node/v10.20.1/bin/node /usr/local/Cellar/yarn/1.22.4/libexec/bin/yarn.js
 
 PATH: 
   /Users/brendan/.nvm/versions/node/v10.20.1/bin:/Users/brendan/.rbenv/shims:/Users/brendan/Library/Python/3.7/bin:/usr/local/opt/python/libexec/bin:./node_modules/.bin:/Users/brendan/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
@@ -14,17 +14,12 @@ Platform:
   darwin x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/openzeppelin-contracts-ethereum-package: Not found
-      at Request.params.callback [as _callback] (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:66987:18)
-      at Request.self.callback (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:140748:22)
-      at Request.emit (events.js:198:13)
-      at Request.<anonymous> (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:141720:10)
-      at Request.emit (events.js:198:13)
-      at IncomingMessage.<anonymous> (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:141642:12)
-      at Object.onceWrapper (events.js:286:20)
-      at IncomingMessage.emit (events.js:203:15)
-      at endReadableNT (_stream_readable.js:1145:12)
-      at process._tickCallback (internal/process/next_tick.js:63:19)
+  SyntaxError: /Users/brendan/workspace/pooltogether-contracts/package.json: Unexpected token / in JSON at position 1845
+      at JSON.parse (<anonymous>)
+      at /usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:1625:59
+      at Generator.next (<anonymous>)
+      at step (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:310:30)
+      at /usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:321:13
 
 npm manifest: 
   {
@@ -54,15 +49,15 @@ npm manifest:
       "postpublish": "PACKAGE_VERSION=$(./scripts/package-version.sh) && git tag -ae v$PACKAGE_VERSION && git push --tags"
     },
     "devDependencies": {
-      "@nomiclabs/buidler": "^1.3.3",
+      "@nomiclabs/buidler": "^1.3.4",
       "@nomiclabs/buidler-ethers": "^1.3.3",
       "@nomiclabs/buidler-etherscan": "^1.3.3",
       "@nomiclabs/buidler-waffle": "^1.3.3",
       "@openzeppelin/cli": "^2.8.2",
       "@truffle/hdwallet-provider": "^1.0.34",
-      "@types/chai": "^4.2.10",
-      "@types/mocha": "^7.0.2",
-      "@types/node": "^13.9.1",
+      // "@types/chai": "^4.2.10",
+      // "@types/mocha": "^7.0.2",
+      // "@types/node": "^13.9.1",
       "buidler-gas-reporter": "^0.1.3",
       "chai": "^4.2.0",
       "chalk": "^4.0.0",
@@ -74,19 +69,18 @@ npm manifest:
       "shelljs": "0.8.3",
       "solc": "0.6.4",
       "solidity-coverage": "^0.7.4",
-      "truffle-extract": "pooltogether/truffle-extract",
-      "ts-node": "^8.6.2",
-      "typescript": "^3.8.3"
+      "truffle-extract": "pooltogether/truffle-extract"
+      // "ts-node": "^8.6.2",
+      // "typescript": "^3.8.3"
     },
     "dependencies": {
-      "@gnosis.pm/safe-contracts": "^1.1.1-dev.2",
       "@opengsn/gsn": "^0.9.0",
-      "@openzeppelin/contracts": "^3.0.1",
-      "@openzeppelin/upgrades": "^2.8.0",
-      "@pooltogether/fixed-point": "^0.1.0",
+      "@openzeppelin/contracts-ethereum-package": "^3.0.0",
+      "@pooltogether/fixed-point": "^0.1.0-upgradeable.1",
       "@pooltogether/oz-migrate": "^0.2.5",
       "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
-      "sortition-sum-tree-factory": "^0.1.0"
+      "sortition-sum-tree-factory": "^0.1.0",
+      "@resolver-engine/core": "^0.3.3"
     }
   }
 
@@ -456,18 +450,6 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/@firebase/webchannel-wrapper/-/webchannel-wrapper-0.2.39.tgz#32ce49e0ba54d831750afde59e32889bef444fd3"
     integrity sha512-V5oQjtYxHlEpWdQr68ZFo8T+3NVccrTieRy8RnzYIasCeptxOxwYUG0cAAKmalgrrrfRJdXup8h5ybi3XSW9Hw==
   
-  "@gnosis.pm/safe-contracts@^1.1.1-dev.2":
-    version "1.1.1-dev.2"
-    resolved "https://registry.yarnpkg.com/@gnosis.pm/safe-contracts/-/safe-contracts-1.1.1-dev.2.tgz#4a5b9a9befe66d15df87d2216237d4ea4f64118f"
-    integrity sha512-x0x8K3/XzfDmtmL6RaF8eSJUPJVmT7jd29kmwoodm/JlYlyOmdQNBynUZUTkmknIlF1coiypCLls9zDbx8QQfw==
-    dependencies:
-      "@truffle/hdwallet-provider" "^1.0.0"
-      dotenv "^8.0.0"
-      openzeppelin-solidity "^2.0.0"
-      shelljs "^0.8.3"
-      solc "0.5.14"
-      truffle "^5.1.21"
-  
   "@grpc/grpc-js@0.8.1":
     version "0.8.1"
     resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-0.8.1.tgz#3003a422577da39e7113566f2fdd4872f31e6090"
@@ -586,10 +568,10 @@ Lockfile:
       uuid "^3.3.2"
       ws "^7.2.1"
   
-  "@nomiclabs/buidler@^1.3.3":
-    version "1.3.3"
-    resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.3.3.tgz#c9eefc93a1b79a6ab6b968b290664c17cd000dc7"
-    integrity sha512-Dgv9gSX4a6BdJSkVA6WntyyQ8BoA7bm3tG6nxBKaliCt+9il9hHB+LaPc0JMM6vzvYEgJ3gkKdrBtG9gR1C/uQ==
+  "@nomiclabs/buidler@^1.3.4":
+    version "1.3.4"
+    resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.3.4.tgz#13b7be82b947997dfac0e5cd5b53ecf6bb4b42d4"
+    integrity sha512-WfYzETXvoVAtmWYIxEcWWxP/hY+qQLFrEs4PtLVu1dX0fZYnhO8RyuK/nLgdeA5tbE+pPZ6rcdh1Kx+P8DTsHQ==
     dependencies:
       "@nomiclabs/ethereumjs-vm" "^4.1.1"
       "@solidity-parser/parser" "^0.5.2"
@@ -759,10 +741,10 @@ Lockfile:
       fs-extra "^8.1.0"
       try-require "^1.2.1"
   
-  "@openzeppelin/contracts@^3.0.0-rc.0", "@openzeppelin/contracts@^3.0.1":
-    version "3.0.1"
-    resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.0.1.tgz#2f327f77d16b43f14674086b2b634bda38cb0838"
-    integrity sha512-uSrD7hZ0ViuHGqHZbeHawZBi/uy7aBiNramXAt2dFFuSuoU4u9insS3V3zdVfOnYSPreUo636xSOuQIFN4//HA==
+  "@openzeppelin/contracts-ethereum-package@^3.0.0":
+    version "3.0.0"
+    resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-ethereum-package/-/contracts-ethereum-package-3.0.0.tgz#d5db971a177c3b37733db2ee4ebdb79c67575d64"
+    integrity sha512-Xg33RtX7FGbSK/YnroLhcGNAvH30/C84NRW8KvbSdXXYiLA8YqM1bOA9sAeLjmQxXqYUn/YL4AUVTgDnG51NOw==
   
   "@openzeppelin/fuzzy-solidity-import-parser@^0.1.2":
     version "0.1.2"
@@ -785,7 +767,7 @@ Lockfile:
       web3 "^1.2.1"
       web3-utils "^1.2.1"
   
-  "@openzeppelin/upgrades@2.8.0", "@openzeppelin/upgrades@^2.8.0":
+  "@openzeppelin/upgrades@2.8.0":
     version "2.8.0"
     resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades/-/upgrades-2.8.0.tgz#8086ab9c99d9f8dac7205030b0f9e7e4a280c4a3"
     integrity sha512-LzjTQPeljPsgHDPdZyH9cMCbIHZILgd2cpNcYEkdsC2IylBYRHShlbEDXJV9snnqg9JWfzPiKIqyj3XVliwtqQ==
@@ -806,12 +788,12 @@ Lockfile:
       web3-eth-contract "1.2.2"
       web3-utils "1.2.2"
   
-  "@pooltogether/fixed-point@^0.1.0":
-    version "0.1.0"
-    resolved "https://registry.yarnpkg.com/@pooltogether/fixed-point/-/fixed-point-0.1.0.tgz#ee81a2357b76a8398fde6079cfe5e0ae1980413b"
-    integrity sha512-CcTD0wXiBvv4cqkp3aH0Ru2aVunop4Z+FBz8ETER9WKccDGRB4zeY9yqckRqgvJKIWy5RHze+rUk2UGdmcqHXA==
+  "@pooltogether/fixed-point@^0.1.0-upgradeable.1":
+    version "0.1.0-upgradeable.1"
+    resolved "https://registry.yarnpkg.com/@pooltogether/fixed-point/-/fixed-point-0.1.0-upgradeable.1.tgz#5c2330a199af6e70d80c2aa58621679e904fdd24"
+    integrity sha512-pIzkVRYbPx2Alh2uQzNipm3Re0xzUgJ7mPBp+JAk+knfWZdxtjglRDF6ant17I84jKcp0sTtgI6c8hLK1Z/Qqw==
     dependencies:
-      "@openzeppelin/contracts" "^3.0.0-rc.0"
+      "@openzeppelin/contracts-ethereum-package" "^3.0.0"
   
   "@pooltogether/oz-migrate@^0.2.5":
     version "0.2.5"
@@ -1063,22 +1045,6 @@ Lockfile:
       ethereumjs-util "^6.1.0"
       ethereumjs-wallet "^0.6.3"
       source-map-support "^0.5.16"
-      web3 "1.2.1"
-      web3-provider-engine "https://github.com/trufflesuite/provider-engine#web3-one"
-  
-  "@truffle/hdwallet-provider@^1.0.0":
-    version "1.0.35"
-    resolved "https://registry.yarnpkg.com/@truffle/hdwallet-provider/-/hdwallet-provider-1.0.35.tgz#9b65c7a53e748183908982e2f922290516a1125a"
-    integrity sha512-Jn/aAy4A2ulWpVPPBEhXjWIifosfLdjqhMwlEs8PgWLdhf3kOCfKYchqoOYZvMJ+PjO8qQ7q9NyfrQPJHZegrA==
-    dependencies:
-      any-promise "^1.3.0"
-      bindings "^1.5.0"
-      bip39 "^2.4.2"
-      ethereum-protocol "^1.0.1"
-      ethereumjs-tx "^1.0.0"
-      ethereumjs-util "^6.1.0"
-      ethereumjs-wallet "^0.6.3"
-      source-map-support "^0.5.19"
       web3 "1.2.1"
       web3-provider-engine "https://github.com/trufflesuite/provider-engine#web3-one"
   
@@ -1588,11 +1554,6 @@ Lockfile:
     dependencies:
       normalize-path "^3.0.0"
       picomatch "^2.0.4"
-  
-  app-module-path@^2.2.0:
-    version "2.2.0"
-    resolved "https://registry.yarnpkg.com/app-module-path/-/app-module-path-2.2.0.tgz#641aa55dfb7d6a6f0a8141c4b9c0aa50b6c24dd5"
-    integrity sha1-ZBqlXft9am8KgUHEucCqULbCTdU=
   
   archive-type@^4.0.0:
     version "4.0.0"
@@ -3592,11 +3553,6 @@ Lockfile:
     dependencies:
       is-obj "^1.0.0"
   
-  dotenv@^8.0.0:
-    version "8.2.0"
-    resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-8.2.0.tgz#97e619259ada750eea3e4ea3e26bceea5424b16a"
-    integrity sha512-8sJ78ElpbDJBHNeBzUbUVLsqKdccaa/BXF1uPTw3GrvQTBgrQrtObr2mUrE38vzYd8cEv+m/JBfDLioYcfXoaw==
-  
   dotignore@~0.1.2:
     version "0.1.2"
     resolved "https://registry.yarnpkg.com/dotignore/-/dotignore-0.1.2.tgz#f942f2200d28c3a76fbdd6f0ee9f3257c8a2e905"
@@ -4116,15 +4072,7 @@ Lockfile:
       bn.js "^4.11.8"
       ethereumjs-util "^6.0.0"
   
-  ethereumjs-abi@0.6.8, ethereumjs-abi@^0.6.8:
-    version "0.6.8"
-    resolved "https://registry.yarnpkg.com/ethereumjs-abi/-/ethereumjs-abi-0.6.8.tgz#71bc152db099f70e62f108b7cdfca1b362c6fcae"
-    integrity sha512-Tx0r/iXI6r+lRsdvkFDlut0N08jWMnKRZ6Gkq+Nmw75lZe4e6o3EkSnkaBP5NF6+m5PTGAr9JP43N3LyeoglsA==
-    dependencies:
-      bn.js "^4.11.8"
-      ethereumjs-util "^6.0.0"
-  
-  "ethereumjs-abi@git+https://github.com/ethereumjs/ethereumjs-abi.git":
+  ethereumjs-abi@0.6.8, ethereumjs-abi@^0.6.8, "ethereumjs-abi@git+https://github.com/ethereumjs/ethereumjs-abi.git":
     version "0.6.8"
     resolved "git+https://github.com/ethereumjs/ethereumjs-abi.git#1cfbb13862f90f0b391d8a699544d5fe4dfb8c7b"
     dependencies:
@@ -6704,7 +6652,7 @@ Lockfile:
     dependencies:
       minimist "^1.2.5"
   
-  mocha@5.2.0, mocha@^5.2.0:
+  mocha@^5.2.0:
     version "5.2.0"
     resolved "https://registry.yarnpkg.com/mocha/-/mocha-5.2.0.tgz#6d8ae508f59167f940f2b5b3c4a612ae50c90ae6"
     integrity sha512-2IUgKDhc3J7Uug+FxMXuqIyYzH7gJjXECKe/w43IGgQHTSj3InJi+yAA7T24L9bQMRKiUEHxEX37G5JpVUGLcQ==
@@ -7083,11 +7031,6 @@ Lockfile:
     version "3.0.0"
     resolved "https://registry.yarnpkg.com/openzeppelin-solidity/-/openzeppelin-solidity-3.0.0.tgz#b68f82529ea1f7131018866b8dcc8d932e698bb5"
     integrity sha512-jW6p145prFEf9k0fXGeF7o0Op88SetcRdaFLvB7UVaZb7NQVCIazB6OBVC9NW28R+/mzumoxGf+VvWvz5oiYhQ==
-  
-  openzeppelin-solidity@^2.0.0:
-    version "2.5.1"
-    resolved "https://registry.yarnpkg.com/openzeppelin-solidity/-/openzeppelin-solidity-2.5.1.tgz#1cdcce30c4c6a7b6625dab62ccd0440a813ab597"
-    integrity sha512-oCGtQPLOou4su76IMr4XXJavy9a8OZmAXeUZ8diOdFznlL/mlkIlYr7wajqCzH4S47nlKPS7m0+a2nilCTpVPQ==
   
   optionator@^0.8.1:
     version "0.8.3"
@@ -8418,20 +8361,6 @@ Lockfile:
       semver "^5.5.0"
       tmp "0.0.33"
   
-  solc@0.5.14:
-    version "0.5.14"
-    resolved "https://registry.yarnpkg.com/solc/-/solc-0.5.14.tgz#7c3ecb2441ac10a15cdfd39207372eb63f2bd00c"
-    integrity sha512-I/MCeOKjnLXxcD65wA+E37BxdERoAYoLeyJ5GnXFijICLmvhzt0xz59R92Zw3TPyJYnHSErKBYpMsfnZVyQJaQ==
-    dependencies:
-      command-exists "^1.2.8"
-      commander "3.0.2"
-      fs-extra "^0.30.0"
-      js-sha3 "0.8.0"
-      memorystream "^0.3.1"
-      require-from-string "^2.0.0"
-      semver "^5.5.0"
-      tmp "0.0.33"
-  
   solc@0.5.15:
     version "0.5.15"
     resolved "https://registry.yarnpkg.com/solc/-/solc-0.5.15.tgz#f674ce93d4d04a86b65a4393657edf03b2f26028"
@@ -8563,7 +8492,7 @@ Lockfile:
     dependencies:
       source-map "^0.5.6"
   
-  source-map-support@^0.5.13, source-map-support@^0.5.16, source-map-support@^0.5.17, source-map-support@^0.5.19:
+  source-map-support@^0.5.13, source-map-support@^0.5.16, source-map-support@^0.5.17:
     version "0.5.19"
     resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.19.tgz#a98b62f86dcaf4f67399648c085291ab9e8fed61"
     integrity sha512-Wonm7zOCIJzBGQdB+thsPar0kYuCIzYvxZwlBa87yi/Mdjv7Tip2cyVbLj5o0cFPN4EVkuTwb3GDDyUx2DGnGw==
@@ -9165,15 +9094,6 @@ Lockfile:
       "@truffle/error" "^0.0.6"
       truffle-interface-adapter "^0.2.5"
       web3 "1.2.1"
-  
-  truffle@^5.1.21:
-    version "5.1.25"
-    resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.25.tgz#553e6fdb9f6d95d9d4725355356c4739c233ff27"
-    integrity sha512-7iGKMkITjInGD1AFD7mKwxowQiNmPYx08jym/u8oNXVsYPYCZ6NbkMNSdf6TFXTTrEQe+tPEIy+CNF1Oc6DDzA==
-    dependencies:
-      app-module-path "^2.2.0"
-      mocha "5.2.0"
-      original-require "1.0.1"
   
   try-require@^1.2.1:
     version "1.2.1"
@@ -10410,32 +10330,6 @@ Lockfile:
     version "14.2.1"
     resolved "https://registry.yarnpkg.com/web3-provider-engine/-/web3-provider-engine-14.2.1.tgz#ef351578797bf170e08d529cb5b02f8751329b95"
     integrity sha512-iSv31h2qXkr9vrL6UZDm4leZMc32SjWJFGOp/D92JXfcEboCqraZyuExDkpxKw8ziTufXieNM7LSXNHzszYdJw==
-    dependencies:
-      async "^2.5.0"
-      backoff "^2.5.0"
-      clone "^2.0.0"
-      cross-fetch "^2.1.0"
-      eth-block-tracker "^3.0.0"
-      eth-json-rpc-infura "^3.1.0"
-      eth-sig-util "^1.4.2"
-      ethereumjs-block "^1.2.2"
-      ethereumjs-tx "^1.2.0"
-      ethereumjs-util "^5.1.5"
-      ethereumjs-vm "^2.3.4"
-      json-rpc-error "^2.0.0"
-      json-stable-stringify "^1.0.1"
-      promise-to-callback "^1.0.0"
-      readable-stream "^2.2.9"
-      request "^2.85.0"
-      semaphore "^1.0.3"
-      ws "^5.1.1"
-      xhr "^2.2.0"
-      xtend "^4.0.1"
-  
-  "web3-provider-engine@git+https://github.com/trufflesuite/provider-engine.git#web3-one":
-    version "14.0.6"
-    uid "3538c60bc4836b73ccae1ac3f64c8fed8ef19c1a"
-    resolved "git+https://github.com/trufflesuite/provider-engine.git#3538c60bc4836b73ccae1ac3f64c8fed8ef19c1a"
     dependencies:
       async "^2.5.0"
       backoff "^2.5.0"

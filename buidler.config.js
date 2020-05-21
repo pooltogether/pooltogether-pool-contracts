@@ -1,11 +1,9 @@
-import { usePlugin } from "@nomiclabs/buidler/config";
-
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("buidler-gas-reporter");
 usePlugin("solidity-coverage");
 usePlugin("@nomiclabs/buidler-etherscan");
 
-export default {
+module.exports = {
   solc: {
     version: "0.6.4",
     optimizer: {

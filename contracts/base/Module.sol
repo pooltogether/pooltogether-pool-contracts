@@ -1,5 +1,7 @@
 pragma solidity ^0.6.4;
 
+import "@nomiclabs/buidler/console.sol";
+
 import "./ModuleManager.sol";
 
 contract Module {
@@ -22,9 +24,11 @@ contract Module {
     function setManager(ModuleManager _manager)
         internal
     {
+        // console.log("Module#setManager entered %s", address(_manager));
         // manager can only be 0 at initalization of contract.
         // Check ensures that setup function can only be called once.
-        require(address(_manager) == address(0), "Manager has already been set");
+        require(address(manager) == address(0), "Manager has already been set");
+        // console.log("Module#setManager setting...");
         manager = _manager;
     }
 }

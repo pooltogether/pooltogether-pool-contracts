@@ -39,7 +39,10 @@ abstract contract NamedModule is Module, IERC1820Implementer {
     bytes memory data = abi.encodeWithSignature(
       "setInterfaceImplementer(address,bytes32,address)", address(manager), interfaceHash, target
     );
-    manager.execTransactionFromModule(address(ERC1820Constants.REGISTRY), 0, data, Enum.Operation.Call);
+    require(
+      manager.execTransactionFromModule(address(ERC1820Constants.REGISTRY), 0, data, Enum.Operation.Call),
+      "could not set interface"
+    );
   }
 
   modifier onlyWhenEnabled() virtual {
