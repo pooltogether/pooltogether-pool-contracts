@@ -311,7 +311,7 @@ describe('PeriodicPrizePool contract', () => {
       debug('calculating exit fee...')
 
       // now post-prize we want to check the fee.  There are now 11 tickets.
-      let exitFee = await ticket.calculateExitFee(wallet._address, toWei('11'))
+      let exitFee = await prizePool.calculateExitFee(wallet._address, toWei('11'))
       
       debug('calculating seconds...')
 

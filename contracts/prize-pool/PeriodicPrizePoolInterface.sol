@@ -14,6 +14,7 @@ interface PeriodicPrizePoolInterface {
   function prizePeriodRemainingSeconds() external view returns (uint256);
   function prizePeriodStartedAt() external view returns (uint256);
   function prizePeriodEndAt() external view returns (uint256);
+  function calculateExitFee(address sender, uint256 tickets) external view returns (uint256);
   function calculateUnlockTimestamp(address sender, uint256 tickets) external view returns (uint256);
   function calculateRemainingPreviousPrize() external view returns (uint256);
   function yieldService() external view returns (YieldServiceInterface);

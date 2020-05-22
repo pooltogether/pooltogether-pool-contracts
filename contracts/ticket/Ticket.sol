@@ -46,17 +46,6 @@ contract Ticket is Meta777, NamedModule {
     return ERC1820Constants.TICKET_INTERFACE_HASH;
   }
 
-  function calculateExitFee(address, uint256 tickets) public view returns (uint256) {
-    uint256 totalSupply = totalSupply();
-    if (totalSupply == 0) {
-      return 0;
-    }
-    return FixedPoint.multiplyUintByMantissa(
-      prizePool().calculateRemainingPreviousPrize(),
-      FixedPoint.calculateMantissa(tickets, totalSupply)
-    );
-  }
-
   function mintTickets(uint256 amount) external nonReentrant {
     _supplyAndMint(_msgSender(), amount);
   }
@@ -106,7 +95,7 @@ contract Ticket is Meta777, NamedModule {
   }
 
   function redeemTicketsInstantly(uint256 tickets) external nonReentrant returns (uint256) {
-    uint256 exitFee = calculateExitFee(_msgSender(), tickets);
+    uint256 exitFee = prizePool().calculateExitFee(_msgSender(), tickets);
 
     // burn the tickets
     _burn(_msgSender(), tickets, "", "");
@@ -174,14 +163,6 @@ contract Ticket is Meta777, NamedModule {
     // Mint draws
     _mint(to, amount, "", "");
   }
-
-  // function loyalty() public view returns (Loyalty) {
-  //   return Loyalty(getInterfaceImplementer(ERC1820Constants.LOYALTY_INTERFACE_HASH));
-  // }
-
-  // function yieldService() public view returns (YieldServiceInterface) {
-  //   return YieldServiceInterface(getInterfaceImplementer(ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH));
-  // }
 
   function prizePool() public view returns (PeriodicPrizePoolInterface) {
     return PeriodicPrizePoolInterface(address(manager));

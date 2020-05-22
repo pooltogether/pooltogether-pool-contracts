@@ -69,6 +69,17 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
     );
   }
 
+  function calculateExitFee(address, uint256 tickets) public view override returns (uint256) {
+    uint256 totalSupply = ticket().totalSupply();
+    if (totalSupply == 0) {
+      return 0;
+    }
+    return FixedPoint.multiplyUintByMantissa(
+      calculateRemainingPreviousPrize(),
+      FixedPoint.calculateMantissa(tickets, totalSupply)
+    );
+  }
+
   function calculateUnlockTimestamp(address, uint256) public view override returns (uint256) {
     return prizePeriodEndAt();
   }
