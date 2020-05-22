@@ -40,6 +40,7 @@ contract Ticket is Meta777, NamedModule {
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
     yieldService = YieldServiceInterface(getInterfaceImplementer(ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH));
     loyalty = Loyalty(getInterfaceImplementer(ERC1820Constants.LOYALTY_INTERFACE_HASH));
+    yieldService.token().approve(address(yieldService), uint(-1));
   }
 
   function hashName() public view override returns (bytes32) {
@@ -74,7 +75,8 @@ contract Ticket is Meta777, NamedModule {
   }
 
   function _supplyAndMint(address to, uint256 amount) internal {
-    yieldService.supply(to, amount);
+    yieldService.token().transferFrom(to, address(this), amount);
+    yieldService.supply(address(this), amount);
     // Mint tickets
     _mint(to, amount, "", "");
     loyalty.supply(to, amount);

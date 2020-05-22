@@ -72,7 +72,7 @@ describe('CompoundYieldService contract', () => {
 
   describe('supply()', () => {
     it('should fail if the user has not approved', async () => {
-      expect(yieldService.supply(wallet._address, toWei('1'))).to.be.revertedWith('could not transferFrom')
+      expect(yieldService.supply(wallet._address, toWei('1'))).to.be.revertedWith('ERC20: transfer amount exceeds allowance')
     })
 
     it('should give the first depositer tokens at the initial exchange rate', async function () {

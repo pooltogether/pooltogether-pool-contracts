@@ -12,7 +12,6 @@ import "@nomiclabs/buidler/console.sol";
 
 import "../base/ModuleManager.sol";
 import "../yield-service/YieldServiceInterface.sol";
-import "../yield-service/YieldServiceConstants.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/Sponsorship.sol";
 import "../token/LoyaltyInterface.sol";

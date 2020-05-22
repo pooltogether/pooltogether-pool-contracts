@@ -85,7 +85,7 @@ describe('PeriodicPrizePool contract', () => {
 
   describe('currentPrize()', () => {
     it('should return the available interest from the prize pool', async () => {
-      await token.approve(yieldService.address, toWei('10'))
+      await token.approve(ticket.address, toWei('10'))
       await ticket.mintTickets(toWei('10'))
       await env.cToken.accrueCustom(toWei('100'))
       expect(await prizePoolCurrentPrize(prizePool)).to.equal(toWei('100'))
@@ -94,7 +94,7 @@ describe('PeriodicPrizePool contract', () => {
 
   describe('mintTickets()', () => {
     it('should create tickets', async () => {
-      await token.approve(yieldService.address, toWei('10'))
+      await token.approve(ticket.address, toWei('10'))
 
       expect(await token.balanceOf(prizePool.address)).to.equal(toWei('0'))
 
@@ -120,7 +120,7 @@ describe('PeriodicPrizePool contract', () => {
     it('should allow a user to pay to redeem their tickets', async () => {
       debug(`minting tickets...`)
 
-      await token.approve(yieldService.address, toWei('10'))
+      await token.approve(ticket.address, toWei('10'))
       await ticket.mintTickets(toWei('10'))
 
       let userBalance = await token.balanceOf(wallet._address)
@@ -159,7 +159,7 @@ describe('PeriodicPrizePool contract', () => {
   describe('redeemTicketsWithTimelock()', () => {
     it('should lock the users funds', async () => {
       debug('minting tickets...')
-      await token.approve(yieldService.address, toWei('10'))
+      await token.approve(ticket.address, toWei('10'))
       await ticket.mintTickets(toWei('10'))
 
       let startedAt = await prizePool.currentPrizeStartedAt()
@@ -185,7 +185,7 @@ describe('PeriodicPrizePool contract', () => {
     })
 
     it('should instantly redeem funds if unlockBlock is now or in the past', async () => {
-      await token.approve(yieldService.address, toWei('10'))
+      await token.approve(ticket.address, toWei('10'))
       let tx = await ticket.mintTickets(toWei('10'))
 
       // way beyond prize end
@@ -201,7 +201,7 @@ describe('PeriodicPrizePool contract', () => {
 
     it('should sweep old locked deposits', async () => {
       // create tickets
-      await token.approve(yieldService.address, toWei('10'))
+      await token.approve(ticket.address, toWei('10'))
       await ticket.mintTickets(toWei('10'))
 
       // mark balance less tickets
@@ -234,7 +234,7 @@ describe('PeriodicPrizePool contract', () => {
     it('should return any timelocked funds that are now open', async () => {
       debug('minting tickets...')
       // deposit
-      await token.approve(yieldService.address, toWei('4'))
+      await token.approve(ticket.address, toWei('4'))
       await ticket.mintTickets(toWei('4'))
 
       let userBalance = await token.balanceOf(wallet._address)
@@ -286,7 +286,7 @@ describe('PeriodicPrizePool contract', () => {
   describe('calculateExitFee(address, uint256 tickets)', () => {
     it('should calculate', async () => {
       // create tickets
-      await token.approve(yieldService.address, toWei('10'))
+      await token.approve(ticket.address, toWei('10'))
       await ticket.mintTickets(toWei('10'))
 
       // create a prize
@@ -334,7 +334,7 @@ describe('PeriodicPrizePool contract', () => {
 
   describe('estimatePrize()', () => {
     it('should calculate the prize', async () => {
-      await token.approve(yieldService.address, toWei('10'))
+      await token.approve(ticket.address, toWei('10'))
       await ticket.mintTickets(toWei('10'))
 
       // supply rate is 0.01 
@@ -371,7 +371,7 @@ describe('PeriodicPrizePool contract', () => {
 
     it('should draw a winner and allocate prize', async () => {
       // ensure the wallet can be selected by depositing
-      await token.approve(yieldService.address, toWei('10'))
+      await token.approve(ticket.address, toWei('10'))
       await ticket.mintTickets(toWei('10'))
 
       await env.cToken.accrueCustom(toWei('10'))
