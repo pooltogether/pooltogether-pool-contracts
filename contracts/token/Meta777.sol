@@ -4,6 +4,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/ERC777.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
 import "./TokenControllerInterface.sol";
 
@@ -18,14 +19,6 @@ contract Meta777 is Initializable, ReentrancyGuardUpgradeSafe, ERC777UpgradeSafe
     address[] memory defaultOperators;
     __ERC777_init(name, symbol, defaultOperators);
     trustedForwarder = _trustedForwarder;
-  }
-
-  function _mint(address user, uint256 amount) internal virtual {
-    super._mint(user, amount, "", "");
-  }
-
-  function _burn(address user, uint256 amount) internal virtual {
-    super._burn(user, amount, "", "");
   }
 
   function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {

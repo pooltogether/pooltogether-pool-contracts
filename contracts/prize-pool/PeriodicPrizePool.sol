@@ -11,7 +11,6 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../base/ModuleManager.sol";
-import "../token/ControlledTokenFactory.sol";
 import "../yield-service/YieldServiceInterface.sol";
 import "../yield-service/YieldServiceConstants.sol";
 import "../token/TokenControllerInterface.sol";
@@ -21,7 +20,6 @@ import "./PrizePoolInterface.sol";
 import "../prize-strategy/PrizeStrategyInterface.sol";
 import "../rng/RNGInterface.sol";
 import "../util/ERC1820Constants.sol";
-import "../token/ControlledTokenFactory.sol";
 
 /* solium-disable security/no-block-members */
 contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, BaseRelayRecipient, PrizePoolInterface, IERC777Recipient, ModuleManager {
@@ -34,7 +32,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
   
   RNGInterface public rng;
   uint256 public currentPrizeStartedAt;
-  uint256 prizePeriodSeconds;
+  uint256 public prizePeriodSeconds;
   uint256 public previousPrize;
   uint256 public feeScaleMantissa;
   uint256 public rngRequestId;
@@ -134,16 +132,23 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
   }
 
   function completeAward() external override requireCanCompleteAward nonReentrant {
+    // console.log("completing!!!!!");
 
     uint256 prize = currentPrize();
+    // console.log("CURREN TPRIZE is %s", prize);
     if (prize > 0) {
+      // console.log("capture...");
       yieldService().capture(prize);
+      // console.log("mint...");
       sponsorship().mint(address(this), prize);
+      // console.log("approve...");
       sponsorship().approve(address(prizeStrategy), prize);
     }
 
+    // console.log("reward loyalty...");
     loyalty().reward(prize);
 
+    // console.log("awarding prize...");
     currentPrizeStartedAt = block.timestamp;
     prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
 

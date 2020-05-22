@@ -2,7 +2,7 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
-import "../token/ControlledTokenFactory.sol";
+import "../token/TimelockFactory.sol";
 import "../token/SponsorshipFactory.sol";
 import "../prize-pool/PeriodicPrizePoolFactory.sol";
 import "../yield-service/CompoundYieldServiceFactory.sol";
@@ -23,7 +23,8 @@ contract PrizePoolBuilder is Initializable {
   CompoundYieldServiceFactory public compoundYieldServiceFactory;
   PeriodicPrizePoolFactory public periodicPrizePoolFactory;
   TicketFactory public ticketFactory;
-  ControlledTokenFactory public controlledTokenFactory;
+  LoyaltyFactory public loyaltyFactory;
+  TimelockFactory public timelockFactory;
   SponsorshipFactory public sponsorshipFactory;
   RNGInterface public rng;
   address public trustedForwarder;
@@ -32,8 +33,9 @@ contract PrizePoolBuilder is Initializable {
     CompoundYieldServiceFactory _compoundYieldServiceFactory,
     PeriodicPrizePoolFactory _periodicPrizePoolFactory,
     TicketFactory _ticketFactory,
-    ControlledTokenFactory _controlledTokenFactory,
+    TimelockFactory _timelockFactory,
     SponsorshipFactory _sponsorshipFactory,
+    LoyaltyFactory _loyaltyFactory,
     RNGInterface _rng,
     address _trustedForwarder
   ) public initializer {
@@ -42,14 +44,16 @@ contract PrizePoolBuilder is Initializable {
     require(address(_ticketFactory) != address(0), "ticket factory is not defined");
     require(address(_rng) != address(0), "rng cannot be zero");
     require(address(_sponsorshipFactory) != address(0), "sponsorship factory cannot be zero");
-    require(address(_controlledTokenFactory) != address(0), "controlled token factory cannot be zero");
+    require(address(_timelockFactory) != address(0), "controlled token factory cannot be zero");
+    require(address(_loyaltyFactory) != address(0), "loyalty factory is not zero");
     compoundYieldServiceFactory = _compoundYieldServiceFactory;
     periodicPrizePoolFactory = _periodicPrizePoolFactory;
     ticketFactory = _ticketFactory;
+    loyaltyFactory = _loyaltyFactory;
     rng = _rng;
     trustedForwarder = _trustedForwarder;
     sponsorshipFactory = _sponsorshipFactory;
-    controlledTokenFactory = _controlledTokenFactory;
+    timelockFactory = _timelockFactory;
   }
 
   function createPeriodicPrizePool(
@@ -71,6 +75,8 @@ contract PrizePoolBuilder is Initializable {
     );
 
     createCompoundYieldServiceModule(prizePool, cToken);
+    createLoyaltyModule(prizePool);
+    createTimelockModule(prizePool);
     createTicketModule(prizePool, _ticketName, _ticketSymbol);
     createSponsorshipModule(prizePool, _sponsorshipName, _sponsorshipSymbol);
 
@@ -92,6 +98,12 @@ contract PrizePoolBuilder is Initializable {
     yieldService.initialize(moduleManager, cToken);
   }
 
+  function createLoyaltyModule(ModuleManager moduleManager) internal {
+    Loyalty loyalty = loyaltyFactory.createLoyalty();
+    moduleManager.enableModule(loyalty);
+    loyalty.initialize(moduleManager, "", "", trustedForwarder);
+  }
+
   function createTicketModule(
     ModuleManager moduleManager,
     string memory _ticketName,
@@ -99,8 +111,15 @@ contract PrizePoolBuilder is Initializable {
   ) internal {
     Ticket ticket = ticketFactory.createTicket();
     moduleManager.enableModule(ticket);
-    ControlledToken timelock = controlledTokenFactory.createControlledToken("", "", address(ticket), trustedForwarder);
-    ticket.initialize(moduleManager, _ticketName, _ticketSymbol, timelock, trustedForwarder);
+    ticket.initialize(moduleManager, _ticketName, _ticketSymbol, trustedForwarder);
+  }
+
+  function createTimelockModule(
+    ModuleManager moduleManager
+  ) internal {
+    Timelock timelock = timelockFactory.createTimelock();
+    moduleManager.enableModule(timelock);
+    timelock.initialize(moduleManager, "", "", trustedForwarder);
   }
 
   function createSponsorshipModule(

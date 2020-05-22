@@ -3,7 +3,6 @@ pragma solidity ^0.6.4;
 import "../yield-service/YieldServiceInterface.sol";
 import "../token/Ticket.sol";
 import "../token/Sponsorship.sol";
-import "../token/ControlledToken.sol";
 import "../prize-strategy/PrizeStrategyInterface.sol";
 
 interface PrizePoolInterface {

@@ -60,7 +60,7 @@ program
     })
 
     await migration.migrate(40, async () => {
-      runShell(`oz create ControlledTokenFactory --force ${flags} --init initialize`)
+      runShell(`oz create LoyaltyFactory --force ${flags} --init initialize`)
     })
 
     await migration.migrate(50, async () => {
@@ -76,22 +76,13 @@ program
       CompoundYieldServiceFactory,
       PeriodicPrizePoolFactory,
       TicketFactory,
-      ControlledTokenFactory,
+      LoyaltyFactory,
       SingleRandomWinnerPrizeStrategyFactory,
       RNGBlockhash
     } = context.contracts
 
-    await migration.migrate(58, async () => {
-      runShell(`oz create CompoundYieldServiceBuilder --force ${flags} --init initialize --args ${CompoundYieldServiceFactory.address}`)
-    })
-
-    context = await buildContext({ network: program.network, address: program.address })
-    const {
-      CompoundYieldServiceBuilder
-    } = context.contracts
-
     await migration.migrate(60, async () => {
-      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${CompoundYieldServiceBuilder.address},${PeriodicPrizePoolFactory.address},${TicketFactory.address},${ControlledTokenFactory.address},${RNGBlockhash.address},${trustedForwarder}`)
+      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${CompoundYieldServiceFactory.address},${PeriodicPrizePoolFactory.address},${TicketFactory.address},${LoyaltyFactory.address},${RNGBlockhash.address},${trustedForwarder}`)
     })
 
     context = await buildContext({ network: program.network, address: program.address })

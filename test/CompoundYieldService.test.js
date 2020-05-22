@@ -76,11 +76,11 @@ describe('CompoundYieldService contract', () => {
     })
 
     it('should give the first depositer tokens at the initial exchange rate', async function () {
-      await token.approve(moduleManager.address, toWei('1'))
+      await token.approve(yieldService.address, toWei('1'))
       
       await yieldService.supply(wallet._address, toWei('1'))
 
-      expect(await balanceOf(cToken, moduleManager.address)).to.equal(toWei('1'))
+      expect(await balanceOf(cToken, yieldService.address)).to.equal(toWei('1'))
 
       expect(await cToken.totalSupply()).to.equal(toWei('1'))
     })
@@ -89,7 +89,7 @@ describe('CompoundYieldService contract', () => {
   describe('redeemUnderlying()', () => {
     it('should allow a user to withdraw their principal', async function () {
       let startBalance = await token.balanceOf(wallet._address)
-      await token.approve(moduleManager.address, toWei('1'))
+      await token.approve(yieldService.address, toWei('1'))
       await yieldService.supply(wallet._address, toWei('1'))
 
       await yieldService.redeem(wallet._address, toWei('1'))
@@ -105,14 +105,14 @@ describe('CompoundYieldService contract', () => {
     })
 
     it('should return the balance when a deposit has been made', async function () {
-      await token.approve(moduleManager.address, toWei('1'))
+      await token.approve(yieldService.address, toWei('1'))
       await yieldService.supply(wallet._address, toWei('1'))
 
       expect(await call(yieldService, 'balance')).to.equal(toWei('1'))
     })
 
     it('should return what has been deposited, plus interest', async () => {
-      await token.approve(moduleManager.address, toWei('1'))
+      await token.approve(yieldService.address, toWei('1'))
       await yieldService.supply(wallet._address, toWei('1'))
 
       expect(await call(yieldService, 'balance')).to.equal(toWei('1'))
@@ -129,7 +129,7 @@ describe('CompoundYieldService contract', () => {
     })
 
     it('should return what has been deposited, excluding interest', async () => {
-      await token.approve(moduleManager.address, toWei('1'))
+      await token.approve(yieldService.address, toWei('1'))
       await yieldService.supply(wallet._address, toWei('1'))
 
       expect(await call(yieldService, 'accountedBalance')).to.equal(toWei('1'))
@@ -142,7 +142,7 @@ describe('CompoundYieldService contract', () => {
 
   describe('unaccountedBalance()', () =>  {
     it('should return the newly accrued interest', async () => {
-      await token.approve(moduleManager.address, toWei('1'))
+      await token.approve(yieldService.address, toWei('1'))
       await yieldService.supply(wallet._address, toWei('1'))
 
       expect(await call(yieldService, 'unaccountedBalance')).to.equal(toWei('0'))
@@ -153,7 +153,7 @@ describe('CompoundYieldService contract', () => {
     })
 
     it('should handle the case when there is less balance available than what has been accounted for', async () => {
-      await token.approve(moduleManager.address, toWei('1'))
+      await token.approve(yieldService.address, toWei('1'))
       await yieldService.supply(wallet._address, toWei('1'))
 
       await cToken.burn(toWei('0.1'));

@@ -5,11 +5,9 @@
     "PrizePoolBuilder": "PrizePoolBuilder",
     "TicketFactory": "TicketFactory",
     "RNGBlockhash": "RNGBlockhash",
-    "ControlledTokenFactory": "ControlledTokenFactory",
     "SingleRandomWinnerPrizePoolBuilder": "SingleRandomWinnerPrizePoolBuilder",
     "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory",
-    "CompoundYieldServiceFactory": "CompoundYieldServiceFactory",
-    "CompoundYieldServiceBuilder": "CompoundYieldServiceBuilder"
+    "CompoundYieldServiceFactory": "CompoundYieldServiceFactory"
   },
   "dependencies": {},
   "name": "PoolTogether3",

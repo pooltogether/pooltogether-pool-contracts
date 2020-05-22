@@ -38,7 +38,7 @@ contract Loyalty is LoyaltyInterface, Meta777, NamedModule {
   ) external override onlyManagerOrModule {
     uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa());
     collateral = collateral.add(amount);
-    _mint(account, tokens);
+    _mint(account, tokens, "", "");
   }
 
   function balanceOfUnderlying(address user) external override view returns (uint256) {
@@ -55,7 +55,7 @@ contract Loyalty is LoyaltyInterface, Meta777, NamedModule {
   ) external override onlyManagerOrModule {
     uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa());
     collateral = collateral.sub(amount);
-    _burn(from, tokens);
+    _burn(from, tokens, "", "");
   }
 
   function exchangeRateMantissa() public view override returns (uint256) {
@@ -66,7 +66,7 @@ contract Loyalty is LoyaltyInterface, Meta777, NamedModule {
     }
   }
 
-  function _beforeTokenTransfer(address, address from, address to, uint256) internal override {
+  function _beforeTokenTransfer(address operator, address from, address to, uint256) internal override {
     require(from == address(0) || to == address(0), "no transfer allowed");
   }
 }

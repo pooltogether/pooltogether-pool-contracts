@@ -4,7 +4,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
 import "./PeriodicPrizePool.sol";
 import "../yield-service/YieldServiceInterface.sol";
-import "../token/ControlledToken.sol";
 import "../external/openzeppelin/ProxyFactory.sol";
 
 contract PeriodicPrizePoolFactory is Initializable, ProxyFactory {

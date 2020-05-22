@@ -8,7 +8,6 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "./YieldServiceInterface.sol";
-import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../external/compound/CTokenInterface.sol";
 import "../base/NamedModule.sol";
@@ -45,11 +44,11 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
   }
 
   function balance() public override returns (uint256) {
-    return cToken.balanceOfUnderlying(address(manager));
+    return cToken.balanceOfUnderlying(address(this));
   }
 
   function unaccountedBalance() public override returns (uint256) {
-    uint256 underlying = cToken.balanceOfUnderlying(address(manager));
+    uint256 underlying = cToken.balanceOfUnderlying(address(this));
     if (underlying >= accountedBalance) {
       return underlying.sub(accountedBalance);
     } else {
@@ -62,30 +61,9 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
   }
 
   function supply(address from, uint256 amount) external override onlyManagerOrModule {
-    // first execute transfer from user to the pool
-    bytes memory transferFrom = abi.encodeWithSignature("transferFrom(address,address,uint256)", from, address(manager), amount);
-    require(
-      manager.execTransactionFromModule(address(token()), 0, transferFrom, Enum.Operation.Call),
-      "could not transferFrom"
-    );
-
-    // approve of ctoken spend
-    bytes memory approve = abi.encodeWithSignature("approve(address,uint256)", address(cToken), amount);
-    require(
-      manager.execTransactionFromModule(address(token()), 0, approve, Enum.Operation.Call),
-      "could not approve"
-    );
-
-    // now mint to cToken
-    bytes memory mint = abi.encodeWithSignature("mint(uint256)", amount);
-    require(
-      manager.execTransactionFromModule(address(cToken), 0, mint, Enum.Operation.Call),
-      "could not mint"
-    );
-
-    // console.log("minted %s for token %s", amount, address(cToken));
-
-    // console.log("total supply is now %s", cToken.totalSupply());
+    token().transferFrom(from, address(this), amount);
+    token().approve(address(cToken), amount);
+    cToken.mint(amount);
 
     accountedBalance = accountedBalance.add(amount);
 
@@ -93,19 +71,8 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
   }
 
   function redeem(address to, uint256 amount) external override onlyManagerOrModule {
-    // first redeem underlying
-    bytes memory redeemUnderlying = abi.encodeWithSignature("redeemUnderlying(uint256)", amount);
-    require(
-      manager.execTransactionFromModule(address(cToken), 0, redeemUnderlying, Enum.Operation.Call),
-      "could not redeemUnderlying"
-    );
-
-    // transfer
-    bytes memory transfer = abi.encodeWithSignature("transfer(address,uint256)", to, amount);
-    require(
-      manager.execTransactionFromModule(address(token()), 0, transfer, Enum.Operation.Call),
-      "could not transfer"
-    );
+    cToken.redeemUnderlying(amount);
+    token().transfer(to, amount);
 
     accountedBalance = accountedBalance.sub(amount);
 

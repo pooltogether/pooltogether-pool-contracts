@@ -20,7 +20,7 @@ contract ControlledToken is Meta777 {
   function _beforeTokenTransfer(address operator, address from, address to, uint256 tokenAmount) internal virtual override {
     address tokenController = ERC1820Constants.REGISTRY.getInterfaceImplementer(controller, ERC1820Constants.TOKEN_CONTROLLER_INTERFACE_HASH);
     if (tokenController != address(0)) {
-      TokenControllerInterface(tokenController).beforeTokenTransfer(operator, from, to, tokenAmount);
+      TokenControllerInterface(tokenController).beforeTokenTransfer(from, from, to, tokenAmount);
     }
   }
 

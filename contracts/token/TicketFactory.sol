@@ -3,7 +3,6 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
 import "./Ticket.sol";
-import "./ControlledTokenFactory.sol";
 import "../external/openzeppelin/ProxyFactory.sol";
 
 contract TicketFactory is Initializable, ProxyFactory {

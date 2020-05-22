@@ -7,7 +7,6 @@ import "@nomiclabs/buidler/console.sol";
 import "../token/TokenControllerInterface.sol";
 
 import "../util/ERC1820Constants.sol";
-import "./ControlledToken.sol";
 import "./Loyalty.sol";
 import "../base/NamedModule.sol";
 
