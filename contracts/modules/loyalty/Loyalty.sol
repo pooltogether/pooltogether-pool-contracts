@@ -6,8 +6,8 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
 import "../token/Meta777.sol";
 import "./LoyaltyInterface.sol";
-import "../base/NamedModule.sol";
-import "../util/ERC1820Constants.sol";
+import "../../base/NamedModule.sol";
+import "../../Constants.sol";
 
 // solium-disable security/no-block-members
 contract Loyalty is LoyaltyInterface, Meta777, NamedModule {
@@ -29,7 +29,7 @@ contract Loyalty is LoyaltyInterface, Meta777, NamedModule {
   }
 
   function hashName() public view override returns (bytes32) {
-    return ERC1820Constants.LOYALTY_INTERFACE_HASH;
+    return Constants.LOYALTY_INTERFACE_HASH;
   }
 
   function supply(

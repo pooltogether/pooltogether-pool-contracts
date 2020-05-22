@@ -1,8 +1,8 @@
 pragma solidity ^0.6.4;
 
-import "../yield-service/YieldServiceInterface.sol";
-import "../ticket/Ticket.sol";
-import "../sponsorship/Sponsorship.sol";
+import "../modules/yield-service/YieldServiceInterface.sol";
+import "../modules/ticket/Ticket.sol";
+import "../modules/sponsorship/Sponsorship.sol";
 import "../prize-strategy/PrizeStrategyInterface.sol";
 
 interface PeriodicPrizePoolInterface {

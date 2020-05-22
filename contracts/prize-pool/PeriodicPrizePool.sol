@@ -11,13 +11,13 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../base/ModuleManager.sol";
-import "../yield-service/YieldServiceInterface.sol";
-import "../sponsorship/Sponsorship.sol";
-import "../loyalty/LoyaltyInterface.sol";
+import "../modules/yield-service/YieldServiceInterface.sol";
+import "../modules/sponsorship/Sponsorship.sol";
+import "../modules/loyalty/LoyaltyInterface.sol";
 import "./PeriodicPrizePoolInterface.sol";
 import "../prize-strategy/PrizeStrategyInterface.sol";
 import "../rng/RNGInterface.sol";
-import "../util/ERC1820Constants.sol";
+import "../Constants.sol";
 
 /* solium-disable security/no-block-members */
 contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, BaseRelayRecipient, PeriodicPrizePoolInterface, IERC777Recipient, ModuleManager {
@@ -51,7 +51,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
     rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = block.timestamp;
-    ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+    Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
   function currentPrize() public override returns (uint256) {
@@ -184,7 +184,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
   }
 
   function getInterfaceImplementer(bytes32 name) public view returns (address) {
-    return ERC1820Constants.REGISTRY.getInterfaceImplementer(address(this), name);
+    return Constants.REGISTRY.getInterfaceImplementer(address(this), name);
   }
 
   function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
@@ -192,19 +192,19 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
   }
 
   function loyalty() public view returns (LoyaltyInterface) {
-    return LoyaltyInterface(getInterfaceImplementer(ERC1820Constants.LOYALTY_INTERFACE_HASH));
+    return LoyaltyInterface(getInterfaceImplementer(Constants.LOYALTY_INTERFACE_HASH));
   }
 
   function sponsorship() public view override returns (Sponsorship) {
-    return Sponsorship(getInterfaceImplementer(ERC1820Constants.SPONSORSHIP_INTERFACE_HASH));
+    return Sponsorship(getInterfaceImplementer(Constants.SPONSORSHIP_INTERFACE_HASH));
   }
 
   function yieldService() public view override returns (YieldServiceInterface) {
-    return YieldServiceInterface(getInterfaceImplementer(ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH));
+    return YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
   }
 
   function ticket() public view override returns (Ticket) {
-    return Ticket(getInterfaceImplementer(ERC1820Constants.TICKET_INTERFACE_HASH));
+    return Ticket(getInterfaceImplementer(Constants.TICKET_INTERFACE_HASH));
   }
 
   modifier requireCanStartAward() {

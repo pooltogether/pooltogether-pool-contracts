@@ -8,8 +8,8 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../token/Meta777.sol";
-import "../util/ERC1820Constants.sol";
-import "../base/NamedModule.sol";
+import "../../Constants.sol";
+import "../../base/NamedModule.sol";
 import "../yield-service/YieldServiceInterface.sol";
 
 /* solium-disable security/no-block-members */
@@ -29,7 +29,7 @@ contract Timelock is Meta777, NamedModule {
   }
 
   function hashName() public view override returns (bytes32) {
-    return ERC1820Constants.TIMELOCK_INTERFACE_HASH;
+    return Constants.TIMELOCK_INTERFACE_HASH;
   }
 
   function sweep(address[] calldata users) external nonReentrant returns (uint256) {
@@ -84,6 +84,6 @@ contract Timelock is Meta777, NamedModule {
   }
 
   function yieldService() public view returns (YieldServiceInterface) {
-    return YieldServiceInterface(getInterfaceImplementer(ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH));
+    return YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
   }
 }

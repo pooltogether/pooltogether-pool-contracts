@@ -3,7 +3,7 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
-import "../yield-service/YieldServiceInterface.sol";
+import "../modules/yield-service/YieldServiceInterface.sol";
 import "../base/NamedModule.sol";
 
 contract MockYieldService is Initializable, YieldServiceInterface, NamedModule {
@@ -14,7 +14,7 @@ contract MockYieldService is Initializable, YieldServiceInterface, NamedModule {
   uint256 public override accountedBalance;
 
   function hashName() public view override returns (bytes32) {
-    return ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH;
+    return Constants.YIELD_SERVICE_INTERFACE_HASH;
   }
 
   function initialize (ModuleManager _manager, IERC20 token) external initializer {

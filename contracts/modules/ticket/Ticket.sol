@@ -10,9 +10,9 @@ import "@nomiclabs/buidler/console.sol";
 import "../token/Meta777.sol";
 import "../timelock/Timelock.sol";
 import "../loyalty/Loyalty.sol";
-import "../prize-pool/PeriodicPrizePoolInterface.sol";
-import "../util/ERC1820Constants.sol";
-import "../base/NamedModule.sol";
+import "../../prize-pool/PeriodicPrizePoolInterface.sol";
+import "../../Constants.sol";
+import "../../base/NamedModule.sol";
 import "../yield-service/YieldServiceInterface.sol";
 
 /* solium-disable security/no-block-members */
@@ -37,13 +37,13 @@ contract Ticket is Meta777, NamedModule {
     enableInterface();
     super.initialize(_name, _symbol, _trustedForwarder);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
-    yieldService = YieldServiceInterface(getInterfaceImplementer(ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH));
-    loyalty = Loyalty(getInterfaceImplementer(ERC1820Constants.LOYALTY_INTERFACE_HASH));
+    yieldService = YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
+    loyalty = Loyalty(getInterfaceImplementer(Constants.LOYALTY_INTERFACE_HASH));
     yieldService.token().approve(address(yieldService), uint(-1));
   }
 
   function hashName() public view override returns (bytes32) {
-    return ERC1820Constants.TICKET_INTERFACE_HASH;
+    return Constants.TICKET_INTERFACE_HASH;
   }
 
   function mintTickets(uint256 amount) external nonReentrant {
@@ -169,6 +169,6 @@ contract Ticket is Meta777, NamedModule {
   }
 
   function getTimelock() public view returns (Timelock) {
-    return Timelock(getInterfaceImplementer(ERC1820Constants.TIMELOCK_INTERFACE_HASH));
+    return Timelock(getInterfaceImplementer(Constants.TIMELOCK_INTERFACE_HASH));
   }
 }

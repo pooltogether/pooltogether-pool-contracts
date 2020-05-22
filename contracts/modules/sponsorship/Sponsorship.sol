@@ -5,9 +5,9 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "../util/ERC1820Constants.sol";
+import "../../Constants.sol";
 import "../loyalty/Loyalty.sol";
-import "../base/NamedModule.sol";
+import "../../base/NamedModule.sol";
 
 // solium-disable security/no-block-members
 contract Sponsorship is Meta777, NamedModule {
@@ -22,7 +22,7 @@ contract Sponsorship is Meta777, NamedModule {
     setManager(_manager);
     enableInterface();
     Meta777.initialize(_name, _symbol, _trustedForwarder);
-    ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+    Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
   function mint(
@@ -40,6 +40,6 @@ contract Sponsorship is Meta777, NamedModule {
   }
 
   function hashName() public view override returns (bytes32) {
-    return ERC1820Constants.SPONSORSHIP_INTERFACE_HASH;
+    return Constants.SPONSORSHIP_INTERFACE_HASH;
   }
 }

@@ -3,7 +3,7 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
 import "./Timelock.sol";
-import "../external/openzeppelin/ProxyFactory.sol";
+import "../../external/openzeppelin/ProxyFactory.sol";
 
 contract TimelockFactory is Initializable, ProxyFactory {
 

@@ -3,8 +3,8 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
 import "../prize-strategy/SingleRandomWinnerPrizeStrategyFactory.sol";
-import "../yield-service/CompoundYieldServiceFactory.sol";
-import "../ticket/TicketFactory.sol";
+import "../modules/yield-service/CompoundYieldServiceFactory.sol";
+import "../modules/ticket/TicketFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 import "./PrizePoolBuilder.sol";
 

@@ -8,8 +8,8 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "./YieldServiceInterface.sol";
-import "../external/compound/CTokenInterface.sol";
-import "../base/NamedModule.sol";
+import "../../external/compound/CTokenInterface.sol";
+import "../../base/NamedModule.sol";
 import "./YieldServiceConstants.sol";
 
 /**

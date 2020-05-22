@@ -9,14 +9,14 @@ import "@nomiclabs/buidler/console.sol";
 import "../rng/RNGInterface.sol";
 import "./PrizeStrategyInterface.sol";
 import "../prize-pool/PeriodicPrizePoolInterface.sol";
-import "../util/ERC1820Constants.sol";
+import "../Constants.sol";
 
 /* solium-disable security/no-block-members */
 contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterface, IERC777Recipient {
   using SafeMath for uint256;
 
   function initialize() public initializer {
-    ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+    Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
   function award(uint256 randomNumber, uint256 prize) external override {
