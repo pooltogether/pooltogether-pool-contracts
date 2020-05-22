@@ -4,7 +4,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
 import "../prize-strategy/SingleRandomWinnerPrizeStrategyFactory.sol";
 import "../yield-service/CompoundYieldServiceFactory.sol";
-import "../token/TicketFactory.sol";
+import "../ticket/TicketFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 import "./PrizePoolBuilder.sol";
 
@@ -37,7 +37,7 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
     prizeStrategy.initialize();
 
-    PrizePoolInterface prizePool = prizePoolBuilder.createPeriodicPrizePool(
+    PeriodicPrizePoolInterface prizePool = prizePoolBuilder.createPeriodicPrizePool(
       cToken,
       prizeStrategy,
       prizePeriodInSeconds,

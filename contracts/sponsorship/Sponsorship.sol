@@ -4,10 +4,9 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@nomiclabs/buidler/console.sol";
-import "../token/TokenControllerInterface.sol";
 
 import "../util/ERC1820Constants.sol";
-import "./Loyalty.sol";
+import "../loyalty/Loyalty.sol";
 import "../base/NamedModule.sol";
 
 // solium-disable security/no-block-members

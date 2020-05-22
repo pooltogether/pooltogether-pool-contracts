@@ -3,7 +3,6 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
 import "./Sponsorship.sol";
-import "./LoyaltyFactory.sol";
 import "../external/openzeppelin/ProxyFactory.sol";
 
 contract SponsorshipFactory is Initializable, ProxyFactory {

@@ -4,7 +4,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 
 import "../prize-strategy/PrizeStrategyInterface.sol";
-import "../prize-pool/PrizePoolInterface.sol";
 import "../util/ERC1820Constants.sol";
 
 contract MockPrizeStrategy is Initializable, PrizeStrategyInterface, IERC777Recipient {

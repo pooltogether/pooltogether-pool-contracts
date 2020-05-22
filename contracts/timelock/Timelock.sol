@@ -7,9 +7,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "./Meta777.sol";
-import "../prize-pool/PrizePoolInterface.sol";
-import "./TokenControllerInterface.sol";
+import "../token/Meta777.sol";
 import "../util/ERC1820Constants.sol";
 import "../base/NamedModule.sol";
 import "../yield-service/YieldServiceInterface.sol";

@@ -8,7 +8,7 @@ import "@nomiclabs/buidler/console.sol";
 
 import "../rng/RNGInterface.sol";
 import "./PrizeStrategyInterface.sol";
-import "../prize-pool/PrizePoolInterface.sol";
+import "../prize-pool/PeriodicPrizePoolInterface.sol";
 import "../util/ERC1820Constants.sol";
 
 /* solium-disable security/no-block-members */
@@ -22,7 +22,7 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
   function award(uint256 randomNumber, uint256 prize) external override {
     // console.log("awarding prize: %s", prize);
     if (prize > 0) {
-      PrizePoolInterface prizePool = PrizePoolInterface(msg.sender);
+      PeriodicPrizePoolInterface prizePool = PeriodicPrizePoolInterface(msg.sender);
       // console.log("transfer sponsorship");
       prizePool.sponsorship().transferFrom(address(prizePool), address(this), prize);
       // console.log("draw ticket");

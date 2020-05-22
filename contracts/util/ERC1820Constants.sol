@@ -5,10 +5,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC182
 library ERC1820Constants {
   IERC1820Registry public constant REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
 
-  // keccak("PoolTogether/TokenControllerInterface")
-  bytes32 public constant TOKEN_CONTROLLER_INTERFACE_HASH =
-  0x88831b143610c1129e74cfaa1592e2d13919001994631da33d11a627e4623ecd;
-
   // keccak("PoolTogetherV3/YieldServiceInterface")
   bytes32 public constant YIELD_SERVICE_INTERFACE_HASH =
   0x4ed5789bd358cc9b40d603c60561144ea3ac89cb64ba5d7aab9a193d06e99978;

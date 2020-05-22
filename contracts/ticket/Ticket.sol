@@ -7,11 +7,10 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "./Meta777.sol";
-import "./Timelock.sol";
-import "./Loyalty.sol";
-import "../prize-pool/PrizePoolInterface.sol";
-import "./TokenControllerInterface.sol";
+import "../token/Meta777.sol";
+import "../timelock/Timelock.sol";
+import "../loyalty/Loyalty.sol";
+import "../prize-pool/PeriodicPrizePoolInterface.sol";
 import "../util/ERC1820Constants.sol";
 import "../base/NamedModule.sol";
 import "../yield-service/YieldServiceInterface.sol";
@@ -119,7 +118,7 @@ contract Ticket is Meta777, NamedModule {
 
     // transfer tickets less fee
     uint256 balance = tickets.sub(exitFee);
-    IERC20(prizePool().token()).transfer(_msgSender(), balance);
+    IERC20(yieldService.token()).transfer(_msgSender(), balance);
 
     // return the amount that was transferred
     return balance;
@@ -184,8 +183,8 @@ contract Ticket is Meta777, NamedModule {
   //   return YieldServiceInterface(getInterfaceImplementer(ERC1820Constants.YIELD_SERVICE_INTERFACE_HASH));
   // }
 
-  function prizePool() public view returns (PrizePoolInterface) {
-    return PrizePoolInterface(address(manager));
+  function prizePool() public view returns (PeriodicPrizePoolInterface) {
+    return PeriodicPrizePoolInterface(address(manager));
   }
 
   function getTimelock() public view returns (Timelock) {

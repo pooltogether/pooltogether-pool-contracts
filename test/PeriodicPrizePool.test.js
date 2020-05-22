@@ -20,7 +20,7 @@ async function prizePoolCurrentPrize(prizePoolContract) {
 }
 
 async function prizePoolEstimatePrize(prizePoolContract, secondsPerBlock) {
-  let fxn = prizePoolContract.interface.functions.estimatePrize
+  let fxn = prizePoolContract.interface.functions.estimatePrizeWithBlockTime
   let data = fxn.encode([secondsPerBlock])
   let result = await prizePoolContract.provider.call({ to: prizePoolContract.address, data })
   return fxn.decode(result)[0]
@@ -162,7 +162,7 @@ describe('PeriodicPrizePool contract', () => {
       await token.approve(ticket.address, toWei('10'))
       await ticket.mintTickets(toWei('10'))
 
-      let startedAt = await prizePool.currentPrizeStartedAt()
+      let startedAt = await prizePool.prizePeriodStartedAt()
       const unlockTimestamp = startedAt.toNumber() + 10
       expect(await prizePool.prizePeriodEndAt()).to.equal(unlockTimestamp)
 
@@ -244,7 +244,7 @@ describe('PeriodicPrizePool contract', () => {
       await ticket.redeemTicketsWithTimelock(toWei('4'))
 
       let availAt = await timelock.balanceAvailableAt(wallet._address)
-      let startTime = await prizePool.currentPrizeStartedAt()
+      let startTime = await prizePool.prizePeriodStartedAt()
 
       expect(availAt.eq(startTime.add(10))).to.be.true
 
@@ -263,14 +263,14 @@ describe('PeriodicPrizePool contract', () => {
 
   describe('multiplyByRemainingTimeFraction()', () => {
     it('should calculate as a fraction of the time remaining', async () => {
-      let remainingSeconds = (await prizePool.remainingSecondsToPrize()).toNumber()
+      let remainingSeconds = (await prizePool.prizePeriodRemainingSeconds()).toNumber()
 
       expect(await prizePool.multiplyByRemainingTimeFraction(toWei('1'))).to.equal(toWei('' + (remainingSeconds / prizePeriodSeconds)))
 
       // increment 4
       await increaseTime(4)
 
-      remainingSeconds = (await prizePool.remainingSecondsToPrize()).toNumber()
+      remainingSeconds = (await prizePool.prizePeriodRemainingSeconds()).toNumber()
       
       expect(await prizePool.multiplyByRemainingTimeFraction(toWei('1'))).to.equal(toWei('' + (remainingSeconds / prizePeriodSeconds)))
     })
@@ -278,7 +278,7 @@ describe('PeriodicPrizePool contract', () => {
 
   describe('prizePeriodEndAt()', () => {
     it('should be correct', async () => {
-      let start = (await prizePool.currentPrizeStartedAt()).toNumber()
+      let start = (await prizePool.prizePeriodStartedAt()).toNumber()
       expect(await prizePool.prizePeriodEndAt()).to.equal(start + 10)
     })
   })
@@ -315,7 +315,7 @@ describe('PeriodicPrizePool contract', () => {
       
       debug('calculating seconds...')
 
-      let remainingSeconds = (await prizePool.remainingSecondsToPrize()).toNumber()
+      let remainingSeconds = (await prizePool.prizePeriodRemainingSeconds()).toNumber()
       let secs = (remainingSeconds / (prizePeriodSeconds*1.0))
 
       debug({ remainingSeconds, secs })
@@ -327,7 +327,7 @@ describe('PeriodicPrizePool contract', () => {
 
   describe('calculateUnlockTimestamp(address, uint256)', () => {
     it('should calculate the prize period end', async () => {
-      let start = (await prizePool.currentPrizeStartedAt()).toNumber()
+      let start = (await prizePool.prizePeriodStartedAt()).toNumber()
       expect(await prizePool.calculateUnlockTimestamp(wallet._address, '0')).to.equal(start + 10)
     })
   })
@@ -343,7 +343,7 @@ describe('PeriodicPrizePool contract', () => {
       // total rate is estimated to be 10 * 0.01 = 0.1
       // total = 10 * 0.1 = 1
 
-      let remainingSeconds = await prizePool.remainingSecondsToPrize()
+      let remainingSeconds = await prizePool.prizePeriodRemainingSeconds()
 
       // seconds per block is one, so there are remainingSeconds blocks left.
       // remainingSeconds * 0.01 == remainingSeconds / 100

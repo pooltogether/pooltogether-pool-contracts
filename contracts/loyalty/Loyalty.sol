@@ -4,7 +4,7 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
-import "./Meta777.sol";
+import "../token/Meta777.sol";
 import "./LoyaltyInterface.sol";
 import "../base/NamedModule.sol";
 import "../util/ERC1820Constants.sol";

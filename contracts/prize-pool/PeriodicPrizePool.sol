@@ -12,29 +12,27 @@ import "@nomiclabs/buidler/console.sol";
 
 import "../base/ModuleManager.sol";
 import "../yield-service/YieldServiceInterface.sol";
-import "../token/TokenControllerInterface.sol";
-import "../token/Sponsorship.sol";
-import "../token/LoyaltyInterface.sol";
-import "./PrizePoolInterface.sol";
+import "../sponsorship/Sponsorship.sol";
+import "../loyalty/LoyaltyInterface.sol";
+import "./PeriodicPrizePoolInterface.sol";
 import "../prize-strategy/PrizeStrategyInterface.sol";
 import "../rng/RNGInterface.sol";
 import "../util/ERC1820Constants.sol";
 
 /* solium-disable security/no-block-members */
-contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, BaseRelayRecipient, PrizePoolInterface, IERC777Recipient, ModuleManager {
+contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, BaseRelayRecipient, PeriodicPrizePoolInterface, IERC777Recipient, ModuleManager {
   using SafeMath for uint256;
-
-  event TicketsRedeemedInstantly(address indexed to, uint256 amount, uint256 fee);
-  event TicketsRedeemedWithTimelock(address indexed to, uint256 amount, uint256 unlockTimestamp);
 
   PrizeStrategyInterface public override prizeStrategy;
   
   RNGInterface public rng;
-  uint256 public currentPrizeStartedAt;
-  uint256 public prizePeriodSeconds;
+  uint256 public override prizePeriodStartedAt;
+  uint256 public override prizePeriodSeconds;
   uint256 public previousPrize;
   uint256 public feeScaleMantissa;
   uint256 public rngRequestId;
+
+  uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
   function initialize (
     address _trustedForwarder,
@@ -52,7 +50,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
     trustedForwarder = _trustedForwarder;
     rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
-    currentPrizeStartedAt = block.timestamp;
+    prizePeriodStartedAt = block.timestamp;
     ERC1820Constants.REGISTRY.setInterfaceImplementer(address(this), ERC1820Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
@@ -67,7 +65,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
   function multiplyByRemainingTimeFraction(uint256 value) public view returns (uint256) {
     return FixedPoint.multiplyUintByMantissa(
       value,
-      FixedPoint.calculateMantissa(remainingSecondsToPrize(), prizePeriodSeconds)
+      FixedPoint.calculateMantissa(prizePeriodRemainingSeconds(), prizePeriodSeconds)
     );
   }
 
@@ -75,15 +73,19 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
     return prizePeriodEndAt();
   }
 
-  function estimatePrize(uint256 secondsPerBlockFixedPoint18) external returns (uint256) {
+  function estimatePrize() public override returns (uint256) {
+    return estimatePrizeWithBlockTime(ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA);
+  }
+
+  function estimatePrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public override returns (uint256) {
     return currentPrize().add(estimateRemainingPrizeWithBlockTime(secondsPerBlockFixedPoint18));
   }
 
-  function estimateRemainingPrize() public view returns (uint256) {
-    return estimateRemainingPrizeWithBlockTime(13 ether);
+  function estimateRemainingPrize() public view override returns (uint256) {
+    return estimateRemainingPrizeWithBlockTime(ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA);
   }
 
-  function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {
+  function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view override returns (uint256) {
     return yieldService().estimateAccruedInterestOverBlocks(
       yieldService().accountedBalance(),
       estimateRemainingBlocksToPrize(secondsPerBlockFixedPoint18)
@@ -92,12 +94,12 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
 
   function estimateRemainingBlocksToPrize(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {
     return FixedPoint.divideUintByMantissa(
-      remainingSecondsToPrize(),
+      prizePeriodRemainingSeconds(),
       secondsPerBlockFixedPoint18
     );
   }
 
-  function remainingSecondsToPrize() public view returns (uint256) {
+  function prizePeriodRemainingSeconds() public view override returns (uint256) {
     uint256 endAt = prizePeriodEndAt();
     if (block.timestamp > endAt) {
       return 0;
@@ -148,20 +150,16 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
     loyalty().reward(prize);
 
     // console.log("awarding prize...");
-    currentPrizeStartedAt = block.timestamp;
+    prizePeriodStartedAt = block.timestamp;
     prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
 
     previousPrize = prize;
     rngRequestId = 0;
   }
 
-  function token() external override view returns (IERC20) {
-    return yieldService().token();
-  }
-
-  function prizePeriodEndAt() public view returns (uint256) {
+  function prizePeriodEndAt() public view override returns (uint256) {
     // current prize started at is non-inclusive, so add one
-    return currentPrizeStartedAt + prizePeriodSeconds;
+    return prizePeriodStartedAt + prizePeriodSeconds;
   }
 
   function tokensReceived(
