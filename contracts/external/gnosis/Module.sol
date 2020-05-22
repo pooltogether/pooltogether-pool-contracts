@@ -1,7 +1,5 @@
 pragma solidity ^0.6.4;
 
-import "@nomiclabs/buidler/console.sol";
-
 import "./ModuleManager.sol";
 
 contract Module {
@@ -17,9 +15,6 @@ contract Module {
         require(isModule || msg.sender == address(manager), "Method can only be called from manager or module");
         _;
     }
-
-    // function afterEnableModule() external virtual onlyManager {}
-    // function beforeDisableModule() external virtual onlyManager {}
 
     function setManager(ModuleManager _manager)
         internal

@@ -2,7 +2,7 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Implementer.sol";
 
-import "./Module.sol";
+import "../external/gnosis/Module.sol";
 import "../Constants.sol";
 
 abstract contract NamedModule is Module, IERC1820Implementer {

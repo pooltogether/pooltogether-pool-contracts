@@ -7,12 +7,12 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
+import "../../Constants.sol";
+import "../../base/NamedModule.sol";
 import "../token/Meta777.sol";
 import "../timelock/Timelock.sol";
 import "../loyalty/Loyalty.sol";
-import "../../prize-pool/PeriodicPrizePoolInterface.sol";
-import "../../Constants.sol";
-import "../../base/NamedModule.sol";
+import "../../periodic-prize-pool/PeriodicPrizePoolInterface.sol";
 import "../yield-service/YieldServiceInterface.sol";
 
 /* solium-disable security/no-block-members */

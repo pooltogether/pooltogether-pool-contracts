@@ -36,4 +36,8 @@ library Constants {
   // keccak256("PoolTogetherV3/TimelockInterface")
   bytes32 public constant TIMELOCK_INTERFACE_HASH =
   0x42e4d9828bdc3604a980d7d232f855652139270154bf191927d85bcf165e50a5;
+
+  // keccak256("PoolTogetherV3/PrizePoolInterface")
+  bytes32 public constant PRIZE_POOL_INTERFACE_HASH =
+  0xa9132fceb7d69949767df6f1c2fa3901378dc016d53edf4827074b8fa1271004;
 }

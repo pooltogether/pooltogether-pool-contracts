@@ -7,7 +7,7 @@ import "../modules/sponsorship/SponsorshipFactory.sol";
 import "../modules/loyalty/LoyaltyFactory.sol";
 import "../modules/yield-service/CompoundYieldServiceFactory.sol";
 import "../modules/ticket/TicketFactory.sol";
-import "../prize-pool/PeriodicPrizePoolFactory.sol";
+import "../periodic-prize-pool/PeriodicPrizePoolFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 
 contract PrizePoolBuilder is Initializable {

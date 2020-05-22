@@ -8,7 +8,7 @@ import "@nomiclabs/buidler/console.sol";
 
 import "../rng/RNGInterface.sol";
 import "./PrizeStrategyInterface.sol";
-import "../prize-pool/PeriodicPrizePoolInterface.sol";
+import "../periodic-prize-pool/PeriodicPrizePoolInterface.sol";
 import "../Constants.sol";
 
 /* solium-disable security/no-block-members */

@@ -135,7 +135,7 @@
         },
         {
           "contract": "PeriodicPrizePoolFactory",
-          "path": "contracts/prize-pool/PeriodicPrizePoolFactory.sol",
+          "path": "contracts/periodic-prize-pool/PeriodicPrizePoolFactory.sol",
           "label": "instance",
           "astId": 15056,
           "type": "t_address",

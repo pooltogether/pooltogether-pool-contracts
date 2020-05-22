@@ -10,7 +10,7 @@ import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "../base/ModuleManager.sol";
+import "../base/OwnableModuleManager.sol";
 import "../modules/yield-service/YieldServiceInterface.sol";
 import "../modules/sponsorship/Sponsorship.sol";
 import "../modules/loyalty/LoyaltyInterface.sol";
@@ -20,7 +20,7 @@ import "../rng/RNGInterface.sol";
 import "../Constants.sol";
 
 /* solium-disable security/no-block-members */
-contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, BaseRelayRecipient, PeriodicPrizePoolInterface, IERC777Recipient, ModuleManager {
+contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInterface, IERC777Recipient, OwnableModuleManager {
   using SafeMath for uint256;
 
   PrizeStrategyInterface public override prizeStrategy;
@@ -43,15 +43,19 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
     require(address(_prizeStrategy) != address(0), "prize strategy must not be zero");
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
     require(address(_rng) != address(0), "rng cannot be zero");
-    setupModules(address(0), "");
-    __Ownable_init();
+    super.initialize(_trustedForwarder);
     __ReentrancyGuard_init();
     prizeStrategy = _prizeStrategy;
-    trustedForwarder = _trustedForwarder;
     rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = block.timestamp;
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+  }
+
+  function getInterfaceImplementer(bytes32 name) internal virtual view returns (address) {
+    address result = Constants.REGISTRY.getInterfaceImplementer(address(this), name);
+    require(result != address(0), "no implementation registered");
+    return result;
   }
 
   function currentPrize() public override returns (uint256) {
@@ -183,14 +187,6 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
   ) external override {
   }
 
-  function getInterfaceImplementer(bytes32 name) public view returns (address) {
-    return Constants.REGISTRY.getInterfaceImplementer(address(this), name);
-  }
-
-  function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
-    return BaseRelayRecipient._msgSender();
-  }
-
   function loyalty() public view returns (LoyaltyInterface) {
     return LoyaltyInterface(getInterfaceImplementer(Constants.LOYALTY_INTERFACE_HASH));
   }
@@ -224,8 +220,4 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, OwnableUpgradeSafe, Ba
     _;
   }
 
-  modifier authorized() override {
-    require(msg.sender == address(this) || msg.sender == owner(), "only self or owner");
-    _;
-  }
 }
