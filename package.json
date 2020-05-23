@@ -36,7 +36,7 @@
     "chalk": "^4.0.0",
     "debug": "^4.1.1",
     "deploy-eip-1820": "^0.2.0",
-    "ethereum-waffle": "^2.3.2",
+    "ethereum-waffle": "^2.5.1",
     "ethers": "^4.0.47",
     "oz-console": "^2.0.1",
     "shelljs": "0.8.3",
@@ -50,7 +50,7 @@
     "@pooltogether/fixed-point": "^0.1.0-upgradeable.1",
     "@pooltogether/oz-migrate": "^0.2.5",
     "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
-    "sortition-sum-tree-factory": "^0.1.0",
-    "@resolver-engine/core": "^0.3.3"
+    "@resolver-engine/core": "^0.3.3",
+    "sortition-sum-tree-factory": "^0.1.0"
   }
 }

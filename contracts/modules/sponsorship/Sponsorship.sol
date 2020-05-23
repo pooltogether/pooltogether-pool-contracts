@@ -6,22 +6,19 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../../Constants.sol";
-import "../loyalty/Loyalty.sol";
-import "../../base/NamedModule.sol";
+import "../../token/TokenModule.sol";
 
 // solium-disable security/no-block-members
-contract Sponsorship is Meta777, NamedModule {
+contract Sponsorship is TokenModule {
   using SafeMath for uint256;
 
   function initialize (
     ModuleManager _manager,
+    address _trustedForwarder,
     string memory _name,
-    string memory _symbol,
-    address _trustedForwarder
-  ) public initializer {
-    setManager(_manager);
-    enableInterface();
-    Meta777.initialize(_name, _symbol, _trustedForwarder);
+    string memory _symbol
+  ) public override initializer {
+    TokenModule.initialize(_manager, _trustedForwarder, _name, _symbol);
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 

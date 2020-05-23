@@ -8,7 +8,7 @@ import "@nomiclabs/buidler/console.sol";
 
 import "../rng/RNGInterface.sol";
 import "./PrizeStrategyInterface.sol";
-import "../periodic-prize-pool/PeriodicPrizePoolInterface.sol";
+import "../modules/periodic-prize-pool/PeriodicPrizePoolInterface.sol";
 import "../Constants.sol";
 
 /* solium-disable security/no-block-members */
@@ -23,8 +23,6 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
     // console.log("awarding prize: %s", prize);
     if (prize > 0) {
       PeriodicPrizePoolInterface prizePool = PeriodicPrizePoolInterface(msg.sender);
-      // console.log("transfer sponsorship");
-      prizePool.sponsorship().transferFrom(address(prizePool), address(this), prize);
       // console.log("draw ticket");
       address winner = prizePool.ticket().draw(randomNumber);
       // Convert the sponsorship to winnings

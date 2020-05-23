@@ -1,9 +1,9 @@
 pragma solidity ^0.6.4;
 
-import "../modules/yield-service/YieldServiceInterface.sol";
-import "../modules/ticket/Ticket.sol";
-import "../modules/sponsorship/Sponsorship.sol";
-import "../prize-strategy/PrizeStrategyInterface.sol";
+import "../yield-service/YieldServiceInterface.sol";
+import "../ticket/Ticket.sol";
+import "../sponsorship/Sponsorship.sol";
+import "../../prize-strategy/PrizeStrategyInterface.sol";
 
 interface PeriodicPrizePoolInterface {
   function estimatePrize() external returns (uint256);

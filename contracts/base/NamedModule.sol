@@ -1,11 +1,24 @@
 pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Implementer.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 
 import "../external/gnosis/Module.sol";
 import "../Constants.sol";
 
-abstract contract NamedModule is Module, IERC1820Implementer {
+abstract contract NamedModule is Initializable, Module, IERC1820Implementer, BaseRelayRecipient {
+
+  function construct (
+    ModuleManager _manager,
+    address _trustedForwarder
+  ) public virtual initializer {
+    setManager(ModuleManager(_manager));
+    enableInterface();
+    if (_trustedForwarder != address(0)) {
+      trustedForwarder = _trustedForwarder;
+    }
+  }
 
   function hashName() public virtual view returns (bytes32);
 
@@ -43,6 +56,10 @@ abstract contract NamedModule is Module, IERC1820Implementer {
       manager.execTransactionFromModule(address(Constants.REGISTRY), 0, data, Enum.Operation.Call),
       "could not set interface"
     );
+  }
+
+  function _msgSender() internal override virtual view returns (address payable) {
+    return BaseRelayRecipient._msgSender();
   }
 
   modifier onlyWhenEnabled() virtual {

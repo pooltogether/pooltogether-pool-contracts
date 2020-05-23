@@ -1,7 +1,9 @@
 const PeriodicPrizePoolFactory = require('../../build/PeriodicPrizePoolFactory.json')
 const RNGBlockhash = require('../../build/RNGBlockhash.json')
 const Forwarder = require('../../build/Forwarder.json')
+const ProtocolGovernor = require('../../build/ProtocolGovernor.json')
 const CompoundYieldServiceFactory = require('../../build/CompoundYieldServiceFactory.json')
+const OwnableModuleManagerFactory = require('../../build/OwnableModuleManagerFactory.json')
 const PrizePoolBuilder = require('../../build/PrizePoolBuilder.json')
 const LoyaltyFactory = require('../../build/LoyaltyFactory.json')
 const SingleRandomWinnerPrizePoolBuilder = require('../../build/SingleRandomWinnerPrizePoolBuilder.json')
@@ -20,6 +22,8 @@ const debug = require('debug')('ptv3:deployContracts')
 
 const overrides = { gasLimit: 20000000 }
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
 async function deployContracts(wallet) {
   provider = buidler.ethers.provider
 
@@ -33,6 +37,16 @@ async function deployContracts(wallet) {
   let cToken = await deployContract(wallet, CTokenMock, [
     token.address, ethers.utils.parseEther('0.01')
   ])
+
+  debug('deploying protocol governor...')
+
+  let protocolGovernor = await deployContract(wallet, ProtocolGovernor, [])
+  await protocolGovernor.initialize('0', ZERO_ADDRESS)
+
+  debug('deploying OwnableModuleManagerFactory')
+
+  let ownableModuleManagerFactory = await deployContract(wallet, OwnableModuleManagerFactory, [])
+  await ownableModuleManagerFactory.initialize()
 
   debug('deploying compound yield service factory')
 
@@ -73,6 +87,8 @@ async function deployContracts(wallet) {
 
   let prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [])
   await prizePoolBuilder.initialize(
+    ownableModuleManagerFactory.address,
+    protocolGovernor.address,
     yieldServiceFactory.address,
     prizePoolFactory.address,
     ticketFactory.address,
@@ -97,6 +113,8 @@ async function deployContracts(wallet) {
     forwarder,
     token,
     cToken,
+    protocolGovernor,
+    ownableModuleManagerFactory,
     yieldServiceFactory,
     prizePoolFactory,
     timelockFactory,

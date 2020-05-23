@@ -3,29 +3,28 @@ pragma solidity 0.6.4;
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "../token/Meta777.sol";
+import "../../token/TokenModule.sol";
 import "../../Constants.sol";
-import "../../base/NamedModule.sol";
 import "../yield-service/YieldServiceInterface.sol";
 
 /* solium-disable security/no-block-members */
-contract Timelock is Meta777, NamedModule {
+contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
 
   mapping(address => uint256) unlockTimestamps;
 
   function initialize(
     ModuleManager _manager,
+    address _trustedForwarder,
     string memory _name,
-    string memory _symbol,
-    address _trustedForwarder
-  ) public initializer {
-    setManager(_manager);
-    enableInterface();
-    super.initialize(_name, _symbol, _trustedForwarder);
+    string memory _symbol
+  ) public override initializer {
+    TokenModule.initialize(_manager, _trustedForwarder, _name, _symbol);
+    __ReentrancyGuard_init();
   }
 
   function hashName() public view override returns (bytes32) {

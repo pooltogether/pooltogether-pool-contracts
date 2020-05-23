@@ -13,7 +13,11 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
   PrizePoolBuilder public prizePoolBuilder;
   SingleRandomWinnerPrizeStrategyFactory public prizeStrategyFactory;
 
-  event SingleRandomWinnerPrizePoolCreated(address indexed creator, address indexed prizePool, address indexed singleRandomWinnerPrizeStrategy);
+  event SingleRandomWinnerPrizePoolCreated(
+    address indexed creator,
+    address indexed moduleManager,
+    address indexed singleRandomWinnerPrizeStrategy
+  );
 
   function initialize (
     PrizePoolBuilder _prizePoolBuilder,
@@ -37,7 +41,7 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
     prizeStrategy.initialize();
 
-    PeriodicPrizePoolInterface prizePool = prizePoolBuilder.createPeriodicPrizePool(
+    OwnableModuleManager manager = prizePoolBuilder.createPeriodicPrizePool(
       cToken,
       prizeStrategy,
       prizePeriodInSeconds,
@@ -47,7 +51,7 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
       _sponsorshipSymbol
     );
 
-    emit SingleRandomWinnerPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit SingleRandomWinnerPrizePoolCreated(msg.sender, address(manager), address(prizeStrategy));
 
     return prizeStrategy;
   }

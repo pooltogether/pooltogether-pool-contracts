@@ -10,21 +10,22 @@ import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "../base/OwnableModuleManager.sol";
-import "../modules/yield-service/YieldServiceInterface.sol";
-import "../modules/sponsorship/Sponsorship.sol";
-import "../modules/loyalty/LoyaltyInterface.sol";
+import "../../base/OwnableModuleManager.sol";
+import "../yield-service/YieldServiceInterface.sol";
+import "../sponsorship/Sponsorship.sol";
+import "../loyalty/LoyaltyInterface.sol";
 import "./PeriodicPrizePoolInterface.sol";
-import "../prize-strategy/PrizeStrategyInterface.sol";
-import "../rng/RNGInterface.sol";
-import "../Constants.sol";
+import "../../prize-strategy/PrizeStrategyInterface.sol";
+import "../../rng/RNGInterface.sol";
+import "../../governance/ProtocolGovernor.sol";
+import "../../Constants.sol";
 
 /* solium-disable security/no-block-members */
-contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInterface, IERC777Recipient, OwnableModuleManager {
+contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInterface, IERC777Recipient, NamedModule {
   using SafeMath for uint256;
 
   PrizeStrategyInterface public override prizeStrategy;
-  
+  ProtocolGovernor governor;
   RNGInterface public rng;
   uint256 public override prizePeriodStartedAt;
   uint256 public override prizePeriodSeconds;
@@ -35,16 +36,20 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
   function initialize (
+    ModuleManager _manager,
     address _trustedForwarder,
+    ProtocolGovernor _governor,
     PrizeStrategyInterface _prizeStrategy,
     RNGInterface _rng,
     uint256 _prizePeriodSeconds
   ) public initializer {
+    require(address(_governor) != address(0), "governor cannot be zero");
     require(address(_prizeStrategy) != address(0), "prize strategy must not be zero");
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
     require(address(_rng) != address(0), "rng cannot be zero");
-    super.initialize(_trustedForwarder);
+    NamedModule.construct(_manager, _trustedForwarder);
     __ReentrancyGuard_init();
+    governor = _governor;
     prizeStrategy = _prizeStrategy;
     rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
@@ -52,14 +57,14 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
   }
 
-  function getInterfaceImplementer(bytes32 name) internal virtual view returns (address) {
-    address result = Constants.REGISTRY.getInterfaceImplementer(address(this), name);
-    require(result != address(0), "no implementation registered");
-    return result;
+  function hashName() public view override returns (bytes32) {
+    return Constants.PRIZE_POOL_INTERFACE_HASH;
   }
 
   function currentPrize() public override returns (uint256) {
-    return yieldService().unaccountedBalance();
+    uint256 balance = yieldService().unaccountedBalance();
+    uint256 reserveFee = calculateReserveFee(balance);
+    return balance.sub(reserveFee);
   }
 
   function calculateRemainingPreviousPrize() public view override returns (uint256) {
@@ -82,6 +87,13 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
       calculateRemainingPreviousPrize(),
       FixedPoint.calculateMantissa(tickets, totalSupply)
     );
+  }
+
+  function calculateReserveFee(uint256 amount) public view returns (uint256) {
+    if (governor.reserve() != address(0) && governor.reserveFeeMantissa() > 0) {
+      return FixedPoint.multiplyUintByMantissa(amount, governor.reserveFeeMantissa());
+    }
+    return 0;
   }
 
   function calculateUnlockTimestamp(address, uint256) public view override returns (uint256) {
@@ -148,21 +160,22 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function completeAward() external override requireCanCompleteAward nonReentrant {
-    // console.log("completing!!!!!");
+    uint256 balance = yieldService().unaccountedBalance();
+    uint256 reserveFee = calculateReserveFee(balance);
+    uint256 prize = balance.sub(reserveFee);
 
-    uint256 prize = currentPrize();
-    // console.log("CURREN TPRIZE is %s", prize);
-    if (prize > 0) {
-      // console.log("capture...");
-      yieldService().capture(prize);
-      // console.log("mint...");
-      sponsorship().mint(address(this), prize);
-      // console.log("approve...");
-      sponsorship().approve(address(prizeStrategy), prize);
+    if (balance > 0) {
+      yieldService().capture(balance);
+      if (reserveFee > 0) {
+        sponsorship().mint(governor.reserve(), reserveFee);
+      }
+      if (prize > 0) {
+        // console.log("mint...");
+        sponsorship().mint(address(prizeStrategy), prize);
+        // console.log("reward loyalty...");
+        loyalty().reward(prize);
+      }
     }
-
-    // console.log("reward loyalty...");
-    loyalty().reward(prize);
 
     // console.log("awarding prize...");
     prizePeriodStartedAt = block.timestamp;

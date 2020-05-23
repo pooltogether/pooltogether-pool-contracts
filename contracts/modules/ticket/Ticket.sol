@@ -3,20 +3,20 @@ pragma solidity 0.6.4;
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../../Constants.sol";
-import "../../base/NamedModule.sol";
-import "../token/Meta777.sol";
+import "../../token/TokenModule.sol";
 import "../timelock/Timelock.sol";
 import "../loyalty/Loyalty.sol";
-import "../../periodic-prize-pool/PeriodicPrizePoolInterface.sol";
+import "../periodic-prize-pool/PeriodicPrizePoolInterface.sol";
 import "../yield-service/YieldServiceInterface.sol";
 
 /* solium-disable security/no-block-members */
-contract Ticket is Meta777, NamedModule {
+contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
 
   SortitionSumTreeFactory.SortitionSumTrees sortitionSumTrees;
@@ -29,13 +29,12 @@ contract Ticket is Meta777, NamedModule {
 
   function initialize (
     ModuleManager _manager,
+    address _trustedForwarder,
     string memory _name,
-    string memory _symbol,
-    address _trustedForwarder
-  ) public initializer {
-    setManager(_manager);
-    enableInterface();
-    super.initialize(_name, _symbol, _trustedForwarder);
+    string memory _symbol
+  ) public override initializer {
+    TokenModule.initialize(_manager, _trustedForwarder, _name, _symbol);
+    __ReentrancyGuard_init();
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
     yieldService = YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
     loyalty = Loyalty(getInterfaceImplementer(Constants.LOYALTY_INTERFACE_HASH));
@@ -63,7 +62,7 @@ contract Ticket is Meta777, NamedModule {
   }
 
   function _supplyAndMint(address to, uint256 amount) internal {
-    yieldService.token().transferFrom(to, address(this), amount);
+    yieldService.token().transferFrom(_msgSender(), address(this), amount);
     yieldService.supply(address(this), amount);
     // Mint tickets
     _mint(to, amount, "", "");
@@ -165,7 +164,7 @@ contract Ticket is Meta777, NamedModule {
   }
 
   function prizePool() public view returns (PeriodicPrizePoolInterface) {
-    return PeriodicPrizePoolInterface(address(manager));
+    return PeriodicPrizePoolInterface(getInterfaceImplementer(Constants.PRIZE_POOL_INTERFACE_HASH));
   }
 
   function getTimelock() public view returns (Timelock) {

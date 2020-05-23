@@ -4,8 +4,11 @@ const { increaseTime } = require('./helpers/increaseTime')
 const { ethers } = require('./helpers/ethers')
 const buidler = require('./helpers/buidler')
 const {
+  PRIZE_POOL_INTERFACE_HASH,
+  TICKET_INTERFACE_HASH,
+  YIELD_SERVICE_INTERFACE_HASH,
   TIMELOCK_INTERFACE_HASH
-} = require('./helpers/constants')
+} = require('../js/constants')
 
 const toWei = ethers.utils.parseEther
 
@@ -42,10 +45,12 @@ describe('Integration Test', () => {
     let lastLog = receipt.logs[receipt.logs.length - 1]
     let singleRandomWinnerCreatedEvent = env.singleRandomWinnerPrizePoolBuilder.interface.events.SingleRandomWinnerPrizePoolCreated.decode(lastLog.data, lastLog.topics)
 
-    prizePool = await buidler.ethers.getContractAt('PeriodicPrizePool', singleRandomWinnerCreatedEvent.prizePool, wallet)
-    ticket = await buidler.ethers.getContractAt('Ticket', await prizePool.ticket(), wallet)
-    yieldService = await buidler.ethers.getContractAt('CompoundYieldService', await prizePool.yieldService(), wallet)
-    timelock = await buidler.ethers.getContractAt('Timelock', await env.registry.getInterfaceImplementer(prizePool.address, TIMELOCK_INTERFACE_HASH), wallet)
+    moduleManager = await buidler.ethers.getContractAt('OwnableModuleManager', singleRandomWinnerCreatedEvent.moduleManager, wallet)
+
+    prizePool = await buidler.ethers.getContractAt('PeriodicPrizePool', await env.registry.getInterfaceImplementer(moduleManager.address, PRIZE_POOL_INTERFACE_HASH), wallet)
+    ticket = await buidler.ethers.getContractAt('Ticket', await env.registry.getInterfaceImplementer(moduleManager.address, TICKET_INTERFACE_HASH), wallet)
+    yieldService = await buidler.ethers.getContractAt('Timelock', await env.registry.getInterfaceImplementer(moduleManager.address, YIELD_SERVICE_INTERFACE_HASH), wallet)
+    timelock = await buidler.ethers.getContractAt('Timelock', await env.registry.getInterfaceImplementer(moduleManager.address, TIMELOCK_INTERFACE_HASH), wallet)
 
     debug({ ticket: ticket.address, prizePool: prizePool.address })
 

@@ -3,30 +3,19 @@ pragma solidity ^0.6.4;
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/ERC777.sol";
 
-import "../token/Meta777.sol";
 import "./LoyaltyInterface.sol";
-import "../../base/NamedModule.sol";
+import "../../token/TokenModule.sol";
 import "../../Constants.sol";
 
 // solium-disable security/no-block-members
-contract Loyalty is LoyaltyInterface, Meta777, NamedModule {
+contract Loyalty is TokenModule, LoyaltyInterface {
   using SafeMath for uint256;
 
   uint256 public collateral;
 
   uint256 internal constant INITIAL_EXCHANGE_RATE_MANTISSA = 1 ether;
-
-  function initialize(
-    ModuleManager _manager,
-    string memory name,
-    string memory symbol,
-    address _trustedForwarder
-  ) public virtual initializer {
-    setManager(_manager);
-    enableInterface();
-    super.initialize(name, symbol, _trustedForwarder);
-  }
 
   function hashName() public view override returns (bytes32) {
     return Constants.LOYALTY_INTERFACE_HASH;

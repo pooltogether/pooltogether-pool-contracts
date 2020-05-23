@@ -3,7 +3,6 @@ pragma solidity 0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
@@ -16,7 +15,7 @@ import "./YieldServiceConstants.sol";
  * Wraps a cToken with a principal token.  The principal token represents how much underlying principal a user holds.
  * The interest can be minted as new principal tokens by the allocator.
  */
-contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModule, OwnableUpgradeSafe {
+contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModule {
   using SafeMath for uint256;
 
   event PrincipalSupplied(address operator, address from, uint256 amount);
@@ -35,11 +34,9 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
     ModuleManager _manager,
     CTokenInterface _cToken
   ) external initializer {
-    setManager(_manager);
-    __Ownable_init();
     require(address(_cToken) != address(0), "cToken cannot be zero");
+    NamedModule.construct(_manager, address(0));
     cToken = _cToken;
-    enableInterface();
   }
 
   function balance() public override returns (uint256) {
@@ -53,10 +50,6 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
     } else {
       return 0;
     }
-  }
-
-  function _msgSender() internal override(ContextUpgradeSafe) virtual view returns (address payable) {
-    return msg.sender;
   }
 
   function supply(address from, uint256 amount) external override onlyManagerOrModule {
