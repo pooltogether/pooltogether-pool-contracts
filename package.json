@@ -3,6 +3,9 @@
   "version": "3.0.0-alpha.7",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
+  "bin" : { 
+    "pt-cli" : "./scripts/cli.js"
+  },
   "license": "GPL-3.0",
   "scripts": {
     "test": "buidler test",
@@ -10,9 +13,9 @@
     "start": "buidler node --port $LOCAL_BUIDLEREVM_PORT",
     "coverage": "rm -rf build cache && buidler compile && buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network local",
-    "migrate": "./scripts/migrate.js",
-    "migrate-local": "./scripts/migrate.js start -n local -a $LOCAL_ADMIN_ADDRESS",
-    "migrate-kovan": "./scripts/migrate.js start -n kovan",
+    "migrate": "./scripts/cli.js",
+    "migrate-local": "./scripts/cli.js migrate -n local -a $LOCAL_ADMIN_ADDRESS",
+    "migrate-kovan": "./scripts/cli.js migrate -n kovan",
     "console-kovan": "oz-console -n kovan",
     "session-kovan": "oz session --network kovan --from $ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50",
     "session-local": "oz session --network local --from $LOCAL_ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50",

@@ -6,10 +6,6 @@ const { runShell } = require('./runShell')
 
 const { buildContext } = require('oz-console')
 
-const ProjectFile = require('@openzeppelin/cli/lib/models/files/ProjectFile').default
-const NetworkFile = require('@openzeppelin/cli/lib/models/files/NetworkFile').default
-const ConfigManager = require("@openzeppelin/cli/lib/models/config/ConfigManager").default
-
 const program = new commander.Command()
 program.description('Deploys the PoolTogether smart contracts')
 program.option('-n --network [network]', 'configure OpenZeppelin network', 'kovan')
@@ -17,7 +13,7 @@ program.option('-a --address [address]', 'configures the address to deploy from'
 program.option('-v --verbose', 'adds verbosity', () => true)
 
 program
-  .command('start')
+  .command('migrate')
   .action(async () => {
     console.log(chalk.dim(`Starting deployment to ${program.network}....`))
 
