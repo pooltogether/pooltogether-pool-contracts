@@ -1,6 +1,6 @@
 {
   "name": "@pooltogether/pooltogether-contracts",
-  "version": "3.0.0-alpha.9",
+  "version": "3.0.0-alpha.10",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
   "bin" : { 
@@ -37,10 +37,6 @@
     "buidler-gas-reporter": "^0.1.3",
     "chai": "^4.2.0",
     "chalk": "^4.0.0",
-    "debug": "^4.1.1",
-    "deploy-eip-1820": "^0.2.0",
-    "ethereum-waffle": "^2.5.1",
-    "ethers": "^4.0.47",
     "oz-console": "^2.0.1",
     "shelljs": "0.8.3",
     "solc": "0.6.4",
@@ -54,6 +50,10 @@
     "@pooltogether/oz-migrate": "^0.2.5",
     "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
     "@resolver-engine/core": "^0.3.3",
-    "sortition-sum-tree-factory": "^0.1.0"
+    "sortition-sum-tree-factory": "^0.1.0",
+    "deploy-eip-1820": "^0.2.0",
+    "ethers": "^4.0.47",
+    "ethereum-waffle": "^2.5.1",
+    "debug": "^4.1.1"
   }
 }
