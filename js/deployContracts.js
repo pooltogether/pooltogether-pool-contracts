@@ -3,7 +3,7 @@ const RNGBlockhash = require('../build/RNGBlockhash.json')
 const Forwarder = require('../build/Forwarder.json')
 const MockGovernor = require('../build/MockGovernor.json')
 const CompoundYieldServiceFactory = require('../build/CompoundYieldServiceFactory.json')
-const OwnableModuleManagerFactory = require('../build/OwnableModuleManagerFactory.json')
+const PrizePoolModuleManagerFactory = require('../build/PrizePoolModuleManagerFactory.json')
 const PrizePoolBuilder = require('../build/PrizePoolBuilder.json')
 const LoyaltyFactory = require('../build/LoyaltyFactory.json')
 const SingleRandomWinnerPrizePoolBuilder = require('../build/SingleRandomWinnerPrizePoolBuilder.json')
@@ -38,9 +38,9 @@ async function deployContracts(wallet, overrides = { gasLimit: 7000000 }) {
 
   let governor = await deployContract(wallet, MockGovernor, [])
 
-  debug('deploying OwnableModuleManagerFactory')
+  debug('deploying PrizePoolModuleManagerFactory')
 
-  let ownableModuleManagerFactory = await deployContract(wallet, OwnableModuleManagerFactory, [])
+  let ownableModuleManagerFactory = await deployContract(wallet, PrizePoolModuleManagerFactory, [])
   await ownableModuleManagerFactory.initialize()
 
   debug('deploying compound yield service factory')

@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/ERC777.sol";
 
 import "./LoyaltyInterface.sol";
-import "../../token/TokenModule.sol";
+import "../../base/TokenModule.sol";
 import "../../Constants.sol";
 
 // solium-disable security/no-block-members

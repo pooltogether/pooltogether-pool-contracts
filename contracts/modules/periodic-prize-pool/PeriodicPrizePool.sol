@@ -11,7 +11,6 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "../../base/OwnableModuleManager.sol";
 import "../yield-service/YieldServiceInterface.sol";
 import "../sponsorship/Sponsorship.sol";
 import "../loyalty/LoyaltyInterface.sol";
@@ -113,10 +112,12 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view override returns (uint256) {
-    return yieldService().estimateAccruedInterestOverBlocks(
+    uint256 remaining = yieldService().estimateAccruedInterestOverBlocks(
       yieldService().accountedBalance(),
       estimateRemainingBlocksToPrize(secondsPerBlockFixedPoint18)
     );
+    uint256 reserveFee = calculateReserveFee(remaining);
+    return remaining.sub(reserveFee);
   }
 
   function estimateRemainingBlocksToPrize(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {

@@ -8,7 +8,7 @@
     "SingleRandomWinnerPrizePoolBuilder": "SingleRandomWinnerPrizePoolBuilder",
     "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory",
     "CompoundYieldServiceFactory": "CompoundYieldServiceFactory",
-    "OwnableModuleManagerFactory": "OwnableModuleManagerFactory",
+    "PrizePoolModuleManagerFactory": "PrizePoolModuleManagerFactory",
     "LoyaltyFactory": "LoyaltyFactory",
     "TimelockFactory": "TimelockFactory",
     "SponsorshipFactory": "SponsorshipFactory"

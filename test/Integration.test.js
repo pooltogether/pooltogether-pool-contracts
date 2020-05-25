@@ -45,12 +45,12 @@ describe('Integration Test', () => {
     let lastLog = receipt.logs[receipt.logs.length - 1]
     let singleRandomWinnerCreatedEvent = env.singleRandomWinnerPrizePoolBuilder.interface.events.SingleRandomWinnerPrizePoolCreated.decode(lastLog.data, lastLog.topics)
 
-    moduleManager = await buidler.ethers.getContractAt('OwnableModuleManager', singleRandomWinnerCreatedEvent.moduleManager, wallet)
+    moduleManager = await buidler.ethers.getContractAt('PrizePoolModuleManager', singleRandomWinnerCreatedEvent.moduleManager, wallet)
 
-    prizePool = await buidler.ethers.getContractAt('PeriodicPrizePool', await env.registry.getInterfaceImplementer(moduleManager.address, PRIZE_POOL_INTERFACE_HASH), wallet)
-    ticket = await buidler.ethers.getContractAt('Ticket', await env.registry.getInterfaceImplementer(moduleManager.address, TICKET_INTERFACE_HASH), wallet)
-    yieldService = await buidler.ethers.getContractAt('Timelock', await env.registry.getInterfaceImplementer(moduleManager.address, YIELD_SERVICE_INTERFACE_HASH), wallet)
-    timelock = await buidler.ethers.getContractAt('Timelock', await env.registry.getInterfaceImplementer(moduleManager.address, TIMELOCK_INTERFACE_HASH), wallet)
+    prizePool = await buidler.ethers.getContractAt('PeriodicPrizePool', await moduleManager.prizePool(), wallet)
+    ticket = await buidler.ethers.getContractAt('Ticket', await moduleManager.ticket(), wallet)
+    yieldService = await buidler.ethers.getContractAt('Timelock', await moduleManager.yieldService(), wallet)
+    timelock = await buidler.ethers.getContractAt('Timelock', await moduleManager.timelock(), wallet)
 
     debug({ ticket: ticket.address, prizePool: prizePool.address })
 

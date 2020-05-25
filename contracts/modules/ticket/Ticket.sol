@@ -9,7 +9,7 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../../Constants.sol";
-import "../../token/TokenModule.sol";
+import "../../base/TokenModule.sol";
 import "../timelock/Timelock.sol";
 import "../loyalty/Loyalty.sol";
 import "../periodic-prize-pool/PeriodicPrizePoolInterface.sol";

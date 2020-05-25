@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "../../token/TokenModule.sol";
+import "../../base/TokenModule.sol";
 import "../../Constants.sol";
 import "../yield-service/YieldServiceInterface.sol";
 

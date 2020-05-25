@@ -3,7 +3,7 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 
-import "../base/OwnableModuleManagerFactory.sol";
+import "../module-manager/PrizePoolModuleManagerFactory.sol";
 import "../modules/timelock/TimelockFactory.sol";
 import "../modules/sponsorship/SponsorshipFactory.sol";
 import "../modules/loyalty/LoyaltyFactory.sol";
@@ -20,7 +20,7 @@ contract PrizePoolBuilder is Initializable {
     address indexed prizeStrategy
   );
 
-  OwnableModuleManagerFactory public ownableModuleManagerFactory;
+  PrizePoolModuleManagerFactory public prizePoolModuleManagerFactory;
   GovernorInterface public governor;
   CompoundYieldServiceFactory public compoundYieldServiceFactory;
   PeriodicPrizePoolFactory public periodicPrizePoolFactory;
@@ -32,7 +32,7 @@ contract PrizePoolBuilder is Initializable {
   address public trustedForwarder;
 
   function initialize (
-    OwnableModuleManagerFactory _ownableModuleManagerFactory,
+    PrizePoolModuleManagerFactory _prizePoolModuleManagerFactory,
     GovernorInterface _governor,
     CompoundYieldServiceFactory _compoundYieldServiceFactory,
     PeriodicPrizePoolFactory _periodicPrizePoolFactory,
@@ -43,7 +43,7 @@ contract PrizePoolBuilder is Initializable {
     RNGInterface _rng,
     address _trustedForwarder
   ) public initializer {
-    require(address(_ownableModuleManagerFactory) != address(0), "module factory cannot be zero");
+    require(address(_prizePoolModuleManagerFactory) != address(0), "module factory cannot be zero");
     require(address(_governor) != address(0), "governor cannot be zero");
     require(address(_compoundYieldServiceFactory) != address(0), "interest pool factory is not defined");
     require(address(_periodicPrizePoolFactory) != address(0), "prize pool factory is not defined");
@@ -52,7 +52,7 @@ contract PrizePoolBuilder is Initializable {
     require(address(_sponsorshipFactory) != address(0), "sponsorship factory cannot be zero");
     require(address(_timelockFactory) != address(0), "controlled token factory cannot be zero");
     require(address(_loyaltyFactory) != address(0), "loyalty factory is not zero");
-    ownableModuleManagerFactory = _ownableModuleManagerFactory;
+    prizePoolModuleManagerFactory = _prizePoolModuleManagerFactory;
     governor = _governor;
     compoundYieldServiceFactory = _compoundYieldServiceFactory;
     periodicPrizePoolFactory = _periodicPrizePoolFactory;
@@ -65,19 +65,19 @@ contract PrizePoolBuilder is Initializable {
   }
 
   function createPeriodicPrizePool(
-    CTokenInterface cToken,
+    CTokenInterface _cToken,
     PrizeStrategyInterface _prizeStrategy,
-    uint256 prizePeriodSeconds,
+    uint256 _prizePeriodSeconds,
     string memory _ticketName,
     string memory _ticketSymbol,
     string memory _sponsorshipName,
     string memory _sponsorshipSymbol
-  ) public returns (OwnableModuleManager) {
-    OwnableModuleManager manager = ownableModuleManagerFactory.createOwnableModuleManager();
+  ) public returns (PrizePoolModuleManager) {
+    PrizePoolModuleManager manager = prizePoolModuleManagerFactory.createPrizePoolModuleManager();
     manager.initialize(trustedForwarder);
 
-    createPeriodicPrizePoolModule(manager, _prizeStrategy, prizePeriodSeconds);
-    createCompoundYieldServiceModule(manager, cToken);
+    createPeriodicPrizePoolModule(manager, _prizeStrategy, _prizePeriodSeconds);
+    createCompoundYieldServiceModule(manager, _cToken);
     createLoyaltyModule(manager);
     createTimelockModule(manager);
     createTicketModule(manager, _ticketName, _ticketSymbol);

@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../../Constants.sol";
-import "../../token/TokenModule.sol";
+import "../../base/TokenModule.sol";
 
 // solium-disable security/no-block-members
 contract Sponsorship is TokenModule {

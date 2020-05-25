@@ -52,7 +52,7 @@ program
     }
 
     await migration.migrate(10, async () => {
-      runShell(`oz create OwnableModuleManagerFactory --force ${flags} --init initialize`)
+      runShell(`oz create PrizePoolModuleManagerFactory --force ${flags} --init initialize`)
     })
 
     await migration.migrate(15, async () => {
@@ -80,7 +80,7 @@ program
     })
 
     await migration.migrate(57, async () => {
-      runShell(`oz create OwnableModuleManagerFactory --force ${flags} --init initialize`)
+      runShell(`oz create PrizePoolModuleManagerFactory --force ${flags} --init initialize`)
     })
 
     await migration.migrate(58, async () => {
@@ -93,7 +93,7 @@ program
 
     context = await buildContext({ network: program.network, address: program.address })
     const { 
-      OwnableModuleManagerFactory,
+      PrizePoolModuleManagerFactory,
       CompoundYieldServiceFactory,
       PeriodicPrizePoolFactory,
       TicketFactory,
@@ -106,7 +106,7 @@ program
 
     /*
     console.log({
-      OwnableModuleManagerFactory: OwnableModuleManagerFactory.address,
+      PrizePoolModuleManagerFactory: PrizePoolModuleManagerFactory.address,
       CompoundYieldServiceFactory: CompoundYieldServiceFactory.address,
       PeriodicPrizePoolFactory: PeriodicPrizePoolFactory.address,
       TicketFactory: TicketFactory.address,
@@ -119,7 +119,7 @@ program
     */
 
     await migration.migrate(60, async () => {
-      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${OwnableModuleManagerFactory.address},${governor},${CompoundYieldServiceFactory.address},${PeriodicPrizePoolFactory.address},${TicketFactory.address},${TimelockFactory.address},${SponsorshipFactory.address},${LoyaltyFactory.address},${RNGBlockhash.address},${trustedForwarder}`)
+      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${PrizePoolModuleManagerFactory.address},${governor},${CompoundYieldServiceFactory.address},${PeriodicPrizePoolFactory.address},${TicketFactory.address},${TimelockFactory.address},${SponsorshipFactory.address},${LoyaltyFactory.address},${RNGBlockhash.address},${trustedForwarder}`)
     })
 
     context = await buildContext({ network: program.network, address: program.address })
