@@ -7,7 +7,11 @@
     "RNGBlockhash": "RNGBlockhash",
     "SingleRandomWinnerPrizePoolBuilder": "SingleRandomWinnerPrizePoolBuilder",
     "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory",
-    "CompoundYieldServiceFactory": "CompoundYieldServiceFactory"
+    "CompoundYieldServiceFactory": "CompoundYieldServiceFactory",
+    "OwnableModuleManagerFactory": "OwnableModuleManagerFactory",
+    "LoyaltyFactory": "LoyaltyFactory",
+    "TimelockFactory": "TimelockFactory",
+    "SponsorshipFactory": "SponsorshipFactory"
   },
   "dependencies": {},
   "name": "PoolTogether3",

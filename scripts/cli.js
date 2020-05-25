@@ -35,15 +35,27 @@ program
       }
     })
 
-    let trustedForwarder
+    await migration.migrate(7, async () => {
+      if (program.network == 'local') {
+        runShell(`oz deploy -n ${program.network} -k regular MockGovernor`)
+      }
+    })
+
+    let trustedForwarder, governor
     if (program.network == 'kovan') {
       trustedForwarder = '0x6453D37248Ab2C16eBd1A8f782a2CBC65860E60B'
+      governor = '0x2f935900D89b0815256a3f2c4c69e1a0230b5860'
     } else {
       context = await buildContext({ network: program.network, address: program.address })
       trustedForwarder = context.networkFile.data.proxies['PoolTogether3/Forwarder'][0].address
+      governor = context.networkFile.data.proxies['PoolTogether3/MockGovernor'][0].address
     }
 
     await migration.migrate(10, async () => {
+      runShell(`oz create OwnableModuleManagerFactory --force ${flags} --init initialize`)
+    })
+
+    await migration.migrate(15, async () => {
       runShell(`oz create CompoundYieldServiceFactory --force ${flags} --init initialize`)
     })
 
@@ -67,18 +79,47 @@ program
       runShell(`oz create RNGBlockhash --force ${flags}`)
     })
 
+    await migration.migrate(57, async () => {
+      runShell(`oz create OwnableModuleManagerFactory --force ${flags} --init initialize`)
+    })
+
+    await migration.migrate(58, async () => {
+      runShell(`oz create TimelockFactory --force ${flags} --init initialize`)
+    })
+
+    await migration.migrate(59, async () => {
+      runShell(`oz create SponsorshipFactory --force ${flags} --init initialize`)
+    })
+
     context = await buildContext({ network: program.network, address: program.address })
     const { 
+      OwnableModuleManagerFactory,
       CompoundYieldServiceFactory,
       PeriodicPrizePoolFactory,
       TicketFactory,
+      TimelockFactory,
+      SponsorshipFactory,
       LoyaltyFactory,
       SingleRandomWinnerPrizeStrategyFactory,
       RNGBlockhash
     } = context.contracts
 
+    /*
+    console.log({
+      OwnableModuleManagerFactory: OwnableModuleManagerFactory.address,
+      CompoundYieldServiceFactory: CompoundYieldServiceFactory.address,
+      PeriodicPrizePoolFactory: PeriodicPrizePoolFactory.address,
+      TicketFactory: TicketFactory.address,
+      LoyaltyFactory: LoyaltyFactory.address,
+      SingleRandomWinnerPrizeStrategyFactory: SingleRandomWinnerPrizeStrategyFactory.address,
+      governor
+    })
+
+    throw new Error('wtf mate')
+    */
+
     await migration.migrate(60, async () => {
-      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${CompoundYieldServiceFactory.address},${PeriodicPrizePoolFactory.address},${TicketFactory.address},${LoyaltyFactory.address},${RNGBlockhash.address},${trustedForwarder}`)
+      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${OwnableModuleManagerFactory.address},${governor},${CompoundYieldServiceFactory.address},${PeriodicPrizePoolFactory.address},${TicketFactory.address},${TimelockFactory.address},${SponsorshipFactory.address},${LoyaltyFactory.address},${RNGBlockhash.address},${trustedForwarder}`)
     })
 
     context = await buildContext({ network: program.network, address: program.address })

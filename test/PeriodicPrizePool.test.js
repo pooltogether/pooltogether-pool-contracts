@@ -5,7 +5,10 @@ const buidler = require('./helpers/buidler')
 const { deployContracts } = require('../js/deployContracts')
 const {
   SPONSORSHIP_INTERFACE_HASH,
-  TIMELOCK_INTERFACE_HASH
+  TIMELOCK_INTERFACE_HASH,
+  TICKET_INTERFACE_HASH,
+  YIELD_SERVICE_INTERFACE_HASH,
+  PRIZE_POOL_INTERFACE_HASH
 } = require('../js/constants')
 
 const toWei = ethers.utils.parseEther
@@ -64,11 +67,15 @@ describe('PeriodicPrizePool contract', () => {
     let tx = await env.singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(env.cToken.address, 10, 'Ticket', 'TICK', 'Sponsorship', 'SPON')
     let events = await getEvents(env.prizePoolBuilder, tx.hash)
     let prizePoolCreatedEvent = events.find(event => event && event.name == 'PrizePoolCreated')
-    prizePool = await buidler.ethers.getContractAt('PeriodicPrizePool', prizePoolCreatedEvent.values.prizePool, wallet)
-    ticket = await buidler.ethers.getContractAt('Ticket', prizePoolCreatedEvent.values.ticket, wallet)
-    yieldService = await buidler.ethers.getContractAt('CompoundYieldService', prizePoolCreatedEvent.values.yieldService, wallet)
-    timelock = await buidler.ethers.getContractAt('Timelock', await env.registry.getInterfaceImplementer(prizePool.address, TIMELOCK_INTERFACE_HASH), wallet)
-    sponsorship = await buidler.ethers.getContractAt('Sponsorship', await env.registry.getInterfaceImplementer(prizePool.address, SPONSORSHIP_INTERFACE_HASH), wallet)
+    
+    let moduleManager = prizePoolCreatedEvent.values.moduleManager
+
+    prizePool = await buidler.ethers.getContractAt('PeriodicPrizePool', await env.registry.getInterfaceImplementer(moduleManager, PRIZE_POOL_INTERFACE_HASH), wallet)
+    ticket = await buidler.ethers.getContractAt('Ticket', await env.registry.getInterfaceImplementer(moduleManager, TICKET_INTERFACE_HASH), wallet)
+    yieldService = await buidler.ethers.getContractAt('CompoundYieldService', await env.registry.getInterfaceImplementer(moduleManager, YIELD_SERVICE_INTERFACE_HASH), wallet)
+
+    timelock = await buidler.ethers.getContractAt('Timelock', await env.registry.getInterfaceImplementer(moduleManager, TIMELOCK_INTERFACE_HASH), wallet)
+    sponsorship = await buidler.ethers.getContractAt('Sponsorship', await env.registry.getInterfaceImplementer(moduleManager, SPONSORSHIP_INTERFACE_HASH), wallet)
 
     await increaseTime(10)
     await prizePool.startAward()

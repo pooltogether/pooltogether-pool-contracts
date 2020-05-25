@@ -52,8 +52,6 @@ describe('CompoundYieldService contract', () => {
       moduleManager.address,
       cToken.address
     )
-
-    debug({ owner: await yieldService.owner(), wallet: wallet._address });
     
     expect(await moduleManager.isModuleEnabled(yieldService.address)).to.be.true
 

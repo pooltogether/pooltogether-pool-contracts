@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../../base/OwnableModuleManager.sol";
@@ -17,7 +18,6 @@ import "../loyalty/LoyaltyInterface.sol";
 import "./PeriodicPrizePoolInterface.sol";
 import "../../prize-strategy/PrizeStrategyInterface.sol";
 import "../../rng/RNGInterface.sol";
-import "../../governance/ProtocolGovernor.sol";
 import "../../Constants.sol";
 
 /* solium-disable security/no-block-members */
@@ -25,7 +25,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   using SafeMath for uint256;
 
   PrizeStrategyInterface public override prizeStrategy;
-  ProtocolGovernor governor;
+  GovernorInterface governor;
   RNGInterface public rng;
   uint256 public override prizePeriodStartedAt;
   uint256 public override prizePeriodSeconds;
@@ -38,7 +38,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   function initialize (
     ModuleManager _manager,
     address _trustedForwarder,
-    ProtocolGovernor _governor,
+    GovernorInterface _governor,
     PrizeStrategyInterface _prizeStrategy,
     RNGInterface _rng,
     uint256 _prizePeriodSeconds

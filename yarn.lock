@@ -693,6 +693,11 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-ethereum-package/-/contracts-ethereum-package-3.0.0.tgz#d5db971a177c3b37733db2ee4ebdb79c67575d64"
   integrity sha512-Xg33RtX7FGbSK/YnroLhcGNAvH30/C84NRW8KvbSdXXYiLA8YqM1bOA9sAeLjmQxXqYUn/YL4AUVTgDnG51NOw==
 
+"@openzeppelin/contracts@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.0.1.tgz#2f327f77d16b43f14674086b2b634bda38cb0838"
+  integrity sha512-uSrD7hZ0ViuHGqHZbeHawZBi/uy7aBiNramXAt2dFFuSuoU4u9insS3V3zdVfOnYSPreUo636xSOuQIFN4//HA==
+
 "@openzeppelin/fuzzy-solidity-import-parser@^0.1.2":
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/fuzzy-solidity-import-parser/-/fuzzy-solidity-import-parser-0.1.2.tgz#3b9f524d6028ca73df60474a313e0295e5610c51"
@@ -741,6 +746,17 @@
   integrity sha512-pIzkVRYbPx2Alh2uQzNipm3Re0xzUgJ7mPBp+JAk+knfWZdxtjglRDF6ant17I84jKcp0sTtgI6c8hLK1Z/Qqw==
   dependencies:
     "@openzeppelin/contracts-ethereum-package" "^3.0.0"
+
+"@pooltogether/governor-contracts@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@pooltogether/governor-contracts/-/governor-contracts-0.1.1.tgz#49b7243ad292de083eef3ff03c77cf1fcd682de5"
+  integrity sha512-5LPfZ0SHzC/H0cOk/bannXOGjGq3egZjPXE2Xw4bvNHTV0JmVrmFuqzcxaYUT6bJDPzfvbj0BKrVtJqm9PtG+Q==
+  dependencies:
+    "@openzeppelin/contracts" "^3.0.1"
+    "@pooltogether/oz-migrate" "^0.2.5"
+    debug "^4.1.1"
+    ethereum-waffle "^2.5.1"
+    ethers "^4.0.47"
 
 "@pooltogether/oz-migrate@^0.2.5":
   version "0.2.5"

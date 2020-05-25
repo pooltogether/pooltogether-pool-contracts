@@ -1,7 +1,7 @@
 const PeriodicPrizePoolFactory = require('../build/PeriodicPrizePoolFactory.json')
 const RNGBlockhash = require('../build/RNGBlockhash.json')
 const Forwarder = require('../build/Forwarder.json')
-const ProtocolGovernor = require('../build/ProtocolGovernor.json')
+const MockGovernor = require('../build/MockGovernor.json')
 const CompoundYieldServiceFactory = require('../build/CompoundYieldServiceFactory.json')
 const OwnableModuleManagerFactory = require('../build/OwnableModuleManagerFactory.json')
 const PrizePoolBuilder = require('../build/PrizePoolBuilder.json')
@@ -36,8 +36,7 @@ async function deployContracts(wallet, overrides = { gasLimit: 7000000 }) {
 
   debug('deploying protocol governor...')
 
-  let protocolGovernor = await deployContract(wallet, ProtocolGovernor, [])
-  await protocolGovernor.initialize('0', ZERO_ADDRESS)
+  let governor = await deployContract(wallet, MockGovernor, [])
 
   debug('deploying OwnableModuleManagerFactory')
 
@@ -84,7 +83,7 @@ async function deployContracts(wallet, overrides = { gasLimit: 7000000 }) {
   let prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [])
   await prizePoolBuilder.initialize(
     ownableModuleManagerFactory.address,
-    protocolGovernor.address,
+    governor.address,
     yieldServiceFactory.address,
     prizePoolFactory.address,
     ticketFactory.address,
@@ -103,13 +102,15 @@ async function deployContracts(wallet, overrides = { gasLimit: 7000000 }) {
     prizeStrategyFactory.address
   )
 
+  debug('deployContracts complete!')
+
   return {
     rng,
     registry,
     forwarder,
     token,
     cToken,
-    protocolGovernor,
+    governor,
     ownableModuleManagerFactory,
     yieldServiceFactory,
     prizePoolFactory,

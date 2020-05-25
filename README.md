@@ -40,7 +40,7 @@ let contracts = await deployContracts(signer)
   forwarder: A OpenGSN TrustedForwarder instance
   token: An ERC20Mintable asset token
   cToken: A Mock Compount cToken for the asset
-  protocolGovernor: A ProtocolGovernor instance
+  governor: A Mock governor instance
   ownableModuleManagerFactory: factory 
   yieldServiceFactory: factory
   prizePoolFactory: factory

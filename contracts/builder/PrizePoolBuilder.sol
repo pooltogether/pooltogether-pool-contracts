@@ -1,6 +1,7 @@
 pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 
 import "../base/OwnableModuleManagerFactory.sol";
 import "../modules/timelock/TimelockFactory.sol";
@@ -20,7 +21,7 @@ contract PrizePoolBuilder is Initializable {
   );
 
   OwnableModuleManagerFactory public ownableModuleManagerFactory;
-  ProtocolGovernor public governor;
+  GovernorInterface public governor;
   CompoundYieldServiceFactory public compoundYieldServiceFactory;
   PeriodicPrizePoolFactory public periodicPrizePoolFactory;
   TicketFactory public ticketFactory;
@@ -32,7 +33,7 @@ contract PrizePoolBuilder is Initializable {
 
   function initialize (
     OwnableModuleManagerFactory _ownableModuleManagerFactory,
-    ProtocolGovernor _governor,
+    GovernorInterface _governor,
     CompoundYieldServiceFactory _compoundYieldServiceFactory,
     PeriodicPrizePoolFactory _periodicPrizePoolFactory,
     TicketFactory _ticketFactory,

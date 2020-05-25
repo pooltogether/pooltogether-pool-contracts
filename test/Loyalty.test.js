@@ -31,7 +31,7 @@ describe('Loyalty contract', function() {
     loyalty = await deployContract(wallet, Loyalty, [])
     await moduleManager.enableModule(loyalty.address)
     debug('initializing...')
-    await loyalty['initialize(address,string,string,address)'](moduleManager.address, "", "", forwarder.address)
+    await loyalty['initialize(address,address,string,string)'](moduleManager.address, forwarder.address, "", "")
 
     // add wallet as module for privileged interactions
     await moduleManager.enableModule(wallet._address)
