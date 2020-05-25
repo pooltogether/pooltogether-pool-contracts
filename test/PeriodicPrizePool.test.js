@@ -2,7 +2,7 @@ const { expect } = require('chai')
 const { ethers } = require('./helpers/ethers')
 const { increaseTime } = require('./helpers/increaseTime')
 const buidler = require('./helpers/buidler')
-const { deployContracts } = require('./helpers/deployContracts')
+const { deployContracts } = require('../js/deployContracts')
 const {
   SPONSORSHIP_INTERFACE_HASH,
   TIMELOCK_INTERFACE_HASH

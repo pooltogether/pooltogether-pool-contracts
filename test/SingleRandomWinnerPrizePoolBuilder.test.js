@@ -1,5 +1,5 @@
 const { expect } = require('chai')
-const { deployContracts } = require('./helpers/deployContracts')
+const { deployContracts } = require('../js/deployContracts')
 const buidler = require('./helpers/buidler')
 
 const debug = require('debug')('ptv3:SingleRandomWinnerPrizePoolBuilder.test')

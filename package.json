@@ -24,7 +24,7 @@
     "clean": "rm -rf build cache abis",
     "verify-kovan": "oz verify -n kovan --remote etherscan --api-key $ETHERSCAN_API_KEY",
     "clean-local": "rm -f .oz-migrate/dev-31337; rm -f .openzeppelin/dev-31337.json",
-    "prepack": "rm -rf build cache && oz compile && truffle-extract -o abis",
+    "prepack": "rm -rf build cache && buidler compile && truffle-extract -b build -o abis",
     "postpublish": "PACKAGE_VERSION=$(./scripts/package-version.sh) && git tag -ae v$PACKAGE_VERSION && git push --tags"
   },
   "devDependencies": {

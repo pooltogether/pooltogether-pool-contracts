@@ -1,4 +1,4 @@
-const { deployContracts } = require('./helpers/deployContracts')
+const { deployContracts } = require('../js/deployContracts')
 const { expect } = require('chai')
 const { increaseTime } = require('./helpers/increaseTime')
 const { ethers } = require('./helpers/ethers')

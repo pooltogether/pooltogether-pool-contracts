@@ -6,3 +6,4 @@ node_modules
 scripts
 /test
 utils
+build/contracts

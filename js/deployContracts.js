@@ -1,32 +1,27 @@
-const PeriodicPrizePoolFactory = require('../../build/PeriodicPrizePoolFactory.json')
-const RNGBlockhash = require('../../build/RNGBlockhash.json')
-const Forwarder = require('../../build/Forwarder.json')
-const ProtocolGovernor = require('../../build/ProtocolGovernor.json')
-const CompoundYieldServiceFactory = require('../../build/CompoundYieldServiceFactory.json')
-const OwnableModuleManagerFactory = require('../../build/OwnableModuleManagerFactory.json')
-const PrizePoolBuilder = require('../../build/PrizePoolBuilder.json')
-const LoyaltyFactory = require('../../build/LoyaltyFactory.json')
-const SingleRandomWinnerPrizePoolBuilder = require('../../build/SingleRandomWinnerPrizePoolBuilder.json')
-const TicketFactory = require('../../build/TicketFactory.json')
-const SponsorshipFactory = require('../../build/SponsorshipFactory.json')
-const TimelockFactory = require('../../build/TimelockFactory.json')
-const SingleRandomWinnerPrizeStrategyFactory = require('../../build/SingleRandomWinnerPrizeStrategyFactory.json')
-const CTokenMock = require('../../build/CTokenMock.json')
-const ERC20Mintable = require('../../build/ERC20Mintable.json')
+const PeriodicPrizePoolFactory = require('../build/PeriodicPrizePoolFactory.json')
+const RNGBlockhash = require('../build/RNGBlockhash.json')
+const Forwarder = require('../build/Forwarder.json')
+const ProtocolGovernor = require('../build/ProtocolGovernor.json')
+const CompoundYieldServiceFactory = require('../build/CompoundYieldServiceFactory.json')
+const OwnableModuleManagerFactory = require('../build/OwnableModuleManagerFactory.json')
+const PrizePoolBuilder = require('../build/PrizePoolBuilder.json')
+const LoyaltyFactory = require('../build/LoyaltyFactory.json')
+const SingleRandomWinnerPrizePoolBuilder = require('../build/SingleRandomWinnerPrizePoolBuilder.json')
+const TicketFactory = require('../build/TicketFactory.json')
+const SponsorshipFactory = require('../build/SponsorshipFactory.json')
+const TimelockFactory = require('../build/TimelockFactory.json')
+const SingleRandomWinnerPrizeStrategyFactory = require('../build/SingleRandomWinnerPrizeStrategyFactory.json')
+const CTokenMock = require('../build/CTokenMock.json')
+const ERC20Mintable = require('../build/ERC20Mintable.json')
 
-const buidler = require('./buidler')
 const { deploy1820 } = require('deploy-eip-1820')
 const { deployContract } = require('ethereum-waffle')
 
 const debug = require('debug')('ptv3:deployContracts')
 
-const overrides = { gasLimit: 20000000 }
-
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-async function deployContracts(wallet) {
-  provider = buidler.ethers.provider
-
+async function deployContracts(wallet, overrides = { gasLimit: 7000000 }) {
   let registry = await deploy1820(wallet)
 
   debug('beforeEach deploy rng, forwarder etc...')
