@@ -1,7 +1,7 @@
 const { deployMockContract } = require('ethereum-waffle')
 const {
   ACCEPT_MAGIC
-} = require('../../js/constants')
+} = require('./constants')
 
 let overrides = { gasLimit: 20000000 }
 

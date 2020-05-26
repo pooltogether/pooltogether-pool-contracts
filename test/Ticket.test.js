@@ -4,7 +4,7 @@ const TicketHarness = require('../build/TicketHarness.json')
 const PeriodicPrizePool = require('../build/PeriodicPrizePool.json')
 const Timelock = require('../build/Timelock.json')
 const IERC20 = require('../build/IERC20.json')
-const { deployMockModule } = require('./helpers/deployMockModule')
+const { deployMockModule } = require('../js/deployMockModule')
 const Loyalty = require('../build/Loyalty.json')
 const CompoundYieldService = require('../build/CompoundYieldService.json')
 const {
