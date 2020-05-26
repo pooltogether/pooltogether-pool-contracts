@@ -3,6 +3,7 @@ const commander = require('commander');
 const chalk = require('chalk')
 const { Project } = require('@pooltogether/oz-migrate')
 const { runShell } = require('./runShell')
+const { deploy1820 } = require('deploy-eip-1820')
 
 const { buildContext } = require('oz-console')
 
@@ -28,6 +29,13 @@ program
     if (program.verbose) {
       flags = '-v'
     }
+
+    await migration.migrate(2, async () => {
+      if (program.network == 'local') {
+        console.log(chalk.dim('Deploying ERC1820 Registry...'))
+        await deploy1820(context.signer)        
+      }
+    })
 
     await migration.migrate(5, async () => {
       if (program.network == 'local') {
