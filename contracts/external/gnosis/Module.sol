@@ -5,14 +5,8 @@ import "./ModuleManager.sol";
 contract Module {
     ModuleManager public manager;
 
-    modifier onlyManager() virtual {
+    modifier authorized() virtual {
         require(msg.sender == address(manager), "Method can only be called from manager");
-        _;
-    }
-
-    modifier onlyManagerOrModule() virtual {
-        bool isModule = manager.isModuleEnabled(Module(msg.sender));
-        require(isModule || msg.sender == address(manager), "Method can only be called from manager or module");
         _;
     }
 
@@ -23,6 +17,7 @@ contract Module {
         // manager can only be 0 at initalization of contract.
         // Check ensures that setup function can only be called once.
         require(address(manager) == address(0), "Manager has already been set");
+        require(address(_manager) != address(0), "Manager is zero");
         // console.log("Module#setManager setting...");
         manager = _manager;
     }
