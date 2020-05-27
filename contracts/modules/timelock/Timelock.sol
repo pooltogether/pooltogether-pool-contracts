@@ -21,9 +21,10 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
     ModuleManager _manager,
     address _trustedForwarder,
     string memory _name,
-    string memory _symbol
+    string memory _symbol,
+    address[] memory defaultOperators
   ) public override initializer {
-    TokenModule.initialize(_manager, _trustedForwarder, _name, _symbol);
+    TokenModule.initialize(_manager, _trustedForwarder, _name, _symbol, defaultOperators);
     __ReentrancyGuard_init();
   }
 
@@ -65,12 +66,12 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
     }
   }
 
-  function mint(address to, uint256 amount, uint256 unlockTimestamp) external onlyManagerOrModule {
+  function mintTo(address to, uint256 amount, uint256 unlockTimestamp) external onlyManagerOrModule {
     _mint(to, amount, "", "");
     unlockTimestamps[to] = unlockTimestamp;
   }
 
-  function burn(address from, uint256 amount) external onlyManagerOrModule {
+  function burnFrom(address from, uint256 amount) external onlyManagerOrModule {
     _burn(from, amount, "", "");
   }
 

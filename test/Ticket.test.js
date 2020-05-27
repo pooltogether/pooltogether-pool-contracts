@@ -22,20 +22,22 @@ const buidler = require('./helpers/buidler')
 
 const toWei = ethers.utils.parseEther
 
-const debug = require('debug')('ptv3:Loyalty.test')
+const debug = require('debug')('ptv3:Ticket.test')
 
 const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
 let overrides = { gasLimit: 20000000 }
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
-describe('Loyalty contract', function() {
+describe('Ticket contract', function() {
 
   let ticket
 
   let wallet
 
   let registry, prizePool, loyalty, yieldService, manager
+
+  let lastTxTimestamp
 
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
@@ -69,7 +71,9 @@ describe('Loyalty contract', function() {
     token = await deployMockContract(wallet, IERC20.abi, overrides)
 
     ticket = await deployContract(wallet, TicketHarness, [], overrides)
-    await manager.enableModule(ticket.address)
+    let tx = await manager.enableModule(ticket.address)
+    let block = await buidler.ethers.provider.getBlock(tx.blockNumber)
+    lastTxTimestamp = block.timestamp
 
     await yieldService.mock.token.returns(token.address)
     await token.mock.approve.returns(true)
@@ -126,78 +130,95 @@ describe('Loyalty contract', function() {
     })
   })
 
-  // describe('redeemTicketsWithTimelock()', () => {
-  //   it('should lock the users funds', async () => {
-  //     debug('minting tickets...')
-  //     await token.approve(ticket.address, toWei('10'))
-  //     await ticket.mintTickets(toWei('10'))
+  describe('redeemTicketsWithTimelock()', () => {
+    it('should lock the users funds', async () => {
+      await ticket.mint(wallet._address, toWei('10'))
 
-  //     let startedAt = await prizePool.prizePeriodStartedAt()
-  //     const unlockTimestamp = startedAt.toNumber() + 10
-  //     expect(await prizePool.prizePeriodEndAt()).to.equal(unlockTimestamp)
+      // unlock timestamp is in future
+      let unlockTimestamp = lastTxTimestamp + 100
+      await prizePool.mock.calculateUnlockTimestamp.returns(unlockTimestamp)
+      // current timelocked balance is zero
+      await timelock.mock.balanceOf.withArgs(wallet._address).returns('0')
 
-  //     let testTimestamp = await prizePool.calculateUnlockTimestamp(wallet._address, toWei('10'));
+      // expect a mint on the timelock
+      await timelock.mock.mintTo.withArgs(wallet._address, toWei('10'), unlockTimestamp).returns()
 
-  //     expect(testTimestamp).to.equal(unlockTimestamp)
+      await ticket.redeemTicketsWithTimelock(toWei('10'))
 
-  //     debug('redeem tickets with timelock...')
+      expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
+    })
 
-  //     await ticket.redeemTicketsWithTimelock(toWei('10'))
+    it('should lock even if there is an existing timelock balance', async () => {
+      await ticket.mint(wallet._address, toWei('10'))
 
-  //     // Tickets are burned
-  //     expect(await ticket.balanceOf(wallet._address)).to.equal('0')
-      
-  //     debug('check timelock...', timelock.address)
+      // unlock timestamp is in future
+      let unlockTimestamp = lastTxTimestamp + 100
+      await prizePool.mock.calculateUnlockTimestamp.returns(unlockTimestamp)
+      // current timelocked balance is non-zero, and still locked
+      await timelock.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
+      await timelock.mock.balanceAvailableAt.withArgs(wallet._address).returns(unlockTimestamp)
 
-  //     // Locked balance is recorded
-  //     expect(await timelock.balanceAvailableAt(wallet._address)).to.equal(unlockTimestamp)
-  //     expect(await timelock.balanceOf(wallet._address)).to.equal(toWei('10'))
-  //   })
+      // expect a mint on the timelock
+      await timelock.mock.mintTo.withArgs(wallet._address, toWei('10'), unlockTimestamp).returns()
 
-  //   it('should instantly redeem funds if unlockBlock is now or in the past', async () => {
-  //     await token.approve(ticket.address, toWei('10'))
-  //     let tx = await ticket.mintTickets(toWei('10'))
+      await ticket.redeemTicketsWithTimelock(toWei('10'))
 
-  //     // way beyond prize end
-  //     await increaseTime(20)
+      expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
+    })
 
-  //     let userBalance = await token.balanceOf(wallet._address)
-  //     tx = await ticket.redeemTicketsWithTimelock(toWei('4'))
-  //     // Tickets are transferred
-  //     expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('4'))
-  //     expect(await timelock.balanceOf(wallet._address)).to.equal('0')
-  //     expect(await timelock.balanceAvailableAt(wallet._address)).to.equal('0')
-  //   })
+    it('should sweep existing timelock balance if it can be redeemed', async () => {
+      await ticket.mint(wallet._address, toWei('10'))
 
-  //   it('should sweep old locked deposits', async () => {
-  //     // create tickets
-  //     await token.approve(ticket.address, toWei('10'))
-  //     await ticket.mintTickets(toWei('10'))
+      let address = ethers.utils.getAddress(wallet._address)
 
-  //     // mark balance less tickets
-  //     let userBalance = await token.balanceOf(wallet._address)
+      // unlock timestamp is in future
+      let unlockTimestamp = lastTxTimestamp + 100
+      await prizePool.mock.calculateUnlockTimestamp.returns(unlockTimestamp)
 
-  //     // now redeem tickets
-  //     await ticket.redeemTicketsWithTimelock(toWei('4'))
+      // current timelocked balance is non-zero, and still locked
+      await timelock.mock.balanceOf.withArgs(wallet._address).returns(toWei('43'))
+      await timelock.mock.balanceAvailableAt.withArgs(wallet._address).returns(lastTxTimestamp)
 
-  //     // tickets should be burned
-  //     expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('6'))
-    
-  //     // now let's progress time so that the previous funds are unlocked
-  //     await increaseTime(20)
+      debug({ timelock: timelock.mock })
 
-  //     // redeem again
-  //     await ticket.redeemTicketsWithTimelock(toWei('6'))
+      // expect a timelock burn
+      await timelock.mock.burnFrom.withArgs(wallet._address, toWei('43')).returns()
 
-  //     // Remaining tickets are burned
-  //     expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
+      // expect a mint on the timelock
+      await timelock.mock.mintTo.withArgs(address, toWei('10'), unlockTimestamp).returns()
 
-  //     // All tokens should have been transferred
-  //     expect((await token.balanceOf(wallet._address)).sub(userBalance)).to.equal(toWei('10'))
+      // expect a sweep of the old funds
+      await yieldService.mock.redeem.withArgs(wallet._address, toWei('43')).returns()
 
-  //     // Locked balance is recorded
-  //     expect(await timelock.balanceOf(wallet._address)).to.equal(toWei('0'))
-  //   })
-  // })
+      await ticket.redeemTicketsWithTimelock(toWei('10'))
 
+      expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
+    })
+
+    it('should instantly redeem funds if unlockBlock is now or in the past', async () => {
+      await ticket.mint(wallet._address, toWei('10'))
+
+      // unlock timestamp is in past
+      await prizePool.mock.calculateUnlockTimestamp.returns(lastTxTimestamp)
+
+      // Ticket queries the timelock
+      await timelock.mock.balanceOf.withArgs(wallet._address).returns(toWei('43'))
+      await timelock.mock.balanceAvailableAt.withArgs(wallet._address).returns(lastTxTimestamp)
+
+      // The timelocked tokens are burned
+      await timelock.mock.burnFrom.withArgs(wallet._address, toWei('43')).returns()
+
+      // The total funds are swept
+      await yieldService.mock.redeem.withArgs(wallet._address, toWei('53')).returns()
+
+      await ticket.redeemTicketsWithTimelock(toWei('10'))
+
+      expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
+    })
+
+    it('should not allow a user to redeem more than they have', async () => {
+      await ticket.mint(wallet._address, toWei('10'))
+      await expect(ticket.redeemTicketsWithTimelock(toWei('20'))).to.be.revertedWith('Insufficient balance')
+    })
+  })
 });

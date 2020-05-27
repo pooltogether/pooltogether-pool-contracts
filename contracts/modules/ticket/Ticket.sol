@@ -31,9 +31,10 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
     ModuleManager _manager,
     address _trustedForwarder,
     string memory _name,
-    string memory _symbol
+    string memory _symbol,
+    address[] memory defaultOperators
   ) public override initializer {
-    TokenModule.initialize(_manager, _trustedForwarder, _name, _symbol);
+    TokenModule.initialize(_manager, _trustedForwarder, _name, _symbol, defaultOperators);
     __ReentrancyGuard_init();
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
     yieldService = YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
@@ -55,7 +56,7 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
 
   function mintTicketsWithTimelock(uint256 amount) external {
     // Subtract timelocked funds
-    getTimelock().burn(_msgSender(), amount);
+    getTimelock().burnFrom(_msgSender(), amount);
 
     // Mint tickets
     _mint(_msgSender(), amount, "", "");
@@ -115,6 +116,7 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   function redeemTicketsWithTimelock(uint256 tickets) external nonReentrant returns (uint256) {
     // burn the tickets
     address sender = _msgSender();
+    require(balanceOf(sender) >= tickets, "Insufficient balance");
     _burn(sender, tickets, "", "");
 
     uint256 unlockTimestamp = prizePool().calculateUnlockTimestamp(sender, tickets);
@@ -126,14 +128,14 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
     uint256 balance = timelock.balanceOf(sender);
     if (balance > 0 && timelock.balanceAvailableAt(sender) <= block.timestamp) {
       transferChange = balance;
-      timelock.burn(sender, balance);
+      timelock.burnFrom(sender, balance);
       // console.log("burning timelock");
     }
 
     // if we are locking these funds for the future
     if (unlockTimestamp > block.timestamp) {
       // time lock new tokens
-      timelock.mint(sender, tickets, unlockTimestamp);
+      timelock.mintTo(sender, tickets, unlockTimestamp);
       // console.log("minting timelock %s %s", tickets, unlockTimestamp);
     } else { // add funds to change
       transferChange = transferChange.add(tickets);
