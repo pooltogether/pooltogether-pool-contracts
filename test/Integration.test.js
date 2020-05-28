@@ -61,7 +61,7 @@ describe('Integration Test', () => {
     it('should support timelocked withdrawals', async () => {
       debug('Minting tickets...')
       await token.approve(ticket.address, toWei('100'))
-      await ticket.mintTickets(toWei('100'))
+      await ticket.mintTickets(toWei('100'), [])
       await cToken.accrueCustom(toWei('22'))
 
       debug('First award...')
@@ -83,7 +83,7 @@ describe('Integration Test', () => {
 
       debug('Redeem tickets with timelock...')
 
-      await ticket.redeemTicketsWithTimelock(toWei('122'))
+      await ticket.redeemTicketsWithTimelock(toWei('122'), [])
 
       debug('Second award...')
 
@@ -103,7 +103,7 @@ describe('Integration Test', () => {
     it('should support instant redemption', async () => {
       debug('Minting tickets...')
       await token.approve(ticket.address, toWei('100'))
-      await ticket.mintTickets(toWei('100'))
+      await ticket.mintTickets(toWei('100'), [])
 
       debug('accruing...')
 
@@ -113,7 +113,7 @@ describe('Integration Test', () => {
 
       let balanceBeforeWithdrawal = await token.balanceOf(wallet._address)
 
-      await ticket.redeemTicketsInstantly(toWei('100'))
+      await ticket.redeemTicketsInstantly(toWei('100'), [])
 
       let balanceAfterWithdrawal = await token.balanceOf(wallet._address)
 
@@ -124,7 +124,7 @@ describe('Integration Test', () => {
     it('should take a fee when instantly redeeming after a prize', async () => {
       debug('Minting tickets...')
       await token.approve(ticket.address, toWei('100'))
-      await ticket.mintTickets(toWei('100'))
+      await ticket.mintTickets(toWei('100'), [])
       await cToken.accrueCustom(toWei('22'))
 
       await increaseTime(10)
@@ -133,7 +133,7 @@ describe('Integration Test', () => {
 
       let balanceBeforeWithdrawal = await token.balanceOf(wallet._address)
 
-      await ticket.redeemTicketsInstantly(toWei('100'))
+      await ticket.redeemTicketsInstantly(toWei('100'), [])
 
       let balanceAfterWithdrawal = await token.balanceOf(wallet._address)
 

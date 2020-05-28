@@ -93,7 +93,7 @@ describe('PeriodicPrizePool contract', () => {
   describe('currentPrize()', () => {
     it('should return the available interest from the prize pool', async () => {
       await token.approve(ticket.address, toWei('10'))
-      await ticket.mintTickets(toWei('10'))
+      await ticket.mintTickets(toWei('10'), [])
       await env.cToken.accrueCustom(toWei('100'))
       expect(await prizePoolCurrentPrize(prizePool)).to.equal(toWei('100'))
     })
@@ -104,13 +104,13 @@ describe('PeriodicPrizePool contract', () => {
       debug('minting tickets...')
       // deposit
       await token.approve(ticket.address, toWei('4'))
-      await ticket.mintTickets(toWei('4'))
+      await ticket.mintTickets(toWei('4'), [])
 
       let userBalance = await token.balanceOf(wallet._address)
 
       debug('redeem with timelock...')
 
-      await ticket.redeemTicketsWithTimelock(toWei('4'))
+      await ticket.redeemTicketsWithTimelock(toWei('4'), [])
 
       let availAt = await timelock.balanceAvailableAt(wallet._address)
       let startTime = await prizePool.prizePeriodStartedAt()
@@ -156,7 +156,7 @@ describe('PeriodicPrizePool contract', () => {
     it('should calculate', async () => {
       // create tickets
       await token.approve(ticket.address, toWei('10'))
-      await ticket.mintTickets(toWei('10'))
+      await ticket.mintTickets(toWei('10'), [])
 
       // create a prize
       await env.cToken.accrueCustom(toWei('1'))
@@ -204,7 +204,7 @@ describe('PeriodicPrizePool contract', () => {
   describe('estimatePrize()', () => {
     it('should calculate the prize', async () => {
       await token.approve(ticket.address, toWei('10'))
-      await ticket.mintTickets(toWei('10'))
+      await ticket.mintTickets(toWei('10'), [])
 
       // supply rate is 0.01 
       // remaining time is 10 seconds
@@ -241,7 +241,7 @@ describe('PeriodicPrizePool contract', () => {
     it('should draw a winner and allocate prize', async () => {
       // ensure the wallet can be selected by depositing
       await token.approve(ticket.address, toWei('10'))
-      await ticket.mintTickets(toWei('10'))
+      await ticket.mintTickets(toWei('10'), [])
 
       await env.cToken.accrueCustom(toWei('10'))
 

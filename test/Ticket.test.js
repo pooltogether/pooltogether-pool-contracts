@@ -100,10 +100,12 @@ describe('Ticket contract', function() {
       let amount = toWei('10')
 
       await token.mock.transferFrom.withArgs(wallet._address, ticket.address, amount).returns(true)
+      await token.mock.allowance.returns(0)
+      await token.mock.approve.returns(true)
       await yieldService.mock.supply.withArgs(ticket.address, amount).returns()
       await loyalty.mock.supply.withArgs(wallet._address, amount).returns()
 
-      await ticket.mintTickets(toWei('10'))
+      await ticket.mintTickets(toWei('10'), [])
 
       expect(await ticket.balanceOf(wallet._address)).to.equal(amount)
     })
@@ -113,11 +115,13 @@ describe('Ticket contract', function() {
     it('should create tickets', async () => {
       let amount = toWei('10')
 
+      await token.mock.allowance.returns(0)
+      await token.mock.approve.returns(true)
       await token.mock.transferFrom.withArgs(wallet._address, ticket.address, amount).returns(true)
       await yieldService.mock.supply.withArgs(ticket.address, amount).returns()
       await loyalty.mock.supply.withArgs(wallet2._address, amount).returns()
 
-      await ticket.operatorMintTickets(wallet2._address, toWei('10'))
+      await ticket.operatorMintTickets(wallet2._address, toWei('10'), [], [])
 
       expect(await ticket.balanceOf(wallet._address)).to.equal('0')
       expect(await ticket.balanceOf(wallet2._address)).to.equal(amount)
@@ -143,7 +147,7 @@ describe('Ticket contract', function() {
       // expect a mint on the timelock
       await timelock.mock.mintTo.withArgs(wallet._address, toWei('10'), unlockTimestamp).returns()
 
-      await ticket.redeemTicketsWithTimelock(toWei('10'))
+      await ticket.redeemTicketsWithTimelock(toWei('10'), [])
 
       expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
     })
@@ -161,7 +165,7 @@ describe('Ticket contract', function() {
       // expect a mint on the timelock
       await timelock.mock.mintTo.withArgs(wallet._address, toWei('10'), unlockTimestamp).returns()
 
-      await ticket.redeemTicketsWithTimelock(toWei('10'))
+      await ticket.redeemTicketsWithTimelock(toWei('10'), [])
 
       expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
     })
@@ -190,7 +194,7 @@ describe('Ticket contract', function() {
       // expect a sweep of the old funds
       await yieldService.mock.redeem.withArgs(wallet._address, toWei('43')).returns()
 
-      await ticket.redeemTicketsWithTimelock(toWei('10'))
+      await ticket.redeemTicketsWithTimelock(toWei('10'), [])
 
       expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
     })
@@ -211,14 +215,14 @@ describe('Ticket contract', function() {
       // The total funds are swept
       await yieldService.mock.redeem.withArgs(wallet._address, toWei('53')).returns()
 
-      await ticket.redeemTicketsWithTimelock(toWei('10'))
+      await ticket.redeemTicketsWithTimelock(toWei('10'), [])
 
       expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
     })
 
     it('should not allow a user to redeem more than they have', async () => {
       await ticket.mint(wallet._address, toWei('10'))
-      await expect(ticket.redeemTicketsWithTimelock(toWei('20'))).to.be.revertedWith('Insufficient balance')
+      await expect(ticket.redeemTicketsWithTimelock(toWei('20'), [])).to.be.revertedWith('Insufficient balance')
     })
   })
 });

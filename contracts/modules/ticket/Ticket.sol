@@ -24,6 +24,24 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   bytes32 constant private TREE_KEY = keccak256("PoolTogether/Ticket");
   uint256 constant private MAX_TREE_LEAVES = 5;
 
+  event TicketsRedeemedWithTimelock(
+    address indexed operator,
+    address indexed from,
+    uint256 tickets,
+    uint256 unlockTimestamp,
+    bytes data,
+    bytes operatorData
+  );
+
+  event TicketsRedeemedInstantly(
+    address indexed operator,
+    address indexed from,
+    uint256 tickets,
+    uint256 exitFee,
+    bytes data,
+    bytes operatorData
+  );
+
   YieldServiceInterface yieldService;
   Loyalty loyalty;
 
@@ -39,34 +57,26 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
     yieldService = YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
     loyalty = Loyalty(getInterfaceImplementer(Constants.LOYALTY_INTERFACE_HASH));
-    yieldService.token().approve(address(yieldService), uint(-1));
   }
 
   function hashName() public view override returns (bytes32) {
     return Constants.TICKET_INTERFACE_HASH;
   }
 
-  function mintTickets(uint256 amount) external nonReentrant {
-    _supplyAndMint(_msgSender(), amount);
+  function mintTickets(uint256 amount, bytes calldata data) external nonReentrant {
+    _supplyAndMint(_msgSender(), amount, data, "");
   }
 
-  function operatorMintTickets(address to, uint256 amount) external nonReentrant {
-    _supplyAndMint(to, amount);
+  function operatorMintTickets(address to, uint256 amount, bytes calldata data, bytes calldata operatorData) external nonReentrant {
+    _supplyAndMint(to, amount, data, operatorData);
   }
 
-  function mintTicketsWithTimelock(uint256 amount) external {
-    // Subtract timelocked funds
-    getTimelock().burnFrom(_msgSender(), amount);
-
-    // Mint tickets
-    _mint(_msgSender(), amount, "", "");
-  }
-
-  function _supplyAndMint(address to, uint256 amount) internal {
+  function _supplyAndMint(address to, uint256 amount, bytes memory data, bytes memory operatorData) internal {
     yieldService.token().transferFrom(_msgSender(), address(this), amount);
+    ensureYieldServiceApproved(amount);
     yieldService.supply(address(this), amount);
     // Mint tickets
-    _mint(to, amount, "", "");
+    _mint(to, amount, data, operatorData);
     loyalty.supply(to, amount);
   }
 
@@ -94,28 +104,79 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
     }
   }
 
-  function redeemTicketsInstantly(uint256 tickets) external nonReentrant returns (uint256) {
-    uint256 exitFee = prizePool().calculateExitFee(_msgSender(), tickets);
+  function operatorRedeemTicketsInstantly(
+    address from,
+    uint256 tickets,
+    bytes calldata data,
+    bytes calldata operatorData
+  ) external nonReentrant onlyOperator(from) returns (uint256) {
+    uint256 exitFee = prizePool().calculateExitFee(from, tickets);
+
+    // transfer the fee to this contract
+    yieldService.token().transferFrom(_msgSender(), address(this), exitFee);
 
     // burn the tickets
     _burn(_msgSender(), tickets, "", "");
     // burn the loyalty
     loyalty.redeem(_msgSender(), tickets);
 
-    // redeem the collateral
-    yieldService.redeem(address(this), tickets);
+    // redeem the tickets less the fee
+    yieldService.redeem(address(this), tickets.sub(exitFee));
 
-    // transfer tickets less fee
-    uint256 balance = tickets.sub(exitFee);
-    IERC20(yieldService.token()).transfer(_msgSender(), balance);
+    // transfer tickets
+    IERC20(yieldService.token()).transfer(from, tickets);
 
-    // return the amount that was transferred
-    return balance;
+    emit TicketsRedeemedInstantly(_msgSender(), from, tickets, exitFee, data, operatorData);
+
+    // return the exit fee
+    return exitFee;
   }
 
-  function redeemTicketsWithTimelock(uint256 tickets) external nonReentrant returns (uint256) {
-    // burn the tickets
+  function redeemTicketsInstantly(uint256 tickets, bytes calldata data) external nonReentrant returns (uint256) {
     address sender = _msgSender();
+    uint256 exitFee = prizePool().calculateExitFee(sender, tickets);
+
+    // burn the tickets
+    _burn(sender, tickets, "", "");
+    // burn the loyalty
+    loyalty.redeem(sender, tickets);
+
+    uint256 ticketsLessFee = tickets.sub(exitFee);
+
+    // redeem the collateral less the fee
+    yieldService.redeem(address(this), ticketsLessFee);
+
+    // transfer tickets less fee
+    IERC20(yieldService.token()).transfer(sender, ticketsLessFee);
+
+    emit TicketsRedeemedInstantly(sender, sender, tickets, exitFee, data, "");
+
+    // return the exit fee
+    return exitFee;
+  }
+
+  function operatorRedeemTicketsWithTimelock(
+    address from,
+    uint256 tickets,
+    bytes calldata data,
+    bytes calldata operatorData
+  ) external nonReentrant onlyOperator(from) returns (uint256) {
+    return _redeemTicketsWithTimelock(_msgSender(), from, tickets, data, operatorData);
+  }
+
+  function redeemTicketsWithTimelock(uint256 tickets, bytes calldata data) external nonReentrant returns (uint256) {
+    address sender = _msgSender();
+    return _redeemTicketsWithTimelock(sender, sender, tickets, data, "");
+  }
+
+  function _redeemTicketsWithTimelock(
+    address operator,
+    address sender,
+    uint256 tickets,
+    bytes memory data,
+    bytes memory operatorData
+  ) internal returns (uint256) {
+    // burn the tickets
     require(balanceOf(sender) >= tickets, "Insufficient balance");
     _burn(sender, tickets, "", "");
 
@@ -147,6 +208,8 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
       yieldService.redeem(sender, transferChange);
     }
 
+    emit TicketsRedeemedWithTimelock(operator, sender, tickets, unlockTimestamp, data, operatorData);
+
     // return the block at which the funds will be available
     return unlockTimestamp;
   }
@@ -165,11 +228,23 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
     _mint(to, amount, "", "");
   }
 
+  function ensureYieldServiceApproved(uint256 amount) internal {
+    IERC20 token = yieldService.token();
+    if (token.allowance(address(this), address(yieldService)) < amount) {
+      yieldService.token().approve(address(yieldService), uint(-1));
+    }
+  }
+
   function prizePool() public view returns (PeriodicPrizePoolInterface) {
     return PeriodicPrizePoolInterface(getInterfaceImplementer(Constants.PRIZE_POOL_INTERFACE_HASH));
   }
 
   function getTimelock() public view returns (Timelock) {
     return Timelock(getInterfaceImplementer(Constants.TIMELOCK_INTERFACE_HASH));
+  }
+
+  modifier onlyOperator(address user) {
+    require(isOperatorFor(_msgSender(), user), "ERC777: caller is not an operator for holder");
+    _;
   }
 }
