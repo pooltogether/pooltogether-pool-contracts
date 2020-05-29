@@ -460,10 +460,10 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
-"@nomiclabs/buidler-waffle@^1.3.3":
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/@nomiclabs/buidler-waffle/-/buidler-waffle-1.3.3.tgz#b2914be9ab00e9ba8662cd0923f26130032b41a6"
-  integrity sha512-vQ91z6DmJx3LAW7vyttqBiHVPDpBhxUifM0Xc5+gvRq1JTkL89Q1Lkz1aJuvyJkaWShxq7EYUZIF3SuJNfxK0Q==
+"@nomiclabs/buidler-waffle@^1.3.4":
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/@nomiclabs/buidler-waffle/-/buidler-waffle-1.3.4.tgz#cb4eb17e9c901387e6ac2e33769042734c4b764e"
+  integrity sha512-qRuTb2Iv8ANIuBizvb6XRdBMga34gsX+YkNNOo5L+elk6DSbVHjAoTRp22Ce0/kg4gTzfvcvbegJMSR0K1h2Qg==
   dependencies:
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
@@ -515,10 +515,10 @@
     uuid "^3.3.2"
     ws "^7.2.1"
 
-"@nomiclabs/buidler@^1.3.4":
-  version "1.3.4"
-  resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.3.4.tgz#13b7be82b947997dfac0e5cd5b53ecf6bb4b42d4"
-  integrity sha512-WfYzETXvoVAtmWYIxEcWWxP/hY+qQLFrEs4PtLVu1dX0fZYnhO8RyuK/nLgdeA5tbE+pPZ6rcdh1Kx+P8DTsHQ==
+"@nomiclabs/buidler@^1.3.5":
+  version "1.3.5"
+  resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.3.5.tgz#7d311cdbd8b70f3cb87d65881e704814c5c558a8"
+  integrity sha512-XhVH2ZjhahXLfS16WnTz058OcyqoaK+TD4UON+AiZ5dN9DdBh1A0XQRAg5MNdvVVo8IQZSGZ+Fp0Qde4fgIDKw==
   dependencies:
     "@nomiclabs/ethereumjs-vm" "^4.1.1"
     "@solidity-parser/parser" "^0.5.2"

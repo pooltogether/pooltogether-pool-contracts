@@ -29,6 +29,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   uint256 public override prizePeriodStartedAt;
   uint256 public override prizePeriodSeconds;
   uint256 public previousPrize;
+  uint256 public previousPrizeTicketCount;
   uint256 public feeScaleMantissa;
   uint256 public rngRequestId;
 
@@ -66,10 +67,6 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     return balance.sub(reserveFee);
   }
 
-  function calculateRemainingPreviousPrize() public view override returns (uint256) {
-    return multiplyByRemainingTimeFraction(previousPrize);
-  }
-
   function multiplyByRemainingTimeFraction(uint256 value) public view returns (uint256) {
     return FixedPoint.multiplyUintByMantissa(
       value,
@@ -78,13 +75,62 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function calculateExitFee(address, uint256 tickets) public view override returns (uint256) {
-    uint256 totalSupply = ticket().totalSupply();
-    if (totalSupply == 0) {
+    return scaleValueByTimeRemaining(
+      calculateExitFeeWithValues(tickets, previousPrizeTicketCount, previousPrize),
+      prizePeriodRemainingSeconds(),
+      prizePeriodSeconds
+    );
+  }
+
+  function calculateExitFeeWithValues(
+    uint256 _tickets,
+    uint256 _previousPrizeTicketCount,
+    uint256 _previousPrize
+  ) public view returns (uint256) {
+    // if there was nothing previously, skip it
+    if (_previousPrize == 0 || _previousPrizeTicketCount == 0) {
       return 0;
     }
+
+    // Fair fee equation:
+    // (their tickets / total tickets at prize time) = exitFee / (exitFee + prize)
+    // Let's assume ticketFraction = (their tickets / total tickets at prize time)
+    // Equation is now:
+    // ticketFraction = exitFee / (exitFee + prize)
+
+    // Solve for exitFee:
+    // ticketFraction = exitFee / (exitFee + prize)
+    // ticketFraction * exitFee + ticketFraction * prize = exitFee
+    // ticketFraction * prize = exitFee - ticketFraction * exitFee
+    // ticketFraction * prize = exitFee(1 - ticketfraction)
+    // (ticketFraction * prize) / (1 - ticketfraction) = exitFee
+
+    uint256 ticketsLimited = _tickets > _previousPrizeTicketCount ? _previousPrizeTicketCount : _tickets;
+    uint256 ticketFractionMantissa = FixedPoint.calculateMantissa(ticketsLimited, _previousPrizeTicketCount);
+    if (ticketFractionMantissa == 1 ether) {
+      return 0;
+    }
+
+    console.log("_tickets: %s, _prevTickets: %s", _tickets, _previousPrizeTicketCount);
+    console.log("ticketsLImited: %s", ticketsLimited);
+    console.log("mantissa: %s", ticketFractionMantissa);
+
+    // calculate the exit fee
+    uint256 exitFee = FixedPoint.divideUintByMantissa(
+      FixedPoint.multiplyUintByMantissa(_previousPrize, ticketFractionMantissa),
+      uint256(1 ether).sub(ticketFractionMantissa)
+    );
+
+    return exitFee > _previousPrize ? _previousPrize : exitFee;
+  }
+
+  function scaleValueByTimeRemaining(uint256 _value, uint256 _timeRemainingSeconds, uint256 _prizePeriodSeconds) public pure returns (uint256) {
     return FixedPoint.multiplyUintByMantissa(
-      calculateRemainingPreviousPrize(),
-      FixedPoint.calculateMantissa(tickets, totalSupply)
+      _value,
+      FixedPoint.calculateMantissa(
+        _timeRemainingSeconds < _prizePeriodSeconds ? _timeRemainingSeconds : _prizePeriodSeconds,
+        _prizePeriodSeconds
+      )
     );
   }
 
@@ -183,6 +229,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
 
     previousPrize = prize;
+    previousPrizeTicketCount = ticket().totalSupply();
     rngRequestId = 0;
   }
 

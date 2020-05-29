@@ -10,6 +10,10 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol
  */
 contract ERC20Mintable is ERC20UpgradeSafe {
 
+    constructor () public {
+        __ERC20_init("token", "TOKE");
+    }
+
     /**
      * @dev See {ERC20-_mint}.
      *

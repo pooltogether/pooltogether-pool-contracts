@@ -99,6 +99,32 @@ describe('PeriodicPrizePool contract', () => {
     })
   })
 
+  describe('calculateExitFeeWithValues()', () => {
+    it('should maximize the fee when the user has half the total tickets', async () => {
+      expect(await prizePool.calculateExitFeeWithValues(
+        500,
+        1000,
+        toWei('1000')
+      )).to.equal(toWei('1000'))
+    })
+
+    it('should have a zero fee when user has no tickets', async () => {
+      expect(await prizePool.calculateExitFeeWithValues(
+        0,
+        1000,
+        toWei('1000')
+      )).to.equal(toWei('0'))
+    })
+
+    it('should have a zero fee when the user has all of the tickets', async () => {
+      expect(await prizePool.calculateExitFeeWithValues(
+        1000,
+        1000,
+        toWei('1000')
+      )).to.equal(toWei('0'))
+    })
+  })
+
   describe('sweepTimelock()', () => {
     it('should return any timelocked funds that are now open', async () => {
       debug('minting tickets...')
