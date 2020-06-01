@@ -1,5 +1,5 @@
 # PoolTogether Prize Savings Protocol
-
+i
 The [PoolTogether](https://www.pooltogether.com/) Prize Savings Protocol Ethereum smart contracts.
 
 See the [API documentation](https://docs.pooltogether.com/)
