@@ -12,3 +12,4 @@ coverage.json
 .openzeppelin/.session
 .oz-migrate/dev-*
 abis
+test-results.xml

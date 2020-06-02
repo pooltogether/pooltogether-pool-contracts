@@ -26,16 +26,15 @@ module.exports = {
   networks: {
     buidlerevm: {
       blockGasLimit: 200000000,
-      gas: 200000000,
       allowUnlimitedContractSize: true
     },
     coverage: {
       url: 'http://127.0.0.1:8555',
-      gas: 200000000
+      blockGasLimit: 200000000,
+      allowUnlimitedContractSize: true
     },
     local: {
       url: 'http://127.0.0.1:' + process.env.LOCAL_BUIDLEREVM_PORT || '8545',
-      gas: 200000000,
       blockGasLimit: 200000000
     }
   },

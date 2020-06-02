@@ -22,65 +22,65 @@ const debug = require('debug')('ptv3:deployContracts')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-async function deployContracts(wallet, overrides = { gasLimit: 7000000 }) {
+async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
   let registry = await deploy1820(wallet)
 
   debug('beforeEach deploy rng, forwarder etc...')
 
-  let rng = await deployContract(wallet, RNGBlockhash, [])
-  let forwarder = await deployContract(wallet, Forwarder, [])
-  let token = await deployContract(wallet, ERC20Mintable, [])
+  let rng = await deployContract(wallet, RNGBlockhash, [], overrides)
+  let forwarder = await deployContract(wallet, Forwarder, [], overrides)
+  let token = await deployContract(wallet, ERC20Mintable, [], overrides)
   let cToken = await deployContract(wallet, CTokenMock, [
     token.address, ethers.utils.parseEther('0.01')
-  ])
+  ], overrides)
 
   debug('deploying protocol governor...')
 
-  let governor = await deployContract(wallet, MockGovernor, [])
+  let governor = await deployContract(wallet, MockGovernor, [], overrides)
 
   debug('deploying PrizePoolModuleManagerFactory')
 
-  let ownableModuleManagerFactory = await deployContract(wallet, PrizePoolModuleManagerFactory, [])
-  await ownableModuleManagerFactory.initialize()
+  let ownableModuleManagerFactory = await deployContract(wallet, PrizePoolModuleManagerFactory, [], overrides)
+  await ownableModuleManagerFactory.initialize(overrides)
 
   debug('deploying compound yield service factory')
 
-  let yieldServiceFactory = await deployContract(wallet, CompoundYieldServiceFactory, [])
-  await yieldServiceFactory.initialize()
+  let yieldServiceFactory = await deployContract(wallet, CompoundYieldServiceFactory, [], overrides)
+  await yieldServiceFactory.initialize(overrides)
 
   debug('deploying prize pool factory')
 
   let prizePoolFactory = await deployContract(wallet, PeriodicPrizePoolFactory, [], overrides)
-  await prizePoolFactory.initialize()
+  await prizePoolFactory.initialize(overrides)
 
   debug('deployed timelock factory')
 
-  let timelockFactory = await deployContract(wallet, TimelockFactory, [])
-  await timelockFactory.initialize()
+  let timelockFactory = await deployContract(wallet, TimelockFactory, [], overrides)
+  await timelockFactory.initialize(overrides)
   
   debug('deployed ticket factory')
 
   let ticketFactory = await deployContract(wallet, TicketFactory, [], overrides)
-  await ticketFactory.initialize()
+  await ticketFactory.initialize(overrides)
   
   debug('deploying prize strategy factory')
 
-  let prizeStrategyFactory = await deployContract(wallet, SingleRandomWinnerPrizeStrategyFactory, [])
-  await prizeStrategyFactory.initialize()
+  let prizeStrategyFactory = await deployContract(wallet, SingleRandomWinnerPrizeStrategyFactory, [], overrides)
+  await prizeStrategyFactory.initialize(overrides)
   
   debug('deploying loyalty factory')
 
-  let loyaltyFactory = await deployContract(wallet, LoyaltyFactory, [])
-  await loyaltyFactory.initialize()
+  let loyaltyFactory = await deployContract(wallet, LoyaltyFactory, [], overrides)
+  await loyaltyFactory.initialize(overrides)
 
   debug('deploying sponsorship factory')
 
-  let sponsorshipFactory = await deployContract(wallet, SponsorshipFactory, [])
-  await sponsorshipFactory.initialize()
+  let sponsorshipFactory = await deployContract(wallet, SponsorshipFactory, [], overrides)
+  await sponsorshipFactory.initialize(overrides)
 
   debug('deploying prize pool builder')
 
-  let prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [])
+  let prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [], overrides)
   await prizePoolBuilder.initialize(
     ownableModuleManagerFactory.address,
     governor.address,
@@ -91,15 +91,17 @@ async function deployContracts(wallet, overrides = { gasLimit: 7000000 }) {
     sponsorshipFactory.address,
     loyaltyFactory.address,
     rng.address,
-    forwarder.address
+    forwarder.address,
+    overrides
   )
   
   debug('deploying single random winner prize pool builder')
 
-  let singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [])
+  let singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [], overrides)
   await singleRandomWinnerPrizePoolBuilder.initialize(
     prizePoolBuilder.address,
-    prizeStrategyFactory.address
+    prizeStrategyFactory.address,
+    overrides
   )
 
   debug('deployContracts complete!')
