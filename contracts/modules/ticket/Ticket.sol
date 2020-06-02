@@ -93,6 +93,8 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   }
 
   function _beforeTokenTransfer(address operator, address from, address to, uint256 tokenAmount) internal virtual override {
+    loyalty.transferUnderlying(from, to, tokenAmount);
+
     if (from != address(0)) {
       uint256 fromBalance = balanceOf(from);
       sortitionSumTrees.set(TREE_KEY, fromBalance.sub(tokenAmount), bytes32(uint256(from)));

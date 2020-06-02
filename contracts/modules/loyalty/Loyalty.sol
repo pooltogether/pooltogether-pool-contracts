@@ -47,6 +47,21 @@ contract Loyalty is TokenModule, LoyaltyInterface {
     _burn(from, tokens, "", "");
   }
 
+  function transferUnderlying(
+    address from,
+    address to,
+    uint256 amount
+  ) external onlyManagerOrModule {
+    uint256 tokens = FixedPoint.divideUintByMantissa(amount, exchangeRateMantissa());
+    if (to == address(0)) {
+      _burn(from, tokens, "", "");
+    } else if (from == address(0)) {
+      _mint(to, tokens, "", "");
+    } else {
+      _send(from, to, tokens, "", "", true);
+    }
+  }
+
   function exchangeRateMantissa() public view override returns (uint256) {
     if (totalSupply() == 0) {
       return INITIAL_EXCHANGE_RATE_MANTISSA;

@@ -7,6 +7,7 @@ import "@nomiclabs/buidler/console.sol";
 
 import "../../Constants.sol";
 import "../../base/TokenModule.sol";
+import "../loyalty/Loyalty.sol";
 
 // solium-disable security/no-block-members
 contract Sponsorship is TokenModule {
@@ -27,6 +28,7 @@ contract Sponsorship is TokenModule {
     uint256 amount
   ) external virtual onlyManagerOrModule {
     _mint(account, amount, "", "");
+    loyalty().supply(account, amount);
   }
 
   function burn(
@@ -34,6 +36,15 @@ contract Sponsorship is TokenModule {
     uint256 amount
   ) external virtual onlyManagerOrModule {
     _burn(from, amount, "", "");
+    loyalty().redeem(from, amount);
+  }
+
+  function _beforeTokenTransfer(address operator, address from, address to, uint256 tokenAmount) internal virtual override {
+    loyalty().transferUnderlying(from, to, tokenAmount);
+  }
+
+  function loyalty() internal view returns (Loyalty) {
+    return Loyalty(getInterfaceImplementer(Constants.LOYALTY_INTERFACE_HASH));
   }
 
   function hashName() public view override returns (bytes32) {
