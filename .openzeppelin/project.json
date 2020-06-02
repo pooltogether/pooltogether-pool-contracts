@@ -5,11 +5,13 @@
     "PrizePoolBuilder": "PrizePoolBuilder",
     "TicketFactory": "TicketFactory",
     "RNGBlockhash": "RNGBlockhash",
-    "ControlledTokenFactory": "ControlledTokenFactory",
     "SingleRandomWinnerPrizePoolBuilder": "SingleRandomWinnerPrizePoolBuilder",
     "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory",
     "CompoundYieldServiceFactory": "CompoundYieldServiceFactory",
-    "CompoundYieldServiceBuilder": "CompoundYieldServiceBuilder"
+    "PrizePoolModuleManagerFactory": "PrizePoolModuleManagerFactory",
+    "LoyaltyFactory": "LoyaltyFactory",
+    "TimelockFactory": "TimelockFactory",
+    "SponsorshipFactory": "SponsorshipFactory"
   },
   "dependencies": {},
   "name": "PoolTogether3",

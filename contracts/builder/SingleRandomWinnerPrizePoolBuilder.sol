@@ -1,11 +1,10 @@
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
-import "../token/ControlledTokenFactory.sol";
 import "../prize-strategy/SingleRandomWinnerPrizeStrategyFactory.sol";
-import "../yield-service/CompoundYieldServiceFactory.sol";
-import "../token/TicketFactory.sol";
+import "../modules/yield-service/CompoundYieldServiceFactory.sol";
+import "../modules/ticket/TicketFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 import "./PrizePoolBuilder.sol";
 
@@ -14,7 +13,11 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
   PrizePoolBuilder public prizePoolBuilder;
   SingleRandomWinnerPrizeStrategyFactory public prizeStrategyFactory;
 
-  event SingleRandomWinnerPrizePoolCreated(address indexed creator, address indexed prizePool, address indexed singleRandomWinnerPrizeStrategy);
+  event SingleRandomWinnerPrizePoolCreated(
+    address indexed creator,
+    address indexed moduleManager,
+    address indexed singleRandomWinnerPrizeStrategy
+  );
 
   function initialize (
     PrizePoolBuilder _prizePoolBuilder,
@@ -36,8 +39,9 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
   ) external returns (SingleRandomWinnerPrizeStrategy) {
 
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
+    prizeStrategy.initialize();
 
-    PrizePool prizePool = prizePoolBuilder.createPeriodicPrizePool(
+    PrizePoolModuleManager manager = prizePoolBuilder.createPeriodicPrizePool(
       cToken,
       prizeStrategy,
       prizePeriodInSeconds,
@@ -47,7 +51,7 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
       _sponsorshipSymbol
     );
 
-    emit SingleRandomWinnerPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit SingleRandomWinnerPrizePoolCreated(msg.sender, address(manager), address(prizeStrategy));
 
     return prizeStrategy;
   }

@@ -1,26 +1,39 @@
 pragma solidity ^0.6.4;
 
-import "../yield-service/YieldServiceInterface.sol";
-import "../token/ControlledToken.sol";
-import "../token/TokenControllerInterface.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
-contract MockYieldService is YieldServiceInterface, TokenControllerInterface {
+import "../modules/yield-service/YieldServiceInterface.sol";
+import "../base/NamedModule.sol";
+
+contract MockYieldService is Initializable, YieldServiceInterface, NamedModule {
 
   uint256 _balanceOf;
-  ControlledToken _token;
+  IERC20 _token;
   uint256 public supplyRatePerBlock;
+  uint256 public override accountedBalance;
 
-  function initialize (ControlledToken token) external {
+  function hashName() public view override returns (bytes32) {
+    return Constants.YIELD_SERVICE_INTERFACE_HASH;
+  }
+
+  function initialize (ModuleManager _manager, IERC20 token) external initializer {
+    setManager(_manager);
     _token = token;
     supplyRatePerBlock = 100 wei;
+    enableInterface();
   }
 
   function setBalanceOf(uint256 amount) external {
     _balanceOf = amount;
   }
 
-  function balanceOf(address) external override returns (uint256) {
+  function balance() external override returns (uint256) {
     return _balanceOf;
+  }
+
+  function unaccountedBalance() external override returns (uint256) {
+    return _balanceOf - accountedBalance;
   }
 
   function estimateAccruedInterestOverBlocks(uint256, uint256) external view override returns (uint256) {
@@ -35,13 +48,23 @@ contract MockYieldService is YieldServiceInterface, TokenControllerInterface {
     return _token;
   }
 
-  function supply(uint256 amount) external override {
-    _token.transferFrom(msg.sender, address(this), amount);
+  function supply(address from, uint256 amount) external override {
+    // first execute transfer from user to the pool
+    bytes memory transferFrom = abi.encodeWithSignature("transferFrom(address,address,uint256)", from, address(manager), amount);
+    manager.execTransactionFromModule(address(_token), 0, transferFrom, Enum.Operation.Call);
+
+    accountedBalance = accountedBalance + amount;
   }
 
-  function redeem(uint256 amount) external override {
-    _token.transfer(msg.sender, amount);
+  function redeem(address to, uint256 amount) external override {
+    // transfer
+    bytes memory transfer = abi.encodeWithSignature("transfer(address,uint256)", to, amount);
+    manager.execTransactionFromModule(address(_token), 0, transfer, Enum.Operation.Call);
+
+    accountedBalance = accountedBalance - amount;
   }
 
-  function beforeTokenTransfer(address from, address to, uint256 tokenAmount) external override {}
+  function capture(uint256 amount) external override {
+    accountedBalance = accountedBalance + amount;
+  }
 }

@@ -1,6 +1,7 @@
 pragma solidity 0.6.4;
 
 interface CTokenInterface {
+    function totalSupply() external view returns (uint256);
     function underlying() external view returns (address);
     function balanceOfUnderlying(address owner) external returns (uint256);
     function supplyRatePerBlock() external returns (uint256);

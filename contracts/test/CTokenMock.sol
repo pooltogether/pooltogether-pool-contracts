@@ -18,12 +18,13 @@ along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity 0.6.4;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@nomiclabs/buidler/console.sol";
 
 import "./ERC20Mintable.sol";
 
-contract CTokenMock is ERC20 {
+contract CTokenMock is ERC20UpgradeSafe {
   mapping(address => uint256) ownerTokenAmounts;
   ERC20Mintable public underlying;
 
@@ -32,7 +33,7 @@ contract CTokenMock is ERC20 {
   constructor (
     ERC20Mintable _token,
     uint256 _supplyRatePerBlock
-  ) public ERC20("", "") {
+  ) public {
     require(address(_token) != address(0), "token is not defined");
     underlying = _token;
     __supplyRatePerBlock = _supplyRatePerBlock;
@@ -41,14 +42,19 @@ contract CTokenMock is ERC20 {
   function mint(uint256 amount) external returns (uint) {
     uint256 newCTokens;
     if (totalSupply() == 0) {
+      // console.log("Supply is zero, new tokens iz %s", amount);
       newCTokens = amount;
     } else {
       // they need to hold the same assets as tokens.
       // Need to calculate the current exchange rate
       uint256 fractionOfCollateral = FixedPoint.calculateMantissa(amount, underlying.balanceOf(address(this)));
       newCTokens = FixedPoint.multiplyUintByMantissa(totalSupply(), fractionOfCollateral);
+      // console.log("Supply exists, new tokens iz %s", newCTokens);
     }
+    // console.log("MINTING %s", newCTokens);
     _mint(msg.sender, newCTokens);
+    // console.log("mint() new supply iz %s", totalSupply());
+    // console.log("CTokenMock this is %s", address(this));
     require(underlying.transferFrom(msg.sender, address(this), amount), "could not transfer tokens");
     return 0;
   }
@@ -70,6 +76,10 @@ contract CTokenMock is ERC20 {
 
   function accrueCustom(uint256 amount) external {
     underlying.mint(address(this), amount);
+  }
+
+  function burn(uint256 amount) external {
+    underlying.burn(address(this), amount);
   }
 
   function cTokenValueOf(uint256 tokens) public view returns (uint256) {
