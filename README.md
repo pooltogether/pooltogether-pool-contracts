@@ -1,6 +1,7 @@
 # PoolTogether Prize Savings Protocol
 
 [![Coverage Status](https://coveralls.io/repos/github/pooltogether/pooltogether-contracts/badge.svg?branch=version-3)](https://coveralls.io/github/pooltogether/pooltogether-contracts?branch=version-3)
+
 [![built-with openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-3677FF)](https://docs.openzeppelin.com/)
 
 The [PoolTogether](https://www.pooltogether.com/) Prize Savings Protocol Ethereum smart contracts.
