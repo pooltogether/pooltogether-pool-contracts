@@ -14,6 +14,8 @@ const toWei = ethers.utils.parseEther
 
 const debug = require('debug')('ptv3:CompoundYieldService.test')
 
+const overrides = { gasLimit: 40000000 }
+
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('CompoundYieldService contract', () => {
   
@@ -27,53 +29,66 @@ describe('CompoundYieldService contract', () => {
   let otherWallet
 
   beforeEach(async () => {
-    [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
+    try {
+      [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
 
-    debug('deploying contracts...')
+      debug('deploying contracts...')
 
-    await deploy1820(wallet)
+      await deploy1820(wallet)
 
-    moduleManager = await deployContract(wallet, ModuleManagerHarness, [])
-    await moduleManager.initialize()
+      moduleManager = await deployContract(wallet, ModuleManagerHarness, [], overrides)
+      await moduleManager.initialize()
 
-    token = await deployContract(wallet, ERC20Mintable, [])
-    cToken = await deployContract(wallet, CTokenMock, [
-      token.address, ethers.utils.parseEther('0.01')
-    ])
-    yieldService = await deployContract(wallet, CompoundYieldService, [])
+      token = await deployContract(wallet, ERC20Mintable, [], overrides)
+      cToken = await deployContract(wallet, CTokenMock, [
+        token.address, ethers.utils.parseEther('0.01')
+      ], overrides)
+      yieldService = await deployContract(wallet, CompoundYieldService, [], overrides)
 
-    debug('enable yield service module...')
+      debug('enable yield service module...')
 
-    await moduleManager.enableModule(yieldService.address)
+      await moduleManager.enableModule(yieldService.address)
 
-    debug('initializing yield service...')
+      debug('initializing yield service...')
 
-    await yieldService.initialize(
-      moduleManager.address,
-      cToken.address
-    )
-    
-    expect(await moduleManager.isModuleEnabled(yieldService.address)).to.be.true
+      await yieldService.initialize(
+        moduleManager.address,
+        cToken.address,
+        overrides
+      )
+      
+      expect(await moduleManager.isModuleEnabled(yieldService.address)).to.be.true
 
-    debug('enable wallet as module...')
+      debug('enable wallet as module...')
 
-    await moduleManager.enableModule(wallet._address)
-    expect(await moduleManager.isModuleEnabled(wallet._address)).to.be.true
-    await token.mint(wallet._address, ethers.utils.parseEther('100000'))
+      await moduleManager.enableModule(wallet._address)
+      expect(await moduleManager.isModuleEnabled(wallet._address)).to.be.true
+
+      debug('minting to wallet...')
+
+      await token.mint(wallet._address, ethers.utils.parseEther('100000'), overrides)
+    } catch (e) {
+      debug('ERRRRROR: ', e)
+    }
   })
 
   describe('initialize()', () => {
     it('should set all the vars', async () => {
+      debug('starting initialize()....')
       expect(await yieldService.cToken()).to.equal(cToken.address)
+      debug('finishing initialize()....')
     })
   })
 
   describe('supply()', () => {
     it('should fail if the user has not approved', async () => {
+      debug('starting supply()....')
       expect(yieldService.supply(wallet._address, toWei('1'))).to.be.revertedWith('ERC20: transfer amount exceeds allowance')
+      debug('finishing supply()....')
     })
 
     it('should give the first depositer tokens at the initial exchange rate', async function () {
+      debug('starting supply() 2....')
       await token.approve(yieldService.address, toWei('1'))
       
       await yieldService.supply(wallet._address, toWei('1'))
@@ -81,11 +96,13 @@ describe('CompoundYieldService contract', () => {
       expect(await balanceOf(cToken, yieldService.address)).to.equal(toWei('1'))
 
       expect(await cToken.totalSupply()).to.equal(toWei('1'))
+      debug('finishing supply() 2....')
     })
   })
 
   describe('redeemUnderlying()', () => {
     it('should allow a user to withdraw their principal', async function () {
+      debug('start redeem underlying....')
       let startBalance = await token.balanceOf(wallet._address)
       await token.approve(yieldService.address, toWei('1'))
       await yieldService.supply(wallet._address, toWei('1'))
@@ -94,12 +111,15 @@ describe('CompoundYieldService contract', () => {
 
       expect(await cToken.balanceOf(wallet._address)).to.equal('0')
       expect(await token.balanceOf(wallet._address)).to.equal(startBalance)
+      debug('finish redeem underlying....')
     })
   })
 
   describe('balance()', () => {
     it('should return zero no deposits have been made', async () => {
+      debug('start balance()')
       expect((await call(yieldService, 'balance')).toString()).to.equal(toWei('0'))
+      debug('finish balance()')
     })
 
     it('should return the balance when a deposit has been made', async function () {

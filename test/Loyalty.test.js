@@ -11,6 +11,8 @@ const toWei = ethers.utils.parseEther
 
 const debug = require('debug')('ptv3:Loyalty.test')
 
+const overrides = { gasLimit: 40000000 }
+
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('Loyalty contract', function() {
 
@@ -25,13 +27,13 @@ describe('Loyalty contract', function() {
   beforeEach(async () => {
     [wallet, otherWallet] = await buidler.ethers.getSigners()
     registry = await deploy1820(wallet)
-    moduleManager = await deployContract(wallet, ModuleManagerHarness, [])
-    await moduleManager.initialize()
-    forwarder = await deployContract(wallet, Forwarder, [])
-    loyalty = await deployContract(wallet, Loyalty, [])
+    moduleManager = await deployContract(wallet, ModuleManagerHarness, [], overrides)
+    await moduleManager.initialize(overrides)
+    forwarder = await deployContract(wallet, Forwarder, [], overrides)
+    loyalty = await deployContract(wallet, Loyalty, [], overrides)
     await moduleManager.enableModule(loyalty.address)
     debug('initializing...')
-    await loyalty['initialize(address,address,string,string)'](moduleManager.address, forwarder.address, "", "")
+    await loyalty['initialize(address,address,string,string)'](moduleManager.address, forwarder.address, "", "", overrides)
 
     // add wallet as module for privileged interactions
     await moduleManager.enableModule(wallet._address)

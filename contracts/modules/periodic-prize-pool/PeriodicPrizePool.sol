@@ -111,9 +111,9 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
       return 0;
     }
 
-    console.log("_tickets: %s, _prevTickets: %s", _tickets, _previousPrizeTicketCount);
-    console.log("ticketsLImited: %s", ticketsLimited);
-    console.log("mantissa: %s", ticketFractionMantissa);
+    // console.log("_tickets: %s, _prevTickets: %s", _tickets, _previousPrizeTicketCount);
+    // console.log("ticketsLImited: %s", ticketsLimited);
+    // console.log("mantissa: %s", ticketFractionMantissa);
 
     // calculate the exit fee
     uint256 exitFee = FixedPoint.divideUintByMantissa(

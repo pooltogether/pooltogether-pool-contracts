@@ -32,6 +32,8 @@ describe('Integration Test', () => {
 
   let overrides = { gasLimit: 40000000 }
 
+  let prizePeriodSeconds = 10
+
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
     provider = buidler.ethers.provider
@@ -40,7 +42,8 @@ describe('Integration Test', () => {
     token = env.token
     cToken = env.cToken
 
-    let tx = await env.singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(cToken.address, 10, 'Ticket', 'TICK', 'Sponsorship', 'SPON', overrides)
+
+    let tx = await env.singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(cToken.address, prizePeriodSeconds, 'Ticket', 'TICK', 'Sponsorship', 'SPON', overrides)
     let receipt = await provider.getTransactionReceipt(tx.hash)
     let lastLog = receipt.logs[receipt.logs.length - 1]
     let singleRandomWinnerCreatedEvent = env.singleRandomWinnerPrizePoolBuilder.interface.events.SingleRandomWinnerPrizePoolCreated.decode(lastLog.data, lastLog.topics)
@@ -57,16 +60,22 @@ describe('Integration Test', () => {
     await token.mint(wallet._address, toWei('1000000'))
   })
 
+  afterEach(function() {
+    if (this.currentTest.state == 'failed') {
+      debug('I FAILED!')
+    }
+  });
+
   describe('Mint tickets', () => {
     it('should support timelocked withdrawals', async () => {
       debug('Minting tickets...')
       await token.approve(ticket.address, toWei('100'))
-      await ticket.mintTickets(toWei('100'), [])
+      await ticket.mintTickets(toWei('100'), [], overrides)
       await cToken.accrueCustom(toWei('22'))
 
       debug('First award...')
 
-      await increaseTime(10)
+      await increaseTime(prizePeriodSeconds * 2)
       
       debug('starting award...')
 
@@ -87,7 +96,7 @@ describe('Integration Test', () => {
 
       debug('Second award...')
 
-      await increaseTime(10)
+      await increaseTime(prizePeriodSeconds * 2)
       await prizePool.startAward()
       await prizePool.completeAward()
 
@@ -103,7 +112,7 @@ describe('Integration Test', () => {
     it('should support instant redemption', async () => {
       debug('Minting tickets...')
       await token.approve(ticket.address, toWei('100'))
-      await ticket.mintTickets(toWei('100'), [])
+      await ticket.mintTickets(toWei('100'), [], overrides)
 
       debug('accruing...')
 
@@ -124,10 +133,10 @@ describe('Integration Test', () => {
     it('should take a fee when instantly redeeming after a prize', async () => {
       debug('Minting tickets...')
       await token.approve(ticket.address, toWei('100'))
-      await ticket.mintTickets(toWei('100'), [])
+      await ticket.mintTickets(toWei('100'), [], overrides)
       await cToken.accrueCustom(toWei('22'))
 
-      await increaseTime(10)
+      await increaseTime(prizePeriodSeconds * 2)
       await prizePool.startAward()
       await prizePool.completeAward()
 
