@@ -17,11 +17,11 @@ contract MockYieldService is Initializable, YieldServiceInterface, NamedModule {
     return Constants.YIELD_SERVICE_INTERFACE_HASH;
   }
 
-  function initialize (ModuleManager _manager, IERC20 token) external initializer {
+  function initialize (NamedModuleManager _manager, IERC20 token) external initializer {
     setManager(_manager);
     _token = token;
     supplyRatePerBlock = 100 wei;
-    enableInterface();
+    _manager.enableModuleInterface(hashName());
   }
 
   function setBalanceOf(uint256 amount) external {

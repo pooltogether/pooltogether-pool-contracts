@@ -5,10 +5,10 @@ const PeriodicPrizePool = require('../build/PeriodicPrizePool.json')
 const Timelock = require('../build/Timelock.json')
 const IERC20 = require('../build/IERC20.json')
 const { deployMockModule } = require('../js/deployMockModule')
-const Loyalty = require('../build/Loyalty.json')
+const Collateral = require('../build/Collateral.json')
 const CompoundYieldService = require('../build/CompoundYieldService.json')
 const {
-  LOYALTY_INTERFACE_HASH,
+  COLLATERAL_INTERFACE_HASH,
   PRIZE_POOL_INTERFACE_HASH,
   TICKET_INTERFACE_HASH,
   TIMELOCK_INTERFACE_HASH,
@@ -35,7 +35,7 @@ describe('Ticket contract', function() {
 
   let wallet
 
-  let registry, prizePool, loyalty, yieldService, manager
+  let registry, prizePool, collateral, yieldService, manager
 
   let lastTxTimestamp
 
@@ -54,9 +54,9 @@ describe('Ticket contract', function() {
 
     prizePool = await deployMockModule(wallet, manager, PeriodicPrizePool.abi, PRIZE_POOL_INTERFACE_HASH)
 
-    debug('deploying loyalty...')
+    debug('deploying collateral...')
 
-    loyalty = await deployMockModule(wallet, manager, Loyalty.abi, LOYALTY_INTERFACE_HASH)
+    collateral = await deployMockModule(wallet, manager, Collateral.abi, COLLATERAL_INTERFACE_HASH)
 
     debug('deploying yieldService...')
 
@@ -103,7 +103,7 @@ describe('Ticket contract', function() {
       await token.mock.allowance.returns(0)
       await token.mock.approve.returns(true)
       await yieldService.mock.supply.withArgs(ticket.address, amount).returns()
-      await loyalty.mock.supply.withArgs(wallet._address, amount).returns()
+      await collateral.mock.supply.withArgs(wallet._address, amount).returns()
 
       await ticket.mintTickets(toWei('10'), [])
 
@@ -119,7 +119,7 @@ describe('Ticket contract', function() {
       await token.mock.approve.returns(true)
       await token.mock.transferFrom.withArgs(wallet._address, ticket.address, amount).returns(true)
       await yieldService.mock.supply.withArgs(ticket.address, amount).returns()
-      await loyalty.mock.supply.withArgs(wallet2._address, amount).returns()
+      await collateral.mock.supply.withArgs(wallet2._address, amount).returns()
 
       await ticket.operatorMintTickets(wallet2._address, toWei('10'), [], [])
 

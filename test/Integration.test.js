@@ -70,7 +70,8 @@ describe('Integration Test', () => {
     it('should support timelocked withdrawals', async () => {
       debug('Minting tickets...')
       await token.approve(ticket.address, toWei('100'))
-      await ticket.mintTickets(toWei('100'), [], overrides)
+      await ticket.mintTickets(toWei('50'), [], overrides)
+      await ticket.mintTickets(toWei('50'), [], overrides)
       await cToken.accrueCustom(toWei('22'))
 
       debug('First award...')

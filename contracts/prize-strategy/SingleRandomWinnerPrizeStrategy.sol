@@ -22,12 +22,14 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
   function award(uint256 randomNumber, uint256 prize) external override {
     // console.log("awarding prize: %s", prize);
     if (prize > 0) {
-      PeriodicPrizePoolInterface prizePool = PeriodicPrizePoolInterface(msg.sender);
+      NamedModule prizePoolModule = NamedModule(msg.sender);
+      PrizePoolModuleManager manager = PrizePoolModuleManager(address(prizePoolModule.manager()));
+      Ticket ticket = manager.ticket();
       // console.log("draw ticket");
-      address winner = prizePool.ticket().draw(randomNumber);
+      address winner = ticket.draw(randomNumber);
       // Convert the sponsorship to winnings
-      prizePool.sponsorship().approve(address(prizePool.ticket()), prize);
-      prizePool.ticket().mintTicketsWithSponsorshipTo(winner, prize);
+      manager.sponsorship().approve(address(ticket), prize);
+      ticket.mintTicketsWithSponsorshipTo(winner, prize);
     }
   }
 

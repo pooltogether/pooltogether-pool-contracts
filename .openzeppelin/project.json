@@ -9,7 +9,7 @@
     "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory",
     "CompoundYieldServiceFactory": "CompoundYieldServiceFactory",
     "PrizePoolModuleManagerFactory": "PrizePoolModuleManagerFactory",
-    "LoyaltyFactory": "LoyaltyFactory",
+    "CollateralFactory": "CollateralFactory",
     "TimelockFactory": "TimelockFactory",
     "SponsorshipFactory": "SponsorshipFactory"
   },

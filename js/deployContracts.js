@@ -5,7 +5,7 @@ const MockGovernor = require('../build/MockGovernor.json')
 const CompoundYieldServiceFactory = require('../build/CompoundYieldServiceFactory.json')
 const PrizePoolModuleManagerFactory = require('../build/PrizePoolModuleManagerFactory.json')
 const PrizePoolBuilder = require('../build/PrizePoolBuilder.json')
-const LoyaltyFactory = require('../build/LoyaltyFactory.json')
+const CollateralFactory = require('../build/CollateralFactory.json')
 const SingleRandomWinnerPrizePoolBuilder = require('../build/SingleRandomWinnerPrizePoolBuilder.json')
 const TicketFactory = require('../build/TicketFactory.json')
 const SponsorshipFactory = require('../build/SponsorshipFactory.json')
@@ -68,10 +68,10 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
   let prizeStrategyFactory = await deployContract(wallet, SingleRandomWinnerPrizeStrategyFactory, [], overrides)
   await prizeStrategyFactory.initialize(overrides)
   
-  debug('deploying loyalty factory')
+  debug('deploying collateral factory')
 
-  let loyaltyFactory = await deployContract(wallet, LoyaltyFactory, [], overrides)
-  await loyaltyFactory.initialize(overrides)
+  let collateralFactory = await deployContract(wallet, CollateralFactory, [], overrides)
+  await collateralFactory.initialize(overrides)
 
   debug('deploying sponsorship factory')
 
@@ -89,7 +89,7 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
     ticketFactory.address,
     timelockFactory.address,
     sponsorshipFactory.address,
-    loyaltyFactory.address,
+    collateralFactory.address,
     rng.address,
     forwarder.address,
     overrides
@@ -119,7 +119,7 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
     timelockFactory,
     ticketFactory,
     prizeStrategyFactory,
-    loyaltyFactory,
+    collateralFactory,
     sponsorshipFactory,
     prizePoolBuilder,
     singleRandomWinnerPrizePoolBuilder

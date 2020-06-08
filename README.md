@@ -50,7 +50,7 @@ let contracts = await deployContracts(signer)
   timelockFactory: factory
   ticketFactory: factory
   prizeStrategyFactory: factory
-  loyaltyFactory: factory
+  collateralFactory: factory
   sponsorshipFactory: factory
   prizePoolBuilder: The PrizePool builder
   singleRandomWinnerPrizePoolBuilder: The SingleRandomWinner prize pool builder 

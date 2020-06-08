@@ -17,8 +17,11 @@ module.exports = {
   // keccak256("PoolTogetherV3/TicketInterface")
   TICKET_INTERFACE_HASH: "0xf22dc5a0b79862d03b1bd7a85ef07c37d8ab6be34838cd9c393ec1d671b9c818",
 
-  // keccak256("PoolTogetherV3/LoyaltyInterface")
-  LOYALTY_INTERFACE_HASH: "0x21adbc49851dc9a5421ef4d78427664813502289b1576200510e09bc637502d9",
+  // keccak256("PoolTogetherV3/CreditReserveInterface")
+  CREDIT_RESERVE_INTERFACE_HASH: "0x38687fa3ddb18984646d008572ff1c77fcc5be7497cf9d815e7d0249e1c54cfa",
+
+  // keccak256("PoolTogetherV3/CollateralInterface")
+  COLLATERAL_INTERFACE_HASH: "0x96988fe746683411b32c1d08cd24ee127a8adc9d43ebf1a8fc37570c3afa7735",
 
   // keccak256("PoolTogetherV3/SponsorshipInterface")
   SPONSORSHIP_INTERFACE_HASH: "0xfdba083ea3843dc5ff273fd3f7fbc2e59baa10a2c2af369fca115112fda76d95",

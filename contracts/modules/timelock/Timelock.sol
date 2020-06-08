@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
+import "../../module-manager/PrizePoolModuleManager.sol";
 import "../../base/TokenModule.sol";
 import "../../Constants.sol";
 import "../yield-service/YieldServiceInterface.sol";
@@ -18,7 +19,7 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
   mapping(address => uint256) unlockTimestamps;
 
   function initialize(
-    ModuleManager _manager,
+    NamedModuleManager _manager,
     address _trustedForwarder,
     string memory _name,
     string memory _symbol,
@@ -45,11 +46,13 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
       }
     }
 
+    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
+
     // pull out the collateral
     if (totalWithdrawal > 0) {
       // console.log("sweepTimelock: redeemsponsorship %s", totalWithdrawal);
       // console.log("sweepTimelock: redeemsponsorship balance %s", outbalance);
-      yieldService().redeem(address(this), totalWithdrawal);
+      yieldService.redeem(address(this), totalWithdrawal);
     }
 
     // console.log("sweepTimelock: starting burn...");
@@ -60,7 +63,7 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
         if (balance > 0) {
           // console.log("sweepTimelock: Burning %s", balance);
           _burn(user, balance, "", "");
-          IERC20(yieldService().token()).transfer(user, balance);
+          IERC20(yieldService.token()).transfer(user, balance);
         }
       }
     }
@@ -81,9 +84,5 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
 
   function _beforeTokenTransfer(address operator, address from, address to, uint256 tokenAmount) internal override {
     require(from == address(0) || to == address(0), "only minting or burning is allowed");
-  }
-
-  function yieldService() public view returns (YieldServiceInterface) {
-    return YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
   }
 }

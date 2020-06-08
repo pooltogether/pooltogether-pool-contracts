@@ -31,7 +31,7 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
   }
 
   function initialize (
-    ModuleManager _manager,
+    NamedModuleManager _manager,
     CTokenInterface _cToken
   ) external initializer {
     require(address(_cToken) != address(0), "cToken cannot be zero");

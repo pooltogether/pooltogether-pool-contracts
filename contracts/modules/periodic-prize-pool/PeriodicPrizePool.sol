@@ -13,7 +13,7 @@ import "@nomiclabs/buidler/console.sol";
 
 import "../yield-service/YieldServiceInterface.sol";
 import "../sponsorship/Sponsorship.sol";
-import "../loyalty/LoyaltyInterface.sol";
+import "../collateral/CollateralInterface.sol";
 import "./PeriodicPrizePoolInterface.sol";
 import "../../prize-strategy/PrizeStrategyInterface.sol";
 import "../../rng/RNGInterface.sol";
@@ -36,7 +36,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
   function initialize (
-    ModuleManager _manager,
+    NamedModuleManager _manager,
     address _trustedForwarder,
     GovernorInterface _governor,
     PrizeStrategyInterface _prizeStrategy,
@@ -62,7 +62,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function currentPrize() public override returns (uint256) {
-    uint256 balance = yieldService().unaccountedBalance();
+    uint256 balance = PrizePoolModuleManager(address(manager)).yieldService().unaccountedBalance();
     uint256 reserveFee = calculateReserveFee(balance);
     return balance.sub(reserveFee);
   }
@@ -158,8 +158,8 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view override returns (uint256) {
-    uint256 remaining = yieldService().estimateAccruedInterestOverBlocks(
-      yieldService().accountedBalance(),
+    uint256 remaining = PrizePoolModuleManager(address(manager)).yieldService().estimateAccruedInterestOverBlocks(
+      PrizePoolModuleManager(address(manager)).yieldService().accountedBalance(),
       estimateRemainingBlocksToPrize(secondsPerBlockFixedPoint18)
     );
     uint256 reserveFee = calculateReserveFee(remaining);
@@ -207,20 +207,22 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function completeAward() external override requireCanCompleteAward nonReentrant {
-    uint256 balance = yieldService().unaccountedBalance();
+    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
+    uint256 balance = yieldService.unaccountedBalance();
     uint256 reserveFee = calculateReserveFee(balance);
     uint256 prize = balance.sub(reserveFee);
 
     if (balance > 0) {
-      yieldService().capture(balance);
+      yieldService.capture(balance);
+      Sponsorship sponsorship = PrizePoolModuleManager(address(manager)).sponsorship();
       if (reserveFee > 0) {
-        sponsorship().mint(governor.reserve(), reserveFee);
+        sponsorship.mint(governor.reserve(), reserveFee);
       }
       if (prize > 0) {
         // console.log("mint...");
-        sponsorship().mint(address(prizeStrategy), prize);
-        // console.log("reward loyalty...");
-        loyalty().reward(prize);
+        sponsorship.mint(address(prizeStrategy), prize);
+        // console.log("reward collateral...");
+        PrizePoolModuleManager(address(manager)).collateral().spread(prize);
       }
     }
 
@@ -229,7 +231,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
 
     previousPrize = prize;
-    previousPrizeTicketCount = ticket().totalSupply();
+    previousPrizeTicketCount = PrizePoolModuleManager(address(manager)).ticket().totalSupply();
     rngRequestId = 0;
   }
 
@@ -246,22 +248,6 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     bytes calldata userData,
     bytes calldata operatorData
   ) external override {
-  }
-
-  function loyalty() public view returns (LoyaltyInterface) {
-    return LoyaltyInterface(getInterfaceImplementer(Constants.LOYALTY_INTERFACE_HASH));
-  }
-
-  function sponsorship() public view override returns (Sponsorship) {
-    return Sponsorship(getInterfaceImplementer(Constants.SPONSORSHIP_INTERFACE_HASH));
-  }
-
-  function yieldService() public view override returns (YieldServiceInterface) {
-    return YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
-  }
-
-  function ticket() public view override returns (Ticket) {
-    return Ticket(getInterfaceImplementer(Constants.TICKET_INTERFACE_HASH));
   }
 
   modifier requireCanStartAward() {
