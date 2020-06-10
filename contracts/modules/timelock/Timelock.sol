@@ -9,23 +9,23 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../../module-manager/PrizePoolModuleManager.sol";
-import "../../base/TokenModule.sol";
+import "../../base/NamedModule.sol";
 import "../../Constants.sol";
 import "../yield-service/YieldServiceInterface.sol";
 
 /* solium-disable security/no-block-members */
-contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
+contract Timelock is NamedModule, ReentrancyGuardUpgradeSafe {
+  using SafeMath for uint256;
 
+  uint256 public totalSupply;
+  mapping(address => uint256) balances;
   mapping(address => uint256) unlockTimestamps;
 
   function initialize(
     NamedModuleManager _manager,
-    address _trustedForwarder,
-    string memory _name,
-    string memory _symbol,
-    address[] memory defaultOperators
-  ) public override initializer {
-    TokenModule.initialize(_manager, _trustedForwarder, _name, _symbol, defaultOperators);
+    address _trustedForwarder
+  ) public initializer {
+    construct(_manager, _trustedForwarder);
     __ReentrancyGuard_init();
   }
 
@@ -41,7 +41,7 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
     for (i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= block.timestamp) {
-        totalWithdrawal = totalWithdrawal.add(balanceOf(user));
+        totalWithdrawal = totalWithdrawal.add(balances[user]);
       }
     }
 
@@ -52,13 +52,13 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
       yieldService.redeem(totalWithdrawal);
     }
 
-
     for (i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= block.timestamp) {
-        uint256 balance = balanceOf(user);
+        uint256 balance = balances[user];
         if (balance > 0) {
-          _burn(user, balance, "", "");
+          _burn(user, balance);
+          delete unlockTimestamps[user];
           PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(user, balance);
           IERC20(yieldService.token()).transfer(user, balance);
         }
@@ -67,15 +67,21 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
   }
 
   function mintTo(address to, uint256 amount, uint256 unlockTimestamp) external onlyManagerOrModule {
-    _mint(to, amount, "", "");
+    balances[to] = balances[to].add(amount);
+    totalSupply = totalSupply.add(amount);
     unlockTimestamps[to] = unlockTimestamp;
+  }
+
+  function _burn(address user, uint256 amount) internal {
+    balances[user] = balances[user].sub(amount);
+    totalSupply = totalSupply.sub(amount);
+  }
+
+  function balanceOf(address user) external view returns (uint256) {
+    return balances[user];
   }
 
   function balanceAvailableAt(address user) external view returns (uint256) {
     return unlockTimestamps[user];
-  }
-
-  function _beforeTokenTransfer(address operator, address from, address to, uint256 tokenAmount) internal override {
-    require(from == address(0) || to == address(0), "only minting or burning is allowed");
   }
 }

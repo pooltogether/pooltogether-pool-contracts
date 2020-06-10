@@ -155,7 +155,7 @@ contract PrizePoolBuilder is Initializable {
   ) internal {
     Timelock timelock = timelockFactory.createTimelock();
     moduleManager.enableModule(timelock);
-    timelock.initialize(moduleManager, trustedForwarder, "", "");
+    timelock.initialize(moduleManager, trustedForwarder);
   }
 
   function createSponsorshipModule(
