@@ -23,6 +23,12 @@ import "../../Constants.sol";
 contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInterface, IERC777Recipient, NamedModule {
   using SafeMath for uint256;
 
+  uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
+
+  event PrizePoolOpened(address indexed operator, uint256 indexed prizePeriodStartedAt);
+  event PrizePoolAwardStarted(address indexed operator, uint256 indexed rngRequestId);
+  event PrizePoolAwardCompleted(address indexed operator, uint256 prize, uint256 reserveFee, bytes32 randomNumber);
+
   PrizeStrategyInterface public override prizeStrategy;
   GovernorInterface governor;
   RNGInterface public rng;
@@ -32,8 +38,6 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   uint256 public previousPrizeAverageTickets;
   uint256 public feeScaleMantissa;
   uint256 public rngRequestId;
-
-  uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
   function initialize (
     NamedModuleManager _manager,
@@ -53,8 +57,9 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     prizeStrategy = _prizeStrategy;
     rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
-    prizePeriodStartedAt = block.timestamp;
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+    prizePeriodStartedAt = block.timestamp;
+    emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
   function hashName() public view override returns (bytes32) {
@@ -203,6 +208,8 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
 
   function startAward() external override requireCanStartAward nonReentrant {
     rngRequestId = rng.requestRandomNumber(address(0),0);
+
+    emit PrizePoolAwardStarted(_msgSender(), rngRequestId);
   }
 
   function completeAward() external override requireCanCompleteAward nonReentrant {
@@ -222,13 +229,15 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
         PrizePoolModuleManager(address(manager)).interestTracker().accrueInterest(prize);
       }
     }
-
+    bytes32 randomNumber = rng.randomNumber(rngRequestId);
     prizePeriodStartedAt = block.timestamp;
-    prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
+    prizeStrategy.award(uint256(randomNumber), prize);
 
     previousPrize = prize;
     previousPrizeAverageTickets = PrizePoolModuleManager(address(manager)).ticket().totalSupply();
     rngRequestId = 0;
+
+    emit PrizePoolAwardCompleted(_msgSender(), prize, reserveFee, randomNumber);
   }
 
   function prizePeriodEndAt() public view override returns (uint256) {

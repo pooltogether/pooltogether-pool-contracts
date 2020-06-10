@@ -18,6 +18,10 @@ contract InterestTracker is NamedModule, InterestTrackerInterface {
 
   uint256 internal constant INITIAL_EXCHANGE_RATE_MANTISSA = 1 ether;
 
+  event CollateralSupplied(address indexed operator, address indexed user, uint256 collateral, uint256 shares);
+  event CollateralRedeemed(address indexed operator, address indexed user, uint256 collateral, uint256 shares, uint256 interestCredited);
+  event InterestAccrued(address indexed operator, uint256 collateral);
+
   mapping (address => uint256) private contributionShares;
   uint256 private totalContributionShares;
   uint256 public totalContributions;
@@ -36,6 +40,8 @@ contract InterestTracker is NamedModule, InterestTrackerInterface {
 
   function accrueInterest(uint256 _collateral) external override {
     totalContributions = totalContributions.add(_collateral);
+
+    emit InterestAccrued(_msgSender(), _collateral);
   }
 
   function supplyCollateral(
@@ -68,13 +74,11 @@ contract InterestTracker is NamedModule, InterestTrackerInterface {
     // here we'll have to remove amount/collateralBalance * balanceOfInterest
     uint256 collateralizationRatioMantissa = _interestRatioMantissa(from);
 
-
     uint256 interest = FixedPoint.multiplyUintByMantissa(amount, collateralizationRatioMantissa);
 
     uint256 amountPlusInterest = amount.add(interest);
 
     uint256 amountPlusInterestShares = FixedPoint.divideUintByMantissa(amountPlusInterest, _exchangeRateMantissa());
-
 
     // remove their collateral and interest
     collateralBalances[from] = collateralBalances[from].sub(amount);
@@ -85,6 +89,8 @@ contract InterestTracker is NamedModule, InterestTrackerInterface {
       // credit the interest to their reserve
       PrizePoolModuleManager(address(manager)).credit().mint(from, interest);
     }
+
+    emit CollateralRedeemed(_msgSender(), from, amount, amountPlusInterestShares, interest);
   }
 
   function _mintCollateral(address to, uint256 amount) internal {
@@ -94,6 +100,8 @@ contract InterestTracker is NamedModule, InterestTrackerInterface {
     contributionShares[to] = contributionShares[to].add(shares);
     totalContributions = totalContributions.add(amount);
     totalContributionShares = totalContributionShares.add(shares);
+
+    emit CollateralSupplied(_msgSender(), to, amount, shares);
   }
 
   function balanceOfInterest(address user) public view override returns (uint256) {

@@ -56,12 +56,18 @@ describe('InterestTracker', function() {
     it('should accurately record the users interest', async () => {
 
       // two users join the pool with the same amount
-      await interestTracker.supplyCollateral(wallet._address, toWei('100'), overrides)
+      await expect(interestTracker.supplyCollateral(wallet._address, toWei('100'), overrides))
+        .to.emit(interestTracker, 'CollateralSupplied')
+        .withArgs(wallet._address, wallet._address, toWei('100'), toWei('100'))
+
       await interestTracker.supplyCollateral(FORWARDER, toWei('100'), overrides)
 
       let prize1 = '39.01851372'
       // prize accrues
-      await interestTracker.accrueInterest(toWei(prize1), overrides)
+      await expect(interestTracker.accrueInterest(toWei(prize1), overrides))
+        .to.emit(interestTracker, 'InterestAccrued')
+        .withArgs(wallet._address, toWei(prize1))
+
       // prize is awarded to the winner
       await interestTracker.supplyCollateral(FORWARDER, toWei(prize1), overrides)
 
@@ -92,7 +98,9 @@ describe('InterestTracker', function() {
     it('should accurately remove the users collateral', async () => {
       await interestTracker.supplyCollateral(wallet._address, toWei('100'))
 
-      await interestTracker.redeemCollateral(wallet._address, toWei('50'))
+      await expect(interestTracker.redeemCollateral(wallet._address, toWei('50')))
+        .to.emit(interestTracker, 'CollateralRedeemed')
+        .withArgs(wallet._address, wallet._address, toWei('50'), toWei('50'), '0')
 
       expect(await interestTracker.balanceOf(wallet._address)).to.equal(toWei('50'))
     })

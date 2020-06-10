@@ -96,14 +96,14 @@ describe('PeriodicPrizePool contract', () => {
     
     prizePool = await deployContract(wallet, PeriodicPrizePoolHarness, [], overrides)
 
-    await prizePool.initialize(
+    await expect(prizePool.initialize(
       manager.address,
       FORWARDER,
       governor.address,
       strategy.address,
       rng.address,
       prizePeriodSeconds
-    )
+    )).to.emit(prizePool, 'PrizePoolOpened')
   })
 
   describe('initialize()', () => {
@@ -255,7 +255,9 @@ describe('PeriodicPrizePool contract', () => {
     it('should request a random number', async () => {
       await increaseTime(11)
       await rng.mock.requestRandomNumber.returns('42')
-      await prizePool.startAward()
+      await expect(prizePool.startAward())
+        .to.emit(prizePool, 'PrizePoolAwardStarted')
+        .withArgs(wallet._address, 42)
       expect(await prizePool.rngRequestId()).to.equal('42')
     })
 
@@ -308,7 +310,9 @@ describe('PeriodicPrizePool contract', () => {
 
       await ticket.mock.totalSupply.returns(toWei('1000'))
 
-      await prizePool.completeAward()
+      await expect(prizePool.completeAward())
+        .to.emit(prizePool, 'PrizePoolAwardCompleted')
+        .withArgs(wallet._address, toWei('100'), '0', random)
 
       expect(await prizePool.previousPrize()).to.equal(toWei('100'))
       expect(await prizePool.previousPrizeAverageTickets()).to.equal(toWei('1000'))
