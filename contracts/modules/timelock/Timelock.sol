@@ -17,6 +17,9 @@ import "../yield-service/YieldServiceInterface.sol";
 contract Timelock is NamedModule, ReentrancyGuardUpgradeSafe {
   using SafeMath for uint256;
 
+  event CollateralTimelocked(address indexed operator, address indexed to, uint256 amount, uint256 unlockTimestamp);
+  event CollateralSwept(address indexed operator, address indexed to, uint256 amount);
+
   uint256 public totalSupply;
   mapping(address => uint256) balances;
   mapping(address => uint256) unlockTimestamps;
@@ -34,6 +37,7 @@ contract Timelock is NamedModule, ReentrancyGuardUpgradeSafe {
   }
 
   function sweep(address[] calldata users) external nonReentrant returns (uint256) {
+    address sender = _msgSender();
     uint256 totalWithdrawal;
 
     // first gather the total withdrawal and fee
@@ -61,6 +65,7 @@ contract Timelock is NamedModule, ReentrancyGuardUpgradeSafe {
           delete unlockTimestamps[user];
           PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(user, balance);
           IERC20(yieldService.token()).transfer(user, balance);
+          emit CollateralSwept(sender, user, balance);
         }
       }
     }
@@ -70,6 +75,8 @@ contract Timelock is NamedModule, ReentrancyGuardUpgradeSafe {
     balances[to] = balances[to].add(amount);
     totalSupply = totalSupply.add(amount);
     unlockTimestamps[to] = unlockTimestamp;
+
+    emit CollateralTimelocked(_msgSender(), to, amount, unlockTimestamp);
   }
 
   function _burn(address user, uint256 amount) internal {
