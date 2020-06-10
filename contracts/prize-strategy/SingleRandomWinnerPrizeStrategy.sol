@@ -20,12 +20,10 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
   }
 
   function award(uint256 randomNumber, uint256 prize) external override {
-    // console.log("awarding prize: %s", prize);
     if (prize > 0) {
       NamedModule prizePoolModule = NamedModule(msg.sender);
       PrizePoolModuleManager manager = PrizePoolModuleManager(address(prizePoolModule.manager()));
       Ticket ticket = manager.ticket();
-      // console.log("draw ticket");
       address winner = ticket.draw(randomNumber);
       // Convert the sponsorship to winnings
       manager.sponsorship().approve(address(ticket), prize);

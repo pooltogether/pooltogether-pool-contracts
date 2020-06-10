@@ -110,8 +110,6 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function calculateReserveFee(uint256 amount) internal view returns (uint256) {
-    // console.log("reserve: %s", governor.reserve());
-    // console.log("mantissa: %s", governor.reserveFeeMantissa());
     if (governor.reserve() == address(0) || governor.reserveFeeMantissa() == 0) {
       return 0;
     }
@@ -220,14 +218,11 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
         sponsorship.mint(governor.reserve(), reserveFee);
       }
       if (prize > 0) {
-        // console.log("mint...");
         sponsorship.mint(address(prizeStrategy), prize);
-        // console.log("reward collateral...");
         PrizePoolModuleManager(address(manager)).interestTracker().accrueInterest(prize);
       }
     }
 
-    // console.log("awarding prize...");
     prizePeriodStartedAt = block.timestamp;
     prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
 

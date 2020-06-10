@@ -25,13 +25,10 @@ abstract contract NamedModule is Initializable, Module, IERC1820Implementer, Bas
   function hashName() public virtual view returns (bytes32);
 
   function canImplementInterfaceForAddress(bytes32 interfaceHash, address addr) external view virtual override returns(bytes32) {
-    // console.log("CAN IMPLEMMENT?");
     require(address(manager) != address(0), "manager is not set on module");
     if (addr == address(manager) && interfaceHash == hashName()) {
-      // console.log("YES CAN IMPLEMMENT");
       return Constants.ACCEPT_MAGIC;
     } else {
-      // console.log("no CAN IMPLEMMENT");
       return bytes32(0);
     }
   }

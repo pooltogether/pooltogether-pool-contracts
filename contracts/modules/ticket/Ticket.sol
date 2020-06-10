@@ -70,24 +70,17 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   function _supplyAndMint(address to, uint256 amount, bytes memory data, bytes memory operatorData) internal {
     YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
 
-    console.log("setp 1");
     yieldService.token().transferFrom(_msgSender(), address(this), amount);
-    console.log("setp 2");
     ensureYieldServiceApproved(amount);
-    console.log("setp 3");
     yieldService.supply(amount);
-    console.log("setp 4");
     _mintTickets(to, amount, data, operatorData);
   }
 
   function _mintTickets(address to, uint256 amount, bytes memory data, bytes memory operatorData) internal {
     // Mint tickets
     _mint(to, amount, data, operatorData);
-    console.log("setp 5");
     PrizePoolModuleManager(address(manager)).prizePool().mintedTickets(amount);
-    console.log("setp 6");
     PrizePoolModuleManager(address(manager)).interestTracker().supplyCollateral(to, amount);
-    console.log("setp 7");
   }
 
   function draw(uint256 randomNumber) external view returns (address) {
@@ -227,11 +220,9 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   }
 
   function _mintTicketsWithSponsorship(address to, uint256 amount) internal {
-    // console.log("_mintTicketsWithSponsorship: transferfrom: %s", amount);
     // Transfer sponsorship
     PrizePoolModuleManager(address(manager)).sponsorship().transferFrom(_msgSender(), address(this), amount);
 
-    // console.log("_mintTicketsWithSponsorship: minting...", amount);
     // Mint draws
     _mintTickets(to, amount, "", "");
   }

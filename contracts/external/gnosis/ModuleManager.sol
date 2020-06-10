@@ -33,17 +33,13 @@ contract ModuleManager is SelfAuthorized, Executor {
     public
     authorized
   {
-    // console.log("enableModule: %s", address(module));
     // Module address cannot be null or sentinel.
     require(address(module) != address(0) && address(module) != SENTINEL_MODULES, "Invalid module address provided");
     // Module cannot be added twice.
     require(modules[address(module)] == address(0), "Module has already been added");
-    // console.log("ENTERED 2");
     modules[address(module)] = modules[SENTINEL_MODULES];
-    // console.log("ENTERED 3");
     modules[SENTINEL_MODULES] = address(module);
 
-    // console.log("enableModule done: modules[]: %s, isModuleEnabled: %s", modules[address(module)], isModuleEnabled(module));
     emit EnabledModule(module);
   }
 
@@ -122,7 +118,6 @@ contract ModuleManager is SelfAuthorized, Executor {
     view
     returns (bool)
   {
-    // console.log("isModuleEnabled: %s", address(module));
     return SENTINEL_MODULES != address(module) && modules[address(module)] != address(0);
   }
 

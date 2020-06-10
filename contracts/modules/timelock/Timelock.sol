@@ -34,7 +34,6 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
   }
 
   function sweep(address[] calldata users) external nonReentrant returns (uint256) {
-    console.log("Timelock start sweep 1");
     uint256 totalWithdrawal;
 
     // first gather the total withdrawal and fee
@@ -43,37 +42,25 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
       address user = users[i];
       if (unlockTimestamps[user] <= block.timestamp) {
         totalWithdrawal = totalWithdrawal.add(balanceOf(user));
-        // console.log("sweepTimelock: totalWithdrawal %s", totalWithdrawal);
       }
     }
-
-    console.log("Timelock sweep 2");
 
     YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
 
     // pull out the collateral
     if (totalWithdrawal > 0) {
-      // console.log("sweepTimelock: redeemsponsorship %s", totalWithdrawal);
-      // console.log("sweepTimelock: redeemsponsorship balance %s", outbalance);
       yieldService.redeem(totalWithdrawal);
     }
 
-    console.log("Timelock sweep 3");
 
-    // console.log("sweepTimelock: starting burn...");
     for (i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= block.timestamp) {
         uint256 balance = balanceOf(user);
         if (balance > 0) {
-          // console.log("sweepTimelock: Burning %s", balance);
-          console.log("Timelock sweep 4");
           _burn(user, balance, "", "");
-          console.log("Timelock sweep 5");
           PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(user, balance);
-          console.log("Timelock sweep 6");
           IERC20(yieldService.token()).transfer(user, balance);
-          console.log("Timelock sweep 7");
         }
       }
     }
