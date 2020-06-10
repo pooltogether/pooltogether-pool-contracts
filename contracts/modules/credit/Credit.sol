@@ -5,20 +5,26 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
+import "../../module-manager/PrizePoolModuleManager.sol";
 import "../../base/TokenModule.sol";
 import "../../Constants.sol";
 
 // solium-disable security/no-block-members
-contract CreditReserve is TokenModule {
+contract Credit is TokenModule {
 
   function hashName() public view override returns (bytes32) {
-    return Constants.CREDIT_RESERVE_INTERFACE_HASH;
+    return Constants.CREDIT_INTERFACE_HASH;
   }
 
   function mint(
     address _user,
     uint256 _collateral
-  ) external onlyManagerOrModule {
+  ) external onlyInterestTracker {
     _mint(_user, _collateral, "", "");
+  }
+
+  modifier onlyInterestTracker() {
+    require(_msgSender() == address(PrizePoolModuleManager(address(manager)).interestTracker()), "only interest tracker");
+    _;
   }
 }

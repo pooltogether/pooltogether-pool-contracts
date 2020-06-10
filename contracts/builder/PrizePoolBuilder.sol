@@ -6,11 +6,11 @@ import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 import "../module-manager/PrizePoolModuleManagerFactory.sol";
 import "../modules/timelock/TimelockFactory.sol";
 import "../modules/sponsorship/SponsorshipFactory.sol";
-import "../modules/collateral/CollateralFactory.sol";
+import "../modules/credit/CreditFactory.sol";
 import "../modules/yield-service/CompoundYieldServiceFactory.sol";
 import "../modules/ticket/TicketFactory.sol";
 import "../modules/periodic-prize-pool/PeriodicPrizePoolFactory.sol";
-import "../modules/credit-reserve/CreditReserveFactory.sol";
+import "../modules/interest-tracker/InterestTrackerFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 
 contract PrizePoolBuilder is Initializable {
@@ -26,10 +26,10 @@ contract PrizePoolBuilder is Initializable {
   CompoundYieldServiceFactory public compoundYieldServiceFactory;
   PeriodicPrizePoolFactory public periodicPrizePoolFactory;
   TicketFactory public ticketFactory;
-  CollateralFactory public collateralFactory;
+  CreditFactory public creditFactory;
   TimelockFactory public timelockFactory;
   SponsorshipFactory public sponsorshipFactory;
-  CreditReserveFactory public creditReserveFactory;
+  InterestTrackerFactory public interestTrackerFactory;
   RNGInterface public rng;
   address public trustedForwarder;
 
@@ -41,8 +41,8 @@ contract PrizePoolBuilder is Initializable {
     TicketFactory _ticketFactory,
     TimelockFactory _timelockFactory,
     SponsorshipFactory _sponsorshipFactory,
-    CollateralFactory _collateralFactory,
-    CreditReserveFactory _creditReserveFactory,
+    CreditFactory _creditFactory,
+    InterestTrackerFactory _interestTrackerFactory,
     RNGInterface _rng,
     address _trustedForwarder
   ) public initializer {
@@ -54,15 +54,15 @@ contract PrizePoolBuilder is Initializable {
     require(address(_rng) != address(0), "rng cannot be zero");
     require(address(_sponsorshipFactory) != address(0), "sponsorship factory cannot be zero");
     require(address(_timelockFactory) != address(0), "controlled token factory cannot be zero");
-    require(address(_collateralFactory) != address(0), "collateral factory cannot be zero");
-    require(address(_creditReserveFactory) != address(0), "credit reserve factory cannot be zero");
-    creditReserveFactory = _creditReserveFactory;
+    require(address(_creditFactory) != address(0), "credit factory cannot be zero");
+    require(address(_interestTrackerFactory) != address(0), "interest tracker factory cannot be zero");
+    interestTrackerFactory = _interestTrackerFactory;
     prizePoolModuleManagerFactory = _prizePoolModuleManagerFactory;
     governor = _governor;
     compoundYieldServiceFactory = _compoundYieldServiceFactory;
     periodicPrizePoolFactory = _periodicPrizePoolFactory;
     ticketFactory = _ticketFactory;
-    collateralFactory = _collateralFactory;
+    creditFactory = _creditFactory;
     rng = _rng;
     trustedForwarder = _trustedForwarder;
     sponsorshipFactory = _sponsorshipFactory;
@@ -83,11 +83,11 @@ contract PrizePoolBuilder is Initializable {
 
     createPeriodicPrizePoolModule(manager, _prizeStrategy, _prizePeriodSeconds);
     createCompoundYieldServiceModule(manager, _cToken);
-    createCollateralModule(manager);
+    createCreditModule(manager);
     createTimelockModule(manager);
     createTicketModule(manager, _ticketName, _ticketSymbol);
     createSponsorshipModule(manager, _sponsorshipName, _sponsorshipSymbol);
-    createCreditReserveModule(manager);
+    createInterestTrackerModule(manager);
 
     emit PrizePoolCreated(
       msg.sender,
@@ -98,12 +98,12 @@ contract PrizePoolBuilder is Initializable {
     return manager;
   }
 
-  function createCreditReserveModule(
+  function createInterestTrackerModule(
     NamedModuleManager _moduleManager
   ) internal {
-    CreditReserve creditReserve = creditReserveFactory.createCreditReserve();
-    _moduleManager.enableModule(creditReserve);
-    creditReserve.initialize(_moduleManager, trustedForwarder, "Credit Reserve", "CRDT");
+    InterestTracker interestTracker = interestTrackerFactory.createInterestTracker();
+    _moduleManager.enableModule(interestTracker);
+    interestTracker.initialize(_moduleManager, trustedForwarder);
   }
 
   function createPeriodicPrizePoolModule(
@@ -132,12 +132,12 @@ contract PrizePoolBuilder is Initializable {
     yieldService.initialize(moduleManager, cToken);
   }
 
-  function createCollateralModule(
+  function createCreditModule(
     NamedModuleManager moduleManager
   ) internal {
-    Collateral collateral = collateralFactory.createCollateral();
-    moduleManager.enableModule(collateral);
-    collateral.initialize(moduleManager, trustedForwarder);
+    Credit credit = creditFactory.createCredit();
+    moduleManager.enableModule(credit);
+    credit.initialize(moduleManager, trustedForwarder, "Credit", "CRDT");
   }
 
   function createTicketModule(

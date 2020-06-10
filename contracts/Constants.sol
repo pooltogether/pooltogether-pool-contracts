@@ -25,13 +25,13 @@ library Constants {
   bytes32 public constant TICKET_INTERFACE_HASH =
   0xf22dc5a0b79862d03b1bd7a85ef07c37d8ab6be34838cd9c393ec1d671b9c818;
 
-  // keccak256("PoolTogetherV3/CreditReserveInterface")
-  bytes32 public constant CREDIT_RESERVE_INTERFACE_HASH =
-  0x38687fa3ddb18984646d008572ff1c77fcc5be7497cf9d815e7d0249e1c54cfa;
+  // keccak256("PoolTogetherV3/InterestTrackerInterface")
+  bytes32 public constant INTEREST_TRACKER_INTERFACE_HASH =
+  0xd024f1a00d323e421da1833cf865a55a44409b62b7315e96bce12d82e75eff6e;
 
-  // keccak256("PoolTogetherV3/CollateralInterface")
-  bytes32 public constant COLLATERAL_INTERFACE_HASH =
-  0x96988fe746683411b32c1d08cd24ee127a8adc9d43ebf1a8fc37570c3afa7735;
+  // keccak256("PoolTogetherV3/CreditInterface")
+  bytes32 public constant CREDIT_INTERFACE_HASH =
+  0xe763560b3de3f53bee3e4b2ec26341deef7b74cbfbe73ac5f88e2ad233f9aaf2;
 
   // keccak256("PoolTogetherV3/SponsorshipInterface")
   bytes32 public constant SPONSORSHIP_INTERFACE_HASH =

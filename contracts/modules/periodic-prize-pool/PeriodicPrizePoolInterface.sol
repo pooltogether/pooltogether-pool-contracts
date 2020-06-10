@@ -22,4 +22,6 @@ interface PeriodicPrizePoolInterface {
   function startAward() external;
   function canCompleteAward() external view returns (bool);
   function completeAward() external;
+  function mintedTickets(uint256 amount) external;
+  function redeemedTickets(uint256 amount) external;
 }

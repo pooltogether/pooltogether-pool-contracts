@@ -8,7 +8,7 @@ import "@nomiclabs/buidler/console.sol";
 import "../../module-manager/PrizePoolModuleManager.sol";
 import "../../Constants.sol";
 import "../../base/TokenModule.sol";
-import "../collateral/Collateral.sol";
+import "../credit/Credit.sol";
 
 // solium-disable security/no-block-members
 contract Sponsorship is TokenModule {
@@ -29,7 +29,7 @@ contract Sponsorship is TokenModule {
     uint256 amount
   ) external virtual onlyManagerOrModule {
     _mint(account, amount, "", "");
-    PrizePoolModuleManager(address(manager)).collateral().supply(account, amount);
+    PrizePoolModuleManager(address(manager)).interestTracker().supplyCollateral(account, amount);
   }
 
   function burn(
@@ -37,7 +37,7 @@ contract Sponsorship is TokenModule {
     uint256 amount
   ) external virtual onlyManagerOrModule {
     _burn(from, amount, "", "");
-    PrizePoolModuleManager(address(manager)).collateral().redeem(from, amount);
+    PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(from, amount);
   }
 
   function hashName() public view override returns (bytes32) {

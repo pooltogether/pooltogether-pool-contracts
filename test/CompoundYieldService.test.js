@@ -1,14 +1,18 @@
-const { deployContract } = require('ethereum-waffle')
-const { deploy1820 } = require('deploy-eip-1820')
-const CompoundYieldService = require('../build/CompoundYieldService.json')
-const ERC20Mintable = require('../build/ERC20Mintable.json')
-const CTokenMock = require('../build/CTokenMock.json')
-const ModuleManagerHarness = require('../build/ModuleManagerHarness.json')
+const { deployContract, deployMockContract } = require('ethereum-waffle')
 const { expect } = require('chai')
+
+const CompoundYieldServiceHarness = require('../build/CompoundYieldServiceHarness.json')
+const CTokenInterface = require('../build/CTokenInterface.json')
+const IERC20 = require('../build/IERC20.json')
+const PrizePoolModuleManager = require('../build/PrizePoolModuleManager.json')
+
 const { ethers } = require('./helpers/ethers')
 const { balanceOf } = require('./helpers/balanceOf')
 const { call } = require('./helpers/call')
 const buidler = require('./helpers/buidler')
+const {
+  YIELD_SERVICE_INTERFACE_HASH
+} = require('../js/constants')
 
 const toWei = ethers.utils.parseEther
 
@@ -22,54 +26,33 @@ describe('CompoundYieldService contract', () => {
   let yieldService
   let token
   let cToken
-  let moduleManager
+  let manager
 
   let wallet
   let allocator
   let otherWallet
 
   beforeEach(async () => {
-    try {
-      [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
+    [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
 
-      debug('deploying contracts...')
+    manager = await deployMockContract(wallet, PrizePoolModuleManager.abi, overrides)
+    token = await deployMockContract(wallet, IERC20.abi, overrides)
+    cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
 
-      await deploy1820(wallet)
+    await cToken.mock.underlying.returns(token.address)
 
-      moduleManager = await deployContract(wallet, ModuleManagerHarness, [], overrides)
-      await moduleManager.initialize()
+    await manager.mock.enableModuleInterface.withArgs(YIELD_SERVICE_INTERFACE_HASH).returns()
+    await manager.mock.isModuleEnabled.withArgs(wallet._address).returns(true)
+    
+    yieldService = await deployContract(wallet, CompoundYieldServiceHarness, [], overrides)
 
-      token = await deployContract(wallet, ERC20Mintable, [], overrides)
-      cToken = await deployContract(wallet, CTokenMock, [
-        token.address, ethers.utils.parseEther('0.01')
-      ], overrides)
-      yieldService = await deployContract(wallet, CompoundYieldService, [], overrides)
+    debug('initializing yield service...')
 
-      debug('enable yield service module...')
-
-      await moduleManager.enableModule(yieldService.address)
-
-      debug('initializing yield service...')
-
-      await yieldService.initialize(
-        moduleManager.address,
-        cToken.address,
-        overrides
-      )
-      
-      expect(await moduleManager.isModuleEnabled(yieldService.address)).to.be.true
-
-      debug('enable wallet as module...')
-
-      await moduleManager.enableModule(wallet._address)
-      expect(await moduleManager.isModuleEnabled(wallet._address)).to.be.true
-
-      debug('minting to wallet...')
-
-      await token.mint(wallet._address, ethers.utils.parseEther('100000'), overrides)
-    } catch (e) {
-      debug('ERRRRROR: ', e)
-    }
+    await yieldService.initialize(
+      manager.address,
+      cToken.address,
+      overrides
+    )
   })
 
   describe('initialize()', () => {
@@ -82,62 +65,62 @@ describe('CompoundYieldService contract', () => {
 
   describe('supply()', () => {
     it('should fail if the user has not approved', async () => {
+      await token.mock.transferFrom.withArgs(wallet._address, yieldService.address, toWei('1')).reverts()
+
       debug('starting supply()....')
-      expect(yieldService.supply(wallet._address, toWei('1'))).to.be.revertedWith('ERC20: transfer amount exceeds allowance')
+      expect(yieldService.supply(toWei('1'))).to.be.revertedWith('Mock revert')
       debug('finishing supply()....')
     })
 
     it('should give the first depositer tokens at the initial exchange rate', async function () {
-      debug('starting supply() 2....')
-      await token.approve(yieldService.address, toWei('1'))
+      await token.mock.transferFrom.withArgs(wallet._address, yieldService.address, toWei('1')).returns(true)
+      await token.mock.approve.withArgs(cToken.address, toWei('1')).returns(true)
+      await cToken.mock.mint.withArgs(toWei('1')).returns(0)
       
-      await yieldService.supply(wallet._address, toWei('1'))
+      await expect(yieldService.supply(toWei('1')))
+        .to.emit(yieldService, 'PrincipalSupplied')
+        .withArgs(wallet._address, toWei('1'))
 
-      expect(await balanceOf(cToken, yieldService.address)).to.equal(toWei('1'))
-
-      expect(await cToken.totalSupply()).to.equal(toWei('1'))
-      debug('finishing supply() 2....')
+      expect(await yieldService.accountedBalance()).to.equal(toWei('1'))
     })
   })
 
   describe('redeemUnderlying()', () => {
-    it('should allow a user to withdraw their principal', async function () {
-      debug('start redeem underlying....')
-      let startBalance = await token.balanceOf(wallet._address)
-      await token.approve(yieldService.address, toWei('1'))
-      await yieldService.supply(wallet._address, toWei('1'))
+    it('should allow redeeming principal', async function () {
+      await yieldService.setAccountedBalance(toWei('1'))
 
-      await yieldService.redeem(wallet._address, toWei('1'))
+      await cToken.mock.redeemUnderlying.withArgs(toWei('1')).returns('0')
+      await token.mock.transfer.withArgs(wallet._address, toWei('1')).returns(true)
 
-      expect(await cToken.balanceOf(wallet._address)).to.equal('0')
-      expect(await token.balanceOf(wallet._address)).to.equal(startBalance)
-      debug('finish redeem underlying....')
+      await expect(yieldService.redeem(toWei('1')))
+        .to.emit(yieldService, 'PrincipalRedeemed')
+        .withArgs(wallet._address, toWei('1'));
+    })
+  })
+
+  describe('capture()', () => {
+    it('should capture excess interest', async () => {
+      await cToken.mock.balanceOfUnderlying.returns(toWei('10'))
+
+      await expect(yieldService.capture(toWei('8')))
+        .to.emit(yieldService, 'PrincipalCaptured')
+        .withArgs(wallet._address, toWei('8'))
+
+      expect(await yieldService.accountedBalance()).to.equal(toWei('8'))
+    })
+
+    it('should not allow captures greater than available', async () => {
+      await cToken.mock.balanceOfUnderlying.returns(toWei('10'))
+
+      await expect(yieldService.capture(toWei('20'))).to.be.revertedWith('insuff')
     })
   })
 
   describe('balance()', () => {
-    it('should return zero no deposits have been made', async () => {
-      debug('start balance()')
-      expect((await call(yieldService, 'balance')).toString()).to.equal(toWei('0'))
-      debug('finish balance()')
-    })
+    it('should return zero if no deposits have been made', async () => {
+      await cToken.mock.balanceOfUnderlying.returns(toWei('11'))
 
-    it('should return the balance when a deposit has been made', async function () {
-      await token.approve(yieldService.address, toWei('1'))
-      await yieldService.supply(wallet._address, toWei('1'))
-
-      expect(await call(yieldService, 'balance')).to.equal(toWei('1'))
-    })
-
-    it('should return what has been deposited, plus interest', async () => {
-      await token.approve(yieldService.address, toWei('1'))
-      await yieldService.supply(wallet._address, toWei('1'))
-
-      expect(await call(yieldService, 'balance')).to.equal(toWei('1'))
-
-      await cToken.accrue();
-
-      expect(await call(yieldService, 'balance')).to.be.gt(toWei('1'))
+      expect((await call(yieldService, 'balance')).toString()).to.equal(toWei('11'))
     })
   })
 
@@ -147,35 +130,22 @@ describe('CompoundYieldService contract', () => {
     })
 
     it('should return what has been deposited, excluding interest', async () => {
-      await token.approve(yieldService.address, toWei('1'))
-      await yieldService.supply(wallet._address, toWei('1'))
+      await yieldService.setAccountedBalance(toWei('99'))
 
-      expect(await call(yieldService, 'accountedBalance')).to.equal(toWei('1'))
-
-      await cToken.accrue();
-
-      expect(await call(yieldService, 'accountedBalance')).to.equal(toWei('1'))
+      expect(await call(yieldService, 'accountedBalance')).to.equal(toWei('99'))
     })
   })
 
   describe('unaccountedBalance()', () =>  {
     it('should return the newly accrued interest', async () => {
-      await token.approve(yieldService.address, toWei('1'))
-      await yieldService.supply(wallet._address, toWei('1'))
-
-      expect(await call(yieldService, 'unaccountedBalance')).to.equal(toWei('0'))
-
-      await cToken.accrueCustom(toWei('2'));
-
-      expect(await call(yieldService, 'unaccountedBalance')).to.equal(toWei('2'))
+      await cToken.mock.balanceOfUnderlying.returns(toWei('10'))
+      await yieldService.setAccountedBalance(toWei('9'))
+      expect(await call(yieldService, 'unaccountedBalance')).to.equal(toWei('1'))
     })
 
     it('should handle the case when there is less balance available than what has been accounted for', async () => {
-      await token.approve(yieldService.address, toWei('1'))
-      await yieldService.supply(wallet._address, toWei('1'))
-
-      await cToken.burn(toWei('0.1'));
-
+      await cToken.mock.balanceOfUnderlying.returns(toWei('10'))
+      await yieldService.setAccountedBalance(toWei('11'))
       expect(await call(yieldService, 'unaccountedBalance')).to.equal(toWei('0'))
     })
   })

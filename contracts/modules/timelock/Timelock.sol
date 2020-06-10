@@ -34,6 +34,7 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
   }
 
   function sweep(address[] calldata users) external nonReentrant returns (uint256) {
+    console.log("Timelock start sweep 1");
     uint256 totalWithdrawal;
 
     // first gather the total withdrawal and fee
@@ -46,14 +47,18 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
       }
     }
 
+    console.log("Timelock sweep 2");
+
     YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
 
     // pull out the collateral
     if (totalWithdrawal > 0) {
       // console.log("sweepTimelock: redeemsponsorship %s", totalWithdrawal);
       // console.log("sweepTimelock: redeemsponsorship balance %s", outbalance);
-      yieldService.redeem(address(this), totalWithdrawal);
+      yieldService.redeem(totalWithdrawal);
     }
+
+    console.log("Timelock sweep 3");
 
     // console.log("sweepTimelock: starting burn...");
     for (i = 0; i < users.length; i++) {
@@ -62,8 +67,13 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
         uint256 balance = balanceOf(user);
         if (balance > 0) {
           // console.log("sweepTimelock: Burning %s", balance);
+          console.log("Timelock sweep 4");
           _burn(user, balance, "", "");
+          console.log("Timelock sweep 5");
+          PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(user, balance);
+          console.log("Timelock sweep 6");
           IERC20(yieldService.token()).transfer(user, balance);
+          console.log("Timelock sweep 7");
         }
       }
     }
@@ -72,10 +82,6 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
   function mintTo(address to, uint256 amount, uint256 unlockTimestamp) external onlyManagerOrModule {
     _mint(to, amount, "", "");
     unlockTimestamps[to] = unlockTimestamp;
-  }
-
-  function burnFrom(address from, uint256 amount) external onlyManagerOrModule {
-    _burn(from, amount, "", "");
   }
 
   function balanceAvailableAt(address user) external view returns (uint256) {

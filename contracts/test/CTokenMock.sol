@@ -47,8 +47,8 @@ contract CTokenMock is ERC20UpgradeSafe {
     } else {
       // they need to hold the same assets as tokens.
       // Need to calculate the current exchange rate
-      uint256 fractionOfCollateral = FixedPoint.calculateMantissa(amount, underlying.balanceOf(address(this)));
-      newCTokens = FixedPoint.multiplyUintByMantissa(totalSupply(), fractionOfCollateral);
+      uint256 fractionOfCredit = FixedPoint.calculateMantissa(amount, underlying.balanceOf(address(this)));
+      newCTokens = FixedPoint.multiplyUintByMantissa(totalSupply(), fractionOfCredit);
       // console.log("Supply exists, new tokens iz %s", newCTokens);
     }
     // console.log("MINTING %s", newCTokens);

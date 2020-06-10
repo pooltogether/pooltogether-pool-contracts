@@ -4,7 +4,7 @@ import "../base/OwnableModuleManager.sol";
 import "../Constants.sol";
 import "../modules/yield-service/YieldServiceInterface.sol";
 import "../modules/ticket/Ticket.sol";
-import "../modules/collateral/Collateral.sol";
+import "../modules/interest-tracker/InterestTrackerInterface.sol";
 import "../modules/sponsorship/Sponsorship.sol";
 import "../modules/periodic-prize-pool/PeriodicPrizePoolInterface.sol";
 
@@ -18,8 +18,8 @@ contract PrizePoolModuleManager is OwnableModuleManager {
     return Ticket(Constants.REGISTRY.getInterfaceImplementer(address(this), Constants.TICKET_INTERFACE_HASH));
   }
 
-  function collateral() public view returns (Collateral) {
-    return Collateral(Constants.REGISTRY.getInterfaceImplementer(address(this), Constants.COLLATERAL_INTERFACE_HASH));
+  function credit() public view returns (Credit) {
+    return Credit(Constants.REGISTRY.getInterfaceImplementer(address(this), Constants.CREDIT_INTERFACE_HASH));
   }
 
   function sponsorship() public view returns (Sponsorship) {
@@ -34,8 +34,8 @@ contract PrizePoolModuleManager is OwnableModuleManager {
     return PeriodicPrizePoolInterface(Constants.REGISTRY.getInterfaceImplementer(address(this), Constants.PRIZE_POOL_INTERFACE_HASH));
   }
 
-  function creditReserve() public view returns (CreditReserve) {
-    return CreditReserve(Constants.REGISTRY.getInterfaceImplementer(address(this), Constants.CREDIT_RESERVE_INTERFACE_HASH));
+  function interestTracker() public view returns (InterestTrackerInterface) {
+    return InterestTrackerInterface(Constants.REGISTRY.getInterfaceImplementer(address(this), Constants.INTEREST_TRACKER_INTERFACE_HASH));
   }
 
 }
