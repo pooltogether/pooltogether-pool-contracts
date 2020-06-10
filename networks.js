@@ -5,11 +5,20 @@ module.exports = {
     kovan: {
       provider: () => new HDWalletProvider(
         process.env.HDWALLET_MNEMONIC,
-        process.env.INFURA_PROVIDER_URL_KOVAN,
+        `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
         0,
         3
       ),
       networkId: 42
+    },
+    ropsten: {
+      provider: () => new HDWalletProvider(
+        process.env.HDWALLET_MNEMONIC,
+        `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
+        0,
+        3
+      ),
+      networkId: 3
     },
     local: {
       host: 'localhost',
