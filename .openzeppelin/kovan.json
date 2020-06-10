@@ -1,11 +1,11 @@
 {
   "contracts": {
     "PrizePoolModuleManagerFactory": {
-      "address": "0x75F50310B8cC026CFF0D5451969f8505E6d2FDC4",
-      "constructorCode": "608060405234801561001057600080fd5b50611b2e806100206000396000f3fe",
-      "bodyBytecodeHash": "04651b335130f581916720b7abedf7ae976058087f817c9b3046dd3ec3b7acc7",
-      "localBytecodeHash": "bfc3e13a7c42e1e439c0b6c3ee69847d154d241463e2783096d5e408e02047fe",
-      "deployedBytecodeHash": "bfc3e13a7c42e1e439c0b6c3ee69847d154d241463e2783096d5e408e02047fe",
+      "address": "0xF3665e426555d53d448434a1Fd65f3A776a3ca5f",
+      "constructorCode": "608060405234801561001057600080fd5b50611d42806100206000396000f3fe",
+      "bodyBytecodeHash": "49f1cbb5d39d544194403d02b6080f26a8de9b60ea5060744c3527fce2a70b83",
+      "localBytecodeHash": "0d1685f33b5aaff5a2e3fae6db05d430b6314c6f6897543fac2287cf71c985a1",
+      "deployedBytecodeHash": "0d1685f33b5aaff5a2e3fae6db05d430b6314c6f6897543fac2287cf71c985a1",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -59,9 +59,9 @@
           "contract": "PrizePoolModuleManagerFactory",
           "path": "contracts/module-manager/PrizePoolModuleManagerFactory.sol",
           "label": "instance",
-          "astId": 15694,
+          "astId": 15707,
           "type": "t_address",
-          "src": "272:38:41"
+          "src": "272:38:42"
         }
       ],
       "warnings": {
@@ -73,11 +73,11 @@
       }
     },
     "CompoundYieldServiceFactory": {
-      "address": "0x8baB222B52A4a6126c10ee8730C8de823BdcBd19",
-      "constructorCode": "608060405234801561001057600080fd5b506119f3806100206000396000f3fe",
-      "bodyBytecodeHash": "69cb911ff3115c90e9a0df5e74d3aabca10d3b455b506f7c40c96835f3638266",
-      "localBytecodeHash": "5a116385b04831d9e77fe3a80718ed3a69e5adb35428c6890ce9d23e6187b458",
-      "deployedBytecodeHash": "5a116385b04831d9e77fe3a80718ed3a69e5adb35428c6890ce9d23e6187b458",
+      "address": "0xd8BA6f3c29855f5132a580Af252AD804E9cE53f5",
+      "constructorCode": "608060405234801561001057600080fd5b50611791806100206000396000f3fe",
+      "bodyBytecodeHash": "a270b9a5cd8809126b2ae1c3a08af0d309e6b26d88f6723985b796dd482c0224",
+      "localBytecodeHash": "724995b413d9ebae5f7782359879376a992b4c93a327c448745393254eff20bc",
+      "deployedBytecodeHash": "724995b413d9ebae5f7782359879376a992b4c93a327c448745393254eff20bc",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -131,9 +131,9 @@
           "contract": "CompoundYieldServiceFactory",
           "path": "contracts/modules/yield-service/CompoundYieldServiceFactory.sol",
           "label": "instance",
-          "astId": 18663,
+          "astId": 19122,
           "type": "t_address",
-          "src": "271:36:56"
+          "src": "271:36:59"
         }
       ],
       "warnings": {
@@ -145,11 +145,11 @@
       }
     },
     "PeriodicPrizePoolFactory": {
-      "address": "0x53a1E5Ddf0D702Bc81C5Bbc204ddD1CFb87043B8",
-      "constructorCode": "608060405234801561001057600080fd5b50612979806100206000396000f3fe",
-      "bodyBytecodeHash": "e7b5cf1ab427462dee2d7a16672c94980d5cbc3c11b60a44e8b9d949cd28781b",
-      "localBytecodeHash": "b89a5e6805e840e4ba09ce727a25219f2f9275db1e0d4cf87b168a4c991dd986",
-      "deployedBytecodeHash": "b89a5e6805e840e4ba09ce727a25219f2f9275db1e0d4cf87b168a4c991dd986",
+      "address": "0x9B2124ADB095D99ED398Fbc94b20B8Ab51DB9B48",
+      "constructorCode": "608060405234801561001057600080fd5b50612772806100206000396000f3fe",
+      "bodyBytecodeHash": "29d104c90511bd8bfa1361003d885eaaef97e7fb1568182b3686d30ffd321fc2",
+      "localBytecodeHash": "351f753876410990065260b5d68e341c0b4893764793c26204b8007806100cfe",
+      "deployedBytecodeHash": "351f753876410990065260b5d68e341c0b4893764793c26204b8007806100cfe",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -203,9 +203,9 @@
           "contract": "PeriodicPrizePoolFactory",
           "path": "contracts/modules/periodic-prize-pool/PeriodicPrizePoolFactory.sol",
           "label": "instance",
-          "astId": 16841,
+          "astId": 17196,
           "type": "t_address",
-          "src": "318:33:46"
+          "src": "318:33:49"
         }
       ],
       "warnings": {
@@ -217,11 +217,11 @@
       }
     },
     "TicketFactory": {
-      "address": "0xC739335ec01420Dc6Df750D38cEfC40508A4ffea",
-      "constructorCode": "608060405234801561001057600080fd5b50615d6e806100206000396000f3fe",
-      "bodyBytecodeHash": "da973db65be9f1b2499a65cc1461aa7d3f1a0448b2bb510a26f74607fc949613",
-      "localBytecodeHash": "9b8519372cc288cd43deeb02dae129bcec1b2b058c3caa08cc28ef64343d3d4d",
-      "deployedBytecodeHash": "9b8519372cc288cd43deeb02dae129bcec1b2b058c3caa08cc28ef64343d3d4d",
+      "address": "0xCB08B6140a0E5aA1D1814A190F65847a7f008fC6",
+      "constructorCode": "608060405234801561001057600080fd5b50615e5c806100206000396000f3fe",
+      "bodyBytecodeHash": "b70bd01ae1cdc3311ccbbc6b5f02401bb9af00f1883a34ce7b954e0e2775da88",
+      "localBytecodeHash": "44031276e56f7ce8a873708d77a4d7fa616d5166bdb0288e32efd1c3066a9a0c",
+      "deployedBytecodeHash": "44031276e56f7ce8a873708d77a4d7fa616d5166bdb0288e32efd1c3066a9a0c",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -275,9 +275,9 @@
           "contract": "TicketFactory",
           "path": "contracts/modules/ticket/TicketFactory.sol",
           "label": "instance",
-          "astId": 17957,
+          "astId": 18391,
           "type": "t_address",
-          "src": "243:22:51"
+          "src": "243:22:54"
         }
       ],
       "warnings": {
@@ -288,12 +288,12 @@
         "uninitializedBaseContracts": []
       }
     },
-    "CollateralFactory": {
-      "address": "0xad11611B099A13A35245e7Be14C01663337951E4",
-      "constructorCode": "608060405234801561001057600080fd5b50613cc1806100206000396000f3fe",
-      "bodyBytecodeHash": "178d4a3c18aa73b2a8ec2e43d96f603e15ef908efe55f0ef8027fd805dec6606",
-      "localBytecodeHash": "52acbe0e1718884103c5650c94d8d7dcb091b49c72409137c1e38c08ea1cc83c",
-      "deployedBytecodeHash": "52acbe0e1718884103c5650c94d8d7dcb091b49c72409137c1e38c08ea1cc83c",
+    "CreditFactory": {
+      "address": "0x9d7C618a92D905170A5504b71eD85a339a10693b",
+      "constructorCode": "608060405234801561001057600080fd5b50613530806100206000396000f3fe",
+      "bodyBytecodeHash": "063f96d18db8ba7514e92b845d2d1fe5b952f13d0dcc089cfab1286349cde784",
+      "localBytecodeHash": "43f52c18a55649d7e98612d452d3b528f1360eca6ba88a9fcff406944888e721",
+      "deployedBytecodeHash": "43f52c18a55649d7e98612d452d3b528f1360eca6ba88a9fcff406944888e721",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -344,12 +344,12 @@
           "src": "1982:29:11"
         },
         {
-          "contract": "CollateralFactory",
-          "path": "contracts/modules/collateral/CollateralFactory.sol",
+          "contract": "CreditFactory",
+          "path": "contracts/modules/credit/CreditFactory.sol",
           "label": "instance",
-          "astId": 15925,
+          "astId": 15809,
           "type": "t_address",
-          "src": "303:23:43"
+          "src": "296:22:44"
         }
       ],
       "warnings": {
@@ -361,11 +361,11 @@
       }
     },
     "SingleRandomWinnerPrizeStrategyFactory": {
-      "address": "0x40D0D5458c78cD17A098091DCbcED9AfD42Eb9E4",
-      "constructorCode": "608060405234801561001057600080fd5b50610ab6806100206000396000f3fe",
-      "bodyBytecodeHash": "eca2243e839208ec13e7143cef9ff937a99fb6d8ed5c840838b86a94cd4afbe8",
-      "localBytecodeHash": "aec7d8d09b5ccec95ed48cfff37d33aa185889817f9c9695bd9fce69da97d129",
-      "deployedBytecodeHash": "aec7d8d09b5ccec95ed48cfff37d33aa185889817f9c9695bd9fce69da97d129",
+      "address": "0xd49b13C9fb63c0697E601f0E010729A66f62E670",
+      "constructorCode": "608060405234801561001057600080fd5b50610a56806100206000396000f3fe",
+      "bodyBytecodeHash": "ba9ef3a36f63e67d1fee188e26dc3076528ca692b3c333a9dfff632439870582",
+      "localBytecodeHash": "725c57714207dc66921215787f713d277ad6e10aa28736c243b937b60a3b8068",
+      "deployedBytecodeHash": "725c57714207dc66921215787f713d277ad6e10aa28736c243b937b60a3b8068",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -419,9 +419,9 @@
           "contract": "SingleRandomWinnerPrizeStrategyFactory",
           "path": "contracts/prize-strategy/SingleRandomWinnerPrizeStrategyFactory.sol",
           "label": "instance",
-          "astId": 18885,
+          "astId": 19345,
           "type": "t_address",
-          "src": "290:47:61"
+          "src": "290:47:63"
         }
       ],
       "warnings": {
@@ -433,7 +433,7 @@
       }
     },
     "RNGBlockhash": {
-      "address": "0xecc939d653DD589Ee38917dBeEB7f9DF9a95bB02",
+      "address": "0x771aCFB0a70CA11353Cf05A363E98518f3245EFC",
       "constructorCode": "608060405234801561001057600080fd5b506102f0806100206000396000f3fe",
       "bodyBytecodeHash": "1c534a5c051925f9fae78d6b73500f56483de51443b7f4d2c596565a61f00729",
       "localBytecodeHash": "d9292299ff1f8f0d02e78cfaa62c8f7aabc1c516d0df724dc1eeb21cd613558a",
@@ -472,25 +472,25 @@
           "contract": "RNGBlockhash",
           "path": "contracts/rng/RNGBlockhash.sol",
           "label": "requestCount",
-          "astId": 18925,
+          "astId": 19385,
           "type": "t_uint256",
-          "src": "208:27:62"
+          "src": "208:27:64"
         },
         {
           "contract": "RNGBlockhash",
           "path": "contracts/rng/RNGBlockhash.sol",
           "label": "completed",
-          "astId": 18929,
+          "astId": 19389,
           "type": "t_mapping<t_bool>",
-          "src": "239:41:62"
+          "src": "239:41:64"
         },
         {
           "contract": "RNGBlockhash",
           "path": "contracts/rng/RNGBlockhash.sol",
           "label": "randomNumbers",
-          "astId": 18933,
+          "astId": 19393,
           "type": "t_mapping<t_bytes32>",
-          "src": "284:48:62"
+          "src": "284:48:64"
         }
       ],
       "warnings": {
@@ -502,11 +502,11 @@
       }
     },
     "TimelockFactory": {
-      "address": "0xe00CFD892C7aBFCc8062dfd5fc004B5CEE135F54",
-      "constructorCode": "608060405234801561001057600080fd5b50614061806100206000396000f3fe",
-      "bodyBytecodeHash": "934458d6e15d42af16e5dd8e767044f9d407783979815513c28cc0355bb7a775",
-      "localBytecodeHash": "83dbbe22aa0d2f4a9ffc741cef8ebc81dbf57b9fe992e1f18bd3f1cc0c0fd040",
-      "deployedBytecodeHash": "83dbbe22aa0d2f4a9ffc741cef8ebc81dbf57b9fe992e1f18bd3f1cc0c0fd040",
+      "address": "0x06f4E07900211271A17C29CCD1e06B53030652C3",
+      "constructorCode": "608060405234801561001057600080fd5b506113ff806100206000396000f3fe",
+      "bodyBytecodeHash": "bc1f94d0357119ab5ec713d94d8b2d22d6cc2884d77254ca5911c9255a4bfa98",
+      "localBytecodeHash": "80a21b83b3886a3870bf103e0b6fdf0e28c66347dbfaedd121c49bf0f5ab8dfe",
+      "deployedBytecodeHash": "80a21b83b3886a3870bf103e0b6fdf0e28c66347dbfaedd121c49bf0f5ab8dfe",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -560,9 +560,9 @@
           "contract": "TimelockFactory",
           "path": "contracts/modules/timelock/TimelockFactory.sol",
           "label": "instance",
-          "astId": 18290,
+          "astId": 18732,
           "type": "t_address",
-          "src": "247:24:54"
+          "src": "247:24:57"
         }
       ],
       "warnings": {
@@ -574,11 +574,11 @@
       }
     },
     "SponsorshipFactory": {
-      "address": "0xA15e339d91eCd2e9E2a084b6A3151f15D99a0293",
-      "constructorCode": "608060405234801561001057600080fd5b506139ed806100206000396000f3fe",
-      "bodyBytecodeHash": "80e8d26f446a64a157362045b0016de9fca043cb80fb14caab7b1e0d4793b78e",
-      "localBytecodeHash": "2c406ab7089b78f2e6d2c8694b87f57cff3eb32ae19debdc21ee71edb8f8dd31",
-      "deployedBytecodeHash": "2c406ab7089b78f2e6d2c8694b87f57cff3eb32ae19debdc21ee71edb8f8dd31",
+      "address": "0x6b4D10c9Bd3B670cc57ED3fE5984d59C000f927f",
+      "constructorCode": "608060405234801561001057600080fd5b50613983806100206000396000f3fe",
+      "bodyBytecodeHash": "27cc55a076df27ea0190b8080aa9d5b2a91b053031e31cd13e115fc9fd94938f",
+      "localBytecodeHash": "0d212cbcad251550bea9d109ed3a31b987b25a40d03a55b2fb15e0af9707a064",
+      "deployedBytecodeHash": "0d212cbcad251550bea9d109ed3a31b987b25a40d03a55b2fb15e0af9707a064",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -632,9 +632,81 @@
           "contract": "SponsorshipFactory",
           "path": "contracts/modules/sponsorship/SponsorshipFactory.sol",
           "label": "instance",
-          "astId": 17090,
+          "astId": 17468,
           "type": "t_address",
-          "src": "253:27:49"
+          "src": "253:27:52"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
+    "InterestTrackerFactory": {
+      "address": "0xe4610507Caf5Ab6b30be77E4694ce7adB5B28eF0",
+      "constructorCode": "608060405234801561001057600080fd5b50611585806100206000396000f3fe",
+      "bodyBytecodeHash": "145a0a6fb3aabbac54eeb491f71cb677ef02a2f4eff4720a2b1671f437ca7fd7",
+      "localBytecodeHash": "7fac816a869e32edfafdbf02b282851bc0f232ca6a57dd70007247f7ace9f954",
+      "deployedBytecodeHash": "7fac816a869e32edfafdbf02b282851bc0f232ca6a57dd70007247f7ace9f954",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 11119,
+          "type": "t_bool",
+          "src": "757:24:11"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 11121,
+          "type": "t_bool",
+          "src": "876:25:11"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 11186,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:11"
+        },
+        {
+          "contract": "InterestTrackerFactory",
+          "path": "contracts/modules/interest-tracker/InterestTrackerFactory.sol",
+          "label": "instance",
+          "astId": 16262,
+          "type": "t_address",
+          "src": "261:31:46"
         }
       ],
       "warnings": {
@@ -646,11 +718,11 @@
       }
     },
     "PrizePoolBuilder": {
-      "address": "0x085c8eB4AFd3c54Ea3D01610408DA30700c0047D",
-      "constructorCode": "608060405234801561001057600080fd5b506111a3806100206000396000f3fe",
-      "bodyBytecodeHash": "95f3510048ecf996308e6d294df57b813ff8d9b961cb83051f98bd1a59e65624",
-      "localBytecodeHash": "f1c6609b68c9b0cbd9890207152f127b2c571e77d2ab5c5a86f4c6254179927a",
-      "deployedBytecodeHash": "f1c6609b68c9b0cbd9890207152f127b2c571e77d2ab5c5a86f4c6254179927a",
+      "address": "0xD5f0f84fe637cB14FfB75C8dBa37B958B14ff2fD",
+      "constructorCode": "608060405234801561001057600080fd5b506113b4806100206000396000f3fe",
+      "bodyBytecodeHash": "c8e8878b040404d3cde4c40eda1b26c82b85fd3b75c23db655c879e5db71bbab",
+      "localBytecodeHash": "4ac95f1f6c7507294b2dbd855484eb2a7641dfdcb287ea0390496cb122ff140d",
+      "deployedBytecodeHash": "4ac95f1f6c7507294b2dbd855484eb2a7641dfdcb287ea0390496cb122ff140d",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -704,81 +776,89 @@
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "prizePoolModuleManagerFactory",
-          "astId": 14288,
+          "astId": 14234,
           "type": "t_address",
-          "src": "809:66:31"
+          "src": "872:66:32"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "governor",
-          "astId": 14290,
+          "astId": 14236,
           "type": "t_address",
-          "src": "879:33:31"
+          "src": "942:33:32"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "compoundYieldServiceFactory",
-          "astId": 14292,
+          "astId": 14238,
           "type": "t_address",
-          "src": "916:62:31"
+          "src": "979:62:32"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "periodicPrizePoolFactory",
-          "astId": 14294,
+          "astId": 14240,
           "type": "t_address",
-          "src": "982:56:31"
+          "src": "1045:56:32"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "ticketFactory",
-          "astId": 14296,
+          "astId": 14242,
           "type": "t_address",
-          "src": "1042:34:31"
+          "src": "1105:34:32"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
-          "label": "collateralFactory",
-          "astId": 14298,
+          "label": "creditFactory",
+          "astId": 14244,
           "type": "t_address",
-          "src": "1080:36:31"
+          "src": "1143:34:32"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "timelockFactory",
-          "astId": 14300,
+          "astId": 14246,
           "type": "t_address",
-          "src": "1120:38:31"
+          "src": "1181:38:32"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "sponsorshipFactory",
-          "astId": 14302,
+          "astId": 14248,
           "type": "t_address",
-          "src": "1162:44:31"
+          "src": "1223:44:32"
+        },
+        {
+          "contract": "PrizePoolBuilder",
+          "path": "contracts/builder/PrizePoolBuilder.sol",
+          "label": "interestTrackerFactory",
+          "astId": 14250,
+          "type": "t_address",
+          "src": "1271:52:32"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "rng",
-          "astId": 14304,
+          "astId": 14252,
           "type": "t_address",
-          "src": "1210:23:31"
+          "src": "1327:23:32"
         },
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
           "label": "trustedForwarder",
-          "astId": 14306,
+          "astId": 14254,
           "type": "t_address",
-          "src": "1237:31:31"
+          "src": "1354:31:32"
         }
       ],
       "warnings": {
@@ -790,7 +870,7 @@
       }
     },
     "SingleRandomWinnerPrizePoolBuilder": {
-      "address": "0x30CAB2D815f7491713AbBB85df8B4977A13F77d8",
+      "address": "0xcc11B65198E85211D2c40d55e2aD61E3d301BC3f",
       "constructorCode": "608060405234801561001057600080fd5b506106ed806100206000396000f3fe",
       "bodyBytecodeHash": "41ff37b0d5033bdab1ca14b11e92db62b7981819eef797b710e386c2d625ed53",
       "localBytecodeHash": "bfcc250c94665a5ba994700a331a61fba02a5299c3855f774029aac64d6b5180",
@@ -848,17 +928,17 @@
           "contract": "SingleRandomWinnerPrizePoolBuilder",
           "path": "contracts/builder/SingleRandomWinnerPrizePoolBuilder.sol",
           "label": "prizePoolBuilder",
-          "astId": 14756,
+          "astId": 14750,
           "type": "t_address",
-          "src": "440:40:32"
+          "src": "440:40:33"
         },
         {
           "contract": "SingleRandomWinnerPrizePoolBuilder",
           "path": "contracts/builder/SingleRandomWinnerPrizePoolBuilder.sol",
           "label": "prizeStrategyFactory",
-          "astId": 14758,
+          "astId": 14752,
           "type": "t_address",
-          "src": "484:66:32"
+          "src": "484:66:33"
         }
       ],
       "warnings": {
@@ -874,107 +954,116 @@
   "proxies": {
     "PoolTogether3/PrizePoolModuleManagerFactory": [
       {
-        "address": "0xFAdA35f1ce48D7540FB97C172c23A4A0D30d6EB3",
+        "address": "0x2E7a5bB4Aa57D4e867F747d15D91D3eB794D2c71",
         "version": "0.3.0",
-        "implementation": "0x75F50310B8cC026CFF0D5451969f8505E6d2FDC4",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0xF3665e426555d53d448434a1Fd65f3A776a3ca5f",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       },
       {
-        "address": "0xc36b0955cb2b7059A0ab3EF779837e60103f760F",
+        "address": "0x9C13A56d330044DDAbBA1Ac0dD0935622429B935",
         "version": "0.3.0",
-        "implementation": "0x75F50310B8cC026CFF0D5451969f8505E6d2FDC4",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0xF3665e426555d53d448434a1Fd65f3A776a3ca5f",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/CompoundYieldServiceFactory": [
       {
-        "address": "0x57c14deBCC34d5bd877D26c23227351d061fC0A1",
+        "address": "0xe3095a8bEC856Dd099F2Bab9edb2889955D29Ff0",
         "version": "0.3.0",
-        "implementation": "0x8baB222B52A4a6126c10ee8730C8de823BdcBd19",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0xd8BA6f3c29855f5132a580Af252AD804E9cE53f5",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/PeriodicPrizePoolFactory": [
       {
-        "address": "0xF65E19bB6757fDF333A4D7E76ddab40424817286",
+        "address": "0x05AC42868d6E0333ef49133C76fd12F4086bC68F",
         "version": "0.3.0",
-        "implementation": "0x53a1E5Ddf0D702Bc81C5Bbc204ddD1CFb87043B8",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0x9B2124ADB095D99ED398Fbc94b20B8Ab51DB9B48",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/TicketFactory": [
       {
-        "address": "0x6d4857b120A613E86F909c51f2794F71bDC44434",
+        "address": "0x7b1E28e336c68b1220F0B60F3E1e7f887a3A49Cd",
         "version": "0.3.0",
-        "implementation": "0xC739335ec01420Dc6Df750D38cEfC40508A4ffea",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0xCB08B6140a0E5aA1D1814A190F65847a7f008fC6",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ],
-    "PoolTogether3/CollateralFactory": [
+    "PoolTogether3/CreditFactory": [
       {
-        "address": "0x7F269B1bcE1B24F373BB30551fF306CF68dDF731",
+        "address": "0x5B3419708140DBE132f41A45332523928CA4bc48",
         "version": "0.3.0",
-        "implementation": "0xad11611B099A13A35245e7Be14C01663337951E4",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0x9d7C618a92D905170A5504b71eD85a339a10693b",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/SingleRandomWinnerPrizeStrategyFactory": [
       {
-        "address": "0xfe94369216A2B04Dc501aEF895Bb7216D506Ebb2",
+        "address": "0x9dc629efbD284C3af4AB4707B02185A747fc8243",
         "version": "0.3.0",
-        "implementation": "0x40D0D5458c78cD17A098091DCbcED9AfD42Eb9E4",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0xd49b13C9fb63c0697E601f0E010729A66f62E670",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/RNGBlockhash": [
       {
-        "address": "0x8B1734d99ABC1DB4615Ec1406E9a429cCc7A1e3D",
+        "address": "0x637E4332404C47B0b3A413D36E29cf98B6CF477b",
         "version": "0.3.0",
-        "implementation": "0xecc939d653DD589Ee38917dBeEB7f9DF9a95bB02",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0x771aCFB0a70CA11353Cf05A363E98518f3245EFC",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/TimelockFactory": [
       {
-        "address": "0xDb72a7fcb022eF465134e33Af08F7dD8337680f6",
+        "address": "0xD6EE259Ff94c77932e1046A5430c3E193D872E4c",
         "version": "0.3.0",
-        "implementation": "0xe00CFD892C7aBFCc8062dfd5fc004B5CEE135F54",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0x06f4E07900211271A17C29CCD1e06B53030652C3",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/SponsorshipFactory": [
       {
-        "address": "0x269BaD6B831208cD29756210A33E11430F279A45",
+        "address": "0xa183C07bED4Da605C45F2107A83d058a97dd61De",
         "version": "0.3.0",
-        "implementation": "0xA15e339d91eCd2e9E2a084b6A3151f15D99a0293",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0x6b4D10c9Bd3B670cc57ED3fE5984d59C000f927f",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
+        "kind": "Upgradeable"
+      }
+    ],
+    "PoolTogether3/InterestTrackerFactory": [
+      {
+        "address": "0x5997C51DD721D038a66F9eA9072AF95fcd976fA0",
+        "version": "0.3.0",
+        "implementation": "0xe4610507Caf5Ab6b30be77E4694ce7adB5B28eF0",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/PrizePoolBuilder": [
       {
-        "address": "0xe5246199B8Cc4c8805A85B99919BE45fA4093538",
+        "address": "0xB0a7b3c750cFbdBc81B9649Ba765B53517b4911c",
         "version": "0.3.0",
-        "implementation": "0x085c8eB4AFd3c54Ea3D01610408DA30700c0047D",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0xD5f0f84fe637cB14FfB75C8dBa37B958B14ff2fD",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/SingleRandomWinnerPrizePoolBuilder": [
       {
-        "address": "0xdE4050B2c7048E78FFc79C0Aa6bDEb8224357Ec5",
+        "address": "0x2331c528754DC4345eB5e07bdF6b50788dd803Ef",
         "version": "0.3.0",
-        "implementation": "0x30CAB2D815f7491713AbBB85df8B4977A13F77d8",
-        "admin": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca",
+        "implementation": "0xcc11B65198E85211D2c40d55e2aD61E3d301BC3f",
+        "admin": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121",
         "kind": "Upgradeable"
       }
     ]
@@ -982,6 +1071,6 @@
   "manifestVersion": "2.2",
   "version": "0.3.0",
   "proxyAdmin": {
-    "address": "0x23812A8BCa6919FbAD9f1EEE958dF77497Ad63ca"
+    "address": "0x896E4ebea4c2CE8f19Fe7eAc72d5042C09f08121"
   }
 }

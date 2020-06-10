@@ -53,6 +53,7 @@ program
     if (program.network == 'kovan') {
       trustedForwarder = '0x6453D37248Ab2C16eBd1A8f782a2CBC65860E60B'
       governor = '0x2f935900D89b0815256a3f2c4c69e1a0230b5860'
+    // } else if (program.network == 'ropsten') {
     } else {
       context = await buildContext({ network: program.network, address: program.address })
       trustedForwarder = context.networkFile.data.proxies['PoolTogether3/Forwarder'][0].address
