@@ -4,11 +4,15 @@ const TicketHarness = require('../build/TicketHarness.json')
 const PeriodicPrizePool = require('../build/PeriodicPrizePool.json')
 const Timelock = require('../build/Timelock.json')
 const IERC20 = require('../build/IERC20.json')
+const PrizePoolModuleManager = require('../build/PrizePoolModuleManager.json')
+const InterestTracker = require('../build/InterestTracker.json')
+const ERC1820ImplementerMock = require('../build/ERC1820ImplementerMock.json')
+
 const { deployMockModule } = require('../js/deployMockModule')
-const Loyalty = require('../build/Loyalty.json')
+const Credit = require('../build/Credit.json')
 const CompoundYieldService = require('../build/CompoundYieldService.json')
 const {
-  LOYALTY_INTERFACE_HASH,
+  CREDIT_INTERFACE_HASH,
   PRIZE_POOL_INTERFACE_HASH,
   TICKET_INTERFACE_HASH,
   TIMELOCK_INTERFACE_HASH,
@@ -35,7 +39,7 @@ describe('Ticket contract', function() {
 
   let wallet
 
-  let registry, prizePool, loyalty, yieldService, manager
+  let registry, prizePool, collateral, yieldService, manager, token, cToken, interestTracker, implementerMock
 
   let lastTxTimestamp
 
@@ -46,44 +50,34 @@ describe('Ticket contract', function() {
 
     debug('creating manager and registry...')
 
-    manager = await deployContract(wallet, ModuleManagerHarness, [], overrides)
-    await manager.initialize()
-    registry = await deploy1820(wallet)
+    await deploy1820(wallet)
 
-    debug('deploying periodic prize pool...')
-
-    prizePool = await deployMockModule(wallet, manager, PeriodicPrizePool.abi, PRIZE_POOL_INTERFACE_HASH)
-
-    debug('deploying loyalty...')
-
-    loyalty = await deployMockModule(wallet, manager, Loyalty.abi, LOYALTY_INTERFACE_HASH)
-
-    debug('deploying yieldService...')
-
-    yieldService = await deployMockModule(wallet, manager, CompoundYieldService.abi, YIELD_SERVICE_INTERFACE_HASH)
-
-    debug('deploying timelock...')
-
-    timelock = await deployMockModule(wallet, manager, Timelock.abi, TIMELOCK_INTERFACE_HASH)
-
-    debug('deploying token...')
-
+    manager = await deployMockContract(wallet, PrizePoolModuleManager.abi, overrides)
     token = await deployMockContract(wallet, IERC20.abi, overrides)
-
-    ticket = await deployContract(wallet, TicketHarness, [], overrides)
-    let tx = await manager.enableModule(ticket.address)
-    let block = await buidler.ethers.provider.getBlock(tx.blockNumber)
-    lastTxTimestamp = block.timestamp
+    yieldService = await deployMockContract(wallet, CompoundYieldService.abi, overrides)
+    interestTracker = await deployMockContract(wallet, InterestTracker.abi, overrides)
+    prizePool = await deployMockContract(wallet, PeriodicPrizePool.abi, overrides)
+    timelock = await deployMockContract(wallet, Timelock.abi, overrides)
 
     await yieldService.mock.token.returns(token.address)
-    await token.mock.approve.returns(true)
+    await manager.mock.enableModuleInterface.withArgs(TICKET_INTERFACE_HASH).returns()
+    await manager.mock.isModuleEnabled.withArgs(wallet._address).returns(true)
 
-    await ticket['initialize(address,address,string,string)'](
+    await manager.mock.yieldService.returns(yieldService.address)
+    await manager.mock.interestTracker.returns(interestTracker.address)
+    await manager.mock.prizePool.returns(prizePool.address)
+    await manager.mock.timelock.returns(timelock.address)
+
+    ticket = await deployContract(wallet, TicketHarness, [], overrides)
+
+    let tx = await ticket['initialize(address,address,string,string)'](
       manager.address,
       FORWARDER,
       'TICKET',
       'TICK'
     )
+    let block = await buidler.ethers.provider.getBlock(tx.blockNumber)
+    lastTxTimestamp = block.timestamp
   })
 
   describe('initialize()', () => {
@@ -91,7 +85,6 @@ describe('Ticket contract', function() {
       expect(await ticket.name()).to.equal('TICKET')
       expect(await ticket.symbol()).to.equal('TICK')
       expect(await ticket.getTrustedForwarder()).to.equal(FORWARDER)
-      expect(await registry.getInterfaceImplementer(manager.address, TICKET_INTERFACE_HASH)).to.equal(ticket.address)
     })
   })
 
@@ -102,8 +95,9 @@ describe('Ticket contract', function() {
       await token.mock.transferFrom.withArgs(wallet._address, ticket.address, amount).returns(true)
       await token.mock.allowance.returns(0)
       await token.mock.approve.returns(true)
-      await yieldService.mock.supply.withArgs(ticket.address, amount).returns()
-      await loyalty.mock.supply.withArgs(wallet._address, amount).returns()
+      await yieldService.mock.supply.withArgs(amount).returns()
+      await interestTracker.mock.supplyCollateral.withArgs(wallet._address, amount).returns()
+      await prizePool.mock.mintedTickets.withArgs(toWei('10')).returns()
 
       await ticket.mintTickets(toWei('10'), [])
 
@@ -118,9 +112,10 @@ describe('Ticket contract', function() {
       await token.mock.allowance.returns(0)
       await token.mock.approve.returns(true)
       await token.mock.transferFrom.withArgs(wallet._address, ticket.address, amount).returns(true)
-      await yieldService.mock.supply.withArgs(ticket.address, amount).returns()
-      await loyalty.mock.supply.withArgs(wallet2._address, amount).returns()
-
+      await yieldService.mock.supply.withArgs(amount).returns()
+      await interestTracker.mock.supplyCollateral.withArgs(wallet2._address, amount).returns()
+      await prizePool.mock.mintedTickets.withArgs(toWei('10')).returns()
+      
       await ticket.operatorMintTickets(wallet2._address, toWei('10'), [], [])
 
       expect(await ticket.balanceOf(wallet._address)).to.equal('0')
@@ -129,14 +124,15 @@ describe('Ticket contract', function() {
   })
 
   describe('redeemTicketsInstantly()', () => {
-    it('should allow a user to pay to redeem their tickets', async () => {
-      await ticket.mint(wallet._address, toWei('10'))
+    xit('should allow a user to pay to redeem their tickets', async () => {
     })
   })
 
   describe('redeemTicketsWithTimelock()', () => {
     it('should lock the users funds', async () => {
       await ticket.mint(wallet._address, toWei('10'))
+
+      await timelock.mock.sweep.withArgs([wallet._address]).returns('0')
 
       // unlock timestamp is in future
       let unlockTimestamp = lastTxTimestamp + 100
@@ -147,6 +143,9 @@ describe('Ticket contract', function() {
       // expect a mint on the timelock
       await timelock.mock.mintTo.withArgs(wallet._address, toWei('10'), unlockTimestamp).returns()
 
+      // prize pool expects it
+      await prizePool.mock.redeemedTickets.withArgs(toWei('10')).returns()
+
       await ticket.redeemTicketsWithTimelock(toWei('10'), [])
 
       expect(await ticket.balanceOf(wallet._address)).to.equal(toWei('0'))
@@ -155,12 +154,17 @@ describe('Ticket contract', function() {
     it('should lock even if there is an existing timelock balance', async () => {
       await ticket.mint(wallet._address, toWei('10'))
 
+      await timelock.mock.sweep.withArgs([wallet._address]).returns('0')
+
       // unlock timestamp is in future
       let unlockTimestamp = lastTxTimestamp + 100
       await prizePool.mock.calculateUnlockTimestamp.returns(unlockTimestamp)
       // current timelocked balance is non-zero, and still locked
       await timelock.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
       await timelock.mock.balanceAvailableAt.withArgs(wallet._address).returns(unlockTimestamp)
+
+      // prize pool expects it
+      await prizePool.mock.redeemedTickets.withArgs(toWei('10')).returns()
 
       // expect a mint on the timelock
       await timelock.mock.mintTo.withArgs(wallet._address, toWei('10'), unlockTimestamp).returns()
@@ -185,14 +189,14 @@ describe('Ticket contract', function() {
 
       debug({ timelock: timelock.mock })
 
-      // expect a timelock burn
-      await timelock.mock.burnFrom.withArgs(wallet._address, toWei('43')).returns()
+      // prize pool expects it
+      await prizePool.mock.redeemedTickets.withArgs(toWei('10')).returns()
+
+      // expect a timelock sweep
+      await timelock.mock.sweep.withArgs([wallet._address]).returns('0')
 
       // expect a mint on the timelock
       await timelock.mock.mintTo.withArgs(address, toWei('10'), unlockTimestamp).returns()
-
-      // expect a sweep of the old funds
-      await yieldService.mock.redeem.withArgs(wallet._address, toWei('43')).returns()
 
       await ticket.redeemTicketsWithTimelock(toWei('10'), [])
 
@@ -209,11 +213,14 @@ describe('Ticket contract', function() {
       await timelock.mock.balanceOf.withArgs(wallet._address).returns(toWei('43'))
       await timelock.mock.balanceAvailableAt.withArgs(wallet._address).returns(lastTxTimestamp)
 
-      // The timelocked tokens are burned
-      await timelock.mock.burnFrom.withArgs(wallet._address, toWei('43')).returns()
+      // The timelocked tokens are swept
+      await timelock.mock.sweep.withArgs([wallet._address]).returns('0')
+      
+      // prize pool expects it
+      await prizePool.mock.redeemedTickets.withArgs(toWei('10')).returns()
 
-      // The total funds are swept
-      await yieldService.mock.redeem.withArgs(wallet._address, toWei('53')).returns()
+      // the timelocked tokens are minted
+      await timelock.mock.mintTo.withArgs(wallet._address, toWei('10'), lastTxTimestamp).returns()
 
       await ticket.redeemTicketsWithTimelock(toWei('10'), [])
 

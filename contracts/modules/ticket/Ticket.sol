@@ -8,10 +8,11 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
+import "../../module-manager/PrizePoolModuleManager.sol";
 import "../../Constants.sol";
 import "../../base/TokenModule.sol";
 import "../timelock/Timelock.sol";
-import "../loyalty/Loyalty.sol";
+import "../interest-tracker/InterestTrackerInterface.sol";
 import "../periodic-prize-pool/PeriodicPrizePoolInterface.sol";
 import "../yield-service/YieldServiceInterface.sol";
 
@@ -42,11 +43,8 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
     bytes operatorData
   );
 
-  YieldServiceInterface yieldService;
-  Loyalty loyalty;
-
   function initialize (
-    ModuleManager _manager,
+    NamedModuleManager _manager,
     address _trustedForwarder,
     string memory _name,
     string memory _symbol,
@@ -55,8 +53,6 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
     TokenModule.initialize(_manager, _trustedForwarder, _name, _symbol, defaultOperators);
     __ReentrancyGuard_init();
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
-    yieldService = YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
-    loyalty = Loyalty(getInterfaceImplementer(Constants.LOYALTY_INTERFACE_HASH));
   }
 
   function hashName() public view override returns (bytes32) {
@@ -72,15 +68,29 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   }
 
   function _supplyAndMint(address to, uint256 amount, bytes memory data, bytes memory operatorData) internal {
+    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
+
+    console.log("setp 1");
     yieldService.token().transferFrom(_msgSender(), address(this), amount);
+    console.log("setp 2");
     ensureYieldServiceApproved(amount);
-    yieldService.supply(address(this), amount);
-    // Mint tickets
-    _mint(to, amount, data, operatorData);
-    loyalty.supply(to, amount);
+    console.log("setp 3");
+    yieldService.supply(amount);
+    console.log("setp 4");
+    _mintTickets(to, amount, data, operatorData);
   }
 
-  function draw(uint256 randomNumber) public view returns (address) {
+  function _mintTickets(address to, uint256 amount, bytes memory data, bytes memory operatorData) internal {
+    // Mint tickets
+    _mint(to, amount, data, operatorData);
+    console.log("setp 5");
+    PrizePoolModuleManager(address(manager)).prizePool().mintedTickets(amount);
+    console.log("setp 6");
+    PrizePoolModuleManager(address(manager)).interestTracker().supplyCollateral(to, amount);
+    console.log("setp 7");
+  }
+
+  function draw(uint256 randomNumber) external view returns (address) {
     uint256 bound = totalSupply();
     address selected;
     if (bound == 0) {
@@ -110,18 +120,20 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
     bytes calldata data,
     bytes calldata operatorData
   ) external nonReentrant onlyOperator(from) returns (uint256) {
-    uint256 exitFee = prizePool().calculateExitFee(from, tickets);
+    uint256 exitFee = PrizePoolModuleManager(address(manager)).prizePool().calculateExitFee(from, tickets);
+
+    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
 
     // transfer the fee to this contract
     yieldService.token().transferFrom(_msgSender(), address(this), exitFee);
 
     // burn the tickets
-    _burn(_msgSender(), tickets, "", "");
-    // burn the loyalty
-    loyalty.redeem(_msgSender(), tickets);
+    _burnTickets(from, tickets);
+    // burn the interestTracker
+    PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(from, tickets);
 
     // redeem the tickets less the fee
-    yieldService.redeem(address(this), tickets.sub(exitFee));
+    yieldService.redeem(tickets.sub(exitFee));
 
     // transfer tickets
     IERC20(yieldService.token()).transfer(from, tickets);
@@ -134,17 +146,20 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
 
   function redeemTicketsInstantly(uint256 tickets, bytes calldata data) external nonReentrant returns (uint256) {
     address sender = _msgSender();
-    uint256 exitFee = prizePool().calculateExitFee(sender, tickets);
+    uint256 exitFee = PrizePoolModuleManager(address(manager)).prizePool().calculateExitFee(sender, tickets);
+
+    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
 
     // burn the tickets
-    _burn(sender, tickets, "", "");
-    // burn the loyalty
-    loyalty.redeem(sender, tickets);
+    _burnTickets(sender, tickets);
+
+    // burn the interestTracker
+    PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(sender, tickets);
 
     uint256 ticketsLessFee = tickets.sub(exitFee);
 
-    // redeem the collateral less the fee
-    yieldService.redeem(address(this), ticketsLessFee);
+    // redeem the interestTracker less the fee
+    yieldService.redeem(ticketsLessFee);
 
     // transfer tickets less fee
     IERC20(yieldService.token()).transfer(sender, ticketsLessFee);
@@ -178,40 +193,33 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   ) internal returns (uint256) {
     // burn the tickets
     require(balanceOf(sender) >= tickets, "Insufficient balance");
-    _burn(sender, tickets, "", "");
+    _burnTickets(sender, tickets);
 
-    uint256 unlockTimestamp = prizePool().calculateUnlockTimestamp(sender, tickets);
-    uint256 transferChange;
+    uint256 unlockTimestamp = PrizePoolModuleManager(address(manager)).prizePool().calculateUnlockTimestamp(sender, tickets);
 
-    Timelock timelock = getTimelock();
+    Timelock timelock = PrizePoolModuleManager(address(manager)).timelock();
 
-    // See if we need to sweep the old balance
-    uint256 balance = timelock.balanceOf(sender);
-    if (balance > 0 && timelock.balanceAvailableAt(sender) <= block.timestamp) {
-      transferChange = balance;
-      timelock.burnFrom(sender, balance);
-      // console.log("burning timelock");
-    }
+    // Sweep the old balance, if any
+    address[] memory senders = new address[](1);
+    senders[0] = sender;
+    timelock.sweep(senders);
 
-    // if we are locking these funds for the future
-    if (unlockTimestamp > block.timestamp) {
-      // time lock new tokens
-      timelock.mintTo(sender, tickets, unlockTimestamp);
-      // console.log("minting timelock %s %s", tickets, unlockTimestamp);
-    } else { // add funds to change
-      transferChange = transferChange.add(tickets);
-    }
-
-    // if there is change, withdraw the change and transfer
-    if (transferChange > 0) {
-      // console.log("withdraw change %s", transferChange);
-      yieldService.redeem(sender, transferChange);
-    }
+    timelock.mintTo(sender, tickets, unlockTimestamp);
 
     emit TicketsRedeemedWithTimelock(operator, sender, tickets, unlockTimestamp, data, operatorData);
 
+    // if the funds should already be unlocked
+    if (unlockTimestamp <= block.timestamp) {
+      timelock.sweep(senders);
+    }
+
     // return the block at which the funds will be available
     return unlockTimestamp;
+  }
+
+  function _burnTickets(address from, uint256 tickets) internal {
+    _burn(from, tickets, "", "");
+    PrizePoolModuleManager(address(manager)).prizePool().redeemedTickets(tickets);
   }
 
   function mintTicketsWithSponsorshipTo(address to, uint256 amount) external {
@@ -221,26 +229,19 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   function _mintTicketsWithSponsorship(address to, uint256 amount) internal {
     // console.log("_mintTicketsWithSponsorship: transferfrom: %s", amount);
     // Transfer sponsorship
-    prizePool().sponsorship().transferFrom(_msgSender(), address(this), amount);
+    PrizePoolModuleManager(address(manager)).sponsorship().transferFrom(_msgSender(), address(this), amount);
 
     // console.log("_mintTicketsWithSponsorship: minting...", amount);
     // Mint draws
-    _mint(to, amount, "", "");
+    _mintTickets(to, amount, "", "");
   }
 
   function ensureYieldServiceApproved(uint256 amount) internal {
+    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
     IERC20 token = yieldService.token();
     if (token.allowance(address(this), address(yieldService)) < amount) {
       yieldService.token().approve(address(yieldService), uint(-1));
     }
-  }
-
-  function prizePool() public view returns (PeriodicPrizePoolInterface) {
-    return PeriodicPrizePoolInterface(getInterfaceImplementer(Constants.PRIZE_POOL_INTERFACE_HASH));
-  }
-
-  function getTimelock() public view returns (Timelock) {
-    return Timelock(getInterfaceImplementer(Constants.TIMELOCK_INTERFACE_HASH));
   }
 
   modifier onlyOperator(address user) {

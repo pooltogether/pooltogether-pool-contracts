@@ -6,10 +6,11 @@ import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 import "../module-manager/PrizePoolModuleManagerFactory.sol";
 import "../modules/timelock/TimelockFactory.sol";
 import "../modules/sponsorship/SponsorshipFactory.sol";
-import "../modules/loyalty/LoyaltyFactory.sol";
+import "../modules/credit/CreditFactory.sol";
 import "../modules/yield-service/CompoundYieldServiceFactory.sol";
 import "../modules/ticket/TicketFactory.sol";
 import "../modules/periodic-prize-pool/PeriodicPrizePoolFactory.sol";
+import "../modules/interest-tracker/InterestTrackerFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 
 contract PrizePoolBuilder is Initializable {
@@ -25,9 +26,10 @@ contract PrizePoolBuilder is Initializable {
   CompoundYieldServiceFactory public compoundYieldServiceFactory;
   PeriodicPrizePoolFactory public periodicPrizePoolFactory;
   TicketFactory public ticketFactory;
-  LoyaltyFactory public loyaltyFactory;
+  CreditFactory public creditFactory;
   TimelockFactory public timelockFactory;
   SponsorshipFactory public sponsorshipFactory;
+  InterestTrackerFactory public interestTrackerFactory;
   RNGInterface public rng;
   address public trustedForwarder;
 
@@ -39,25 +41,28 @@ contract PrizePoolBuilder is Initializable {
     TicketFactory _ticketFactory,
     TimelockFactory _timelockFactory,
     SponsorshipFactory _sponsorshipFactory,
-    LoyaltyFactory _loyaltyFactory,
+    CreditFactory _creditFactory,
+    InterestTrackerFactory _interestTrackerFactory,
     RNGInterface _rng,
     address _trustedForwarder
   ) public initializer {
     require(address(_prizePoolModuleManagerFactory) != address(0), "module factory cannot be zero");
     require(address(_governor) != address(0), "governor cannot be zero");
-    require(address(_compoundYieldServiceFactory) != address(0), "interest pool factory is not defined");
-    require(address(_periodicPrizePoolFactory) != address(0), "prize pool factory is not defined");
-    require(address(_ticketFactory) != address(0), "ticket factory is not defined");
+    require(address(_compoundYieldServiceFactory) != address(0), "interest pool factory cannot be zero");
+    require(address(_periodicPrizePoolFactory) != address(0), "prize pool factory cannot be zero");
+    require(address(_ticketFactory) != address(0), "ticket factory cannot be zero");
     require(address(_rng) != address(0), "rng cannot be zero");
     require(address(_sponsorshipFactory) != address(0), "sponsorship factory cannot be zero");
     require(address(_timelockFactory) != address(0), "controlled token factory cannot be zero");
-    require(address(_loyaltyFactory) != address(0), "loyalty factory is not zero");
+    require(address(_creditFactory) != address(0), "credit factory cannot be zero");
+    require(address(_interestTrackerFactory) != address(0), "interest tracker factory cannot be zero");
+    interestTrackerFactory = _interestTrackerFactory;
     prizePoolModuleManagerFactory = _prizePoolModuleManagerFactory;
     governor = _governor;
     compoundYieldServiceFactory = _compoundYieldServiceFactory;
     periodicPrizePoolFactory = _periodicPrizePoolFactory;
     ticketFactory = _ticketFactory;
-    loyaltyFactory = _loyaltyFactory;
+    creditFactory = _creditFactory;
     rng = _rng;
     trustedForwarder = _trustedForwarder;
     sponsorshipFactory = _sponsorshipFactory;
@@ -78,10 +83,11 @@ contract PrizePoolBuilder is Initializable {
 
     createPeriodicPrizePoolModule(manager, _prizeStrategy, _prizePeriodSeconds);
     createCompoundYieldServiceModule(manager, _cToken);
-    createLoyaltyModule(manager);
+    createCreditModule(manager);
     createTimelockModule(manager);
     createTicketModule(manager, _ticketName, _ticketSymbol);
     createSponsorshipModule(manager, _sponsorshipName, _sponsorshipSymbol);
+    createInterestTrackerModule(manager);
 
     emit PrizePoolCreated(
       msg.sender,
@@ -92,8 +98,16 @@ contract PrizePoolBuilder is Initializable {
     return manager;
   }
 
+  function createInterestTrackerModule(
+    NamedModuleManager _moduleManager
+  ) internal {
+    InterestTracker interestTracker = interestTrackerFactory.createInterestTracker();
+    _moduleManager.enableModule(interestTracker);
+    interestTracker.initialize(_moduleManager, trustedForwarder);
+  }
+
   function createPeriodicPrizePoolModule(
-    ModuleManager _moduleManager,
+    NamedModuleManager _moduleManager,
     PrizeStrategyInterface _prizeStrategy,
     uint256 _prizePeriodSeconds
   ) internal {
@@ -110,7 +124,7 @@ contract PrizePoolBuilder is Initializable {
   }
 
   function createCompoundYieldServiceModule(
-    ModuleManager moduleManager,
+    NamedModuleManager moduleManager,
     CTokenInterface cToken
   ) internal {
     CompoundYieldService yieldService = compoundYieldServiceFactory.createCompoundYieldService();
@@ -118,16 +132,16 @@ contract PrizePoolBuilder is Initializable {
     yieldService.initialize(moduleManager, cToken);
   }
 
-  function createLoyaltyModule(
-    ModuleManager moduleManager
+  function createCreditModule(
+    NamedModuleManager moduleManager
   ) internal {
-    Loyalty loyalty = loyaltyFactory.createLoyalty();
-    moduleManager.enableModule(loyalty);
-    loyalty.initialize(moduleManager, trustedForwarder, "", "");
+    Credit credit = creditFactory.createCredit();
+    moduleManager.enableModule(credit);
+    credit.initialize(moduleManager, trustedForwarder, "Credit", "CRDT");
   }
 
   function createTicketModule(
-    ModuleManager moduleManager,
+    NamedModuleManager moduleManager,
     string memory _ticketName,
     string memory _ticketSymbol
   ) internal {
@@ -137,7 +151,7 @@ contract PrizePoolBuilder is Initializable {
   }
 
   function createTimelockModule(
-    ModuleManager moduleManager
+    NamedModuleManager moduleManager
   ) internal {
     Timelock timelock = timelockFactory.createTimelock();
     moduleManager.enableModule(timelock);
@@ -145,7 +159,7 @@ contract PrizePoolBuilder is Initializable {
   }
 
   function createSponsorshipModule(
-    ModuleManager moduleManager,
+    NamedModuleManager moduleManager,
     string memory _sponsorshipName,
     string memory _sponsorshipSymbol
   ) internal {

@@ -9,9 +9,10 @@
     "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory",
     "CompoundYieldServiceFactory": "CompoundYieldServiceFactory",
     "PrizePoolModuleManagerFactory": "PrizePoolModuleManagerFactory",
-    "LoyaltyFactory": "LoyaltyFactory",
+    "CreditFactory": "CreditFactory",
     "TimelockFactory": "TimelockFactory",
-    "SponsorshipFactory": "SponsorshipFactory"
+    "SponsorshipFactory": "SponsorshipFactory",
+    "InterestTrackerFactory": "InterestTrackerFactory"
   },
   "dependencies": {},
   "name": "PoolTogether3",

@@ -11,7 +11,7 @@ import "../base/NamedModule.sol";
 abstract contract TokenModule is Initializable, ERC777UpgradeSafe, NamedModule {
 
   function initialize(
-    ModuleManager _manager,
+    NamedModuleManager _manager,
     address _trustedForwarder,
     string memory name,
     string memory symbol
@@ -21,7 +21,7 @@ abstract contract TokenModule is Initializable, ERC777UpgradeSafe, NamedModule {
   }
 
   function initialize(
-    ModuleManager _manager,
+    NamedModuleManager _manager,
     address _trustedForwarder,
     string memory name,
     string memory symbol,

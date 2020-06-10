@@ -5,7 +5,8 @@ const MockGovernor = require('../build/MockGovernor.json')
 const CompoundYieldServiceFactory = require('../build/CompoundYieldServiceFactory.json')
 const PrizePoolModuleManagerFactory = require('../build/PrizePoolModuleManagerFactory.json')
 const PrizePoolBuilder = require('../build/PrizePoolBuilder.json')
-const LoyaltyFactory = require('../build/LoyaltyFactory.json')
+const CreditFactory = require('../build/CreditFactory.json')
+const InterestTrackerFactory = require('../build/InterestTrackerFactory.json')
 const SingleRandomWinnerPrizePoolBuilder = require('../build/SingleRandomWinnerPrizePoolBuilder.json')
 const TicketFactory = require('../build/TicketFactory.json')
 const SponsorshipFactory = require('../build/SponsorshipFactory.json')
@@ -19,8 +20,6 @@ const { deploy1820 } = require('deploy-eip-1820')
 const { deployContract } = require('ethereum-waffle')
 
 const debug = require('debug')('ptv3:deployContracts')
-
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
   let registry = await deploy1820(wallet)
@@ -68,10 +67,15 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
   let prizeStrategyFactory = await deployContract(wallet, SingleRandomWinnerPrizeStrategyFactory, [], overrides)
   await prizeStrategyFactory.initialize(overrides)
   
-  debug('deploying loyalty factory')
+  debug('deploying credit factory')
 
-  let loyaltyFactory = await deployContract(wallet, LoyaltyFactory, [], overrides)
-  await loyaltyFactory.initialize(overrides)
+  let creditFactory = await deployContract(wallet, CreditFactory, [], overrides)
+  await creditFactory.initialize(overrides)
+
+  debug('deploying interest tracker factory')
+
+  let interestTrackerFactory = await deployContract(wallet, InterestTrackerFactory, [], overrides)
+  await interestTrackerFactory.initialize(overrides)
 
   debug('deploying sponsorship factory')
 
@@ -89,12 +93,13 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
     ticketFactory.address,
     timelockFactory.address,
     sponsorshipFactory.address,
-    loyaltyFactory.address,
+    creditFactory.address,
+    interestTrackerFactory.address,
     rng.address,
     forwarder.address,
     overrides
   )
-  
+
   debug('deploying single random winner prize pool builder')
 
   let singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [], overrides)
@@ -119,9 +124,10 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
     timelockFactory,
     ticketFactory,
     prizeStrategyFactory,
-    loyaltyFactory,
+    creditFactory,
     sponsorshipFactory,
     prizePoolBuilder,
+    interestTrackerFactory,
     singleRandomWinnerPrizePoolBuilder
   }
 }

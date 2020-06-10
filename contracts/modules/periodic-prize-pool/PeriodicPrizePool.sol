@@ -13,7 +13,7 @@ import "@nomiclabs/buidler/console.sol";
 
 import "../yield-service/YieldServiceInterface.sol";
 import "../sponsorship/Sponsorship.sol";
-import "../loyalty/LoyaltyInterface.sol";
+import "../interest-tracker/InterestTrackerInterface.sol";
 import "./PeriodicPrizePoolInterface.sol";
 import "../../prize-strategy/PrizeStrategyInterface.sol";
 import "../../rng/RNGInterface.sol";
@@ -26,17 +26,17 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   PrizeStrategyInterface public override prizeStrategy;
   GovernorInterface governor;
   RNGInterface public rng;
-  uint256 public override prizePeriodStartedAt;
   uint256 public override prizePeriodSeconds;
+  uint256 public override prizePeriodStartedAt;
   uint256 public previousPrize;
-  uint256 public previousPrizeTicketCount;
+  uint256 public previousPrizeAverageTickets;
   uint256 public feeScaleMantissa;
   uint256 public rngRequestId;
 
   uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
   function initialize (
-    ModuleManager _manager,
+    NamedModuleManager _manager,
     address _trustedForwarder,
     GovernorInterface _governor,
     PrizeStrategyInterface _prizeStrategy,
@@ -62,69 +62,44 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function currentPrize() public override returns (uint256) {
-    uint256 balance = yieldService().unaccountedBalance();
+    uint256 balance = PrizePoolModuleManager(address(manager)).yieldService().unaccountedBalance();
     uint256 reserveFee = calculateReserveFee(balance);
     return balance.sub(reserveFee);
   }
 
-  function multiplyByRemainingTimeFraction(uint256 value) public view returns (uint256) {
-    return FixedPoint.multiplyUintByMantissa(
-      value,
-      FixedPoint.calculateMantissa(prizePeriodRemainingSeconds(), prizePeriodSeconds)
-    );
-  }
-
-  function calculateExitFee(address, uint256 tickets) public view override returns (uint256) {
+  function calculateExitFee(address user, uint256 tickets) public view override returns (uint256) {
     return scaleValueByTimeRemaining(
-      calculateExitFeeWithValues(tickets, previousPrizeTicketCount, previousPrize),
-      prizePeriodRemainingSeconds(),
+      _calculateExitFeeWithValues(
+        PrizePoolModuleManager(address(manager)).interestTracker().interestRatioMantissa(user),
+        tickets,
+        previousPrizeAverageTickets,
+        previousPrize
+      ),
+      _prizePeriodRemainingSeconds(),
       prizePeriodSeconds
     );
   }
 
-  function calculateExitFeeWithValues(
+  function _calculateExitFeeWithValues(
+    uint256 _userInterestRatioMantissa,
     uint256 _tickets,
-    uint256 _previousPrizeTicketCount,
+    uint256 _previousPrizeAverageTickets,
     uint256 _previousPrize
-  ) public view returns (uint256) {
-    // if there was nothing previously, skip it
-    if (_previousPrize == 0 || _previousPrizeTicketCount == 0) {
+  ) internal pure returns (uint256) {
+    // If there were no tickets, then it doesn't matter
+    if (_previousPrizeAverageTickets == 0) {
       return 0;
     }
-
-    // Fair fee equation:
-    // (their tickets / total tickets at prize time) = exitFee / (exitFee + prize)
-    // Let's assume ticketFraction = (their tickets / total tickets at prize time)
-    // Equation is now:
-    // ticketFraction = exitFee / (exitFee + prize)
-
-    // Solve for exitFee:
-    // ticketFraction = exitFee / (exitFee + prize)
-    // ticketFraction * exitFee + ticketFraction * prize = exitFee
-    // ticketFraction * prize = exitFee - ticketFraction * exitFee
-    // ticketFraction * prize = exitFee(1 - ticketfraction)
-    // (ticketFraction * prize) / (1 - ticketfraction) = exitFee
-
-    uint256 ticketsLimited = _tickets > _previousPrizeTicketCount ? _previousPrizeTicketCount : _tickets;
-    uint256 ticketFractionMantissa = FixedPoint.calculateMantissa(ticketsLimited, _previousPrizeTicketCount);
-    if (ticketFractionMantissa == 1 ether) {
+    // user needs to collateralize their tickets the same as the previous prize.
+    uint256 interestRatioMantissa = FixedPoint.calculateMantissa(_previousPrize, _previousPrizeAverageTickets);
+    if (_userInterestRatioMantissa >= interestRatioMantissa) {
       return 0;
     }
-
-    // console.log("_tickets: %s, _prevTickets: %s", _tickets, _previousPrizeTicketCount);
-    // console.log("ticketsLImited: %s", ticketsLimited);
-    // console.log("mantissa: %s", ticketFractionMantissa);
-
-    // calculate the exit fee
-    uint256 exitFee = FixedPoint.divideUintByMantissa(
-      FixedPoint.multiplyUintByMantissa(_previousPrize, ticketFractionMantissa),
-      uint256(1 ether).sub(ticketFractionMantissa)
-    );
-
-    return exitFee > _previousPrize ? _previousPrize : exitFee;
+    uint256 interestRatioDifferenceMantissa = interestRatioMantissa - _userInterestRatioMantissa;
+    return FixedPoint.multiplyUintByMantissa(_tickets, interestRatioDifferenceMantissa);
   }
 
-  function scaleValueByTimeRemaining(uint256 _value, uint256 _timeRemainingSeconds, uint256 _prizePeriodSeconds) public pure returns (uint256) {
+  function scaleValueByTimeRemaining(uint256 _value, uint256 _timeRemainingSeconds, uint256 _prizePeriodSeconds) internal pure returns (uint256) {
     return FixedPoint.multiplyUintByMantissa(
       _value,
       FixedPoint.calculateMantissa(
@@ -134,11 +109,13 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     );
   }
 
-  function calculateReserveFee(uint256 amount) public view returns (uint256) {
-    if (governor.reserve() != address(0) && governor.reserveFeeMantissa() > 0) {
-      return FixedPoint.multiplyUintByMantissa(amount, governor.reserveFeeMantissa());
+  function calculateReserveFee(uint256 amount) internal view returns (uint256) {
+    // console.log("reserve: %s", governor.reserve());
+    // console.log("mantissa: %s", governor.reserveFeeMantissa());
+    if (governor.reserve() == address(0) || governor.reserveFeeMantissa() == 0) {
+      return 0;
     }
-    return 0;
+    return FixedPoint.multiplyUintByMantissa(amount, governor.reserveFeeMantissa());
   }
 
   function calculateUnlockTimestamp(address, uint256) public view override returns (uint256) {
@@ -158,8 +135,8 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockFixedPoint18) public view override returns (uint256) {
-    uint256 remaining = yieldService().estimateAccruedInterestOverBlocks(
-      yieldService().accountedBalance(),
+    uint256 remaining = PrizePoolModuleManager(address(manager)).yieldService().estimateAccruedInterestOverBlocks(
+      PrizePoolModuleManager(address(manager)).yieldService().accountedBalance(),
       estimateRemainingBlocksToPrize(secondsPerBlockFixedPoint18)
     );
     uint256 reserveFee = calculateReserveFee(remaining);
@@ -168,12 +145,16 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
 
   function estimateRemainingBlocksToPrize(uint256 secondsPerBlockFixedPoint18) public view returns (uint256) {
     return FixedPoint.divideUintByMantissa(
-      prizePeriodRemainingSeconds(),
+      _prizePeriodRemainingSeconds(),
       secondsPerBlockFixedPoint18
     );
   }
 
   function prizePeriodRemainingSeconds() public view override returns (uint256) {
+    return _prizePeriodRemainingSeconds();
+  }
+
+  function _prizePeriodRemainingSeconds() internal view returns (uint256) {
     uint256 endAt = prizePeriodEndAt();
     if (block.timestamp > endAt) {
       return 0;
@@ -202,25 +183,47 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     return isRngRequested() && isRngCompleted();
   }
 
+  function mintedTickets(uint256 amount) external override onlyManagerOrModule {
+    previousPrizeAverageTickets = previousPrizeAverageTickets.add(
+      scaleValueByTimeRemaining(
+        amount,
+        _prizePeriodRemainingSeconds(),
+        prizePeriodSeconds
+      )
+    );
+  }
+
+  function redeemedTickets(uint256 amount) external override onlyManagerOrModule {
+    previousPrizeAverageTickets = previousPrizeAverageTickets.sub(
+      scaleValueByTimeRemaining(
+        amount,
+        _prizePeriodRemainingSeconds(),
+        prizePeriodSeconds
+      )
+    );
+  }
+
   function startAward() external override requireCanStartAward nonReentrant {
     rngRequestId = rng.requestRandomNumber(address(0),0);
   }
 
   function completeAward() external override requireCanCompleteAward nonReentrant {
-    uint256 balance = yieldService().unaccountedBalance();
+    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
+    uint256 balance = yieldService.unaccountedBalance();
     uint256 reserveFee = calculateReserveFee(balance);
     uint256 prize = balance.sub(reserveFee);
 
     if (balance > 0) {
-      yieldService().capture(balance);
+      yieldService.capture(balance);
+      Sponsorship sponsorship = PrizePoolModuleManager(address(manager)).sponsorship();
       if (reserveFee > 0) {
-        sponsorship().mint(governor.reserve(), reserveFee);
+        sponsorship.mint(governor.reserve(), reserveFee);
       }
       if (prize > 0) {
         // console.log("mint...");
-        sponsorship().mint(address(prizeStrategy), prize);
-        // console.log("reward loyalty...");
-        loyalty().reward(prize);
+        sponsorship.mint(address(prizeStrategy), prize);
+        // console.log("reward collateral...");
+        PrizePoolModuleManager(address(manager)).interestTracker().accrueInterest(prize);
       }
     }
 
@@ -229,7 +232,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     prizeStrategy.award(uint256(rng.randomNumber(rngRequestId)), prize);
 
     previousPrize = prize;
-    previousPrizeTicketCount = ticket().totalSupply();
+    previousPrizeAverageTickets = PrizePoolModuleManager(address(manager)).ticket().totalSupply();
     rngRequestId = 0;
   }
 
@@ -246,22 +249,6 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     bytes calldata userData,
     bytes calldata operatorData
   ) external override {
-  }
-
-  function loyalty() public view returns (LoyaltyInterface) {
-    return LoyaltyInterface(getInterfaceImplementer(Constants.LOYALTY_INTERFACE_HASH));
-  }
-
-  function sponsorship() public view override returns (Sponsorship) {
-    return Sponsorship(getInterfaceImplementer(Constants.SPONSORSHIP_INTERFACE_HASH));
-  }
-
-  function yieldService() public view override returns (YieldServiceInterface) {
-    return YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
-  }
-
-  function ticket() public view override returns (Ticket) {
-    return Ticket(getInterfaceImplementer(Constants.TICKET_INTERFACE_HASH));
   }
 
   modifier requireCanStartAward() {

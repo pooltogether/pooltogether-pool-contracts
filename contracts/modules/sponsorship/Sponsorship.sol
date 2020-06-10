@@ -5,15 +5,17 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@nomiclabs/buidler/console.sol";
 
+import "../../module-manager/PrizePoolModuleManager.sol";
 import "../../Constants.sol";
 import "../../base/TokenModule.sol";
+import "../credit/Credit.sol";
 
 // solium-disable security/no-block-members
 contract Sponsorship is TokenModule {
   using SafeMath for uint256;
 
   function initialize (
-    ModuleManager _manager,
+    NamedModuleManager _manager,
     address _trustedForwarder,
     string memory _name,
     string memory _symbol
@@ -27,6 +29,7 @@ contract Sponsorship is TokenModule {
     uint256 amount
   ) external virtual onlyManagerOrModule {
     _mint(account, amount, "", "");
+    PrizePoolModuleManager(address(manager)).interestTracker().supplyCollateral(account, amount);
   }
 
   function burn(
@@ -34,6 +37,7 @@ contract Sponsorship is TokenModule {
     uint256 amount
   ) external virtual onlyManagerOrModule {
     _burn(from, amount, "", "");
+    PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(from, amount);
   }
 
   function hashName() public view override returns (bytes32) {

@@ -42,7 +42,6 @@ describe('Integration Test', () => {
     token = env.token
     cToken = env.cToken
 
-
     let tx = await env.singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(cToken.address, prizePeriodSeconds, 'Ticket', 'TICK', 'Sponsorship', 'SPON', overrides)
     let receipt = await provider.getTransactionReceipt(tx.hash)
     let lastLog = receipt.logs[receipt.logs.length - 1]
@@ -60,17 +59,18 @@ describe('Integration Test', () => {
     await token.mint(wallet._address, toWei('1000000'))
   })
 
-  afterEach(function() {
-    if (this.currentTest.state == 'failed') {
-      debug('I FAILED!')
-    }
-  });
-
   describe('Mint tickets', () => {
     it('should support timelocked withdrawals', async () => {
-      debug('Minting tickets...')
+      debug('Approving token spend...')
       await token.approve(ticket.address, toWei('100'))
-      await ticket.mintTickets(toWei('100'), [], overrides)
+
+      debug('Minting tickets...')
+
+      await ticket.mintTickets(toWei('50'), [], overrides)
+      await ticket.mintTickets(toWei('50'), [], overrides)
+
+      debug('Accrue custom...')
+
       await cToken.accrueCustom(toWei('22'))
 
       debug('First award...')

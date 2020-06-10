@@ -288,7 +288,7 @@
         "uninitializedBaseContracts": []
       }
     },
-    "LoyaltyFactory": {
+    "CollateralFactory": {
       "address": "0xad11611B099A13A35245e7Be14C01663337951E4",
       "constructorCode": "608060405234801561001057600080fd5b50613cc1806100206000396000f3fe",
       "bodyBytecodeHash": "178d4a3c18aa73b2a8ec2e43d96f603e15ef908efe55f0ef8027fd805dec6606",
@@ -344,8 +344,8 @@
           "src": "1982:29:11"
         },
         {
-          "contract": "LoyaltyFactory",
-          "path": "contracts/modules/loyalty/LoyaltyFactory.sol",
+          "contract": "CollateralFactory",
+          "path": "contracts/modules/collateral/CollateralFactory.sol",
           "label": "instance",
           "astId": 15925,
           "type": "t_address",
@@ -743,7 +743,7 @@
         {
           "contract": "PrizePoolBuilder",
           "path": "contracts/builder/PrizePoolBuilder.sol",
-          "label": "loyaltyFactory",
+          "label": "collateralFactory",
           "astId": 14298,
           "type": "t_address",
           "src": "1080:36:31"
@@ -915,7 +915,7 @@
         "kind": "Upgradeable"
       }
     ],
-    "PoolTogether3/LoyaltyFactory": [
+    "PoolTogether3/CollateralFactory": [
       {
         "address": "0x7F269B1bcE1B24F373BB30551fF306CF68dDF731",
         "version": "0.3.0",

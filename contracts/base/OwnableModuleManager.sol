@@ -4,9 +4,9 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 
-import "../external/gnosis/ModuleManager.sol";
+import "./NamedModuleManager.sol";
 
-contract OwnableModuleManager is ModuleManager, OwnableUpgradeSafe, BaseRelayRecipient {
+contract OwnableModuleManager is NamedModuleManager, OwnableUpgradeSafe, BaseRelayRecipient {
 
   function initialize(address _trustedForwarder) public initializer {
     __Ownable_init();

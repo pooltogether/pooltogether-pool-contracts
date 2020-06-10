@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
+import "../../module-manager/PrizePoolModuleManager.sol";
 import "../../base/TokenModule.sol";
 import "../../Constants.sol";
 import "../yield-service/YieldServiceInterface.sol";
@@ -18,7 +19,7 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
   mapping(address => uint256) unlockTimestamps;
 
   function initialize(
-    ModuleManager _manager,
+    NamedModuleManager _manager,
     address _trustedForwarder,
     string memory _name,
     string memory _symbol,
@@ -33,6 +34,7 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
   }
 
   function sweep(address[] calldata users) external nonReentrant returns (uint256) {
+    console.log("Timelock start sweep 1");
     uint256 totalWithdrawal;
 
     // first gather the total withdrawal and fee
@@ -45,12 +47,18 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
       }
     }
 
+    console.log("Timelock sweep 2");
+
+    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
+
     // pull out the collateral
     if (totalWithdrawal > 0) {
       // console.log("sweepTimelock: redeemsponsorship %s", totalWithdrawal);
       // console.log("sweepTimelock: redeemsponsorship balance %s", outbalance);
-      yieldService().redeem(address(this), totalWithdrawal);
+      yieldService.redeem(totalWithdrawal);
     }
+
+    console.log("Timelock sweep 3");
 
     // console.log("sweepTimelock: starting burn...");
     for (i = 0; i < users.length; i++) {
@@ -59,8 +67,13 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
         uint256 balance = balanceOf(user);
         if (balance > 0) {
           // console.log("sweepTimelock: Burning %s", balance);
+          console.log("Timelock sweep 4");
           _burn(user, balance, "", "");
-          IERC20(yieldService().token()).transfer(user, balance);
+          console.log("Timelock sweep 5");
+          PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(user, balance);
+          console.log("Timelock sweep 6");
+          IERC20(yieldService.token()).transfer(user, balance);
+          console.log("Timelock sweep 7");
         }
       }
     }
@@ -71,19 +84,11 @@ contract Timelock is TokenModule, ReentrancyGuardUpgradeSafe {
     unlockTimestamps[to] = unlockTimestamp;
   }
 
-  function burnFrom(address from, uint256 amount) external onlyManagerOrModule {
-    _burn(from, amount, "", "");
-  }
-
   function balanceAvailableAt(address user) external view returns (uint256) {
     return unlockTimestamps[user];
   }
 
   function _beforeTokenTransfer(address operator, address from, address to, uint256 tokenAmount) internal override {
     require(from == address(0) || to == address(0), "only minting or burning is allowed");
-  }
-
-  function yieldService() public view returns (YieldServiceInterface) {
-    return YieldServiceInterface(getInterfaceImplementer(Constants.YIELD_SERVICE_INTERFACE_HASH));
   }
 }

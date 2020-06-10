@@ -17,11 +17,11 @@ contract MockYieldService is Initializable, YieldServiceInterface, NamedModule {
     return Constants.YIELD_SERVICE_INTERFACE_HASH;
   }
 
-  function initialize (ModuleManager _manager, IERC20 token) external initializer {
+  function initialize (NamedModuleManager _manager, IERC20 token) external initializer {
     setManager(_manager);
     _token = token;
     supplyRatePerBlock = 100 wei;
-    enableInterface();
+    _manager.enableModuleInterface(hashName());
   }
 
   function setBalanceOf(uint256 amount) external {
@@ -48,17 +48,17 @@ contract MockYieldService is Initializable, YieldServiceInterface, NamedModule {
     return _token;
   }
 
-  function supply(address from, uint256 amount) external override {
+  function supply(uint256 amount) external override {
     // first execute transfer from user to the pool
-    bytes memory transferFrom = abi.encodeWithSignature("transferFrom(address,address,uint256)", from, address(manager), amount);
+    bytes memory transferFrom = abi.encodeWithSignature("transferFrom(address,address,uint256)", msg.sender, address(manager), amount);
     manager.execTransactionFromModule(address(_token), 0, transferFrom, Enum.Operation.Call);
 
     accountedBalance = accountedBalance + amount;
   }
 
-  function redeem(address to, uint256 amount) external override {
+  function redeem(uint256 amount) external override {
     // transfer
-    bytes memory transfer = abi.encodeWithSignature("transfer(address,uint256)", to, amount);
+    bytes memory transfer = abi.encodeWithSignature("transfer(address,uint256)", msg.sender, amount);
     manager.execTransactionFromModule(address(_token), 0, transfer, Enum.Operation.Call);
 
     accountedBalance = accountedBalance - amount;
