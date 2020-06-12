@@ -12,19 +12,28 @@ import "../../Constants.sol";
 // solium-disable security/no-block-members
 contract Credit is TokenModule {
 
+  bytes32 private interfaceHash;
+
+  function initialize(
+    NamedModuleManager _manager,
+    address _trustedForwarder,
+    string memory name,
+    string memory symbol,
+    bytes32 _interfaceHash
+  ) public initializer {
+    require(_interfaceHash != bytes32(0), "interface hash must be defined");
+    interfaceHash = _interfaceHash;
+    super.initialize(_manager, _trustedForwarder, name, symbol);
+  }
+
   function hashName() public view override returns (bytes32) {
-    return Constants.CREDIT_INTERFACE_HASH;
+    return interfaceHash;
   }
 
   function mint(
     address _user,
     uint256 _collateral
-  ) external onlyInterestTracker {
+  ) external onlyManagerOrModule {
     _mint(_user, _collateral, "", "");
-  }
-
-  modifier onlyInterestTracker() {
-    require(_msgSender() == address(PrizePoolModuleManager(address(manager)).interestTracker()), "only interest tracker");
-    _;
   }
 }

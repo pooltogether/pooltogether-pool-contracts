@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../../module-manager/PrizePoolModuleManager.sol";
+import "../interest-tracker/InterestTrackerInterface.sol";
 import "../../Constants.sol";
 import "../../base/TokenModule.sol";
 import "../credit/Credit.sol";
@@ -13,6 +14,8 @@ import "../credit/Credit.sol";
 // solium-disable security/no-block-members
 contract Sponsorship is TokenModule {
   using SafeMath for uint256;
+
+  mapping(address => uint256) interestShares;
 
   function initialize (
     NamedModuleManager _manager,
@@ -29,7 +32,8 @@ contract Sponsorship is TokenModule {
     uint256 amount
   ) external virtual onlyManagerOrModule {
     _mint(account, amount, "", "");
-    PrizePoolModuleManager(address(manager)).interestTracker().supplyCollateral(account, amount);
+    uint256 shares = PrizePoolModuleManager(address(manager)).interestTracker().supplyCollateral(amount);
+    interestShares[account] = interestShares[account].add(shares);
   }
 
   function burn(
@@ -37,7 +41,32 @@ contract Sponsorship is TokenModule {
     uint256 amount
   ) external virtual onlyManagerOrModule {
     _burn(from, amount, "", "");
-    PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(from, amount);
+    uint256 shares = PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(amount);
+    interestShares[from] = interestShares[from].sub(shares);
+  }
+
+  function _sweep(address user) internal {
+    address[] memory users = new address[](1);
+    users[0] = user;
+    sweep(users);
+  }
+
+  function _sweep(address[] memory users) internal {
+    InterestTrackerInterface interestTracker = PrizePoolModuleManager(address(manager)).interestTracker();
+    Credit sponsorshipCredit = PrizePoolModuleManager(address(manager)).sponsorshipCredit();
+    uint256 exchangeRateMantissa = interestTracker.exchangeRateMantissa();
+    for (uint256 i = 0; i < users.length; i++) {
+      address user = users[i];
+      uint256 total = FixedPoint.divideUintByMantissa(interestShares[user], exchangeRateMantissa);
+      uint256 spareChange = total.sub(balanceOf(user));
+      sponsorshipCredit.mint(user, spareChange);
+      uint256 shares = interestTracker.redeemCollateral(spareChange);
+      interestShares[user] = interestShares[user].sub(shares);
+    }
+  }
+
+  function sweep(address[] memory users) public {
+    _sweep(users);
   }
 
   function hashName() public view override returns (bytes32) {
