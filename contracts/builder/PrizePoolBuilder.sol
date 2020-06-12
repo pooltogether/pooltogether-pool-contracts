@@ -83,11 +83,12 @@ contract PrizePoolBuilder is Initializable {
 
     createPeriodicPrizePoolModule(manager, _prizeStrategy, _prizePeriodSeconds);
     createCompoundYieldServiceModule(manager, _cToken);
-    createCreditModule(manager);
+    createTicketCreditModule(manager);
+    createSponsorshipCreditModule(manager);
     createTimelockModule(manager);
-    createTicketModule(manager, _ticketName, _ticketSymbol);
-    createSponsorshipModule(manager, _sponsorshipName, _sponsorshipSymbol);
     createInterestTrackerModule(manager);
+    createTicketModule(manager, _ticketName, _ticketSymbol).initializeDependencies();
+    createSponsorshipModule(manager, _sponsorshipName, _sponsorshipSymbol);
 
     emit PrizePoolCreated(
       msg.sender,
@@ -126,45 +127,59 @@ contract PrizePoolBuilder is Initializable {
   function createCompoundYieldServiceModule(
     NamedModuleManager moduleManager,
     CTokenInterface cToken
-  ) internal {
+  ) internal returns (CompoundYieldService) {
     CompoundYieldService yieldService = compoundYieldServiceFactory.createCompoundYieldService();
     moduleManager.enableModule(yieldService);
     yieldService.initialize(moduleManager, cToken);
+    return yieldService;
   }
 
-  function createCreditModule(
+  function createTicketCreditModule(
     NamedModuleManager moduleManager
-  ) internal {
+  ) internal returns (Credit) {
     Credit credit = creditFactory.createCredit();
     moduleManager.enableModule(credit);
-    credit.initialize(moduleManager, trustedForwarder, "Credit", "CRDT");
+    credit.initialize(moduleManager, trustedForwarder, "Ticket Credit", "TCRD", Constants.TICKET_CREDIT_INTERFACE_HASH);
+    return credit;
+  }
+
+  function createSponsorshipCreditModule(
+    NamedModuleManager moduleManager
+  ) internal returns (Credit) {
+    Credit credit = creditFactory.createCredit();
+    moduleManager.enableModule(credit);
+    credit.initialize(moduleManager, trustedForwarder, "Sponsorship Credit", "SCRD", Constants.SPONSORSHIP_CREDIT_INTERFACE_HASH);
+    return credit;
   }
 
   function createTicketModule(
     NamedModuleManager moduleManager,
     string memory _ticketName,
     string memory _ticketSymbol
-  ) internal {
+  ) internal returns (Ticket) {
     Ticket ticket = ticketFactory.createTicket();
     moduleManager.enableModule(ticket);
     ticket.initialize(moduleManager, trustedForwarder, _ticketName, _ticketSymbol);
+    return ticket;
   }
 
   function createTimelockModule(
     NamedModuleManager moduleManager
-  ) internal {
+  ) internal returns (Timelock) {
     Timelock timelock = timelockFactory.createTimelock();
     moduleManager.enableModule(timelock);
     timelock.initialize(moduleManager, trustedForwarder);
+    return timelock;
   }
 
   function createSponsorshipModule(
     NamedModuleManager moduleManager,
     string memory _sponsorshipName,
     string memory _sponsorshipSymbol
-  ) internal {
+  ) internal returns (Sponsorship) {
     Sponsorship sponsorship = sponsorshipFactory.createSponsorship();
     moduleManager.enableModule(sponsorship);
     sponsorship.initialize(moduleManager, trustedForwarder, _sponsorshipName, _sponsorshipSymbol);
+    return sponsorship;
   }
 }

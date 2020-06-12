@@ -3,6 +3,7 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Implementer.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
+import "@nomiclabs/buidler/console.sol";
 // import "@gnosis.pm/safe-contracts/contracts/base/Module.sol";
 
 import "../external/gnosis/Module.sol";
@@ -38,8 +39,8 @@ abstract contract NamedModule is Initializable, Module, IERC1820Implementer, Bas
   }
 
   modifier onlyManagerOrModule() virtual {
-      bool isModule = manager.isModuleEnabled(Module(msg.sender));
-      require(isModule || msg.sender == address(manager), "Method can only be called from manager or module");
-      _;
+    bool isModule = manager.isModuleEnabled(Module(msg.sender));
+    require(isModule || msg.sender == address(manager), "Method can only be called from manager or module");
+    _;
   }
 }

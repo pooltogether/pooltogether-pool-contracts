@@ -182,11 +182,8 @@ describe('PeriodicPrizePool contract', () => {
     })
   })
 
-  describe('calculateExitFee(address user, uint256 tickets)', () => {
+  describe('calculateExitFee(uint256 tickets, uint256 userInterestRatio)', () => {
     it('should calculate the fee as a fraction of time remaining', async () => {
-
-      // user has no interest
-      await interestTracker.mock.interestRatioMantissa.withArgs(wallet._address).returns('0')
 
       await prizePool.setPreviousPrizeAverageTickets(toWei('100'))
       await prizePool.setPreviousPrize(toWei('10'))
@@ -194,7 +191,9 @@ describe('PeriodicPrizePool contract', () => {
       // check remaining seconds
       let remainingSeconds = (await prizePool.prizePeriodRemainingSeconds()).toNumber()
       let fraction = remainingSeconds / (prizePeriodSeconds * 1.0)
-      expect(await prizePool.calculateExitFee(wallet._address, toWei('50'))).to.equal(toWei('' + (5 * fraction)))
+
+      // user has no interest
+      expect(await prizePool.calculateExitFee(toWei('50'), toWei('0'))).to.equal(toWei('' + (5 * fraction)))
     })
   })
 
@@ -297,13 +296,9 @@ describe('PeriodicPrizePool contract', () => {
       await rng.mock.isRequestComplete.withArgs('42').returns(true)
       await rng.mock.randomNumber.withArgs('42').returns(random)
 
-      // setup winnings
-      await yieldService.mock.unaccountedBalance.returns(toWei('100'))
-
       // setup the capture and sponsorship mint
-      await yieldService.mock.capture.withArgs(toWei('100')).returns()
+      await interestTracker.mock.captureInterest.returns(toWei('100'))
       await sponsorship.mock.mint.withArgs(strategy.address, toWei('100')).returns()
-      await interestTracker.mock.accrueInterest.withArgs(toWei('100')).returns()
 
       // expect strategy
       await strategy.mock.award.withArgs(random, toWei('100')).returns()
@@ -315,7 +310,7 @@ describe('PeriodicPrizePool contract', () => {
         .withArgs(wallet._address, toWei('100'), '0', random)
 
       expect(await prizePool.previousPrize()).to.equal(toWei('100'))
-      expect(await prizePool.previousPrizeAverageTickets()).to.equal(toWei('1000'))
+      expect(await prizePool.prizeAverageTickets()).to.equal(toWei('1000'))
       expect(await prizePool.rngRequestId()).to.equal('0')
     })
   })

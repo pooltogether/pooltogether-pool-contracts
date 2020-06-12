@@ -18,14 +18,14 @@ contract InterestTracker is NamedModule, InterestTrackerInterface {
 
   uint256 internal constant INITIAL_EXCHANGE_RATE_MANTISSA = 1 ether;
 
-  event CollateralSupplied(address indexed operator, address indexed user, uint256 collateral, uint256 shares);
-  event CollateralRedeemed(address indexed operator, address indexed user, uint256 collateral, uint256 shares, uint256 interestCredited);
-  event InterestAccrued(address indexed operator, uint256 collateral);
+  event CollateralSupplied(address indexed user, uint256 collateral, uint256 shares);
+  event CollateralRedeemed(address indexed user, uint256 collateral, uint256 shares);
+  event InterestCaptured(address indexed operator, uint256 collateral);
 
-  mapping (address => uint256) private contributionShares;
-  uint256 private totalContributionShares;
-  uint256 public totalContributions;
-  mapping(address => uint256) collateralBalances;
+  mapping (address => uint256) private balances;
+  uint256 public totalSupply;
+  uint256 public totalCollateral;
+  uint256 public newInterest;
 
   function initialize(
     NamedModuleManager _manager,
@@ -38,106 +38,86 @@ contract InterestTracker is NamedModule, InterestTrackerInterface {
     return Constants.INTEREST_TRACKER_INTERFACE_HASH;
   }
 
-  function accrueInterest(uint256 _collateral) external override {
-    totalContributions = totalContributions.add(_collateral);
-
-    emit InterestAccrued(_msgSender(), _collateral);
-  }
-
+  // Here we mint a user "fair shares" of the total pool of collateral.
   function supplyCollateral(
-    address _user,
     uint256 _collateral
-  ) external override onlyManagerOrModule {
-    _mintCollateral(_user, _collateral);
+  ) external override onlyManagerOrModule returns (uint256) {
+    // mint new shares based on current exchange rate
+    // console.log("supply collateral %s", _collateral);
+    uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
+    // console.log("supply collateral shares %s", shares);
+    balances[msg.sender] = balances[msg.sender].add(shares);
+    totalSupply = totalSupply.add(shares);
+    totalCollateral = totalCollateral.add(_collateral);
+
+    emit CollateralSupplied(msg.sender, _collateral, shares);
+
+    return shares;
   }
 
+  // here a user burns their shares of the pool of collateral.  It is expected that the collateral will drop as well
   function redeemCollateral(
-    address from,
-    uint256 amount
-  ) external override onlyManagerOrModule {
-    _redeemCollateral(from, amount);
+    uint256 _collateral
+  ) external override onlyManagerOrModule returns (uint256) {
+    // console.log("InterestTracker redeemCollateral %s", _collateral);
+    uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
+    // console.log("InterestTracker shares %s", shares);
+    require(shares <= balances[msg.sender], "InterestTracker/insuff");
+    // console.log("InterestTracker balances[msg.sender] %s", balances[msg.sender]);
+    // console.log("InterestTracker totalSupply %s", totalSupply);
+    // console.log("InterestTracker totalCollateral %s", totalCollateral);
+    balances[msg.sender] = balances[msg.sender].sub(shares);
+    totalSupply = totalSupply.sub(shares);
+    totalCollateral = totalCollateral.sub(_collateral);
+
+    emit CollateralRedeemed(msg.sender, _collateral, shares);
+
+    return shares;
   }
 
-  function transferCollateral(
-    address from,
-    address to,
-    uint256 amount
-  ) external override onlyManagerOrModule {
-    _redeemCollateral(from, amount);
-    _mintCollateral(to, amount);
+  function balanceOfCollateral(address user) external override returns (uint256) {
+    return FixedPoint.multiplyUintByMantissa(balances[user], _exchangeRateMantissa());
   }
 
-  function _redeemCollateral(address from, uint256 amount) internal {
-    require(amount <= collateralBalances[from], "InterestTracker/insuff");
+  function captureInterest() external override returns (uint256) {
+    poke();
+    uint256 interest = newInterest;
+    newInterest = 0;
 
-    // want to maintain the collateralization ratio.
-    // here we'll have to remove amount/collateralBalance * balanceOfInterest
-    uint256 collateralizationRatioMantissa = _interestRatioMantissa(from);
+    emit InterestCaptured(msg.sender, interest);
 
-    uint256 interest = FixedPoint.multiplyUintByMantissa(amount, collateralizationRatioMantissa);
-
-    uint256 amountPlusInterest = amount.add(interest);
-
-    uint256 amountPlusInterestShares = FixedPoint.divideUintByMantissa(amountPlusInterest, _exchangeRateMantissa());
-
-    // remove their collateral and interest
-    collateralBalances[from] = collateralBalances[from].sub(amount);
-    contributionShares[from] = contributionShares[from].sub(amountPlusInterestShares);
-    totalContributionShares = totalContributionShares.sub(amountPlusInterestShares);
-    totalContributions = totalContributions.sub(amountPlusInterest);
-    if (interest > 0) {
-      // credit the interest to their reserve
-      PrizePoolModuleManager(address(manager)).credit().mint(from, interest);
-    }
-
-    emit CollateralRedeemed(_msgSender(), from, amount, amountPlusInterestShares, interest);
+    return interest;
   }
 
-  function _mintCollateral(address to, uint256 amount) internal {
-    // add the collateral to their credit
-    uint256 shares = FixedPoint.divideUintByMantissa(amount, _exchangeRateMantissa());
-    collateralBalances[to] = collateralBalances[to].add(amount);
-    contributionShares[to] = contributionShares[to].add(shares);
-    totalContributions = totalContributions.add(amount);
-    totalContributionShares = totalContributionShares.add(shares);
-
-    emit CollateralSupplied(_msgSender(), to, amount, shares);
+  function collateralValueOfShares(uint256 shares) external override returns (uint256) {
+    return FixedPoint.multiplyUintByMantissa(shares, _exchangeRateMantissa());
   }
 
-  function balanceOfInterest(address user) public view override returns (uint256) {
-    return _balanceOfInterest(user);
+  function balanceOf(address user) external override view returns (uint256) {
+    return balances[user];
   }
 
-  function balanceOfCollateral(address user) external view override returns (uint256) {
-    return collateralBalances[user];
-  }
-
-  function balanceOf(address user) external view override returns (uint256) {
-    return FixedPoint.multiplyUintByMantissa(contributionShares[user], _exchangeRateMantissa());
-  }
-
-  function interestRatioMantissa(address user) external view override returns (uint256) {
-    return _interestRatioMantissa(user);
-  }
-
-  function exchangeRateMantissa() external view returns (uint256) {
+  function exchangeRateMantissa() external override returns (uint256) {
     return _exchangeRateMantissa();
   }
 
-  function _interestRatioMantissa(address user) internal view returns (uint256) {
-    return FixedPoint.calculateMantissa(_balanceOfInterest(user), collateralBalances[user]);
-  }
-
-  function _balanceOfInterest(address user) internal view returns (uint256) {
-    uint256 balance = FixedPoint.multiplyUintByMantissa(contributionShares[user], _exchangeRateMantissa());
-    return balance.sub(collateralBalances[user]);
-  }
-
-  function _exchangeRateMantissa() internal view returns (uint256) {
-    if (totalContributionShares == 0) {
+  function _exchangeRateMantissa() internal returns (uint256) {
+    // we know the total collateral currently in the system.
+    if (totalSupply == 0) {
       return INITIAL_EXCHANGE_RATE_MANTISSA;
     } else {
-      return FixedPoint.calculateMantissa(totalContributions, totalContributionShares);
+      poke();
+      return FixedPoint.calculateMantissa(totalCollateral, totalSupply);
+    }
+  }
+
+  function poke() internal {
+    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
+    uint256 unaccountedBalance = yieldService.unaccountedBalance();
+    if (unaccountedBalance > 0) {
+      yieldService.capture(unaccountedBalance);
+      newInterest = newInterest.add(unaccountedBalance);
+      totalCollateral = totalCollateral.add(unaccountedBalance);
     }
   }
 }

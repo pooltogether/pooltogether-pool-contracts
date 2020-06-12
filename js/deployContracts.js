@@ -1,5 +1,5 @@
 const PeriodicPrizePoolFactory = require('../build/PeriodicPrizePoolFactory.json')
-const RNGBlockhash = require('../build/RNGBlockhash.json')
+const RNGServiceMock = require('../build/RNGServiceMock.json')
 const Forwarder = require('../build/Forwarder.json')
 const MockGovernor = require('../build/MockGovernor.json')
 const CompoundYieldServiceFactory = require('../build/CompoundYieldServiceFactory.json')
@@ -26,7 +26,7 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
 
   debug('beforeEach deploy rng, forwarder etc...')
 
-  let rng = await deployContract(wallet, RNGBlockhash, [], overrides)
+  let rng = await deployContract(wallet, RNGServiceMock, [], overrides)
   let forwarder = await deployContract(wallet, Forwarder, [], overrides)
   let token = await deployContract(wallet, ERC20Mintable, [], overrides)
   let cToken = await deployContract(wallet, CTokenMock, [

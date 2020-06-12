@@ -63,7 +63,6 @@ contract Timelock is NamedModule, ReentrancyGuardUpgradeSafe {
         if (balance > 0) {
           _burn(user, balance);
           delete unlockTimestamps[user];
-          PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(user, balance);
           IERC20(yieldService.token()).transfer(user, balance);
           emit CollateralSwept(sender, user, balance);
         }

@@ -1,12 +1,11 @@
 pragma solidity ^0.6.4;
 
 interface InterestTrackerInterface {
-  function accrueInterest(uint256 amount) external;
-  function balanceOfInterest(address user) external view returns (uint256);
-  function balanceOfCollateral(address user) external view returns (uint256);
+  function captureInterest() external returns (uint256);
+  function balanceOfCollateral(address user) external returns (uint256);
   function balanceOf(address user) external view returns (uint256);
-  function supplyCollateral(address from, uint256 amount) external;
-  function redeemCollateral(address from, uint256 amount) external;
-  function transferCollateral(address from, address to, uint256 amount) external;
-  function interestRatioMantissa(address user) external view returns (uint256);
+  function supplyCollateral(uint256 amount) external returns (uint256);
+  function redeemCollateral(uint256 amount) external returns (uint256);
+  function collateralValueOfShares(uint256 shares) external returns (uint256);
+  function exchangeRateMantissa() external returns (uint256);
 }

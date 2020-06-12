@@ -36,6 +36,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   uint256 public override prizePeriodStartedAt;
   uint256 public previousPrize;
   uint256 public previousPrizeAverageTickets;
+  uint256 public prizeAverageTickets;
   uint256 public feeScaleMantissa;
   uint256 public rngRequestId;
 
@@ -58,7 +59,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
-    prizePeriodStartedAt = block.timestamp;
+    prizePeriodStartedAt = currentTime();
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
@@ -72,10 +73,10 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     return balance.sub(reserveFee);
   }
 
-  function calculateExitFee(address user, uint256 tickets) public view override returns (uint256) {
+  function calculateExitFee(uint256 tickets, uint256 userInterestRatio) public view override returns (uint256) {
     return scaleValueByTimeRemaining(
       _calculateExitFeeWithValues(
-        PrizePoolModuleManager(address(manager)).interestTracker().interestRatioMantissa(user),
+        userInterestRatio,
         tickets,
         previousPrizeAverageTickets,
         previousPrize
@@ -159,15 +160,16 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
 
   function _prizePeriodRemainingSeconds() internal view returns (uint256) {
     uint256 endAt = prizePeriodEndAt();
-    if (block.timestamp > endAt) {
+    uint256 time = currentTime();
+    if (time > endAt) {
       return 0;
     } else {
-      return endAt - block.timestamp;
+      return endAt - time;
     }
   }
 
   function isPrizePeriodOver() public view returns (bool) {
-    return block.timestamp > prizePeriodEndAt();
+    return currentTime() > prizePeriodEndAt();
   }
 
   function isRngRequested() public view returns (bool) {
@@ -187,17 +189,18 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function mintedTickets(uint256 amount) external override onlyManagerOrModule {
-    previousPrizeAverageTickets = previousPrizeAverageTickets.add(
-      scaleValueByTimeRemaining(
-        amount,
-        _prizePeriodRemainingSeconds(),
-        prizePeriodSeconds
-      )
+    uint256 scaledTickets = scaleValueByTimeRemaining(
+      amount,
+      _prizePeriodRemainingSeconds(),
+      prizePeriodSeconds
+    );
+    prizeAverageTickets = prizeAverageTickets.add(
+      scaledTickets
     );
   }
 
   function redeemedTickets(uint256 amount) external override onlyManagerOrModule {
-    previousPrizeAverageTickets = previousPrizeAverageTickets.sub(
+    prizeAverageTickets = prizeAverageTickets.sub(
       scaleValueByTimeRemaining(
         amount,
         _prizePeriodRemainingSeconds(),
@@ -213,28 +216,27 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function completeAward() external override requireCanCompleteAward nonReentrant {
-    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
-    uint256 balance = yieldService.unaccountedBalance();
+    uint256 balance = PrizePoolModuleManager(address(manager)).interestTracker().captureInterest();
     uint256 reserveFee = calculateReserveFee(balance);
     uint256 prize = balance.sub(reserveFee);
 
     if (balance > 0) {
-      yieldService.capture(balance);
       Sponsorship sponsorship = PrizePoolModuleManager(address(manager)).sponsorship();
       if (reserveFee > 0) {
         sponsorship.mint(governor.reserve(), reserveFee);
       }
       if (prize > 0) {
         sponsorship.mint(address(prizeStrategy), prize);
-        PrizePoolModuleManager(address(manager)).interestTracker().accrueInterest(prize);
       }
     }
+
     bytes32 randomNumber = rng.randomNumber(rngRequestId);
-    prizePeriodStartedAt = block.timestamp;
+    prizePeriodStartedAt = currentTime();
     prizeStrategy.award(uint256(randomNumber), prize);
 
     previousPrize = prize;
-    previousPrizeAverageTickets = PrizePoolModuleManager(address(manager)).ticket().totalSupply();
+    previousPrizeAverageTickets = prizeAverageTickets;
+    prizeAverageTickets = PrizePoolModuleManager(address(manager)).ticket().totalSupply();
     rngRequestId = 0;
 
     emit PrizePoolAwardCompleted(_msgSender(), prize, reserveFee, randomNumber);
@@ -253,6 +255,10 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     bytes calldata userData,
     bytes calldata operatorData
   ) external override {
+  }
+
+  function currentTime() internal virtual view returns (uint256) {
+    return block.timestamp;
   }
 
   modifier requireCanStartAward() {
