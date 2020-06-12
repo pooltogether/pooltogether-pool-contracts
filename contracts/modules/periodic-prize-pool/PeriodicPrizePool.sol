@@ -59,7 +59,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
-    prizePeriodStartedAt = block.timestamp;
+    prizePeriodStartedAt = currentTime();
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
@@ -74,14 +74,6 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function calculateExitFee(uint256 tickets, uint256 userInterestRatio) public view override returns (uint256) {
-    console.log("!!! calculateExitFee: %s", _prizePeriodRemainingSeconds());
-    console.log("!!! calculateExitFee: tickets: %s", tickets);
-    console.log("!!! calculateExitFee userInterestRatio %s previousPrizeAverageTickets %s previousPrize %s",
-        userInterestRatio,
-        previousPrizeAverageTickets,
-        previousPrize
-    );
-
     return scaleValueByTimeRemaining(
       _calculateExitFeeWithValues(
         userInterestRatio,
@@ -168,15 +160,16 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
 
   function _prizePeriodRemainingSeconds() internal view returns (uint256) {
     uint256 endAt = prizePeriodEndAt();
-    if (block.timestamp > endAt) {
+    uint256 time = currentTime();
+    if (time > endAt) {
       return 0;
     } else {
-      return endAt - block.timestamp;
+      return endAt - time;
     }
   }
 
   function isPrizePeriodOver() public view returns (bool) {
-    return block.timestamp > prizePeriodEndAt();
+    return currentTime() > prizePeriodEndAt();
   }
 
   function isRngRequested() public view returns (bool) {
@@ -196,17 +189,14 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
   }
 
   function mintedTickets(uint256 amount) external override onlyManagerOrModule {
-    console.log("++++ mintedTickets %s",  _prizePeriodRemainingSeconds());
     uint256 scaledTickets = scaleValueByTimeRemaining(
       amount,
       _prizePeriodRemainingSeconds(),
       prizePeriodSeconds
     );
-    console.log("++++ scaled tickets: %s", scaledTickets);
     prizeAverageTickets = prizeAverageTickets.add(
       scaledTickets
     );
-    console.log("+++ new average %s", prizeAverageTickets);
   }
 
   function redeemedTickets(uint256 amount) external override onlyManagerOrModule {
@@ -241,7 +231,7 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     }
 
     bytes32 randomNumber = rng.randomNumber(rngRequestId);
-    prizePeriodStartedAt = block.timestamp;
+    prizePeriodStartedAt = currentTime();
     prizeStrategy.award(uint256(randomNumber), prize);
 
     previousPrize = prize;
@@ -265,6 +255,10 @@ contract PeriodicPrizePool is ReentrancyGuardUpgradeSafe, PeriodicPrizePoolInter
     bytes calldata userData,
     bytes calldata operatorData
   ) external override {
+  }
+
+  function currentTime() internal virtual view returns (uint256) {
+    return block.timestamp;
   }
 
   modifier requireCanStartAward() {

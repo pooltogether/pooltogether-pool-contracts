@@ -43,7 +43,9 @@ contract InterestTracker is NamedModule, InterestTrackerInterface {
     uint256 _collateral
   ) external override onlyManagerOrModule returns (uint256) {
     // mint new shares based on current exchange rate
+    // console.log("supply collateral %s", _collateral);
     uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
+    // console.log("supply collateral shares %s", shares);
     balances[msg.sender] = balances[msg.sender].add(shares);
     totalSupply = totalSupply.add(shares);
     totalCollateral = totalCollateral.add(_collateral);
@@ -57,13 +59,13 @@ contract InterestTracker is NamedModule, InterestTrackerInterface {
   function redeemCollateral(
     uint256 _collateral
   ) external override onlyManagerOrModule returns (uint256) {
-    console.log("InterestTracker redeemCollateral %s", _collateral);
+    // console.log("InterestTracker redeemCollateral %s", _collateral);
     uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
-    console.log("InterestTracker shares %s", shares);
+    // console.log("InterestTracker shares %s", shares);
     require(shares <= balances[msg.sender], "InterestTracker/insuff");
-    console.log("InterestTracker balances[msg.sender] %s", balances[msg.sender]);
-    console.log("InterestTracker totalSupply %s", totalSupply);
-    console.log("InterestTracker totalCollateral %s", totalCollateral);
+    // console.log("InterestTracker balances[msg.sender] %s", balances[msg.sender]);
+    // console.log("InterestTracker totalSupply %s", totalSupply);
+    // console.log("InterestTracker totalCollateral %s", totalCollateral);
     balances[msg.sender] = balances[msg.sender].sub(shares);
     totalSupply = totalSupply.sub(shares);
     totalCollateral = totalCollateral.sub(_collateral);

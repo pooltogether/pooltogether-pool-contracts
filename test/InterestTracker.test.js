@@ -66,6 +66,7 @@ describe('InterestTracker', function() {
       await interestTracker.supplyCollateral(toWei('100'))
 
       await yieldService.mock.unaccountedBalance.returns(toWei('50'))
+      await yieldService.mock.capture.withArgs(toWei('50')).returns()
 
       expect(await call(interestTracker, 'balanceOfCollateral', wallet._address)).to.equal(toWei('150'))
     })
@@ -75,8 +76,17 @@ describe('InterestTracker', function() {
       await interestTracker.supplyCollateral(toWei('100'))
 
       await yieldService.mock.unaccountedBalance.returns(toWei('100'))
+      await yieldService.mock.capture.withArgs(toWei('100')).returns()
 
       await interestTracker2.supplyCollateral(toWei('100'))
+
+      // reset unaccountedBalance
+      await yieldService.mock.unaccountedBalance.returns('0')
+
+      expect(await interestTracker.totalCollateral()).to.equal(toWei('300'))
+      expect(await interestTracker.balanceOf(wallet._address)).to.equal(toWei('100'))
+      expect(await interestTracker.balanceOf(wallet2._address)).to.equal(toWei('50'))
+      expect(await interestTracker.totalSupply()).to.equal(toWei('150'))
       expect(await call(interestTracker, 'balanceOfCollateral', wallet._address)).to.equal(toWei('200'))
       expect(await call(interestTracker, 'balanceOfCollateral', wallet2._address)).to.equal(toWei('100'))
     })
@@ -89,19 +99,22 @@ describe('InterestTracker', function() {
         .to.emit(interestTracker, 'CollateralSupplied')
         .withArgs(wallet._address, toWei('100'), toWei('100'))
       
-      await yieldService.mock.unaccountedBalance.returns('0')
 
       await interestTracker2.supplyCollateral(toWei('100'), overrides)
 
       // await showCredit()
 
       let prize1 = '39.01851372'
+      await yieldService.mock.unaccountedBalance.returns(toWei(prize1))
       await yieldService.mock.capture.withArgs(toWei(prize1)).returns()
 
       // prize is awarded to first wallet
-      await expect(interestTracker.captureInterest(toWei(prize1), overrides))
+      await expect(interestTracker.captureInterest(overrides))
         .to.emit(interestTracker, 'InterestCaptured')
         .withArgs(wallet._address, toWei(prize1))
+
+      // reset available interest
+      await yieldService.mock.unaccountedBalance.returns(toWei('0'))
 
       // // // prize is awarded to the winner
       await interestTracker2.supplyCollateral(toWei(prize1), overrides)
@@ -132,7 +145,7 @@ describe('InterestTracker', function() {
       await expect(interestTracker.redeemCollateral(toWei('101'))).to.be.revertedWith('InterestTracker/insuff')
     })
 
-    it.only('should handle redeems when there is unaccounted balance', async () => {
+    it('should handle redeems when there is unaccounted balance', async () => {
       await yieldService.mock.unaccountedBalance.returns(toWei('0'))
 
       await interestTracker.supplyCollateral(toWei('100'))
@@ -146,6 +159,9 @@ describe('InterestTracker', function() {
       // redeems all of their collateral
       await interestTracker.redeemCollateral(toWei('200'))
 
+      // reset
+      await yieldService.mock.unaccountedBalance.returns(toWei('0'))
+
       expect(await call(interestTracker, 'balanceOfCollateral', wallet._address)).to.equal(toWei('0'))
     })
   })
@@ -153,6 +169,7 @@ describe('InterestTracker', function() {
   describe('captureInterest()', () => {
     it('should capture interest from the yield service', async () => {
       expect(await interestTracker.totalCollateral()).to.equal('0')
+      await yieldService.mock.unaccountedBalance.returns(toWei('10'))
       await yieldService.mock.capture.withArgs(toWei('10')).returns()
       await interestTracker.captureInterest()
       expect(await interestTracker.totalCollateral()).to.equal(toWei('10'))

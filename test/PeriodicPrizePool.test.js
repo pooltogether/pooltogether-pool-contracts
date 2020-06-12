@@ -310,7 +310,7 @@ describe('PeriodicPrizePool contract', () => {
         .withArgs(wallet._address, toWei('100'), '0', random)
 
       expect(await prizePool.previousPrize()).to.equal(toWei('100'))
-      expect(await prizePool.previousPrizeAverageTickets()).to.equal(toWei('1000'))
+      expect(await prizePool.prizeAverageTickets()).to.equal(toWei('1000'))
       expect(await prizePool.rngRequestId()).to.equal('0')
     })
   })

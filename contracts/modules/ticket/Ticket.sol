@@ -78,7 +78,7 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   }
 
   function mintTickets(address to, uint256 amount, bytes calldata data) external nonReentrant {
-    console.log("mintTickets: %s %s %s", _msgSender(), to, amount);
+    // console.log("mintTickets: %s %s %s", _msgSender(), to, amount);
     yieldService.token().transferFrom(_msgSender(), address(this), amount);
     ensureYieldServiceApproved(amount);
     yieldService.supply(amount);
@@ -90,9 +90,9 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
     // Mint tickets
     _mint(to, amount, data, operatorData);
     uint256 shares = interestTracker.supplyCollateral(amount);
-    console.log("share: %s", shares);
+    // console.log("share: %s", shares);
     interestShares[to] = interestShares[to].add(shares);
-    console.log("final shares: %s", interestShares[to]);
+    // console.log("final shares: %s", interestShares[to]);
   }
 
   function draw(uint256 randomNumber) external view returns (address) {
@@ -154,44 +154,44 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
 
   function _interestRatioMantissa(address user) internal returns (uint256) {
     uint256 tickets = balanceOf(user);
-    console.log("_interestRatioMantissa %s %s %s", user, tickets, interestShares[user]);
+    // console.log("_interestRatioMantissa %s %s %s", user, tickets, interestShares[user]);
     uint256 ticketsPlusInterest = interestTracker.collateralValueOfShares(interestShares[user]);
-    console.log("_interestRatioMantissa ticketsPlusInterest %s %s", ticketsPlusInterest, tickets);
+    // console.log("_interestRatioMantissa ticketsPlusInterest %s %s", ticketsPlusInterest, tickets);
     uint256 interest;
     if (ticketsPlusInterest >= tickets) {
       interest = ticketsPlusInterest.sub(tickets);
     }
-    console.log("????????????? interest %s", interest);
+    // console.log("????????????? interest %s", interest);
     return FixedPoint.calculateMantissa(interest, tickets);
   }
 
   function redeemTicketsInstantly(uint256 tickets, bytes calldata data) external nonReentrant returns (uint256) {
-    console.log("redeemTicketsInstantly!!!");
+    // console.log("redeemTicketsInstantly!!!");
     address sender = _msgSender();
     uint256 userInterestRatioMantissa = _interestRatioMantissa(sender);
 
-    console.log("redeemTicketsInstantly: userInterestRatioMantissa: %s", userInterestRatioMantissa);
+    // console.log("redeemTicketsInstantly: userInterestRatioMantissa: %s", userInterestRatioMantissa);
 
     uint256 exitFee = prizePool.calculateExitFee(
       tickets,
       userInterestRatioMantissa
     );
 
-    console.log("redeemTicketsInstantly: exitFee: %s", exitFee);
+    // console.log("redeemTicketsInstantly: exitFee: %s", exitFee);
 
-    console.log("redeemTicketsInstantly: burning...");
+    // console.log("redeemTicketsInstantly: burning...");
 
     // burn the tickets
     _burnTickets(sender, tickets);
 
-    console.log("redeemTicketsInstantly: crediting...");
+    // console.log("redeemTicketsInstantly: crediting...");
 
     // now calculate how much interest needs to be redeemed to maintain the interest ratio
     _creditUser(sender, tickets, userInterestRatioMantissa);
 
     uint256 ticketsLessFee = tickets.sub(exitFee);
 
-    console.log("redeemTicketsInstantly: ticketsLessFee: %s", ticketsLessFee);
+    // console.log("redeemTicketsInstantly: ticketsLessFee: %s", ticketsLessFee);
 
     // redeem the interestTracker less the fee
     yieldService.redeem(ticketsLessFee);
@@ -207,11 +207,11 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
 
   function _creditUser(address sender, uint256 tickets, uint256 userInterestRatioMantissa) internal {
     uint256 ticketInterest = FixedPoint.multiplyUintByMantissa(tickets, userInterestRatioMantissa);
-    console.log("_creditUser ticketInterest: %s", ticketInterest);
+    // console.log("_creditUser ticketInterest: %s", ticketInterest);
     uint256 burnedShares = interestTracker.redeemCollateral(tickets.add(ticketInterest));
-    console.log("_creditUser burnedShares: %s", burnedShares);
+    // console.log("_creditUser burnedShares: %s", burnedShares);
     interestShares[sender] = interestShares[sender].sub(burnedShares);
-    console.log("_creditUser new shares: %s", interestShares[sender]);
+    // console.log("_creditUser new shares: %s", interestShares[sender]);
     ticketCredit.mint(sender, ticketInterest);
   }
 
