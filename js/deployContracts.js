@@ -1,16 +1,12 @@
-const PeriodicPrizePoolFactory = require('../build/PeriodicPrizePoolFactory.json')
+const CompoundPeriodicPrizePoolFactory = require('../build/CompoundPeriodicPrizePoolFactory.json')
 const RNGServiceMock = require('../build/RNGServiceMock.json')
 const Forwarder = require('../build/Forwarder.json')
 const MockGovernor = require('../build/MockGovernor.json')
-const CompoundYieldServiceFactory = require('../build/CompoundYieldServiceFactory.json')
-const PrizePoolModuleManagerFactory = require('../build/PrizePoolModuleManagerFactory.json')
 const PrizePoolBuilder = require('../build/PrizePoolBuilder.json')
-const CreditFactory = require('../build/CreditFactory.json')
-const InterestTrackerFactory = require('../build/InterestTrackerFactory.json')
 const SingleRandomWinnerPrizePoolBuilder = require('../build/SingleRandomWinnerPrizePoolBuilder.json')
 const TicketFactory = require('../build/TicketFactory.json')
-const SponsorshipFactory = require('../build/SponsorshipFactory.json')
-const TimelockFactory = require('../build/TimelockFactory.json')
+const ControlledTokenFactory = require('../build/ControlledTokenFactory.json')
+// const TimelockFactory = require('../build/TimelockFactory.json')
 const SingleRandomWinnerPrizeStrategyFactory = require('../build/SingleRandomWinnerPrizeStrategyFactory.json')
 const CTokenMock = require('../build/CTokenMock.json')
 const ERC20Mintable = require('../build/ERC20Mintable.json')
@@ -37,25 +33,20 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
 
   let governor = await deployContract(wallet, MockGovernor, [], overrides)
 
-  debug('deploying PrizePoolModuleManagerFactory')
+  // debug('deploying compound yield service factory')
 
-  let ownableModuleManagerFactory = await deployContract(wallet, PrizePoolModuleManagerFactory, [], overrides)
-  await ownableModuleManagerFactory.initialize(overrides)
-
-  debug('deploying compound yield service factory')
-
-  let yieldServiceFactory = await deployContract(wallet, CompoundYieldServiceFactory, [], overrides)
-  await yieldServiceFactory.initialize(overrides)
+  // let yieldServiceFactory = await deployContract(wallet, CompoundYieldServiceFactory, [], overrides)
+  // await yieldServiceFactory.initialize(overrides)
 
   debug('deploying prize pool factory')
 
-  let prizePoolFactory = await deployContract(wallet, PeriodicPrizePoolFactory, [], overrides)
+  let prizePoolFactory = await deployContract(wallet, CompoundPeriodicPrizePoolFactory, [], overrides)
   await prizePoolFactory.initialize(overrides)
 
-  debug('deployed timelock factory')
+  // debug('deployed timelock factory')
 
-  let timelockFactory = await deployContract(wallet, TimelockFactory, [], overrides)
-  await timelockFactory.initialize(overrides)
+  // let timelockFactory = await deployContract(wallet, TimelockFactory, [], overrides)
+  // await timelockFactory.initialize(overrides)
   
   debug('deployed ticket factory')
 
@@ -67,34 +58,24 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
   let prizeStrategyFactory = await deployContract(wallet, SingleRandomWinnerPrizeStrategyFactory, [], overrides)
   await prizeStrategyFactory.initialize(overrides)
   
-  debug('deploying credit factory')
+  // debug('deploying interest tracker factory')
 
-  let creditFactory = await deployContract(wallet, CreditFactory, [], overrides)
-  await creditFactory.initialize(overrides)
-
-  debug('deploying interest tracker factory')
-
-  let interestTrackerFactory = await deployContract(wallet, InterestTrackerFactory, [], overrides)
-  await interestTrackerFactory.initialize(overrides)
+  // let interestTrackerFactory = await deployContract(wallet, InterestTrackerFactory, [], overrides)
+  // await interestTrackerFactory.initialize(overrides)
 
   debug('deploying sponsorship factory')
 
-  let sponsorshipFactory = await deployContract(wallet, SponsorshipFactory, [], overrides)
-  await sponsorshipFactory.initialize(overrides)
+  let controlledTokenFactory = await deployContract(wallet, ControlledTokenFactory, [], overrides)
+  await controlledTokenFactory.initialize(overrides)
 
   debug('deploying prize pool builder')
 
   let prizePoolBuilder = await deployContract(wallet, PrizePoolBuilder, [], overrides)
   await prizePoolBuilder.initialize(
-    ownableModuleManagerFactory.address,
     governor.address,
-    yieldServiceFactory.address,
     prizePoolFactory.address,
     ticketFactory.address,
-    timelockFactory.address,
-    sponsorshipFactory.address,
-    creditFactory.address,
-    interestTrackerFactory.address,
+    controlledTokenFactory.address,
     rng.address,
     forwarder.address,
     overrides
@@ -118,16 +99,11 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
     token,
     cToken,
     governor,
-    ownableModuleManagerFactory,
-    yieldServiceFactory,
     prizePoolFactory,
-    timelockFactory,
     ticketFactory,
     prizeStrategyFactory,
-    creditFactory,
-    sponsorshipFactory,
+    controlledTokenFactory,
     prizePoolBuilder,
-    interestTrackerFactory,
     singleRandomWinnerPrizePoolBuilder
   }
 }

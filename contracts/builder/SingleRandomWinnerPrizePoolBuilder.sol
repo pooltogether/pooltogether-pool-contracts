@@ -3,8 +3,7 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
 import "../prize-strategy/SingleRandomWinnerPrizeStrategyFactory.sol";
-import "../modules/yield-service/CompoundYieldServiceFactory.sol";
-import "../modules/ticket/TicketFactory.sol";
+import "../ticket/TicketFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 import "./PrizePoolBuilder.sol";
 
@@ -15,7 +14,7 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
 
   event SingleRandomWinnerPrizePoolCreated(
     address indexed creator,
-    address indexed moduleManager,
+    address indexed prizePool,
     address indexed singleRandomWinnerPrizeStrategy
   );
 
@@ -41,7 +40,7 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
     prizeStrategy.initialize();
 
-    PrizePoolModuleManager manager = prizePoolBuilder.createPeriodicPrizePool(
+    PeriodicPrizePool prizePool = prizePoolBuilder.createPeriodicPrizePool(
       cToken,
       prizeStrategy,
       prizePeriodInSeconds,
@@ -51,7 +50,7 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
       _sponsorshipSymbol
     );
 
-    emit SingleRandomWinnerPrizePoolCreated(msg.sender, address(manager), address(prizeStrategy));
+    emit SingleRandomWinnerPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizeStrategy;
   }

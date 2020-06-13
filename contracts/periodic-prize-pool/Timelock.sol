@@ -8,35 +8,20 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "../../module-manager/PrizePoolModuleManager.sol";
-import "../../base/NamedModule.sol";
-import "../../Constants.sol";
-import "../yield-service/YieldServiceInterface.sol";
+import "./InterestTracker.sol";
 
 /* solium-disable security/no-block-members */
-contract Timelock is NamedModule, ReentrancyGuardUpgradeSafe {
+abstract contract Timelock is ContextUpgradeSafe, InterestTracker {
   using SafeMath for uint256;
 
   event CollateralTimelocked(address indexed operator, address indexed to, uint256 amount, uint256 unlockTimestamp);
   event CollateralSwept(address indexed operator, address indexed to, uint256 amount);
 
   uint256 public totalSupply;
-  mapping(address => uint256) balances;
+  mapping(address => uint256) timelockBalances;
   mapping(address => uint256) unlockTimestamps;
 
-  function initialize(
-    NamedModuleManager _manager,
-    address _trustedForwarder
-  ) public initializer {
-    construct(_manager, _trustedForwarder);
-    __ReentrancyGuard_init();
-  }
-
-  function hashName() public view override returns (bytes32) {
-    return Constants.TIMELOCK_INTERFACE_HASH;
-  }
-
-  function sweep(address[] calldata users) external nonReentrant returns (uint256) {
+  function sweep(address[] memory users) public returns (uint256) {
     address sender = _msgSender();
     uint256 totalWithdrawal;
 
@@ -45,33 +30,31 @@ contract Timelock is NamedModule, ReentrancyGuardUpgradeSafe {
     for (i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= block.timestamp) {
-        totalWithdrawal = totalWithdrawal.add(balances[user]);
+        totalWithdrawal = totalWithdrawal.add(timelockBalances[user]);
       }
     }
 
-    YieldServiceInterface yieldService = PrizePoolModuleManager(address(manager)).yieldService();
-
     // pull out the collateral
     if (totalWithdrawal > 0) {
-      yieldService.redeem(totalWithdrawal);
+      _redeem(totalWithdrawal);
     }
 
     for (i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= block.timestamp) {
-        uint256 balance = balances[user];
+        uint256 balance = timelockBalances[user];
         if (balance > 0) {
           _burn(user, balance);
           delete unlockTimestamps[user];
-          IERC20(yieldService.token()).transfer(user, balance);
+          IERC20(_token()).transfer(user, balance);
           emit CollateralSwept(sender, user, balance);
         }
       }
     }
   }
 
-  function mintTo(address to, uint256 amount, uint256 unlockTimestamp) external onlyManagerOrModule {
-    balances[to] = balances[to].add(amount);
+  function mintTo(address to, uint256 amount, uint256 unlockTimestamp) public {
+    timelockBalances[to] = timelockBalances[to].add(amount);
     totalSupply = totalSupply.add(amount);
     unlockTimestamps[to] = unlockTimestamp;
 
@@ -79,15 +62,11 @@ contract Timelock is NamedModule, ReentrancyGuardUpgradeSafe {
   }
 
   function _burn(address user, uint256 amount) internal {
-    balances[user] = balances[user].sub(amount);
+    timelockBalances[user] = timelockBalances[user].sub(amount);
     totalSupply = totalSupply.sub(amount);
   }
 
-  function balanceOf(address user) external view returns (uint256) {
-    return balances[user];
-  }
-
-  function balanceAvailableAt(address user) external view returns (uint256) {
+  function balanceAvailableAt(address user) public view returns (uint256) {
     return unlockTimestamps[user];
   }
 }

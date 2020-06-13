@@ -3,70 +3,45 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 
-import "../module-manager/PrizePoolModuleManagerFactory.sol";
-import "../modules/timelock/TimelockFactory.sol";
-import "../modules/sponsorship/SponsorshipFactory.sol";
-import "../modules/credit/CreditFactory.sol";
-import "../modules/yield-service/CompoundYieldServiceFactory.sol";
-import "../modules/ticket/TicketFactory.sol";
-import "../modules/periodic-prize-pool/PeriodicPrizePoolFactory.sol";
-import "../modules/interest-tracker/InterestTrackerFactory.sol";
+import "../token/ControlledTokenFactory.sol";
+import "../ticket/TicketFactory.sol";
+import "../periodic-prize-pool/CompoundPeriodicPrizePoolFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 
 contract PrizePoolBuilder is Initializable {
 
   event PrizePoolCreated(
     address indexed creator,
-    address indexed moduleManager,
+    address indexed prizePool,
     address indexed prizeStrategy
   );
 
-  PrizePoolModuleManagerFactory public prizePoolModuleManagerFactory;
   GovernorInterface public governor;
-  CompoundYieldServiceFactory public compoundYieldServiceFactory;
-  PeriodicPrizePoolFactory public periodicPrizePoolFactory;
+  CompoundPeriodicPrizePoolFactory public periodicPrizePoolFactory;
   TicketFactory public ticketFactory;
-  CreditFactory public creditFactory;
-  TimelockFactory public timelockFactory;
-  SponsorshipFactory public sponsorshipFactory;
-  InterestTrackerFactory public interestTrackerFactory;
+  ControlledTokenFactory public controlledTokenFactory;
   RNGInterface public rng;
   address public trustedForwarder;
 
   function initialize (
-    PrizePoolModuleManagerFactory _prizePoolModuleManagerFactory,
     GovernorInterface _governor,
-    CompoundYieldServiceFactory _compoundYieldServiceFactory,
-    PeriodicPrizePoolFactory _periodicPrizePoolFactory,
+    CompoundPeriodicPrizePoolFactory _periodicPrizePoolFactory,
     TicketFactory _ticketFactory,
-    TimelockFactory _timelockFactory,
-    SponsorshipFactory _sponsorshipFactory,
-    CreditFactory _creditFactory,
-    InterestTrackerFactory _interestTrackerFactory,
+    ControlledTokenFactory _controlledTokenFactory,
     RNGInterface _rng,
     address _trustedForwarder
   ) public initializer {
-    require(address(_prizePoolModuleManagerFactory) != address(0), "module factory cannot be zero");
     require(address(_governor) != address(0), "governor cannot be zero");
-    require(address(_compoundYieldServiceFactory) != address(0), "interest pool factory cannot be zero");
     require(address(_periodicPrizePoolFactory) != address(0), "prize pool factory cannot be zero");
     require(address(_ticketFactory) != address(0), "ticket factory cannot be zero");
     require(address(_rng) != address(0), "rng cannot be zero");
-    require(address(_sponsorshipFactory) != address(0), "sponsorship factory cannot be zero");
-    require(address(_timelockFactory) != address(0), "controlled token factory cannot be zero");
-    require(address(_creditFactory) != address(0), "credit factory cannot be zero");
-    require(address(_interestTrackerFactory) != address(0), "interest tracker factory cannot be zero");
-    interestTrackerFactory = _interestTrackerFactory;
-    prizePoolModuleManagerFactory = _prizePoolModuleManagerFactory;
+    require(address(_controlledTokenFactory) != address(0), "controlled token factory cannot be zero");
     governor = _governor;
-    compoundYieldServiceFactory = _compoundYieldServiceFactory;
     periodicPrizePoolFactory = _periodicPrizePoolFactory;
     ticketFactory = _ticketFactory;
-    creditFactory = _creditFactory;
+    controlledTokenFactory = _controlledTokenFactory;
     rng = _rng;
     trustedForwarder = _trustedForwarder;
-    sponsorshipFactory = _sponsorshipFactory;
-    timelockFactory = _timelockFactory;
   }
 
   function createPeriodicPrizePool(
@@ -77,109 +52,101 @@ contract PrizePoolBuilder is Initializable {
     string memory _ticketSymbol,
     string memory _sponsorshipName,
     string memory _sponsorshipSymbol
-  ) public returns (PrizePoolModuleManager) {
-    PrizePoolModuleManager manager = prizePoolModuleManagerFactory.createPrizePoolModuleManager();
-    manager.initialize(trustedForwarder);
+  ) public returns (CompoundPeriodicPrizePool) {
+    CompoundPeriodicPrizePool prizePool = periodicPrizePoolFactory.createCompoundPeriodicPrizePool();
 
-    createPeriodicPrizePoolModule(manager, _prizeStrategy, _prizePeriodSeconds);
-    createCompoundYieldServiceModule(manager, _cToken);
-    createTicketCreditModule(manager);
-    createSponsorshipCreditModule(manager);
-    createTimelockModule(manager);
-    createInterestTrackerModule(manager);
-    createTicketModule(manager, _ticketName, _ticketSymbol).initializeDependencies();
-    createSponsorshipModule(manager, _sponsorshipName, _sponsorshipSymbol);
+    initializePrizePool(
+      prizePool,
+      _cToken,
+      _prizeStrategy,
+      _prizePeriodSeconds
+    );
+
+    setTokens(
+      prizePool,
+      _ticketName,
+      _ticketSymbol,
+      _sponsorshipName,
+      _sponsorshipSymbol
+    );
 
     emit PrizePoolCreated(
       msg.sender,
-      address(manager),
+      address(prizePool),
       address(_prizeStrategy)
     );
 
-    return manager;
+    return prizePool;
   }
 
-  function createInterestTrackerModule(
-    NamedModuleManager _moduleManager
-  ) internal {
-    InterestTracker interestTracker = interestTrackerFactory.createInterestTracker();
-    _moduleManager.enableModule(interestTracker);
-    interestTracker.initialize(_moduleManager, trustedForwarder);
-  }
-
-  function createPeriodicPrizePoolModule(
-    NamedModuleManager _moduleManager,
+  function initializePrizePool(
+    CompoundPeriodicPrizePool prizePool,
+    CTokenInterface _cToken,
     PrizeStrategyInterface _prizeStrategy,
     uint256 _prizePeriodSeconds
   ) internal {
-    PeriodicPrizePool prizePool = periodicPrizePoolFactory.createPeriodicPrizePool();
-    _moduleManager.enableModule(prizePool);
     prizePool.initialize(
-      _moduleManager,
       trustedForwarder,
       governor,
       _prizeStrategy,
       rng,
-      _prizePeriodSeconds
+      _prizePeriodSeconds,
+      _cToken
     );
   }
 
-  function createCompoundYieldServiceModule(
-    NamedModuleManager moduleManager,
-    CTokenInterface cToken
-  ) internal returns (CompoundYieldService) {
-    CompoundYieldService yieldService = compoundYieldServiceFactory.createCompoundYieldService();
-    moduleManager.enableModule(yieldService);
-    yieldService.initialize(moduleManager, cToken);
-    return yieldService;
+  function setTokens(
+    CompoundPeriodicPrizePool prizePool,
+    string memory _ticketName,
+    string memory _ticketSymbol,
+    string memory _sponsorshipName,
+    string memory _sponsorshipSymbol
+  ) internal {
+    prizePool.setTokens(
+      createTicket(prizePool, _ticketName, _ticketSymbol),
+      createSponsorship(prizePool, _sponsorshipName, _sponsorshipSymbol),
+      createTicketCredit(prizePool),
+      createSponsorshipCredit(prizePool)
+    );
   }
 
-  function createTicketCreditModule(
-    NamedModuleManager moduleManager
-  ) internal returns (Credit) {
-    Credit credit = creditFactory.createCredit();
-    moduleManager.enableModule(credit);
-    credit.initialize(moduleManager, trustedForwarder, "Ticket Credit", "TCRD", Constants.TICKET_CREDIT_INTERFACE_HASH);
+  function createTicketCredit(
+    PeriodicPrizePool prizePool
+  ) internal returns (ControlledToken) {
+    ControlledToken credit = controlledTokenFactory.createControlledToken();
+    address[] memory defaultOperators;
+    credit.initialize("Ticket Credit", "TCRD", defaultOperators, trustedForwarder, prizePool);
     return credit;
   }
 
-  function createSponsorshipCreditModule(
-    NamedModuleManager moduleManager
-  ) internal returns (Credit) {
-    Credit credit = creditFactory.createCredit();
-    moduleManager.enableModule(credit);
-    credit.initialize(moduleManager, trustedForwarder, "Sponsorship Credit", "SCRD", Constants.SPONSORSHIP_CREDIT_INTERFACE_HASH);
+  function createSponsorshipCredit(
+    PeriodicPrizePool prizePool
+  ) internal returns (ControlledToken) {
+    ControlledToken credit = controlledTokenFactory.createControlledToken();
+    address[] memory defaultOperators;
+    credit.initialize("Sponsorship Credit", "SCRD", defaultOperators, trustedForwarder, prizePool);
     return credit;
   }
 
-  function createTicketModule(
-    NamedModuleManager moduleManager,
+  function createTicket(
+    PeriodicPrizePool prizePool,
     string memory _ticketName,
     string memory _ticketSymbol
   ) internal returns (Ticket) {
     Ticket ticket = ticketFactory.createTicket();
-    moduleManager.enableModule(ticket);
-    ticket.initialize(moduleManager, trustedForwarder, _ticketName, _ticketSymbol);
+    address[] memory defaultOperators;
+    ticket.initialize(_ticketName, _ticketSymbol, defaultOperators, trustedForwarder, prizePool);
     return ticket;
   }
 
-  function createTimelockModule(
-    NamedModuleManager moduleManager
-  ) internal returns (Timelock) {
-    Timelock timelock = timelockFactory.createTimelock();
-    moduleManager.enableModule(timelock);
-    timelock.initialize(moduleManager, trustedForwarder);
-    return timelock;
-  }
-
-  function createSponsorshipModule(
-    NamedModuleManager moduleManager,
+  function createSponsorship(
+    PeriodicPrizePool prizePool,
     string memory _sponsorshipName,
     string memory _sponsorshipSymbol
-  ) internal returns (Sponsorship) {
-    Sponsorship sponsorship = sponsorshipFactory.createSponsorship();
-    moduleManager.enableModule(sponsorship);
-    sponsorship.initialize(moduleManager, trustedForwarder, _sponsorshipName, _sponsorshipSymbol);
+  ) internal returns (ControlledToken) {
+    ControlledToken sponsorship = controlledTokenFactory.createControlledToken();
+    address[] memory defaultOperators;
+    sponsorship.initialize(_sponsorshipName, _sponsorshipSymbol, defaultOperators, trustedForwarder, prizePool);
     return sponsorship;
   }
 }

@@ -8,7 +8,7 @@ import "@nomiclabs/buidler/console.sol";
 
 import "../rng/RNGInterface.sol";
 import "./PrizeStrategyInterface.sol";
-import "../modules/periodic-prize-pool/PeriodicPrizePoolInterface.sol";
+import "../periodic-prize-pool/PeriodicPrizePool.sol";
 import "../Constants.sol";
 
 /* solium-disable security/no-block-members */
@@ -21,13 +21,10 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, PrizeStrategyInterfac
 
   function award(uint256 randomNumber, uint256 prize) external override {
     if (prize > 0) {
-      NamedModule prizePoolModule = NamedModule(msg.sender);
-      PrizePoolModuleManager manager = PrizePoolModuleManager(address(prizePoolModule.manager()));
-      Ticket ticket = manager.ticket();
+      PeriodicPrizePool prizePool = PeriodicPrizePool(msg.sender);
+      Ticket ticket = prizePool.ticket();
       address winner = ticket.draw(randomNumber);
-      // Convert the sponsorship to winnings
-      manager.sponsorship().approve(address(ticket), prize);
-      ticket.mintTicketsWithSponsorshipTo(winner, prize);
+      ticket.transfer(winner, prize);
     }
   }
 

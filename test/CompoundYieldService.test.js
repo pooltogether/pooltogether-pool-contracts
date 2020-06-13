@@ -4,7 +4,6 @@ const { expect } = require('chai')
 const CompoundYieldServiceHarness = require('../build/CompoundYieldServiceHarness.json')
 const CTokenInterface = require('../build/CTokenInterface.json')
 const IERC20 = require('../build/IERC20.json')
-const PrizePoolModuleManager = require('../build/PrizePoolModuleManager.json')
 
 const { ethers } = require('./helpers/ethers')
 const { balanceOf } = require('./helpers/balanceOf')
@@ -26,7 +25,6 @@ describe('CompoundYieldService contract', () => {
   let yieldService
   let token
   let cToken
-  let manager
 
   let wallet
   let allocator
@@ -35,21 +33,16 @@ describe('CompoundYieldService contract', () => {
   beforeEach(async () => {
     [wallet, allocator, otherWallet] = await buidler.ethers.getSigners()
 
-    manager = await deployMockContract(wallet, PrizePoolModuleManager.abi, overrides)
     token = await deployMockContract(wallet, IERC20.abi, overrides)
     cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
 
     await cToken.mock.underlying.returns(token.address)
 
-    await manager.mock.enableModuleInterface.withArgs(YIELD_SERVICE_INTERFACE_HASH).returns()
-    await manager.mock.isModuleEnabled.withArgs(wallet._address).returns(true)
-    
     yieldService = await deployContract(wallet, CompoundYieldServiceHarness, [], overrides)
 
     debug('initializing yield service...')
 
     await yieldService.initialize(
-      manager.address,
       cToken.address,
       overrides
     )
@@ -64,22 +57,15 @@ describe('CompoundYieldService contract', () => {
   })
 
   describe('supply()', () => {
-    it('should fail if the user has not approved', async () => {
-      await token.mock.transferFrom.withArgs(wallet._address, yieldService.address, toWei('1')).reverts()
-
-      debug('starting supply()....')
-      expect(yieldService.supply(toWei('1'))).to.be.revertedWith('Mock revert')
-      debug('finishing supply()....')
-    })
-
     it('should give the first depositer tokens at the initial exchange rate', async function () {
       await token.mock.transferFrom.withArgs(wallet._address, yieldService.address, toWei('1')).returns(true)
       await token.mock.approve.withArgs(cToken.address, toWei('1')).returns(true)
       await cToken.mock.mint.withArgs(toWei('1')).returns(0)
       
-      await expect(yieldService.supply(toWei('1')))
-        .to.emit(yieldService, 'PrincipalSupplied')
-        .withArgs(wallet._address, toWei('1'))
+      await yieldService.supply(toWei('1'))
+      // await expect(yieldService.supply(toWei('1')))
+      //   .to.emit(yieldService, 'PrincipalSupplied')
+      //   .withArgs(wallet._address, toWei('1'))
 
       expect(await yieldService.accountedBalance()).to.equal(toWei('1'))
     })

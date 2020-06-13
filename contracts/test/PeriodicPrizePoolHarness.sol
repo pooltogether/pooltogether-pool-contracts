@@ -1,9 +1,10 @@
 pragma solidity ^0.6.4;
 
-import "../modules/periodic-prize-pool/PeriodicPrizePool.sol";
+import "../periodic-prize-pool/PeriodicPrizePool.sol";
+import "./MockYieldService.sol";
 
 /* solium-disable security/no-block-members */
-contract PeriodicPrizePoolHarness is PeriodicPrizePool {
+contract PeriodicPrizePoolHarness is PeriodicPrizePool, MockYieldService {
 
   uint256 time;
 
