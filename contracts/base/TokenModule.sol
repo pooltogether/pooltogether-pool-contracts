@@ -10,6 +10,11 @@ import "../base/NamedModule.sol";
 
 abstract contract TokenModule is Initializable, ERC777UpgradeSafe, NamedModule {
 
+  modifier onlyOperator(address _from) {
+    require(isOperatorFor(_msgSender(), _from), "TokenModule/Invalid operator");
+    _;
+  }
+
   function initialize(
     NamedModuleManager _manager,
     address _trustedForwarder,
