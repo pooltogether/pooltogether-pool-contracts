@@ -56,9 +56,9 @@ contract CompoundYieldService is Initializable, YieldServiceInterface, NamedModu
   }
 
   function supply(uint256 amount) external override onlyManagerOrModule {
-    IERC20 toke = _token();
-    toke.transferFrom(msg.sender, address(this), amount);
-    toke.approve(address(cToken), amount);
+    IERC20 token = _token();
+    token.transferFrom(msg.sender, address(this), amount);
+    token.approve(address(cToken), amount);
     cToken.mint(amount);
 
     accountedBalance = accountedBalance.add(amount);
