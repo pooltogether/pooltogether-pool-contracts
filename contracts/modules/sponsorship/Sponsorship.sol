@@ -34,6 +34,10 @@ contract Sponsorship is TokenModule, ReentrancyGuardUpgradeSafe {
     yieldService = PrizePoolModuleManager(address(_manager)).yieldService();
   }
 
+  function balanceOfInterestShares(address user) external view returns (uint256) {
+    return interestShares[user];
+  }
+
   function supply(address receiver, uint256 amount) external nonReentrant {
     address _sender = _msgSender();
 
@@ -49,10 +53,10 @@ contract Sponsorship is TokenModule, ReentrancyGuardUpgradeSafe {
   function redeem(uint256 amount) external nonReentrant {
     address _sender = _msgSender();
 
+    _burnSponsorship(_sender, amount);
+
     yieldService.redeem(amount);
     IERC20(yieldService.token()).transfer(_sender, amount);
-
-    _burnSponsorship(_sender, amount);
 
     emit SponsorshipRedeemed(_sender, _sender, amount);
   }
@@ -60,10 +64,10 @@ contract Sponsorship is TokenModule, ReentrancyGuardUpgradeSafe {
   function operatorRedeem(address from, uint256 amount) external nonReentrant onlyOperator(from) {
     address _sender = _msgSender();
 
+    _burnSponsorship(from, amount);
+
     yieldService.redeem(amount);
     IERC20(yieldService.token()).transfer(from, amount);
-
-    _burnSponsorship(from, amount);
 
     emit SponsorshipRedeemed(_sender, from, amount);
   }
@@ -103,8 +107,8 @@ contract Sponsorship is TokenModule, ReentrancyGuardUpgradeSafe {
     uint256 amount
   ) internal {
     _burn(from, amount, "", "");
-    uint256 shares = PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(amount);
-    interestShares[from] = interestShares[from].sub(shares);
+    // uint256 shares = PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(amount);
+    // interestShares[from] = interestShares[from].sub(shares);
     _sweep(from);
   }
 
