@@ -1,6 +1,10 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const { deploy1820 } = require('deploy-eip-1820')
+<<<<<<< HEAD
 const SponsorshipHarness = require('../build/SponsorshipHarness.json')
+=======
+const Sponsorship = require('../build/SponsorshipHarness.json')
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
 const PeriodicPrizePool = require('../build/PeriodicPrizePool.json')
 const Credit = require('../build/Credit.json')
 const Timelock = require('../build/Timelock.json')
@@ -17,7 +21,10 @@ const { call } = require('./helpers/call')
 const { ethers } = require('./helpers/ethers')
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
+<<<<<<< HEAD
 const getIterable = require('./helpers/iterable')
+=======
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
 const { CALL_EXCEPTION } = require('ethers/errors')
 
 const toWei = ethers.utils.parseEther
@@ -40,6 +47,7 @@ describe.only('Sponsorship contract', function() {
 
   let lastTxTimestamp
 
+<<<<<<< HEAD
   const _mocksForSupply = async ({supply, mintedTickets, collateral, account = wallet}) => {
     await token.mock.transferFrom.withArgs(account._address, sponsorship.address, supply).returns(true)
       
@@ -67,6 +75,8 @@ describe.only('Sponsorship contract', function() {
   }
 
 
+=======
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
 
@@ -94,7 +104,11 @@ describe.only('Sponsorship contract', function() {
     await manager.mock.timelock.returns(timelock.address)
     await manager.mock.sponsorshipCredit.returns(sponsorshipCredit.address)
 
+<<<<<<< HEAD
     sponsorship = await deployContract(wallet, SponsorshipHarness, [], overrides)
+=======
+    sponsorship = await deployContract(wallet, Sponsorship, [], overrides)
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
 
     let tx = await sponsorship['initialize(address,address,string,string)'](
       manager.address,
@@ -116,6 +130,7 @@ describe.only('Sponsorship contract', function() {
 
   describe('supply()', () => {
     it('should mint sponsorship tokens', async () => {
+<<<<<<< HEAD
       const sweepAmount = toWei('0')
       const supplyAmount = toWei('10')
 
@@ -137,11 +152,31 @@ describe.only('Sponsorship contract', function() {
       // Test supply
       expect(await sponsorship.balanceOfInterestShares(wallet._address)).to.equal(supplyAmount)
       expect(await sponsorship.balanceOf(wallet._address)).to.equal(supplyAmount)
+=======
+      let amount = toWei('10')
+
+      await token.mock.transferFrom.withArgs(wallet._address, sponsorship.address, amount).returns(true)
+      
+      // ensure yield service approved
+      await token.mock.allowance.returns(0)
+      await token.mock.approve.returns(true)
+      
+      // supply to yield service
+      await yieldService.mock.supply.withArgs(amount).returns()
+      await prizePool.mock.mintedTickets.withArgs(toWei('10')).returns()
+      await interestTracker.mock.supplyCollateral.withArgs(amount).returns(amount)
+
+      await sponsorship.supply(wallet._address, toWei('10'), [])
+
+      expect(await sponsorship.balanceOfInterestShares(wallet._address)).to.equal(amount)
+      expect(await sponsorship.balanceOf(wallet._address)).to.equal(amount)
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
     })
   })
 
   describe('redeem()', () => {
     it('should allow a sponsor to redeem their sponsorship tokens', async () => {
+<<<<<<< HEAD
       const amount = toWei('10')
 
       // Pre-fund sponsorship tokens
@@ -175,11 +210,55 @@ describe.only('Sponsorship contract', function() {
       // Test balance revert
       await expect(sponsorship.redeem(amount.mul(2)))
         .to.be.revertedWith('Sponsorship/insuff')
+=======
+      await sponsorship.setInterestSharesForTest(wallet._address, toWei('10'))
+      await sponsorship.mintForTest(wallet._address, toWei('10'))
+
+      // burn tickets
+      await prizePool.mock.redeemedTickets.withArgs(toWei('10')).returns()
+
+      // credit user
+      await interestTracker.mock.totalSupply.returns(toWei('10'))
+      await interestTracker.mock.redeemCollateral.withArgs(toWei('10')).returns(toWei('10'))
+      await interestTracker.mock.exchangeRateMantissa.returns(toWei('1'));
+      await sponsorshipCredit.mock.mint.withArgs(wallet._address, toWei('10')).returns()
+
+      await yieldService.mock.redeem.withArgs(toWei('10')).returns()
+
+      await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+
+      await expect(sponsorship.redeem(toWei('10'), []))
+        .to.emit(sponsorship, 'SponsorshipRedeemed')
+        .withArgs(wallet._address, wallet._address, toWei('10'))
+    })
+
+    it('should not allow a sponsor to redeem more sponsorship tokens than they hold', async () => {
+      await sponsorship.setInterestSharesForTest(wallet._address, toWei('10'))
+      await sponsorship.mintForTest(wallet._address, toWei('10'))
+
+      // burn tickets
+      await prizePool.mock.redeemedTickets.withArgs(toWei('10')).returns()
+
+      // credit user
+      await interestTracker.mock.totalSupply.returns(toWei('10'))
+      await interestTracker.mock.redeemCollateral.withArgs(toWei('10')).returns(toWei('10'))
+      await interestTracker.mock.exchangeRateMantissa.returns(toWei('1'));
+      await sponsorshipCredit.mock.mint.withArgs(wallet._address, toWei('10')).returns()
+
+      await yieldService.mock.redeem.withArgs(toWei('10')).returns()
+
+      await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+
+      await expect(sponsorship.redeem(toWei('10'), []))
+        .to.emit(sponsorship, 'SponsorshipRedeemed')
+        .withArgs(wallet._address, wallet._address, toWei('10'))
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
     })
   })
 
   describe('operatorRedeem()', () => {
     it('should allow an operator to redeem on behalf of a sponsor their sponsorship tokens', async () => {
+<<<<<<< HEAD
       const amount = toWei('10')
 
       // Pre-fund sponsorship tokens
@@ -216,6 +295,37 @@ describe.only('Sponsorship contract', function() {
 
       // Test redeem revert
       await expect(sponsorship.connect(wallet2).operatorRedeem(wallet._address, amount))
+=======
+      await sponsorship.setInterestSharesForTest(wallet._address, toWei('10'))
+      await sponsorship.mintForTest(wallet._address, toWei('10'))
+
+      // approve operator
+      await sponsorship.authorizeOperator(wallet2._address)
+
+      // burn tickets
+      await prizePool.mock.redeemedTickets.withArgs(toWei('10')).returns()
+
+      // credit user
+      await interestTracker.mock.totalSupply.returns(toWei('10'))
+      await interestTracker.mock.redeemCollateral.withArgs(toWei('10')).returns(toWei('10'))
+      await interestTracker.mock.exchangeRateMantissa.returns(toWei('1'));
+      await sponsorshipCredit.mock.mint.withArgs(wallet._address, toWei('10')).returns()
+
+      await yieldService.mock.redeem.withArgs(toWei('10')).returns()
+
+      await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+
+      await expect(sponsorship.connect(wallet2).operatorRedeem(wallet._address, toWei('10'), []))
+        .to.emit(sponsorship, 'SponsorshipRedeemed')
+        .withArgs(wallet2._address, wallet._address, toWei('10'))
+    })
+
+    it('should not allow an unapproved operator to redeem on behalf of a sponsor', async () => {
+      await sponsorship.setInterestSharesForTest(wallet._address, toWei('10'))
+      await sponsorship.mintForTest(wallet._address, toWei('10'))
+
+      await expect(sponsorship.connect(wallet2).operatorRedeem(wallet._address, toWei('10'), []))
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
         .to.be.revertedWith('TokenModule/Invalid operator');
     })
   })
@@ -231,6 +341,7 @@ describe.only('Sponsorship contract', function() {
   })
 
   describe('sweep()', () => {
+<<<<<<< HEAD
     it('should allow anyone to sweep for a list of users', async () => {
       const numAccounts = 5
       const iterableAccounts = getIterable(await buidler.ethers.getSigners(), numAccounts)
@@ -278,6 +389,9 @@ describe.only('Sponsorship contract', function() {
         expect(await sponsorship.balanceOf(user.data._address)).to.equal(amounts[user.index])
       }
     })
+=======
+    it('should allow anyone to sweep for a list of users')
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
   })
 
 });
