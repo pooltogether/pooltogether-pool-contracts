@@ -287,9 +287,4 @@ contract Ticket is TokenModule, ReentrancyGuardUpgradeSafe {
   function balanceOfInterestShares(address user) external view returns (uint256) {
     return interestShares[user];
   }
-
-  modifier onlyOperator(address user) {
-    require(isOperatorFor(_msgSender(), user), "ERC777: caller is not an operator for holder");
-    _;
-  }
 }
