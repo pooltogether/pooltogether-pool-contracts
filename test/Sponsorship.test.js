@@ -1,7 +1,11 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const { deploy1820 } = require('deploy-eip-1820')
 <<<<<<< HEAD
+<<<<<<< HEAD
 const SponsorshipHarness = require('../build/SponsorshipHarness.json')
+=======
+const Sponsorship = require('../build/SponsorshipHarness.json')
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
 =======
 const Sponsorship = require('../build/SponsorshipHarness.json')
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
@@ -22,7 +26,10 @@ const { ethers } = require('./helpers/ethers')
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
 <<<<<<< HEAD
+<<<<<<< HEAD
 const getIterable = require('./helpers/iterable')
+=======
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
 =======
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
 const { CALL_EXCEPTION } = require('ethers/errors')
@@ -47,6 +54,7 @@ describe.only('Sponsorship contract', function() {
 
   let lastTxTimestamp
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   const _mocksForSupply = async ({supply, mintedTickets, collateral, account = wallet}) => {
     await token.mock.transferFrom.withArgs(account._address, sponsorship.address, supply).returns(true)
@@ -77,6 +85,8 @@ describe.only('Sponsorship contract', function() {
 
 =======
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
+=======
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
 
@@ -105,7 +115,11 @@ describe.only('Sponsorship contract', function() {
     await manager.mock.sponsorshipCredit.returns(sponsorshipCredit.address)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     sponsorship = await deployContract(wallet, SponsorshipHarness, [], overrides)
+=======
+    sponsorship = await deployContract(wallet, Sponsorship, [], overrides)
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
 =======
     sponsorship = await deployContract(wallet, Sponsorship, [], overrides)
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
@@ -131,6 +145,7 @@ describe.only('Sponsorship contract', function() {
   describe('supply()', () => {
     it('should mint sponsorship tokens', async () => {
 <<<<<<< HEAD
+<<<<<<< HEAD
       const sweepAmount = toWei('0')
       const supplyAmount = toWei('10')
 
@@ -153,6 +168,8 @@ describe.only('Sponsorship contract', function() {
       expect(await sponsorship.balanceOfInterestShares(wallet._address)).to.equal(supplyAmount)
       expect(await sponsorship.balanceOf(wallet._address)).to.equal(supplyAmount)
 =======
+=======
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
       let amount = toWei('10')
 
       await token.mock.transferFrom.withArgs(wallet._address, sponsorship.address, amount).returns(true)
@@ -170,12 +187,16 @@ describe.only('Sponsorship contract', function() {
 
       expect(await sponsorship.balanceOfInterestShares(wallet._address)).to.equal(amount)
       expect(await sponsorship.balanceOf(wallet._address)).to.equal(amount)
+<<<<<<< HEAD
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
+=======
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
     })
   })
 
   describe('redeem()', () => {
     it('should allow a sponsor to redeem their sponsorship tokens', async () => {
+<<<<<<< HEAD
 <<<<<<< HEAD
       const amount = toWei('10')
 
@@ -211,6 +232,8 @@ describe.only('Sponsorship contract', function() {
       await expect(sponsorship.redeem(amount.mul(2)))
         .to.be.revertedWith('Sponsorship/insuff')
 =======
+=======
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
       await sponsorship.setInterestSharesForTest(wallet._address, toWei('10'))
       await sponsorship.mintForTest(wallet._address, toWei('10'))
 
@@ -252,12 +275,16 @@ describe.only('Sponsorship contract', function() {
       await expect(sponsorship.redeem(toWei('10'), []))
         .to.emit(sponsorship, 'SponsorshipRedeemed')
         .withArgs(wallet._address, wallet._address, toWei('10'))
+<<<<<<< HEAD
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
+=======
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
     })
   })
 
   describe('operatorRedeem()', () => {
     it('should allow an operator to redeem on behalf of a sponsor their sponsorship tokens', async () => {
+<<<<<<< HEAD
 <<<<<<< HEAD
       const amount = toWei('10')
 
@@ -296,6 +323,8 @@ describe.only('Sponsorship contract', function() {
       // Test redeem revert
       await expect(sponsorship.connect(wallet2).operatorRedeem(wallet._address, amount))
 =======
+=======
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
       await sponsorship.setInterestSharesForTest(wallet._address, toWei('10'))
       await sponsorship.mintForTest(wallet._address, toWei('10'))
 
@@ -325,6 +354,9 @@ describe.only('Sponsorship contract', function() {
       await sponsorship.mintForTest(wallet._address, toWei('10'))
 
       await expect(sponsorship.connect(wallet2).operatorRedeem(wallet._address, toWei('10'), []))
+<<<<<<< HEAD
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
+=======
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
         .to.be.revertedWith('TokenModule/Invalid operator');
     })
@@ -341,6 +373,7 @@ describe.only('Sponsorship contract', function() {
   })
 
   describe('sweep()', () => {
+<<<<<<< HEAD
 <<<<<<< HEAD
     it('should allow anyone to sweep for a list of users', async () => {
       const numAccounts = 5
@@ -389,6 +422,9 @@ describe.only('Sponsorship contract', function() {
         expect(await sponsorship.balanceOf(user.data._address)).to.equal(amounts[user.index])
       }
     })
+=======
+    it('should allow anyone to sweep for a list of users')
+>>>>>>> Add unit-tests for Sponsorship contract (WIP)
 =======
     it('should allow anyone to sweep for a list of users')
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
