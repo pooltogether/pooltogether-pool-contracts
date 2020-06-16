@@ -81,7 +81,7 @@ describe('Integration Test', () => {
 
       let tx, receipt
 
-      await printGas(await prizePool.mintTickets(wallet._address, toWei('100'), [], overrides))
+      await prizePool.mintTickets(wallet._address, toWei('100'), [], overrides)
 
       debug('Accrue custom...')
 

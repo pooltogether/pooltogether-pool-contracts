@@ -206,7 +206,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function isPrizePeriodOver() public view returns (bool) {
-    return currentTime() > prizePeriodEndAt();
+    return currentTime() >= prizePeriodEndAt();
   }
 
   function isRngRequested() public view returns (bool) {
