@@ -18,8 +18,8 @@ abstract contract Timelock is ContextUpgradeSafe, InterestTracker {
   event CollateralSwept(address indexed operator, address indexed to, uint256 amount);
 
   uint256 public totalSupply;
-  mapping(address => uint256) timelockBalances;
-  mapping(address => uint256) unlockTimestamps;
+  mapping(address => uint256) internal timelockBalances;
+  mapping(address => uint256) internal unlockTimestamps; // balanceOfAvailableAt
 
   function sweep(address[] memory users) public returns (uint256) {
     address sender = _msgSender();
