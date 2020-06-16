@@ -18,6 +18,9 @@ contract Sponsorship is TokenModule, ReentrancyGuardUpgradeSafe {
 
   event SponsorshipSupplied(address indexed operator, address indexed to, uint256 amount);
   event SponsorshipRedeemed(address indexed operator, address indexed from, uint256 amount);
+  event SponsorshipMinted(address indexed operator, address indexed to, uint256 amount);
+  event SponsorshipBurned(address indexed operator, address indexed from, uint256 amount);
+  event SponsorshipSwept(address indexed operator, address[] users);
 
   mapping(address => uint256) interestShares;
   YieldServiceInterface public yieldService;
@@ -39,37 +42,38 @@ contract Sponsorship is TokenModule, ReentrancyGuardUpgradeSafe {
   }
 
   function supply(address receiver, uint256 amount) external nonReentrant {
-    address _sender = _msgSender();
+    address sender = _msgSender();
 
-    yieldService.token().transferFrom(_sender, address(this), amount);
+    yieldService.token().transferFrom(sender, address(this), amount);
     ensureYieldServiceApproved(amount);
     yieldService.supply(amount);
 
     _mintSponsorship(receiver, amount);
 
-    emit SponsorshipSupplied(_sender, receiver, amount);
+    emit SponsorshipSupplied(sender, receiver, amount);
   }
 
   function redeem(uint256 amount) external nonReentrant {
-    address _sender = _msgSender();
+    address sender = _msgSender();
+    require(interestShares[sender] >= amount, "Sponsorship/insuff");
 
-    _burnSponsorship(_sender, amount);
+    _burnSponsorship(sender, amount);
 
     yieldService.redeem(amount);
-    IERC20(yieldService.token()).transfer(_sender, amount);
+    IERC20(yieldService.token()).transfer(sender, amount);
 
-    emit SponsorshipRedeemed(_sender, _sender, amount);
+    emit SponsorshipRedeemed(sender, sender, amount);
   }
 
   function operatorRedeem(address from, uint256 amount) external nonReentrant onlyOperator(from) {
-    address _sender = _msgSender();
+    address sender = _msgSender();
 
     _burnSponsorship(from, amount);
 
     yieldService.redeem(amount);
     IERC20(yieldService.token()).transfer(from, amount);
 
-    emit SponsorshipRedeemed(_sender, from, amount);
+    emit SponsorshipRedeemed(sender, from, amount);
   }
 
   function mint(
@@ -77,61 +81,90 @@ contract Sponsorship is TokenModule, ReentrancyGuardUpgradeSafe {
     uint256 amount
   ) external virtual onlyManagerOrModule {
     _mintSponsorship(account, amount);
+    emit SponsorshipMinted(_msgSender(), account, amount);
   }
 
   function burn(
-    address from,
+    address account,
     uint256 amount
   ) external virtual onlyManagerOrModule {
-    _burnSponsorship(from, amount);
+    _burnSponsorship(account, amount);
+    emit SponsorshipBurned(_msgSender(), account, amount);
   }
 
   function sweep(address[] calldata users) external {
     _sweep(users);
+    emit SponsorshipSwept(_msgSender(), users);
   }
-
-
 
   function _mintSponsorship(
     address account,
     uint256 amount
   ) internal {
+    // Mint sponsorship tokens
     _mint(account, amount, "", "");
+
+    // Supply collateral for interest tracking
     uint256 shares = PrizePoolModuleManager(address(manager)).interestTracker().supplyCollateral(amount);
     interestShares[account] = interestShares[account].add(shares);
-  }
 
+    // Burn & accredit any accrued interest on collateral
+    _sweepInterest(account);
+  }
 
   function _burnSponsorship(
-    address from,
+    address account,
     uint256 amount
   ) internal {
-    _burn(from, amount, "", "");
-    // uint256 shares = PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(amount);
-    // interestShares[from] = interestShares[from].sub(shares);
-    _sweep(from);
+    // Burn & accredit accrued interest on collateral
+    _burnCollateralSweepInterest(account, amount);
+
+    // Burn sponsorship tokens
+    _burn(account, amount, "", "");
   }
 
-
-  function _sweep(address user) internal {
-    address[] memory users = new address[](1);
-    users[0] = user;
-    _sweep(users);
+  function _burnCollateralSweepInterest(
+    address account, 
+    uint256 collateralAmount
+  ) internal {
+    // Burn collateral + interest from interest tracker
+    _burnFromInterestTracker(account, collateralAmount.add(_mintCredit(account)));
   }
 
-  function _sweep(address[] memory users) internal {
-    InterestTrackerInterface interestTracker = PrizePoolModuleManager(address(manager)).interestTracker();
-    Credit sponsorshipCredit = PrizePoolModuleManager(address(manager)).sponsorshipCredit();
-    uint256 exchangeRateMantissa = interestTracker.exchangeRateMantissa();
-    for (uint256 i = 0; i < users.length; i++) {
-      address user = users[i];
-      // uint256 collateral = interestTracker.collateralValueOfShares(interestShares[user]);
-      uint256 collateral = FixedPoint.divideUintByMantissa(interestShares[user], exchangeRateMantissa);
-      uint256 interest = collateral.sub(balanceOf(user));
-      sponsorshipCredit.mint(user, interest);
-      uint256 shares = interestTracker.redeemCollateral(interest);
-      interestShares[user] = interestShares[user].sub(shares);
+  function _sweepInterest(address account) internal {
+    // Burn interest from interest tracker
+    _burnFromInterestTracker(account, _mintCredit(account));
+  }
+
+  function _sweep(address[] memory accounts) internal {
+    for (uint256 i = 0; i < accounts.length; i++) {
+      address account = accounts[i];
+      _sweepInterest(account);
     }
+  }
+
+  function _calculateCollateralInterest(address account) internal returns (uint256 interest) {
+    InterestTrackerInterface interestTracker = PrizePoolModuleManager(address(manager)).interestTracker();
+    uint256 exchangeRateMantissa = interestTracker.exchangeRateMantissa();
+    
+    // Calculate interest on collateral to be accreditted to account
+    uint256 collateral = FixedPoint.divideUintByMantissa(interestShares[account], exchangeRateMantissa);
+    interest = collateral.sub(balanceOf(account));
+  }
+
+  function _burnFromInterestTracker(address account, uint256 amount) internal {
+    // Burn collateral/interest from interest tracker
+    uint256 shares = PrizePoolModuleManager(address(manager)).interestTracker().redeemCollateral(amount);
+    interestShares[account] = interestShares[account].sub(shares);
+  }
+  
+  function _mintCredit(address account) internal returns (uint256 interest) {
+    // Calculate any accrued interest on existing collateral
+    interest = _calculateCollateralInterest(account);
+
+    // Mint sponsorship credit for interest accrued
+    Credit sponsorshipCredit = PrizePoolModuleManager(address(manager)).sponsorshipCredit();
+    sponsorshipCredit.mint(account, interest);
   }
 
   function ensureYieldServiceApproved(uint256 amount) internal {
