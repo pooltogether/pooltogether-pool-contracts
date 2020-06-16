@@ -67,7 +67,7 @@ abstract contract InterestTracker is AbstractYieldService {
     return interest;
   }
 
-  function collateralValueOfShares(uint256 shares) internal returns (uint256) {
+  function collateralValueOfShares(uint256 shares) public returns (uint256) {
     return FixedPoint.multiplyUintByMantissa(shares, _exchangeRateMantissa());
   }
 
@@ -88,9 +88,12 @@ abstract contract InterestTracker is AbstractYieldService {
   function poke() internal {
     uint256 unaccountedBalance = _unaccountedBalance();
     if (unaccountedBalance > 0) {
+      // console.log("CAPTURED %s", unaccountedBalance / 1 ether);
       _capture(unaccountedBalance);
       newInterest = newInterest.add(unaccountedBalance);
+      // console.log("new interest %s", newInterest / 1 ether);
       totalCollateral = totalCollateral.add(unaccountedBalance);
+      // console.log("totalCollateral %s", totalCollateral / 1 ether);
     }
   }
 }

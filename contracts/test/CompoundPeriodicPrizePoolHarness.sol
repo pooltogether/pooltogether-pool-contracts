@@ -1,26 +1,11 @@
 pragma solidity ^0.6.4;
 
-import "../periodic-prize-pool/PeriodicPrizePool.sol";
-import "./MockYieldService.sol";
+import "../periodic-prize-pool/CompoundPeriodicPrizePool.sol";
 
 /* solium-disable security/no-block-members */
-contract PeriodicPrizePoolHarness is PeriodicPrizePool, MockYieldService {
+contract CompoundPeriodicPrizePoolHarness is CompoundPeriodicPrizePool {
 
   uint256 time;
-
-  function calculateExitFeeWithValues(
-    uint256 _userInterestRatioMantissa,
-    uint256 _tickets,
-    uint256 _previousPrizeAverageTickets,
-    uint256 _previousPrize
-  ) public pure returns (uint256) {
-    return _calculateExitFeeWithValues(
-      _userInterestRatioMantissa,
-      _tickets,
-      _previousPrizeAverageTickets,
-      _previousPrize
-    );
-  }
 
   function setPreviousPrizeAverageTickets(uint256 _previousPrizeAverageTickets) external {
     previousPrizeAverageTickets = _previousPrizeAverageTickets;

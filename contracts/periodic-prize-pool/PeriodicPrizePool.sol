@@ -262,7 +262,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
         sponsorship.mint(governor.reserve(), reserveFee, "", "");
       }
       if (prize > 0) {
-        ticket.mint(address(prizeStrategy), prize, "", "");
+        _mintTickets(address(prizeStrategy), prize, "", "");
       }
     }
 
@@ -315,7 +315,6 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function mintTickets(address to, uint256 amount, bytes calldata data) external nonReentrant {
-    // console.log("mintTickets: %s %s %s", _msgSender(), to, amount);
     _token().transferFrom(_msgSender(), address(this), amount);
     _supply(amount);
     _mintTickets(to, amount, data, "");
@@ -365,46 +364,46 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     return _ticketInterestRatioMantissa(user);
   }
 
-  function _ticketInterestRatioMantissa(address user) internal returns (uint256) {
+  function balanceOfTicketInterest(address user) public returns (uint256) {
     uint256 tickets = ticket.balanceOf(user);
-    // console.log("_ticketInterestRatioMantissa %s %s %s", user, tickets, interestShares[user]);
+    return _balanceOfTicketInterest(user, tickets);
+  }
+
+  function _balanceOfTicketInterest(address user, uint256 tickets) internal returns (uint256) {
     uint256 ticketsPlusInterest = collateralValueOfShares(ticketInterestShares[user]);
-    // console.log("_ticketInterestRatioMantissa ticketsPlusInterest %s %s", ticketsPlusInterest, tickets);
     uint256 interest;
     if (ticketsPlusInterest >= tickets) {
       interest = ticketsPlusInterest.sub(tickets);
     }
-    // console.log("????????????? interest %s", interest);
-    return FixedPoint.calculateMantissa(interest, tickets);
+    return interest;
+  }
+
+  function _ticketInterestRatioMantissa(address user) internal returns (uint256) {
+    uint256 tickets = ticket.balanceOf(user);
+    return FixedPoint.calculateMantissa(_balanceOfTicketInterest(user, tickets), tickets);
   }
 
   function redeemTicketsInstantly(uint256 tickets, bytes calldata data) external nonReentrant returns (uint256) {
-    // console.log("redeemTicketsInstantly!!!");
     address sender = _msgSender();
     uint256 userInterestRatioMantissa = _ticketInterestRatioMantissa(sender);
 
-    // console.log("redeemTicketsInstantly: userInterestRatioMantissa: %s", userInterestRatioMantissa);
 
     uint256 exitFee = calculateExitFee(
       tickets,
       userInterestRatioMantissa
     );
 
-    // console.log("redeemTicketsInstantly: exitFee: %s", exitFee);
 
-    // console.log("redeemTicketsInstantly: burning...");
 
     // burn the tickets
     _burnTickets(sender, tickets, data, "");
 
-    // console.log("redeemTicketsInstantly: crediting...");
 
     // now calculate how much interest needs to be redeemed to maintain the interest ratio
     _redeemTicketInterestShares(sender, tickets, userInterestRatioMantissa);
 
     uint256 ticketsLessFee = tickets.sub(exitFee);
 
-    // console.log("redeemTicketsInstantly: ticketsLessFee: %s", ticketsLessFee);
 
     // redeem the interestTracker less the fee
     _redeem(ticketsLessFee);
@@ -418,11 +417,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function _redeemTicketInterestShares(address sender, uint256 tickets, uint256 userInterestRatioMantissa) internal {
     uint256 ticketInterest = FixedPoint.multiplyUintByMantissa(tickets, userInterestRatioMantissa);
-    // console.log("_redeemTicketInterestShares ticketInterest: %s", ticketInterest);
     uint256 burnedShares = redeemCollateral(tickets.add(ticketInterest));
-    // console.log("_redeemTicketInterestShares burnedShares: %s", burnedShares);
     ticketInterestShares[sender] = ticketInterestShares[sender].sub(burnedShares);
-    // console.log("_redeemTicketInterestShares new shares: %s", ticketInterestShares[sender]);
     ticketCredit.mint(sender, ticketInterest, "", "");
   }
 
@@ -500,11 +496,11 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     // handle transfers of tickets, sponsorship, credits etc
 
     // transfers of credits are ignored
-    // if (msg.sender == address(ticket)) {
-    //   beforeTicketTransfer(operator, from, to, amount);
-    // } else if (msg.sender == address(sponsorship)) {
-    //   beforeSponsorshipTransfer(operator, from, to, amount);
-    // }
+    if (msg.sender == address(ticket)) {
+      beforeTicketTransfer(operator, from, to, amount);
+    } else if (msg.sender == address(sponsorship)) {
+      beforeSponsorshipTransfer(operator, from, to, amount);
+    }
   }
 
   function beforeTicketTransfer(address, address from, address to, uint256 amount) internal {
@@ -527,5 +523,9 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     }
 
     // otherwise do the business here
+  }
+
+  function balanceOfTicketInterestShares(address user) public view returns (uint256) {
+    return ticketInterestShares[user];
   }
 }
