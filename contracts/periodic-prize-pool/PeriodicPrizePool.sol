@@ -49,7 +49,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   );
 
   PrizeStrategyInterface public override prizeStrategy;
-  GovernorInterface governor;
+  GovernorInterface public governor;
   RNGInterface public rng;
   Ticket public ticket;
   ControlledToken public sponsorship;
