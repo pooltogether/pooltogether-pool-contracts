@@ -42,8 +42,8 @@ contract CompoundYieldService is AbstractYieldService {
   }
 
   function _supply(uint256 amount) internal override {
-    IERC20 toke = _token();
-    toke.approve(address(cToken), amount);
+    IERC20 token = _token();
+    token.approve(address(cToken), amount);
     cToken.mint(amount);
     __accountedBalance = __accountedBalance.add(amount);
 
