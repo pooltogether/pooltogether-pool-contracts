@@ -50,6 +50,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   event SponsorshipSupplied(address indexed operator, address indexed to, uint256 amount);
   event SponsorshipRedeemed(address indexed operator, address indexed from, uint256 amount);
+  event SponsorshipInterestMinted(address indexed operator, address indexed to, uint256 amount);
   event SponsorshipInterestBurned(address indexed operator, address indexed from, uint256 amount);
 
   PrizeStrategyInterface public override prizeStrategy;
@@ -513,7 +514,14 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   // Sponsorship Minting/Redeeming
   //
 
-  function supplySponsorship(address receiver, uint256 amount) external nonReentrant {
+  function supplySponsorship(
+    address receiver, 
+    uint256 amount, 
+    bytes memory data, 
+    bytes memory operatorData
+  ) 
+    public nonReentrant 
+  {
     address sender = _msgSender();
 
     // Transfer Assets
@@ -521,17 +529,23 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     _supply(amount);
 
     // Mint Tokens
-    _mintSponsorship(receiver, amount);
+    _mintSponsorship(receiver, amount, data, operatorData);
 
     emit SponsorshipSupplied(sender, receiver, amount);
   }
 
-  function redeemSponsorship(uint256 amount) external nonReentrant {
+  function redeemSponsorship(
+    uint256 amount, 
+    bytes memory data, 
+    bytes memory operatorData
+  ) 
+    public nonReentrant 
+  {
     address sender = _msgSender();
     require(sponsorshipInterestShares[sender] >= amount, "Insufficient balance");
 
     // Burn Tokens
-    _burnSponsorship(sender, amount);
+    _burnSponsorship(sender, amount, data, operatorData);
 
     // Transfer Assets
     _redeem(amount);
@@ -540,13 +554,20 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     emit SponsorshipRedeemed(sender, sender, amount);
   }
 
-  function operatorRedeemSponsorship(address from, uint256 amount) external nonReentrant {
+  function operatorRedeemSponsorship(
+    address from, 
+    uint256 amount, 
+    bytes memory data, 
+    bytes memory operatorData
+  ) 
+    public nonReentrant 
+  {
     address sender = _msgSender();
     require(sponsorship.isOperatorFor(sender, from), "Invalid operator");
     require(sponsorshipInterestShares[from] >= amount, "Insufficient balance");
 
     // Burn Tokens
-    _burnSponsorship(from, amount);
+    _burnSponsorship(from, amount, data, operatorData);
 
     // Transfer Assets
     _redeem(amount);
@@ -557,36 +578,45 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function _mintSponsorship(
     address account,
-    uint256 amount
+    uint256 amount,
+    bytes memory data, 
+    bytes memory operatorData
   ) internal {
     // Mint sponsorship tokens
-    sponsorship.controllerMint(account, amount, "", "");
+    sponsorship.controllerMint(account, amount, data, operatorData);
 
     // Supply collateral for interest tracking
     uint256 shares = supplyCollateral(amount);
     sponsorshipInterestShares[account] = sponsorshipInterestShares[account].add(shares);
 
     // Burn & accredit any accrued interest on sponsored collateral
-    _sweepSponsorshipInterest(account);
+    _sweepSponsorshipInterest(account, data, operatorData);
+
+    emit SponsorshipInterestMinted(_msgSender(), account, shares);
   }
 
   function _burnSponsorship(
     address account,
-    uint256 amount
+    uint256 amount,
+    bytes memory data, 
+    bytes memory operatorData
   ) internal {
     // Burn & accredit accrued interest on collateral
-    _burnSponsorshipCollateralSweepInterest(account, amount);
+    _burnSponsorshipCollateralSweepInterest(account, amount, data, operatorData);
 
     // Burn sponsorship tokens
-    sponsorship.controllerBurn(account, amount, "", "");
+    sponsorship.controllerBurn(account, amount, data, operatorData);
   }
 
   function _burnSponsorshipCollateralSweepInterest(
     address account, 
-    uint256 collateralAmount
+    uint256 collateralAmount,
+    bytes memory data, 
+    bytes memory operatorData
   ) internal {
     // Burn collateral + interest from interest tracker
-    _burnSponsorshipFromInterestTracker(account, _mintSponsorshipCredit(account).add(collateralAmount));
+    uint256 interest = _mintSponsorshipCredit(account, data, operatorData);
+    _burnSponsorshipFromInterestTracker(account, interest.add(collateralAmount));
   }
 
   function _calculateInterestOnSponsorship(address account) internal returns (uint256 interest) {
@@ -599,14 +629,20 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     // Burn collateral/interest from interest tracker
     uint256 shares = redeemCollateral(amount);
     sponsorshipInterestShares[account] = sponsorshipInterestShares[account].sub(shares);
-
-    emit SponsorshipInterestBurned(_msgSender(), account, amount);
+    
+    emit SponsorshipInterestBurned(_msgSender(), account, shares);
   }
   
-  function _mintSponsorshipCredit(address account) internal returns (uint256 interest) {
+  function _mintSponsorshipCredit(
+    address account,
+    bytes memory data, 
+    bytes memory operatorData
+  ) 
+    internal returns (uint256 interest) 
+  {
     // Mint accrued interest on existing collateral
     interest = _calculateInterestOnSponsorship(account);
-    sponsorshipCredit.controllerMint(account, interest, "", "");
+    sponsorshipCredit.controllerMint(account, interest, data, operatorData);
   }
 
 
@@ -614,15 +650,28 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   // Sponsorship Sweep
   //
 
-  function sweepSponsorship(address[] calldata accounts) external {
+  function sweepSponsorship(
+    address[] memory accounts,
+    bytes memory data, 
+    bytes memory operatorData
+  ) 
+    public 
+  {
     for (uint256 i = 0; i < accounts.length; i++) {
       address account = accounts[i];
-      _sweepSponsorshipInterest(account);
+      _sweepSponsorshipInterest(account, data, operatorData);
     }
   }
 
-  function _sweepSponsorshipInterest(address account) internal {
-    _burnSponsorshipFromInterestTracker(account, _mintSponsorshipCredit(account));
+  function _sweepSponsorshipInterest(
+    address account,
+    bytes memory data, 
+    bytes memory operatorData
+  ) 
+    internal 
+  {
+    uint256 interest = _mintSponsorshipCredit(account, data, operatorData);
+    _burnSponsorshipFromInterestTracker(account, interest);
   }
 
 
