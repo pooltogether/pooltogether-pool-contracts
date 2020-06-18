@@ -29,6 +29,10 @@ contract ControlledToken is ERC777UpgradeSafe, BaseRelayRecipient {
     _burn(_user, _amount, data, operatorData);
   }
 
+  // function burn(uint256 amount, bytes memory data) public override  {
+  //   revert();
+  // }
+
   modifier onlyController {
     require(_msgSender() == address(controller), "only controller");
     _;
