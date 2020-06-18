@@ -3,10 +3,10 @@ const { deploy1820 } = require('deploy-eip-1820')
 const MockGovernor = require('../build/MockGovernor.json')
 const RNGServiceMock = require('../build/RNGServiceMock.json')
 const MockPrizeStrategy = require('../build/MockPrizeStrategy.json')
-const PeriodicPrizePool = require('../build/PeriodicPrizePool.json')
+const CompoundPeriodicPrizePoolHarness = require('../build/CompoundPeriodicPrizePoolHarness.json')
 const Ticket = require('../build/Ticket.json')
 const ControlledToken = require('../build/ControlledToken.json')
-const IERC20 = require('../build/IERC20.json')
+const CTokenInterface = require('../build/CTokenInterface.json')
 
 const { ethers } = require('./helpers/ethers')
 const { expect } = require('chai')
@@ -31,31 +31,33 @@ describe.only('PeriodicPrizePool contract', function() {
 
   let prizePeriodSeconds = toWei('1000')
 
-  // const _mocksForSponsorshipSupply = async ({supply, mintedTickets, collateral, account = wallet}) => {
-  //   await cToken.mock.transferFrom.withArgs(account._address, sponsorship.address, supply).returns(true)
-      
-  //   // ensure yield service approved
-  //   await cToken.mock.allowance.returns(0)
-  //   await cToken.mock.approve.returns(true)
-    
-  //   // supply to yield service
-  //   await yieldService.mock.supply.withArgs(supply).returns()
-  //   await prizePool.mock.mintedTickets.withArgs(mintedTickets).returns()
-  //   await interestTracker.mock.supplyCollateral.withArgs(collateral).returns(collateral)
-  // }
+  const _mocksForTokens = async () => {
+    await cToken.mock.underlying.returns(cToken.address)
 
-  // const _mocksForSponsorshipRedeem = async ({redeem, redeemedTickets, transfer, account = wallet}) => {
-  //   await prizePool.mock.redeemedTickets.withArgs(redeemedTickets).returns()
-  //   await yieldService.mock.redeem.withArgs(redeem).returns()
-  //   await cToken.mock.transfer.withArgs(account._address, transfer).returns(true)
-  // }
+    await ticket.mock.controllerMint.returns()
+    await ticketCredit.mock.controllerMint.returns()
+    await sponsorship.mock.controllerMint.returns()
+    await sponsorshipCredit.mock.controllerMint.returns()
 
-  // const _mocksForSponsorshipSweep = async ({totalSupply, redeemCollateral, credit, account = wallet, exchangeRate = toWei('1')}) => {
-  //     await interestTracker.mock.totalSupply.returns(totalSupply)
-  //     await interestTracker.mock.redeemCollateral.withArgs(redeemCollateral).returns(redeemCollateral)
-  //     await interestTracker.mock.exchangeRateMantissa.returns(exchangeRate);
-  //     await sponsorshipCredit.mock.mint.withArgs(account._address, credit).returns()
-  // }
+    await ticket.mock.controllerBurn.returns()
+    await ticketCredit.mock.controllerBurn.returns()
+    await sponsorship.mock.controllerBurn.returns()
+    await sponsorshipCredit.mock.controllerBurn.returns()
+  }
+
+  const _mocksForSponsorshipSupply = async ({supply, account = wallet}) => {
+    await cToken.mock.transferFrom.withArgs(account._address, prizePool.address, supply).returns(true)
+  }
+
+  const _mocksForSponsorshipRedeem = async ({redeem, transfer, account = wallet}) => {
+    await cToken.mock.redeemUnderlying.withArgs(redeem).returns(redeem)
+    await cToken.mock.transfer.withArgs(account._address, transfer).returns(true)
+  }
+
+  const _mocksForSponsorshipSweep = async ({totalSupply, redeemCollateral, credit = toWei('0'), account = wallet}) => {
+    await cToken.mock.balanceOfUnderlying.returns(totalSupply)
+    await sponsorship.mock.balanceOf.withArgs(account._address).returns(redeemCollateral)
+  }
 
 
   beforeEach(async () => {
@@ -66,24 +68,28 @@ describe.only('PeriodicPrizePool contract', function() {
     debug('deploying registry...')
     registry = await deploy1820(wallet)
 
-    debug('mocking protocol governor...')
-    governor = await deployContract(wallet, MockGovernor, overrides)
+    debug('deploying protocol governor...')
+    governor = await deployContract(wallet, MockGovernor, [], overrides)
 
-    debug('mocking prizeStrategy...')
-    rngService = await deployContract(wallet, RNGServiceMock, overrides)
+    debug('deploying rng service...')
+    rngService = await deployContract(wallet, RNGServiceMock, [], overrides)
 
-    debug('mocking prizeStrategy...')
-    prizeStrategy = await deployContract(wallet, MockPrizeStrategy, overrides)
+    debug('deploying prize strategy...')
+    prizeStrategy = await deployContract(wallet, MockPrizeStrategy, [], overrides)
   
     debug('mocking tokens...')
-    cToken = await deployMockContract(wallet, IERC20.abi, overrides)
+    cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
     ticket = await deployMockContract(wallet, Ticket.abi, overrides)
     ticketCredit = await deployMockContract(wallet, ControlledToken.abi, overrides)
     sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)
     sponsorshipCredit = await deployMockContract(wallet, ControlledToken.abi, overrides)
 
+    // Common Mocks for Tokens
+    await _mocksForTokens()
+
     debug('deploying prizePool...')
-    prizePool = await deployContract(wallet, PeriodicPrizePool, [], overrides)
+    prizePool = await deployContract(wallet, CompoundPeriodicPrizePoolHarness, [], overrides)
+    debug({prizePoolAddress: prizePool.address})
 
     debug('initializing prizePool...')
     await prizePool.initialize(
@@ -91,186 +97,181 @@ describe.only('PeriodicPrizePool contract', function() {
       governor.address,
       prizeStrategy.address,
       rngService.address,
-      prizePeriodSeconds
+      prizePeriodSeconds,
+      cToken.address
     )
+    debug('setting prizePool tokens...')
     await prizePool.setTokens(
       ticket.address,
-      ticketCredit.address,
       sponsorship.address,
+      ticketCredit.address,
       sponsorshipCredit.address
     )
   })
 
-  describe.only('initialize()', () => {
+  describe('initialize()', () => {
     it('should set the params', async () => {
-      expect(await sponsorship.name()).to.equal('SPONSORSHIP')
-      expect(await sponsorship.symbol()).to.equal('SPON')
-      expect(await sponsorship.getTrustedForwarder()).to.equal(FORWARDER)
+      expect(await prizePool.governor()).to.equal(governor.address)
+      expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
+      expect(await prizePool.rng()).to.equal(rngService.address)
+      expect(await prizePool.prizePeriodSeconds()).to.equal(prizePeriodSeconds)
+      expect(await prizePool.getTrustedForwarder()).to.equal(FORWARDER)
+    })
+  })
+
+  describe('setTokens()', () => {
+    it('should set the token addresses', async () => {
+      expect(await prizePool.ticket()).to.equal(ticket.address)
+      expect(await prizePool.sponsorship()).to.equal(sponsorship.address)
+      expect(await prizePool.ticketCredit()).to.equal(ticketCredit.address)
+      expect(await prizePool.sponsorshipCredit()).to.equal(sponsorshipCredit.address)
     })
   })
 
   describe('supply()', () => {
     it('should mint sponsorship tokens', async () => {
-      const sweepAmount = toWei('0')
       const supplyAmount = toWei('10')
 
-      await _mocksForSupply({
+      await _mocksForSponsorshipSupply({
         supply: supplyAmount, 
-        mintedTickets: supplyAmount, 
         collateral: supplyAmount,
       })
 
-      await _mocksForSweep({
-        totalSupply: sweepAmount, 
-        redeemCollateral: sweepAmount, 
-        credit: sweepAmount,
+      await _mocksForSponsorshipSweep({
+        totalSupply: supplyAmount, 
+        redeemCollateral: supplyAmount, 
       })
 
       // Supply sponsorship
-      await sponsorship.supply(wallet._address, supplyAmount)
+      await expect(prizePool.supplySponsorship(wallet._address, supplyAmount))
+        .to.emit(prizePool, 'SponsorshipSupplied')
+        .withArgs(wallet._address, wallet._address, supplyAmount)
 
-      // Test supply
-      expect(await sponsorship.balanceOfInterestShares(wallet._address)).to.equal(supplyAmount)
-      expect(await sponsorship.balanceOf(wallet._address)).to.equal(supplyAmount)
+      expect(await prizePool.balanceOfSponsorshipInterestShares(wallet._address)).to.equal(supplyAmount)
     })
   })
 
-  describe('redeem()', () => {
+  describe('redeemSponsorship()', () => {
     it('should allow a sponsor to redeem their sponsorship tokens', async () => {
       const amount = toWei('10')
 
-      // Pre-fund sponsorship tokens
-      await sponsorship.setInterestSharesForTest(wallet._address, amount)
-      await sponsorship.mintForTest(wallet._address, amount)
+      // Pre-fund Prize-Pool
+      await prizePool.supplyCollateralForTest(amount)
+      await prizePool.setSponsorshipInterestSharesForTest(wallet._address, amount)
 
-      await _mocksForSweep({
-        totalSupply: amount, 
+      await _mocksForSponsorshipSweep({
+        totalSupply: toWei('0'),   // avoid poke() from doubling the "amount"
         redeemCollateral: amount, 
-        credit: toWei('0'),
       })
 
-      await _mocksForRedeem({
+      await _mocksForSponsorshipRedeem({
         redeem: amount, 
-        redeemedTickets: amount, 
         transfer: amount,
       })
 
-      // Test redeem
-      await expect(sponsorship.redeem(amount))
-        .to.emit(sponsorship, 'SponsorshipRedeemed')
+      // Test redeemSponsorship
+      await expect(prizePool.redeemSponsorship(amount))
+        .to.emit(prizePool, 'SponsorshipRedeemed')
         .withArgs(wallet._address, wallet._address, amount)
     })
 
     it('should not allow a sponsor to redeem more sponsorship tokens than they hold', async () => {
       const amount = toWei('10')
 
-      // Pre-fund sponsorship tokens
-      await sponsorship.setInterestSharesForTest(wallet._address, amount)
+      // Pre-fund Prize-Pool
+      await prizePool.supplyCollateralForTest(amount)
+      await prizePool.setSponsorshipInterestSharesForTest(wallet._address, amount)
 
-      // Test balance revert
-      await expect(sponsorship.redeem(amount.mul(2)))
-        .to.be.revertedWith('Sponsorship/insuff')
+      // Test revert
+      await expect(prizePool.redeemSponsorship(amount.mul(2)))
+        .to.be.revertedWith('Insufficient balance')
     })
   })
 
-  describe('operatorRedeem()', () => {
-    it('should allow an operator to redeem on behalf of a sponsor their sponsorship tokens', async () => {
+  describe('operatorRedeemSponsorship()', () => {
+    it('should allow an operator to redeem on behalf of a sponsor their sponsorship tokens'/*, async () => {
       const amount = toWei('10')
 
-      // Pre-fund sponsorship tokens
-      await sponsorship.setInterestSharesForTest(wallet._address, amount)
-      await sponsorship.mintForTest(wallet._address, amount)
+      // Pre-fund Prize-Pool
+      await prizePool.supplyCollateralForTest(amount)
+      await prizePool.setSponsorshipInterestSharesForTest(wallet._address, amount)
 
-      await _mocksForSweep({
-        totalSupply: amount, 
+      await _mocksForSponsorshipSweep({
+        totalSupply: toWei('0'),   // avoid poke() from doubling the "amount"
         redeemCollateral: amount, 
-        credit: toWei('0'),
       })
 
-      await _mocksForRedeem({
+      await _mocksForSponsorshipRedeem({
         redeem: amount, 
-        redeemedTickets: amount, 
         transfer: amount,
       })
 
-      // approve operator
-      await sponsorship.authorizeOperator(wallet2._address)
+      // approved operator
+      await sponsorship.mock.isOperatorFor(wallet2._address, wallet._address).returns(true)
 
       // Test operator redeem
-      await expect(sponsorship.connect(wallet2).operatorRedeem(wallet._address, amount))
-        .to.emit(sponsorship, 'SponsorshipRedeemed')
+      await expect(prizePool.connect(wallet2).operatorRedeemSponsorship(wallet._address, amount))
+        .to.emit(prizePool, 'SponsorshipRedeemed')
         .withArgs(wallet2._address, wallet._address, amount)
-    })
+    }*/)
 
-    it('should not allow an unapproved operator to redeem on behalf of a sponsor', async () => {
+    it('should not allow an unapproved operator to redeem on behalf of a sponsor'/*, async () => {
       const amount = toWei('10')
 
-      // Pre-fund sponsorship tokens
-      await sponsorship.setInterestSharesForTest(wallet._address, amount)
-      await sponsorship.mintForTest(wallet._address, amount)
+      // Pre-fund Prize-Pool
+      await prizePool.supplyCollateralForTest(amount)
+      await prizePool.setSponsorshipInterestSharesForTest(wallet._address, amount)
+
+      // unapproved operator
+      debug({sponsorshipMock: sponsorship.mock.isOperatorFor})
+      await sponsorship.mock.isOperatorFor(wallet2._address, wallet._address).returns(false)
 
       // Test redeem revert
-      await expect(sponsorship.connect(wallet2).operatorRedeem(wallet._address, amount))
+      await expect(prizePool.connect(wallet2).operatorRedeemSponsorship(wallet._address, amount))
         .to.be.revertedWith('TokenModule/Invalid operator');
-    })
+    }*/)
   })
 
-  describe('mint()', () => {
-    it('should allow a Module to mint sponsorship tokens')
-    it('should allow the Module Manager to mint sponsorship tokens')
-  })
-
-  describe('burn()', () => {
-    it('should allow a Module to burn sponsorship tokens')
-    it('should allow the Module Manager to burn sponsorship tokens')
-  })
-
-  describe('sweep()', () => {
-    it('should allow anyone to sweep for a list of users', async () => {
-      const numAccounts = 5
-      const iterableAccounts = getIterable(await buidler.ethers.getSigners(), numAccounts)
+  describe('sweepSponsorship()', () => {
+    it('should allow anyone to sweep sponsorship for a list of users', async () => {
       const amounts = [toWei('10'), toWei('98765'), toWei('100'), toWei('100000000'), toWei('10101101')]
+      const iterableAccounts = getIterable(await buidler.ethers.getSigners(), amounts.length)
       const accountAddresses = []
       const interestAmount = toWei('1')
       let totalSupply = toWei('0')
 
+      // TotalSupply = 0
+      await cToken.mock.balanceOfUnderlying.returns(totalSupply)
+
       // Pre-fund sponsorship tokens *with interest*
       for await (let user of iterableAccounts()) {
-        await sponsorship.mintForTest(user.data._address, amounts[user.index])
-        await sponsorship.setInterestSharesForTest(user.data._address, amounts[user.index].add(interestAmount))
+        await prizePool.supplyCollateralForTest(amounts[user.index])
+        await prizePool.setSponsorshipInterestSharesForTest(user.data._address, amounts[user.index].add(interestAmount)) // + interest
 
         accountAddresses.push(user.data._address)
         totalSupply = totalSupply.add(amounts[user.index])
       }
-      debug({accountAddresses})
+
+      // TotalSupply = Sum of all Balances
+      await cToken.mock.balanceOfUnderlying.returns(totalSupply)
 
       // Mocks for multiple accounts
       for await (let user of iterableAccounts()) {
-        await _mocksForSweep({
-          account: user.data,
-          totalSupply: totalSupply, 
-          redeemCollateral: interestAmount,
-          credit: interestAmount,
-        })
+        await sponsorship.mock.balanceOf.withArgs(user.data._address).returns(amounts[user.index])
 
-        await _mocksForRedeem({
+        await _mocksForSponsorshipRedeem({
           account: user.data,
           redeem: amounts[user.index], 
-          redeemedTickets: amounts[user.index], 
           transfer: amounts[user.index],
         })
-        totalSupply = totalSupply.sub(amounts[user.index])
       }
 
       // Sweep for multiple accounts
-      await expect(sponsorship.sweep(accountAddresses))
-        .to.emit(sponsorship, 'SponsorshipSwept')
-        .withArgs(wallet._address, accountAddresses)
+      await prizePool.sweepSponsorship(accountAddresses)
 
       // Test balances; all interest swept
       for await (let user of iterableAccounts()) {
-        expect(await sponsorship.balanceOfInterestShares(user.data._address)).to.equal(amounts[user.index]) // "interestAmount" swept
-        expect(await sponsorship.balanceOf(user.data._address)).to.equal(amounts[user.index])
+        expect(await prizePool.balanceOfSponsorshipInterestShares(user.data._address)).to.equal(amounts[user.index]) // "interestAmount" swept
       }
     })
   })

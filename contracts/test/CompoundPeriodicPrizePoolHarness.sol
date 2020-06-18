@@ -25,4 +25,25 @@ contract CompoundPeriodicPrizePoolHarness is CompoundPeriodicPrizePool {
     }
     return time;
   }
+
+  function setInterestSharesForTest(address user, uint256 amount) external {
+    ticketInterestShares[user] = amount;
+  }
+
+  function setSponsorshipInterestSharesForTest(address user, uint256 amount) external {
+    sponsorshipInterestShares[user] = amount;
+  }
+
+  // Here we mint a user "fair shares" of the total pool of collateral.
+  function supplyCollateralForTest(uint256 _collateral) public {
+    uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
+    interestShareTotalSupply = interestShareTotalSupply.add(shares);
+    totalCollateral = totalCollateral.add(_collateral);
+    __accountedBalance = __accountedBalance.add(_collateral);
+  }
+
+  function _supply(uint256 amount) internal override {
+    __accountedBalance = __accountedBalance.add(amount);
+    emit PrincipalSupplied(msg.sender, amount);
+  }
 }

@@ -50,17 +50,18 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   event SponsorshipSupplied(address indexed operator, address indexed to, uint256 amount);
   event SponsorshipRedeemed(address indexed operator, address indexed from, uint256 amount);
+  event SponsorshipInterestBurned(address indexed operator, address indexed from, uint256 amount);
 
-  PrizeStrategyInterface internal override prizeStrategy;
-  GovernorInterface internal governor;
-  RNGInterface internal rng;
-  Ticket internal ticket;
-  ControlledToken internal sponsorship;
-  ControlledToken internal ticketCredit;
-  ControlledToken internal sponsorshipCredit;
+  PrizeStrategyInterface public override prizeStrategy;
+  GovernorInterface public governor;
+  RNGInterface public rng;
+  Ticket public ticket;
+  ControlledToken public sponsorship;
+  ControlledToken public ticketCredit;
+  ControlledToken public sponsorshipCredit;
 
-  uint256 internal override prizePeriodSeconds;
-  uint256 internal override prizePeriodStartedAt;
+  uint256 public override prizePeriodSeconds;
+  uint256 public override prizePeriodStartedAt;
   uint256 internal previousPrize;
   uint256 internal previousPrizeAverageTickets;
   uint256 internal prizeAverageTickets;
@@ -75,7 +76,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     PrizeStrategyInterface _prizeStrategy,
     RNGInterface _rng,
     uint256 _prizePeriodSeconds
-  ) external initializer {
+  ) public initializer {
     require(address(_governor) != address(0), "governor cannot be zero");
     require(address(_prizeStrategy) != address(0), "prize strategy must not be zero");
     require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
@@ -270,7 +271,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
     if (balance > 0) {
       if (reserveFee > 0) {
-        sponsorship.mint(governor.reserve(), reserveFee, "", "");
+        sponsorship.controllerMint(governor.reserve(), reserveFee, "", "");
       }
       if (prize > 0) {
         _mintTickets(address(prizeStrategy), prize, "", "");
@@ -339,7 +340,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function _mintTickets(address to, uint256 amount, bytes memory data, bytes memory operatorData) internal {
     // Mint tickets
-    ticket.mint(to, amount, data, operatorData);
+    ticket.controllerMint(to, amount, data, operatorData);
     _mintTicketInterestShares(to, amount);
   }
 
@@ -436,7 +437,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     uint256 ticketInterest = FixedPoint.multiplyUintByMantissa(tickets, userInterestRatioMantissa);
     uint256 burnedShares = redeemCollateral(tickets.add(ticketInterest));
     ticketInterestShares[sender] = ticketInterestShares[sender].sub(burnedShares);
-    ticketCredit.mint(sender, ticketInterest, "", "");
+    ticketCredit.controllerMint(sender, ticketInterest, "", "");
   }
 
   function operatorRedeemTicketsWithTimelock(
@@ -491,7 +492,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function _burnTickets(address from, uint256 tickets, bytes memory data, bytes memory operatorData) internal {
-    ticket.burn(from, tickets, data, operatorData);
+    ticket.controllerBurn(from, tickets, data, operatorData);
     redeemedTickets(tickets);
   }
 
@@ -559,7 +560,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     uint256 amount
   ) internal {
     // Mint sponsorship tokens
-    sponsorship.mint(account, amount, "", "");
+    sponsorship.controllerMint(account, amount, "", "");
 
     // Supply collateral for interest tracking
     uint256 shares = supplyCollateral(amount);
@@ -577,7 +578,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     _burnSponsorshipCollateralSweepInterest(account, amount);
 
     // Burn sponsorship tokens
-    _burn(account, amount, "", "");
+    sponsorship.controllerBurn(account, amount, "", "");
   }
 
   function _burnSponsorshipCollateralSweepInterest(
@@ -598,13 +599,14 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     // Burn collateral/interest from interest tracker
     uint256 shares = redeemCollateral(amount);
     sponsorshipInterestShares[account] = sponsorshipInterestShares[account].sub(shares);
-    // TODO: emit burned sponsorship interest
+
+    emit SponsorshipInterestBurned(_msgSender(), account, amount);
   }
   
   function _mintSponsorshipCredit(address account) internal returns (uint256 interest) {
     // Mint accrued interest on existing collateral
     interest = _calculateInterestOnSponsorship(account);
-    sponsorshipCredit.mint(account, interest);
+    sponsorshipCredit.controllerMint(account, interest, "", "");
   }
 
 
