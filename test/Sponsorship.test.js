@@ -1,14 +1,10 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const { deploy1820 } = require('deploy-eip-1820')
 <<<<<<< HEAD
-<<<<<<< HEAD
 const SponsorshipHarness = require('../build/SponsorshipHarness.json')
 =======
 const Sponsorship = require('../build/SponsorshipHarness.json')
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
-=======
-const SponsorshipHarness = require('../build/SponsorshipHarness.json')
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
 const PeriodicPrizePool = require('../build/PeriodicPrizePool.json')
 const Credit = require('../build/Credit.json')
 const Timelock = require('../build/Timelock.json')
@@ -26,13 +22,9 @@ const { ethers } = require('./helpers/ethers')
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
 <<<<<<< HEAD
-<<<<<<< HEAD
 const getIterable = require('./helpers/iterable')
 =======
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
-=======
-const getIterable = require('./helpers/iterable')
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
 const { CALL_EXCEPTION } = require('ethers/errors')
 
 const toWei = ethers.utils.parseEther
@@ -56,9 +48,6 @@ describe.only('Sponsorship contract', function() {
   let lastTxTimestamp
 
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
   const _mocksForSupply = async ({supply, mintedTickets, collateral, account = wallet}) => {
     await token.mock.transferFrom.withArgs(account._address, sponsorship.address, supply).returns(true)
       
@@ -86,11 +75,8 @@ describe.only('Sponsorship contract', function() {
   }
 
 
-<<<<<<< HEAD
 =======
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
-=======
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
 
@@ -119,14 +105,10 @@ describe.only('Sponsorship contract', function() {
     await manager.mock.sponsorshipCredit.returns(sponsorshipCredit.address)
 
 <<<<<<< HEAD
-<<<<<<< HEAD
     sponsorship = await deployContract(wallet, SponsorshipHarness, [], overrides)
 =======
     sponsorship = await deployContract(wallet, Sponsorship, [], overrides)
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
-=======
-    sponsorship = await deployContract(wallet, SponsorshipHarness, [], overrides)
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
 
     let tx = await sponsorship['initialize(address,address,string,string)'](
       manager.address,
@@ -149,9 +131,6 @@ describe.only('Sponsorship contract', function() {
   describe('supply()', () => {
     it('should mint sponsorship tokens', async () => {
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
       const sweepAmount = toWei('0')
       const supplyAmount = toWei('10')
 
@@ -173,7 +152,6 @@ describe.only('Sponsorship contract', function() {
       // Test supply
       expect(await sponsorship.balanceOfInterestShares(wallet._address)).to.equal(supplyAmount)
       expect(await sponsorship.balanceOf(wallet._address)).to.equal(supplyAmount)
-<<<<<<< HEAD
 =======
       let amount = toWei('10')
 
@@ -193,17 +171,12 @@ describe.only('Sponsorship contract', function() {
       expect(await sponsorship.balanceOfInterestShares(wallet._address)).to.equal(amount)
       expect(await sponsorship.balanceOf(wallet._address)).to.equal(amount)
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
-=======
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
     })
   })
 
   describe('redeem()', () => {
     it('should allow a sponsor to redeem their sponsorship tokens', async () => {
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
       const amount = toWei('10')
 
       // Pre-fund sponsorship tokens
@@ -237,7 +210,6 @@ describe.only('Sponsorship contract', function() {
       // Test balance revert
       await expect(sponsorship.redeem(amount.mul(2)))
         .to.be.revertedWith('Sponsorship/insuff')
-<<<<<<< HEAD
 =======
       await sponsorship.setInterestSharesForTest(wallet._address, toWei('10'))
       await sponsorship.mintForTest(wallet._address, toWei('10'))
@@ -281,17 +253,12 @@ describe.only('Sponsorship contract', function() {
         .to.emit(sponsorship, 'SponsorshipRedeemed')
         .withArgs(wallet._address, wallet._address, toWei('10'))
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
-=======
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
     })
   })
 
   describe('operatorRedeem()', () => {
     it('should allow an operator to redeem on behalf of a sponsor their sponsorship tokens', async () => {
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
       const amount = toWei('10')
 
       // Pre-fund sponsorship tokens
@@ -328,7 +295,6 @@ describe.only('Sponsorship contract', function() {
 
       // Test redeem revert
       await expect(sponsorship.connect(wallet2).operatorRedeem(wallet._address, amount))
-<<<<<<< HEAD
 =======
       await sponsorship.setInterestSharesForTest(wallet._address, toWei('10'))
       await sponsorship.mintForTest(wallet._address, toWei('10'))
@@ -360,8 +326,6 @@ describe.only('Sponsorship contract', function() {
 
       await expect(sponsorship.connect(wallet2).operatorRedeem(wallet._address, toWei('10'), []))
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
-=======
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
         .to.be.revertedWith('TokenModule/Invalid operator');
     })
   })
@@ -378,9 +342,6 @@ describe.only('Sponsorship contract', function() {
 
   describe('sweep()', () => {
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
     it('should allow anyone to sweep for a list of users', async () => {
       const numAccounts = 5
       const iterableAccounts = getIterable(await buidler.ethers.getSigners(), numAccounts)
@@ -428,12 +389,9 @@ describe.only('Sponsorship contract', function() {
         expect(await sponsorship.balanceOf(user.data._address)).to.equal(amounts[user.index])
       }
     })
-<<<<<<< HEAD
 =======
     it('should allow anyone to sweep for a list of users')
 >>>>>>> Add unit-tests for Sponsorship contract (WIP)
-=======
->>>>>>> 9bd18f8e827b44775d124941de5532ccc9b6baea
   })
 
 });
