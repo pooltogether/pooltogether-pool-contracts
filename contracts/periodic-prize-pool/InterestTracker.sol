@@ -51,6 +51,7 @@ abstract contract InterestTracker is AbstractYieldService {
   }
 
   function captureInterest() internal returns (uint256) {
+    // console.log("POKE!");
     poke();
     uint256 interest = newInterest;
     newInterest = 0;
@@ -81,6 +82,7 @@ abstract contract InterestTracker is AbstractYieldService {
 
   function poke() internal {
     uint256 unaccountedBalance = _unaccountedBalance();
+    // console.log("poke() unaccounted: %s", unaccountedBalance);
     if (unaccountedBalance > 0) {
       _capture(unaccountedBalance);
       newInterest = newInterest.add(unaccountedBalance);
