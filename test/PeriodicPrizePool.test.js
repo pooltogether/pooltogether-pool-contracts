@@ -99,6 +99,11 @@ describe.only('PeriodicPrizePool contract', function() {
       expect(await prizePool.ticketCredit()).to.equal(ticketCredit.address)
       expect(await prizePool.sponsorshipCredit()).to.equal(sponsorshipCredit.address)
     })
+
+    it('should not allow setting the token addresses twice', async () => {
+      await expect(prizePool.setTokens(ticket.address, sponsorship.address, ticketCredit.address, sponsorshipCredit.address))
+        .to.be.revertedWith('already initialized')
+    })
   })
 
   describe('supplySponsorship()', () => {
