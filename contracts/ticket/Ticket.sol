@@ -4,9 +4,10 @@ import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 
 import "../token/ControlledToken.sol";
+import "./TicketInterface.sol";
 
 /* solium-disable security/no-block-members */
-contract Ticket is ControlledToken {
+contract Ticket is TicketInterface, ControlledToken {
   using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
 
   SortitionSumTreeFactory.SortitionSumTrees sortitionSumTrees;
@@ -39,7 +40,7 @@ contract Ticket is ControlledToken {
     }
   }
 
-  function draw(uint256 randomNumber) public view returns (address) {
+  function draw(uint256 randomNumber) public override view returns (address) {
     uint256 bound = totalSupply();
     address selected;
     if (bound == 0) {
