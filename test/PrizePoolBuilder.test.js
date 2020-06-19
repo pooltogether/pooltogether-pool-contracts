@@ -20,7 +20,6 @@ describe('PrizePoolBuilder', () => {
       expect(await builder.periodicPrizePoolFactory()).to.equal(env.prizePoolFactory.address)
       expect(await builder.ticketFactory()).to.equal(env.ticketFactory.address)
       expect(await builder.controlledTokenFactory()).to.equal(env.controlledTokenFactory.address)
-      expect(await builder.rng()).to.equal(env.rng.address)
       expect(await builder.trustedForwarder()).to.equal(env.forwarder.address)
     })
   })

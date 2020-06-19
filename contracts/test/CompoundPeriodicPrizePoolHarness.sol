@@ -41,9 +41,4 @@ contract CompoundPeriodicPrizePoolHarness is CompoundPeriodicPrizePool {
     totalCollateral = totalCollateral.add(_collateral);
     __accountedBalance = __accountedBalance.add(_collateral);
   }
-
-  function _supply(uint256 amount) internal override {
-    __accountedBalance = __accountedBalance.add(amount);
-    emit PrincipalSupplied(msg.sender, amount);
-  }
 }

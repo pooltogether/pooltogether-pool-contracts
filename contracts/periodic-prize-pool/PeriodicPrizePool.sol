@@ -272,6 +272,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   function awardTickets(address user, uint256 amount, bytes calldata data) external override onlyPrizeStrategy nonReentrant {
     require(prizeStrategyBalance >= amount, "PrizePool/insuff");
     prizeStrategyBalance = prizeStrategyBalance.sub(amount);
+    // The tickets were already accruing, so just tack them onto the prize average
+    prizeAverageTickets = prizeAverageTickets.add(amount);
     _mintTickets(user, amount, data, "");
 
     emit Awarded(user, address(__ticket), amount, data);
@@ -281,7 +283,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     require(prizeStrategyBalance >= amount, "PrizePool/insuff");
     prizeStrategyBalance = prizeStrategyBalance.sub(amount);
 
-    // mintSponsorship
+    _mintSponsorship(user, amount, data, "");
 
     emit Awarded(user, address(sponsorship), amount, data);
   }
@@ -315,6 +317,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   //
 
   function mintTickets(address to, uint256 amount, bytes calldata data) external nonReentrant {
+    console.log("PeriodicPrizePool mint tickets: %s", amount);
     _token().transferFrom(_msgSender(), address(this), amount);
     _supply(amount);
     _mintTickets(to, amount, data, "");
@@ -450,21 +453,26 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     require(__ticket.balanceOf(sender) >= tickets, "Insufficient balance");
     _burnTickets(sender, tickets, data, operatorData);
 
+
     uint256 unlockTimestamp = calculateUnlockTimestamp(sender, tickets);
 
     // Sweep the old balance, if any
     address[] memory senders = new address[](1);
     senders[0] = sender;
+    
+
     sweep(senders);
 
     mintTo(sender, tickets, unlockTimestamp);
 
     emit TicketsRedeemedWithTimelock(operator, sender, tickets, unlockTimestamp, data, operatorData);
 
+
     // if the funds should already be unlocked
     if (unlockTimestamp <= block.timestamp) {
       sweep(senders);
     }
+
 
     // return the block at which the funds will be available
     return unlockTimestamp;

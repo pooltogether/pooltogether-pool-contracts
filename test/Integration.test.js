@@ -28,7 +28,7 @@ describe('Integration Test', () => {
 
   let prizePool
   let ticket, ticket2
-  let interestTracker
+  let prizeStrategy
 
   let overrides = { gasLimit: 40000000 }
 
@@ -51,6 +51,7 @@ describe('Integration Test', () => {
     debug({ singleRandomWinnerCreatedEvent })
 
     prizePool = await buidler.ethers.getContractAt('CompoundPeriodicPrizePool', singleRandomWinnerCreatedEvent.prizePool, wallet)
+    prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerPrizeStrategyInterface', await prizePool.prizeStrategy(), wallet)
     prizePool2 = prizePool.connect(wallet2)
     ticket = await buidler.ethers.getContractAt('Ticket', await prizePool.ticket(), wallet)
     ticket2 = ticket.connect(wallet2)
@@ -93,11 +94,11 @@ describe('Integration Test', () => {
       
       debug('starting award...')
 
-      await prizePool.startAward()
+      await prizeStrategy.startAward(prizePool.address)
 
       debug('completing award...')
 
-      await prizePool.completeAward()
+      await prizeStrategy.completeAward(prizePool.address, [])
 
       debug('completed award')
 
@@ -111,8 +112,8 @@ describe('Integration Test', () => {
       debug('Second award...')
 
       await increaseTime(prizePeriodSeconds * 2)
-      await prizePool.startAward()
-      await prizePool.completeAward()
+      await prizeStrategy.startAward(prizePool.address)
+      await prizeStrategy.completeAward(prizePool.address, [])
 
       debug('Sweep timelocked funds...')
 
@@ -170,8 +171,8 @@ describe('Integration Test', () => {
 
       debug('3')
 
-      await prizePool.startAward()
-      await prizePool.completeAward()
+      await prizeStrategy.startAward(prizePool.address)
+      await prizeStrategy.completeAward(prizePool.address, [])
 
       debug('4')
 

@@ -76,7 +76,6 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
     prizePoolFactory.address,
     ticketFactory.address,
     controlledTokenFactory.address,
-    rng.address,
     forwarder.address,
     overrides
   )
@@ -86,6 +85,7 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
   let singleRandomWinnerPrizePoolBuilder = await deployContract(wallet, SingleRandomWinnerPrizePoolBuilder, [], overrides)
   await singleRandomWinnerPrizePoolBuilder.initialize(
     prizePoolBuilder.address,
+    rng.address,
     prizeStrategyFactory.address,
     overrides
   )

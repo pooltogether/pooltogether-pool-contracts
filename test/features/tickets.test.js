@@ -1,6 +1,6 @@
 const { PoolEnv } = require('./support/PoolEnv')
 
-describe('tickets', () => {
+describe('Buy & Redeem Tickets', () => {
 
   let env
 

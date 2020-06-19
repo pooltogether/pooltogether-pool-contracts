@@ -43,6 +43,7 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, BaseRelayRecipient, S
     uint256 requestId = rngRequestIds[address(prizePool)];
     bytes32 randomNumber = rng.randomNumber(requestId);
     uint256 prize = prizePool.awardPrize();
+    console.log("PRIZE IS %s", prize);
     delete rngRequestIds[address(prizePool)];
     if (prize > 0) {
       TicketInterface ticket = prizePool.ticket();
