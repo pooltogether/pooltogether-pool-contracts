@@ -340,10 +340,9 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     bytes calldata data,
     bytes calldata operatorData
   ) 
-    external nonReentrant returns (uint256) 
+    external nonReentrant onlyOperator(__ticket, from) returns (uint256) 
   {
     address sender = _msgSender();
-    
 
     uint256 userInterestRatioMantissa = _ticketInterestRatioMantissa(from);
     uint256 exitFee = calculateExitFee(tickets, userInterestRatioMantissa);
