@@ -21,11 +21,11 @@ contract ControlledToken is ERC777UpgradeSafe, BaseRelayRecipient {
     controller = _controller;
   }
 
-  function mint(address _user, uint256 _amount, bytes calldata data, bytes calldata operatorData) external virtual onlyController {
+  function controllerMint(address _user, uint256 _amount, bytes calldata data, bytes calldata operatorData) external virtual onlyController {
     _mint(_user, _amount, data, operatorData);
   }
 
-  function burn(address _user, uint256 _amount, bytes calldata data, bytes calldata operatorData) external virtual onlyController {
+  function controllerBurn(address _user, uint256 _amount, bytes calldata data, bytes calldata operatorData) external virtual onlyController {
     _burn(_user, _amount, data, operatorData);
   }
 

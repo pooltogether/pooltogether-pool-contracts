@@ -25,7 +25,7 @@ abstract contract InterestTracker is AbstractYieldService {
   // Here we mint a user "fair shares" of the total pool of collateral.
   function supplyCollateral(
     uint256 _collateral
-  ) public returns (uint256) {
+  ) internal returns (uint256) {
     // mint new shares based on current exchange rate
     // console.log("supply collateral %s", _collateral);
     uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
@@ -41,7 +41,7 @@ abstract contract InterestTracker is AbstractYieldService {
   // here a user burns their shares of the pool of collateral.  It is expected that the collateral will drop as well
   function redeemCollateral(
     uint256 _collateral
-  ) public returns (uint256) {
+  ) internal returns (uint256) {
     // console.log("InterestTracker redeemCollateral %s", _collateral);
     uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
     // console.log("InterestTracker shares %s", shares);
