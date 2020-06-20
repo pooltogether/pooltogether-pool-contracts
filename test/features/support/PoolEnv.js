@@ -85,6 +85,9 @@ function PoolEnv() {
 
   this.poolAccrues = async function ({ tickets }) {
     await this.env.cToken.accrueCustom(toWei(tickets))
+
+    debug(`totalSupply: ${await this.env.cToken.totalSupply()}`)
+    debug(`poolAccrues new underlying: ${await call(this.env.cToken, 'balanceOfUnderlying', this.env.prizePool.address)}`)
   }
 
   this.expectUserToHaveTicketInterest = async function ({ user, interest }) {
@@ -105,7 +108,7 @@ function PoolEnv() {
 
     let ticketInterest = await call(prizePool, 'balanceOfTicketInterest', wallet._address)
 
-    expect(ticketInterest).to.equalish(toWei(interest), 200)
+    expect(ticketInterest).to.equalish(toWei(interest), 300)
   }
 
   this.awardPrize = async function () {
@@ -117,14 +120,14 @@ function PoolEnv() {
 
     await this._prizePool.setCurrentTime(endTime, this.overrides)
 
-    debug('Starting award with token ${token}...')
-    await this._prizePool.startAward(this.overrides)
+    debug(`Starting award with token ${token}...`)
+    await this.env.prizeStrategy.startAward(this._prizePool.address, this.overrides)
 
     let randomNumber = ethers.utils.hexlify(ethers.utils.padZeros(ethers.utils.bigNumberify('' + token), 32))
     await this.env.rng.setRandomNumber(randomNumber, this.overrides)
 
     debug(`Completing award...`)
-    await this._prizePool.completeAward(this.overrides)
+    await this.env.prizeStrategy.completeAward(this._prizePool.address, [], this.overrides)
     
     debug('award completed')
 

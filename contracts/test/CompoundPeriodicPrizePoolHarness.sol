@@ -19,7 +19,7 @@ contract CompoundPeriodicPrizePoolHarness is CompoundPeriodicPrizePool {
     time = _time;
   }
 
-  function currentTime() internal override view returns (uint256) {
+  function _currentTime() internal override view returns (uint256) {
     if (time == 0) {
       return block.timestamp;
     }
@@ -40,10 +40,5 @@ contract CompoundPeriodicPrizePoolHarness is CompoundPeriodicPrizePool {
     interestShareTotalSupply = interestShareTotalSupply.add(shares);
     totalCollateral = totalCollateral.add(_collateral);
     __accountedBalance = __accountedBalance.add(_collateral);
-  }
-
-  function _supply(uint256 amount) internal override {
-    __accountedBalance = __accountedBalance.add(amount);
-    emit PrincipalSupplied(msg.sender, amount);
   }
 }

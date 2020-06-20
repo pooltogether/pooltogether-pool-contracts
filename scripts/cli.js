@@ -63,65 +63,36 @@ program
     }
 
     await migration.migrate(10, async () => {
-      runShell(`oz create PrizePoolModuleManagerFactory --force ${flags} --init initialize`)
+      runShell(`oz create CompoundPeriodicPrizePoolFactory --force ${flags} --init initialize`)
     })
 
     await migration.migrate(15, async () => {
-      runShell(`oz create CompoundYieldServiceFactory --force ${flags} --init initialize`)
-    })
-
-    await migration.migrate(20, async () => {
-      runShell(`oz create PeriodicPrizePoolFactory --force ${flags} --init initialize`)
-    })
-
-    await migration.migrate(30, async () => {
       runShell(`oz create TicketFactory --force ${flags} --init initialize`)
     })
 
-    await migration.migrate(40, async () => {
-      runShell(`oz create CreditFactory --force ${flags} --init initialize`)
+    await migration.migrate(20, async () => {
+      runShell(`oz create ControlledTokenFactory --force ${flags} --init initialize`)
     })
 
-    await migration.migrate(50, async () => {
+    await migration.migrate(25, async () => {
       runShell(`oz create SingleRandomWinnerPrizeStrategyFactory --force ${flags} --init initialize`)
     })
 
-    await migration.migrate(60, async () => {
+    await migration.migrate(30, async () => {
       runShell(`oz create RNGBlockhash --force ${flags}`)
-    })
-
-    await migration.migrate(70, async () => {
-      runShell(`oz create PrizePoolModuleManagerFactory --force ${flags} --init initialize`)
-    })
-
-    await migration.migrate(80, async () => {
-      runShell(`oz create TimelockFactory --force ${flags} --init initialize`)
-    })
-
-    await migration.migrate(90, async () => {
-      runShell(`oz create SponsorshipFactory --force ${flags} --init initialize`)
-    })
-
-    await migration.migrate(100, async () => {
-      runShell(`oz create InterestTrackerFactory --force ${flags} --init initialize`)
     })
 
     context = await buildContext({ network: program.network, address: program.address })
     const {
-      PrizePoolModuleManagerFactory,
-      CompoundYieldServiceFactory,
-      PeriodicPrizePoolFactory,
+      CompoundPeriodicPrizePoolFactory,
       TicketFactory,
-      TimelockFactory,
-      InterestTrackerFactory,
-      SponsorshipFactory,
-      CreditFactory,
+      ControlledTokenFactory,
       SingleRandomWinnerPrizeStrategyFactory,
       RNGBlockhash
     } = context.contracts
 
-    await migration.migrate(110, async () => {
-      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${PrizePoolModuleManagerFactory.address},${governor},${CompoundYieldServiceFactory.address},${PeriodicPrizePoolFactory.address},${TicketFactory.address},${TimelockFactory.address},${SponsorshipFactory.address},${CreditFactory.address},${InterestTrackerFactory.address},${RNGBlockhash.address},${trustedForwarder}`)
+    await migration.migrate(35, async () => {
+      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${governor},${CompoundPeriodicPrizePoolFactory.address},${TicketFactory.address},${ControlledTokenFactory.address},${RNGBlockhash.address},${trustedForwarder}`)
     })
 
     context = await buildContext({ network: program.network, address: program.address })
@@ -129,7 +100,7 @@ program
       PrizePoolBuilder,
     } = context.contracts
 
-    await migration.migrate(120, async () => {
+    await migration.migrate(40, async () => {
       runShell(`oz create SingleRandomWinnerPrizePoolBuilder --force ${flags} --init initialize --args ${PrizePoolBuilder.address},${SingleRandomWinnerPrizeStrategyFactory.address}`)
     })
 

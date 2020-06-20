@@ -7,8 +7,7 @@ contract CompoundPeriodicPrizePool is PeriodicPrizePool, CompoundYieldService {
   function initialize (
     address _trustedForwarder,
     GovernorInterface _governor,
-    PrizeStrategyInterface _prizeStrategy,
-    RNGInterface _rng,
+    address _prizeStrategy,
     uint256 _prizePeriodSeconds,
     CTokenInterface _cToken
   ) public initializer {
@@ -16,7 +15,6 @@ contract CompoundPeriodicPrizePool is PeriodicPrizePool, CompoundYieldService {
       _trustedForwarder,
       _governor,
       _prizeStrategy,
-      _rng,
       _prizePeriodSeconds
     );
     cToken = _cToken;

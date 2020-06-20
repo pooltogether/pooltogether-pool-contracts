@@ -30,7 +30,10 @@ async function deployTestPool(wallet, prizePeriodSeconds, overrides = { gasLimit
 
   let governor = await deployContract(wallet, MockGovernor, [], overrides)
   let prizeStrategy = await deployContract(wallet, SingleRandomWinnerPrizeStrategy, [], overrides)
-  await prizeStrategy.initialize()
+  await prizeStrategy.initialize(
+    forwarder.address,
+    rng.address
+  )
   
   let prizePool = await deployContract(wallet, CompoundPeriodicPrizePoolHarness, [], overrides)
 
@@ -38,7 +41,6 @@ async function deployTestPool(wallet, prizePeriodSeconds, overrides = { gasLimit
     forwarder.address,
     governor.address,
     prizeStrategy.address,
-    rng.address,
     prizePeriodSeconds,
     cToken.address
   );

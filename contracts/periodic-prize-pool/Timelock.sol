@@ -66,7 +66,11 @@ abstract contract Timelock is ContextUpgradeSafe, InterestTracker {
     totalSupply = totalSupply.sub(amount);
   }
 
-  function balanceAvailableAt(address user) public view returns (uint256) {
+  function timelockBalanceAvailableAt(address user) public view returns (uint256) {
     return unlockTimestamps[user];
+  }
+
+  function timelockBalanceOf(address user) public view returns (uint256) {
+    return timelockBalances[user];
   }
 }

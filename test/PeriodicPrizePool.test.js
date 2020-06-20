@@ -1,10 +1,9 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const { deploy1820 } = require('deploy-eip-1820')
-const MockGovernor = require('../build/MockGovernor.json')
-const RNGServiceMock = require('../build/RNGServiceMock.json')
-const MockPrizeStrategy = require('../build/MockPrizeStrategy.json')
+const GovernorInterface = require('../build/GovernorInterface.json')
 const CompoundPeriodicPrizePoolHarness = require('../build/CompoundPeriodicPrizePoolHarness.json')
 const Ticket = require('../build/Ticket.json')
+const IERC20 = require('../build/IERC20.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CTokenInterface = require('../build/CTokenInterface.json')
 
@@ -23,11 +22,10 @@ const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
 let overrides = { gasLimit: 20000000 }
 
-
-describe.only('PeriodicPrizePool contract', function() {
+describe('PeriodicPrizePool contract', function() {
   let wallet, wallet2
 
-  let registry, governor, rngService, prizePool, prizeStrategy, cToken
+  let registry, governor, prizePool, prizeStrategy, cToken, token
 
   let ticket, ticketCredit, sponsorship, sponsorshipCredit
 
@@ -42,15 +40,12 @@ describe.only('PeriodicPrizePool contract', function() {
     registry = await deploy1820(wallet)
 
     debug('deploying protocol governor...')
-    governor = await deployContract(wallet, MockGovernor, [], overrides)
+    governor = await deployMockContract(wallet, GovernorInterface.abi, [], overrides)
 
-    debug('deploying rng service...')
-    rngService = await deployContract(wallet, RNGServiceMock, [], overrides)
-
-    debug('deploying prize strategy...')
-    prizeStrategy = await deployContract(wallet, MockPrizeStrategy, [], overrides)
+    prizeStrategy = wallet._address
   
     debug('mocking tokens...')
+    token = await deployMockContract(wallet, IERC20.abi, overrides)
     cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
     ticket = await deployMockContract(wallet, Ticket.abi, overrides)
     ticketCredit = await deployMockContract(wallet, ControlledToken.abi, overrides)
@@ -58,7 +53,7 @@ describe.only('PeriodicPrizePool contract', function() {
     sponsorshipCredit = await deployMockContract(wallet, ControlledToken.abi, overrides)
 
     // Common Mocks for Tokens
-    await cToken.mock.underlying.returns(cToken.address)
+    await cToken.mock.underlying.returns(token.address)
 
     debug('deploying prizePool...')
     prizePool = await deployContract(wallet, CompoundPeriodicPrizePoolHarness, [], overrides)
@@ -67,8 +62,7 @@ describe.only('PeriodicPrizePool contract', function() {
     await prizePool.initialize(
       FORWARDER,
       governor.address,
-      prizeStrategy.address,
-      rngService.address,
+      prizeStrategy,
       prizePeriodSeconds,
       cToken.address
     )
@@ -85,8 +79,7 @@ describe.only('PeriodicPrizePool contract', function() {
     it('should set the params', async () => {
       expect(await prizePool.getTrustedForwarder()).to.equal(FORWARDER)
       expect(await prizePool.governor()).to.equal(governor.address)
-      expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
-      expect(await prizePool.rng()).to.equal(rngService.address)
+      expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy)
       expect(await prizePool.prizePeriodSeconds()).to.equal(prizePeriodSeconds)
       expect(await prizePool.cToken()).to.equal(cToken.address)
     })
@@ -110,7 +103,9 @@ describe.only('PeriodicPrizePool contract', function() {
     it('should mint sponsorship tokens', async () => {
       const supplyAmount = toWei('10')
 
-      await cToken.mock.transferFrom.withArgs(wallet._address, prizePool.address, supplyAmount).returns(true)
+      await token.mock.transferFrom.withArgs(wallet._address, prizePool.address, supplyAmount).returns(true)
+      await token.mock.approve.withArgs(cToken.address, supplyAmount).returns(true)
+      await cToken.mock.mint.withArgs(supplyAmount).returns('0')
       await cToken.mock.balanceOfUnderlying.withArgs(prizePool.address).returns(supplyAmount)
       await sponsorship.mock.controllerMint.withArgs(wallet._address, supplyAmount, EMPTY_STR, EMPTY_STR).returns()
       await sponsorship.mock.balanceOf.withArgs(wallet._address).returns(supplyAmount)
@@ -140,7 +135,7 @@ describe.only('PeriodicPrizePool contract', function() {
       await sponsorship.mock.balanceOf.withArgs(wallet._address).returns(amount)
 
       await cToken.mock.redeemUnderlying.withArgs(amount).returns(amount)
-      await cToken.mock.transfer.withArgs(wallet._address, amount).returns(true)
+      await token.mock.transfer.withArgs(wallet._address, amount).returns(true)
 
       await sponsorship.mock.controllerBurn.withArgs(wallet._address, amount, EMPTY_STR, EMPTY_STR).returns()
       await sponsorshipCredit.mock.controllerMint.withArgs(wallet._address, toWei('0'), EMPTY_STR, EMPTY_STR).returns()
@@ -177,7 +172,7 @@ describe.only('PeriodicPrizePool contract', function() {
       await sponsorship.mock.balanceOf.withArgs(wallet._address).returns(amount)
 
       await cToken.mock.redeemUnderlying.withArgs(amount).returns(amount)
-      await cToken.mock.transfer.withArgs(wallet._address, amount).returns(true)
+      await token.mock.transfer.withArgs(wallet._address, amount).returns(true)
 
       await sponsorship.mock.controllerBurn.withArgs(wallet._address, amount, EMPTY_STR, EMPTY_STR).returns()
       await sponsorshipCredit.mock.controllerMint.withArgs(wallet._address, toWei('0'), EMPTY_STR, EMPTY_STR).returns()
@@ -234,7 +229,7 @@ describe.only('PeriodicPrizePool contract', function() {
       for await (let user of iterableAccounts()) {
         const amount = amounts[user.index]
         await cToken.mock.redeemUnderlying.withArgs(amount).returns(amount)
-        await cToken.mock.transfer.withArgs(user.data._address, amount).returns(true)
+        await token.mock.transfer.withArgs(user.data._address, amount).returns(true)
         await sponsorship.mock.balanceOf.withArgs(user.data._address).returns(amount)
 
         await sponsorship.mock.controllerBurn.withArgs(user.data._address, amount, EMPTY_STR, EMPTY_STR).returns()

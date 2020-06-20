@@ -20,7 +20,6 @@ contract PrizePoolBuilder is Initializable {
   CompoundPeriodicPrizePoolFactory public periodicPrizePoolFactory;
   TicketFactory public ticketFactory;
   ControlledTokenFactory public controlledTokenFactory;
-  RNGInterface public rng;
   address public trustedForwarder;
 
   function initialize (
@@ -28,25 +27,22 @@ contract PrizePoolBuilder is Initializable {
     CompoundPeriodicPrizePoolFactory _periodicPrizePoolFactory,
     TicketFactory _ticketFactory,
     ControlledTokenFactory _controlledTokenFactory,
-    RNGInterface _rng,
     address _trustedForwarder
   ) public initializer {
     require(address(_governor) != address(0), "governor cannot be zero");
     require(address(_periodicPrizePoolFactory) != address(0), "prize pool factory cannot be zero");
     require(address(_ticketFactory) != address(0), "ticket factory cannot be zero");
-    require(address(_rng) != address(0), "rng cannot be zero");
     require(address(_controlledTokenFactory) != address(0), "controlled token factory cannot be zero");
     governor = _governor;
     periodicPrizePoolFactory = _periodicPrizePoolFactory;
     ticketFactory = _ticketFactory;
     controlledTokenFactory = _controlledTokenFactory;
-    rng = _rng;
     trustedForwarder = _trustedForwarder;
   }
 
   function createPeriodicPrizePool(
     CTokenInterface _cToken,
-    PrizeStrategyInterface _prizeStrategy,
+    address _prizeStrategy,
     uint256 _prizePeriodSeconds,
     string memory _ticketName,
     string memory _ticketSymbol,
@@ -82,14 +78,13 @@ contract PrizePoolBuilder is Initializable {
   function initializePrizePool(
     CompoundPeriodicPrizePool prizePool,
     CTokenInterface _cToken,
-    PrizeStrategyInterface _prizeStrategy,
+    address _prizeStrategy,
     uint256 _prizePeriodSeconds
   ) internal {
     prizePool.initialize(
       trustedForwarder,
       governor,
       _prizeStrategy,
-      rng,
       _prizePeriodSeconds,
       _cToken
     );
