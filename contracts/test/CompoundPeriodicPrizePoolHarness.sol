@@ -15,6 +15,10 @@ contract CompoundPeriodicPrizePoolHarness is CompoundPeriodicPrizePool {
     previousPrize = _previousPrize;
   }
 
+  function setPrizeAverageTickets(uint256 _prizeAverageTickets) external {
+    prizeAverageTickets = _prizeAverageTickets;
+  }
+
   function setCurrentTime(uint256 _time) external {
     time = _time;
   }
@@ -26,8 +30,9 @@ contract CompoundPeriodicPrizePoolHarness is CompoundPeriodicPrizePool {
     return time;
   }
 
-  function setInterestSharesForTest(address user, uint256 amount) external {
-    ticketInterestShares[user] = amount;
+  function setInterestSharesForTest(address user, uint256 _collateral) external {
+    uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
+    ticketInterestShares[user] = shares;
   }
 
   function setSponsorshipInterestSharesForTest(address user, uint256 amount) external {
