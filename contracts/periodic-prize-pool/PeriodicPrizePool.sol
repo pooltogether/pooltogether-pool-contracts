@@ -316,7 +316,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   // Ticket Minting/Redeeming
   //
 
-  function mintTickets(address to, uint256 amount, bytes calldata data) external nonReentrant {
+  function mintTickets(address to, uint256 amount, bytes calldata data) external override nonReentrant {
     console.log("PeriodicPrizePool mint tickets: %s", amount);
     _token().transferFrom(_msgSender(), address(this), amount);
     _supply(amount);
