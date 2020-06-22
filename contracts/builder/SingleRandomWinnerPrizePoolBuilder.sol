@@ -24,9 +24,9 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
     RNGInterface _rng,
     SingleRandomWinnerPrizeStrategyFactory _prizeStrategyFactory
   ) public initializer {
-    require(address(_prizePoolBuilder) != address(0), "prize pool builder must be defined");
-    require(address(_rng) != address(0), "rng cannot be zero");
-    require(address(_prizeStrategyFactory) != address(0), "prize strategy factory must be defined");
+    require(address(_prizePoolBuilder) != address(0), "SRWPPB/prize-pool-builder-zero");
+    require(address(_rng) != address(0), "SRWPPB/rng-zero");
+    require(address(_prizeStrategyFactory) != address(0), "SRWPPB/prize-strategy-factory-zero");
     prizePoolBuilder = _prizePoolBuilder;
     rng = _rng;
     prizeStrategyFactory = _prizeStrategyFactory;

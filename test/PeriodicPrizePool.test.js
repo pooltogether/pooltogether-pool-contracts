@@ -96,7 +96,7 @@ describe('PeriodicPrizePool contract', function() {
 
     it('should not allow setting the token addresses twice', async () => {
       await expect(prizePool.setTokens(ticket.address, sponsorship.address, ticketCredit.address, sponsorshipCredit.address))
-        .to.be.revertedWith('already initialized')
+        .to.be.revertedWith('PrizePool/init-twice')
     })
   })
 
@@ -156,7 +156,7 @@ describe('PeriodicPrizePool contract', function() {
 
       // Test revert
       await expect(prizePool.redeemSponsorship(amount.mul(2), EMPTY_STR, EMPTY_STR))
-        .to.be.revertedWith('Insufficient balance')
+        .to.be.revertedWith('PrizePool/insuff-sponsorship-shares')
     })
   })
 
@@ -199,7 +199,7 @@ describe('PeriodicPrizePool contract', function() {
 
       // Test redeem revert
       await expect(prizePool.connect(wallet2).operatorRedeemSponsorship(wallet._address, amount, EMPTY_STR, EMPTY_STR))
-        .to.be.revertedWith('Invalid operator');
+        .to.be.revertedWith('PrizePool/only-operator');
     })
   })
 

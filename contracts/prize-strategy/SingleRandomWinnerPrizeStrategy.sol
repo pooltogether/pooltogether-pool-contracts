@@ -20,7 +20,7 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, BaseRelayRecipient, S
   event PrizePoolAwardStarted(address indexed operator, address indexed prizePool, uint256 indexed rngRequestId);
 
   RNGInterface public rng;
-  mapping(address => uint256) rngRequestIds;
+  mapping(address => uint256) public rngRequestIds;
 
   function initialize(
     address _trustedForwarder,
@@ -43,7 +43,6 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, BaseRelayRecipient, S
     uint256 requestId = rngRequestIds[address(prizePool)];
     bytes32 randomNumber = rng.randomNumber(requestId);
     uint256 prize = prizePool.awardPrize();
-    console.log("PRIZE IS %s", prize);
     delete rngRequestIds[address(prizePool)];
     if (prize > 0) {
       TicketInterface ticket = prizePool.ticket();
