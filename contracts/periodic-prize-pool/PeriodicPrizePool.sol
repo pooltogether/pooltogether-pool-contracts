@@ -14,8 +14,6 @@ import "@nomiclabs/buidler/console.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
 import "./PeriodicPrizePoolInterface.sol";
-import "../prize-strategy/PrizeStrategyInterface.sol";
-import "../rng/RNGInterface.sol";
 import "../Constants.sol";
 import "./Timelock.sol";
 import "../ticket/Ticket.sol";
@@ -27,8 +25,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
   event PrizePoolOpened(address indexed operator, uint256 indexed prizePeriodStartedAt);
-  event PrizePoolAwardStarted(address indexed operator, uint256 indexed rngRequestId);
-  event PrizePoolAwardCompleted(address indexed operator, uint256 prize, uint256 reserveFee, bytes32 randomNumber);
+  event PrizePoolAwarded(address indexed operator, uint256 prize, uint256 reserveFee);
 
   event TicketsRedeemedWithTimelock(
     address indexed operator,
@@ -53,10 +50,11 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   event SponsorshipInterestMinted(address indexed operator, address indexed to, uint256 amount);
   event SponsorshipInterestBurned(address indexed operator, address indexed from, uint256 amount);
 
-  PrizeStrategyInterface public override prizeStrategy;
+  event Awarded(address indexed operator, address indexed winner, address indexed token, uint256 amount, bytes data);
+
+  address public override prizeStrategy;
   GovernorInterface public governor;
-  RNGInterface public rng;
-  Ticket public ticket;
+  Ticket internal __ticket;
   ControlledToken public sponsorship;
   ControlledToken public ticketCredit;
   ControlledToken public sponsorshipCredit;
@@ -70,26 +68,24 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   uint256 internal rngRequestId;
   mapping(address => uint256) internal ticketInterestShares;
   mapping(address => uint256) internal sponsorshipInterestShares;
+  uint256 public prizeStrategyBalance;
 
   function initialize (
     address _trustedForwarder,
     GovernorInterface _governor,
-    PrizeStrategyInterface _prizeStrategy,
-    RNGInterface _rng,
+    address _prizeStrategy,
     uint256 _prizePeriodSeconds
   ) public initializer {
-    require(address(_governor) != address(0), "governor cannot be zero");
-    require(address(_prizeStrategy) != address(0), "prize strategy must not be zero");
-    require(_prizePeriodSeconds > 0, "prize period must be greater than zero");
-    require(address(_rng) != address(0), "rng cannot be zero");
+    require(address(_governor) != address(0), "PrizePool/governor-not-zero");
+    require(address(_prizeStrategy) != address(0), "PrizePool/prize-strategy-not-zero");
+    require(_prizePeriodSeconds > 0, "PrizePool/prize-period-greater-than-zero");
     trustedForwarder = _trustedForwarder;
     __ReentrancyGuard_init();
     governor = _governor;
     prizeStrategy = _prizeStrategy;
-    rng = _rng;
     prizePeriodSeconds = _prizePeriodSeconds;
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
-    prizePeriodStartedAt = currentTime();
+    prizePeriodStartedAt = _currentTime();
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
@@ -99,12 +95,12 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     ControlledToken _ticketCredit,
     ControlledToken _sponsorshipCredit
   ) external {
-    require(address(ticket) == address(0), "already initialized");
-    require(address(_ticket) != address(0), "ticket cannot be zero");
-    require(address(_sponsorship) != address(0), "sponsorship cannot be zero");
-    require(address(_ticketCredit) != address(0), "ticketCredit cannot be zero");
-    require(address(_sponsorshipCredit) != address(0), "sponsorshipCredit cannot be zero");
-    ticket = _ticket;
+    require(address(__ticket) == address(0), "PrizePool/init-twice");
+    require(address(_ticket) != address(0), "PrizePool/ticket-not-zero");
+    require(address(_sponsorship) != address(0), "PrizePool/sponsorship-not-zero");
+    require(address(_ticketCredit) != address(0), "PrizePool/ticket-credit-not-zero");
+    require(address(_sponsorshipCredit) != address(0), "PrizePool/sponsorship-credit-not-zero");
+    __ticket = _ticket;
     sponsorship = _sponsorship;
     ticketCredit = _ticketCredit;
     sponsorshipCredit = _sponsorshipCredit;
@@ -174,7 +170,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function calculateUnlockTimestamp(address, uint256) public view override returns (uint256) {
-    return prizePeriodEndAt();
+    return _prizePeriodEndAt();
   }
 
   function estimatePrize() public override returns (uint256) {
@@ -210,35 +206,15 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function _prizePeriodRemainingSeconds() internal view returns (uint256) {
-    uint256 endAt = prizePeriodEndAt();
-    uint256 time = currentTime();
+    uint256 endAt = _prizePeriodEndAt();
+    uint256 time = _currentTime();
     if (time > endAt) {
       return 0;
     }
     return endAt - time;
   }
 
-  function isPrizePeriodOver() public view returns (bool) {
-    return currentTime() >= prizePeriodEndAt();
-  }
-
-  function isRngRequested() public view returns (bool) {
-    return rngRequestId != 0;
-  }
-
-  function isRngCompleted() public view returns (bool) {
-    return rng.isRequestComplete(rngRequestId);
-  }
-
-  function canStartAward() public view override returns (bool) {
-    return isPrizePeriodOver() && !isRngRequested();
-  }
-
-  function canCompleteAward() public view override returns (bool) {
-    return isRngRequested() && isRngCompleted();
-  }
-
-  function mintedTickets(uint256 amount) public override {
+  function _mintedTickets(uint256 amount) internal {
     uint256 scaledTickets = _scaleValueByTimeRemaining(
       amount,
       _prizePeriodRemainingSeconds(),
@@ -249,7 +225,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     );
   }
 
-  function redeemedTickets(uint256 amount) public override {
+  function _redeemedTickets(uint256 amount) internal {
     prizeAverageTickets = prizeAverageTickets.sub(
       _scaleValueByTimeRemaining(
         amount,
@@ -259,39 +235,65 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     );
   }
 
-  function startAward() public override requireCanStartAward nonReentrant {
-    rngRequestId = rng.requestRandomNumber(address(0),0);
-
-    emit PrizePoolAwardStarted(_msgSender(), rngRequestId);
+  function isPrizePeriodOver() external override view returns (bool) {
+    return _isPrizePeriodOver();
   }
 
-  function completeAward() public override requireCanCompleteAward nonReentrant {
+  function _isPrizePeriodOver() internal view returns (bool) {
+    return _currentTime() >= _prizePeriodEndAt();
+  }
+
+  function ticket() external override view returns (TicketInterface) {
+    return __ticket;
+  }
+
+  function awardPrize() external override onlyPrizeStrategy returns (uint256) {
+    require(_isPrizePeriodOver(), "PrizePool/not-over");
     uint256 balance = captureInterest();
     uint256 reserveFee = _calculateReserveFee(balance);
     uint256 prize = balance.sub(reserveFee);
+    prizeStrategyBalance = prizeStrategyBalance.add(prize);
 
-    if (balance > 0) {
-      if (reserveFee > 0) {
-        sponsorship.controllerMint(governor.reserve(), reserveFee, "", "");
-      }
-      if (prize > 0) {
-        _mintTickets(address(prizeStrategy), prize, "", "");
-      }
-    }
-
-    bytes32 randomNumber = rng.randomNumber(rngRequestId);
-    prizePeriodStartedAt = currentTime();
-    prizeStrategy.award(uint256(randomNumber), prize);
-
+    prizePeriodStartedAt = _currentTime();
     previousPrize = prize;
     previousPrizeAverageTickets = prizeAverageTickets;
-    prizeAverageTickets = ticket.totalSupply();
-    rngRequestId = 0;
+    prizeAverageTickets = __ticket.totalSupply();
 
-    emit PrizePoolAwardCompleted(_msgSender(), prize, reserveFee, randomNumber);
+    if (reserveFee > 0) {
+      sponsorship.controllerMint(governor.reserve(), reserveFee, "", "");
+    }
+
+    emit PrizePoolAwarded(_msgSender(), prize, reserveFee);
+    emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
+
+    return prize;
   }
 
-  function prizePeriodEndAt() public view override returns (uint256) {
+  function awardTickets(address user, uint256 amount, bytes calldata data) external override onlyPrizeStrategy nonReentrant {
+    require(prizeStrategyBalance >= amount, "PrizePool/insuff");
+    prizeStrategyBalance = prizeStrategyBalance.sub(amount);
+    // The tickets were already accruing, so just tack them onto the prize average
+    prizeAverageTickets = prizeAverageTickets.add(amount);
+    _mintTickets(user, amount, data, "");
+
+    emit Awarded(_msgSender(), user, address(__ticket), amount, data);
+  }
+
+  function awardSponsorship(address user, uint256 amount, bytes calldata data) external override onlyPrizeStrategy nonReentrant {
+    require(prizeStrategyBalance >= amount, "PrizePool/insuff");
+    prizeStrategyBalance = prizeStrategyBalance.sub(amount);
+
+    _mintSponsorship(user, amount, data, "");
+
+    emit Awarded(_msgSender(), user, address(sponsorship), amount, data);
+  }
+
+  function prizePeriodEndAt() external view override returns (uint256) {
+    // current prize started at is non-inclusive, so add one
+    return _prizePeriodEndAt();
+  }
+
+  function _prizePeriodEndAt() internal view returns (uint256) {
     // current prize started at is non-inclusive, so add one
     return prizePeriodStartedAt + prizePeriodSeconds;
   }
@@ -306,42 +308,24 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   ) external override {
   }
 
-  function currentTime() internal virtual view returns (uint256) {
+  function _currentTime() internal virtual view returns (uint256) {
     return block.timestamp;
   }
-
-  modifier requireCanStartAward() {
-    require(isPrizePeriodOver(), "prize period not over");
-    require(!isRngRequested(), "rng has already been requested");
-    _;
-  }
-
-  modifier requireCanCompleteAward() {
-    require(isRngRequested(), "no rng request has been made");
-    require(isRngCompleted(), "rng request has not completed");
-    _;
-  }
-
-  modifier notRequestingRN() {
-    require(rngRequestId == 0, "rng request is in flight");
-    _;
-  }
-
 
   //
   // Ticket Minting/Redeeming
   //
 
-  function mintTickets(address to, uint256 amount, bytes calldata data) external nonReentrant {
+  function mintTickets(address to, uint256 amount, bytes calldata data) external override nonReentrant {
     _token().transferFrom(_msgSender(), address(this), amount);
     _supply(amount);
     _mintTickets(to, amount, data, "");
-    mintedTickets(amount);
+    _mintedTickets(amount);
   }
 
   function _mintTickets(address to, uint256 amount, bytes memory data, bytes memory operatorData) internal {
     // Mint tickets
-    ticket.controllerMint(to, amount, data, operatorData);
+    __ticket.controllerMint(to, amount, data, operatorData);
     _mintTicketInterestShares(to, amount);
   }
 
@@ -359,7 +343,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     external nonReentrant returns (uint256) 
   {
     address sender = _msgSender();
-    require(ticket.isOperatorFor(sender, from), "Invalid operator");
+    
 
     uint256 userInterestRatioMantissa = _ticketInterestRatioMantissa(from);
     uint256 exitFee = calculateExitFee(tickets, userInterestRatioMantissa);
@@ -384,7 +368,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function balanceOfTicketInterest(address user) public returns (uint256) {
-    uint256 tickets = ticket.balanceOf(user);
+    uint256 tickets = __ticket.balanceOf(user);
     return _balanceOfTicketInterest(user, tickets);
   }
 
@@ -398,7 +382,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function _ticketInterestRatioMantissa(address user) internal returns (uint256) {
-    uint256 tickets = ticket.balanceOf(user);
+    uint256 tickets = __ticket.balanceOf(user);
     return FixedPoint.calculateMantissa(_balanceOfTicketInterest(user, tickets), tickets);
   }
 
@@ -412,17 +396,13 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
       userInterestRatioMantissa
     );
 
-
-
     // burn the tickets
     _burnTickets(sender, tickets, data, "");
-
 
     // now calculate how much interest needs to be redeemed to maintain the interest ratio
     _redeemTicketInterestShares(sender, tickets, userInterestRatioMantissa);
 
     uint256 ticketsLessFee = tickets.sub(exitFee);
-
 
     // redeem the interestTracker less the fee
     _redeem(ticketsLessFee);
@@ -447,10 +427,9 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     bytes calldata data,
     bytes calldata operatorData
   ) 
-    external nonReentrant returns (uint256) 
+    external nonReentrant onlyOperator(__ticket, from) returns (uint256) 
   {
     address sender = _msgSender();
-    require(ticket.isOperatorFor(sender, from), "Invalid operator");
     return _redeemTicketsWithTimelock(sender, from, tickets, data, operatorData);
   }
 
@@ -469,46 +448,37 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     internal returns (uint256) 
   {
     // burn the tickets
-    require(ticket.balanceOf(sender) >= tickets, "Insufficient balance");
+    require(__ticket.balanceOf(sender) >= tickets, "PrizePool/insuff-tickets");
     _burnTickets(sender, tickets, data, operatorData);
+
 
     uint256 unlockTimestamp = calculateUnlockTimestamp(sender, tickets);
 
     // Sweep the old balance, if any
     address[] memory senders = new address[](1);
     senders[0] = sender;
+    
     sweep(senders);
 
     mintTo(sender, tickets, unlockTimestamp);
 
     emit TicketsRedeemedWithTimelock(operator, sender, tickets, unlockTimestamp, data, operatorData);
 
+
     // if the funds should already be unlocked
     if (unlockTimestamp <= block.timestamp) {
       sweep(senders);
     }
+
 
     // return the block at which the funds will be available
     return unlockTimestamp;
   }
 
   function _burnTickets(address from, uint256 tickets, bytes memory data, bytes memory operatorData) internal {
-    ticket.controllerBurn(from, tickets, data, operatorData);
-    redeemedTickets(tickets);
+    __ticket.controllerBurn(from, tickets, data, operatorData);
+    _redeemedTickets(tickets);
   }
-
-  function mintTicketsWithSponsorshipTo(address to, uint256 amount) public {
-    _mintTicketsWithSponsorship(to, amount);
-  }
-
-  function _mintTicketsWithSponsorship(address to, uint256 amount) internal {
-    // Transfer sponsorship
-    sponsorship.transferFrom(_msgSender(), address(this), amount);
-
-    // Mint draws
-    _mintTickets(to, amount, "", "");
-  }
-
 
   //
   // Sponsorship Minting/Redeeming
@@ -542,16 +512,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     public nonReentrant 
   {
     address sender = _msgSender();
-    require(sponsorshipInterestShares[sender] >= amount, "Insufficient balance");
-
-    // Burn Tokens
-    _burnSponsorship(sender, amount, data, operatorData);
-
-    // Transfer Assets
-    _redeem(amount);
-    _token().transfer(sender, amount);
-
-    emit SponsorshipRedeemed(sender, sender, amount);
+    _redeemSponsorship(sender, sender, amount, data, operatorData);
   }
 
   function operatorRedeemSponsorship(
@@ -560,11 +521,19 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     bytes memory data, 
     bytes memory operatorData
   ) 
-    public nonReentrant 
+    public nonReentrant onlyOperator(sponsorship, from)
   {
-    address sender = _msgSender();
-    require(sponsorship.isOperatorFor(sender, from), "Invalid operator");
-    require(sponsorshipInterestShares[from] >= amount, "Insufficient balance");
+    _redeemSponsorship(_msgSender(), from, amount, data, operatorData);
+  }
+
+  function _redeemSponsorship(
+    address operator,
+    address from,
+    uint256 amount,
+    bytes memory data,
+    bytes memory operatorData
+  ) internal {
+    require(sponsorshipInterestShares[from] >= amount, "PrizePool/insuff-sponsorship-shares");
 
     // Burn Tokens
     _burnSponsorship(from, amount, data, operatorData);
@@ -573,7 +542,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     _redeem(amount);
     _token().transfer(from, amount);
 
-    emit SponsorshipRedeemed(sender, from, amount);
+    emit SponsorshipRedeemed(operator, from, amount);
   }
 
   function _mintSponsorship(
@@ -586,13 +555,21 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     sponsorship.controllerMint(account, amount, data, operatorData);
 
     // Supply collateral for interest tracking
-    uint256 shares = supplyCollateral(amount);
-    sponsorshipInterestShares[account] = sponsorshipInterestShares[account].add(shares);
+    _mintSponsorshipInterestShares(account, amount);
 
     // Burn & accredit any accrued interest on sponsored collateral
     _sweepSponsorshipInterest(account, data, operatorData);
+  }
+
+  function _mintSponsorshipInterestShares(
+    address account,
+    uint256 amount
+  ) internal returns (uint256) {
+    uint256 shares = supplyCollateral(amount);
+    sponsorshipInterestShares[account] = sponsorshipInterestShares[account].add(shares);
 
     emit SponsorshipInterestMinted(_msgSender(), account, shares);
+    return shares;
   }
 
   function _burnSponsorship(
@@ -645,7 +622,6 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     sponsorshipCredit.controllerMint(account, interest, data, operatorData);
   }
 
-
   //
   // Sponsorship Sweep
   //
@@ -674,7 +650,6 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     _burnSponsorshipFromInterestTracker(account, interest);
   }
 
-
   //
   // Public Read
   //
@@ -694,10 +669,12 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   function beforeTokenTransfer(address operator, address from, address to, uint256 amount) external override {
     // handle transfers of tickets, sponsorship, credits etc
 
+    address sender = _msgSender();
+
     // transfers of credits are ignored
-    if (msg.sender == address(ticket)) {
+    if (sender == address(__ticket)) {
       beforeTicketTransfer(operator, from, to, amount);
-    } else if (msg.sender == address(sponsorship)) {
+    } else if (sender == address(sponsorship)) {
       beforeSponsorshipTransfer(operator, from, to, amount);
     }
   }
@@ -715,16 +692,28 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     _mintTicketInterestShares(to, amount);
   }
 
-  function beforeSponsorshipTransfer(address operator, address from, address to, uint256 amount) internal {
+  function beforeSponsorshipTransfer(address, address from, address to, uint256 amount) internal {
     // minting and burning are handled elsewhere
     if (from == address(0) || to == address(0)) {
       return;
     }
 
     // otherwise do the business here
+    _burnSponsorshipCollateralSweepInterest(from, amount, "", "");
+    _mintSponsorshipInterestShares(to, amount);
   }
 
   function balanceOfTicketInterestShares(address user) public view returns (uint256) {
     return ticketInterestShares[user];
+  }
+
+  modifier onlyPrizeStrategy() {
+    require(_msgSender() == address(prizeStrategy), "PrizePool/only-prize-strategy");
+    _;
+  }
+
+  modifier onlyOperator(IERC777 token, address user) {
+    require(token.isOperatorFor(_msgSender(), user), "PrizePool/only-operator");
+    _;
   }
 }

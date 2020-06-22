@@ -1,9 +1,10 @@
 pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "./YieldServiceInterface.sol";
 
-abstract contract AbstractYieldService {
-  function token() external virtual view returns (IERC20) {
+abstract contract AbstractYieldService is YieldServiceInterface {
+  function token() external override virtual view returns (IERC20) {
     return _token();
   }
 

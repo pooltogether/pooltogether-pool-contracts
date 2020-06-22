@@ -10,6 +10,7 @@ import "./PrizePoolBuilder.sol";
 contract SingleRandomWinnerPrizePoolBuilder is Initializable {
 
   PrizePoolBuilder public prizePoolBuilder;
+  RNGInterface public rng;
   SingleRandomWinnerPrizeStrategyFactory public prizeStrategyFactory;
 
   event SingleRandomWinnerPrizePoolCreated(
@@ -20,11 +21,14 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
 
   function initialize (
     PrizePoolBuilder _prizePoolBuilder,
+    RNGInterface _rng,
     SingleRandomWinnerPrizeStrategyFactory _prizeStrategyFactory
   ) public initializer {
-    require(address(_prizePoolBuilder) != address(0), "prize pool builder must be defined");
-    require(address(_prizeStrategyFactory) != address(0), "prize strategy factory must be defined");
+    require(address(_prizePoolBuilder) != address(0), "SRWPPB/prize-pool-builder-zero");
+    require(address(_rng) != address(0), "SRWPPB/rng-zero");
+    require(address(_prizeStrategyFactory) != address(0), "SRWPPB/prize-strategy-factory-zero");
     prizePoolBuilder = _prizePoolBuilder;
+    rng = _rng;
     prizeStrategyFactory = _prizeStrategyFactory;
   }
 
@@ -38,11 +42,11 @@ contract SingleRandomWinnerPrizePoolBuilder is Initializable {
   ) external returns (SingleRandomWinnerPrizeStrategy) {
 
     SingleRandomWinnerPrizeStrategy prizeStrategy = prizeStrategyFactory.createSingleRandomWinner();
-    prizeStrategy.initialize();
+    prizeStrategy.initialize(prizePoolBuilder.trustedForwarder(), rng);
 
     PeriodicPrizePool prizePool = prizePoolBuilder.createPeriodicPrizePool(
       cToken,
-      prizeStrategy,
+      address(prizeStrategy),
       prizePeriodInSeconds,
       _ticketName,
       _ticketSymbol,

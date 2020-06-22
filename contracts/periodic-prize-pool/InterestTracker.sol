@@ -27,9 +27,7 @@ abstract contract InterestTracker is AbstractYieldService {
     uint256 _collateral
   ) internal returns (uint256) {
     // mint new shares based on current exchange rate
-    // console.log("supply collateral %s", _collateral);
     uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
-    // console.log("supply collateral shares %s", shares);
     interestShareTotalSupply = interestShareTotalSupply.add(shares);
     totalCollateral = totalCollateral.add(_collateral);
 
@@ -42,13 +40,8 @@ abstract contract InterestTracker is AbstractYieldService {
   function redeemCollateral(
     uint256 _collateral
   ) internal returns (uint256) {
-    // console.log("InterestTracker redeemCollateral %s", _collateral);
     uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
-    // console.log("InterestTracker shares %s", shares);
     require(shares <= interestShareTotalSupply, "InterestTracker/insuff");
-    // console.log("InterestTracker interestShareBalances[msg.sender] %s", interestShareBalances[msg.sender]);
-    // console.log("InterestTracker interestShareTotalSupply %s", interestShareTotalSupply);
-    // console.log("InterestTracker totalCollateral %s", totalCollateral);
     interestShareTotalSupply = interestShareTotalSupply.sub(shares);
     totalCollateral = totalCollateral.sub(_collateral);
 
@@ -63,6 +56,7 @@ abstract contract InterestTracker is AbstractYieldService {
     newInterest = 0;
 
     emit InterestCaptured(msg.sender, interest);
+
 
     return interest;
   }
@@ -88,12 +82,9 @@ abstract contract InterestTracker is AbstractYieldService {
   function poke() internal {
     uint256 unaccountedBalance = _unaccountedBalance();
     if (unaccountedBalance > 0) {
-      // console.log("CAPTURED %s", unaccountedBalance / 1 ether);
       _capture(unaccountedBalance);
       newInterest = newInterest.add(unaccountedBalance);
-      // console.log("new interest %s", newInterest / 1 ether);
       totalCollateral = totalCollateral.add(unaccountedBalance);
-      // console.log("totalCollateral %s", totalCollateral / 1 ether);
     }
   }
 }
