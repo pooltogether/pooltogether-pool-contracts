@@ -30,7 +30,7 @@ describe('PeriodicPrizePool contract', function() {
 
   let ticket, ticketCredit, sponsorship, sponsorshipCredit
 
-  let prizePeriodSeconds = toWei('1000')
+  let prizePeriodSeconds = 1000
 
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
@@ -99,6 +99,55 @@ describe('PeriodicPrizePool contract', function() {
         .to.be.revertedWith('PrizePool/init-twice')
     })
   })
+
+  //
+  // Ticket Minting/Redeeming
+  //
+
+  describe('redeemTicketsInstantly()', () => {
+    it('should not allow a user to redeem more tickets than they hold', async () => {
+      const amount = toWei('10')
+
+      // Pre-fund
+      await prizePool.setInterestSharesForTest(wallet._address, amount)
+
+      // Mocks
+      await cToken.mock.balanceOfUnderlying.withArgs(prizePool.address).returns(amount)
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
+
+      // Test revert
+      await expect(prizePool.redeemTicketsInstantly(amount.mul(2), EMPTY_STR, EMPTY_STR))
+        .to.be.revertedWith('Insufficient balance')
+    })
+
+    it('should allow a user to redeem their tickets', async () => {
+      const averagePrize = toWei('100')
+      const amount = toWei('10')
+
+      // Pre-fund
+      await cToken.mock.balanceOfUnderlying.withArgs(prizePool.address).returns(toWei('0'))
+      await prizePool.supplyCollateralForTest(amount)
+      await prizePool.setInterestSharesForTest(wallet._address, amount)
+      await prizePool.setPrizeAverageTickets(averagePrize)
+
+      // Mocks
+      await cToken.mock.balanceOfUnderlying.withArgs(prizePool.address).returns(amount)
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
+      await cToken.mock.redeemUnderlying.withArgs(amount).returns(amount)
+      await token.mock.transfer.withArgs(wallet._address, amount).returns(true)
+      await ticket.mock.controllerBurn.withArgs(wallet._address, amount, EMPTY_STR, EMPTY_STR).returns()
+      await ticketCredit.mock.controllerMint.withArgs(wallet._address, toWei('0'), EMPTY_STR, EMPTY_STR).returns()
+      
+      // Test redeemTicketsInstantly
+      await expect(prizePool.redeemTicketsInstantly(amount, EMPTY_STR, EMPTY_STR))
+        .to.emit(prizePool, 'TicketsRedeemedInstantly')
+        .withArgs(wallet._address, wallet._address, amount, toWei('0'), EMPTY_STR, EMPTY_STR)
+    })
+  })
+
+  //
+  // Sponsorship Minting/Redeeming
+  //
 
   describe('supplySponsorship()', () => {
     it('should mint sponsorship tokens', async () => {
@@ -202,6 +251,10 @@ describe('PeriodicPrizePool contract', function() {
         .to.be.revertedWith('PrizePool/only-operator');
     })
   })
+
+  //
+  // Sponsorship Sweep
+  //
 
   describe('sweepSponsorship()', () => {
     it('should allow anyone to sweep sponsorship for a list of users', async () => {
