@@ -109,8 +109,7 @@ contract PrizePoolBuilder is Initializable {
     PeriodicPrizePool prizePool
   ) internal returns (ControlledToken) {
     ControlledToken credit = controlledTokenFactory.createControlledToken();
-    address[] memory defaultOperators;
-    credit.initialize("Ticket Credit", "TCRD", defaultOperators, trustedForwarder, prizePool);
+    credit.initialize("Ticket Credit", "TCRD", trustedForwarder, prizePool);
     return credit;
   }
 
@@ -118,8 +117,7 @@ contract PrizePoolBuilder is Initializable {
     PeriodicPrizePool prizePool
   ) internal returns (ControlledToken) {
     ControlledToken credit = controlledTokenFactory.createControlledToken();
-    address[] memory defaultOperators;
-    credit.initialize("Sponsorship Credit", "SCRD", defaultOperators, trustedForwarder, prizePool);
+    credit.initialize("Sponsorship Credit", "SCRD", trustedForwarder, prizePool);
     return credit;
   }
 
@@ -129,8 +127,7 @@ contract PrizePoolBuilder is Initializable {
     string memory _ticketSymbol
   ) internal returns (Ticket) {
     Ticket ticket = ticketFactory.createTicket();
-    address[] memory defaultOperators;
-    ticket.initialize(_ticketName, _ticketSymbol, defaultOperators, trustedForwarder, prizePool);
+    ticket.initialize(_ticketName, _ticketSymbol, trustedForwarder, prizePool);
     return ticket;
   }
 
@@ -140,8 +137,7 @@ contract PrizePoolBuilder is Initializable {
     string memory _sponsorshipSymbol
   ) internal returns (ControlledToken) {
     ControlledToken sponsorship = controlledTokenFactory.createControlledToken();
-    address[] memory defaultOperators;
-    sponsorship.initialize(_sponsorshipName, _sponsorshipSymbol, defaultOperators, trustedForwarder, prizePool);
+    sponsorship.initialize(_sponsorshipName, _sponsorshipSymbol, trustedForwarder, prizePool);
     return sponsorship;
   }
 }

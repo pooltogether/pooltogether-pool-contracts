@@ -62,7 +62,7 @@ function PoolEnv() {
     }
 
     await token.approve(prizePool.address, amount, this.overrides)
-    await prizePool.mintTickets(wallet._address, amount, EMPTY_STR, EMPTY_STR, this.overrides)
+    await prizePool.mintTickets(wallet._address, amount, this.overrides)
 
     debug(`Bought tickets`)
   }
@@ -128,7 +128,7 @@ function PoolEnv() {
     await this.env.rng.setRandomNumber(randomNumber, this.overrides)
 
     debug(`Completing award...`)
-    await this.env.prizeStrategy.completeAward(this._prizePool.address, EMPTY_STR, this.overrides)
+    await this.env.prizeStrategy.completeAward(this._prizePool.address, this.overrides)
     
     debug('award completed')
 

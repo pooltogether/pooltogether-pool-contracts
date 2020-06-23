@@ -39,7 +39,7 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, BaseRelayRecipient, S
     emit PrizePoolAwardStarted(_msgSender(), address(prizePool), requestId);
   }
 
-  function completeAward(PeriodicPrizePoolInterface prizePool, bytes calldata data) external override requireCanCompleteAward(prizePool) {
+  function completeAward(PeriodicPrizePoolInterface prizePool) external override requireCanCompleteAward(prizePool) {
     uint256 requestId = rngRequestIds[address(prizePool)];
     bytes32 randomNumber = rng.randomNumber(requestId);
     uint256 prize = prizePool.awardPrize();
@@ -47,7 +47,7 @@ contract SingleRandomWinnerPrizeStrategy is Initializable, BaseRelayRecipient, S
     if (prize > 0) {
       TicketInterface ticket = prizePool.ticket();
       address winner = ticket.draw(uint256(randomNumber));
-      prizePool.awardTickets(winner, prize, data);
+      prizePool.awardTickets(winner, prize);
     }
   }
 

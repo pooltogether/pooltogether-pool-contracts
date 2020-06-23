@@ -46,16 +46,16 @@ async function deployTestPool(wallet, prizePeriodSeconds, overrides = { gasLimit
   );
 
   let sponsorship = await deployContract(wallet, ControlledToken, [], overrides)
-  await sponsorship.initialize("Sponsorship", "SPON", [], forwarder.address, prizePool.address)
+  await sponsorship.initialize("Sponsorship", "SPON", forwarder.address, prizePool.address)
 
   let sponsorshipCredit = await deployContract(wallet, ControlledToken, [], overrides)
-  await sponsorshipCredit.initialize("Sponsorship Credit", "SCRED", [], forwarder.address, prizePool.address)
+  await sponsorshipCredit.initialize("Sponsorship Credit", "SCRED", forwarder.address, prizePool.address)
 
   let ticket = await deployContract(wallet, Ticket, [], overrides)
-  await ticket.initialize("Ticket", "TICK", [], forwarder.address, prizePool.address)
+  await ticket.initialize("Ticket", "TICK", forwarder.address, prizePool.address)
 
   let ticketCredit = await deployContract(wallet, ControlledToken, [], overrides)
-  await ticketCredit.initialize("Ticket Credit", "TCRED", [], forwarder.address, prizePool.address)
+  await ticketCredit.initialize("Ticket Credit", "TCRED", forwarder.address, prizePool.address)
 
   await prizePool.setTokens(
     ticket.address,
