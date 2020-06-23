@@ -31,10 +31,11 @@ describe('DepositorFactory', () => {
   describe('deposit', () => {
     it('should allow deposit from anyone', async () => {
       let address = await depositorFactory.calculateAddress(wallet._address)
+      let depositAmount = toWei('100')
 
-      await token.mock.balanceOf.withArgs(address).returns(toWei('100'))
-      await token.mock.approve.withArgs(prizePool.address, toWei('100')).returns(true)
-      await prizePool.mock.mintTickets.withArgs(wallet._address, toWei('100'), []).returns()
+      await token.mock.balanceOf.withArgs(address).returns(depositAmount)
+      await token.mock.approve.withArgs(prizePool.address, depositAmount).returns(true)
+      await prizePool.mock.mintTickets.withArgs(wallet._address, depositAmount, []).returns()
 
       await depositorFactory.deposit(wallet._address, [])
     })

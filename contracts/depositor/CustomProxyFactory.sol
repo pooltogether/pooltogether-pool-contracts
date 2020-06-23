@@ -16,7 +16,7 @@ contract CustomProxyFactory {
 
     if(_data.length > 0) {
       (bool success,) = proxy.call(_data);
-      require(success, "constructor call failed");
+      require(success, "CustomProxyFactory/constructor-failed");
     }
   }
 
