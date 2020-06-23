@@ -1,5 +1,5 @@
 const { expect } = require('chai')
-const DepositorFactory = require('../build/DepositorFactory.json')
+const CounterfactualActionFactory = require('../build/CounterfactualActionFactory.json')
 const PeriodicPrizePoolInterface = require('../build/PeriodicPrizePoolInterface.json')
 const IERC20 = require('../build/IERC20.json')
 const { ethers } = require('./helpers/ethers')
@@ -8,7 +8,7 @@ const { deployContract, deployMockContract } = require('ethereum-waffle')
 
 const toWei = ethers.utils.parseEther
 
-describe('DepositorFactory', () => {
+describe('CounterfactualActionFactory', () => {
   
   let wallet, wallet2
 
@@ -24,26 +24,38 @@ describe('DepositorFactory', () => {
     prizePool = await deployMockContract(wallet, PeriodicPrizePoolInterface.abi)
     await prizePool.mock.token.returns(token.address)
 
-    depositorFactory = await deployContract(wallet, DepositorFactory, [])
-    await depositorFactory.initialize(prizePool.address)
+    factory = await deployContract(wallet, CounterfactualActionFactory, [])
+    await factory.initialize(prizePool.address)
   })
 
-  describe('deposit', () => {
-    it('should allow deposit from anyone', async () => {
-      let address = await depositorFactory.calculateAddress(wallet._address)
+  describe('mintTickets', () => {
+    it('should allow mintTickets from anyone', async () => {
+      let address = await factory.calculateAddress(wallet._address)
       let depositAmount = toWei('100')
 
       await token.mock.balanceOf.withArgs(address).returns(depositAmount)
       await token.mock.approve.withArgs(prizePool.address, depositAmount).returns(true)
       await prizePool.mock.mintTickets.withArgs(wallet._address, depositAmount, []).returns()
 
-      await depositorFactory.deposit(wallet._address, [])
+      await factory.mintTickets(wallet._address, [])
+    })
+  })
+
+  describe('cancel', () => {
+    it('should someone to withdraw their funds', async () => {
+      let address = await factory.calculateAddress(wallet._address)
+      let depositAmount = toWei('100')
+
+      await token.mock.balanceOf.withArgs(address).returns(depositAmount)
+      await token.mock.transfer.withArgs(wallet._address, depositAmount).returns(true)
+
+      await factory.cancel(wallet._address, [])
     })
   })
 
   describe('code()', () => {
     it("should show the same code", async () => {
-      let code = await depositorFactory.code()
+      let code = await factory.code()
 
       expect(code.length).to.equal(112)
     })

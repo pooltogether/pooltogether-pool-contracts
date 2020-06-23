@@ -1,26 +1,8 @@
-pragma solidity ^0.6.0;
+pragma solidity ^0.6.4;
 
 // solium-disable security/no-inline-assembly
-// solium-disable security/no-low-level-calls
-contract CustomProxyFactory {
-
-  event ProxyCreated(address proxy);
-
-  function deployMinimal(address _logic, bytes memory _data) public returns (address proxy) {
-    bytes memory clone = deployCode(_logic);
-    assembly {
-      proxy := create(0, add(clone, 0x20), 0x37)
-    }
-
-    emit ProxyCreated(address(proxy));
-
-    if(_data.length > 0) {
-      (bool success,) = proxy.call(_data);
-      require(success, "CustomProxyFactory/constructor-failed");
-    }
-  }
-
-  function deployCode(address _logic) public pure returns (bytes memory clone) {
+library MinimalProxyLibrary {
+  function minimalProxy(address _logic) internal pure returns (bytes memory clone) {
     // Adapted from https://github.com/optionality/clone-factory/blob/32782f82dfc5a00d103a7e61a17a5dedbd1e8e9d/contracts/CloneFactory.sol
     bytes20 targetBytes = bytes20(_logic);
     assembly {
