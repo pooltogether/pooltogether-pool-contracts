@@ -283,7 +283,11 @@ describe('PeriodicPrizePool contract', function() {
       for await (let user of iterableAccounts()) {
         const amount = amounts[user.index]
         await cToken.mock.redeemUnderlying.withArgs(amount).returns(amount)
+        await token.mock.transfer.withArgs(user.data._address, amount).returns(true)
         await sponsorship.mock.balanceOf.withArgs(user.data._address).returns(amount)
+
+        await sponsorship.mock.controllerBurn.withArgs(user.data._address, amount, EMPTY_STR, EMPTY_STR).returns()
+        await sponsorshipCredit.mock.controllerMint.withArgs(user.data._address, interestAmount, EMPTY_STR, EMPTY_STR).returns()
       }
 
       // Sweep for multiple accounts
