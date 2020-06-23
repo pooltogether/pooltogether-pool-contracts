@@ -57,7 +57,6 @@ abstract contract InterestTracker is AbstractYieldService {
 
     emit InterestCaptured(msg.sender, interest);
 
-
     return interest;
   }
 
