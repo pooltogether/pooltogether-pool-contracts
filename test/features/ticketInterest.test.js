@@ -27,12 +27,11 @@ describe('Interest earned on Tickets', () => {
     await env.expectUserToHaveTicketInterest({ user: 2, interest: 0 })
   })
 
-
   it('should earn partial interest on tickets', async () => {
     await env.createPool({ prizePeriodSeconds: 10 })
-    await env.buyTicketsAtTime({ user: 1, tickets: 100, elapsed: 0 })
+    await env.buyTicketsAtTime({ user: 1, tickets: 100, time: 0 })
     await env.poolAccrues({ tickets: 50 })
-    await env.buyTicketsAtTime({ user: 2, tickets: 100, elapsed: 5 })
+    await env.buyTicketsAtTime({ user: 2, tickets: 100, time: 5 })
     await env.poolAccrues({ tickets: 50 })
     await env.awardPrizeToToken({ token: 1 })
     await env.expectUserToHaveTicketInterest({ user: 1, interest: 80 })
