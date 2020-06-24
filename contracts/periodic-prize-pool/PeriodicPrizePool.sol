@@ -347,7 +347,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     // burn the tickets
     _burnTickets(operator, from, tickets);
     // burn the interestTracker
-    _redeemTicketInterestShares(from, tickets, userInterestRatioMantissa, data, operatorData);
+    _redeemTicketInterestShares(from, tickets, userInterestRatioMantissa);
 
     // redeem the tickets less the fee
     uint256 amount = tickets.sub(exitFee);
@@ -393,7 +393,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     _burnTickets(sender, sender, tickets);
 
     // now calculate how much interest needs to be redeemed to maintain the interest ratio
-    _redeemTicketInterestShares(sender, tickets, userInterestRatioMantissa, data, "");
+    _redeemTicketInterestShares(sender, tickets, userInterestRatioMantissa);
 
     uint256 ticketsLessFee = tickets.sub(exitFee);
 
@@ -410,9 +410,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   function _redeemTicketInterestShares(
     address sender,
     uint256 tickets,
-    uint256 userInterestRatioMantissa,
-    bytes memory data,
-    bytes memory operatorData
+    uint256 userInterestRatioMantissa
   )
     internal
   {
@@ -663,7 +661,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     // otherwise we need to transfer the collateral from one user to the other
     // the from's collateralization will increase, so credit them
     uint256 fromTicketInterestRatio = _ticketInterestRatioMantissa(from);
-    _redeemTicketInterestShares(from, amount, fromTicketInterestRatio, "", "");
+    _redeemTicketInterestShares(from, amount, fromTicketInterestRatio);
     _mintTicketInterestShares(to, amount);
   }
 

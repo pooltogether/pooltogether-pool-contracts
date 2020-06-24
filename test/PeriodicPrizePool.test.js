@@ -115,7 +115,7 @@ describe('PeriodicPrizePool contract', function() {
       await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
 
       // Test revert
-      await expect(prizePool.redeemTicketsInstantly(amount.mul(2), EMPTY_STR, EMPTY_STR))
+      await expect(prizePool.redeemTicketsInstantly(amount.mul(2)))
         .to.be.revertedWith('Insufficient balance')
     })
 
@@ -134,13 +134,13 @@ describe('PeriodicPrizePool contract', function() {
       await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
       await cToken.mock.redeemUnderlying.withArgs(amount).returns(amount)
       await token.mock.transfer.withArgs(wallet._address, amount).returns(true)
-      await ticket.mock.controllerBurn.withArgs(wallet._address, amount, EMPTY_STR, EMPTY_STR).returns()
-      await ticketCredit.mock.controllerMint.withArgs(wallet._address, toWei('0'), EMPTY_STR, EMPTY_STR).returns()
+      await ticket.mock.controllerBurn.withArgs(wallet._address, wallet._address, amount).returns()
+      await ticketCredit.mock.controllerMint.withArgs(wallet._address, toWei('0')).returns()
       
       // Test redeemTicketsInstantly
-      await expect(prizePool.redeemTicketsInstantly(amount, EMPTY_STR, EMPTY_STR))
+      await expect(prizePool.redeemTicketsInstantly(amount))
         .to.emit(prizePool, 'TicketsRedeemedInstantly')
-        .withArgs(wallet._address, wallet._address, amount, toWei('0'), EMPTY_STR, EMPTY_STR)
+        .withArgs(wallet._address, wallet._address, amount, toWei('0'))
     })
   })
 
