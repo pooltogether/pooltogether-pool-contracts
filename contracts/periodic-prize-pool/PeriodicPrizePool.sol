@@ -339,6 +339,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     external nonReentrant returns (uint256)
   {
     address operator = _msgSender();
+    require(__ticket.balanceOf(from) >= tickets, "PrizePool/insuff-tickets");
 
     uint256 userInterestRatioMantissa = _ticketInterestRatioMantissa(from);
     uint256 totalExitFee = calculateExitFee(tickets, userInterestRatioMantissa);
@@ -390,7 +391,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function redeemTicketsInstantly(uint256 tickets) external nonReentrant returns (uint256) {
     address sender = _msgSender();
-    require(__ticket.balanceOf(sender) >= tickets, "Insufficient balance");
+    require(__ticket.balanceOf(sender) >= tickets, "PrizePool/insuff-tickets");
     uint256 userInterestRatioMantissa = _ticketInterestRatioMantissa(sender);
 
     uint256 exitFee = calculateExitFee(
