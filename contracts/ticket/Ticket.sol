@@ -18,16 +18,15 @@ contract Ticket is TicketInterface, ControlledToken {
   function initialize (
     string memory _name,
     string memory _symbol,
-    address[] memory defaultOperators,
     address _trustedForwarder,
     TokenControllerInterface _controller
   ) public override initializer {
-    ControlledToken.initialize(_name, _symbol, defaultOperators, _trustedForwarder, _controller);
+    ControlledToken.initialize(_name, _symbol, _trustedForwarder, _controller);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
   }
 
-  function _beforeTokenTransfer(address operator, address from, address to, uint256 tokenAmount) internal virtual override {
-    super._beforeTokenTransfer(operator, from, to, tokenAmount);
+  function _beforeTokenTransfer(address from, address to, uint256 tokenAmount) internal virtual override {
+    super._beforeTokenTransfer(from, to, tokenAmount);
 
     if (from != address(0)) {
       uint256 fromBalance = balanceOf(from);

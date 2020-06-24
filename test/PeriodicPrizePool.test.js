@@ -14,7 +14,6 @@ const getIterable = require('./helpers/iterable')
 
 const toWei = ethers.utils.parseEther
 const toBytes = ethers.utils.toUtf8Bytes
-const EMPTY_STR = toBytes('')
 
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
@@ -116,7 +115,7 @@ describe('PeriodicPrizePool contract', function() {
       await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
 
       // Test revert
-      await expect(prizePool.redeemTicketsInstantly(amount.mul(2), EMPTY_STR, EMPTY_STR))
+      await expect(prizePool.redeemTicketsInstantly(amount.mul(2)))
         .to.be.revertedWith('Insufficient balance')
     })
 
@@ -135,13 +134,13 @@ describe('PeriodicPrizePool contract', function() {
       await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
       await cToken.mock.redeemUnderlying.withArgs(amount).returns(amount)
       await token.mock.transfer.withArgs(wallet._address, amount).returns(true)
-      await ticket.mock.controllerBurn.withArgs(wallet._address, amount, EMPTY_STR, EMPTY_STR).returns()
-      await ticketCredit.mock.controllerMint.withArgs(wallet._address, toWei('0'), EMPTY_STR, EMPTY_STR).returns()
+      await ticket.mock.controllerBurn.withArgs(wallet._address, wallet._address, amount).returns()
+      await ticketCredit.mock.controllerMint.withArgs(wallet._address, toWei('0')).returns()
       
       // Test redeemTicketsInstantly
-      await expect(prizePool.redeemTicketsInstantly(amount, EMPTY_STR, EMPTY_STR))
+      await expect(prizePool.redeemTicketsInstantly(amount))
         .to.emit(prizePool, 'TicketsRedeemedInstantly')
-        .withArgs(wallet._address, wallet._address, amount, toWei('0'), EMPTY_STR, EMPTY_STR)
+        .withArgs(wallet._address, wallet._address, amount, toWei('0'))
     })
   })
 
@@ -157,12 +156,12 @@ describe('PeriodicPrizePool contract', function() {
       await token.mock.approve.withArgs(cToken.address, supplyAmount).returns(true)
       await cToken.mock.mint.withArgs(supplyAmount).returns('0')
       await cToken.mock.balanceOfUnderlying.withArgs(prizePool.address).returns(supplyAmount)
-      await sponsorship.mock.controllerMint.withArgs(wallet._address, supplyAmount, EMPTY_STR, EMPTY_STR).returns()
+      await sponsorship.mock.controllerMint.withArgs(wallet._address, supplyAmount).returns()
       await sponsorship.mock.balanceOf.withArgs(wallet._address).returns(supplyAmount)
-      await sponsorshipCredit.mock.controllerMint.withArgs(wallet._address, toWei('0'), EMPTY_STR, EMPTY_STR).returns()
+      await sponsorshipCredit.mock.controllerMint.withArgs(wallet._address, toWei('0')).returns()
 
       // Supply sponsorship
-      await expect(prizePool.supplySponsorship(wallet._address, supplyAmount, EMPTY_STR, EMPTY_STR))
+      await expect(prizePool.supplySponsorship(wallet._address, supplyAmount))
         .to.emit(prizePool, 'SponsorshipSupplied')
         .withArgs(wallet._address, wallet._address, supplyAmount)
         .to.emit(prizePool, 'SponsorshipInterestMinted')
@@ -187,11 +186,11 @@ describe('PeriodicPrizePool contract', function() {
       await cToken.mock.redeemUnderlying.withArgs(amount).returns(amount)
       await token.mock.transfer.withArgs(wallet._address, amount).returns(true)
 
-      await sponsorship.mock.controllerBurn.withArgs(wallet._address, amount, EMPTY_STR, EMPTY_STR).returns()
-      await sponsorshipCredit.mock.controllerMint.withArgs(wallet._address, toWei('0'), EMPTY_STR, EMPTY_STR).returns()
+      await sponsorship.mock.controllerBurn.withArgs(wallet._address, wallet._address, amount).returns()
+      await sponsorshipCredit.mock.controllerMint.withArgs(wallet._address, toWei('0')).returns()
 
       // Test redeemSponsorship
-      await expect(prizePool.redeemSponsorship(amount, EMPTY_STR, EMPTY_STR))
+      await expect(prizePool.redeemSponsorship(amount))
         .to.emit(prizePool, 'SponsorshipRedeemed')
         .withArgs(wallet._address, wallet._address, amount)
     })
@@ -204,12 +203,12 @@ describe('PeriodicPrizePool contract', function() {
       await prizePool.setSponsorshipInterestSharesForTest(wallet._address, amount)
 
       // Test revert
-      await expect(prizePool.redeemSponsorship(amount.mul(2), EMPTY_STR, EMPTY_STR))
+      await expect(prizePool.redeemSponsorship(amount.mul(2)))
         .to.be.revertedWith('PrizePool/insuff-sponsorship-shares')
     })
   })
 
-  describe('operatorRedeemSponsorship()', () => {
+  describe('redeemSponsorshipFrom()', () => {
     it('should allow an operator to redeem on behalf of a sponsor their sponsorship tokens', async () => {
       const amount = toWei('10')
       const interestAmount = toWei('1')
@@ -224,31 +223,13 @@ describe('PeriodicPrizePool contract', function() {
       await cToken.mock.redeemUnderlying.withArgs(amount).returns(amount)
       await token.mock.transfer.withArgs(wallet._address, amount).returns(true)
 
-      await sponsorship.mock.controllerBurn.withArgs(wallet._address, amount, EMPTY_STR, EMPTY_STR).returns()
-      await sponsorshipCredit.mock.controllerMint.withArgs(wallet._address, toWei('0'), EMPTY_STR, EMPTY_STR).returns()
-
-      // approved operator
-      await sponsorship.mock.isOperatorFor.withArgs(wallet2._address, wallet._address).returns(true)
+      await sponsorship.mock.controllerBurn.withArgs(wallet2._address, wallet._address, amount).returns()
+      await sponsorshipCredit.mock.controllerMint.withArgs(wallet._address, toWei('0')).returns()
 
       // Test operator redeem
-      await expect(prizePool.connect(wallet2).operatorRedeemSponsorship(wallet._address, amount, EMPTY_STR, EMPTY_STR))
+      await expect(prizePool.connect(wallet2).redeemSponsorshipFrom(wallet._address, amount))
         .to.emit(prizePool, 'SponsorshipRedeemed')
         .withArgs(wallet2._address, wallet._address, amount)
-    })
-
-    it('should not allow an unapproved operator to redeem on behalf of a sponsor', async () => {
-      const amount = toWei('10')
-
-      // Pre-fund Prize-Pool
-      await prizePool.supplyCollateralForTest(amount)
-      await prizePool.setSponsorshipInterestSharesForTest(wallet._address, amount)
-
-      // unapproved operator
-      await sponsorship.mock.isOperatorFor.withArgs(wallet2._address, wallet._address).returns(false)
-
-      // Test redeem revert
-      await expect(prizePool.connect(wallet2).operatorRedeemSponsorship(wallet._address, amount, EMPTY_STR, EMPTY_STR))
-        .to.be.revertedWith('PrizePool/only-operator');
     })
   })
 
@@ -286,12 +267,11 @@ describe('PeriodicPrizePool contract', function() {
         await token.mock.transfer.withArgs(user.data._address, amount).returns(true)
         await sponsorship.mock.balanceOf.withArgs(user.data._address).returns(amount)
 
-        await sponsorship.mock.controllerBurn.withArgs(user.data._address, amount, EMPTY_STR, EMPTY_STR).returns()
-        await sponsorshipCredit.mock.controllerMint.withArgs(user.data._address, interestAmount, EMPTY_STR, EMPTY_STR).returns()
+        await sponsorshipCredit.mock.controllerMint.withArgs(user.data._address, interestAmount).returns()
       }
 
       // Sweep for multiple accounts
-      await expect(prizePool.sweepSponsorship(accountAddresses, EMPTY_STR, EMPTY_STR))
+      await expect(prizePool.sweepSponsorship(accountAddresses))
         .to.emit(prizePool, 'SponsorshipInterestBurned')
         .withArgs(wallet._address, accountAddresses[0], interestAmount)
 

@@ -12,7 +12,7 @@ interface PeriodicPrizePoolInterface is YieldServiceInterface {
   function prizePeriodRemainingSeconds() external view returns (uint256);
   function prizePeriodStartedAt() external view returns (uint256);
   function prizePeriodEndAt() external view returns (uint256);
-  function mintTickets(address to, uint256 amount, bytes calldata data, bytes calldata operatorData) external;
+  function mintTickets(address to, uint256 amount) external;
   function ticket() external view returns (TicketInterface);
   function isPrizePeriodOver() external view returns (bool);
   function calculateExitFee(uint256 tickets, uint256 ticketInterestRatioMantissa) external view returns (uint256);
@@ -20,6 +20,6 @@ interface PeriodicPrizePoolInterface is YieldServiceInterface {
   function currentPrize() external returns (uint256);
   function prizeStrategy() external view returns (address);
   function awardPrize() external returns (uint256);
-  function awardTickets(address user, uint256 amount, bytes calldata data) external;
-  function awardSponsorship(address user, uint256 amount, bytes calldata data) external;
+  function awardTickets(address user, uint256 amount) external;
+  function awardSponsorship(address user, uint256 amount) external;
 }

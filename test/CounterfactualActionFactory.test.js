@@ -35,9 +35,9 @@ describe('CounterfactualActionFactory', () => {
 
       await token.mock.balanceOf.withArgs(address).returns(depositAmount)
       await token.mock.approve.withArgs(prizePool.address, depositAmount).returns(true)
-      await prizePool.mock.mintTickets.withArgs(wallet._address, depositAmount, [], []).returns()
+      await prizePool.mock.mintTickets.withArgs(wallet._address, depositAmount).returns()
 
-      await factory.mintTickets(wallet._address, [], [])
+      await factory.mintTickets(wallet._address)
     })
   })
 
@@ -49,7 +49,7 @@ describe('CounterfactualActionFactory', () => {
       await token.mock.balanceOf.withArgs(address).returns(depositAmount)
       await token.mock.transfer.withArgs(wallet._address, depositAmount).returns(true)
 
-      await factory.cancel(wallet._address, [])
+      await factory.cancel(wallet._address)
     })
   })
 
