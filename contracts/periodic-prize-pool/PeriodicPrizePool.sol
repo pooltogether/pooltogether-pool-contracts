@@ -130,8 +130,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     uint256 _tickets,
     uint256 _previousPrizeAverageTickets,
     uint256 _previousPrize
-  ) 
-    internal pure returns (uint256) 
+  )
+    internal pure returns (uint256)
   {
     // If there were no tickets, then it doesn't matter
     if (_previousPrizeAverageTickets == 0) {
@@ -147,11 +147,11 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function _scaleValueByTimeRemaining(
-    uint256 _value, 
-    uint256 _timeRemainingSeconds, 
+    uint256 _value,
+    uint256 _timeRemainingSeconds,
     uint256 _prizePeriodSeconds
-  ) 
-    internal pure returns (uint256) 
+  )
+    internal pure returns (uint256)
   {
     return FixedPoint.multiplyUintByMantissa(
       _value,
@@ -316,10 +316,15 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   // Ticket Minting/Redeeming
   //
 
-  function mintTickets(address to, uint256 amount, bytes calldata data) external override nonReentrant {
+
+  //
+  // Ticket Minting/Redeeming
+  //
+
+  function mintTickets(address to, uint256 amount, bytes calldata data, bytes calldata operatorData) external override nonReentrant {
     _token().transferFrom(_msgSender(), address(this), amount);
     _supply(amount);
-    _mintTickets(to, amount, data, "");
+    _mintTickets(to, amount, data, operatorData);
     _mintedTickets(amount);
   }
 
@@ -353,7 +358,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     // burn the tickets
     _burnTickets(from, tickets, data, operatorData);
     // burn the interestTracker
-    _redeemTicketInterestShares(from, tickets, userInterestRatioMantissa);
+    _redeemTicketInterestShares(from, tickets, userInterestRatioMantissa, data, operatorData);
 
     // redeem the tickets less the fee
     uint256 amount = tickets.sub(exitFee);
@@ -385,10 +390,15 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     return FixedPoint.calculateMantissa(_balanceOfTicketInterest(user, tickets), tickets);
   }
 
-  function redeemTicketsInstantly(uint256 tickets, bytes calldata data) external nonReentrant returns (uint256) {
+  function redeemTicketsInstantly(
+    uint256 tickets,
+    bytes calldata data
+  )
+    external nonReentrant returns (uint256)
+  {
     address sender = _msgSender();
+    require(__ticket.balanceOf(sender) >= tickets, "Insufficient balance");
     uint256 userInterestRatioMantissa = _ticketInterestRatioMantissa(sender);
-
 
     uint256 exitFee = calculateExitFee(
       tickets,
@@ -399,7 +409,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     _burnTickets(sender, tickets, data, "");
 
     // now calculate how much interest needs to be redeemed to maintain the interest ratio
-    _redeemTicketInterestShares(sender, tickets, userInterestRatioMantissa);
+    _redeemTicketInterestShares(sender, tickets, userInterestRatioMantissa, data, "");
 
     uint256 ticketsLessFee = tickets.sub(exitFee);
 
@@ -413,11 +423,19 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     return exitFee;
   }
 
-  function _redeemTicketInterestShares(address sender, uint256 tickets, uint256 userInterestRatioMantissa) internal {
+  function _redeemTicketInterestShares(
+    address sender,
+    uint256 tickets,
+    uint256 userInterestRatioMantissa,
+    bytes memory data,
+    bytes memory operatorData
+  )
+    internal
+  {
     uint256 ticketInterest = FixedPoint.multiplyUintByMantissa(tickets, userInterestRatioMantissa);
     uint256 burnedShares = redeemCollateral(tickets.add(ticketInterest));
     ticketInterestShares[sender] = ticketInterestShares[sender].sub(burnedShares);
-    ticketCredit.controllerMint(sender, ticketInterest, "", "");
+    ticketCredit.controllerMint(sender, ticketInterest, data, operatorData);
   }
 
   function operatorRedeemTicketsWithTimelock(
@@ -425,8 +443,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     uint256 tickets,
     bytes calldata data,
     bytes calldata operatorData
-  ) 
-    external nonReentrant onlyOperator(__ticket, from) returns (uint256) 
+  )
+    external nonReentrant onlyOperator(__ticket, from) returns (uint256)
   {
     address sender = _msgSender();
     return _redeemTicketsWithTimelock(sender, from, tickets, data, operatorData);
@@ -443,8 +461,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     uint256 tickets,
     bytes memory data,
     bytes memory operatorData
-  ) 
-    internal returns (uint256) 
+  )
+    internal returns (uint256)
   {
     // burn the tickets
     require(__ticket.balanceOf(sender) >= tickets, "PrizePool/insuff-tickets");
@@ -456,7 +474,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     // Sweep the old balance, if any
     address[] memory senders = new address[](1);
     senders[0] = sender;
-    
+
     sweep(senders);
 
     mintTo(sender, tickets, unlockTimestamp);
@@ -484,12 +502,12 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   //
 
   function supplySponsorship(
-    address receiver, 
-    uint256 amount, 
-    bytes memory data, 
+    address receiver,
+    uint256 amount,
+    bytes memory data,
     bytes memory operatorData
-  ) 
-    public nonReentrant 
+  )
+    public nonReentrant
   {
     address sender = _msgSender();
 
@@ -504,22 +522,22 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function redeemSponsorship(
-    uint256 amount, 
-    bytes memory data, 
+    uint256 amount,
+    bytes memory data,
     bytes memory operatorData
-  ) 
-    public nonReentrant 
+  )
+    public nonReentrant
   {
     address sender = _msgSender();
     _redeemSponsorship(sender, sender, amount, data, operatorData);
   }
 
   function operatorRedeemSponsorship(
-    address from, 
-    uint256 amount, 
-    bytes memory data, 
+    address from,
+    uint256 amount,
+    bytes memory data,
     bytes memory operatorData
-  ) 
+  )
     public nonReentrant onlyOperator(sponsorship, from)
   {
     _redeemSponsorship(_msgSender(), from, amount, data, operatorData);
@@ -547,7 +565,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   function _mintSponsorship(
     address account,
     uint256 amount,
-    bytes memory data, 
+    bytes memory data,
     bytes memory operatorData
   ) internal {
     // Mint sponsorship tokens
@@ -574,7 +592,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   function _burnSponsorship(
     address account,
     uint256 amount,
-    bytes memory data, 
+    bytes memory data,
     bytes memory operatorData
   ) internal {
     // Burn & accredit accrued interest on collateral
@@ -585,9 +603,9 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function _burnSponsorshipCollateralSweepInterest(
-    address account, 
+    address account,
     uint256 collateralAmount,
-    bytes memory data, 
+    bytes memory data,
     bytes memory operatorData
   ) internal {
     // Burn collateral + interest from interest tracker
@@ -605,16 +623,16 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     // Burn collateral/interest from interest tracker
     uint256 shares = redeemCollateral(amount);
     sponsorshipInterestShares[account] = sponsorshipInterestShares[account].sub(shares);
-    
+
     emit SponsorshipInterestBurned(_msgSender(), account, shares);
   }
-  
+
   function _mintSponsorshipCredit(
     address account,
-    bytes memory data, 
+    bytes memory data,
     bytes memory operatorData
-  ) 
-    internal returns (uint256 interest) 
+  )
+    internal returns (uint256 interest)
   {
     // Mint accrued interest on existing collateral
     interest = _calculateInterestOnSponsorship(account);
@@ -627,10 +645,10 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function sweepSponsorship(
     address[] memory accounts,
-    bytes memory data, 
+    bytes memory data,
     bytes memory operatorData
-  ) 
-    public 
+  )
+    public
   {
     for (uint256 i = 0; i < accounts.length; i++) {
       address account = accounts[i];
@@ -640,10 +658,10 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function _sweepSponsorshipInterest(
     address account,
-    bytes memory data, 
+    bytes memory data,
     bytes memory operatorData
-  ) 
-    internal 
+  )
+    internal
   {
     uint256 interest = _mintSponsorshipCredit(account, data, operatorData);
     _burnSponsorshipFromInterestTracker(account, interest);
@@ -687,7 +705,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     // otherwise we need to transfer the collateral from one user to the other
     // the from's collateralization will increase, so credit them
     uint256 fromTicketInterestRatio = _ticketInterestRatioMantissa(from);
-    _redeemTicketInterestShares(from, amount, fromTicketInterestRatio);
+    _redeemTicketInterestShares(from, amount, fromTicketInterestRatio, "", "");
     _mintTicketInterestShares(to, amount);
   }
 

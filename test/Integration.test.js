@@ -13,6 +13,7 @@ const {
 
 const toWei = ethers.utils.parseEther
 const fromWei = ethers.utils.formatEther
+const EMPTY_STR = []
 
 const debug = require('debug')('ptv3:Integration.test')
 
@@ -82,7 +83,7 @@ describe('Integration Test', () => {
 
       let tx, receipt
 
-      await prizePool.mintTickets(wallet._address, toWei('100'), [], overrides)
+      await prizePool.mintTickets(wallet._address, toWei('100'), EMPTY_STR, EMPTY_STR, overrides)
 
       debug('Accrue custom...')
 
@@ -98,7 +99,7 @@ describe('Integration Test', () => {
 
       debug('completing award...')
 
-      await prizeStrategy.completeAward(prizePool.address, [])
+      await prizeStrategy.completeAward(prizePool.address, EMPTY_STR)
 
       debug('completed award')
 
@@ -107,13 +108,13 @@ describe('Integration Test', () => {
 
       debug('Redeem tickets with timelock...')
 
-      await prizePool.redeemTicketsWithTimelock(toWei('122'), [])
+      await prizePool.redeemTicketsWithTimelock(toWei('122'), EMPTY_STR)
 
       debug('Second award...')
 
       await increaseTime(prizePeriodSeconds * 2)
       await prizeStrategy.startAward(prizePool.address)
-      await prizeStrategy.completeAward(prizePool.address, [])
+      await prizeStrategy.completeAward(prizePool.address, EMPTY_STR)
 
       debug('Sweep timelocked funds...')
 
@@ -127,7 +128,7 @@ describe('Integration Test', () => {
     it('should support instant redemption', async () => {
       debug('Minting tickets...')
       await token.approve(prizePool.address, toWei('100'))
-      await prizePool.mintTickets(wallet._address, toWei('100'), [], overrides)
+      await prizePool.mintTickets(wallet._address, toWei('100'), EMPTY_STR, EMPTY_STR, overrides)
 
       debug('accruing...')
 
@@ -139,7 +140,7 @@ describe('Integration Test', () => {
       
       debug('redeeming tickets...')
 
-      await prizePool.redeemTicketsInstantly(toWei('100'), [])
+      await prizePool.redeemTicketsInstantly(toWei('100'), EMPTY_STR, EMPTY_STR)
 
       debug('checking balance...')
 
@@ -155,7 +156,7 @@ describe('Integration Test', () => {
 
       debug('1.2')
 
-      await prizePool2.mintTickets(wallet2._address, toWei('100'), [], overrides)
+      await prizePool2.mintTickets(wallet2._address, toWei('100'), EMPTY_STR, EMPTY_STR, overrides)
 
       debug('1.5')
 
@@ -167,19 +168,19 @@ describe('Integration Test', () => {
 
       // second user has not collateralized
       await token.approve(prizePool.address, toWei('100'))
-      await prizePool.mintTickets(wallet._address, toWei('100'), [], overrides)
+      await prizePool.mintTickets(wallet._address, toWei('100'), EMPTY_STR, EMPTY_STR, overrides)
 
       debug('3')
 
       await prizeStrategy.startAward(prizePool.address)
-      await prizeStrategy.completeAward(prizePool.address, [])
+      await prizeStrategy.completeAward(prizePool.address, EMPTY_STR)
 
       debug('4')
 
       // when second user withdraws, they must pay a fee
       let balanceBeforeWithdrawal = await token.balanceOf(wallet._address)
 
-      await prizePool.redeemTicketsInstantly(toWei('100'), [])
+      await prizePool.redeemTicketsInstantly(toWei('100'), EMPTY_STR, EMPTY_STR)
 
       debug('5')
 
