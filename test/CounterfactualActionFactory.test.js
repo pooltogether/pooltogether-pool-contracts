@@ -9,7 +9,7 @@ const { deployContract, deployMockContract } = require('ethereum-waffle')
 const toWei = ethers.utils.parseEther
 
 describe('CounterfactualActionFactory', () => {
-  
+
   let wallet, wallet2
 
   let token, prizePool
@@ -35,9 +35,9 @@ describe('CounterfactualActionFactory', () => {
 
       await token.mock.balanceOf.withArgs(address).returns(depositAmount)
       await token.mock.approve.withArgs(prizePool.address, depositAmount).returns(true)
-      await prizePool.mock.mintTickets.withArgs(wallet._address, depositAmount, []).returns()
+      await prizePool.mock.mintTickets.withArgs(wallet._address, depositAmount, [], []).returns()
 
-      await factory.mintTickets(wallet._address, [])
+      await factory.mintTickets(wallet._address, [], [])
     })
   })
 

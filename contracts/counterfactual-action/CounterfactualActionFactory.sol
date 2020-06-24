@@ -19,9 +19,9 @@ contract CounterfactualActionFactory {
     return Create2.computeAddress(salt(user), keccak256(MinimalProxyLibrary.minimalProxy(address(depositor))));
   }
 
-  function mintTickets(address payable user, bytes calldata data) external {
+  function mintTickets(address payable user, bytes calldata data, bytes calldata operatorData) external {
     CounterfactualAction d = newAction(user);
-    d.mintTickets(user, prizePool, data);
+    d.mintTickets(user, prizePool, data, operatorData);
   }
 
   function cancel(address payable user) external {
