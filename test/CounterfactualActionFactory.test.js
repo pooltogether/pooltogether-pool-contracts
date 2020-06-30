@@ -1,12 +1,14 @@
 const { expect } = require('chai')
 const CounterfactualActionFactory = require('../build/CounterfactualActionFactory.json')
-const PeriodicPrizePoolInterface = require('../build/PeriodicPrizePoolInterface.json')
+const PrizePool = require('../build/PrizePool.json')
 const IERC20 = require('../build/IERC20.json')
 const { ethers } = require('./helpers/ethers')
 const buidler = require('./helpers/buidler')
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 
 const toWei = ethers.utils.parseEther
+
+const TICKET_ADDRESS = '0xea674fdde714fd979de3edf0f56aa9716b898ec8'
 
 describe('CounterfactualActionFactory', () => {
 
@@ -21,23 +23,23 @@ describe('CounterfactualActionFactory', () => {
     provider = buidler.ethers.provider
 
     token = await deployMockContract(wallet, IERC20.abi)
-    prizePool = await deployMockContract(wallet, PeriodicPrizePoolInterface.abi)
+    prizePool = await deployMockContract(wallet, PrizePool.abi)
     await prizePool.mock.token.returns(token.address)
 
     factory = await deployContract(wallet, CounterfactualActionFactory, [])
     await factory.initialize(prizePool.address)
   })
 
-  describe('mintTickets', () => {
-    it('should allow mintTickets from anyone', async () => {
+  describe('depositTo', () => {
+    it('should allow depositTo from anyone', async () => {
       let address = await factory.calculateAddress(wallet._address)
       let depositAmount = toWei('100')
 
       await token.mock.balanceOf.withArgs(address).returns(depositAmount)
       await token.mock.approve.withArgs(prizePool.address, depositAmount).returns(true)
-      await prizePool.mock.mintTickets.withArgs(wallet._address, depositAmount).returns()
+      await prizePool.mock.depositTo.withArgs(wallet._address, depositAmount, TICKET_ADDRESS).returns()
 
-      await factory.mintTickets(wallet._address)
+      await factory.depositTo(wallet._address, TICKET_ADDRESS)
     })
   })
 

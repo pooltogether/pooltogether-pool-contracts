@@ -17,8 +17,8 @@ Assertion.addMethod('equalish', function (value, difference = 10) {
 
   this.assert(
       delta.lte(difference)
-    , `expected #{this} to be within ${difference} of #{exp} but got #{act}`
-    , "expected #{this} to not be within #{act}"
+    , `expected ${obj.toString()} to be within ${difference} of #{exp} but got #{act}`
+    , `expected ${obj.toString()} to not be within #{act}`
     , value.toString()        // expected
     , obj.toString()   // actual
   );

@@ -3,17 +3,9 @@ const { expect } = require('chai')
 const { increaseTime } = require('./helpers/increaseTime')
 const { ethers } = require('./helpers/ethers')
 const buidler = require('./helpers/buidler')
-const { call } = require('./helpers/call')
-const {
-  PRIZE_POOL_INTERFACE_HASH,
-  TICKET_INTERFACE_HASH,
-  YIELD_SERVICE_INTERFACE_HASH,
-  TIMELOCK_INTERFACE_HASH
-} = require('../js/constants')
 
 const toWei = ethers.utils.parseEther
 const fromWei = ethers.utils.formatEther
-const EMPTY_STR = []
 
 const debug = require('debug')('ptv3:Integration.test')
 
@@ -44,17 +36,17 @@ describe('Integration Test', () => {
     token2 = token.connect(wallet2)
     cToken = env.cToken
 
-    let tx = await env.singleRandomWinnerPrizePoolBuilder.createSingleRandomWinnerPrizePool(cToken.address, prizePeriodSeconds, 'Ticket', 'TICK', 'Sponsorship', 'SPON', overrides)
+    let tx = await env.prizeStrategyBuilder.create(cToken.address, prizePeriodSeconds, overrides)
     let receipt = await provider.getTransactionReceipt(tx.hash)
     let lastLog = receipt.logs[receipt.logs.length - 1]
-    let singleRandomWinnerCreatedEvent = env.singleRandomWinnerPrizePoolBuilder.interface.events.SingleRandomWinnerPrizePoolCreated.decode(lastLog.data, lastLog.topics)
+    let event = env.prizeStrategyBuilder.interface.events.PrizeStrategyBuilt.decode(lastLog.data, lastLog.topics)
 
-    debug({ singleRandomWinnerCreatedEvent })
+    debug({ event })
 
-    prizePool = await buidler.ethers.getContractAt('CompoundPeriodicPrizePool', singleRandomWinnerCreatedEvent.prizePool, wallet)
-    prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerPrizeStrategyInterface', await prizePool.prizeStrategy(), wallet)
+    prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategy', event.prizeStrategy, wallet)
+    prizePool = await buidler.ethers.getContractAt('CompoundPrizePool', await prizeStrategy.prizePool(), wallet)
     prizePool2 = prizePool.connect(wallet2)
-    ticket = await buidler.ethers.getContractAt('Ticket', await prizePool.ticket(), wallet)
+    ticket = await buidler.ethers.getContractAt('ControlledToken', await prizeStrategy.ticket(), wallet)
     ticket2 = ticket.connect(wallet2)
 
     debug({
@@ -83,7 +75,8 @@ describe('Integration Test', () => {
 
       let tx, receipt
 
-      await prizePool.mintTickets(wallet._address, toWei('100'), overrides)
+      await prizePool.depositTo(wallet._address, toWei('50'), ticket.address, overrides)
+      await prizePool.depositTo(wallet._address, toWei('50'), ticket.address, overrides)
 
       debug('Accrue custom...')
 
@@ -95,11 +88,11 @@ describe('Integration Test', () => {
       
       debug('starting award...')
 
-      await prizeStrategy.startAward(prizePool.address)
+      await prizeStrategy.startAward()
 
       debug('completing award...')
 
-      await prizeStrategy.completeAward(prizePool.address)
+      await prizeStrategy.completeAward()
 
       debug('completed award')
 
@@ -108,17 +101,17 @@ describe('Integration Test', () => {
 
       debug('Redeem tickets with timelock...')
 
-      await prizePool.redeemTicketsWithTimelock(toWei('122'))
+      await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('122'), ticket.address, overrides)
 
       debug('Second award...')
 
       await increaseTime(prizePeriodSeconds * 2)
-      await prizeStrategy.startAward(prizePool.address)
-      await prizeStrategy.completeAward(prizePool.address)
+      await prizeStrategy.startAward()
+      await prizeStrategy.completeAward()
 
       debug('Sweep timelocked funds...')
 
-      await prizePool.sweep([wallet._address])
+      await prizePool.sweepTimelockBalances([wallet._address])
 
       let balanceAfterWithdrawal = await token.balanceOf(wallet._address)
 
@@ -128,7 +121,7 @@ describe('Integration Test', () => {
     it('should support instant redemption', async () => {
       debug('Minting tickets...')
       await token.approve(prizePool.address, toWei('100'))
-      await prizePool.mintTickets(wallet._address, toWei('100'), overrides)
+      await prizePool.depositTo(wallet._address, toWei('100'), ticket.address, overrides)
 
       debug('accruing...')
 
@@ -140,7 +133,7 @@ describe('Integration Test', () => {
       
       debug('redeeming tickets...')
 
-      await prizePool.redeemTicketsInstantly(toWei('100'))
+      await prizePool.withdrawInstantlyFrom(wallet._address, toWei('100'), ticket.address, 0, overrides)
 
       debug('checking balance...')
 
@@ -156,7 +149,7 @@ describe('Integration Test', () => {
 
       debug('1.2')
 
-      await prizePool2.mintTickets(wallet2._address, toWei('100'), overrides)
+      await prizePool2.depositTo(wallet2._address, toWei('100'), ticket.address, overrides)
 
       debug('1.5')
 
@@ -168,19 +161,19 @@ describe('Integration Test', () => {
 
       // second user has not collateralized
       await token.approve(prizePool.address, toWei('100'))
-      await prizePool.mintTickets(wallet._address, toWei('100'), overrides)
+      await prizePool.depositTo(wallet._address, toWei('100'), ticket.address, overrides)
 
       debug('3')
 
-      await prizeStrategy.startAward(prizePool.address)
-      await prizeStrategy.completeAward(prizePool.address)
+      await prizeStrategy.startAward()
+      await prizeStrategy.completeAward()
 
       debug('4')
 
       // when second user withdraws, they must pay a fee
       let balanceBeforeWithdrawal = await token.balanceOf(wallet._address)
 
-      await prizePool.redeemTicketsInstantly(toWei('100'))
+      await prizePool.withdrawInstantlyFrom(wallet._address, toWei('100'), ticket.address, 0, overrides)
 
       debug('5')
 

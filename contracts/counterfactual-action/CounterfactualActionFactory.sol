@@ -7,9 +7,9 @@ import "../utils/MinimalProxyLibrary.sol";
 contract CounterfactualActionFactory {
 
   CounterfactualAction depositor;
-  PeriodicPrizePoolInterface prizePool;
+  PrizePool prizePool;
 
-  function initialize(PeriodicPrizePoolInterface _prizePool) external {
+  function initialize(PrizePool _prizePool) external {
     require(address(_prizePool) != address(0), "CounterfactualActionFactory/prize-pool-not-zero");
     depositor = new CounterfactualAction();
     prizePool = _prizePool;
@@ -19,9 +19,9 @@ contract CounterfactualActionFactory {
     return Create2.computeAddress(salt(user), keccak256(MinimalProxyLibrary.minimalProxy(address(depositor))));
   }
 
-  function mintTickets(address payable user) external {
+  function depositTo(address payable user, address token) external {
     CounterfactualAction d = newAction(user);
-    d.mintTickets(user, prizePool);
+    d.depositTo(user, prizePool, token);
   }
 
   function cancel(address payable user) external {

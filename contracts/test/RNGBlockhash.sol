@@ -2,7 +2,7 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
-import "./RNGInterface.sol";
+import "../rng/RNGInterface.sol";
 
 contract RNGBlockhash is RNGInterface {
   using SafeMath for uint256;
