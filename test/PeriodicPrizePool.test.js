@@ -43,7 +43,7 @@ describe('PeriodicPrizePool contract', function() {
     governor = await deployMockContract(wallet, GovernorInterface.abi, [], overrides)
 
     prizeStrategy = wallet._address
-  
+
     debug('mocking tokens...')
     token = await deployMockContract(wallet, IERC20.abi, overrides)
     cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
@@ -116,7 +116,7 @@ describe('PeriodicPrizePool contract', function() {
 
       // Test revert
       await expect(prizePool.redeemTicketsInstantly(amount.mul(2)))
-        .to.be.revertedWith('Insufficient balance')
+        .to.be.revertedWith('PrizePool/insuff-tickets')
     })
 
     it('should allow a user to redeem their tickets', async () => {
@@ -136,11 +136,54 @@ describe('PeriodicPrizePool contract', function() {
       await token.mock.transfer.withArgs(wallet._address, amount).returns(true)
       await ticket.mock.controllerBurn.withArgs(wallet._address, wallet._address, amount).returns()
       await ticketCredit.mock.controllerMint.withArgs(wallet._address, toWei('0')).returns()
-      
+
       // Test redeemTicketsInstantly
       await expect(prizePool.redeemTicketsInstantly(amount))
         .to.emit(prizePool, 'TicketsRedeemedInstantly')
-        .withArgs(wallet._address, wallet._address, amount, toWei('0'))
+        .withArgs(wallet._address, wallet._address, amount, toWei('0'), toWei('0'))
+    })
+  })
+
+  describe('redeemTicketsInstantlyFrom()', () => {
+    it('should not allow an operator to redeem more tickets than a user holds', async () => {
+      const amount = toWei('100')
+      const sponsoredExitFee = toWei('10')
+
+      // Pre-fund
+      await prizePool.setInterestSharesForTest(wallet._address, amount)
+
+      // Mocks
+      await cToken.mock.balanceOfUnderlying.withArgs(prizePool.address).returns(amount)
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
+
+      // Test revert
+      await expect(prizePool.connect(wallet2).redeemTicketsInstantlyFrom(wallet._address, amount.mul(2), sponsoredExitFee))
+        .to.be.revertedWith('PrizePool/insuff-tickets')
+    })
+
+    it('should allow an operator to redeem tickets on behalf of a user', async () => {
+      const averagePrize = toWei('1000')
+      const amount = toWei('100')
+      const sponsoredExitFee = toWei('10')
+
+      // Pre-fund
+      await cToken.mock.balanceOfUnderlying.withArgs(prizePool.address).returns(toWei('0'))
+      await prizePool.supplyCollateralForTest(amount)
+      await prizePool.setInterestSharesForTest(wallet._address, amount)
+      await prizePool.setPrizeAverageTickets(averagePrize)
+
+      // Mocks
+      await cToken.mock.balanceOfUnderlying.withArgs(prizePool.address).returns(amount)
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
+      await cToken.mock.redeemUnderlying.withArgs(amount).returns(amount)
+      await token.mock.transfer.withArgs(wallet._address, amount).returns(true)
+      await ticket.mock.controllerBurn.withArgs(wallet2._address, wallet._address, amount).returns()
+      await ticketCredit.mock.controllerMint.withArgs(wallet._address, toWei('0')).returns()
+
+      // Test redeemTicketsInstantlyFrom
+      await expect(prizePool.connect(wallet2).redeemTicketsInstantlyFrom(wallet._address, amount, sponsoredExitFee))
+        .to.emit(prizePool, 'TicketsRedeemedInstantly')
+        .withArgs(wallet2._address, wallet._address, amount, toWei('0'), toWei('0'))
     })
   })
 
@@ -283,7 +326,3 @@ describe('PeriodicPrizePool contract', function() {
   })
 
 });
-
-
-
-

@@ -38,7 +38,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     address indexed operator,
     address indexed from,
     uint256 tickets,
-    uint256 exitFee
+    uint256 exitFee,
+    uint256 sponsoredExitFee
   );
 
   event SponsorshipSupplied(address indexed operator, address indexed to, uint256 amount);
@@ -332,32 +333,41 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function redeemTicketsInstantlyFrom(
     address from,
-    uint256 tickets
-  ) 
-    external nonReentrant returns (uint256) 
+    uint256 tickets,
+    uint256 prepaidExitFee
+  )
+    external nonReentrant returns (uint256)
   {
     address operator = _msgSender();
+    require(__ticket.balanceOf(from) >= tickets, "PrizePool/insuff-tickets");
 
     uint256 userInterestRatioMantissa = _ticketInterestRatioMantissa(from);
-    uint256 exitFee = calculateExitFee(tickets, userInterestRatioMantissa);
+    uint256 totalExitFee = calculateExitFee(tickets, userInterestRatioMantissa);
 
-    // transfer the fee to this contract
-    _token().transferFrom(operator, address(this), exitFee);
+    uint256 userExitFee = totalExitFee;
+    uint256 sponsoredExitFee = (totalExitFee > prepaidExitFee) ? prepaidExitFee : totalExitFee;
+    if (totalExitFee > 0) {
+      userExitFee = (totalExitFee > prepaidExitFee) ? totalExitFee.sub(prepaidExitFee) : 0;
+    }
+
+    // transfer the sponsored exit-fee to this contract
+    if (sponsoredExitFee > 0) {
+      _token().transferFrom(operator, address(this), sponsoredExitFee);
+    }
 
     // burn the tickets
     _burnTickets(operator, from, tickets);
     // burn the interestTracker
     _redeemTicketInterestShares(from, tickets, userInterestRatioMantissa);
 
-    // redeem the tickets less the fee
-    uint256 amount = tickets.sub(exitFee);
-    _redeem(amount);
-    _token().transfer(from, amount);
+    // redeem the tickets less the exit-fee
+    _redeem(tickets.sub(totalExitFee));
+    _token().transfer(from, tickets.sub(userExitFee)); // includes sponsored exit-fee
 
-    emit TicketsRedeemedInstantly(operator, from, tickets, exitFee);
+    emit TicketsRedeemedInstantly(operator, from, tickets, totalExitFee, sponsoredExitFee);
 
     // return the exit fee
-    return exitFee;
+    return totalExitFee;
   }
 
   function balanceOfTicketInterest(address user) public returns (uint256) {
@@ -381,7 +391,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function redeemTicketsInstantly(uint256 tickets) external nonReentrant returns (uint256) {
     address sender = _msgSender();
-    require(__ticket.balanceOf(sender) >= tickets, "Insufficient balance");
+    require(__ticket.balanceOf(sender) >= tickets, "PrizePool/insuff-tickets");
     uint256 userInterestRatioMantissa = _ticketInterestRatioMantissa(sender);
 
     uint256 exitFee = calculateExitFee(
@@ -401,7 +411,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     _redeem(ticketsLessFee);
     _token().transfer(sender, ticketsLessFee);
 
-    emit TicketsRedeemedInstantly(sender, sender, tickets, exitFee);
+    emit TicketsRedeemedInstantly(sender, sender, tickets, exitFee, 0);
 
     // return the exit fee
     return exitFee;
@@ -423,8 +433,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   function redeemTicketsWithTimelockFrom(
     address from,
     uint256 tickets
-  ) 
-    external nonReentrant returns (uint256) 
+  )
+    external nonReentrant returns (uint256)
   {
     address operator = _msgSender();
     return _redeemTicketsWithTimelock(operator, from, tickets);
@@ -439,8 +449,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     address operator,
     address sender,
     uint256 tickets
-  ) 
-    internal returns (uint256) 
+  )
+    internal returns (uint256)
   {
     // burn the tickets
     require(__ticket.balanceOf(sender) >= tickets, "PrizePool/insuff-tickets");
@@ -477,10 +487,10 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   //
 
   function supplySponsorship(
-    address receiver, 
+    address receiver,
     uint256 amount
-  ) 
-    public nonReentrant 
+  )
+    public nonReentrant
   {
     address sender = _msgSender();
 
@@ -496,17 +506,17 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function redeemSponsorship(
     uint256 amount
-  ) 
-    public nonReentrant 
+  )
+    public nonReentrant
   {
     address sender = _msgSender();
     _redeemSponsorship(sender, sender, amount);
   }
 
   function redeemSponsorshipFrom(
-    address from, 
+    address from,
     uint256 amount
-  ) 
+  )
     public nonReentrant
   {
     _redeemSponsorship(_msgSender(), from, amount);
@@ -567,7 +577,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function _burnSponsorshipCollateralSweepInterest(
-    address account, 
+    address account,
     uint256 collateralAmount
   ) internal {
     // Burn collateral + interest from interest tracker
@@ -591,8 +601,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function _mintSponsorshipCredit(
     address account
-  ) 
-    internal returns (uint256 interest) 
+  )
+    internal returns (uint256 interest)
   {
     // Mint accrued interest on existing collateral
     interest = _calculateInterestOnSponsorship(account);
@@ -605,8 +615,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function sweepSponsorship(
     address[] memory accounts
-  ) 
-    public 
+  )
+    public
   {
     for (uint256 i = 0; i < accounts.length; i++) {
       address account = accounts[i];
@@ -616,8 +626,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function _sweepSponsorshipInterest(
     address account
-  ) 
-    internal 
+  )
+    internal
   {
     uint256 interest = _mintSponsorshipCredit(account);
     _burnSponsorshipFromInterestTracker(account, interest);
