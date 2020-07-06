@@ -110,13 +110,14 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function calculateExitFee(uint256 tickets, uint256 userInterestRatio) public view override returns (uint256) {
+    uint256 exitFee = _calculateExitFeeWithValues(
+      userInterestRatio,
+      tickets,
+      previousPrizeAverageTickets,
+      previousPrize
+    );
     return _scaleValueByTimeRemaining(
-      _calculateExitFeeWithValues(
-        userInterestRatio,
-        tickets,
-        previousPrizeAverageTickets,
-        previousPrize
-      ),
+      exitFee,
       _prizePeriodRemainingSeconds(),
       prizePeriodSeconds
     );
@@ -139,6 +140,7 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
     if (_userInterestRatioMantissa >= interestRatioMantissa) {
       return 0;
     }
+
     uint256 interestRatioDifferenceMantissa = interestRatioMantissa - _userInterestRatioMantissa;
     return FixedPoint.multiplyUintByMantissa(_tickets, interestRatioDifferenceMantissa);
   }
@@ -167,6 +169,9 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
   }
 
   function calculateUnlockTimestamp(address, uint256) public view override returns (uint256) {
+    if (previousPrize == 0) {
+      return 0;
+    }
     return _prizePeriodEndAt();
   }
 
@@ -315,8 +320,8 @@ abstract contract PeriodicPrizePool is Timelock, BaseRelayRecipient, ReentrancyG
 
   function mintTickets(address to, uint256 amount) external override nonReentrant {
     _token().transferFrom(_msgSender(), address(this), amount);
-    _supply(amount);
-    _mintTickets(to, amount);
+    _supply(amount); // increase unaccounted balance
+    _mintTickets(to, amount); // create new tickets and mint interest shares
     _mintedTickets(amount);
   }
 

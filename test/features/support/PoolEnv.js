@@ -21,6 +21,7 @@ function PoolEnv() {
     debug(`Fetched ${this.wallets.length} wallets`)
     debug(`Creating pool with prize period ${prizePeriodSeconds}...`)
     this.env = await deployTestPool(this.wallets[0], '' + prizePeriodSeconds)
+    this._prizePool = this.env.prizePool
     debug(`Pool created with address ${this.env.prizePool.address}`)
   }
 
@@ -56,25 +57,48 @@ function PoolEnv() {
 
     let amount = toWei(tickets)
 
-    let balance = await token.balanceOf(wallet._address)
-    if (balance.lt(amount)) {
-      await token.mint(wallet._address, amount.mul('100'), this.overrides)
-    }
-
+    await token.mint(wallet._address, amount, this.overrides)
     await token.approve(prizePool.address, amount, this.overrides)
     await prizePool.mintTickets(wallet._address, amount, this.overrides)
 
     debug(`Bought tickets`)
   }
 
-  this.buyTicketsAtTime = async function ({ user, tickets, elapsed }) {
+  this.timeAtElapsed = async function (elapsedTime) {
+    let startTime = await this._prizePool.prizePeriodStartedAt()
+    // console.log('start time: ', startTime.toString())
+    return startTime.add(elapsedTime)
+  }
+
+  this.atTime = async function (elapsedTime, asyncFunc) {
+    let currentTime = await this.timeAtElapsed(elapsedTime)
+    await this._prizePool.setCurrentTime(currentTime, this.overrides)
+    await asyncFunc()
+    await this._prizePool.setCurrentTime('0', this.overrides)
+  }
+
+  this.buyTicketsAtTime = async function ({ user, tickets, time }) {
+    await this.atTime(time, async () => {
+      await this.buyTickets({ user, tickets })
+    })
+  }
+
+  this.redeemTicketsInstantly = async function ({ user, tickets }) {
     let wallet = await this.wallet(user)
     let prizePool = await this.prizePool(wallet)
-    let startTime = await prizePool.prizePeriodStartedAt()
-    let buyTime = startTime.add(elapsed)
-    await prizePool.setCurrentTime(buyTime, this.overrides)
-    await this.buyTickets({ user, tickets })
-    await prizePool.setCurrentTime('0', this.overrides)
+    await prizePool.redeemTicketsInstantly(toWei(tickets))
+  }
+
+  this.redeemTicketsInstantlyAtTime = async function ({ user, tickets, time }) {
+    await this.atTime(time, async () => {
+      await this.redeemTicketsInstantly({ user, tickets })
+    })
+  }
+
+  this.redeemTicketsWithTimelock = async function ({ user, tickets }) {
+    let wallet = await this.wallet(user)
+    let prizePool = await this.prizePool(wallet)
+    await prizePool.redeemTicketsWithTimelock(toWei(tickets))
   }
 
   this.expectUserToHaveTickets = async function ({ user, tickets }) {
@@ -110,6 +134,12 @@ function PoolEnv() {
     let ticketInterest = await call(prizePool, 'balanceOfTicketInterest', wallet._address)
 
     expect(ticketInterest).to.equalish(toWei(interest), 300)
+  }
+
+  this.expectUserToHaveTokens = async function ({ user, tokens }) {
+    let wallet = await this.wallet(user)
+    let token = await this.token(wallet)
+    expect(await token.balanceOf(wallet._address)).to.equalish(toWei(tokens), 100)
   }
 
   this.awardPrize = async function () {

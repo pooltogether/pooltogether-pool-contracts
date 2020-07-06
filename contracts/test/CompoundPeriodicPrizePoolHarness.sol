@@ -1,5 +1,7 @@
 pragma solidity ^0.6.4;
 
+import "@nomiclabs/buidler/console.sol";
+
 import "../periodic-prize-pool/CompoundPeriodicPrizePool.sol";
 
 /* solium-disable security/no-block-members */
@@ -20,6 +22,7 @@ contract CompoundPeriodicPrizePoolHarness is CompoundPeriodicPrizePool {
   }
 
   function setCurrentTime(uint256 _time) external {
+    // console.log("setCurrentTime( %s )", _time);
     time = _time;
   }
 
@@ -27,6 +30,7 @@ contract CompoundPeriodicPrizePoolHarness is CompoundPeriodicPrizePool {
     if (time == 0) {
       return block.timestamp;
     }
+    // console.log("_currentTime(): %s", time);
     return time;
   }
 
@@ -41,7 +45,7 @@ contract CompoundPeriodicPrizePoolHarness is CompoundPeriodicPrizePool {
 
   // Here we mint a user "fair shares" of the total pool of collateral.
   function supplyCollateralForTest(uint256 _collateral) public {
-    uint256 shares = FixedPoint.divideUintByMantissa(_collateral, _exchangeRateMantissa());
+    uint256 shares = _shareValueOfCollateral(_collateral);
     interestShareTotalSupply = interestShareTotalSupply.add(shares);
     totalCollateral = totalCollateral.add(_collateral);
     __accountedBalance = __accountedBalance.add(_collateral);

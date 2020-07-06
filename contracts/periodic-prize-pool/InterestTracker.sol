@@ -51,7 +51,7 @@ abstract contract InterestTracker is AbstractYieldService {
   }
 
   function captureInterest() internal returns (uint256) {
-    poke();
+    _poke();
     uint256 interest = newInterest;
     newInterest = 0;
 
@@ -61,7 +61,15 @@ abstract contract InterestTracker is AbstractYieldService {
   }
 
   function collateralValueOfShares(uint256 shares) public returns (uint256) {
+    return _collateralValueOfShares(shares);
+  }
+
+  function _collateralValueOfShares(uint256 shares) internal returns (uint256) {
     return FixedPoint.multiplyUintByMantissa(shares, _exchangeRateMantissa());
+  }
+
+  function _shareValueOfCollateral(uint256 collateral) internal returns (uint256) {
+    return FixedPoint.divideUintByMantissa(collateral, _exchangeRateMantissa());
   }
 
   function exchangeRateMantissa() external returns (uint256) {
@@ -73,12 +81,16 @@ abstract contract InterestTracker is AbstractYieldService {
     if (interestShareTotalSupply == 0) {
       return INITIAL_EXCHANGE_RATE_MANTISSA;
     } else {
-      poke();
+      _poke();
       return FixedPoint.calculateMantissa(totalCollateral, interestShareTotalSupply);
     }
   }
 
-  function poke() internal {
+  function poke() external {
+    _poke();
+  }
+
+  function _poke() internal {
     uint256 unaccountedBalance = _unaccountedBalance();
     if (unaccountedBalance > 0) {
       _capture(unaccountedBalance);
