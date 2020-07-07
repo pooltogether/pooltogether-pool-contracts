@@ -43,11 +43,12 @@ contract PrizeStrategyBuilder is Initializable {
 
   function create(
     CTokenInterface _cToken,
-    uint256 _prizePeriodSeconds
+    uint256 _prizePeriodSeconds,
+    address[] memory externalAwards
   ) public returns (PrizeStrategy) {
     PrizeStrategy prizeStrategy = prizeStrategyProxyFactory.create();
 
-    (CompoundPrizePool prizePool, ControlledToken[] memory tokens) = createPrizePool(
+    (CompoundPrizePool prizePool, address[] memory tokens) = createPrizePool(
       prizeStrategy,
       _cToken
     );
@@ -59,7 +60,8 @@ contract PrizeStrategyBuilder is Initializable {
       prizePool,
       tokens[0],
       tokens[1],
-      rng
+      rng,
+      externalAwards
     );
 
     emit PrizeStrategyBuilt(
@@ -74,7 +76,7 @@ contract PrizeStrategyBuilder is Initializable {
   function createPrizePool(
     PrizeStrategy prizeStrategy,
     CTokenInterface _cToken
-  ) internal returns (CompoundPrizePool, ControlledToken[] memory) {
+  ) internal returns (CompoundPrizePool, address[] memory) {
     CompoundPrizePoolBuilder.TokenDetails[] memory tokenDetails = new CompoundPrizePoolBuilder.TokenDetails[](2);
 
     tokenDetails[0] = CompoundPrizePoolBuilder.TokenDetails({ name: "Ticket", symbol: "TCKT" });

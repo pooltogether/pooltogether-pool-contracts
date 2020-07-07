@@ -3,6 +3,7 @@ pragma solidity ^0.6.4;
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 
+import "../prize-pool/MappedSinglyLinkedList.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../prize-pool/PrizePool.sol";
@@ -20,8 +21,8 @@ contract PrizeStrategyStorage {
 
   PrizePool public prizePool;
   GovernorInterface public governor;
-  ControlledToken public ticket;
-  ControlledToken public sponsorship;
+  IERC20 public ticket;
+  IERC20 public sponsorship;
   SortitionSumTreeFactory.SortitionSumTrees sortitionSumTrees;
 
   uint256 public prizePeriodSeconds;
@@ -35,4 +36,6 @@ contract PrizeStrategyStorage {
   RNGInterface public rng;
   uint256 public rngRequestId;
 
+  // external tokens awarded as part of prize
+  MappedSinglyLinkedList.Mapping internal externalAwardMapping;
 }

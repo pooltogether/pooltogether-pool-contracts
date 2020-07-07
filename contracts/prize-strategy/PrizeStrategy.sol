@@ -32,6 +32,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   using SafeMath for uint256;
   using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
+  using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
   bytes32 constant private TREE_KEY = keccak256("PoolTogether/Ticket");
   uint256 constant private MAX_TREE_LEAVES = 5;
@@ -40,8 +41,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   event PrizePoolOpened(address indexed operator, uint256 indexed prizePeriodStartedAt);
   event PrizePoolAwardStarted(address indexed operator, address indexed prizePool, uint256 indexed rngRequestId);
   event PrizePoolAwarded(address indexed operator, uint256 prize, uint256 reserveFee);
-  event SponsorshipInterestMinted(address indexed operator, address indexed to, uint256 amount);
-  event SponsorshipInterestBurned(address indexed operator, address indexed from, uint256 amount);
   event Awarded(address indexed operator, address indexed winner, address indexed token, uint256 amount);
 
   function initialize (
@@ -49,9 +48,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
     GovernorInterface _governor,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
-    ControlledToken _ticket,
-    ControlledToken _sponsorship,
-    RNGInterface _rng
+    address _ticket,
+    address _sponsorship,
+    RNGInterface _rng,
+    address[] memory _externalAwards
   ) public initializer {
     require(address(_governor) != address(0), "PrizePool/governor-not-zero");
     require(_prizePeriodSeconds > 0, "PrizePool/prize-period-greater-than-zero");
@@ -60,9 +60,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
     require(address(_sponsorship) != address(0), "PrizePool/sponsorship-not-zero");
     require(address(_rng) != address(0), "PrizePool/rng-not-zero");
     prizePool = _prizePool;
-    ticket = _ticket;
+    ticket = IERC20(_ticket);
     rng = _rng;
-    sponsorship = _sponsorship;
+    sponsorship = IERC20(_sponsorship);
     trustedForwarder = _trustedForwarder;
     __ReentrancyGuard_init();
     governor = _governor;
@@ -70,6 +70,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
     prizePeriodStartedAt = _currentTime();
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
+    externalAwardMapping.initialize(_externalAwards);
+    for (uint256 i = 0; i < _externalAwards.length; i++) {
+      require(prizePool.canAwardExternal(_externalAwards[i]), "PrizePool/cannot-award-external");
+    }
 
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
@@ -268,25 +272,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return _currentTime() >= _prizePeriodEndAt();
   }
 
-  function awardPrize() internal returns (uint256) {
-    require(_isPrizePeriodOver(), "PrizePool/not-over");
-    uint256 balance = prizePool.awardBalance();
-    uint256 reserveFee = _calculateReserveFee(balance);
-    uint256 prize = balance.sub(reserveFee);
-
-    prizePeriodStartedAt = _currentTime();
-    previousPrize = prize;
-    previousPrizeAverageTickets = prizeAverageTickets;
-    prizeAverageTickets = ticket.totalSupply();
-
-    if (reserveFee > 0) {
-      sponsorship.controllerMint(governor.reserve(), reserveFee);
-    }
-
-    emit PrizePoolAwarded(_msgSender(), prize, reserveFee);
-    emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
-
-    return prize;
+  function awardSponsorship(address user, uint256 amount) internal {
+    prizePool.award(user, amount, address(sponsorship));
   }
 
   function awardTickets(address user, uint256 amount) internal {
@@ -294,8 +281,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
     prizePool.award(user, amount, address(ticket));
   }
 
-  function awardSponsorship(address user, uint256 amount) internal {
-    prizePool.award(user, amount, address(sponsorship));
+  function awardExternalTokens(address winner) internal {
+    address currentToken = externalAwardMapping.addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
+    while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
+      prizePool.award(winner, IERC20(currentToken).balanceOf(address(prizePool)), currentToken);
+      currentToken = externalAwardMapping.addressMap[currentToken];
+    }
   }
 
   function prizePeriodEndAt() external view returns (uint256) {
@@ -386,18 +377,30 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   function completeAward() external requireCanCompleteAward {
-    // console.log("completeing awaward 2");
+    require(_isPrizePeriodOver(), "PrizePool/not-over");
     bytes32 randomNumber = rng.randomNumber(rngRequestId);
-    // console.log("completeing awaward 3");
-    uint256 prize = awardPrize();
-    // console.log("completeing awaward 4 %s", prize);
+    uint256 balance = prizePool.awardBalance();
+    uint256 reserveFee = _calculateReserveFee(balance);
+    uint256 prize = balance.sub(reserveFee);
+
     delete rngRequestId;
-    if (prize > 0) {
-      address winner = draw(uint256(randomNumber));
-      if (winner != address(0)) {
-        awardTickets(winner, prize);
-      }
+    prizePeriodStartedAt = _currentTime();
+    previousPrize = prize;
+    previousPrizeAverageTickets = prizeAverageTickets;
+    prizeAverageTickets = ticket.totalSupply();
+
+    if (reserveFee > 0) {
+      awardSponsorship(governor.reserve(), reserveFee);
     }
+
+    address winner = draw(uint256(randomNumber));
+    if (winner != address(0)) {
+      awardTickets(winner, prize);
+      awardExternalTokens(winner);
+    }
+
+    emit PrizePoolAwarded(_msgSender(), prize, reserveFee);
+    emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
   modifier requireCanStartAward() {
@@ -437,4 +440,5 @@ contract PrizeStrategy is PrizeStrategyStorage,
     bytes calldata operatorData
   ) external override {
   }
+  
 }

@@ -38,10 +38,10 @@ contract CompoundPrizePoolBuilder is Initializable {
     ComptrollerInterface comptroller,
     CTokenInterface cToken,
     TokenDetails[] calldata tokenDetails
-  ) external returns (CompoundPrizePool compoundPrizePool, ControlledToken[] memory tokens) {
+  ) external returns (CompoundPrizePool compoundPrizePool, address[] memory tokens) {
     compoundPrizePool = compoundPrizePoolFactory.create();
 
-    tokens = new ControlledToken[](tokenDetails.length);
+    tokens = new address[](tokenDetails.length);
     for (uint256 i = 0; i < tokens.length; i++) {
       ControlledToken token = controlledTokenFactory.create();
       token.initialize(
@@ -50,7 +50,7 @@ contract CompoundPrizePoolBuilder is Initializable {
         trustedForwarder,
         compoundPrizePool
       );
-      tokens[i] = token;
+      tokens[i] = address(token);
     }
 
     compoundPrizePool.initialize(

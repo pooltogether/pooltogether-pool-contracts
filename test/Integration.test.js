@@ -36,7 +36,7 @@ describe('Integration Test', () => {
     token2 = token.connect(wallet2)
     cToken = env.cToken
 
-    let tx = await env.prizeStrategyBuilder.create(cToken.address, prizePeriodSeconds, overrides)
+    let tx = await env.prizeStrategyBuilder.create(cToken.address, prizePeriodSeconds, [], overrides)
     let receipt = await provider.getTransactionReceipt(tx.hash)
     let lastLog = receipt.logs[receipt.logs.length - 1]
     let event = env.prizeStrategyBuilder.interface.events.PrizeStrategyBuilt.decode(lastLog.data, lastLog.topics)
@@ -181,8 +181,6 @@ describe('Integration Test', () => {
 
       // no previous prize, so withdrawal costs zero
       let difference = balanceAfterWithdrawal.sub(balanceBeforeWithdrawal)
-
-      console.log(fromWei(difference.toString()))
 
       expect(difference.lt(toWei('100'))).to.be.true
     })

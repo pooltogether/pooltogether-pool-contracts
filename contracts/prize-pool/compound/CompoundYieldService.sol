@@ -30,6 +30,10 @@ contract CompoundYieldService is AbstractYieldService {
     emit PrincipalSupplied(msg.sender, amount);
   }
 
+  function _canAwardExternal(address _token) internal override view returns (bool) {
+    return _token != address(cToken);
+  }
+
   function _redeem(uint256 amount) internal override {
     cToken.redeemUnderlying(amount);
 
