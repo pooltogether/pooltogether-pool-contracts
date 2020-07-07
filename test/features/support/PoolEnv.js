@@ -6,7 +6,7 @@ const { call } = require('../../helpers/call')
 const { deployTestPool } = require('../../../js/deployTestPool')
 require('../../helpers/chaiMatchers')
 
-const debug = require('debug')('ptv3:cucumber:world')
+const debug = require('debug')('ptv3:PoolEnv')
 
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const fromWei = (val) => ethers.utils.formatEther('' + val)
@@ -21,14 +21,20 @@ function PoolEnv() {
     debug(`Fetched ${this.wallets.length} wallets`)
     debug(`Creating pool with prize period ${prizePeriodSeconds}...`)
     this.env = await deployTestPool(this.wallets[0], '' + prizePeriodSeconds)
-    this._prizePool = this.env.prizePool
-    debug(`Pool created with address ${this.env.prizePool.address}`)
+    debug(`CompoundPrizePool created with address ${this.env.compoundPrizePool.address}`)
+    debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
+  }
+
+  this.prizeStrategy = async function (wallet) {
+    let prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategyHarness', this.env.prizeStrategy.address, wallet)
+    this._prizeStrategy = prizeStrategy
+    return prizeStrategy
   }
 
   this.prizePool = async function (wallet) {
-    let prizePool = await buidler.ethers.getContractAt('CompoundPeriodicPrizePoolHarness', this.env.prizePool.address, wallet)
-    this._prizePool = prizePool
-    return prizePool
+    let compoundPrizePool = await buidler.ethers.getContractAt('CompoundPrizePool', this.env.compoundPrizePool.address, wallet)
+    this._prizePool = compoundPrizePool
+    return compoundPrizePool
   }
 
   this.token = async function (wallet) {
@@ -36,9 +42,9 @@ function PoolEnv() {
   }
 
   this.ticket = async function (wallet) {
-    let prizePool = await this.prizePool(wallet)
+    let prizePool = await this.prizeStrategy(wallet)
     let ticketAddress = await prizePool.ticket()
-    return await buidler.ethers.getContractAt('Ticket', ticketAddress, wallet)
+    return await buidler.ethers.getContractAt('ControlledToken', ticketAddress, wallet)
   }
 
   this.wallet = async function (id) {
@@ -53,52 +59,33 @@ function PoolEnv() {
     debug('wallet is ', wallet._address)
 
     let token = await this.token(wallet)
+    let ticket = await this.ticket(wallet)
     let prizePool = await this.prizePool(wallet)
 
     let amount = toWei(tickets)
 
-    await token.mint(wallet._address, amount, this.overrides)
+    let balance = await token.balanceOf(wallet._address)
+    if (balance.lt(amount)) {
+      await token.mint(wallet._address, amount.mul('100'), this.overrides)
+    }
+
     await token.approve(prizePool.address, amount, this.overrides)
-    await prizePool.mintTickets(wallet._address, amount, this.overrides)
+
+    debug('Depositing...')
+
+    await prizePool.depositTo(wallet._address, amount, ticket.address, this.overrides)
 
     debug(`Bought tickets`)
   }
 
-  this.timeAtElapsed = async function (elapsedTime) {
-    let startTime = await this._prizePool.prizePeriodStartedAt()
-    // console.log('start time: ', startTime.toString())
-    return startTime.add(elapsedTime)
-  }
-
-  this.atTime = async function (elapsedTime, asyncFunc) {
-    let currentTime = await this.timeAtElapsed(elapsedTime)
-    await this._prizePool.setCurrentTime(currentTime, this.overrides)
-    await asyncFunc()
-    await this._prizePool.setCurrentTime('0', this.overrides)
-  }
-
-  this.buyTicketsAtTime = async function ({ user, tickets, time }) {
-    await this.atTime(time, async () => {
-      await this.buyTickets({ user, tickets })
-    })
-  }
-
-  this.redeemTicketsInstantly = async function ({ user, tickets }) {
+  this.buyTicketsAtTime = async function ({ user, tickets, elapsed }) {
     let wallet = await this.wallet(user)
-    let prizePool = await this.prizePool(wallet)
-    await prizePool.redeemTicketsInstantly(toWei(tickets))
-  }
-
-  this.redeemTicketsInstantlyAtTime = async function ({ user, tickets, time }) {
-    await this.atTime(time, async () => {
-      await this.redeemTicketsInstantly({ user, tickets })
-    })
-  }
-
-  this.redeemTicketsWithTimelock = async function ({ user, tickets }) {
-    let wallet = await this.wallet(user)
-    let prizePool = await this.prizePool(wallet)
-    await prizePool.redeemTicketsWithTimelock(toWei(tickets))
+    let prizeStrategy = await this.prizeStrategy(wallet)
+    let startTime = await prizeStrategy.prizePeriodStartedAt()
+    let buyTime = startTime.add(elapsed)
+    await prizeStrategy.setCurrentTime(buyTime, this.overrides)
+    await this.buyTickets({ user, tickets })
+    await prizeStrategy.setCurrentTime('0', this.overrides)
   }
 
   this.expectUserToHaveTickets = async function ({ user, tickets }) {
@@ -109,60 +96,56 @@ function PoolEnv() {
   }
 
   this.poolAccrues = async function ({ tickets }) {
+    debug(`poolAccrues(${tickets.toString()})...`)
     await this.env.cToken.accrueCustom(toWei(tickets))
 
-    debug(`totalSupply: ${await this.env.cToken.totalSupply()}`)
-    debug(`poolAccrues new underlying: ${await call(this.env.cToken, 'balanceOfUnderlying', this.env.prizePool.address)}`)
+    debug(`poolAccrues cToken totalSupply: ${await this.env.cToken.totalSupply()}`)
+    debug(`poolAccrues balanceOfUnderlying: ${await call(this.env.cToken, 'balanceOfUnderlying', this.env.compoundPrizePool.address)}`)
   }
 
-  this.expectUserToHaveTicketInterest = async function ({ user, interest }) {
+  this.expectUserToHaveTicketCredit = async function ({ user, interest }) {
     let wallet = await this.wallet(user)
-    let prizePool = await this.prizePool(wallet)
 
-    let ticketShares = await prizePool.balanceOfTicketInterestShares(wallet._address)
-    let interestCollateral = await prizePool.totalCollateral();
-    let tickets = await this.env.ticket.balanceOf(wallet._address)
-    let collateralValue = await call(prizePool, 'collateralValueOfShares', ticketShares)
+    let prizeStrategy = await this.prizeStrategy(wallet)
 
-    debug({
-      ticketShares: fromWei(ticketShares),
-      interestCollateral: fromWei(interestCollateral),
-      tickets: fromWei(tickets),
-      shareValue: fromWei(collateralValue)
-    })
+    // let ticketShares = await prizeStrategy.balanceOfTicketInterestShares(wallet._address)
+    // let totalCollateral = await prizeStrategy.totalCollateral();
+    // let tickets = await this.env.ticket.balanceOf(wallet._address)
+    // let collateralValue = await call(prizeStrategy, 'collateralValueOfShares', ticketShares)
 
-    let ticketInterest = await call(prizePool, 'balanceOfTicketInterest', wallet._address)
+    // debug({
+    //   ticketShares: fromWei(ticketShares),
+    //   totalCollateral: fromWei(totalCollateral),
+    //   tickets: fromWei(tickets),
+    //   collateralValue: fromWei(collateralValue)
+    // })
+
+    let ticketInterest = await call(prizeStrategy, 'balanceOfTicketInterest', wallet._address)
 
     expect(ticketInterest).to.equalish(toWei(interest), 300)
   }
 
-  this.expectUserToHaveTokens = async function ({ user, tokens }) {
-    let wallet = await this.wallet(user)
-    let token = await this.token(wallet)
-    expect(await token.balanceOf(wallet._address)).to.equalish(toWei(tokens), 100)
-  }
-
   this.awardPrize = async function () {
-    this.awardPrizeToToken({ token: 0 })
+    await this.awardPrizeToToken({ token: 0 })
   }
 
   this.awardPrizeToToken = async function ({ token }) {
-    let endTime = await this._prizePool.prizePeriodEndAt()
+    let endTime = await this._prizeStrategy.prizePeriodEndAt()
 
-    await this._prizePool.setCurrentTime(endTime, this.overrides)
+    await this._prizeStrategy.setCurrentTime(endTime, this.overrides)
 
     debug(`Starting award with token ${token}...`)
-    await this.env.prizeStrategy.startAward(this._prizePool.address, this.overrides)
+    await this.env.prizeStrategy.startAward(this.overrides)
 
     let randomNumber = ethers.utils.hexlify(ethers.utils.padZeros(ethers.utils.bigNumberify('' + token), 32))
     await this.env.rng.setRandomNumber(randomNumber, this.overrides)
 
     debug(`Completing award...`)
-    await this.env.prizeStrategy.completeAward(this._prizePool.address, this.overrides)
+    await this.env.prizeStrategy.completeAward(this.overrides)
     
     debug('award completed')
 
-    await this._prizePool.setCurrentTime('0', this.overrides)
+    await this._prizeStrategy.setCurrentTime('0', this.overrides)
   }
 
 }

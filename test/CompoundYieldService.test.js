@@ -62,19 +62,14 @@ describe('CompoundYieldService contract', () => {
       await token.mock.approve.withArgs(cToken.address, toWei('1')).returns(true)
       await cToken.mock.mint.withArgs(toWei('1')).returns(0)
       
-      await yieldService.supply(toWei('1'))
-      // await expect(yieldService.supply(toWei('1')))
-      //   .to.emit(yieldService, 'PrincipalSupplied')
-      //   .withArgs(wallet._address, toWei('1'))
-
-      expect(await yieldService.accountedBalance()).to.equal(toWei('1'))
+      await expect(yieldService.supply(toWei('1')))
+        .to.emit(yieldService, 'PrincipalSupplied')
+        .withArgs(wallet._address, toWei('1'))
     })
   })
 
-  describe('redeemUnderlying()', () => {
+  describe('redeem()', () => {
     it('should allow redeeming principal', async function () {
-      await yieldService.setAccountedBalance(toWei('1'))
-
       await cToken.mock.redeemUnderlying.withArgs(toWei('1')).returns('0')
       await token.mock.transfer.withArgs(wallet._address, toWei('1')).returns(true)
 
@@ -84,55 +79,11 @@ describe('CompoundYieldService contract', () => {
     })
   })
 
-  describe('capture()', () => {
-    it('should capture excess interest', async () => {
-      await cToken.mock.balanceOfUnderlying.returns(toWei('10'))
-
-      await expect(yieldService.capture(toWei('8')))
-        .to.emit(yieldService, 'PrincipalCaptured')
-        .withArgs(wallet._address, toWei('8'))
-
-      expect(await yieldService.accountedBalance()).to.equal(toWei('8'))
-    })
-
-    it('should not allow captures greater than available', async () => {
-      await cToken.mock.balanceOfUnderlying.returns(toWei('10'))
-
-      await expect(yieldService.capture(toWei('20'))).to.be.revertedWith('insuff')
-    })
-  })
-
   describe('balance()', () => {
     it('should return zero if no deposits have been made', async () => {
       await cToken.mock.balanceOfUnderlying.returns(toWei('11'))
 
       expect((await call(yieldService, 'balance')).toString()).to.equal(toWei('11'))
-    })
-  })
-
-  describe('accountedBalance()', () => {
-    it('should return zero when nothing is available', async () => {
-      expect((await call(yieldService, 'accountedBalance')).toString()).to.equal(toWei('0'))
-    })
-
-    it('should return what has been deposited, excluding interest', async () => {
-      await yieldService.setAccountedBalance(toWei('99'))
-
-      expect(await call(yieldService, 'accountedBalance')).to.equal(toWei('99'))
-    })
-  })
-
-  describe('unaccountedBalance()', () =>  {
-    it('should return the newly accrued interest', async () => {
-      await cToken.mock.balanceOfUnderlying.returns(toWei('10'))
-      await yieldService.setAccountedBalance(toWei('9'))
-      expect(await call(yieldService, 'unaccountedBalance')).to.equal(toWei('1'))
-    })
-
-    it('should handle the case when there is less balance available than what has been accounted for', async () => {
-      await cToken.mock.balanceOfUnderlying.returns(toWei('10'))
-      await yieldService.setAccountedBalance(toWei('11'))
-      expect(await call(yieldService, 'unaccountedBalance')).to.equal(toWei('0'))
     })
   })
 })

@@ -2,12 +2,13 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
+
 import "./TokenControllerInterface.sol";
 
 // solium-disable security/no-block-members
 contract ControlledToken is ERC20UpgradeSafe, BaseRelayRecipient {
 
-  TokenControllerInterface controller;
+  TokenControllerInterface public controller;
 
   function initialize(
     string memory name,
@@ -24,7 +25,11 @@ contract ControlledToken is ERC20UpgradeSafe, BaseRelayRecipient {
     _mint(_user, _amount);
   }
 
-  function controllerBurn(address _operator, address _user, uint256 _amount) external virtual onlyController {
+  function controllerBurn(address _user, uint256 _amount) external virtual onlyController {
+    _burn(_user, _amount);
+  }
+
+  function controllerBurnFrom(address _operator, address _user, uint256 _amount) external virtual onlyController {
     if (_operator != _user) {
       uint256 decreasedAllowance = allowance(_user, _operator).sub(_amount, "ERC20: burn amount exceeds allowance");
       _approve(_user, _operator, decreasedAllowance);

@@ -6,8 +6,8 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "./AbstractYieldService.sol";
-import "../external/compound/CTokenInterface.sol";
+import "../AbstractYieldService.sol";
+import "../../external/compound/CTokenInterface.sol";
 
 /**
  * Wraps a cToken with a principal token.  The principal token represents how much underlying principal a user holds.
@@ -16,55 +16,27 @@ import "../external/compound/CTokenInterface.sol";
 contract CompoundYieldService is AbstractYieldService {
   using SafeMath for uint256;
 
-  event PrincipalSupplied(address from, uint256 amount);
-  event PrincipalRedeemed(address from, uint256 amount);
-  event PrincipalCaptured(address from, uint256 amount);
-
   CTokenInterface public cToken;
-
-  uint256 internal override __accountedBalance;
 
   function _balance() internal override returns (uint256) {
     return cToken.balanceOfUnderlying(address(this));
-  }
-
-  function _accountedBalance() internal override view returns (uint256) {
-    return __accountedBalance;
-  }
-
-  function _unaccountedBalance() internal override returns (uint256) {
-    uint256 underlying = cToken.balanceOfUnderlying(address(this));
-    if (underlying >= __accountedBalance) {
-      return underlying.sub(__accountedBalance);
-    } else {
-      return 0;
-    }
   }
 
   function _supply(uint256 amount) internal override {
     IERC20 token = _token();
     token.approve(address(cToken), amount);
     cToken.mint(amount);
-    __accountedBalance = __accountedBalance.add(amount);
 
     emit PrincipalSupplied(msg.sender, amount);
   }
 
   function _redeem(uint256 amount) internal override {
     cToken.redeemUnderlying(amount);
-    __accountedBalance = __accountedBalance.sub(amount);
 
     emit PrincipalRedeemed(msg.sender, amount);
   }
 
-  function _capture(uint256 amount) internal override {
-    require(amount <= _unaccountedBalance(), "insuff");
-    __accountedBalance = __accountedBalance.add(amount);
-
-    emit PrincipalCaptured(msg.sender, amount);
-  }
-
-  function _estimateAccruedInterestOverBlocks(uint256 principalAmount, uint256 blocks) internal view override returns (uint256) {
+  function estimateAccruedInterestOverBlocks(uint256 principalAmount, uint256 blocks) public view override returns (uint256) {
     // estimated = principalAmount * supply rate per block * blocks
     uint256 multiplier = principalAmount.mul(blocks);
     return FixedPoint.multiplyUintByMantissa(multiplier, supplyRatePerBlock());

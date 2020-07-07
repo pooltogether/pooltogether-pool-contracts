@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "./ControlledToken.sol";
 import "../external/openzeppelin/ProxyFactory.sol";
 
-contract ControlledTokenFactory is Initializable, ProxyFactory {
+contract ControlledTokenProxyFactory is Initializable, ProxyFactory {
 
   ControlledToken public instance;
 
@@ -13,7 +13,7 @@ contract ControlledTokenFactory is Initializable, ProxyFactory {
     instance = new ControlledToken();
   }
 
-  function createControlledToken() external returns (ControlledToken) {
+  function create() external returns (ControlledToken) {
     return ControlledToken(deployMinimal(address(instance), ""));
   }
 }
