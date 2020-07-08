@@ -22,6 +22,11 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     uint256 balance;
   }
 
+  struct InterestIndex {
+    uint224 mantissa;
+    uint32 blockNumber;
+  }
+
   event CapturedAward(uint256 amount);
   event Deposited(address indexed operator, address indexed to, address indexed token, uint256 amount);
   event Awarded(address indexed winner, address indexed token, uint256 amount);
@@ -30,20 +35,14 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
   event TimelockedWithdrawal(address indexed operator, address indexed from, address indexed token, uint256 amount, uint256 unlockTimestamp);
   event TimelockedWithdrawalSwept(address indexed operator, address indexed from, uint256 amount);
 
-  MappedSinglyLinkedList.Mapping _tokens;
+  MappedSinglyLinkedList.Mapping internal _tokens;
   ComptrollerInterface public comptroller;
-  ControlledToken public timelock;
-  
+
   uint256 public timelockTotalSupply;
   mapping(address => uint256) internal timelockBalances;
   mapping(address => uint256) internal unlockTimestamps;
 
   uint256 internal __awardBalance;
-
-  struct InterestIndex {
-    uint224 mantissa;
-    uint32 blockNumber;
-  }
 
   InterestIndex internal interestIndex;
 
@@ -235,27 +234,19 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
   function sweepTimelockBalances(address[] memory users) public returns (uint256) {
     address operator = _msgSender();
 
-    uint256 totalWithdrawal;
     // first gather the total withdrawal and fee
-    uint256 i;
-    for (i = 0; i < users.length; i++) {
-      address user = users[i];
-      if (unlockTimestamps[user] <= _currentTime()) {
-        totalWithdrawal = totalWithdrawal.add(timelockBalances[user]);
-      }
-    }
-
+    uint256 totalWithdrawal = _calculateTotalForSweep(users);
     // if there is nothing to do, just quit
     if (totalWithdrawal == 0) {
       return 0;
     }
-    
 
     _redeem(totalWithdrawal);
 
     BalanceChange[] memory changes = new BalanceChange[](users.length);
 
     IERC20 token = IERC20(_token());
+    uint256 i;
     for (i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= _currentTime()) {
@@ -277,6 +268,15 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
       BalanceChange memory change = changes[i];
       if (change.balance > 0) {
         comptroller.afterSweepTimelockedWithdrawal(operator, change.user, change.balance);
+      }
+    }
+  }
+
+  function _calculateTotalForSweep(address[] memory users) internal view returns (uint256 totalWithdrawal) {
+    for (uint256 i = 0; i < users.length; i++) {
+      address user = users[i];
+      if (unlockTimestamps[user] <= _currentTime()) {
+        totalWithdrawal = totalWithdrawal.add(timelockBalances[user]);
       }
     }
   }
@@ -314,7 +314,7 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
   function isControlled(address _token) internal view returns (bool) {
     return _tokens.contains(_token);
   }
-  
+
   modifier onlyControlledToken(address _token) {
     require(isControlled(_token), "PrizePool/unknown-token");
     _;

@@ -5,6 +5,8 @@ library MinimalProxyLibrary {
   function minimalProxy(address _logic) internal pure returns (bytes memory clone) {
     // Adapted from https://github.com/optionality/clone-factory/blob/32782f82dfc5a00d103a7e61a17a5dedbd1e8e9d/contracts/CloneFactory.sol
     bytes20 targetBytes = bytes20(_logic);
+
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       let size := 0x37
       // allocate output byte array - this could also be done without assembly

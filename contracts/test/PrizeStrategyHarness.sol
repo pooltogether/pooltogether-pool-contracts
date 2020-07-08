@@ -5,7 +5,7 @@ import "../prize-strategy/PrizeStrategy.sol";
 /* solium-disable security/no-block-members */
 contract PrizeStrategyHarness is PrizeStrategy {
 
-  uint256 time;
+  uint256 internal time;
 
   function setPreviousPrizeAverageTickets(uint256 _previousPrizeAverageTickets) external {
     previousPrizeAverageTickets = _previousPrizeAverageTickets;

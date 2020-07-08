@@ -2,6 +2,7 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
@@ -31,6 +32,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
                           TokenControllerInterface {
 
   using SafeMath for uint256;
+  using SafeCast for uint256;
   using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
@@ -41,7 +43,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   event PrizePoolOpened(address indexed operator, uint256 indexed prizePeriodStartedAt);
   event PrizePoolAwardStarted(address indexed operator, address indexed prizePool, uint256 indexed rngRequestId);
   event PrizePoolAwarded(address indexed operator, uint256 prize, uint256 reserveFee);
-  event Awarded(address indexed operator, address indexed winner, address indexed token, uint256 amount);
 
   function initialize (
     address _trustedForwarder,
@@ -97,7 +98,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function _accrueTicketCredit(address user, uint256 balance) internal {
     uint256 credit = calculateNewTicketCredit(user, balance);
     creditBalances[user] = CreditBalance({
-      credit: uint128(creditBalances[user].credit + credit),
+      credit: uint256(creditBalances[user].credit).add(uint256(credit)).toUint128(),
       interestIndex: uint128(prizePool.interestIndexMantissa())
     });
   }
@@ -141,7 +142,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
       }
       _accrueTicketCredit(from, ticket.balanceOf(from));
       if (burnAmount > 0) {
-        creditBalances[from].credit = creditBalances[from].credit - uint128(burnAmount);
+        creditBalances[from].credit = uint256(creditBalances[from].credit).sub(burnAmount).toUint128();
       }
       return fee;
     }
@@ -157,7 +158,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   function _balanceOfTicketCredit(address user) internal returns (uint256) {
-    return creditBalances[user].credit + calculateNewTicketCredit(user, ticket.balanceOf(user));
+    return uint256(creditBalances[user].credit).add(calculateNewTicketCredit(user, ticket.balanceOf(user)));
   }
 
   function _calculateExitFee(uint256 tickets) internal view returns (uint256) {
@@ -250,7 +251,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     if (time > endAt) {
       return 0;
     }
-    return endAt - time;
+    return endAt.sub(time);
   }
 
   function _mintedTickets(uint256 amount) internal {
@@ -296,7 +297,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   function _prizePeriodEndAt() internal view returns (uint256) {
     // current prize started at is non-inclusive, so add one
-    return prizePeriodStartedAt + prizePeriodSeconds;
+    return prizePeriodStartedAt.add(prizePeriodSeconds);
   }
 
   function beforeTokenTransfer(address from, address to, uint256 amount, address token) external override {
@@ -440,5 +441,5 @@ contract PrizeStrategy is PrizeStrategyStorage,
     bytes calldata operatorData
   ) external override {
   }
-  
+
 }

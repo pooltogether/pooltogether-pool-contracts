@@ -17,13 +17,13 @@ contract PrizeStrategyStorage {
     uint128 credit;
   }
 
-  mapping(address => CreditBalance) creditBalances;
+  mapping(address => CreditBalance) internal creditBalances;
 
   PrizePool public prizePool;
   GovernorInterface public governor;
   IERC20 public ticket;
   IERC20 public sponsorship;
-  SortitionSumTreeFactory.SortitionSumTrees sortitionSumTrees;
+  SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
 
   uint256 public prizePeriodSeconds;
   uint256 public prizePeriodStartedAt;
