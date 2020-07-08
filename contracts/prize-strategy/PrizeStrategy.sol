@@ -54,12 +54,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
     RNGInterface _rng,
     address[] memory _externalAwards
   ) public initializer {
-    require(address(_governor) != address(0), "PrizePool/governor-not-zero");
-    require(_prizePeriodSeconds > 0, "PrizePool/prize-period-greater-than-zero");
-    require(address(_prizePool) != address(0), "PrizePool/prize-pool-zero");
-    require(address(_ticket) != address(0), "PrizePool/ticket-not-zero");
-    require(address(_sponsorship) != address(0), "PrizePool/sponsorship-not-zero");
-    require(address(_rng) != address(0), "PrizePool/rng-not-zero");
+    require(address(_governor) != address(0), "PrizeStrategy/governor-not-zero");
+    require(_prizePeriodSeconds > 0, "PrizeStrategy/prize-period-greater-than-zero");
+    require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-zero");
+    require(address(_ticket) != address(0), "PrizeStrategy/ticket-not-zero");
+    require(address(_sponsorship) != address(0), "PrizeStrategy/sponsorship-not-zero");
+    require(address(_rng) != address(0), "PrizeStrategy/rng-not-zero");
     prizePool = _prizePool;
     ticket = IERC20(_ticket);
     rng = _rng;
@@ -73,7 +73,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
     externalAwardMapping.initialize(_externalAwards);
     for (uint256 i = 0; i < _externalAwards.length; i++) {
-      require(prizePool.canAwardExternal(_externalAwards[i]), "PrizePool/cannot-award-external");
+      require(prizePool.canAwardExternal(_externalAwards[i]), "PrizeStrategy/cannot-award-external");
     }
 
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
@@ -378,7 +378,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   function completeAward() external requireCanCompleteAward {
-    require(_isPrizePeriodOver(), "PrizePool/not-over");
+    require(_isPrizePeriodOver(), "PrizeStrategy/not-over");
     bytes32 randomNumber = rng.randomNumber(rngRequestId);
     uint256 balance = prizePool.awardBalance();
     uint256 reserveFee = _calculateReserveFee(balance);
@@ -405,14 +405,14 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   modifier requireCanStartAward() {
-    require(_isPrizePeriodOver(), "prize period not over");
-    require(!isRngRequested(), "rng has already been requested");
+    require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
+    require(!isRngRequested(), "PrizeStrategy/rng-already-requested");
     _;
   }
 
   modifier requireCanCompleteAward() {
-    require(isRngRequested(), "no rng request has been made");
-    require(isRngCompleted(), "rng request has not completed");
+    require(isRngRequested(), "PrizeStrategy/no-rng-request");
+    require(isRngCompleted(), "PrizeStrategy/rng-request-not-complete");
     _;
   }
 

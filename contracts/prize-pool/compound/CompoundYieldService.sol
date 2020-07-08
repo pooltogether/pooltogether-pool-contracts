@@ -48,7 +48,7 @@ contract CompoundYieldService is AbstractYieldService {
 
   function supplyRatePerBlock() internal view returns (uint256) {
     (bool success, bytes memory data) = address(cToken).staticcall(abi.encodeWithSignature("supplyRatePerBlock()"));
-    require(success, "supplyRatePerBlock failed");
+    require(success, "CompoundYieldService/supplyRatePerBlock-failed");
     return abi.decode(data, (uint256));
   }
 
