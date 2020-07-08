@@ -302,7 +302,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   function beforeTokenTransfer(address from, address to, uint256 amount, address token) external override onlyPrizePool {
     if (token == address(ticket)) {
-      _requireRngNotRequested();
+      _requireNotLocked();
       if (from != address(0)) {
         uint256 fromBalance = ticket.balanceOf(from).sub(amount);
 
@@ -319,7 +319,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     }
   }
 
-  function afterDepositTo(address to, uint256 amount, address token) external override onlyPrizePool requireRngNotRequested {
+  function afterDepositTo(address to, uint256 amount, address token) external override onlyPrizePool requireNotLocked {
     if (token == address(ticket)) {
       uint256 toBalance = ticket.balanceOf(to);
       _accrueTicketCredit(to, toBalance.sub(amount));
@@ -328,7 +328,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     }
   }
 
-  function afterWithdrawWithTimelockFrom(address from, uint256, address token) external override onlyPrizePool requireRngNotRequested {
+  function afterWithdrawWithTimelockFrom(address from, uint256, address token) external override onlyPrizePool requireNotLocked {
     if (token == address(ticket)) {
       uint256 fromBalance = ticket.balanceOf(from);
       sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));
@@ -342,7 +342,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     address token,
     uint256,
     uint256
-  ) external override onlyPrizePool requireRngNotRequested {
+  ) external override onlyPrizePool requireNotLocked {
     if (token == address(ticket)) {
       uint256 fromBalance = ticket.balanceOf(from);
       sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));
@@ -417,8 +417,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     _;
   }
 
-  modifier requireRngNotRequested() {
-    _requireRngNotRequested();
+  modifier requireNotLocked() {
+    _requireNotLocked();
     _;
   }
 
@@ -427,7 +427,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     _;
   }
 
-  function _requireRngNotRequested() internal view {
+  function _requireNotLocked() internal view {
     require(rngRequestId == 0, "PrizeStrategy/rng-in-flight");
   }
 
