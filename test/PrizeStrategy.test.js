@@ -9,7 +9,7 @@ const ControlledToken = require('../build/ControlledToken.json')
 
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
-
+const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
 const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
@@ -47,28 +47,62 @@ describe('PrizeStrategy', function() {
     prizeStrategy = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
 
     debug('initializing prizeStrategy...')
-
-    await prizeStrategy.initialize(
-      FORWARDER,
-      governor.address,
-      prizePeriodSeconds,
-      prizePool.address,
-      ticket.address,
-      sponsorship.address,
-      rng.address,
-      []
-    )
   })
 
-  describe('initialize()', () => {
-    it('should set the params', async () => {
-      expect(await prizeStrategy.getTrustedForwarder()).to.equal(FORWARDER)
-      expect(await prizeStrategy.governor()).to.equal(governor.address)
-      expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
-      expect(await prizeStrategy.prizePeriodSeconds()).to.equal(prizePeriodSeconds)
-      expect(await prizeStrategy.ticket()).to.equal(ticket.address)
-      expect(await prizeStrategy.sponsorship()).to.equal(sponsorship.address)
-      expect(await prizeStrategy.rng()).to.equal(rng.address)
+  describe('with a mocked PrizeStrategy', () =>{ 
+    beforeEach(async () => {
+      await prizeStrategy.initialize(
+        FORWARDER,
+        governor.address,
+        prizePeriodSeconds,
+        prizePool.address,
+        ticket.address,
+        sponsorship.address,
+        rng.address,
+        []
+      )
+    })
+
+    describe('initialize()', () => {
+      it('should set the params', async () => {
+        expect(await prizeStrategy.getTrustedForwarder()).to.equal(FORWARDER)
+        expect(await prizeStrategy.governor()).to.equal(governor.address)
+        expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
+        expect(await prizeStrategy.prizePeriodSeconds()).to.equal(prizePeriodSeconds)
+        expect(await prizeStrategy.ticket()).to.equal(ticket.address)
+        expect(await prizeStrategy.sponsorship()).to.equal(sponsorship.address)
+        expect(await prizeStrategy.rng()).to.equal(rng.address)
+      })
+    })
+  })
+
+  describe('afterDepositTo()', () => {
+    beforeEach(async () => {
+      await prizeStrategy.initialize(
+        FORWARDER,
+        governor.address,
+        prizePeriodSeconds,
+        wallet._address, // here we make it so we are the prize pool
+        ticket.address,
+        sponsorship.address,
+        rng.address
+      )
+    })
+
+    it('should only be called by the prize pool', async () => {
+      prizeStrategy2 = await prizeStrategy.connect(wallet2)
+      await expect(prizeStrategy2.afterDepositTo(wallet._address, toWei('10'), ticket.address)).to.be.revertedWith('PrizeStrategy/only-prize-pool')
+    })
+
+    xit('should update the users ticket balance', async () => {
+      debug("got here1")
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('22'))
+      debug("got here2")
+      await prizeStrategy.afterDepositTo(wallet._address, toWei('10'), ticket.address)
+      debug("got here3")
+      expect(await prizeStrategy.draw(1)).to.equal(wallet._address) // they exist in the sortition sum tree
+      debug("got here54")
+      expect((await prizeStrategy.prizeAverageTickets()).gt('0')).to.be.true // prize average was updated
     })
   })
 });
