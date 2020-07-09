@@ -1,5 +1,7 @@
 pragma solidity ^0.6.4;
 
+import "@nomiclabs/buidler/console.sol";
+
 library MappedSinglyLinkedList {
 
   address public constant SENTINAL_TOKEN = address(0x1);
@@ -13,22 +15,25 @@ library MappedSinglyLinkedList {
     address[] memory array = new address[](self.count);
     uint256 count;
     address currentToken = self.addressMap[SENTINAL_TOKEN];
+    // console.log("currentToken: %s", currentToken);
     while (currentToken != address(0) && currentToken != SENTINAL_TOKEN) {
       array[count] = currentToken;
       currentToken = self.addressMap[currentToken];
+      // console.log("currentToken: %s", currentToken);
       count++;
     }
     return array;
   }
 
   function initialize(Mapping storage self, address[] memory addresses) internal {
-    uint256 count = 1;
+    uint256 count = 0;
     self.addressMap[SENTINAL_TOKEN] = SENTINAL_TOKEN;
     for (uint256 i = 0; i < addresses.length; i++) {
-      self.addressMap[address(addresses[i])] = self.addressMap[SENTINAL_TOKEN];
-      self.addressMap[SENTINAL_TOKEN] = address(addresses[i]);
+      self.addressMap[addresses[i]] = self.addressMap[SENTINAL_TOKEN];
+      self.addressMap[SENTINAL_TOKEN] = addresses[i];
       count += 1;
     }
+    // console.log("sentinal initialized to %s", self.addressMap[SENTINAL_TOKEN]);
     self.count = count;
   }
 

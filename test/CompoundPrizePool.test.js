@@ -220,6 +220,22 @@ describe('PrizePool contract', function() {
         expect(await prizePool.timelockBalanceAvailableAt(wallet._address)).to.equal('0')
       })
     })
+
+    describe('tokens()', () => {
+      it('should return all tokens', async () => {
+        expect(await prizePool.tokens()).to.deep.equal([ticket.address])
+      })
+    })
+  
+    describe('canAwardExternal', () => { 
+      it('should allow non-ctoken', async () => {
+        expect(await prizePool.canAwardExternal(ticket.address)).to.be.true
+      })
+  
+      it('should not allow ctoken', async () => {
+        expect(await prizePool.canAwardExternal(cToken.address)).to.be.false
+      })
+    })
   })
 
   describe('awardExternal()', () => {
