@@ -55,7 +55,8 @@ describe('PrizeStrategy', function() {
       prizePool.address,
       ticket.address,
       sponsorship.address,
-      rng.address
+      rng.address,
+      []
     )
   })
 
