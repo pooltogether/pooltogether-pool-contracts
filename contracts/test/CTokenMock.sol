@@ -25,10 +25,10 @@ import "@nomiclabs/buidler/console.sol";
 import "./ERC20Mintable.sol";
 
 contract CTokenMock is ERC20UpgradeSafe {
-  mapping(address => uint256) ownerTokenAmounts;
+  mapping(address => uint256) internal ownerTokenAmounts;
   ERC20Mintable public underlying;
 
-  uint256 __supplyRatePerBlock;
+  uint256 internal __supplyRatePerBlock;
 
   constructor (
     ERC20Mintable _token,

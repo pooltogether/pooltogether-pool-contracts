@@ -30,6 +30,10 @@ contract CompoundYieldService is AbstractYieldService {
     emit PrincipalSupplied(msg.sender, amount);
   }
 
+  function _canAwardExternal(address _token) internal override view returns (bool) {
+    return _token != address(cToken);
+  }
+
   function _redeem(uint256 amount) internal override {
     cToken.redeemUnderlying(amount);
 
@@ -44,7 +48,7 @@ contract CompoundYieldService is AbstractYieldService {
 
   function supplyRatePerBlock() internal view returns (uint256) {
     (bool success, bytes memory data) = address(cToken).staticcall(abi.encodeWithSignature("supplyRatePerBlock()"));
-    require(success, "supplyRatePerBlock failed");
+    require(success, "CompoundYieldService/supplyRatePerBlock-failed");
     return abi.decode(data, (uint256));
   }
 

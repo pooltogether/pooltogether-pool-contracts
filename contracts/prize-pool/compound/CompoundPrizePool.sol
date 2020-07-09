@@ -7,13 +7,13 @@ contract CompoundPrizePool is PrizePool, CompoundYieldService {
   function initialize (
     address _trustedForwarder,
     ComptrollerInterface _comptroller,
-    ControlledToken[] memory _collateralTokens,
+    address[] memory _controlledTokens,
     CTokenInterface _cToken
   ) public initializer {
     PrizePool.initialize(
       _trustedForwarder,
       _comptroller,
-      _collateralTokens
+      _controlledTokens
     );
     cToken = _cToken;
   }

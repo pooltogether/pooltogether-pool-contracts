@@ -11,13 +11,13 @@ contract ControlledToken is ERC20UpgradeSafe, BaseRelayRecipient {
   TokenControllerInterface public controller;
 
   function initialize(
-    string memory name,
-    string memory symbol,
+    string memory _name,
+    string memory _symbol,
     address _trustedForwarder,
     TokenControllerInterface _controller
   ) public virtual initializer {
     trustedForwarder = _trustedForwarder;
-    __ERC20_init(name, symbol);
+    __ERC20_init(_name, _symbol);
     controller = _controller;
   }
 
@@ -31,14 +31,14 @@ contract ControlledToken is ERC20UpgradeSafe, BaseRelayRecipient {
 
   function controllerBurnFrom(address _operator, address _user, uint256 _amount) external virtual onlyController {
     if (_operator != _user) {
-      uint256 decreasedAllowance = allowance(_user, _operator).sub(_amount, "ERC20: burn amount exceeds allowance");
+      uint256 decreasedAllowance = allowance(_user, _operator).sub(_amount, "ControlledToken/exceeds-allowance");
       _approve(_user, _operator, decreasedAllowance);
     }
     _burn(_user, _amount);
   }
 
   modifier onlyController {
-    require(_msgSender() == address(controller), "only controller");
+    require(_msgSender() == address(controller), "ControlledToken/only-controller");
     _;
   }
 

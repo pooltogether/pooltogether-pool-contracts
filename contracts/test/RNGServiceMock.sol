@@ -4,7 +4,7 @@ import "../rng/RNGInterface.sol";
 
 contract RNGServiceMock is RNGInterface {
 
-  bytes32 random;
+  bytes32 internal random;
 
   function setRandomNumber(bytes32 rando) external {
     random = rando;

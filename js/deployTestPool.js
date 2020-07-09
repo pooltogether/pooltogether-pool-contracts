@@ -65,7 +65,8 @@ async function deployTestPool(wallet, prizePeriodSeconds, overrides = { gasLimit
     compoundPrizePool.address,
     ticket.address,
     sponsorship.address,
-    rng.address
+    rng.address,
+    []
   )
 
   debug("Addresses: \n", {

@@ -10,47 +10,46 @@ import "./AbstractYieldService.sol";
 import "./ComptrollerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
+import "./MappedSinglyLinkedList.sol";
 
 /* solium-disable security/no-block-members */
 abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
   using SafeMath for uint256;
+  using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
   struct BalanceChange {
     address user;
     uint256 balance;
   }
 
+  struct InterestIndex {
+    uint224 mantissa;
+    uint32 blockNumber;
+  }
+
   event CapturedAward(uint256 amount);
   event Deposited(address indexed operator, address indexed to, address indexed token, uint256 amount);
   event Awarded(address indexed winner, address indexed token, uint256 amount);
+  event AwardedExternal(address indexed winner, address indexed token, uint256 amount);
   event InstantWithdrawal(address indexed operator, address indexed from, address indexed token, uint256 amount, uint256 exitFee, uint256 sponsoredExitFee);
   event TimelockedWithdrawal(address indexed operator, address indexed from, address indexed token, uint256 amount, uint256 unlockTimestamp);
   event TimelockedWithdrawalSwept(address indexed operator, address indexed from, uint256 amount);
 
-  address internal constant SENTINAL_TOKEN = address(0x1);
-
-  mapping(address => address) internal _tokens;
-  uint256 tokenCount;
+  MappedSinglyLinkedList.Mapping internal _tokens;
   ComptrollerInterface public comptroller;
-  ControlledToken public timelock;
-  
+
   uint256 public timelockTotalSupply;
   mapping(address => uint256) internal timelockBalances;
   mapping(address => uint256) internal unlockTimestamps;
 
   uint256 internal __awardBalance;
 
-  struct InterestIndex {
-    uint224 mantissa;
-    uint32 blockNumber;
-  }
-
   InterestIndex internal interestIndex;
 
   function initialize (
     address _trustedForwarder,
     ComptrollerInterface _comptroller,
-    ControlledToken[] memory _collateralTokens
+    address[] memory _controlledTokens
   ) public initializer {
     require(address(_comptroller) != address(0), "PrizePool/comptroller-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-zero");
@@ -58,13 +57,9 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
       mantissa: uint224(1 ether),
       blockNumber: uint32(block.number)
     });
-    tokenCount = 1;
-    _tokens[SENTINAL_TOKEN] = SENTINAL_TOKEN;
-    for (uint256 i = 0; i < _collateralTokens.length; i++) {
-      _tokens[address(_collateralTokens[i])] = _tokens[SENTINAL_TOKEN];
-      _tokens[SENTINAL_TOKEN] = address(_collateralTokens[i]);
-      tokenCount += 1;
-      require(_collateralTokens[i].controller() == this, "PrizePool/token-ctrlr-mismatch");
+    _tokens.initialize(_controlledTokens);
+    for (uint256 i = 0; i < _controlledTokens.length; i++) {
+      require(ControlledToken(_controlledTokens[i]).controller() == this, "PrizePool/token-ctrlr-mismatch");
     }
     __ReentrancyGuard_init();
     trustedForwarder = _trustedForwarder;
@@ -213,6 +208,10 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
   }
 
   function award(address to, uint256 amount, address token) external onlyComptroller onlyControlledToken(token) {
+    if (amount == 0) {
+      return;
+    }
+
     _updateAwardBalance();
     ControlledToken(token).controllerMint(to, amount);
     __awardBalance = __awardBalance.sub(amount);
@@ -220,30 +219,34 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     emit Awarded(to, token, amount);
   }
 
+  function awardExternal(address to, uint256 amount, address token) external onlyComptroller {
+    require(_canAwardExternal(token), "PrizePool/invalid-external-token");
+
+    if (amount == 0) {
+      return;
+    }
+
+    IERC20(token).transfer(to, amount);
+
+    emit AwardedExternal(to, token, amount);
+  }
+
   function sweepTimelockBalances(address[] memory users) public returns (uint256) {
     address operator = _msgSender();
 
-    uint256 totalWithdrawal;
     // first gather the total withdrawal and fee
-    uint256 i;
-    for (i = 0; i < users.length; i++) {
-      address user = users[i];
-      if (unlockTimestamps[user] <= _currentTime()) {
-        totalWithdrawal = totalWithdrawal.add(timelockBalances[user]);
-      }
-    }
-
+    uint256 totalWithdrawal = _calculateTotalForSweep(users);
     // if there is nothing to do, just quit
     if (totalWithdrawal == 0) {
       return 0;
     }
-    
 
     _redeem(totalWithdrawal);
 
     BalanceChange[] memory changes = new BalanceChange[](users.length);
 
     IERC20 token = IERC20(_token());
+    uint256 i;
     for (i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= _currentTime()) {
@@ -269,16 +272,17 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     }
   }
 
-  function tokens() external view returns (address[] memory) {
-    address[] memory array = new address[](tokenCount);
-    uint256 count;
-    address currentToken = _tokens[SENTINAL_TOKEN];
-    while (currentToken != address(0) && currentToken != SENTINAL_TOKEN) {
-      array[count] = currentToken;
-      currentToken = _tokens[currentToken];
-      count++;
+  function _calculateTotalForSweep(address[] memory users) internal view returns (uint256 totalWithdrawal) {
+    for (uint256 i = 0; i < users.length; i++) {
+      address user = users[i];
+      if (unlockTimestamps[user] <= _currentTime()) {
+        totalWithdrawal = totalWithdrawal.add(timelockBalances[user]);
+      }
     }
-    return array;
+  }
+
+  function tokens() external view returns (address[] memory) {
+    return _tokens.addressArray();
   }
 
   function _currentTime() internal virtual view returns (uint256) {
@@ -299,16 +303,20 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
 
   function _tokenTotalSupply() internal view returns (uint256) {
     uint256 total = timelockTotalSupply;
-    address currentToken = _tokens[SENTINAL_TOKEN];
-    while (currentToken != address(0) && currentToken != SENTINAL_TOKEN) {
+    address currentToken = _tokens.addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
+    while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
       total = IERC20(currentToken).totalSupply();
-      currentToken = _tokens[currentToken];
+      currentToken = _tokens.addressMap[currentToken];
     }
     return total;
   }
-  
+
+  function isControlled(address _token) internal view returns (bool) {
+    return _tokens.contains(_token);
+  }
+
   modifier onlyControlledToken(address _token) {
-    require(_token != address(0) && _tokens[_token] != address(0), "PrizePool/unknown-token");
+    require(isControlled(_token), "PrizePool/unknown-token");
     _;
   }
 

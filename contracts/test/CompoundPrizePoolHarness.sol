@@ -5,7 +5,7 @@ import "../prize-pool/compound/CompoundPrizePool.sol";
 /* solium-disable security/no-block-members */
 contract CompoundPrizePoolHarness is CompoundPrizePool {
 
-  uint256 time;
+  uint256 internal time;
 
   function setCurrentTime(uint256 _time) external {
     time = _time;

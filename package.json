@@ -1,6 +1,6 @@
 {
   "name": "@pooltogether/pooltogether-contracts",
-  "version": "3.0.0-alpha.22",
+  "version": "3.0.0-alpha.23",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
   "bin": {
@@ -8,6 +8,9 @@
   },
   "license": "GPL-3.0",
   "scripts": {
+    "reinstall": "rm -rf node_modules/ && rm -f yarn.lock && yarn",
+    "verify": "yarn hint && yarn test",
+    "hint": "solhint \"contracts/**/*.sol\"",
     "test": "buidler test",
     "compile": "buidler --show-stack-traces --max-memory 8192 compile",
     "start": "buidler node --port $LOCAL_BUIDLEREVM_PORT",
@@ -28,35 +31,36 @@
     "prepack": "rm -rf build cache && buidler compile && truffle-extract -b build -o abis",
     "postpublish": "PACKAGE_VERSION=$(./scripts/package-version.sh) && git tag -ae v$PACKAGE_VERSION && git push --tags"
   },
+  "dependencies": {
+  },
   "devDependencies": {
     "@nomiclabs/buidler": "^1.3.5",
     "@nomiclabs/buidler-ethers": "^1.3.3",
     "@nomiclabs/buidler-etherscan": "^1.3.3",
     "@nomiclabs/buidler-waffle": "^1.3.4",
-    "@openzeppelin/cli": "^2.8.2",
-    "@resolver-engine/core": "^0.3.3",
-    "@truffle/hdwallet-provider": "^1.0.34",
-    "buidler-gas-reporter": "^0.1.3",
-    "chai": "^4.2.0",
-    "chalk": "^4.0.0",
-    "mocha-junit-reporter": "^1.23.3",
-    "oz-console": "^2.0.1",
-    "shelljs": "0.8.3",
-    "solc": "0.6.4",
-    "solidity-coverage": "^0.7.4",
-    "truffle-extract": "pooltogether/truffle-extract"
-  },
-  "dependencies": {
     "@opengsn/gsn": "^0.9.0",
+    "@openzeppelin/cli": "^2.8.2",
     "@openzeppelin/contracts-ethereum-package": "^3.0.0",
     "@pooltogether/fixed-point": "pooltogether/fixed-point.git#0.1.0-upgradeable.1",
     "@pooltogether/governor-contracts": "^0.1.1",
     "@pooltogether/oz-migrate": "^0.2.5",
     "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
+    "@resolver-engine/core": "^0.3.3",
+    "@truffle/hdwallet-provider": "^1.0.34",
+    "buidler-gas-reporter": "^0.1.3",
+    "chai": "^4.2.0",
+    "chalk": "^4.0.0",
     "debug": "^4.1.1",
     "deploy-eip-1820": "^0.2.0",
     "ethereum-waffle": "^2.5.1",
     "ethers": "^4.0.47",
-    "sortition-sum-tree-factory": "^0.1.0"
+    "mocha-junit-reporter": "^1.23.3",
+    "oz-console": "^2.0.1",
+    "shelljs": "0.8.3",
+    "solc": "0.6.4",
+    "solhint": "^3.0.0",
+    "solidity-coverage": "^0.7.4",
+    "sortition-sum-tree-factory": "^0.1.0",
+    "truffle-extract": "pooltogether/truffle-extract"
   }
 }

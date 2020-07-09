@@ -6,8 +6,8 @@ import "../utils/MinimalProxyLibrary.sol";
 
 contract CounterfactualActionFactory {
 
-  CounterfactualAction depositor;
-  PrizePool prizePool;
+  CounterfactualAction public depositor;
+  PrizePool public prizePool;
 
   function initialize(PrizePool _prizePool) external {
     require(address(_prizePool) != address(0), "CounterfactualActionFactory/prize-pool-not-zero");

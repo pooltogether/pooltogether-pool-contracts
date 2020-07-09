@@ -14,6 +14,11 @@ abstract contract AbstractYieldService {
     return _balance();
   }
 
+  function canAwardExternal(address _token) external virtual view returns (bool) {
+    return _canAwardExternal(_token);
+  }
+
+  function _canAwardExternal(address _token) internal virtual view returns (bool);
   function _token() internal virtual view returns (IERC20);
   function _balance() internal virtual returns (uint256);
   function _supply(uint256 mintAmount) internal virtual;
