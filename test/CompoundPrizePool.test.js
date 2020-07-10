@@ -9,6 +9,7 @@ const { ethers } = require('./helpers/ethers')
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
 const getIterable = require('./helpers/iterable')
+const { call } = require('./helpers/call')
 
 const toWei = ethers.utils.parseEther
 const toBytes = ethers.utils.toUtf8Bytes
@@ -51,6 +52,12 @@ describe('PrizePool contract', function() {
         [ticket.address],
         cToken.address
       )
+    })
+
+    describe('initialize()', () => {
+      it('should set all the vars', async () => {
+        expect(await prizePool.cToken()).to.equal(cToken.address)
+      })
     })
 
     describe('depositTo()', () => {
@@ -138,7 +145,7 @@ describe('PrizePool contract', function() {
 
       it('should sweep only balances that are unlocked', async () => {
         // updateAwardBalance
-        await cToken.mock.balanceOfUnderlying.returns('0')
+        await cToken.mock.balanceOfUnderlying.returns(toWei('33'))
         await ticket.mock.totalSupply.returns('0')
 
         // force current time
@@ -221,17 +228,48 @@ describe('PrizePool contract', function() {
       })
     })
 
+    describe('supply()', () => {
+      it('should give the first depositer tokens at the initial exchange rate', async function () {
+        await token.mock.transferFrom.withArgs(wallet._address, prizePool.address, toWei('1')).returns(true)
+        await token.mock.approve.withArgs(cToken.address, toWei('1')).returns(true)
+        await cToken.mock.mint.withArgs(toWei('1')).returns(0)
+
+        await expect(prizePool.supply(toWei('1')))
+          .to.emit(prizePool, 'PrincipalSupplied')
+          .withArgs(wallet._address, toWei('1'))
+      })
+    })
+
+    describe('redeem()', () => {
+      it('should allow redeeming principal', async function () {
+        await cToken.mock.redeemUnderlying.withArgs(toWei('1')).returns('0')
+        await token.mock.transfer.withArgs(wallet._address, toWei('1')).returns(true)
+
+        await expect(prizePool.redeem(toWei('1')))
+          .to.emit(prizePool, 'PrincipalRedeemed')
+          .withArgs(wallet._address, toWei('1'));
+      })
+    })
+
+    describe('balance()', () => {
+      it('should return zero if no deposits have been made', async () => {
+        await cToken.mock.balanceOfUnderlying.returns(toWei('11'))
+
+        expect((await call(prizePool, 'balance')).toString()).to.equal(toWei('11'))
+      })
+    })
+
     describe('tokens()', () => {
       it('should return all tokens', async () => {
         expect(await prizePool.tokens()).to.deep.equal([ticket.address])
       })
     })
-  
-    describe('canAwardExternal', () => { 
+
+    describe('canAwardExternal', () => {
       it('should allow non-ctoken', async () => {
         expect(await prizePool.canAwardExternal(ticket.address)).to.be.true
       })
-  
+
       it('should not allow ctoken', async () => {
         expect(await prizePool.canAwardExternal(cToken.address)).to.be.false
       })

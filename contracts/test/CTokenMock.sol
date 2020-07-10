@@ -20,7 +20,6 @@ pragma solidity 0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-import "@nomiclabs/buidler/console.sol";
 
 import "./ERC20Mintable.sol";
 

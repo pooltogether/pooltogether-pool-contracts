@@ -1,7 +1,5 @@
 pragma solidity ^0.6.4;
 
-import "@nomiclabs/buidler/console.sol";
-
 library MappedSinglyLinkedList {
 
   address public constant SENTINAL_TOKEN = address(0x1);
