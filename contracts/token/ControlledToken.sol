@@ -73,9 +73,6 @@ contract ControlledToken is ERC20UpgradeSafe, BaseRelayRecipient {
   /// @param from Address of the account sending the tokens (address(0x0) on minting)
   /// @param to Address of the account receiving the tokens (address(0x0) on burning)
   /// @param amount Amount of tokens being transferred
-  //
-  // NOTE: Should receive a success bool from "controller.beforeTokenTransfer" and revert on failure
-  //  ie: require(controller.beforeTokenTransfer(...), "...")
   function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
     controller.beforeTokenTransfer(from, to, amount);
   }

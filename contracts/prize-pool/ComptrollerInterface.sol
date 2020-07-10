@@ -44,8 +44,7 @@ interface ComptrollerInterface {
   /// @param operator The address of the operator who performed the sweep
   /// @param from The address of the account that received the swept assets
   /// @param amount The amount of the asset tokens that were swept
-  /// @param token The address of the token that was swept
-  function afterSweepTimelockedWithdrawal(address operator, address from, uint256 amount, address token) external;
+  function afterSweepTimelockedWithdrawal(address operator, address from, uint256 amount) external;
 
   /// @dev Inheriting contract must provide a view into the exit "fairness" fee for an instant withdrawal
   /// @param from The address of the account to withdraw from
