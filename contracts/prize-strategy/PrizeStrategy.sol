@@ -91,7 +91,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return selected;
   }
 
-  function accrueTicketCredit(address user) public {
+  function accrueTicketCredit(address user) external {
     _accrueTicketCredit(user, ticket.balanceOf(user));
   }
 
@@ -300,8 +300,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return prizePeriodStartedAt.add(prizePeriodSeconds);
   }
 
-  function beforeTokenTransfer(address from, address to, uint256 amount, address token) external override {
+  function beforeTokenTransfer(address from, address to, uint256 amount, address token) external override onlyPrizePool {
     if (token == address(ticket)) {
+      _requireNotLocked();
       if (from != address(0)) {
         uint256 fromBalance = ticket.balanceOf(from).sub(amount);
 
@@ -318,7 +319,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     }
   }
 
-  function afterDepositTo(address to, uint256 amount, address token) external override {
+  function afterDepositTo(address to, uint256 amount, address token) external override onlyPrizePool requireNotLocked {
     if (token == address(ticket)) {
       uint256 toBalance = ticket.balanceOf(to);
       _accrueTicketCredit(to, toBalance.sub(amount));
@@ -327,7 +328,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     }
   }
 
-  function afterWithdrawWithTimelockFrom(address from, uint256, address token) external override {
+  function afterWithdrawWithTimelockFrom(address from, uint256, address token) external override onlyPrizePool requireNotLocked {
     if (token == address(ticket)) {
       uint256 fromBalance = ticket.balanceOf(from);
       sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));
@@ -341,7 +342,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     address token,
     uint256,
     uint256
-  ) external override {
+  ) external override onlyPrizePool requireNotLocked {
     if (token == address(ticket)) {
       uint256 fromBalance = ticket.balanceOf(from);
       sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));
@@ -359,7 +360,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   // Ticket Minting/Redeeming
   //
 
-  function balanceOfTicketInterest(address user) public returns (uint256) {
+  function balanceOfTicketInterest(address user) external returns (uint256) {
     return _balanceOfTicketCredit(user);
   }
 
@@ -411,16 +412,30 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   modifier requireCanCompleteAward() {
-    require(isRngRequested(), "PrizeStrategy/no-rng-request");
-    require(isRngCompleted(), "PrizeStrategy/rng-request-not-complete");
+    require(isRngRequested(), "PrizeStrategy/rng-not-requested");
+    require(isRngCompleted(), "PrizeStrategy/rng-not-complete");
     _;
   }
 
-  function canStartAward() public view returns (bool) {
+  modifier requireNotLocked() {
+    _requireNotLocked();
+    _;
+  }
+
+  modifier onlyPrizePool() {
+    require(_msgSender() == address(prizePool), "PrizeStrategy/only-prize-pool");
+    _;
+  }
+
+  function _requireNotLocked() internal view {
+    require(rngRequestId == 0, "PrizeStrategy/rng-in-flight");
+  }
+
+  function canStartAward() external view returns (bool) {
     return _isPrizePeriodOver() && !isRngRequested();
   }
 
-  function canCompleteAward() public view returns (bool) {
+  function canCompleteAward() external view returns (bool) {
     return isRngRequested() && isRngCompleted();
   }
 

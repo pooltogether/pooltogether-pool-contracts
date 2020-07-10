@@ -1,4 +1,5 @@
-const { deployContract, deployMockContract } = require('ethereum-waffle')
+const { deployContract } = require('ethereum-waffle')
+const { deployMockContract } = require('./helpers/deployMockContract')
 const { deploy1820 } = require('deploy-eip-1820')
 const GovernorInterface = require('../build/GovernorInterface.json')
 const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
@@ -9,7 +10,7 @@ const ControlledToken = require('../build/ControlledToken.json')
 
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
-
+const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
 const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
@@ -47,7 +48,6 @@ describe('PrizeStrategy', function() {
     prizeStrategy = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
 
     debug('initializing prizeStrategy...')
-
     await prizeStrategy.initialize(
       FORWARDER,
       governor.address,
@@ -69,6 +69,104 @@ describe('PrizeStrategy', function() {
       expect(await prizeStrategy.ticket()).to.equal(ticket.address)
       expect(await prizeStrategy.sponsorship()).to.equal(sponsorship.address)
       expect(await prizeStrategy.rng()).to.equal(rng.address)
+    })
+  })
+
+  describe('afterDepositTo()', () => {
+    it('should only be called by the prize pool', async () => {
+      prizeStrategy2 = await prizeStrategy.connect(wallet2)
+      await expect(prizeStrategy2.afterDepositTo(wallet._address, toWei('10'), ticket.address)).to.be.revertedWith('PrizeStrategy/only-prize-pool')
+    })
+
+    it('should update the users ticket balance', async () => {
+      await prizePool.mock.interestIndexMantissa.returns(toWei('1'))
+      await ticket.mock.totalSupply.returns('22')
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('22'))
+      await prizePool.call(prizeStrategy, 'afterDepositTo', wallet._address, toWei('10'), ticket.address)
+      expect(await prizeStrategy.draw(1)).to.equal(wallet._address) // they exist in the sortition sum tree
+      expect((await prizeStrategy.prizeAverageTickets()).gt('0')).to.be.true // prize average was updated
+    })
+
+    it('should not be called if an rng request is in flight', async () => {
+      await rng.mock.requestRandomNumber.returns('11');
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
+      await prizeStrategy.startAward();
+
+      await expect(prizePool.call(prizeStrategy, 'afterDepositTo', wallet._address, toWei('10'), ticket.address))
+        .to.be.revertedWith('PrizeStrategy/rng-in-flight');
+    });
+  });
+
+  describe('afterWithdrawInstantlyFrom()', () => {
+    it('should revert if rng request is in flight', async () => {
+      await rng.mock.requestRandomNumber.returns('11');
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
+      await prizeStrategy.startAward();
+
+      await expect(
+        prizePool.call(
+          prizeStrategy,
+          'afterWithdrawInstantlyFrom',
+          wallet._address,
+          wallet._address,
+          toWei('10'),
+          ticket.address,
+          toWei('0'),
+          toWei('0')
+        ))
+        .to.be.revertedWith('PrizeStrategy/rng-in-flight')
+    });
+  });
+
+  describe("beforeTokenTransfer()", () => {
+    it('should allow other token transfers if awarding is happening', async () => {
+      await rng.mock.requestRandomNumber.returns('11');
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
+      await prizeStrategy.startAward();
+
+      await prizePool.call(
+        prizeStrategy,
+        'beforeTokenTransfer(address,address,uint256,address)',
+        wallet._address,
+        wallet._address,
+        toWei('10'),
+        wallet._address
+      )
+    })
+
+    it('should revert on ticket transfer if awarding is happening', async () => {
+      await rng.mock.requestRandomNumber.returns('11');
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
+      await prizeStrategy.startAward();
+
+      await expect(
+        prizePool.call(
+          prizeStrategy,
+          'beforeTokenTransfer(address,address,uint256,address)',
+          wallet._address,
+          wallet._address,
+          toWei('10'),
+          ticket.address
+        ))
+        .to.be.revertedWith('PrizeStrategy/rng-in-flight')
+    })
+  })
+  
+  describe("afterWithdrawWithTimelockFrom()", () => {
+    it('should revert on ticket transfer if awarding is happening', async () => {
+      await rng.mock.requestRandomNumber.returns('11');
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
+      await prizeStrategy.startAward();
+
+      await expect(
+        prizePool.call(
+          prizeStrategy,
+          'afterWithdrawWithTimelockFrom(address,uint256,address)',
+          wallet._address,
+          toWei('10'),
+          ticket.address
+        ))
+        .to.be.revertedWith('PrizeStrategy/rng-in-flight')
     })
   })
 });

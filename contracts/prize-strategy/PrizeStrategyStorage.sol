@@ -28,10 +28,10 @@ contract PrizeStrategyStorage {
   uint256 public prizePeriodSeconds;
   uint256 public prizePeriodStartedAt;
 
-  uint256 internal previousPrize;
-  uint256 internal previousPrizeAverageTickets;
+  uint256 public previousPrize;
+  uint256 public previousPrizeAverageTickets;
 
-  uint256 internal prizeAverageTickets;
+  uint256 public prizeAverageTickets;
 
   RNGInterface public rng;
   uint256 public rngRequestId;
