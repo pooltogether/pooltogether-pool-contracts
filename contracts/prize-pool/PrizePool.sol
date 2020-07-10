@@ -12,7 +12,10 @@ import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "./MappedSinglyLinkedList.sol";
 
-/* solium-disable security/no-block-members */
+
+/// @title Base Prize Pool for managing escrowed assets
+/// @notice Manages depositing and withdrawing assets from the Prize Pool
+/// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
 abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
   using SafeMath for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
@@ -46,11 +49,18 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
 
   InterestIndex internal interestIndex;
 
+  /// @notice Initializes the Prize Pool with required contract connections
+  /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
+  /// @param _comptroller Address of the component-controller that manages the prize-strategy
+  /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
   function initialize (
     address _trustedForwarder,
     ComptrollerInterface _comptroller,
     address[] memory _controlledTokens
-  ) public initializer {
+  )
+    public
+    initializer
+  {
     require(address(_comptroller) != address(0), "PrizePool/comptroller-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-zero");
     interestIndex = InterestIndex({
@@ -66,6 +76,10 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     comptroller = _comptroller;
   }
 
+  /// @notice Deposit assets into the Prize Pool to Purchase Tickets
+  /// @param to The address receiving the Tickets
+  /// @param amount The amount of assets to deposit to purchase tickets
+  /// @param token The address of the Asset Token being deposited
   function depositTo(address to, uint256 amount, address token) external onlyControlledToken(token) nonReentrant {
     _updateAwardBalance();
 
@@ -80,18 +94,27 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     emit Deposited(operator, to, token, amount);
   }
 
+  /// @notice Withdraw assets from the Prize Pool instantly by paying a Fairness fee if exiting early
+  /// @param from The address to withdraw assets from by redeeming tickets
+  /// @param amount The amount of assets to redeem for tickets
+  /// @param token The address of the asset token being withdrawn
+  /// @param prepaidExitFee An optional amount of assets paid by the operator used to cover exit fees
+  /// @return exitFee The amount of the fairness fee paid
   function withdrawInstantlyFrom(
     address from,
     uint256 amount,
     address token,
     uint256 prepaidExitFee
   )
-    external nonReentrant onlyControlledToken(token) returns (uint256)
+    external
+    nonReentrant
+    onlyControlledToken(token)
+    returns (uint256 exitFee)
   {
     _updateAwardBalance();
 
     address operator = _msgSender();
-    uint256 exitFee = comptroller.calculateInstantWithdrawalFee(from, amount, token);
+    exitFee = comptroller.calculateInstantWithdrawalFee(from, amount, token);
     uint256 sponsoredExitFee = (exitFee > prepaidExitFee) ? prepaidExitFee : exitFee;
     uint256 userExitFee = exitFee.sub(sponsoredExitFee);
 
@@ -111,54 +134,56 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     comptroller.afterWithdrawInstantlyFrom(operator, from, amount, token, exitFee, sponsoredExitFee);
 
     emit InstantWithdrawal(operator, from, token, amount, exitFee, sponsoredExitFee);
-
-    // return the exit fee
-    return exitFee;
   }
 
+  /// @notice Withdraw assets from the Prize Pool with a timelock on the assets
+  /// @dev The timelock is used to ensure that the tickets have contributed their equal weight
+  /// in the Prize before being withdrawn, in order to prevent gaming the system
+  /// @param from The address to withdraw assets from by redeeming tickets
+  /// @param amount The amount of assets to redeem for tickets
+  /// @param token The address of the asset token being withdrawn
+  /// @return unlockTimestamp The unlock timestamp that the assets will be released upon
   function withdrawWithTimelockFrom(
     address from,
     uint256 amount,
     address token
   )
-    external nonReentrant onlyControlledToken(token) returns (uint256)
+    external
+    nonReentrant
+    onlyControlledToken(token)
+    returns (uint256 unlockTimestamp)
   {
     _updateAwardBalance();
 
-
     address operator = _msgSender();
-
     ControlledToken(token).controllerBurnFrom(operator, from, amount);
 
     // Sweep the old balance, if any
     address[] memory users = new address[](1);
     users[0] = from;
-
-
     sweepTimelockBalances(users);
-
 
     timelockTotalSupply = timelockTotalSupply.add(amount);
     timelockBalances[from] = timelockBalances[from].add(amount);
 
-    uint256 unlockTimestamp = comptroller.calculateWithdrawalUnlockTimestamp(from, amount, token);
+    // the block at which the funds will be available
+    unlockTimestamp = comptroller.calculateWithdrawalUnlockTimestamp(from, amount, token);
     unlockTimestamps[from] = unlockTimestamp;
-
 
     comptroller.afterWithdrawWithTimelockFrom(from, amount, token);
 
     emit TimelockedWithdrawal(operator, from, token, amount, unlockTimestamp);
 
-
     // if the funds should already be unlocked
     if (unlockTimestamp <= _currentTime()) {
       sweepTimelockBalances(users);
     }
-
-    // return the block at which the funds will be available
-    return unlockTimestamp;
   }
 
+  /// @notice Updates the Prize Strategy when Tickets are transferred between holders
+  /// @param from The address the tickets are being transferred from
+  /// @param to The address the tickets are being transferred to
+  /// @param amount The amount of tickets being trasferred
   function beforeTokenTransfer(address from, address to, uint256 amount) external override {
     // minting and redeeming are handled separately
     if (from != address(0) && to != address(0)) {
@@ -166,14 +191,16 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     }
   }
 
-  function awardBalance() external returns (uint256) {
+  /// @notice Pokes the current award balance of the Prize Pool
+  /// @dev Updates the internal rolling interest rate since the last poke
+  /// @return award The total amount of assets to be awarded for the current prize
+  function awardBalance() external returns (uint256 award) {
     _updateAwardBalance();
     return __awardBalance;
   }
 
-  // The index is the accrued interest on the collateral since the last update.
-  // however, do we include the current interest?
-
+  /// @dev Calculates the current award balance based on the collateral & rolling interest rate
+  /// @dev The interest-index is the rolling or "accrued" exchange-rate on the unaccounted collateral since the last update.
   function _updateAwardBalance() internal {
     // this should only run once per block.
     if (interestIndex.blockNumber == uint32(block.number)) {
@@ -202,12 +229,26 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     }
   }
 
-  function interestIndexMantissa() external returns (uint256) {
+  /// @notice Gets the rolling interest rate since the last award update
+  /// @return interestRate The rolling interest rate
+  function interestIndexMantissa() external returns (uint256 interestRate) {
     _updateAwardBalance();
     return uint256(interestIndex.mantissa);
   }
 
-  function award(address to, uint256 amount, address token) external onlyComptroller onlyControlledToken(token) {
+  /// @notice Called by the Prize-Strategy to Award a Prize to a specific account
+  /// @param to The address of the winner that receives the award
+  /// @param amount The amount of assets to be awarded
+  /// @param token The addess of the asset token being awarded
+  function award(
+    address to,
+    uint256 amount,
+    address token
+  )
+    external
+    onlyComptroller
+    onlyControlledToken(token)
+  {
     if (amount == 0) {
       return;
     }
@@ -219,6 +260,11 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     emit Awarded(to, token, amount);
   }
 
+  /// @notice Called by the Prize-Strategy to Award Secondary (external) Prize amounts to a specific account
+  /// @dev Used to award any arbitrary tokens held by the Prize Pool
+  /// @param to The address of the winner that receives the award
+  /// @param amount The amount of external assets to be awarded
+  /// @param token The addess of the external asset token being awarded
   function awardExternal(address to, uint256 amount, address token) external onlyComptroller {
     require(_canAwardExternal(token), "PrizePool/invalid-external-token");
 
@@ -231,11 +277,14 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     emit AwardedExternal(to, token, amount);
   }
 
-  function sweepTimelockBalances(address[] memory users) public returns (uint256) {
+  /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
+  /// @param users An array of account addresses to sweep balances for
+  /// @return totalWithdrawal The total amount of assets swept from the Prize Pool
+  function sweepTimelockBalances(address[] memory users) public returns (uint256 totalWithdrawal) {
     address operator = _msgSender();
 
     // first gather the total withdrawal and fee
-    uint256 totalWithdrawal = _calculateTotalForSweep(users);
+    totalWithdrawal = _calculateTotalForSweep(users);
     // if there is nothing to do, just quit
     if (totalWithdrawal == 0) {
       return 0;
@@ -272,6 +321,9 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     }
   }
 
+  /// @dev Calculates the total amount of unlocked assets available to be withdrawn via Sweep
+  /// @param users An array of account addresses to sweep balances for
+  /// @return totalWithdrawal The total amount of assets that can be swept from the Prize Pool
   function _calculateTotalForSweep(address[] memory users) internal view returns (uint256 totalWithdrawal) {
     for (uint256 i = 0; i < users.length; i++) {
       address user = users[i];
@@ -281,45 +333,64 @@ abstract contract PrizePool is Initializable, AbstractYieldService, BaseRelayRec
     }
   }
 
-  function tokens() external view returns (address[] memory) {
+  /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
+  /// @return controlledTokens An array of controlled token addresses
+  function tokens() external view returns (address[] memory controlledTokens) {
     return _tokens.addressArray();
   }
 
-  function _currentTime() internal virtual view returns (uint256) {
+  /// @dev Gets the current time as represented by the current block
+  /// @return timestamp The timestamp of the current block
+  function _currentTime() internal virtual view returns (uint256 timestamp) {
     return block.timestamp;
   }
 
-  function timelockBalanceAvailableAt(address user) external view returns (uint256) {
+  /// @notice The timestamp at which an accounts timelocked balance will be made available
+  /// @param user The address of an account with timelocked assets
+  /// @return unlockTimestamp The timestamp at which the locked assets will be made available
+  function timelockBalanceAvailableAt(address user) external view returns (uint256 unlockTimestamp) {
     return unlockTimestamps[user];
   }
 
-  function timelockBalanceOf(address user) external view returns (uint256) {
+  /// @notice The balance of timelocked assets for an account
+  /// @param user The address of an account with timelocked assets
+  /// @return timelockBalance The amount of assets that have been timelocked
+  function timelockBalanceOf(address user) external view returns (uint256 timelockBalance) {
     return timelockBalances[user];
   }
 
-  function accountedBalance() external view returns (uint256) {
+  /// @notice The currently accounted-for balance in relation to the rolling exchange-rate
+  /// @return totalAccounted The currently accounted-for balance
+  function accountedBalance() external view returns (uint256 totalAccounted) {
     return _tokenTotalSupply();
   }
 
-  function _tokenTotalSupply() internal view returns (uint256) {
-    uint256 total = timelockTotalSupply;
+  /// @dev The currently accounted-for balance in relation to the rolling exchange-rate
+  /// @return total The currently accounted-for balance
+  function _tokenTotalSupply() internal view returns (uint256 total) {
+    total = timelockTotalSupply;
     address currentToken = _tokens.addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
     while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
-      total = IERC20(currentToken).totalSupply();
+      total = total.add(IERC20(currentToken).totalSupply());
       currentToken = _tokens.addressMap[currentToken];
     }
-    return total;
   }
 
+  /// @dev Checks if a specific token is controlled by the Prize Pool
+  /// @param _token The address of the token to check
+  /// @return True if the token is a controlled token, false otherwise
   function isControlled(address _token) internal view returns (bool) {
     return _tokens.contains(_token);
   }
 
+  /// @dev Function modifier to ensure usage of tokens controlled by the Prize Pool
+  /// @param _token The address of the token to check
   modifier onlyControlledToken(address _token) {
     require(isControlled(_token), "PrizePool/unknown-token");
     _;
   }
 
+  /// @dev Function modifier to ensure caller is the component-controller
   modifier onlyComptroller() {
     require(msg.sender == address(comptroller), "PrizePool/only-comptroller");
     _;
