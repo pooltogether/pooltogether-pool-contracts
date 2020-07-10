@@ -129,7 +129,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   function calculateInstantWithdrawalFee(address from, uint256 amount, address token) external override returns (uint256) {
     if (token == address(ticket)) {
-      uint256 totalFee = _calculateExitFee(amount);
+      uint256 totalFee = _beforeExitFee(amount);
       uint256 totalCredit = _balanceOfTicketCredit(from);
       uint256 burnAmount;
       uint256 fee;
@@ -160,9 +160,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return uint256(creditBalances[user].credit).add(calculateNewTicketCredit(user, ticket.balanceOf(user)));
   }
 
-  function _calculateExitFee(uint256 tickets) internal view returns (uint256) {
+  function _beforeExitFee(uint256 tickets) internal view returns (uint256) {
     return _scaleValueByTimeRemaining(
-      _calculateExitFeeWithValues(
+      _beforeExitFeeWithValues(
         tickets,
         previousPrizeAverageTickets,
         previousPrize
@@ -172,7 +172,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     );
   }
 
-  function _calculateExitFeeWithValues(
+  function _beforeExitFeeWithValues(
     uint256 _tickets,
     uint256 _previousPrizeAverageTickets,
     uint256 _previousPrize
