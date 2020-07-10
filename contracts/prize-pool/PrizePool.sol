@@ -374,7 +374,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @param users An array of account addresses to sweep balances for
   /// @return totalWithdrawal The total amount of assets that can be swept from the Prize Pool
   function _calculateTotalForSweep(address[] memory users) internal view returns (uint256 totalWithdrawal) {
-    
+
     for (uint256 i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= _currentTime()) {
