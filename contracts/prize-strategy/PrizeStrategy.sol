@@ -17,7 +17,7 @@ import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 import "./PrizeStrategyStorage.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
-import "../prize-pool/ComptrollerInterface.sol";
+import "../prize-pool/PrizeStrategyInterface.sol";
 import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
 
@@ -26,7 +26,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
                           Initializable,
                           BaseRelayRecipient,
                           ReentrancyGuardUpgradeSafe,
-                          ComptrollerInterface,
+                          PrizeStrategyInterface,
                           IERC777Recipient,
                           TokenControllerInterface {
 

@@ -5,11 +5,10 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-import "./ComptrollerInterface.sol";
+import "./PrizeStrategyInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "./MappedSinglyLinkedList.sol";
-
 
 /// @title Base Prize Pool for managing escrowed assets
 /// @notice Manages depositing and withdrawing assets from the Prize Pool
@@ -39,7 +38,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   event PrincipalRedeemed(address from, uint256 amount);
 
   MappedSinglyLinkedList.Mapping internal _tokens;
-  ComptrollerInterface public comptroller;
+  PrizeStrategyInterface public prizeStrategy;
 
   uint256 public timelockTotalSupply;
   mapping(address => uint256) internal timelockBalances;
@@ -51,17 +50,17 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
 
   /// @notice Initializes the Prize Pool with required contract connections
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
-  /// @param _comptroller Address of the component-controller that manages the prize-strategy
+  /// @param _prizeStrategy Address of the component-controller that manages the prize-strategy
   /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
   function initialize (
     address _trustedForwarder,
-    ComptrollerInterface _comptroller,
+    PrizeStrategyInterface _prizeStrategy,
     address[] memory _controlledTokens
   )
     public
     initializer
   {
-    require(address(_comptroller) != address(0), "PrizePool/comptroller-zero");
+    require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-zero");
     interestIndex = InterestIndex({
       mantissa: uint224(1 ether),
@@ -73,7 +72,56 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     }
     __ReentrancyGuard_init();
     trustedForwarder = _trustedForwarder;
-    comptroller = _comptroller;
+    prizeStrategy = _prizeStrategy;
+  }
+
+  /// @dev Inheriting contract must determine if a specific token type may be awarded as a prize enhancement
+  /// @param _token The address of the token to check
+  /// @return True if the token may be awarded, false otherwise
+  function _canAwardExternal(address _token) internal virtual view returns (bool);
+
+  /// @dev Inheriting contract must return an interface to the underlying asset token that conforms to the ERC20 spec
+  /// @return A reference to the interface of the underling asset token
+  function _token() internal virtual view returns (IERC20);
+
+  /// @dev Inheriting contract must return the balance of the underlying assets held by the Yield Service
+  /// @return The underlying balance of asset tokens
+  function _balance() internal virtual returns (uint256);
+
+  /// @dev Inheriting contract must provide the ability to supply asset tokens in exchange
+  /// for yield-bearing tokens to be held in escrow by the Yield Service
+  /// @param mintAmount The amount of asset tokens to be supplied
+  function _supply(uint256 mintAmount) internal virtual;
+
+  /// @dev Inheriting contract must provide the ability to redeem yield-bearing tokens in exchange
+  /// for the underlying asset tokens held in escrow by the Yield Service
+  /// @param redeemAmount The amount of yield-bearing tokens to be redeemed
+  function _redeem(uint256 redeemAmount) internal virtual;
+
+  /// @dev Inheriting contract must provide an estimate for the amount of accrued interest that would
+  /// be applied to the `principal` amount over a given number of `blocks`
+  /// @param principal The amount of asset tokens to provide an estimate on
+  /// @param blocks The number of blocks that the principal would accrue interest over
+  /// @return The estimated interest that would accrue on the principal
+  function estimateAccruedInterestOverBlocks(uint256 principal, uint256 blocks) public virtual view returns (uint256);
+
+  /// @dev Gets the underlying asset token used by the Yield Service
+  /// @return A reference to the interface of the underling asset token
+  function token() external virtual view returns (IERC20) {
+    return _token();
+  }
+
+  /// @dev Gets the balance of the underlying assets held by the Yield Service
+  /// @return The underlying balance of asset tokens
+  function balance() external virtual returns (uint256) {
+    return _balance();
+  }
+
+  /// @dev Checks with the Prize Pool if a specific token type may be awarded as a prize enhancement
+  /// @param _externalToken The address of the token to check
+  /// @return True if the token may be awarded, false otherwise
+  function canAwardExternal(address _externalToken) external virtual view returns (bool) {
+    return _canAwardExternal(_externalToken);
   }
 
   /// @dev Inheriting contract must determine if a specific token type may be awarded as a prize enhancement
@@ -138,7 +186,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     _token().transferFrom(operator, address(this), amount);
     _supply(amount);
 
-    comptroller.afterDepositTo(to, amount, token);
+    prizeStrategy.afterDepositTo(to, amount, token);
 
     emit Deposited(operator, to, token, amount);
   }
@@ -163,7 +211,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     _updateAwardBalance();
 
     address operator = _msgSender();
-    exitFee = comptroller.calculateInstantWithdrawalFee(from, amount, token);
+    exitFee = prizeStrategy.calculateInstantWithdrawalFee(from, amount, token);
     uint256 sponsoredExitFee = (exitFee > prepaidExitFee) ? prepaidExitFee : exitFee;
     uint256 userExitFee = exitFee.sub(sponsoredExitFee);
 
@@ -180,7 +228,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     _redeem(amountLessFee);
     _token().transfer(from, amountLessFee);
 
-    comptroller.afterWithdrawInstantlyFrom(operator, from, amount, token, exitFee, sponsoredExitFee);
+    prizeStrategy.afterWithdrawInstantlyFrom(operator, from, amount, token, exitFee, sponsoredExitFee);
 
     emit InstantWithdrawal(operator, from, token, amount, exitFee, sponsoredExitFee);
   }
@@ -216,10 +264,10 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     timelockBalances[from] = timelockBalances[from].add(amount);
 
     // the block at which the funds will be available
-    unlockTimestamp = comptroller.calculateWithdrawalUnlockTimestamp(from, amount, token);
+    unlockTimestamp = prizeStrategy.calculateWithdrawalUnlockTimestamp(from, amount, token);
     unlockTimestamps[from] = unlockTimestamp;
 
-    comptroller.afterWithdrawWithTimelockFrom(from, amount, token);
+    prizeStrategy.afterWithdrawWithTimelockFrom(from, amount, token);
 
     emit TimelockedWithdrawal(operator, from, token, amount, unlockTimestamp);
 
@@ -236,7 +284,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   function beforeTokenTransfer(address from, address to, uint256 amount) external override {
     // minting and redeeming are handled separately
     if (from != address(0) && to != address(0)) {
-      comptroller.beforeTokenTransfer(from, to, amount, msg.sender);
+      prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
     }
   }
 
@@ -295,7 +343,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     address token
   )
     external
-    onlyComptroller
+    onlyPrizeStrategy
     onlyControlledToken(token)
   {
     if (amount == 0) {
@@ -314,7 +362,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of external assets to be awarded
   /// @param token The addess of the external asset token being awarded
-  function awardExternal(address to, uint256 amount, address token) external onlyComptroller {
+  function awardExternal(address to, uint256 amount, address token) external onlyPrizeStrategy {
     require(_canAwardExternal(token), "PrizePool/invalid-external-token");
 
     if (amount == 0) {
@@ -365,7 +413,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     for (i = 0; i < changes.length; i++) {
       BalanceChange memory change = changes[i];
       if (change.balance > 0) {
-        comptroller.afterSweepTimelockedWithdrawal(operator, change.user, change.balance);
+        prizeStrategy.afterSweepTimelockedWithdrawal(operator, change.user, change.balance);
       }
     }
   }
@@ -439,9 +487,9 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     _;
   }
 
-  /// @dev Function modifier to ensure caller is the component-controller
-  modifier onlyComptroller() {
-    require(msg.sender == address(comptroller), "PrizePool/only-comptroller");
+  /// @dev Function modifier to ensure caller is the prize-strategy
+  modifier onlyPrizeStrategy() {
+    require(msg.sender == address(prizeStrategy), "PrizePool/only-prizeStrategy");
     _;
   }
 }
