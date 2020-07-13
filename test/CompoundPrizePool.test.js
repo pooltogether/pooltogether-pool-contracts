@@ -1,6 +1,6 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
-const ComptrollerInterface = require('../build/ComptrollerInterface.json')
+const PrizeStrategyInterface = require('../build/PrizeStrategyInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CTokenInterface = require('../build/CTokenInterface.json')
 const IERC20 = require('../build/IERC20.json')
@@ -24,7 +24,7 @@ const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 describe('PrizePool contract', function() {
   let wallet, wallet2
 
-  let prizePool, token, comptroller, cToken
+  let prizePool, token, prizeStrategy, cToken
 
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
@@ -35,7 +35,7 @@ describe('PrizePool contract', function() {
     cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
     await cToken.mock.underlying.returns(token.address)
 
-    comptroller = await deployMockContract(wallet, ComptrollerInterface.abi, overrides)
+    prizeStrategy = await deployMockContract(wallet, PrizeStrategyInterface.abi, overrides)
 
     debug('deploying CompoundPrizePoolHarness...')
     prizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
@@ -48,7 +48,7 @@ describe('PrizePool contract', function() {
     beforeEach(async () => {
       await prizePool.initialize(
         FORWARDER,
-        comptroller.address,
+        prizeStrategy.address,
         [ticket.address],
         cToken.address
       )
@@ -71,7 +71,7 @@ describe('PrizePool contract', function() {
         await token.mock.transferFrom.withArgs(wallet._address, prizePool.address, amount).returns(true)
         await token.mock.approve.withArgs(cToken.address, amount).returns(true)
         await cToken.mock.mint.withArgs(amount).returns('0')
-        await comptroller.mock.afterDepositTo.withArgs(wallet2._address, amount, ticket.address).returns()
+        await prizeStrategy.mock.afterDepositTo.withArgs(wallet2._address, amount, ticket.address).returns()
         await ticket.mock.controllerMint.withArgs(wallet2._address, amount).returns()
 
         // Test depositTo
@@ -90,11 +90,11 @@ describe('PrizePool contract', function() {
         await cToken.mock.balanceOfUnderlying.returns('0')
         await ticket.mock.totalSupply.returns('0')
 
-        await comptroller.mock.calculateInstantWithdrawalFee.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
+        await prizeStrategy.mock.calculateInstantWithdrawalFee.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await comptroller.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
 
         await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0'))
           .to.emit(prizePool, 'InstantWithdrawal')
@@ -112,7 +112,7 @@ describe('PrizePool contract', function() {
         await prizePool.setCurrentTime('1')
 
         // ensure withdraw is later than now
-        await comptroller.mock.calculateWithdrawalUnlockTimestamp
+        await prizeStrategy.mock.calculateWithdrawalUnlockTimestamp
           .withArgs(wallet._address, toWei('10'), ticket.address)
           .returns(10)
 
@@ -120,7 +120,7 @@ describe('PrizePool contract', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, toWei('10')).returns()
 
         // expect finish
-        await comptroller.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('10'), ticket.address).returns()
+        await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('10'), ticket.address).returns()
 
         // setup timelocked withdrawal
         await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('10'), ticket.address)
@@ -155,13 +155,13 @@ describe('PrizePool contract', function() {
         await ticket.mock.controllerBurnFrom.returns()
 
         // withdraw for a user, and it's eligible at 10 seconds
-        await comptroller.mock.calculateWithdrawalUnlockTimestamp.returns(10)
-        await comptroller.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('11'), ticket.address).returns()
+        await prizeStrategy.mock.calculateWithdrawalUnlockTimestamp.returns(10)
+        await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('11'), ticket.address).returns()
         await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('11'), ticket.address)
 
         // withdraw for a user, and it's eligible at 20 seconds
-        await comptroller.mock.calculateWithdrawalUnlockTimestamp.returns(20)
-        await comptroller.mock.afterWithdrawWithTimelockFrom.withArgs(wallet2._address, toWei('22'), ticket.address).returns()
+        await prizeStrategy.mock.calculateWithdrawalUnlockTimestamp.returns(20)
+        await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet2._address, toWei('22'), ticket.address).returns()
         await prizePool.withdrawWithTimelockFrom(wallet2._address, toWei('22'), ticket.address)
 
         // Only first deposit is unlocked
@@ -170,7 +170,7 @@ describe('PrizePool contract', function() {
         // expect the redeem && transfer for only the unlocked amount
         await cToken.mock.redeemUnderlying.withArgs(toWei('11')).returns('0')
         await token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
-        await comptroller.mock.afterSweepTimelockedWithdrawal.withArgs(wallet._address, wallet._address, toWei('11')).returns()
+        await prizeStrategy.mock.afterSweepTimelockedWithdrawal.withArgs(wallet._address, wallet._address, toWei('11')).returns()
 
         // Let's sweep
         await expect(prizePool.sweepTimelockBalances([wallet._address, wallet2._address]))
@@ -197,7 +197,7 @@ describe('PrizePool contract', function() {
         await prizePool.setCurrentTime('1')
 
         // ensure withdraw is later than now
-        await comptroller.mock.calculateWithdrawalUnlockTimestamp
+        await prizeStrategy.mock.calculateWithdrawalUnlockTimestamp
           .withArgs(wallet._address, toWei('10'), ticket.address)
           .returns(10)
 
@@ -205,7 +205,7 @@ describe('PrizePool contract', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, toWei('10')).returns()
 
         // expect finish
-        await comptroller.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('10'), ticket.address).returns()
+        await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('10'), ticket.address).returns()
 
         // setup timelocked withdrawal
         await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('10'), ticket.address)
@@ -213,7 +213,7 @@ describe('PrizePool contract', function() {
         // expect the redeem && transfer
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await comptroller.mock.afterSweepTimelockedWithdrawal.withArgs(wallet._address, wallet._address, toWei('10')).returns()
+        await prizeStrategy.mock.afterSweepTimelockedWithdrawal.withArgs(wallet._address, wallet._address, toWei('10')).returns()
 
         // ensure time is after
         await prizePool.setCurrentTime('11')
@@ -280,15 +280,15 @@ describe('PrizePool contract', function() {
     beforeEach(async () => {
       await prizePool.initialize(
         FORWARDER,
-        wallet._address, // wallet is the comptroller
+        wallet._address, // wallet is the prizeStrategy
         [ticket.address],
         cToken.address
       )
     })
 
-    it('should only allow the comptroller to award external', async () => {
+    it('should only allow the prizeStrategy to award external', async () => {
       let prizePool2 = prizePool.connect(wallet2)
-      await expect(prizePool2.awardExternal(wallet._address, toWei('10'), FORWARDER)).to.be.revertedWith('PrizePool/only-comptroller')
+      await expect(prizePool2.awardExternal(wallet._address, toWei('10'), FORWARDER)).to.be.revertedWith('PrizePool/only-prizeStrategy')
     })
 
     it('should require the token to be allowed', async () => {

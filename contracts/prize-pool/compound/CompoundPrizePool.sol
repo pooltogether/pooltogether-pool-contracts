@@ -18,12 +18,12 @@ contract CompoundPrizePool is PrizePool {
 
   /// @notice Initializes the Prize Pool and Yield Service with the required contract connections
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
-  /// @param _comptroller Address of the component-controller that manages the prize-strategy
+  /// @param _prizeStrategy Address of the component-controller that manages the prize-strategy
   /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
   /// @param _cToken Address of the Compound cToken interface
   function initialize (
     address _trustedForwarder,
-    ComptrollerInterface _comptroller,
+    PrizeStrategyInterface _prizeStrategy,
     address[] memory _controlledTokens,
     CTokenInterface _cToken
   )
@@ -32,7 +32,7 @@ contract CompoundPrizePool is PrizePool {
   {
     PrizePool.initialize(
       _trustedForwarder,
-      _comptroller,
+      _prizeStrategy,
       _controlledTokens
     );
     cToken = _cToken;
