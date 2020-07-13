@@ -120,10 +120,10 @@ function PoolEnv() {
     debug(`poolAccrues balanceOfUnderlying: ${await call(this.env.cToken, 'balanceOfUnderlying', this.env.compoundPrizePool.address)}`)
   }
 
-  this.expectUserToHaveTicketCredit = async function ({ user, credit }) {
+  this.expectUserToHaveCredit = async function ({ user, credit }) {
     let wallet = await this.wallet(user)
     let prizeStrategy = await this.prizeStrategy(wallet)
-    let ticketInterest = await call(prizeStrategy, 'balanceOfTicketInterest', wallet._address)
+    let ticketInterest = await call(prizeStrategy, 'balanceOfCredit', wallet._address)
     expect(ticketInterest).to.equalish(toWei(credit), 300)
   }
 

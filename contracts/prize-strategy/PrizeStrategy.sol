@@ -108,6 +108,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   /// @notice Calculates the accrued interest for a user
+  /// @param user The user whose credit should be calculated.
+  /// @param ticketBalance The current balance of the user's tickets.
+  /// @return 
   function calculateAccruedCredit(address user, uint256 ticketBalance) internal returns (uint256) {
     uint256 interestIndex = prizePool.interestIndexMantissa();
     uint256 userIndex = creditBalances[user].interestIndex;// ticketIndexMantissa[user];
@@ -145,8 +148,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function _calculateInstantWithdrawalFee(address from, uint256 amount, address token) internal returns (uint256) {
     if (token == address(ticket)) {
       _accrueTicketCredit(from, ticket.balanceOf(from));
-      uint256 totalFee = _calculateExitFee(amount, previousPrizeAverageTickets, previousPrize);
-      uint256 feeCredit = calculateFeeCredit(from, totalFee);
+      uint256 totalFee = _calculateExpectedInterest(amount);
+      uint256 feeCredit = _calculateFeeCredit(from, totalFee);
       uint256 actualFee = totalFee.sub(feeCredit);
       if (feeCredit > 0) {
         creditBalances[from].credit = uint256(creditBalances[from].credit).sub(feeCredit).toUint128();
@@ -160,7 +163,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param user The user whose credit should be checked
   /// @param fee The fee we are trying to cover
   /// @return The amount of the fee that credit can cover
-  function calculateFeeCredit(address user, uint256 fee) internal view returns (uint256) {
+  function _calculateFeeCredit(address user, uint256 fee) internal view returns (uint256) {
     uint256 credit = uint256(creditBalances[user].credit);
     uint256 feeCredit;
     if (credit >= fee) {
@@ -174,24 +177,30 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Calculates the withdrawal unlock timestamp by estimated how long it would take to pay off the exit fee.  This function also accrues their ticket credit.
   /// @param user The user who wishes to withdraw
   /// @param controlledToken The token they are withdrawing
-  /// @return The absolute timestamp after which they are allowed to withdraw
-  function beforeWithdrawWithTimelockFrom(address user, uint256 amount, address controlledToken) external override returns (uint256) {
+  /// @return timestamp The absolute timestamp after which they are allowed to withdraw
+  function beforeWithdrawWithTimelockFrom(address user, uint256 amount, address controlledToken) external override returns (uint256 timestamp) {
     if (controlledToken == address(sponsorship)) {
       return 0;
     } else if (controlledToken == address(ticket)) {
       uint256 remainingFee = _calculateInstantWithdrawalFee(user, amount, controlledToken);
-      uint256 timestamp;
       if (remainingFee > 0) {
         // calculate how long it would take to accrue
         timestamp = _currentTime().add(
-          _calculateAccrualTime(amount, remainingFee, previousPrize, previousPrizeAverageTickets, prizePeriodSeconds)
+          _estimateAccrualTime(amount, remainingFee, previousPrize, previousPrizeAverageTickets, prizePeriodSeconds)
         );
       }
       return timestamp;
     }
   }
 
-  function calculateAccrualTime(
+  /// @notice Estimates the amount of time it will take for a given amount of funds to accrue the given amount of interest based on the previous prize.
+  /// @param _principal The principal amount on which interest is accruing
+  /// @param _interest The amount of interest that must accrue
+  /// @param _previousPrize The size of the previous prize
+  /// @param _previousPrizeAverageTickets The number of tickets held during the previous prize
+  /// @param _prizePeriodSeconds The duration of the prize
+  /// @return durationSeconds The duration of time it will take to accrue the given amount of interest, in seconds.
+  function estimateAccrualTime(
     uint256 _principal,
     uint256 _interest,
     uint256 _previousPrize,
@@ -200,9 +209,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
   )
     external
     pure
-    returns (uint256)
+    returns (uint256 durationSeconds)
   {
-    return _calculateAccrualTime(
+    return _estimateAccrualTime(
       _principal,
       _interest,
       _previousPrize,
@@ -211,7 +220,14 @@ contract PrizeStrategy is PrizeStrategyStorage,
     );
   }
 
-  function _calculateAccrualTime(
+  /// @notice Estimates the amount of time it will take for a given amount of funds to accrue the given amount of interest based on the previous prize.
+  /// @param _principal The principal amount on which interest is accruing
+  /// @param _interest The amount of interest that must accrue
+  /// @param _previousPrize The size of the previous prize
+  /// @param _previousPrizeAverageTickets The number of tickets held during the previous prize
+  /// @param _prizePeriodSeconds The duration of the prize
+  /// @return durationSeconds The duration of time it will take to accrue the given amount of interest, in seconds.
+  function _estimateAccrualTime(
     uint256 _principal,
     uint256 _interest,
     uint256 _previousPrize,
@@ -220,7 +236,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   )
     internal
     pure
-    returns (uint256)
+    returns (uint256 durationSeconds)
   {
 
     // Let's assume that prevPrize = interestRatePerSecond * prizePeriodSeconds * prevPrizeTickets
@@ -242,14 +258,14 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return durationSecondsMantissa.div(FixedPoint.SCALE);
   }
 
-  function _balanceOfTicketCredit(address user) internal returns (uint256) {
-    return uint256(creditBalances[user].credit).add(calculateAccruedCredit(user, ticket.balanceOf(user)));
-  }
-
+  /// @notice Calculates the interest per ticket accrued for the previous prize.
+  /// @param _previousPrizeAverageTickets The number of tickets for the previous prize
+  /// @param _previousPrize The size of the previous prize
+  /// @return interestPerTicketMantissa The interest that was earned per ticket for the last prize.
   function _calculatePreviousPrizeTicketCollateralization(
     uint256 _previousPrizeAverageTickets,
     uint256 _previousPrize
-  ) internal pure returns (uint256) {
+  ) internal pure returns (uint256 interestPerTicketMantissa) {
     // If there were no tickets, then it has a collateralization of zero
     if (_previousPrizeAverageTickets == 0) {
       return 0;
@@ -258,24 +274,30 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return FixedPoint.calculateMantissa(_previousPrize, _previousPrizeAverageTickets);
   }
 
-  function _calculateExitFee(
-    uint256 _tickets,
-    uint256 _previousPrizeAverageTickets,
-    uint256 _previousPrize
+  /// @notice Calculates the interest that should have accrued on the given amount of tickets
+  /// @param _tickets The tickets whose interest should be calculated
+  /// @return interest The interest that should have accrued on the tickets
+  function _calculateExpectedInterest(
+    uint256 _tickets
   )
-    internal pure returns (uint256)
+    internal view returns (uint256 interest)
   {
     // user needs to have accrued at least as much interest as required by the tickets
-    uint256 ticketCollateralizationMantissa = _calculatePreviousPrizeTicketCollateralization(_previousPrizeAverageTickets, _previousPrize);
+    uint256 ticketCollateralizationMantissa = _calculatePreviousPrizeTicketCollateralization(previousPrizeAverageTickets, previousPrize);
     return FixedPoint.multiplyUintByMantissa(_tickets, ticketCollateralizationMantissa);
   }
 
+  /// @notice Scales a value by a fraction being the remaining time out of the prize period.  I.e. when there are 0 seconds left, it's zero.  When there are remaining == prize period seconds left it's 1.
+  /// @param _value The value to scale
+  /// @param _timeRemainingSeconds The time remaining in the prize period.
+  /// @param _prizePeriodSeconds The length of the prize period in seconds.
+  /// @return scaledValue The value scaled the time fraction
   function _scaleValueByTimeRemaining(
     uint256 _value,
     uint256 _timeRemainingSeconds,
     uint256 _prizePeriodSeconds
   )
-    internal pure returns (uint256)
+    internal pure returns (uint256 scaledValue)
   {
     return FixedPoint.multiplyUintByMantissa(
       _value,
@@ -436,12 +458,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return block.timestamp;
   }
 
-  //
-  // Ticket Minting/Redeeming
-  //
-
-  function balanceOfTicketInterest(address user) external returns (uint256) {
-    return _balanceOfTicketCredit(user);
+  /// @notice Returns the credit balance for a given user.  Not that this includes both minted credit and pending credit.
+  /// @param user The user whose credit balance should be returned
+  /// @return creditBalance The balance of the users credit
+  function balanceOfCredit(address user) external returns (uint256 creditBalance) {
+    _accrueTicketCredit(user, ticket.balanceOf(user));
+    return uint256(creditBalances[user].credit);
   }
 
   function _msgSender() internal override virtual view returns (address payable) {

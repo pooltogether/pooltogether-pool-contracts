@@ -170,7 +170,7 @@ describe('PrizeStrategy', function() {
     })
   })
 
-  describe('calculateAccrualTime()', () => {
+  describe('estimateAccrualTime()', () => {
     it('should be zero if there was no previous prize', async () => {
       
       let ticketBalance = toWei('100')
@@ -179,7 +179,7 @@ describe('PrizeStrategy', function() {
       let previousPrizeAverageTickets = toWei('0')
       let prizePeriodSeconds = toWei('10')
 
-      expect(await prizeStrategy.calculateAccrualTime(
+      expect(await prizeStrategy.estimateAccrualTime(
         ticketBalance,
         interest,
         previousPrize,
@@ -197,7 +197,7 @@ describe('PrizeStrategy', function() {
       let previousPrizeAverageTickets = toWei('100')
       let prizePeriodSeconds = '10'
 
-      expect(await prizeStrategy.calculateAccrualTime(
+      expect(await prizeStrategy.estimateAccrualTime(
         ticketBalance,
         interest,
         previousPrize,
@@ -215,7 +215,7 @@ describe('PrizeStrategy', function() {
       let previousPrizeAverageTickets = toWei('100')
       let prizePeriodSeconds = '10'
 
-      expect(await prizeStrategy.calculateAccrualTime(
+      expect(await prizeStrategy.estimateAccrualTime(
         ticketBalance,
         interest,
         previousPrize,
@@ -233,7 +233,7 @@ describe('PrizeStrategy', function() {
       let previousPrizeAverageTickets = toWei('100')
       let prizePeriodSeconds = '10'
 
-      expect(await prizeStrategy.calculateAccrualTime(
+      expect(await prizeStrategy.estimateAccrualTime(
         ticketBalance,
         interest,
         previousPrize,

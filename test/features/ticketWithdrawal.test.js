@@ -45,12 +45,12 @@ describe('Withdraw Feature', () => {
       await env.buyTickets({ user: 2, tickets: 100, elapsed: 0 })
       await env.poolAccrues({ tickets: 31 })
       // now the pool has accrued 31 tickets on 310- meaning user 2 should have credit of 10
-      await env.expectUserToHaveTicketCredit({ user: 2, credit: 10 })
+      await env.expectUserToHaveCredit({ user: 2, credit: 10 })
       await env.withdrawInstantly({ user: 2, tickets: 100 })
 
       // consume the credit so they can now withdraw for free
       await env.expectUserToHaveTokens({ user: 2, tokens: 100 })
-      await env.expectUserToHaveTicketCredit({ user: 2, credit: 0 })
+      await env.expectUserToHaveCredit({ user: 2, credit: 0 })
     })
   })
 
@@ -91,13 +91,13 @@ describe('Withdraw Feature', () => {
 
       // accrue 10.5 tickets for 210, which means the user has credit of 5
       await env.poolAccrues({ tickets: '10.5' })
-      await env.expectUserToHaveTicketCredit({ user: 2, credit: 5 })
+      await env.expectUserToHaveCredit({ user: 2, credit: 5 })
 
       // withdraw with timelock.  Req'd cltralization is 0.1.  They already have 5, so half time.
       await env.withdrawWithTimelockAtTime({ user: 2, tickets: 100, elapsed: 0 })
 
       // should have burned their credit
-      await env.expectUserToHaveTicketCredit({ user: 2, credit: 0 })
+      await env.expectUserToHaveCredit({ user: 2, credit: 0 })
 
       // tickets are converted to timelock
       await env.expectUserToHaveTimelock({ user: 2, timelock: 100 })
