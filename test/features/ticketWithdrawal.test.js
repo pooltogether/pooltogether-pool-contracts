@@ -15,6 +15,15 @@ describe('Withdraw Feature', () => {
       await env.withdrawInstantly({ user: 1, tickets: 100 })
       await env.expectUserToHaveTokens({ user: 1, tokens: 100 })
     })
+
+    it('should allow a winner to withdraw instantly', async () => {
+      await env.createPool({ prizePeriodSeconds: 10 })
+      await env.buyTicketsAtTime({ user: 1, tickets: 100, elapsed: 0 })
+      await env.poolAccrues({ tickets: 10 }) // 10% collateralized
+      await env.awardPrize()
+      await env.withdrawInstantly({ user: 1, tickets: 110 })
+      await env.expectUserToHaveTokens({ user: 1, tokens: 110 })
+    })
   
     it('should have a cost to withdraw if there is a previous prize', async () => {
       await env.createPool({ prizePeriodSeconds: 10 })

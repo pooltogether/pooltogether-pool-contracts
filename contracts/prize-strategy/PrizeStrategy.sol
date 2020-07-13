@@ -80,6 +80,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
+  function chanceOf(address user) external view returns (uint256) {
+    return sortitionSumTrees.stakeOf(TREE_KEY, bytes32(uint256(user)));
+  }
+
   function draw(uint256 randomNumber) public view returns (address) {
     uint256 bound = ticket.totalSupply();
     address selected;
@@ -112,8 +116,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Calculates the accrued interest for a user
   /// @param user The user whose credit should be calculated.
   /// @param ticketBalance The current balance of the user's tickets.
-  /// @return The amount of accrued credit
-  function calculateAccruedCredit(address user, uint256 ticketBalance) internal returns (uint256) {
+  /// @return accruedCredit The credit that has accrued since the last credit update.
+  function calculateAccruedCredit(address user, uint256 ticketBalance) internal returns (uint256 accruedCredit) {
     uint256 interestIndex = prizePool.interestIndexMantissa();
     uint256 userIndex = creditBalances[user].interestIndex;// ticketIndexMantissa[user];
     if (userIndex == 0) {
@@ -379,20 +383,30 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return _currentTime() >= _prizePeriodEndAt();
   }
 
-  function awardSponsorship(address user, uint256 amount) internal {
+  function _awardSponsorship(address user, uint256 amount) internal {
     prizePool.award(user, amount, address(sponsorship));
   }
 
-  function awardTickets(address user, uint256 amount) internal {
+  /// @notice Awards interest as tickets to a user
+  /// @param user The user to whom the tickets are minted
+  /// @param amount The amount of interest to mint as tickets.
+  function _awardTickets(address user, uint256 amount) internal {
     _accrueTicketCredit(user, ticket.balanceOf(user));
+    uint256 creditEarned = _calculateExpectedInterest(amount);
+    creditBalances[user].credit = uint256(creditBalances[user].credit).add(uint256(creditEarned)).toUint128();
     prizePool.award(user, amount, address(ticket));
   }
 
-  function awardExternalTokens(address winner) internal {
+  /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.
+  /// @param winner The user to transfer the tokens to
+  function _awardAllExternalTokens(address winner) internal {
     address currentToken = externalAwardMapping.addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
     while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
-      prizePool.award(winner, IERC20(currentToken).balanceOf(address(prizePool)), currentToken);
-      currentToken = externalAwardMapping.addressMap[currentToken];
+      uint256 balance = IERC20(currentToken).balanceOf(address(prizePool));
+      if (balance > 0) {
+        prizePool.award(winner, balance, currentToken);
+        currentToken = externalAwardMapping.addressMap[currentToken];
+      }
     }
   }
 
@@ -406,22 +420,19 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return prizePeriodStartedAt.add(prizePeriodSeconds);
   }
 
+  /// @notice Called by the PrizePool for transfers of controlled tokens
+  /// @dev Note that this is only for *transfers*, not mints or burns
   function beforeTokenTransfer(address from, address to, uint256 amount, address token) external override onlyPrizePool {
     if (token == address(ticket)) {
       _requireNotLocked();
-      if (from != address(0)) {
-        uint256 fromBalance = ticket.balanceOf(from).sub(amount);
 
-        _accrueTicketCredit(from, fromBalance);
-        sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));
-      }
+      uint256 fromBalance = ticket.balanceOf(from).sub(amount);
+      _accrueTicketCredit(from, fromBalance);
+      sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));
 
-      if (to != address(0)) {
-        uint256 toBalance = ticket.balanceOf(to).add(amount);
-
-        _accrueTicketCredit(to, toBalance);
-        sortitionSumTrees.set(TREE_KEY, toBalance, bytes32(uint256(to)));
-      }
+      uint256 toBalance = ticket.balanceOf(to).add(amount);
+      _accrueTicketCredit(to, toBalance);
+      sortitionSumTrees.set(TREE_KEY, toBalance, bytes32(uint256(to)));
     }
   }
 
@@ -486,10 +497,13 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   function completeAward() external requireCanCompleteAward {
     require(_isPrizePeriodOver(), "PrizeStrategy/not-over");
+
+
     bytes32 randomNumber = rng.randomNumber(rngRequestId);
     uint256 balance = prizePool.awardBalance();
     uint256 reserveFee = _calculateReserveFee(balance);
     uint256 prize = balance.sub(reserveFee);
+
 
     delete rngRequestId;
     prizePeriodStartedAt = _currentTime();
@@ -498,13 +512,14 @@ contract PrizeStrategy is PrizeStrategyStorage,
     prizeAverageTickets = ticket.totalSupply();
 
     if (reserveFee > 0) {
-      awardSponsorship(governor.reserve(), reserveFee);
+      _awardSponsorship(governor.reserve(), reserveFee);
     }
+
 
     address winner = draw(uint256(randomNumber));
     if (winner != address(0)) {
-      awardTickets(winner, prize);
-      awardExternalTokens(winner);
+      _awardTickets(winner, prize);
+      _awardAllExternalTokens(winner);
     }
 
     emit PrizePoolAwarded(_msgSender(), prize, reserveFee);

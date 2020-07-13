@@ -1,5 +1,6 @@
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
+const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
 const GovernorInterface = require('../build/GovernorInterface.json')
 const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
@@ -10,6 +11,7 @@ const ControlledToken = require('../build/ControlledToken.json')
 
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
+const { AddressZero } = require('ethers/constants')
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
@@ -58,6 +60,8 @@ describe('PrizeStrategy', function() {
       rng.address,
       []
     )
+
+    debug('initialized!')
   })
 
   describe('initialize()', () => {
@@ -240,6 +244,48 @@ describe('PrizeStrategy', function() {
         previousPrizeAverageTickets,
         prizePeriodSeconds
       )).to.equal('20')
+
+    })
+  })
+
+  describe('completeAward()', () => {
+    it('should accrue credit to the winner', async () => {
+      debug('Setting time')
+
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt());
+
+      debug('Calling afterDepositTo')
+      await ticket.mock.balanceOf.returns(toWei('10'))
+      await prizePool.mock.interestIndexMantissa.returns(toWei('1'))
+
+      // have the mock update the number of prize tickets
+      await prizePool.call(prizeStrategy, 'afterDepositTo', wallet._address, toWei('10'), ticket.address);
+
+      // ensure prize period is over
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
+
+      // allow an rng request
+      await rng.mock.requestRandomNumber.returns('1')
+
+      debug('Starting award...')
+
+      // start the award
+      await prizeStrategy.startAward()
+
+      await rng.mock.isRequestComplete.returns(true)
+      await rng.mock.randomNumber.returns('0x6c00000000000000000000000000000000000000000000000000000000000000')
+      await prizePool.mock.interestIndexMantissa.returns(toWei('1.1'))
+      await prizePool.mock.awardBalance.returns(toWei('1'))
+      await governor.mock.reserve.returns(AddressZero) // no reserve
+      await ticket.mock.totalSupply.returns(toWei('10'))
+      await prizePool.mock.award.withArgs(wallet._address, toWei('1'), ticket.address).returns()
+
+      debug('Completing award...')
+
+      // complete the award
+      await prizeStrategy.completeAward()
+
+      expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal(toWei('1.1'))
 
     })
   })
