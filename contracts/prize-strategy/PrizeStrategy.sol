@@ -1,13 +1,13 @@
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
@@ -24,6 +24,7 @@ import "../Constants.sol";
 /* solium-disable security/no-block-members */
 contract PrizeStrategy is PrizeStrategyStorage,
                           Initializable,
+                          OwnableUpgradeSafe,
                           BaseRelayRecipient,
                           ReentrancyGuardUpgradeSafe,
                           PrizeStrategyInterface,
@@ -64,6 +65,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     rng = _rng;
     sponsorship = IERC20(_sponsorship);
     trustedForwarder = _trustedForwarder;
+    __Ownable_init();
     __ReentrancyGuard_init();
     governor = _governor;
     prizePeriodSeconds = _prizePeriodSeconds;
@@ -110,7 +112,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Calculates the accrued interest for a user
   /// @param user The user whose credit should be calculated.
   /// @param ticketBalance The current balance of the user's tickets.
-  /// @return 
+  /// @return The amount of accrued credit
   function calculateAccruedCredit(address user, uint256 ticketBalance) internal returns (uint256) {
     uint256 interestIndex = prizePool.interestIndexMantissa();
     uint256 userIndex = creditBalances[user].interestIndex;// ticketIndexMantissa[user];
@@ -174,7 +176,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return feeCredit;
   }
 
-  /// @notice Calculates the withdrawal unlock timestamp by estimated how long it would take to pay off the exit fee.  This function also accrues their ticket credit.
+  /// @notice Calculates the withdrawal unlock timestamp by estimated how long it would take to pay off the exit fee.
+  /// This function also accrues their ticket credit.
   /// @param user The user who wishes to withdraw
   /// @param controlledToken The token they are withdrawing
   /// @return timestamp The absolute timestamp after which they are allowed to withdraw
@@ -287,7 +290,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return FixedPoint.multiplyUintByMantissa(_tickets, ticketCollateralizationMantissa);
   }
 
-  /// @notice Scales a value by a fraction being the remaining time out of the prize period.  I.e. when there are 0 seconds left, it's zero.  When there are remaining == prize period seconds left it's 1.
+  /// @notice Scales a value by a fraction being the remaining time out of the prize period.  I.e. when there are 0 seconds left, it's zero.
+  /// When there are remaining == prize period seconds left it's 1.
   /// @param _value The value to scale
   /// @param _timeRemainingSeconds The time remaining in the prize period.
   /// @param _prizePeriodSeconds The length of the prize period in seconds.
@@ -466,7 +470,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return uint256(creditBalances[user].credit);
   }
 
-  function _msgSender() internal override virtual view returns (address payable) {
+  function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
     return BaseRelayRecipient._msgSender();
   }
 
@@ -505,6 +509,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
     emit PrizePoolAwarded(_msgSender(), prize, reserveFee);
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
+  }
+
+  function emergencyShutdown() external onlyOwner {
+    prizePool.detachPrizeStrategy();
   }
 
   modifier requireCanStartAward() {
