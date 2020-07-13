@@ -1,13 +1,13 @@
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
@@ -24,6 +24,7 @@ import "../Constants.sol";
 /* solium-disable security/no-block-members */
 contract PrizeStrategy is PrizeStrategyStorage,
                           Initializable,
+                          OwnableUpgradeSafe,
                           BaseRelayRecipient,
                           ReentrancyGuardUpgradeSafe,
                           PrizeStrategyInterface,
@@ -64,6 +65,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     rng = _rng;
     sponsorship = IERC20(_sponsorship);
     trustedForwarder = _trustedForwarder;
+    __Ownable_init();
     __ReentrancyGuard_init();
     governor = _governor;
     prizePeriodSeconds = _prizePeriodSeconds;
@@ -467,7 +469,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return uint256(creditBalances[user].credit);
   }
 
-  function _msgSender() internal override virtual view returns (address payable) {
+  function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
     return BaseRelayRecipient._msgSender();
   }
 
@@ -506,6 +508,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
     emit PrizePoolAwarded(_msgSender(), prize, reserveFee);
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
+  }
+
+  function emergencyShutdown() external onlyOwner {
+    prizePool.detachPrizeStrategy();
   }
 
   modifier requireCanStartAward() {

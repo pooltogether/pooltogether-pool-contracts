@@ -1,5 +1,6 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
+const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
 const PrizeStrategyInterface = require('../build/PrizeStrategyInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CTokenInterface = require('../build/CTokenInterface.json')
@@ -24,7 +25,7 @@ const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 describe('PrizePool contract', function() {
   let wallet, wallet2
 
-  let prizePool, token, prizeStrategy, cToken
+  let prizePool, token, cToken, prizeStrategy
 
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
@@ -298,6 +299,81 @@ describe('PrizePool contract', function() {
     it('should allow arbitrary tokens to be transferred', async () => {
       await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
       await prizePool.awardExternal(wallet._address, toWei('10'), token.address)
+    })
+  })
+
+  describe('with a detached prize strategy', () => {
+    let detachedPrizePool
+    let ticket2
+
+    beforeEach(async () => {
+      debug('deploying CompoundPrizePoolHarness...')
+      detachedPrizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
+
+      debug('deploying ControlledToken...')
+      ticket2 = await deployMockContract(wallet, ControlledToken.abi, overrides)
+      await ticket2.mock.controller.returns(detachedPrizePool.address)
+
+      debug('initializing PrizePool...')
+      await detachedPrizePool.initialize(
+        FORWARDER,
+        wallet._address,    // Prize Strategy
+        [ticket2.address],
+        cToken.address
+      )
+
+      debug('detaching PrizeStrategy from PrizePool...')
+      await detachedPrizePool.detachPrizeStrategy();
+    })
+
+    describe('depositTo()', () => {
+      it('should NOT mint tokens to the user', async () => {
+        await expect(detachedPrizePool.depositTo(wallet2._address, toWei('1'), ticket2.address))
+          .to.be.revertedWith('PrizePool/prize-strategy-detached')
+      })
+    })
+
+    describe('withdrawInstantlyFrom()', () => {
+      it('should allow a user to withdraw instantly', async () => {
+        let amount = toWei('11')
+
+        // updateAwardBalance
+        await cToken.mock.balanceOfUnderlying.returns('0')
+        await ticket2.mock.totalSupply.returns('0')
+
+        // await prizeStrategy.mock.calculateInstantWithdrawalFee.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
+        await ticket2.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
+        await cToken.mock.redeemUnderlying.withArgs(toWei('11')).returns('0')
+        await token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
+        // await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
+
+        await expect(detachedPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, '0'))
+          .to.emit(detachedPrizePool, 'InstantWithdrawal')
+          .withArgs(wallet._address, wallet._address, ticket2.address, amount, toWei('0'), '0')
+      })
+    })
+
+    describe('withdrawWithTimelockFrom()', () => {
+      it('should allow a user to withdraw with a timelock', async () => {
+        // updateAwardBalance
+        await cToken.mock.balanceOfUnderlying.returns('0')
+        await ticket2.mock.totalSupply.returns('0')
+
+        // force current time
+        await detachedPrizePool.setCurrentTime('1')
+
+        // expect a ticket burn
+        await ticket2.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, toWei('10')).returns()
+        await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
+
+        // full-amount should be tansferred
+        await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+        await detachedPrizePool.withdrawWithTimelockFrom(wallet._address, toWei('10'), ticket2.address)
+
+        expect(await detachedPrizePool.timelockBalanceOf(wallet._address)).to.equal(toWei('0'))
+        expect(await detachedPrizePool.timelockBalanceAvailableAt(wallet._address)).to.equal('0')
+        expect(await detachedPrizePool.timelockTotalSupply()).to.equal(toWei('0'))
+      })
     })
   })
 });

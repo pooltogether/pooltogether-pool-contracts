@@ -36,6 +36,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   event TimelockedWithdrawalSwept(address indexed operator, address indexed from, uint256 amount);
   event PrincipalSupplied(address from, uint256 amount);
   event PrincipalRedeemed(address from, uint256 amount);
+  event PrizeStrategyDetached();
 
   MappedSinglyLinkedList.Mapping internal _tokens;
   PrizeStrategyInterface public prizeStrategy;
@@ -287,7 +288,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @param amount The amount of tickets being trasferred
   function beforeTokenTransfer(address from, address to, uint256 amount) external override {
     // minting and redeeming are handled separately
-    if (from != address(0) && to != address(0)) {
+    if (from != address(0) && to != address(0) && _hasPrizeStrategy()) {
       prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
     }
   }
@@ -411,12 +412,8 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
       }
     }
 
-    for (i = 0; i < changes.length; i++) {
-      BalanceChange memory change = changes[i];
-      if (change.balance > 0) {
-        prizeStrategy.afterSweepTimelockedWithdrawal(operator, change.user, change.balance);
-      }
-    }
+    // Update prize strategy after sweep
+    _updateAfterSweep(changes, operator);
   }
 
   /// @dev Calculates the total amount of unlocked assets available to be withdrawn via Sweep
@@ -430,6 +427,33 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
         totalWithdrawal = totalWithdrawal.add(timelockBalances[user]);
       }
     }
+  }
+
+  /// @dev Updates the Prize Strategy after a sweep has been performed on timelocked balances
+  /// @param changes An array of user-balance changes
+  /// @param operator The address of the operator performing the update
+  function _updateAfterSweep(BalanceChange[] memory changes, address operator) internal {
+    if (!_hasPrizeStrategy()) { return; }
+
+    for (uint256 i = 0; i < changes.length; i++) {
+      BalanceChange memory change = changes[i];
+      if (change.balance > 0) {
+        prizeStrategy.afterSweepTimelockedWithdrawal(operator, change.user, change.balance);
+      }
+    }
+  }
+
+  /// @notice Emergency shutdown of the Prize Pool by detaching the Prize Strategy
+  /// @dev Called by the PrizeStrategy contract to issue an Emergency Shutdown of a corrupted Prize Strategy
+  function detachPrizeStrategy() external onlyPrizeStrategy {
+    delete prizeStrategy;
+    emit PrizeStrategyDetached();
+  }
+
+  /// @notice Check if the Prize Pool has an active Prize Strategy
+  /// @dev When the prize strategy is detached deposits are disabled, and only withdrawals are permitted
+  function _hasPrizeStrategy() internal view returns (bool) {
+    return (address(prizeStrategy) != address(0x0));
   }
 
   /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
