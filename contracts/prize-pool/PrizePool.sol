@@ -127,42 +127,43 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @notice Deposit assets into the Prize Pool to Purchase Tickets
   /// @param to The address receiving the Tickets
   /// @param amount The amount of assets to deposit to purchase tickets
-  /// @param _controlledToken The address of the Asset Token being deposited
-  function depositTo(address to, uint256 amount, address _controlledToken) external onlyControlledToken(_controlledToken) nonReentrant {
+  /// @param controlledToken The address of the Asset Token being deposited
+  function depositTo(address to, uint256 amount, address controlledToken) external onlyControlledToken(controlledToken) nonReentrant {
     _updateAwardBalance();
 
     address operator = _msgSender();
 
-    ControlledToken(_controlledToken).controllerMint(to, amount);
+    ControlledToken(controlledToken).controllerMint(to, amount);
     _token().transferFrom(operator, address(this), amount);
     _supply(amount);
 
-    prizeStrategy.afterDepositTo(to, amount, _controlledToken);
+    prizeStrategy.afterDepositTo(to, amount, controlledToken);
 
-    emit Deposited(operator, to, _controlledToken, amount);
+    emit Deposited(operator, to, controlledToken, amount);
   }
 
   /// @notice Withdraw assets from the Prize Pool instantly by paying a Fairness fee if exiting early
   /// @param from The address to withdraw assets from by redeeming tickets
   /// @param amount The amount of assets to redeem for tickets
-  /// @param _controlledToken The address of the asset token being withdrawn
+  /// @param controlledToken The address of the asset token being withdrawn
   /// @param prepaidExitFee An optional amount of assets paid by the operator used to cover exit fees
   /// @return exitFee The amount of the fairness fee paid
   function withdrawInstantlyFrom(
     address from,
     uint256 amount,
-    address _controlledToken,
+    address controlledToken,
     uint256 prepaidExitFee
   )
     external
     nonReentrant
-    onlyControlledToken(_controlledToken)
+    onlyControlledToken(controlledToken)
     returns (uint256 exitFee)
   {
     _updateAwardBalance();
 
+    exitFee = prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken);
+
     address operator = _msgSender();
-    exitFee = prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, _controlledToken);
     uint256 sponsoredExitFee = (exitFee > prepaidExitFee) ? prepaidExitFee : exitFee;
     uint256 userExitFee = exitFee.sub(sponsoredExitFee);
 
@@ -172,16 +173,16 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     }
 
     // burn the tickets
-    ControlledToken(_controlledToken).controllerBurnFrom(_msgSender(), from, amount);
+    ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
 
     // redeem the tickets less the fee
     uint256 amountLessFee = amount.sub(userExitFee);
     _redeem(amountLessFee);
     _token().transfer(from, amountLessFee);
 
-    prizeStrategy.afterWithdrawInstantlyFrom(operator, from, amount, _controlledToken, exitFee, sponsoredExitFee);
+    prizeStrategy.afterWithdrawInstantlyFrom(operator, from, amount, controlledToken, exitFee, sponsoredExitFee);
 
-    emit InstantWithdrawal(operator, from, _controlledToken, amount, exitFee, sponsoredExitFee);
+    emit InstantWithdrawal(operator, from, controlledToken, amount, exitFee, sponsoredExitFee);
   }
 
   /// @notice Withdraw assets from the Prize Pool with a timelock on the assets
@@ -203,7 +204,10 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   {
     _updateAwardBalance();
 
+    unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken);
+
     address operator = _msgSender();
+
     ControlledToken(controlledToken).controllerBurnFrom(operator, from, amount);
 
     // Sweep the old balance, if any
@@ -213,19 +217,19 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
 
     timelockTotalSupply = timelockTotalSupply.add(amount);
     timelockBalances[from] = timelockBalances[from].add(amount);
-
-    // the block at which the funds will be available
-    unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken);
     unlockTimestamps[from] = unlockTimestamp;
-
-    prizeStrategy.afterWithdrawWithTimelockFrom(from, amount, controlledToken);
-
-    emit TimelockedWithdrawal(operator, from, controlledToken, amount, unlockTimestamp);
 
     // if the funds should already be unlocked
     if (unlockTimestamp <= _currentTime()) {
       sweepTimelockBalances(users);
     }
+
+    prizeStrategy.afterWithdrawWithTimelockFrom(from, amount, controlledToken);
+
+    emit TimelockedWithdrawal(operator, from, controlledToken, amount, unlockTimestamp);
+
+    // return the block at which the funds will be available
+    return unlockTimestamp;
   }
 
   /// @notice Updates the Prize Strategy when Tickets are transferred between holders
@@ -259,21 +263,17 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     uint256 bal = _balance();
     uint256 accounted = tokenTotalSupply.add(__awardBalance);
 
-    if (bal < accounted) {
-      // if the balance is less then the accounted, we must decrease the prize.
-      uint256 diff = accounted.sub(bal);
-      __awardBalance = __awardBalance.sub(diff);
-    } else if (bal > accounted) {
-    // if the balance is greater then the accounted, we capture it as prize money
-     uint256 diff = bal.sub(accounted);
-      __awardBalance = __awardBalance.add(diff);
-    }
-
     if (accounted > 0) {
       interestIndex = InterestIndex({
         mantissa: uint224(interestIndex.mantissa * bal / accounted),
         blockNumber: uint32(block.number)
       });
+    }
+
+    if (bal > tokenTotalSupply) {
+      __awardBalance = bal.sub(tokenTotalSupply);
+    } else {
+      __awardBalance = 0;
     }
   }
 
@@ -340,6 +340,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
 
     _redeem(totalWithdrawal);
 
+
     BalanceChange[] memory changes = new BalanceChange[](users.length);
 
     IERC20 underlyingToken = IERC20(_token());
@@ -373,6 +374,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @param users An array of account addresses to sweep balances for
   /// @return totalWithdrawal The total amount of assets that can be swept from the Prize Pool
   function _calculateTotalForSweep(address[] memory users) internal view returns (uint256 totalWithdrawal) {
+    
     for (uint256 i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= _currentTime()) {
@@ -425,16 +427,16 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   }
 
   /// @dev Checks if a specific token is controlled by the Prize Pool
-  /// @param _controlledToken The address of the token to check
+  /// @param controlledToken The address of the token to check
   /// @return True if the token is a controlled token, false otherwise
-  function isControlled(address _controlledToken) internal view returns (bool) {
-    return _tokens.contains(_controlledToken);
+  function isControlled(address controlledToken) internal view returns (bool) {
+    return _tokens.contains(controlledToken);
   }
 
   /// @dev Function modifier to ensure usage of tokens controlled by the Prize Pool
-  /// @param _controlledToken The address of the token to check
-  modifier onlyControlledToken(address _controlledToken) {
-    require(isControlled(_controlledToken), "PrizePool/unknown-token");
+  /// @param controlledToken The address of the token to check
+  modifier onlyControlledToken(address controlledToken) {
+    require(isControlled(controlledToken), "PrizePool/unknown-token");
     _;
   }
 

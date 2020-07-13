@@ -169,4 +169,78 @@ describe('PrizeStrategy', function() {
         .to.be.revertedWith('PrizeStrategy/rng-in-flight')
     })
   })
+
+  describe('estimateAccrualTime()', () => {
+    it('should be zero if there was no previous prize', async () => {
+      
+      let ticketBalance = toWei('100')
+      let interest = toWei('10')
+      let previousPrize = toWei('0')
+      let previousPrizeAverageTickets = toWei('0')
+      let prizePeriodSeconds = toWei('10')
+
+      expect(await prizeStrategy.estimateAccrualTime(
+        ticketBalance,
+        interest,
+        previousPrize,
+        previousPrizeAverageTickets,
+        prizePeriodSeconds
+      )).to.equal('0')
+
+    })
+
+    it('should be the maximum if they need the same amount of interest', async () => {
+      
+      let ticketBalance = toWei('100')
+      let interest = toWei('10')
+      let previousPrize = toWei('10')
+      let previousPrizeAverageTickets = toWei('100')
+      let prizePeriodSeconds = '10'
+
+      expect(await prizeStrategy.estimateAccrualTime(
+        ticketBalance,
+        interest,
+        previousPrize,
+        previousPrizeAverageTickets,
+        prizePeriodSeconds
+      )).to.equal('10')
+
+    })
+
+    it('should be half if they have half the credit', async () => {
+      
+      let ticketBalance = toWei('100')
+      let interest = toWei('5')
+      let previousPrize = toWei('10')
+      let previousPrizeAverageTickets = toWei('100')
+      let prizePeriodSeconds = '10'
+
+      expect(await prizeStrategy.estimateAccrualTime(
+        ticketBalance,
+        interest,
+        previousPrize,
+        previousPrizeAverageTickets,
+        prizePeriodSeconds
+      )).to.equal('5')
+
+    })
+
+    it('should be double if they require twice as much interest', async () => {
+      
+      let ticketBalance = toWei('100')
+      let interest = toWei('20')
+      let previousPrize = toWei('10')
+      let previousPrizeAverageTickets = toWei('100')
+      let prizePeriodSeconds = '10'
+
+      expect(await prizeStrategy.estimateAccrualTime(
+        ticketBalance,
+        interest,
+        previousPrize,
+        previousPrizeAverageTickets,
+        prizePeriodSeconds
+      )).to.equal('20')
+
+    })
+  })
 });

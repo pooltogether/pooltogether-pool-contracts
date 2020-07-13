@@ -14,7 +14,7 @@ describe('Ticket Interest Feature', () => {
     await env.poolAccrues({ tickets: 100 })
     await env.awardPrize()
     await env.expectUserToHaveTickets({ user: 1, tickets: 200 })
-    await env.expectUserToHaveTicketCredit({ user: 1, interest: 100 })
+    await env.expectUserToHaveCredit({ user: 1, credit: 100 })
   })
 
   it('should not earn interest for late comers to the pool', async () => {
@@ -23,8 +23,8 @@ describe('Ticket Interest Feature', () => {
     await env.poolAccrues({ tickets: 100 })
     await env.buyTickets({ user: 2, tickets: 100 })
     await env.awardPrizeToToken({ token: 1 })
-    await env.expectUserToHaveTicketCredit({ user: 1, interest: 100 })
-    await env.expectUserToHaveTicketCredit({ user: 2, interest: 0 })
+    await env.expectUserToHaveCredit({ user: 1, credit: 100 })
+    await env.expectUserToHaveCredit({ user: 2, credit: 0 })
   })
 
   it('should earn partial interest on tickets', async () => {
@@ -90,10 +90,10 @@ describe('Ticket Interest Feature', () => {
 
     */
     // given that the user began with a rate of 1, we expect (endRate - startRate) * tokens = 80) => (endRate * 100 - 1 * 100 = 80) => endRate * 100 = 80 + 100 = endRate = 1.8
-    await env.expectUserToHaveTicketCredit({ user: 1, interest: 80 })
+    await env.expectUserToHaveCredit({ user: 1, credit: 80 })
 
     // given that the user began with a rate of 1.5, we expect (end rate - start rate * tokens = 20) => (endRate - 1.5 * 100 = 20) => endRate = 1.7
-    await env.expectUserToHaveTicketCredit({ user: 2, interest: 20 }) // user 1 should have 150/250 of 50, and user 2 has 100/250 of 50
+    await env.expectUserToHaveCredit({ user: 2, credit: 20 }) // user 1 should have 150/250 of 50, and user 2 has 100/250 of 50
   })
 
 })

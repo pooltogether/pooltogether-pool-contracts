@@ -3,7 +3,7 @@ const RNGServiceMock = require('../build/RNGServiceMock.json')
 const Forwarder = require('../build/Forwarder.json')
 const MockGovernor = require('../build/MockGovernor.json')
 const ControlledToken = require('../build/ControlledToken.json')
-const CompoundPrizePool = require('../build/CompoundPrizePool.json')
+const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
 const CTokenMock = require('../build/CTokenMock.json')
 const ERC20Mintable = require('../build/ERC20Mintable.json')
 
@@ -33,9 +33,9 @@ async function deployTestPool(wallet, prizePeriodSeconds, overrides = { gasLimit
 
   let prizeStrategy = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
 
-  debug('Deploying CompoundPrizePool...')
+  debug('Deploying CompoundPrizePoolHarness...')
 
-  let compoundPrizePool = await deployContract(wallet, CompoundPrizePool, [], overrides)
+  let compoundPrizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
 
   debug('Deploying Sponsorship...')
 
@@ -47,7 +47,7 @@ async function deployTestPool(wallet, prizePeriodSeconds, overrides = { gasLimit
   let ticket = await deployContract(wallet, ControlledToken, [], overrides)
   await ticket.initialize("Ticket", "TICK", forwarder.address, compoundPrizePool.address)
 
-  debug('Initializing CompoundPrizePool...')
+  debug('Initializing CompoundPrizePoolHarness...')
 
   await compoundPrizePool.initialize(
     forwarder.address,
