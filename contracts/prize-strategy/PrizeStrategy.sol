@@ -110,7 +110,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Calculates the accrued interest for a user
   /// @param user The user whose credit should be calculated.
   /// @param ticketBalance The current balance of the user's tickets.
-  /// @return 
+  /// @return
   function calculateAccruedCredit(address user, uint256 ticketBalance) internal returns (uint256) {
     uint256 interestIndex = prizePool.interestIndexMantissa();
     uint256 userIndex = creditBalances[user].interestIndex;// ticketIndexMantissa[user];
@@ -287,7 +287,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return FixedPoint.multiplyUintByMantissa(_tickets, ticketCollateralizationMantissa);
   }
 
-  /// @notice Scales a value by a fraction being the remaining time out of the prize period.  I.e. when there are 0 seconds left, it's zero.  When there are remaining == prize period seconds left it's 1.
+  /// @notice Scales a value by a fraction being the remaining time out of the prize period.  I.e. when there are 0 seconds left, it's zero.
+  /// When there are remaining == prize period seconds left it's 1.
   /// @param _value The value to scale
   /// @param _timeRemainingSeconds The time remaining in the prize period.
   /// @param _prizePeriodSeconds The length of the prize period in seconds.
