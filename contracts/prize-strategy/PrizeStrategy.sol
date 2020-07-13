@@ -127,8 +127,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return balance.sub(reserveFee);
   }
 
-  function calculateInstantWithdrawalFee(address from, uint256 amount, address token) external override returns (uint256) {
-    if (token == address(ticket)) {
+  function beforeWithdrawInstantlyFrom(address from, uint256 amount, address controlledToken) external override returns (uint256) {
+    if (controlledToken == address(ticket)) {
       uint256 totalFee = _beforeExitFee(amount);
       uint256 totalCredit = _balanceOfTicketCredit(from);
       uint256 burnAmount;
@@ -148,10 +148,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return 0;
   }
 
-  function calculateWithdrawalUnlockTimestamp(address, uint256, address token) external override returns (uint256) {
-    if (token == address(sponsorship)) {
+  function beforeWithdrawWithTimelockFrom(address, uint256, address controlledToken) external override returns (uint256) {
+    if (controlledToken == address(sponsorship)) {
       return 0;
-    } else if (token == address(ticket)) {
+    } else if (controlledToken == address(ticket)) {
       return _prizePeriodEndAt();
     }
   }
