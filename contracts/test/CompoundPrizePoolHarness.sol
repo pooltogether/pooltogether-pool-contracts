@@ -7,6 +7,18 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
 
   uint256 internal time;
 
+  function initialize(CTokenInterface _cToken) public {
+    cToken = _cToken;
+  }
+
+  function supply(uint256 mintAmount) external {
+    _supply(mintAmount);
+  }
+
+  function redeem(uint256 redeemAmount) external {
+    _redeem(redeemAmount);
+  }
+
   function setCurrentTime(uint256 _time) external {
     time = _time;
   }
