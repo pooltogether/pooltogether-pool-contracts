@@ -127,9 +127,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return balance.sub(reserveFee);
   }
 
-  function calculateInstantWithdrawalFee(address from, uint256 amount, address token) external override returns (uint256) {
-    if (token == address(ticket)) {
-      uint256 totalFee = _calculateExitFee(amount);
+  function beforeWithdrawInstantlyFrom(address from, uint256 amount, address controlledToken) external override returns (uint256) {
+    if (controlledToken == address(ticket)) {
+      uint256 totalFee = _calculateExitFeeWithTimeScale(amount);
       uint256 totalCredit = _balanceOfTicketCredit(from);
       uint256 burnAmount;
       uint256 fee;
@@ -148,10 +148,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return 0;
   }
 
-  function calculateWithdrawalUnlockTimestamp(address, uint256, address token) external override returns (uint256) {
-    if (token == address(sponsorship)) {
+  function beforeWithdrawWithTimelockFrom(address, uint256, address controlledToken) external override returns (uint256) {
+    if (controlledToken == address(sponsorship)) {
       return 0;
-    } else if (token == address(ticket)) {
+    } else if (controlledToken == address(ticket)) {
       return _prizePeriodEndAt();
     }
   }
@@ -160,9 +160,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return uint256(creditBalances[user].credit).add(calculateNewTicketCredit(user, ticket.balanceOf(user)));
   }
 
-  function _calculateExitFee(uint256 tickets) internal view returns (uint256) {
+  function _calculateExitFeeWithTimeScale(uint256 tickets) internal view returns (uint256) {
     return _scaleValueByTimeRemaining(
-      _calculateExitFeeWithValues(
+      _calculateExitFee(
         tickets,
         previousPrizeAverageTickets,
         previousPrize
@@ -172,7 +172,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     );
   }
 
-  function _calculateExitFeeWithValues(
+  function _calculateExitFee(
     uint256 _tickets,
     uint256 _previousPrizeAverageTickets,
     uint256 _previousPrize

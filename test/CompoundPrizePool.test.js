@@ -90,7 +90,7 @@ describe('PrizePool contract', function() {
         await cToken.mock.balanceOfUnderlying.returns('0')
         await ticket.mock.totalSupply.returns('0')
 
-        await prizeStrategy.mock.calculateInstantWithdrawalFee.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
+        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
@@ -112,7 +112,7 @@ describe('PrizePool contract', function() {
         await prizePool.setCurrentTime('1')
 
         // ensure withdraw is later than now
-        await prizeStrategy.mock.calculateWithdrawalUnlockTimestamp
+        await prizeStrategy.mock.beforeWithdrawWithTimelockFrom
           .withArgs(wallet._address, toWei('10'), ticket.address)
           .returns(10)
 
@@ -155,12 +155,12 @@ describe('PrizePool contract', function() {
         await ticket.mock.controllerBurnFrom.returns()
 
         // withdraw for a user, and it's eligible at 10 seconds
-        await prizeStrategy.mock.calculateWithdrawalUnlockTimestamp.returns(10)
+        await prizeStrategy.mock.beforeWithdrawWithTimelockFrom.returns(10)
         await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('11'), ticket.address).returns()
         await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('11'), ticket.address)
 
         // withdraw for a user, and it's eligible at 20 seconds
-        await prizeStrategy.mock.calculateWithdrawalUnlockTimestamp.returns(20)
+        await prizeStrategy.mock.beforeWithdrawWithTimelockFrom.returns(20)
         await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet2._address, toWei('22'), ticket.address).returns()
         await prizePool.withdrawWithTimelockFrom(wallet2._address, toWei('22'), ticket.address)
 
@@ -197,7 +197,7 @@ describe('PrizePool contract', function() {
         await prizePool.setCurrentTime('1')
 
         // ensure withdraw is later than now
-        await prizeStrategy.mock.calculateWithdrawalUnlockTimestamp
+        await prizeStrategy.mock.beforeWithdrawWithTimelockFrom
           .withArgs(wallet._address, toWei('10'), ticket.address)
           .returns(10)
 

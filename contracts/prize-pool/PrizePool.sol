@@ -124,94 +124,45 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     return _canAwardExternal(_externalToken);
   }
 
-  /// @dev Inheriting contract must determine if a specific token type may be awarded as a prize enhancement
-  /// @param _token The address of the token to check
-  /// @return True if the token may be awarded, false otherwise
-  function _canAwardExternal(address _token) internal virtual view returns (bool);
-
-  /// @dev Inheriting contract must return an interface to the underlying asset token that conforms to the ERC20 spec
-  /// @return A reference to the interface of the underling asset token
-  function _token() internal virtual view returns (IERC20);
-
-  /// @dev Inheriting contract must return the balance of the underlying assets held by the Yield Service
-  /// @return The underlying balance of asset tokens
-  function _balance() internal virtual returns (uint256);
-
-  /// @dev Inheriting contract must provide the ability to supply asset tokens in exchange
-  /// for yield-bearing tokens to be held in escrow by the Yield Service
-  /// @param mintAmount The amount of asset tokens to be supplied
-  function _supply(uint256 mintAmount) internal virtual;
-
-  /// @dev Inheriting contract must provide the ability to redeem yield-bearing tokens in exchange
-  /// for the underlying asset tokens held in escrow by the Yield Service
-  /// @param redeemAmount The amount of yield-bearing tokens to be redeemed
-  function _redeem(uint256 redeemAmount) internal virtual;
-
-  /// @dev Inheriting contract must provide an estimate for the amount of accrued interest that would
-  /// be applied to the `principal` amount over a given number of `blocks`
-  /// @param principal The amount of asset tokens to provide an estimate on
-  /// @param blocks The number of blocks that the principal would accrue interest over
-  /// @return The estimated interest that would accrue on the principal
-  function estimateAccruedInterestOverBlocks(uint256 principal, uint256 blocks) public virtual view returns (uint256);
-
-  /// @dev Gets the underlying asset token used by the Yield Service
-  /// @return A reference to the interface of the underling asset token
-  function token() external virtual view returns (IERC20) {
-    return _token();
-  }
-
-  /// @dev Gets the balance of the underlying assets held by the Yield Service
-  /// @return The underlying balance of asset tokens
-  function balance() external virtual returns (uint256) {
-    return _balance();
-  }
-
-  /// @dev Checks with the Prize Pool if a specific token type may be awarded as a prize enhancement
-  /// @param _externalToken The address of the token to check
-  /// @return True if the token may be awarded, false otherwise
-  function canAwardExternal(address _externalToken) external virtual view returns (bool) {
-    return _canAwardExternal(_externalToken);
-  }
-
   /// @notice Deposit assets into the Prize Pool to Purchase Tickets
   /// @param to The address receiving the Tickets
   /// @param amount The amount of assets to deposit to purchase tickets
-  /// @param token The address of the Asset Token being deposited
-  function depositTo(address to, uint256 amount, address token) external onlyControlledToken(token) nonReentrant {
+  /// @param _controlledToken The address of the Asset Token being deposited
+  function depositTo(address to, uint256 amount, address _controlledToken) external onlyControlledToken(_controlledToken) nonReentrant {
     _updateAwardBalance();
 
     address operator = _msgSender();
 
-    ControlledToken(token).controllerMint(to, amount);
+    ControlledToken(_controlledToken).controllerMint(to, amount);
     _token().transferFrom(operator, address(this), amount);
     _supply(amount);
 
-    prizeStrategy.afterDepositTo(to, amount, token);
+    prizeStrategy.afterDepositTo(to, amount, _controlledToken);
 
-    emit Deposited(operator, to, token, amount);
+    emit Deposited(operator, to, _controlledToken, amount);
   }
 
   /// @notice Withdraw assets from the Prize Pool instantly by paying a Fairness fee if exiting early
   /// @param from The address to withdraw assets from by redeeming tickets
   /// @param amount The amount of assets to redeem for tickets
-  /// @param token The address of the asset token being withdrawn
+  /// @param _controlledToken The address of the asset token being withdrawn
   /// @param prepaidExitFee An optional amount of assets paid by the operator used to cover exit fees
   /// @return exitFee The amount of the fairness fee paid
   function withdrawInstantlyFrom(
     address from,
     uint256 amount,
-    address token,
+    address _controlledToken,
     uint256 prepaidExitFee
   )
     external
     nonReentrant
-    onlyControlledToken(token)
+    onlyControlledToken(_controlledToken)
     returns (uint256 exitFee)
   {
     _updateAwardBalance();
 
     address operator = _msgSender();
-    exitFee = prizeStrategy.calculateInstantWithdrawalFee(from, amount, token);
+    exitFee = prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, _controlledToken);
     uint256 sponsoredExitFee = (exitFee > prepaidExitFee) ? prepaidExitFee : exitFee;
     uint256 userExitFee = exitFee.sub(sponsoredExitFee);
 
@@ -221,16 +172,16 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     }
 
     // burn the tickets
-    ControlledToken(token).controllerBurnFrom(_msgSender(), from, amount);
+    ControlledToken(_controlledToken).controllerBurnFrom(_msgSender(), from, amount);
 
     // redeem the tickets less the fee
     uint256 amountLessFee = amount.sub(userExitFee);
     _redeem(amountLessFee);
     _token().transfer(from, amountLessFee);
 
-    prizeStrategy.afterWithdrawInstantlyFrom(operator, from, amount, token, exitFee, sponsoredExitFee);
+    prizeStrategy.afterWithdrawInstantlyFrom(operator, from, amount, _controlledToken, exitFee, sponsoredExitFee);
 
-    emit InstantWithdrawal(operator, from, token, amount, exitFee, sponsoredExitFee);
+    emit InstantWithdrawal(operator, from, _controlledToken, amount, exitFee, sponsoredExitFee);
   }
 
   /// @notice Withdraw assets from the Prize Pool with a timelock on the assets
@@ -238,22 +189,22 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// in the Prize before being withdrawn, in order to prevent gaming the system
   /// @param from The address to withdraw assets from by redeeming tickets
   /// @param amount The amount of assets to redeem for tickets
-  /// @param token The address of the asset token being withdrawn
+  /// @param controlledToken The address of the asset token being withdrawn
   /// @return unlockTimestamp The unlock timestamp that the assets will be released upon
   function withdrawWithTimelockFrom(
     address from,
     uint256 amount,
-    address token
+    address controlledToken
   )
     external
     nonReentrant
-    onlyControlledToken(token)
+    onlyControlledToken(controlledToken)
     returns (uint256 unlockTimestamp)
   {
     _updateAwardBalance();
 
     address operator = _msgSender();
-    ControlledToken(token).controllerBurnFrom(operator, from, amount);
+    ControlledToken(controlledToken).controllerBurnFrom(operator, from, amount);
 
     // Sweep the old balance, if any
     address[] memory users = new address[](1);
@@ -264,12 +215,12 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     timelockBalances[from] = timelockBalances[from].add(amount);
 
     // the block at which the funds will be available
-    unlockTimestamp = prizeStrategy.calculateWithdrawalUnlockTimestamp(from, amount, token);
+    unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken);
     unlockTimestamps[from] = unlockTimestamp;
 
-    prizeStrategy.afterWithdrawWithTimelockFrom(from, amount, token);
+    prizeStrategy.afterWithdrawWithTimelockFrom(from, amount, controlledToken);
 
-    emit TimelockedWithdrawal(operator, from, token, amount, unlockTimestamp);
+    emit TimelockedWithdrawal(operator, from, controlledToken, amount, unlockTimestamp);
 
     // if the funds should already be unlocked
     if (unlockTimestamp <= _currentTime()) {
@@ -336,42 +287,42 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @notice Called by the Prize-Strategy to Award a Prize to a specific account
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of assets to be awarded
-  /// @param token The addess of the asset token being awarded
+  /// @param controlledToken The addess of the asset token being awarded
   function award(
     address to,
     uint256 amount,
-    address token
+    address controlledToken
   )
     external
     onlyPrizeStrategy
-    onlyControlledToken(token)
+    onlyControlledToken(controlledToken)
   {
     if (amount == 0) {
       return;
     }
 
     _updateAwardBalance();
-    ControlledToken(token).controllerMint(to, amount);
+    ControlledToken(controlledToken).controllerMint(to, amount);
     __awardBalance = __awardBalance.sub(amount);
 
-    emit Awarded(to, token, amount);
+    emit Awarded(to, controlledToken, amount);
   }
 
   /// @notice Called by the Prize-Strategy to Award Secondary (external) Prize amounts to a specific account
   /// @dev Used to award any arbitrary tokens held by the Prize Pool
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of external assets to be awarded
-  /// @param token The addess of the external asset token being awarded
-  function awardExternal(address to, uint256 amount, address token) external onlyPrizeStrategy {
-    require(_canAwardExternal(token), "PrizePool/invalid-external-token");
+  /// @param controlledToken The addess of the external asset token being awarded
+  function awardExternal(address to, uint256 amount, address controlledToken) external onlyPrizeStrategy {
+    require(_canAwardExternal(controlledToken), "PrizePool/invalid-external-token");
 
     if (amount == 0) {
       return;
     }
 
-    IERC20(token).transfer(to, amount);
+    IERC20(controlledToken).transfer(to, amount);
 
-    emit AwardedExternal(to, token, amount);
+    emit AwardedExternal(to, controlledToken, amount);
   }
 
   /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
@@ -391,20 +342,20 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
 
     BalanceChange[] memory changes = new BalanceChange[](users.length);
 
-    IERC20 token = IERC20(_token());
+    IERC20 underlyingToken = IERC20(_token());
     uint256 i;
     for (i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= _currentTime()) {
-        uint256 balance = timelockBalances[user];
-        if (balance > 0) {
-          timelockTotalSupply = timelockTotalSupply.sub(balance);
+        uint256 userBalance = timelockBalances[user];
+        if (userBalance > 0) {
+          timelockTotalSupply = timelockTotalSupply.sub(userBalance);
           delete timelockBalances[user];
           delete unlockTimestamps[user];
-          token.transfer(user, balance);
-          emit TimelockedWithdrawalSwept(operator, user, balance);
+          underlyingToken.transfer(user, userBalance);
+          emit TimelockedWithdrawalSwept(operator, user, userBalance);
         }
-        changes[i] = BalanceChange(user, balance);
+        changes[i] = BalanceChange(user, userBalance);
       } else {
         changes[i] = BalanceChange(user, 0);
       }
@@ -474,16 +425,16 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   }
 
   /// @dev Checks if a specific token is controlled by the Prize Pool
-  /// @param _token The address of the token to check
+  /// @param _controlledToken The address of the token to check
   /// @return True if the token is a controlled token, false otherwise
-  function isControlled(address _token) internal view returns (bool) {
-    return _tokens.contains(_token);
+  function isControlled(address _controlledToken) internal view returns (bool) {
+    return _tokens.contains(_controlledToken);
   }
 
   /// @dev Function modifier to ensure usage of tokens controlled by the Prize Pool
-  /// @param _token The address of the token to check
-  modifier onlyControlledToken(address _token) {
-    require(isControlled(_token), "PrizePool/unknown-token");
+  /// @param _controlledToken The address of the token to check
+  modifier onlyControlledToken(address _controlledToken) {
+    require(isControlled(_controlledToken), "PrizePool/unknown-token");
     _;
   }
 
