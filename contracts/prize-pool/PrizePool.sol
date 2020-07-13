@@ -130,6 +130,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @param amount The amount of assets to deposit to purchase tickets
   /// @param controlledToken The address of the Asset Token being deposited
   function depositTo(address to, uint256 amount, address controlledToken) external onlyControlledToken(controlledToken) nonReentrant {
+    require(_hasPrizeStrategy(), "PrizePool/prize-strategy-detached");
     _updateAwardBalance();
 
     address operator = _msgSender();
@@ -162,7 +163,10 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   {
     _updateAwardBalance();
 
-    exitFee = prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken);
+    bool hasPrizeStrategy = _hasPrizeStrategy();
+    if (hasPrizeStrategy) {
+      exitFee = prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken);
+    }
 
     address operator = _msgSender();
     uint256 sponsoredExitFee = (exitFee > prepaidExitFee) ? prepaidExitFee : exitFee;
@@ -181,7 +185,9 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     _redeem(amountLessFee);
     _token().transfer(from, amountLessFee);
 
-    prizeStrategy.afterWithdrawInstantlyFrom(operator, from, amount, controlledToken, exitFee, sponsoredExitFee);
+    if (hasPrizeStrategy) {
+      prizeStrategy.afterWithdrawInstantlyFrom(operator, from, amount, controlledToken, exitFee, sponsoredExitFee);
+    }
 
     emit InstantWithdrawal(operator, from, controlledToken, amount, exitFee, sponsoredExitFee);
   }
@@ -205,7 +211,10 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   {
     _updateAwardBalance();
 
-    unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken);
+    bool hasPrizeStrategy = _hasPrizeStrategy();
+    if (hasPrizeStrategy) {
+      unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken);
+    }
 
     address operator = _msgSender();
 
@@ -225,7 +234,9 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
       sweepTimelockBalances(users);
     }
 
-    prizeStrategy.afterWithdrawWithTimelockFrom(from, amount, controlledToken);
+    if (hasPrizeStrategy) {
+      prizeStrategy.afterWithdrawWithTimelockFrom(from, amount, controlledToken);
+    }
 
     emit TimelockedWithdrawal(operator, from, controlledToken, amount, unlockTimestamp);
 

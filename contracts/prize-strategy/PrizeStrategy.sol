@@ -112,7 +112,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Calculates the accrued interest for a user
   /// @param user The user whose credit should be calculated.
   /// @param ticketBalance The current balance of the user's tickets.
-  /// @return
+  /// @return The amount of accrued credit
   function calculateAccruedCredit(address user, uint256 ticketBalance) internal returns (uint256) {
     uint256 interestIndex = prizePool.interestIndexMantissa();
     uint256 userIndex = creditBalances[user].interestIndex;// ticketIndexMantissa[user];
@@ -176,7 +176,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return feeCredit;
   }
 
-  /// @notice Calculates the withdrawal unlock timestamp by estimated how long it would take to pay off the exit fee.  This function also accrues their ticket credit.
+  /// @notice Calculates the withdrawal unlock timestamp by estimated how long it would take to pay off the exit fee.
+  /// This function also accrues their ticket credit.
   /// @param user The user who wishes to withdraw
   /// @param controlledToken The token they are withdrawing
   /// @return timestamp The absolute timestamp after which they are allowed to withdraw
