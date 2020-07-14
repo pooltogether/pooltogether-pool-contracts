@@ -38,7 +38,7 @@ describe('PrizeStrategy', function() {
 
     debug('deploying protocol governor...')
     governor = await deployMockContract(wallet, GovernorInterface.abi, [], overrides)
-  
+
     debug('mocking tokens...')
     token = await deployMockContract(wallet, IERC20.abi, overrides)
     prizePool = await deployMockContract(wallet, PrizePool.abi, overrides)
@@ -92,7 +92,7 @@ describe('PrizeStrategy', function() {
     })
 
     it('should not be called if an rng request is in flight', async () => {
-      await rng.mock.requestRandomNumber.returns('11');
+      await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
       await prizeStrategy.startAward();
 
@@ -103,7 +103,7 @@ describe('PrizeStrategy', function() {
 
   describe('afterWithdrawInstantlyFrom()', () => {
     it('should revert if rng request is in flight', async () => {
-      await rng.mock.requestRandomNumber.returns('11');
+      await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
       await prizeStrategy.startAward();
 
@@ -124,7 +124,7 @@ describe('PrizeStrategy', function() {
 
   describe("beforeTokenTransfer()", () => {
     it('should allow other token transfers if awarding is happening', async () => {
-      await rng.mock.requestRandomNumber.returns('11');
+      await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
       await prizeStrategy.startAward();
 
@@ -139,7 +139,7 @@ describe('PrizeStrategy', function() {
     })
 
     it('should revert on ticket transfer if awarding is happening', async () => {
-      await rng.mock.requestRandomNumber.returns('11');
+      await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
       await prizeStrategy.startAward();
 
@@ -155,10 +155,10 @@ describe('PrizeStrategy', function() {
         .to.be.revertedWith('PrizeStrategy/rng-in-flight')
     })
   })
-  
+
   describe("afterWithdrawWithTimelockFrom()", () => {
     it('should revert on ticket transfer if awarding is happening', async () => {
-      await rng.mock.requestRandomNumber.returns('11');
+      await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
       await prizeStrategy.startAward();
 
@@ -176,7 +176,7 @@ describe('PrizeStrategy', function() {
 
   describe('estimateAccrualTime()', () => {
     it('should be zero if there was no previous prize', async () => {
-      
+
       let ticketBalance = toWei('100')
       let interest = toWei('10')
       let previousPrize = toWei('0')
@@ -194,7 +194,7 @@ describe('PrizeStrategy', function() {
     })
 
     it('should be the maximum if they need the same amount of interest', async () => {
-      
+
       let ticketBalance = toWei('100')
       let interest = toWei('10')
       let previousPrize = toWei('10')
@@ -212,7 +212,7 @@ describe('PrizeStrategy', function() {
     })
 
     it('should be half if they have half the credit', async () => {
-      
+
       let ticketBalance = toWei('100')
       let interest = toWei('5')
       let previousPrize = toWei('10')
@@ -230,7 +230,7 @@ describe('PrizeStrategy', function() {
     })
 
     it('should be double if they require twice as much interest', async () => {
-      
+
       let ticketBalance = toWei('100')
       let interest = toWei('20')
       let previousPrize = toWei('10')
@@ -265,7 +265,7 @@ describe('PrizeStrategy', function() {
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
 
       // allow an rng request
-      await rng.mock.requestRandomNumber.returns('1')
+      await rng.mock.requestRandomNumber.returns('1', '1')
 
       debug('Starting award...')
 
