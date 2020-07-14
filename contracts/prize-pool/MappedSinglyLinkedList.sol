@@ -23,6 +23,22 @@ library MappedSinglyLinkedList {
     return array;
   }
 
+  function addAddress(Mapping storage self, address newAddress) internal {
+    require(newAddress != SENTINAL_TOKEN && newAddress != address(0), "Invalid address");
+    require(self.addressMap[newAddress] == address(0), "Already added");
+    self.addressMap[newAddress] = self.addressMap[SENTINAL_TOKEN];
+    self.addressMap[SENTINAL_TOKEN] = newAddress;
+    self.count = self.count + 1;
+  }
+
+  function removeAddress(Mapping storage self, address prevAddress, address addr) internal {
+    require(addr != SENTINAL_TOKEN && addr != address(0), "Invalid address");
+    require(self.addressMap[prevAddress] == addr, "Invalid prevAddress");
+    self.addressMap[prevAddress] = self.addressMap[addr];
+    self.addressMap[addr] = address(0);
+    self.count = self.count - 1;
+  }
+
   function initialize(Mapping storage self, address[] memory addresses) internal {
     uint256 count = 0;
     self.addressMap[SENTINAL_TOKEN] = SENTINAL_TOKEN;
