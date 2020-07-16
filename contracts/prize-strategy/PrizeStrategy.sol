@@ -41,7 +41,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
   event PrizePoolOpened(address indexed operator, uint256 indexed prizePeriodStartedAt);
-  event PrizePoolAwardStarted(address indexed operator, address indexed prizePool, uint256 indexed rngRequestId);
+  event PrizePoolAwardStarted(address indexed operator, address indexed prizePool, uint32 indexed rngRequestId, uint32 rngLockBlock);
   event PrizePoolAwarded(address indexed operator, uint256 prize, uint256 reserveFee);
 
   function initialize (
@@ -490,22 +490,22 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   function startAward() external requireCanStartAward {
-    rngRequestId = rng.requestRandomNumber(address(0),0);
+    (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber(address(0), 0);
+    rngRequest.id = requestId;
+    rngRequest.lockBlock = lockBlock;
 
-    emit PrizePoolAwardStarted(_msgSender(), address(prizePool), rngRequestId);
+    emit PrizePoolAwardStarted(_msgSender(), address(prizePool), requestId, lockBlock);
   }
 
   function completeAward() external requireCanCompleteAward {
     require(_isPrizePeriodOver(), "PrizeStrategy/not-over");
 
-
-    bytes32 randomNumber = rng.randomNumber(rngRequestId);
+    uint256 randomNumber = rng.randomNumber(rngRequest.id);
     uint256 balance = prizePool.awardBalance();
     uint256 reserveFee = _calculateReserveFee(balance);
     uint256 prize = balance.sub(reserveFee);
 
-
-    delete rngRequestId;
+    delete rngRequest;
     prizePeriodStartedAt = _currentTime();
     previousPrize = prize;
     previousPrizeAverageTickets = prizeAverageTickets;
@@ -516,7 +516,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     }
 
 
-    address winner = draw(uint256(randomNumber));
+    address winner = draw(randomNumber);
     if (winner != address(0)) {
       _awardTickets(winner, prize);
       _awardAllExternalTokens(winner);
@@ -553,7 +553,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   function _requireNotLocked() internal view {
-    require(rngRequestId == 0, "PrizeStrategy/rng-in-flight");
+    require(rngRequest.lockBlock == 0 || block.number < rngRequest.lockBlock, "PrizeStrategy/rng-in-flight");
   }
 
   function canStartAward() external view returns (bool) {
@@ -565,11 +565,19 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   function isRngRequested() public view returns (bool) {
-    return rngRequestId != 0;
+    return rngRequest.id != 0;
   }
 
   function isRngCompleted() public view returns (bool) {
-    return rng.isRequestComplete(rngRequestId);
+    return rng.isRequestComplete(rngRequest.id);
+  }
+
+  function getLastRngLockBlock() public view returns (uint32) {
+    return rngRequest.lockBlock;
+  }
+
+  function getLastRngRequestId() public view returns (uint32) {
+    return rngRequest.id;
   }
 
   function tokensReceived(

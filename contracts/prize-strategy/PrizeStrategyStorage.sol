@@ -25,6 +25,11 @@ contract PrizeStrategyStorage {
   IERC20 public sponsorship;
   SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
 
+  struct RngRequest {
+    uint32 id;
+    uint32 lockBlock;
+  }
+
   uint256 public prizePeriodSeconds;
   uint256 public prizePeriodStartedAt;
 
@@ -34,7 +39,7 @@ contract PrizeStrategyStorage {
   uint256 public prizeAverageTickets;
 
   RNGInterface public rng;
-  uint256 public rngRequestId;
+  RngRequest internal rngRequest;
 
   // external tokens awarded as part of prize
   MappedSinglyLinkedList.Mapping internal externalAwardMapping;
