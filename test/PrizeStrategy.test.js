@@ -74,6 +74,38 @@ describe('PrizeStrategy', function() {
       expect(await prizeStrategy.sponsorship()).to.equal(sponsorship.address)
       expect(await prizeStrategy.rng()).to.equal(rng.address)
     })
+
+    it('should disallow unapproved external prize tokens', async () => {
+      const invalidExternalToken = '0x0000000000000000000000000000000000000001'
+      const initArgs = [
+        FORWARDER,
+        governor.address,
+        prizePeriodSeconds,
+        prizePool.address,
+        ticket.address,
+        sponsorship.address,
+        rng.address,
+        [invalidExternalToken]
+      ]
+
+      debug('deploying secondary prizeStrategy...')
+      const prizeStrategy2 = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
+
+      debug('initializing secondary prizeStrategy...')
+      await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
+      await expect(prizeStrategy2.initialize(...initArgs))
+        .to.be.revertedWith('PrizeStrategy/cannot-award-external')
+    })
+  })
+
+  describe('chanceOf()', () => {
+    it('should show the odds for a user to win the prize', async () => {
+      const amount = toWei('10')
+      await prizePool.mock.interestIndexMantissa.returns(toWei('1'))
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
+      await prizePool.call(prizeStrategy, 'afterDepositTo', wallet._address, amount, ticket.address)
+      expect(await prizeStrategy.chanceOf(wallet._address)).to.be.equal(amount)
+    })
   })
 
   describe('afterDepositTo()', () => {

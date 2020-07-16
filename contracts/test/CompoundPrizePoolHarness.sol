@@ -39,6 +39,10 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
     time = _time;
   }
 
+  function setTimelockBalance(uint256 _timelockBalance) external {
+    timelockTotalSupply = _timelockBalance;
+  }
+
   function _currentTime() internal override view returns (uint256) {
     if (time == 0) {
       return block.timestamp;

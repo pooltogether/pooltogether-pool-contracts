@@ -4,7 +4,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-import "@nomiclabs/buidler/console.sol";
 
 import "./PrizeStrategyInterface.sol";
 import "../token/ControlledToken.sol";
@@ -69,7 +68,6 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     public
     initializer
   {
-    console.log("PrizePool.initialize");
     require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-zero");
     interestIndex = InterestIndex({
@@ -179,10 +177,8 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
       exitFee = prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken);
     }
 
-
     uint256 mantissa = FixedPoint.calculateMantissa(maxExitFeeMultiple, 100);
-    uint256 maxFee = FixedPoint.multiplyUintByMantissa(amount, mantissa); // amount.mul(maxExitFeeMultiple).div(100);
-    console.log("MAX FEE: %d (%d)", maxFee, maxFee / 1e18);
+    uint256 maxFee = FixedPoint.multiplyUintByMantissa(amount, mantissa);
     if (exitFee > maxFee) {
       exitFee = maxFee;
     }

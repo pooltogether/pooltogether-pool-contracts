@@ -27,6 +27,9 @@ describe('PrizePool contract', function() {
   let wallet, wallet2
 
   let prizePool, token, cToken, prizeStrategy
+  let multiTokenPrizePool, multiTokenPrizeStrategy
+
+  let ticket, sponsorship
 
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
@@ -61,6 +64,7 @@ describe('PrizePool contract', function() {
     describe('initialize()', () => {
       it('should set all the vars', async () => {
         expect(await prizePool.cToken()).to.equal(cToken.address)
+        expect(await prizePool.token()).to.equal(token.address)
       })
     })
 
@@ -244,6 +248,18 @@ describe('PrizePool contract', function() {
       })
     })
 
+    describe('estimateAccruedInterestOverBlocks()', () => {
+      it('should get the supply rate from the yield service to estimate interest per block', async function () {
+        const deposit = toWei('100')
+        const supplyRate = toWei('0.001')
+        const numBlocks = '10'
+
+        await cToken.mock.supplyRatePerBlock.returns(supplyRate)
+
+        expect(await prizePool.estimateAccruedInterestOverBlocks(deposit, numBlocks)).to.deep.equal(toWei('1'))
+      })
+    })
+
     describe('supply()', () => {
       it('should give the first depositer tokens at the initial exchange rate', async function () {
         await token.mock.transferFrom.withArgs(wallet._address, prizePool.address, toWei('1')).returns(true)
@@ -288,6 +304,40 @@ describe('PrizePool contract', function() {
 
       it('should not allow ctoken', async () => {
         expect(await prizePool.canAwardExternal(cToken.address)).to.be.false
+      })
+    })
+  })
+
+  describe('with a multi-token prize pool', () => {
+
+    beforeEach(async () => {
+
+      debug('deploying CompoundPrizePoolHarness...')
+      multiTokenPrizeStrategy = await deployMockContract(wallet, PrizeStrategyInterface.abi, overrides)
+      multiTokenPrizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
+
+      sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)
+
+      await ticket.mock.controller.returns(multiTokenPrizePool.address)
+      await sponsorship.mock.controller.returns(multiTokenPrizePool.address)
+
+      await multiTokenPrizePool.initializeAll(
+        FORWARDER,
+        multiTokenPrizeStrategy.address,
+        [ticket.address, sponsorship.address],
+        '50',    // Max Exit Fee
+        '10000', // Max Timelock
+        cToken.address
+      )
+    })
+
+    describe('accountedBalance()', () => {
+      it('should return the total accounted balance for all tokens including timelocked deposits', async () => {
+        await ticket.mock.totalSupply.returns(toWei('123'))
+        await sponsorship.mock.totalSupply.returns(toWei('456'))
+        await multiTokenPrizePool.setTimelockBalance(toWei('789'))
+
+        expect(await multiTokenPrizePool.accountedBalance()).to.equal(toWei('1368'))
       })
     })
   })
