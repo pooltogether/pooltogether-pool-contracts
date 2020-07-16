@@ -11,15 +11,14 @@ contract RNGBlockhash is RNGInterface {
   mapping(uint32 => bool) public completed;
   mapping(uint32 => uint256) public randomNumbers;
 
-  function requestRandomNumber(address token, uint256 budget) external override returns (uint32, uint32) {
-    uint32 requestId = uint32(requestCount.add(1));
-    uint32 lockBlock = 1;
+  function requestRandomNumber(address token, uint256 budget) external override returns (uint32 requestId, uint32 lockBlock) {
+    requestId = uint32(requestCount.add(1));
+    lockBlock = 1;
     completed[requestId] = true;
     randomNumbers[requestId] = uint256(blockhash(1));
 
     emit RandomNumberRequested(requestId, msg.sender, token, budget);
     emit RandomNumberCompleted(requestId, randomNumbers[requestId]);
-    return (requestId, lockBlock);
   }
 
   function isRequestComplete(uint32 id) external override view returns (bool) {

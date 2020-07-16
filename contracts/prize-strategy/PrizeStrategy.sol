@@ -572,6 +572,14 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return rng.isRequestComplete(rngRequest.id);
   }
 
+  function getLastRngLockBlock() public view returns (uint32) {
+    return rngRequest.lockBlock;
+  }
+
+  function getLastRngRequestId() public view returns (uint32) {
+    return rngRequest.id;
+  }
+
   function tokensReceived(
     address operator,
     address from,
