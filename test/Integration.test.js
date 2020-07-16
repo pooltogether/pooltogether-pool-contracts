@@ -10,7 +10,7 @@ const fromWei = ethers.utils.formatEther
 const debug = require('debug')('ptv3:Integration.test')
 
 describe('Integration Test', () => {
-  
+
   let wallet, wallet2
 
   let env
@@ -43,6 +43,8 @@ describe('Integration Test', () => {
       ethers.utils.toUtf8Bytes("TICK"),
       ethers.utils.toUtf8Bytes("Sponsorship"),
       ethers.utils.toUtf8Bytes("SPON"),
+      '50',                   // Max Exit Fee Percentage
+      prizePeriodSeconds * 2, // Max Timelock Duration
       [],
       overrides
     )
@@ -94,7 +96,7 @@ describe('Integration Test', () => {
       debug('First award...')
 
       await increaseTime(prizePeriodSeconds * 2)
-      
+
       debug('starting award...')
 
       await prizeStrategy.startAward()
@@ -139,7 +141,7 @@ describe('Integration Test', () => {
       await increaseTime(4)
 
       let balanceBeforeWithdrawal = await token.balanceOf(wallet._address)
-      
+
       debug('redeeming tickets...')
 
       await prizePool.withdrawInstantlyFrom(wallet._address, toWei('100'), ticket.address, 0, overrides)

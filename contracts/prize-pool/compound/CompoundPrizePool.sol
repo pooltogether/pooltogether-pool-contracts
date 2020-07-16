@@ -20,11 +20,15 @@ contract CompoundPrizePool is PrizePool {
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
   /// @param _prizeStrategy Address of the component-controller that manages the prize-strategy
   /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
+  /// @param _maxExitFeeMultiple The maximum exit fee size, relative to the withdrawal amount
+  /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
   /// @param _cToken Address of the Compound cToken interface
   function initialize (
     address _trustedForwarder,
     PrizeStrategyInterface _prizeStrategy,
     address[] memory _controlledTokens,
+    uint256 _maxExitFeeMultiple,
+    uint256 _maxTimelockDuration,
     CTokenInterface _cToken
   )
     public
@@ -33,7 +37,9 @@ contract CompoundPrizePool is PrizePool {
     PrizePool.initialize(
       _trustedForwarder,
       _prizeStrategy,
-      _controlledTokens
+      _controlledTokens,
+      _maxExitFeeMultiple,
+      _maxTimelockDuration
     );
     cToken = _cToken;
   }

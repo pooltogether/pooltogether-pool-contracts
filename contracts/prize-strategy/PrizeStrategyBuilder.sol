@@ -52,6 +52,8 @@ contract PrizeStrategyBuilder is Initializable {
     bytes memory ticketSymbol,
     bytes memory sponsorshipName,
     bytes memory sponsorshipSymbol,
+    uint256 _maxExitFeeMultiple,
+    uint256 _maxTimelockDuration,
     address[] memory externalAwards
   ) public returns (PrizeStrategy) {
     PrizeStrategy prizeStrategy = prizeStrategyProxyFactory.create();
@@ -62,7 +64,9 @@ contract PrizeStrategyBuilder is Initializable {
       ticketName,
       ticketSymbol,
       sponsorshipName,
-      sponsorshipSymbol
+      sponsorshipSymbol,
+      _maxExitFeeMultiple,
+      _maxTimelockDuration
     );
 
     prizeStrategy.initialize(
@@ -91,7 +95,9 @@ contract PrizeStrategyBuilder is Initializable {
     bytes memory ticketName,
     bytes memory ticketSymbol,
     bytes memory sponsorshipName,
-    bytes memory sponsorshipSymbol
+    bytes memory sponsorshipSymbol,
+    uint256 _maxExitFeeMultiple,
+    uint256 _maxTimelockDuration
   ) internal returns (CompoundPrizePool prizePool, address[] memory tokens) {
     prizePool = compoundPrizePoolProxyFactory.create();
     tokens = new address[](2);
@@ -101,6 +107,8 @@ contract PrizeStrategyBuilder is Initializable {
       trustedForwarder,
       prizeStrategy,
       tokens,
+      _maxExitFeeMultiple,
+      _maxTimelockDuration,
       _cToken
     );
   }
@@ -119,7 +127,9 @@ contract PrizeStrategyBuilder is Initializable {
     PrizeStrategy prizeStrategy,
     CTokenInterface _cToken,
     ControlledToken ticket,
-    ControlledToken sponsorship
+    ControlledToken sponsorship,
+    uint256 _maxExitFeeMultiple,
+    uint256 _maxTimelockDuration
   ) internal returns (CompoundPrizePool) {
     address[] memory tokens = new address[](2);
     tokens[0] = address(ticket);
@@ -129,6 +139,8 @@ contract PrizeStrategyBuilder is Initializable {
       trustedForwarder,
       prizeStrategy,
       tokens,
+      _maxExitFeeMultiple,
+      _maxTimelockDuration,
       _cToken
     );
   }
