@@ -13,7 +13,13 @@ const { deployContract } = require('ethereum-waffle')
 
 const debug = require('debug')('ptv3:deployTestPool')
 
-async function deployTestPool(wallet, prizePeriodSeconds, overrides = { gasLimit: 20000000 }) {
+async function deployTestPool({
+  wallet,
+  prizePeriodSeconds,
+  maxExitFeePercentage,
+  maxTimelockMultiple,
+  overrides = { gasLimit: 20000000 }
+}) {
   let registry = await deploy1820(wallet)
 
   debug('beforeEach deploy rng, forwarder etc...')
@@ -28,7 +34,7 @@ async function deployTestPool(wallet, prizePeriodSeconds, overrides = { gasLimit
   debug('Deploying Governor...')
 
   let governor = await deployContract(wallet, MockGovernor, [], overrides)
-  
+
   debug('Deploying PrizeStrategy...')
 
   let prizeStrategy = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
@@ -49,10 +55,12 @@ async function deployTestPool(wallet, prizePeriodSeconds, overrides = { gasLimit
 
   debug('Initializing CompoundPrizePoolHarness...')
 
-  await compoundPrizePool.initialize(
+  await compoundPrizePool.initializeAll(
     forwarder.address,
     prizeStrategy.address,
     [ticket.address, sponsorship.address],
+    maxExitFeePercentage,
+    prizePeriodSeconds * maxTimelockMultiple,
     cToken.address
   )
 

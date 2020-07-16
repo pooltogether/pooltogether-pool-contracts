@@ -24,7 +24,7 @@ describe('Withdraw Feature', () => {
       await env.withdrawInstantly({ user: 1, tickets: 110 })
       await env.expectUserToHaveTokens({ user: 1, tokens: 110 })
     })
-  
+
     it('should have a cost to withdraw if there is a previous prize', async () => {
       await env.createPool({ prizePeriodSeconds: 10 })
       // buy at time zero so that it is considered a 'full' ticket
@@ -72,7 +72,7 @@ describe('Withdraw Feature', () => {
       await env.awardPrize()
 
       // buy tickets at time 0
-      await env.buyTickets({ user: 2, tickets: 100, elapsed: 0 })
+      await env.buyTicketsAtTime({ user: 2, tickets: 100, elapsed: 0 })
       // withdraw at time 0 (to make the end time easy to calculate)
       await env.withdrawWithTimelockAtTime({ user: 2, tickets: 100, elapsed: 0 })
 

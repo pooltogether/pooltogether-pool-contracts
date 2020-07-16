@@ -7,8 +7,24 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
 
   uint256 internal time;
 
-  function initialize(CTokenInterface _cToken) public {
-    cToken = _cToken;
+  function initializeAll(
+    address _trustedForwarder,
+    PrizeStrategyInterface _prizeStrategy,
+    address[] memory _controlledTokens,
+    uint256 _maxExitFeeMultiple,
+    uint256 _maxTimelockDuration,
+    CTokenInterface _cToken
+  )
+    public
+  {
+    CompoundPrizePool.initialize(
+      _trustedForwarder,
+      _prizeStrategy,
+      _controlledTokens,
+      _maxExitFeeMultiple,
+      _maxTimelockDuration,
+      _cToken
+    );
   }
 
   function supply(uint256 mintAmount) external {
