@@ -41,7 +41,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
   event PrizePoolOpened(address indexed operator, uint256 indexed prizePeriodStartedAt);
-  event PrizePoolAwardStarted(address indexed operator, address indexed prizePool, uint32 indexed rngRequestId);
+  event PrizePoolAwardStarted(address indexed operator, address indexed prizePool, uint32 indexed rngRequestId, uint32 rngLockBlock);
   event PrizePoolAwarded(address indexed operator, uint256 prize, uint256 reserveFee);
 
   function initialize (
@@ -494,7 +494,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     rngRequest.id = requestId;
     rngRequest.lockBlock = lockBlock;
 
-    emit PrizePoolAwardStarted(_msgSender(), address(prizePool), requestId);
+    emit PrizePoolAwardStarted(_msgSender(), address(prizePool), requestId, lockBlock);
   }
 
   function completeAward() external requireCanCompleteAward {
