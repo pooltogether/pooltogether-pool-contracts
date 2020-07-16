@@ -4,21 +4,21 @@ import "../rng/RNGInterface.sol";
 
 contract RNGServiceMock is RNGInterface {
 
-  bytes32 internal random;
+  uint256 internal random;
 
-  function setRandomNumber(bytes32 rando) external {
+  function setRandomNumber(uint256 rando) external {
     random = rando;
   }
 
-  function requestRandomNumber(address, uint256) external override returns (uint256) {
-    return 1;
+  function requestRandomNumber(address, uint256) external override returns (uint32, uint32) {
+    return (1, 1);
   }
 
-  function isRequestComplete(uint256) external override view returns (bool) {
+  function isRequestComplete(uint32) external override view returns (bool) {
     return true;
   }
 
-  function randomNumber(uint256) external override view returns (bytes32) {
+  function randomNumber(uint32) external override view returns (uint256) {
     return random;
   }
 }

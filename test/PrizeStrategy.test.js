@@ -124,7 +124,7 @@ describe('PrizeStrategy', function() {
     })
 
     it('should not be called if an rng request is in flight', async () => {
-      await rng.mock.requestRandomNumber.returns('11');
+      await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
       await prizeStrategy.startAward();
 
@@ -135,7 +135,7 @@ describe('PrizeStrategy', function() {
 
   describe('afterWithdrawInstantlyFrom()', () => {
     it('should revert if rng request is in flight', async () => {
-      await rng.mock.requestRandomNumber.returns('11');
+      await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
       await prizeStrategy.startAward();
 
@@ -156,7 +156,7 @@ describe('PrizeStrategy', function() {
 
   describe("beforeTokenTransfer()", () => {
     it('should allow other token transfers if awarding is happening', async () => {
-      await rng.mock.requestRandomNumber.returns('11');
+      await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
       await prizeStrategy.startAward();
 
@@ -171,7 +171,7 @@ describe('PrizeStrategy', function() {
     })
 
     it('should revert on ticket transfer if awarding is happening', async () => {
-      await rng.mock.requestRandomNumber.returns('11');
+      await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
       await prizeStrategy.startAward();
 
@@ -190,7 +190,7 @@ describe('PrizeStrategy', function() {
 
   describe("afterWithdrawWithTimelockFrom()", () => {
     it('should revert on ticket transfer if awarding is happening', async () => {
-      await rng.mock.requestRandomNumber.returns('11');
+      await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
       await prizeStrategy.startAward();
 
@@ -297,7 +297,7 @@ describe('PrizeStrategy', function() {
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
 
       // allow an rng request
-      await rng.mock.requestRandomNumber.returns('1')
+      await rng.mock.requestRandomNumber.returns('1', '1')
 
       debug('Starting award...')
 
