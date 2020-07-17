@@ -16,15 +16,17 @@ function PoolEnv() {
 
   this.overrides = { gasLimit: 40000000 }
 
-  this.createPool = async function ({ prizePeriodSeconds, maxExitFeePercentage = '50', maxTimelockMultiple = 2 }) {
+  this.createPool = async function ({ prizePeriodSeconds, exitFee, creditRate }) {
     this.wallets = await buidler.ethers.getSigners()
     debug(`Fetched ${this.wallets.length} wallets`)
     debug(`Creating pool with prize period ${prizePeriodSeconds}...`)
     this.env = await deployTestPool({
       wallet: this.wallets[0],
       prizePeriodSeconds,
-      maxExitFeePercentage,
-      maxTimelockMultiple,
+      maxExitFeePercentage: toWei('0.5'),
+      maxTimelockDuration: ethers.utils.bigNumberify('' + prizePeriodSeconds).mul('4'),
+      exitFee: toWei(exitFee),
+      creditRate: toWei(creditRate),
       overrides: this.overrides
     })
     debug(`CompoundPrizePool created with address ${this.env.compoundPrizePool.address}`)
@@ -108,7 +110,7 @@ function PoolEnv() {
     let wallet = await this.wallet(user)
     let ticket = await this.ticket(wallet)
     let amount = toWei(tickets)
-    expect(await ticket.balanceOf(wallet._address)).to.equal(amount)
+    expect(await ticket.balanceOf(wallet._address)).to.equalish(amount, 300)
   }
 
   this.expectUserToHaveTokens = async function ({ user, tokens }) {
@@ -131,6 +133,12 @@ function PoolEnv() {
     let prizeStrategy = await this.prizeStrategy(wallet)
     let ticketInterest = await call(prizeStrategy, 'balanceOfCredit', wallet._address)
     expect(ticketInterest).to.equalish(toWei(credit), 300)
+  }
+
+  this.expectUserToHaveCreditAtTime = async function ({ user, credit, elapsed }) {
+    this.atTime(elapsed, async () => {
+      this.expectUserToHaveCredit({ user, credit })
+    })
   }
 
   this.expectUserToHaveTimelock = async function ({ user, timelock }) {
@@ -208,6 +216,12 @@ function PoolEnv() {
     await this.atTime(elapsed, async () => {
       await this.sweepTimelockBalances({ user })
     })
+  }
+
+  this.balanceOfTickets = async function ({ user }) {
+    let wallet = await this.wallet(user)
+    let ticket = await this.ticket(wallet)
+    return fromWei(await ticket.balanceOf(wallet._address))
   }
 
 }

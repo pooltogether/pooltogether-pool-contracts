@@ -6,19 +6,6 @@ import "../prize-strategy/PrizeStrategy.sol";
 contract PrizeStrategyHarness is PrizeStrategy {
 
   uint256 internal time;
-
-  function setPreviousPrizeAverageTickets(uint256 _previousPrizeAverageTickets) external {
-    previousPrizeAverageTickets = _previousPrizeAverageTickets;
-  }
-
-  function setPreviousPrize(uint256 _previousPrize) external {
-    previousPrize = _previousPrize;
-  }
-
-  function setPrizeAverageTickets(uint256 _prizeAverageTickets) external {
-    prizeAverageTickets = _prizeAverageTickets;
-  }
-
   function setCurrentTime(uint256 _time) external {
     // console.log("setCurrentTime( %s )", _time);
     time = _time;

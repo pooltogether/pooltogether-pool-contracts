@@ -10,6 +10,7 @@ const ERC20Mintable = require('../build/ERC20Mintable.json')
 const ethers = require('ethers')
 const { deploy1820 } = require('deploy-eip-1820')
 const { deployContract } = require('ethereum-waffle')
+const toWei = (val) => ethers.utils.parseEther('' + val)
 
 const debug = require('debug')('ptv3:deployTestPool')
 
@@ -17,7 +18,9 @@ async function deployTestPool({
   wallet,
   prizePeriodSeconds,
   maxExitFeePercentage,
-  maxTimelockMultiple,
+  maxTimelockDuration,
+  exitFee,
+  creditRate,
   overrides = { gasLimit: 20000000 }
 }) {
   let registry = await deploy1820(wallet)
@@ -59,8 +62,8 @@ async function deployTestPool({
     forwarder.address,
     prizeStrategy.address,
     [ticket.address, sponsorship.address],
-    maxExitFeePercentage,
-    prizePeriodSeconds * maxTimelockMultiple,
+    maxExitFeePercentage || toWei('0.5'),
+    maxTimelockDuration || prizePeriodSeconds,
     cToken.address
   )
 
@@ -74,6 +77,8 @@ async function deployTestPool({
     ticket.address,
     sponsorship.address,
     rng.address,
+    exitFee || toWei('0.1'),
+    creditRate || toWei('0.1').div(prizePeriodSeconds),
     []
   )
 

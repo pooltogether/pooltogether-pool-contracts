@@ -9,7 +9,7 @@ describe('Tickets Feature', () => {
   })
 
   it('should be possible to purchase tickets', async () => {
-    await env.createPool({ prizePeriodSeconds: 10 })
+    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
     await env.buyTickets({ user: 1, tickets: 100 })
     await env.buyTickets({ user: 2, tickets: 50 })
     await env.expectUserToHaveTickets({ user: 1, tickets: 100 })
@@ -17,7 +17,7 @@ describe('Tickets Feature', () => {
   })
 
   it('should be possible to win tickets', async () => {
-    await env.createPool({ prizePeriodSeconds: 10 })
+    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
     await env.buyTickets({ user: 1, tickets: 100 })
     await env.poolAccrues({ tickets: 100 })
     await env.awardPrizeToToken({ token: 0 })
