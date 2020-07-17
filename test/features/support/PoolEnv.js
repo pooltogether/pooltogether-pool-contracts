@@ -13,14 +13,26 @@ const debug = require('debug')('ptv3:PoolEnv')
 
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const fromWei = (val) => ethers.utils.formatEther('' + val)
-const EMPTY_STR = []
 
 function PoolEnv() {
 
   this.overrides = { gasLimit: 40000000 }
 
-  this.createPool = async function ({ prizePeriodSeconds, exitFee, creditRate, externalERC20Awards = [] }) {
+  this.createPool = async function ({
+    prizePeriodSeconds,
+    exitFee,
+    creditRate,
+    maxExitFeeMantissa = toWei('0.5'),
+    maxTimelockDuration = 1000,
+    externalERC20Awards = []
+  }) {
     this.wallets = await buidler.ethers.getSigners()
+
+    debug({
+      wallet1: this.wallets[0]._address,
+      wallet2: this.wallets[1]._address,
+      wallet3: this.wallets[2]._address
+    })
 
     const externalAwardAddresses = []
     this.externalERC20Awards = {}
@@ -36,8 +48,8 @@ function PoolEnv() {
     this.env = await deployTestPool({
       wallet: this.wallets[0],
       prizePeriodSeconds,
-      maxExitFeePercentage: toWei('0.5'),
-      maxTimelockDuration: ethers.utils.bigNumberify('' + prizePeriodSeconds).mul('4'),
+      maxExitFeeMantissa,
+      maxTimelockDuration,
       exitFee: toWei(exitFee),
       creditRate: toWei(creditRate),
       overrides: this.overrides,
@@ -63,6 +75,10 @@ function PoolEnv() {
     return this.env.token.connect(wallet)
   }
 
+  this.governanceToken = async function (wallet) {
+    return this.env.governanceToken.connect(wallet)
+  }
+
   this.ticket = async function (wallet) {
     let prizeStrategy = await this.prizeStrategy(wallet)
     let ticketAddress = await prizeStrategy.ticket()
@@ -84,7 +100,7 @@ function PoolEnv() {
     await this.externalERC20Awards[externalAward].mint(this.env.compoundPrizePool.address, toWei(amount))
   }
 
-  this.buyTickets = async function ({ user, tickets }) {
+  this.buyTickets = async function ({ user, tickets, referrer }) {
     debug(`Buying tickets...`)
     let wallet = await this.wallet(user)
 
@@ -105,7 +121,13 @@ function PoolEnv() {
 
     debug('Depositing...')
 
-    await prizePool.depositTo(wallet._address, amount, ticket.address, this.overrides)
+    let data = []
+    if (referrer) {
+      let referrerWallet = await this.wallet(referrer)
+      data = ethers.utils.defaultAbiCoder.encode(['address'], [referrerWallet._address])
+    }
+
+    await prizePool.depositTo(wallet._address, amount, ticket.address, data, this.overrides)
 
     debug(`Bought tickets`)
   }
@@ -121,7 +143,7 @@ function PoolEnv() {
 
     let amount = toWei('' + tickets)
 
-    await prizePool.timelockDepositTo(wallet._address, amount, ticket.address, this.overrides)
+    await prizePool.timelockDepositTo(wallet._address, amount, ticket.address, [], this.overrides)
 
     debug(`Bought tickets with timelocked tokens`)
   }
@@ -137,15 +159,93 @@ function PoolEnv() {
 
     let amount = toWei('' + sponsorship)
 
-    await prizePool.timelockDepositTo(wallet._address, amount, sponsorshipContract.address, this.overrides)
+    await prizePool.timelockDepositTo(wallet._address, amount, sponsorshipContract.address, [], this.overrides)
 
     debug(`Bought sponsorship with timelocked tokens`)
   }
 
-  this.buyTicketsAtTime = async function ({ user, tickets, elapsed }) {
+  this.buyTicketsAtTime = async function ({ user, tickets, referrer, elapsed }) {
     await this.atTime(elapsed, async () => {
-      await this.buyTickets({ user, tickets })
+      await this.buyTickets({ user, tickets, referrer })
     })
+  }
+
+  this.claimBalanceDripGovernanceTokensAtTime = async function ({ user, elapsed }) {
+    await this.atTime(elapsed, async () => {
+      await this.claimBalanceDripGovernanceTokens({ user })
+    })
+  }
+
+  this.claimBalanceDripGovernanceTokens = async function ({ user }) {
+    let wallet = await this.wallet(user)
+    await this.env.comptroller.claimBalanceDrip(
+      this.env.prizeStrategy.address,
+      wallet._address,
+      this.env.ticket.address,
+      this.env.governanceToken.address
+    )
+  }
+
+  this.claimVolumeDripGovernanceTokens = async function ({ user }) {
+    let wallet = await this.wallet(user)
+    await this.env.comptroller.claimVolumeDrip(
+      this.env.prizeStrategy.address,
+      wallet._address,
+      '1'
+    )
+  }
+
+  this.claimVolumeDripGovernanceTokensAtTime = async function ({ user, elapsed }) {
+    await this.atTime(elapsed, async () => {
+      await this.claimVolumeDripGovernanceTokens({ user })
+    })
+  }
+
+  this.claimReferralVolumeDripGovernanceTokens = async function ({ user }) {
+    let wallet = await this.wallet(user)
+    debug(`CLAIMING REFERRAL VOLUME FOR ${wallet._address}`)
+    await this.env.comptroller.claimReferralVolumeDrip(
+      this.env.prizeStrategy.address,
+      wallet._address,
+      '1'
+    )
+  }
+
+  this.claimReferralVolumeDripGovernanceTokensAtTime = async function ({ user, elapsed }) {
+    await this.atTime(elapsed, async () => {
+      await this.claimReferralVolumeDripGovernanceTokens({ user })
+    })
+  }
+
+  this.balanceDripGovernanceTokenAtRate = async function ({ dripRatePerSecond }) {
+    await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
+    await this.env.comptroller.addBalanceDrip(this.env.prizeStrategy.address, this.env.ticket.address, this.env.governanceToken.address, dripRatePerSecond)
+  }
+
+  this.volumeDripGovernanceToken = async function ({ dripAmount, periodSeconds, startTime }) {
+    let periodStartedAt = await this.env.prizeStrategy.prizePeriodStartedAt()
+    await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
+    await this.env.comptroller.addVolumeDrip(
+      this.env.prizeStrategy.address,
+      this.env.ticket.address,
+      this.env.governanceToken.address,
+      periodSeconds,
+      toWei(dripAmount),
+      periodStartedAt.add(startTime)
+    )
+  }
+
+  this.referralVolumeDripGovernanceToken = async function ({ dripAmount, periodSeconds, startTime }) {
+    let periodStartedAt = await this.env.prizeStrategy.prizePeriodStartedAt()
+    await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
+    await this.env.comptroller.addReferralVolumeDrip(
+      this.env.prizeStrategy.address,
+      this.env.ticket.address,
+      this.env.governanceToken.address,
+      periodSeconds,
+      toWei(dripAmount),
+      periodStartedAt.add(startTime)
+    )
   }
 
   this.atTime = async function (elapsed, callback) {
@@ -157,7 +257,9 @@ function PoolEnv() {
     debug(`atTime(${elapsed}): startTime: ${startTime.toString()}, time: ${time.toString()}`)
     await prizeStrategy.setCurrentTime(time, this.overrides)
     await prizePool.setCurrentTime(time, this.overrides)
+    await this.env.comptroller.setCurrentTime(time, this.overrides)
     await callback()
+    await this.env.comptroller.setCurrentTime('0', this.overrides)
     await prizePool.setCurrentTime('0', this.overrides)
     await prizeStrategy.setCurrentTime('0', this.overrides)
   }
@@ -174,6 +276,13 @@ function PoolEnv() {
     let token = await this.token(wallet)
     let amount = toWei(tokens)
     expect(await token.balanceOf(wallet._address)).to.equalish(amount, 300)
+  }
+
+  this.expectUserToHaveGovernanceTokens = async function ({ user, tokens }) {
+    let wallet = await this.wallet(user)
+    let governanceToken = await this.governanceToken(wallet)
+    let amount = toWei(tokens)
+    expect(await governanceToken.balanceOf(wallet._address)).to.equalish(amount, 300)
   }
 
   this.expectUserToHaveSponsorship = async function ({ user, sponsorship }) {
@@ -252,7 +361,7 @@ function PoolEnv() {
     let wallet = await this.wallet(user)
     let ticket = await this.ticket(wallet)
     let prizePool = await this.prizePool(wallet)
-    await prizePool.withdrawInstantlyFrom(wallet._address, toWei(tickets), ticket.address, '0', toWei('1000'))
+    await prizePool.withdrawInstantlyFrom(wallet._address, toWei(tickets), ticket.address, '0', toWei('1000'), [])
   }
 
   this.withdrawInstantlyAtTime = async function ({ user, tickets, elapsed }) {
@@ -265,7 +374,7 @@ function PoolEnv() {
     let wallet = await this.wallet(user)
     let ticket = await this.ticket(wallet)
     let prizePool = await this.prizePool(wallet)
-    await prizePool.withdrawWithTimelockFrom(wallet._address, toWei(tickets), ticket.address)
+    await prizePool.withdrawWithTimelockFrom(wallet._address, toWei(tickets), ticket.address, [])
   }
 
   this.withdrawWithTimelockAtTime = async function ({ user, tickets, elapsed }) {

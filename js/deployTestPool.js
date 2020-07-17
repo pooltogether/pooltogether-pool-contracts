@@ -1,7 +1,7 @@
 const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
 const RNGServiceMock = require('../build/RNGServiceMock.json')
 const Forwarder = require('../build/Forwarder.json')
-const MockGovernor = require('../build/MockGovernor.json')
+const ComptrollerHarness = require('../build/ComptrollerHarness.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
 const CTokenMock = require('../build/CTokenMock.json')
@@ -37,7 +37,10 @@ async function deployTestPool({
 
   debug('Deploying Governor...')
 
-  let governor = await deployContract(wallet, MockGovernor, [], overrides)
+  let governanceToken = await deployContract(wallet, ERC20Mintable, [], overrides)
+
+  let comptroller = await deployContract(wallet, ComptrollerHarness, [], overrides)
+  await comptroller.initialize()
 
   debug('Deploying PrizeStrategy...')
 
@@ -64,7 +67,7 @@ async function deployTestPool({
     prizeStrategy.address,
     [ticket.address, sponsorship.address],
     maxExitFeeMantissa || toWei('0.5'),
-    maxTimelockDuration || prizePeriodSeconds,
+    maxTimelockDuration || '10000',
     cToken.address
   )
 
@@ -72,16 +75,17 @@ async function deployTestPool({
 
   await prizeStrategy.initialize(
     forwarder.address,
-    governor.address,
+    comptroller.address,
     prizePeriodSeconds,
     compoundPrizePool.address,
     ticket.address,
     sponsorship.address,
     rng.address,
-    exitFee || toWei('0.1'),
-    creditRate || toWei('0.1').div(prizePeriodSeconds),
     externalERC20Awards
   )
+
+  await prizeStrategy.setExitFeeMantissa(exitFee || toWei('0.1'))
+  await prizeStrategy.setCreditRateMantissa(creditRate || toWei('0.1').div(prizePeriodSeconds))
 
   debug("Addresses: \n", {
     rng: rng.address,
@@ -89,12 +93,13 @@ async function deployTestPool({
     forwarder: forwarder.address,
     token: token.address,
     cToken: cToken.address,
-    governor: governor.address,
+    comptroller: comptroller.address,
     prizeStrategy: prizeStrategy.address,
     ticket: ticket.address,
     compoundPrizePool: compoundPrizePool.address,
     sponsorship: sponsorship.address,
-    prizeStrategy: prizeStrategy.address
+    prizeStrategy: prizeStrategy.address,
+    governanceToken: governanceToken.address
   })
 
   return {
@@ -103,11 +108,12 @@ async function deployTestPool({
     forwarder,
     token,
     cToken,
-    governor,
+    comptroller,
     prizeStrategy,
     compoundPrizePool,
     ticket,
-    sponsorship
+    sponsorship,
+    governanceToken
   }
 }
 

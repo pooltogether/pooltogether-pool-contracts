@@ -16,7 +16,7 @@ interface PrizeStrategyInterface {
   /// @param to The address of the account who is receiving the deposit
   /// @param amount The amount of the deposit to account for
   /// @param controlledToken The address of the token that was deposited
-  function afterDepositTo(address to, uint256 amount, address controlledToken) external;
+  function afterDepositTo(address to, uint256 amount, address controlledToken, bytes calldata data) external;
 
   /// @notice Called by the Prize Pool after a user converts their timelocked tokens into a deposit
   /// @dev Inheriting contract must handle deposits into the Prize Pool and account for balance changes
@@ -24,27 +24,27 @@ interface PrizeStrategyInterface {
   /// @param to The address of the account who is receiving the deposit
   /// @param amount The amount of the deposit to account for
   /// @param controlledToken The address of the token that was deposited
-  function afterTimelockDepositTo(address operator, address to, uint256 amount, address controlledToken) external;
+  function afterTimelockDepositTo(address operator, address to, uint256 amount, address controlledToken, bytes calldata data) external;
 
   /// @dev Inheriting contract must provide a view into the unlock timestamp for a timelocked withdrawal
   /// @param from The address of the account to withdraw from
   /// @param amount The amount of the withdrawal to account for
   /// @param controlledToken The address of the token to be withdrawn
   /// @return The unlock timestamp for releasing locked assets
-  function beforeWithdrawWithTimelockFrom(address from, uint256 amount, address controlledToken) external returns (uint256);
+  function beforeWithdrawWithTimelockFrom(address from, uint256 amount, address controlledToken, bytes calldata data) external returns (uint256);
 
   /// @dev Inheriting contract must handle withdrawals from the Prize Pool that have a timelock on the Assets
   /// @param from The address of the account who performed the withdrawal
   /// @param amount The amount of the withdrawal to account for
   /// @param controlledToken The address of the token to be withdrawn
-  function afterWithdrawWithTimelockFrom(address from, uint256 amount, address controlledToken) external;
+  function afterWithdrawWithTimelockFrom(address from, uint256 amount, address controlledToken, bytes calldata data) external;
 
   /// @dev Inheriting contract must provide a view into the exit "fairness" fee for an instant withdrawal
   /// @param from The address of the account to withdraw from
   /// @param amount The amount of the withdrawal to account for
   /// @param controlledToken The address of the token to be withdrawn
   /// @return The exit "fairness" fee required to withdraw instantly
-  function beforeWithdrawInstantlyFrom(address from, uint256 amount, address controlledToken) external returns (uint256);
+  function beforeWithdrawInstantlyFrom(address from, uint256 amount, address controlledToken, bytes calldata data) external returns (uint256);
 
   /// @dev Inheriting contract must handle instant withdrawals from the Prize Pool
   /// @param operator The address of an approved operator who performed the withdrawal
@@ -59,7 +59,8 @@ interface PrizeStrategyInterface {
     uint256 amount,
     address controlledToken,
     uint256 exitFee,
-    uint256 sponsoredExitFee
+    uint256 sponsoredExitFee,
+    bytes calldata data
   ) external;
 
   /// @dev Inheriting contract must handle swept assets on the Prize Pool

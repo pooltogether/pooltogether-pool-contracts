@@ -2,8 +2,8 @@ pragma solidity 0.6.4;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
-import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 
+import "../comptroller/ComptrollerInterface.sol";
 import "../prize-strategy/PrizeStrategyProxyFactory.sol";
 import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
@@ -32,7 +32,7 @@ contract CompoundPrizePoolBuilder is Initializable {
     address indexed prizeStrategy
   );
 
-  GovernorInterface public governor;
+  ComptrollerInterface public comptroller;
   CompoundPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
   PrizeStrategyProxyFactory public prizeStrategyProxyFactory;
@@ -40,20 +40,20 @@ contract CompoundPrizePoolBuilder is Initializable {
   address public trustedForwarder;
 
   function initialize (
-    GovernorInterface _governor,
+    ComptrollerInterface _comptroller,
     PrizeStrategyProxyFactory _prizeStrategyProxyFactory,
     address _trustedForwarder,
     CompoundPrizePoolProxyFactory _compoundPrizePoolProxyFactory,
     ControlledTokenProxyFactory _controlledTokenProxyFactory,
     RNGInterface _rng
   ) public initializer {
-    require(address(_governor) != address(0), "CompoundPrizePoolBuilder/governor-not-zero");
+    require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
     require(address(_prizeStrategyProxyFactory) != address(0), "CompoundPrizePoolBuilder/prize-strategy-factory-not-zero");
     require(address(_compoundPrizePoolProxyFactory) != address(0), "CompoundPrizePoolBuilder/compound-prize-pool-builder-not-zero");
     require(address(_controlledTokenProxyFactory) != address(0), "CompoundPrizePoolBuilder/controlled-token-proxy-factory-not-zero");
     require(address(_rng) != address(0), "CompoundPrizePoolBuilder/rng-not-zero");
     rng = _rng;
-    governor = _governor;
+    comptroller = _comptroller;
     prizeStrategyProxyFactory = _prizeStrategyProxyFactory;
     trustedForwarder = _trustedForwarder;
     compoundPrizePoolProxyFactory = _compoundPrizePoolProxyFactory;
@@ -78,16 +78,17 @@ contract CompoundPrizePoolBuilder is Initializable {
 
     prizeStrategy.initialize(
       trustedForwarder,
-      governor,
+      comptroller,
       config.prizePeriodSeconds,
       prizePool,
       tokens[0],
       tokens[1],
       rng,
-      config.exitFeeMantissa,
-      config.creditRateMantissa,
       config.externalERC20Awards
     );
+
+    prizeStrategy.setExitFeeMantissa(config.exitFeeMantissa);
+    prizeStrategy.setCreditRateMantissa(config.creditRateMantissa);
 
     prizeStrategy.transferOwnership(msg.sender);
 
