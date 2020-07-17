@@ -1,6 +1,6 @@
 pragma solidity ^0.6.4;
 
-import "../rng/RNGInterface.sol";
+import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 
 contract RNGServiceMock is RNGInterface {
 
