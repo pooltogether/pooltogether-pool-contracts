@@ -2,12 +2,12 @@ pragma solidity ^0.6.4;
 
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
+import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 
 import "../prize-pool/MappedSinglyLinkedList.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../prize-pool/PrizePool.sol";
-import "../rng/RNGInterface.sol";
 import "../Constants.sol";
 
 contract PrizeStrategyStorage {

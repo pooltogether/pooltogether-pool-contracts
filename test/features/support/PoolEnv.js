@@ -16,11 +16,17 @@ function PoolEnv() {
 
   this.overrides = { gasLimit: 40000000 }
 
-  this.createPool = async function ({ prizePeriodSeconds }) {
+  this.createPool = async function ({ prizePeriodSeconds, maxExitFeePercentage = '50', maxTimelockMultiple = 2 }) {
     this.wallets = await buidler.ethers.getSigners()
     debug(`Fetched ${this.wallets.length} wallets`)
     debug(`Creating pool with prize period ${prizePeriodSeconds}...`)
-    this.env = await deployTestPool(this.wallets[0], '' + prizePeriodSeconds)
+    this.env = await deployTestPool({
+      wallet: this.wallets[0],
+      prizePeriodSeconds,
+      maxExitFeePercentage,
+      maxTimelockMultiple,
+      overrides: this.overrides
+    })
     debug(`CompoundPrizePool created with address ${this.env.compoundPrizePool.address}`)
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
   }
@@ -160,7 +166,7 @@ function PoolEnv() {
 
     debug(`Completing award...`)
     await this.env.prizeStrategy.completeAward(this.overrides)
-    
+
     debug('award completed')
 
     await this._prizeStrategy.setCurrentTime('0', this.overrides)

@@ -41,6 +41,9 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   MappedSinglyLinkedList.Mapping internal _tokens;
   PrizeStrategyInterface public prizeStrategy;
 
+  uint256 internal maxExitFeeMultiple;
+  uint256 internal maxTimelockDuration;
+
   uint256 public timelockTotalSupply;
   mapping(address => uint256) internal timelockBalances;
   mapping(address => uint256) internal unlockTimestamps;
@@ -53,10 +56,14 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
   /// @param _prizeStrategy Address of the component-controller that manages the prize-strategy
   /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
+  /// @param _maxExitFeeMultiple The maximum exit fee size, relative to the withdrawal amount
+  /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
   function initialize (
     address _trustedForwarder,
     PrizeStrategyInterface _prizeStrategy,
-    address[] memory _controlledTokens
+    address[] memory _controlledTokens,
+    uint256 _maxExitFeeMultiple,
+    uint256 _maxTimelockDuration
   )
     public
     initializer
@@ -74,6 +81,8 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     __ReentrancyGuard_init();
     trustedForwarder = _trustedForwarder;
     prizeStrategy = _prizeStrategy;
+    maxExitFeeMultiple = _maxExitFeeMultiple;
+    maxTimelockDuration = _maxTimelockDuration;
   }
 
   /// @dev Inheriting contract must determine if a specific token type may be awarded as a prize enhancement
@@ -168,6 +177,12 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
       exitFee = prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken);
     }
 
+    uint256 mantissa = FixedPoint.calculateMantissa(maxExitFeeMultiple, 100);
+    uint256 maxFee = FixedPoint.multiplyUintByMantissa(amount, mantissa);
+    if (exitFee > maxFee) {
+      exitFee = maxFee;
+    }
+
     address operator = _msgSender();
     uint256 sponsoredExitFee = (exitFee > prepaidExitFee) ? prepaidExitFee : exitFee;
     uint256 userExitFee = exitFee.sub(sponsoredExitFee);
@@ -209,11 +224,16 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     onlyControlledToken(controlledToken)
     returns (uint256 unlockTimestamp)
   {
+    uint256 blockTime = _currentTime();
     _updateAwardBalance();
 
     bool hasPrizeStrategy = _hasPrizeStrategy();
     if (hasPrizeStrategy) {
       unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken);
+    }
+
+    if (unlockTimestamp > 0 && unlockTimestamp.sub(blockTime) > maxTimelockDuration) {
+      unlockTimestamp = blockTime.add(maxTimelockDuration);
     }
 
     address operator = _msgSender();
