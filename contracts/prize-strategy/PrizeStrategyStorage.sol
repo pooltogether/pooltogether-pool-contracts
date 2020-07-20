@@ -11,18 +11,19 @@ import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
 
 contract PrizeStrategyStorage {
-
-  struct CreditBalance {
-    uint128 interestIndex;
-    uint128 credit;
+  struct Credit {
+    uint192 balance;
+    uint64 timestamp;
   }
 
-  mapping(address => CreditBalance) internal creditBalances;
+  mapping(address => Credit) internal creditBalances;
 
   PrizePool public prizePool;
   GovernorInterface public governor;
   IERC20 public ticket;
   IERC20 public sponsorship;
+  RNGInterface public rng;
+
   SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
 
   struct RngRequest {
@@ -33,14 +34,12 @@ contract PrizeStrategyStorage {
   uint256 public prizePeriodSeconds;
   uint256 public prizePeriodStartedAt;
 
-  uint256 public previousPrize;
-  uint256 public previousPrizeAverageTickets;
-
-  uint256 public prizeAverageTickets;
-
-  RNGInterface public rng;
   RngRequest internal rngRequest;
 
   // external tokens awarded as part of prize
   MappedSinglyLinkedList.Mapping internal externalAwardMapping;
+
+  uint256 public exitFeeMantissa;
+
+  uint256 public creditRateMantissa;
 }

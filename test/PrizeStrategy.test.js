@@ -11,7 +11,7 @@ const ControlledToken = require('../build/ControlledToken.json')
 
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
-const { AddressZero } = require('ethers/constants')
+const { AddressZero, Zero } = require('ethers/constants')
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
@@ -58,6 +58,8 @@ describe('PrizeStrategy', function() {
       ticket.address,
       sponsorship.address,
       rng.address,
+      toWei('0.1'),
+      toWei('0.1').div(prizePeriodSeconds),
       []
     )
 
@@ -85,6 +87,8 @@ describe('PrizeStrategy', function() {
         ticket.address,
         sponsorship.address,
         rng.address,
+        toWei('0.1'),
+        toWei('0.1').div(prizePeriodSeconds),
         [invalidExternalToken]
       ]
 
@@ -98,10 +102,51 @@ describe('PrizeStrategy', function() {
     })
   })
 
+  describe('currentPrize()', () => {
+    it('should return the currently accrued interest when reserve is zero', async () => {
+      await prizePool.mock.awardBalance.returns('100')
+      await governor.mock.reserve.returns(AddressZero)
+      expect(await call(prizeStrategy, 'currentPrize')).equal('100')
+    })
+
+    it('should return the interest accrued less the reserve when the reserve is non-zero', async () => {
+      await prizePool.mock.awardBalance.returns('100')
+      await governor.mock.reserve.returns(FORWARDER)
+      await governor.mock.reserveFeeMantissa.returns(toWei('0.1'))
+      expect(await call(prizeStrategy, 'currentPrize')).equal('90')
+    })
+  })
+
+  describe('estimatePrize()', () => {
+    it('should calculate the estimated prize', async () => {
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
+      await prizePool.mock.awardBalance.returns('100')
+      await prizePool.mock.accountedBalance.returns('1000')
+      await governor.mock.reserve.returns(AddressZero)
+      await prizePool.mock.estimateAccruedInterestOverBlocks
+        .returns('10')
+
+      expect(await call(prizeStrategy, 'estimatePrize')).to.equal('110')
+    })
+  })
+
+  describe('estimatePrizeWithBlockTime()', () => {
+    it('should calculate the estimated prize', async () => {
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
+      await prizePool.mock.awardBalance.returns('100')
+      await prizePool.mock.accountedBalance.returns('1000')
+      await governor.mock.reserve.returns(AddressZero)
+      await prizePool.mock.estimateAccruedInterestOverBlocks
+        .withArgs('1000', toWei('10'))
+        .returns('10')
+
+      expect(await call(prizeStrategy, 'estimatePrizeWithBlockTime', 100)).to.equal('110')
+    })
+  })
+
   describe('chanceOf()', () => {
     it('should show the odds for a user to win the prize', async () => {
       const amount = toWei('10')
-      await prizePool.mock.interestIndexMantissa.returns(toWei('1'))
       await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
       await prizePool.call(prizeStrategy, 'afterDepositTo', wallet._address, amount, ticket.address)
       expect(await prizeStrategy.chanceOf(wallet._address)).to.be.equal(amount)
@@ -115,12 +160,10 @@ describe('PrizeStrategy', function() {
     })
 
     it('should update the users ticket balance', async () => {
-      await prizePool.mock.interestIndexMantissa.returns(toWei('1'))
       await ticket.mock.totalSupply.returns('22')
       await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('22'))
       await prizePool.call(prizeStrategy, 'afterDepositTo', wallet._address, toWei('10'), ticket.address)
       expect(await prizeStrategy.draw(1)).to.equal(wallet._address) // they exist in the sortition sum tree
-      expect((await prizeStrategy.prizeAverageTickets()).gt('0')).to.be.true // prize average was updated
     })
 
     it('should not be called if an rng request is in flight', async () => {
@@ -206,119 +249,23 @@ describe('PrizeStrategy', function() {
     })
   })
 
-  describe('estimateAccrualTime()', () => {
-    it('should be zero if there was no previous prize', async () => {
-
+  describe('estimateCreditAccrualTime()', () => {
+    it('should calculate the accrual time', async () => {
       let ticketBalance = toWei('100')
       let interest = toWei('10')
-      let previousPrize = toWei('0')
-      let previousPrizeAverageTickets = toWei('0')
-      let prizePeriodSeconds = toWei('10')
-
-      expect(await prizeStrategy.estimateAccrualTime(
+      expect(await prizeStrategy.estimateCreditAccrualTime(
         ticketBalance,
-        interest,
-        previousPrize,
-        previousPrizeAverageTickets,
-        prizePeriodSeconds
-      )).to.equal('0')
-
+        interest
+      )).to.equal(prizePeriodSeconds)
     })
 
-    it('should be the maximum if they need the same amount of interest', async () => {
-
+    it('should calculate the accrual time', async () => {
       let ticketBalance = toWei('100')
-      let interest = toWei('10')
-      let previousPrize = toWei('10')
-      let previousPrizeAverageTickets = toWei('100')
-      let prizePeriodSeconds = '10'
-
-      expect(await prizeStrategy.estimateAccrualTime(
+      let interest = toWei('30')
+      expect(await prizeStrategy.estimateCreditAccrualTime(
         ticketBalance,
-        interest,
-        previousPrize,
-        previousPrizeAverageTickets,
-        prizePeriodSeconds
-      )).to.equal('10')
-
-    })
-
-    it('should be half if they have half the credit', async () => {
-
-      let ticketBalance = toWei('100')
-      let interest = toWei('5')
-      let previousPrize = toWei('10')
-      let previousPrizeAverageTickets = toWei('100')
-      let prizePeriodSeconds = '10'
-
-      expect(await prizeStrategy.estimateAccrualTime(
-        ticketBalance,
-        interest,
-        previousPrize,
-        previousPrizeAverageTickets,
-        prizePeriodSeconds
-      )).to.equal('5')
-
-    })
-
-    it('should be double if they require twice as much interest', async () => {
-
-      let ticketBalance = toWei('100')
-      let interest = toWei('20')
-      let previousPrize = toWei('10')
-      let previousPrizeAverageTickets = toWei('100')
-      let prizePeriodSeconds = '10'
-
-      expect(await prizeStrategy.estimateAccrualTime(
-        ticketBalance,
-        interest,
-        previousPrize,
-        previousPrizeAverageTickets,
-        prizePeriodSeconds
-      )).to.equal('20')
-
-    })
-  })
-
-  describe('completeAward()', () => {
-    it('should accrue credit to the winner', async () => {
-      debug('Setting time')
-
-      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt());
-
-      debug('Calling afterDepositTo')
-      await ticket.mock.balanceOf.returns(toWei('10'))
-      await prizePool.mock.interestIndexMantissa.returns(toWei('1'))
-
-      // have the mock update the number of prize tickets
-      await prizePool.call(prizeStrategy, 'afterDepositTo', wallet._address, toWei('10'), ticket.address);
-
-      // ensure prize period is over
-      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
-
-      // allow an rng request
-      await rng.mock.requestRandomNumber.returns('1', '1')
-
-      debug('Starting award...')
-
-      // start the award
-      await prizeStrategy.startAward()
-
-      await rng.mock.isRequestComplete.returns(true)
-      await rng.mock.randomNumber.returns('0x6c00000000000000000000000000000000000000000000000000000000000000')
-      await prizePool.mock.interestIndexMantissa.returns(toWei('1.1'))
-      await prizePool.mock.awardBalance.returns(toWei('1'))
-      await governor.mock.reserve.returns(AddressZero) // no reserve
-      await ticket.mock.totalSupply.returns(toWei('10'))
-      await prizePool.mock.award.withArgs(wallet._address, toWei('1'), ticket.address).returns()
-
-      debug('Completing award...')
-
-      // complete the award
-      await prizeStrategy.completeAward()
-
-      expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal(toWei('1.1'))
-
+        interest
+      )).to.equal(prizePeriodSeconds * 3)
     })
   })
 });

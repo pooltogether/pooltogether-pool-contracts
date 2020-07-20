@@ -22,11 +22,6 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     uint256 balance;
   }
 
-  struct InterestIndex {
-    uint224 mantissa;
-    uint32 blockNumber;
-  }
-
   event CapturedAward(uint256 amount);
   event Deposited(address indexed operator, address indexed to, address indexed token, uint256 amount);
   event Awarded(address indexed winner, address indexed token, uint256 amount);
@@ -41,16 +36,14 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   MappedSinglyLinkedList.Mapping internal _tokens;
   PrizeStrategyInterface public prizeStrategy;
 
-  uint256 internal maxExitFeeMultiple;
-  uint256 internal maxTimelockDuration;
+  uint256 public maxExitFeeMultiple;
+  uint256 public maxTimelockDuration;
 
   uint256 public timelockTotalSupply;
   mapping(address => uint256) internal timelockBalances;
   mapping(address => uint256) internal unlockTimestamps;
 
   uint256 internal __awardBalance;
-
-  InterestIndex internal interestIndex;
 
   /// @notice Initializes the Prize Pool with required contract connections
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
@@ -70,10 +63,6 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   {
     require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-zero");
-    interestIndex = InterestIndex({
-      mantissa: uint224(1 ether),
-      blockNumber: uint32(block.number)
-    });
     _tokens.initialize(_controlledTokens);
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
       require(ControlledToken(_controlledTokens[i]).controller() == this, "PrizePool/token-ctrlr-mismatch");
@@ -286,34 +275,14 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @dev Calculates the current award balance based on the collateral & rolling interest rate
   /// @dev The interest-index is the rolling or "accrued" exchange-rate on the unaccounted collateral since the last update.
   function _updateAwardBalance() internal {
-    // this should only run once per block.
-    if (interestIndex.blockNumber == uint32(block.number)) {
-      return;
-    }
-
     uint256 tokenTotalSupply = _tokenTotalSupply();
     uint256 bal = _balance();
-    uint256 accounted = tokenTotalSupply.add(__awardBalance);
-
-    if (accounted > 0) {
-      interestIndex = InterestIndex({
-        mantissa: uint224(interestIndex.mantissa * bal / accounted),
-        blockNumber: uint32(block.number)
-      });
-    }
 
     if (bal > tokenTotalSupply) {
       __awardBalance = bal.sub(tokenTotalSupply);
     } else {
       __awardBalance = 0;
     }
-  }
-
-  /// @notice Gets the rolling interest rate since the last award update
-  /// @return interestRate The rolling interest rate
-  function interestIndexMantissa() external returns (uint256 interestRate) {
-    _updateAwardBalance();
-    return uint256(interestIndex.mantissa);
   }
 
   /// @notice Called by the Prize-Strategy to Award a Prize to a specific account
