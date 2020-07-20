@@ -11,7 +11,7 @@ const ControlledToken = require('../build/ControlledToken.json')
 
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
-const { AddressZero } = require('ethers/constants')
+const { AddressZero, Zero } = require('ethers/constants')
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
@@ -99,6 +99,48 @@ describe('PrizeStrategy', function() {
       await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
       await expect(prizeStrategy2.initialize(...initArgs))
         .to.be.revertedWith('PrizeStrategy/cannot-award-external')
+    })
+  })
+
+  describe('currentPrize()', () => {
+    it('should return the currently accrued interest when reserve is zero', async () => {
+      await prizePool.mock.awardBalance.returns('100')
+      await governor.mock.reserve.returns(AddressZero)
+      expect(await call(prizeStrategy, 'currentPrize')).equal('100')
+    })
+
+    it('should return the interest accrued less the reserve when the reserve is non-zero', async () => {
+      await prizePool.mock.awardBalance.returns('100')
+      await governor.mock.reserve.returns(FORWARDER)
+      await governor.mock.reserveFeeMantissa.returns(toWei('0.1'))
+      expect(await call(prizeStrategy, 'currentPrize')).equal('90')
+    })
+  })
+
+  describe('estimatePrize()', () => {
+    it('should calculate the estimated prize', async () => {
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
+      await prizePool.mock.awardBalance.returns('100')
+      await prizePool.mock.accountedBalance.returns('1000')
+      await governor.mock.reserve.returns(AddressZero)
+      await prizePool.mock.estimateAccruedInterestOverBlocks
+        .returns('10')
+
+      expect(await call(prizeStrategy, 'estimatePrize')).to.equal('110')
+    })
+  })
+
+  describe('estimatePrizeWithBlockTime()', () => {
+    it('should calculate the estimated prize', async () => {
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
+      await prizePool.mock.awardBalance.returns('100')
+      await prizePool.mock.accountedBalance.returns('1000')
+      await governor.mock.reserve.returns(AddressZero)
+      await prizePool.mock.estimateAccruedInterestOverBlocks
+        .withArgs('1000', toWei('10'))
+        .returns('10')
+
+      expect(await call(prizeStrategy, 'estimatePrizeWithBlockTime', 100)).to.equal('110')
     })
   })
 

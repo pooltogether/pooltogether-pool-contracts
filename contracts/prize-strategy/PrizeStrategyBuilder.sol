@@ -15,10 +15,10 @@ contract PrizeStrategyBuilder is Initializable {
   struct Config {
     CTokenInterface cToken;
     uint256 prizePeriodSeconds;
-    bytes ticketName;
-    bytes ticketSymbol;
-    bytes sponsorshipName;
-    bytes sponsorshipSymbol;
+    string ticketName;
+    string ticketSymbol;
+    string sponsorshipName;
+    string sponsorshipSymbol;
     uint256 maxExitFeeMultiple;
     uint256 maxTimelockDuration;
     uint256 exitFeeMantissa;
@@ -99,10 +99,10 @@ contract PrizeStrategyBuilder is Initializable {
   function createPrizePoolAndTokens(
     PrizeStrategy prizeStrategy,
     CTokenInterface _cToken,
-    bytes memory ticketName,
-    bytes memory ticketSymbol,
-    bytes memory sponsorshipName,
-    bytes memory sponsorshipSymbol,
+    string memory ticketName,
+    string memory ticketSymbol,
+    string memory sponsorshipName,
+    string memory sponsorshipSymbol,
     uint256 _maxExitFeeMultiple,
     uint256 _maxTimelockDuration
   ) internal returns (CompoundPrizePool prizePool, address[] memory tokens) {
@@ -122,8 +122,8 @@ contract PrizeStrategyBuilder is Initializable {
 
   function createControlledToken(
     TokenControllerInterface controller,
-    bytes memory name,
-    bytes memory symbol
+    string memory name,
+    string memory symbol
   ) internal returns (ControlledToken) {
     ControlledToken token = controlledTokenProxyFactory.create();
     token.initialize(string(name), string(symbol), trustedForwarder, controller);

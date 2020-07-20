@@ -36,8 +36,8 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   MappedSinglyLinkedList.Mapping internal _tokens;
   PrizeStrategyInterface public prizeStrategy;
 
-  uint256 internal maxExitFeeMultiple;
-  uint256 internal maxTimelockDuration;
+  uint256 public maxExitFeeMultiple;
+  uint256 public maxTimelockDuration;
 
   uint256 public timelockTotalSupply;
   mapping(address => uint256) internal timelockBalances;

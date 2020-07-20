@@ -12,6 +12,7 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
+import "@nomiclabs/buidler/console.sol";
 
 import "./PrizeStrategyStorage.sol";
 import "../token/TokenControllerInterface.sol";
@@ -357,28 +358,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return _interest.div(accruedPerSecond);
   }
 
-  /// @notice Scales a value by a fraction being the remaining time out of the prize period.  I.e. when there are 0 seconds left, it's zero.
-  /// When there are remaining == prize period seconds left it's 1.
-  /// @param _value The value to scale
-  /// @param _timeRemainingSeconds The time remaining in the prize period.
-  /// @param _prizePeriodSeconds The length of the prize period in seconds.
-  /// @return scaledValue The value scaled the time fraction
-  function _scaleValueByTimeRemaining(
-    uint256 _value,
-    uint256 _timeRemainingSeconds,
-    uint256 _prizePeriodSeconds
-  )
-    internal pure returns (uint256 scaledValue)
-  {
-    return FixedPoint.multiplyUintByMantissa(
-      _value,
-      FixedPoint.calculateMantissa(
-        _timeRemainingSeconds < _prizePeriodSeconds ? _timeRemainingSeconds : _prizePeriodSeconds,
-        _prizePeriodSeconds
-      )
-    );
-  }
-
   /// @notice Calculates the reserve portion of the given amount of funds.  If there is no reserve address, the portion will be zero.
   /// @param amount The prize amount
   /// @return The size of the reserve portion of the prize
@@ -413,6 +392,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param secondsPerBlockMantissa The seconds per block to use for the calculation.  Should be a fixed point 18 number like Ether.
   /// @return The estimated remaining prize
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockMantissa) public view returns (uint256) {
+    uint256 accounted = prizePool.accountedBalance();
+    uint256 remainingBlocks = estimateRemainingBlocksToPrize(secondsPerBlockMantissa);
+    console.log("accoutned; %s, remaining: %s", accounted, remainingBlocks);
     uint256 remaining = prizePool.estimateAccruedInterestOverBlocks(
       prizePool.accountedBalance(),
       estimateRemainingBlocksToPrize(secondsPerBlockMantissa)
