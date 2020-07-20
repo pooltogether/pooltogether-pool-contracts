@@ -39,7 +39,7 @@ contract PrizeStrategyStorage {
   // external tokens awarded as part of prize
   MappedSinglyLinkedList.Mapping internal externalAwardMapping;
 
-  uint256 exitFeeMantissa;
+  uint256 public exitFeeMantissa;
 
-  uint256 creditRateMantissa;
+  uint256 public creditRateMantissa;
 }

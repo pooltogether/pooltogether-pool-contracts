@@ -12,7 +12,6 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
-import "@nomiclabs/buidler/console.sol";
 
 import "./PrizeStrategyStorage.sol";
 import "../token/TokenControllerInterface.sol";
@@ -116,7 +115,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function _accrueCredit(address user, uint256 balance) internal {
     uint256 credit = calculateAccruedCredit(user, balance);
     creditBalances[user] = Credit({
-      balance: _addCredit(user, balance, uint256(credit)).toUint128(),
+      balance: _addCredit(user, balance, credit).toUint128(),
       timestamp: _currentTime().toUint64()
     });
   }
@@ -403,7 +402,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return currentPrize().add(estimateRemainingPrizeWithBlockTime(secondsPerBlockMantissa));
   }
 
-  /// @notice Estimates the size of the *remaining* prize to accrue.  This function uses the constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA to calculate the accrued interest.
+  /// @notice Estimates the size of the *remaining* prize to accrue.
+  /// This function uses the constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA to calculate the accrued interest.
   /// @return The estimated remaining prize
   function estimateRemainingPrize() public view returns (uint256) {
     return estimateRemainingPrizeWithBlockTime(ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA);

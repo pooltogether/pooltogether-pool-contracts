@@ -9,7 +9,7 @@ jobs:
       - checkout
       - run:
           name: Install and Test
-          command: yarn && yarn coverage
+          command: yarn && yarn hint && yarn coverage
       - coveralls/upload
 workflows:
     build-and-test:
