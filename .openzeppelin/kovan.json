@@ -1,155 +1,11 @@
 {
   "contracts": {
-    "CompoundPeriodicPrizePoolFactory": {
-      "address": "0x0d21851920D6196b1F8f400f4cc1309e41209E9B",
-      "constructorCode": "608060405234801561001057600080fd5b5061472a806100206000396000f3fe",
-      "bodyBytecodeHash": "cd5bb9a61189f8fd7dfe6cfaf94dfbac65a98eba51af0c37a64e53b5c4d14962",
-      "localBytecodeHash": "77271f4f6d22d8d396d1cfd51445127c23a78bd3489e0e92d72178c06bb98cdc",
-      "deployedBytecodeHash": "77271f4f6d22d8d396d1cfd51445127c23a78bd3489e0e92d72178c06bb98cdc",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_address": {
-          "id": "t_address",
-          "kind": "elementary",
-          "label": "address"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 11119,
-          "type": "t_bool",
-          "src": "757:24:11"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 11121,
-          "type": "t_bool",
-          "src": "876:25:11"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 11186,
-          "type": "t_array:50<t_uint256>",
-          "src": "1982:29:11"
-        },
-        {
-          "contract": "CompoundPeriodicPrizePoolFactory",
-          "path": "contracts/periodic-prize-pool/CompoundPeriodicPrizePoolFactory.sol",
-          "label": "instance",
-          "astId": 14615,
-          "type": "t_address",
-          "src": "278:33:34"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
-      }
-    },
-    "TicketFactory": {
-      "address": "0xAd18e608F34FC2bFA1047cf5b100cB61b9DEc604",
-      "constructorCode": "608060405234801561001057600080fd5b50613aea806100206000396000f3fe",
-      "bodyBytecodeHash": "4fc97d32dfc41f0efed033bec635006c0dc62b6f645adf4dcb78b331155485c5",
-      "localBytecodeHash": "c055e277d4cc5660755dd5e923eba48d6c5883c6e16590fd19e882555e5148e9",
-      "deployedBytecodeHash": "c055e277d4cc5660755dd5e923eba48d6c5883c6e16590fd19e882555e5148e9",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_address": {
-          "id": "t_address",
-          "kind": "elementary",
-          "label": "address"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 11119,
-          "type": "t_bool",
-          "src": "757:24:11"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 11121,
-          "type": "t_bool",
-          "src": "876:25:11"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 11186,
-          "type": "t_array:50<t_uint256>",
-          "src": "1982:29:11"
-        },
-        {
-          "contract": "TicketFactory",
-          "path": "contracts/ticket/TicketFactory.sol",
-          "label": "instance",
-          "astId": 18600,
-          "type": "t_address",
-          "src": "240:22:59"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
-      }
-    },
-    "ControlledTokenFactory": {
-      "address": "0x98A36Aae2cf9f3C582Dd1abdC6D0450230Bd5C2a",
+    "CompoundPrizePoolProxyFactory": {
+      "address": "0x6F4b497eC3594a9b65777786FC5422d049E3fFd2",
       "constructorCode": "608060405234801561001057600080fd5b5061325f806100206000396000f3fe",
-      "bodyBytecodeHash": "4a985a15dc1786bf572fdb4b27de46fe41ca4fc8547702968bfd260d506cd0dd",
-      "localBytecodeHash": "a07a1631af1de07d92418a736f450f5b1797c05429c96f762e30176e6addaf06",
-      "deployedBytecodeHash": "a07a1631af1de07d92418a736f450f5b1797c05429c96f762e30176e6addaf06",
+      "bodyBytecodeHash": "ebf3ec79034abd8bcd1c7ae9db43babbc4809a4ea60a65ea938e5278fa7d384f",
+      "localBytecodeHash": "0eff6b1c208d64bbe3b065aa7742fb0a3fb2259ba83fbf4d1e319cbdc82a6aa5",
+      "deployedBytecodeHash": "0eff6b1c208d64bbe3b065aa7742fb0a3fb2259ba83fbf4d1e319cbdc82a6aa5",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -179,33 +35,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11119,
+          "astId": 1157,
           "type": "t_bool",
-          "src": "757:24:11"
+          "src": "757:24:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11121,
+          "astId": 1159,
           "type": "t_bool",
-          "src": "876:25:11"
+          "src": "876:25:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11186,
+          "astId": 1224,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:11"
+          "src": "1982:29:10"
         },
         {
-          "contract": "ControlledTokenFactory",
-          "path": "contracts/token/ControlledTokenFactory.sol",
+          "contract": "CompoundPrizePoolProxyFactory",
+          "path": "contracts/prize-pool/compound/CompoundPrizePoolProxyFactory.sol",
           "label": "instance",
-          "astId": 18785,
+          "astId": 5208,
           "type": "t_address",
-          "src": "258:31:62"
+          "src": "447:33:35"
         }
       ],
       "warnings": {
@@ -216,12 +72,12 @@
         "uninitializedBaseContracts": []
       }
     },
-    "SingleRandomWinnerPrizeStrategyFactory": {
-      "address": "0x190Dc2791E5B4AF1c7c51072B9CB20DFB5C4389f",
-      "constructorCode": "608060405234801561001057600080fd5b5061090c806100206000396000f3fe",
-      "bodyBytecodeHash": "bbe8fd0cac2b6454c65376578faa4fc2034e55c3048b0340236f2a1e569c291c",
-      "localBytecodeHash": "8dd01b570d732331e418a0f62068e7e10be7d395f96e252c06d3b6f891b452a1",
-      "deployedBytecodeHash": "8dd01b570d732331e418a0f62068e7e10be7d395f96e252c06d3b6f891b452a1",
+    "ControlledTokenProxyFactory": {
+      "address": "0xEB0CeC43379C01C55c1df1DaC0C66d8d41795091",
+      "constructorCode": "608060405234801561001057600080fd5b50611b44806100206000396000f3fe",
+      "bodyBytecodeHash": "10dd6e0102379b5f0f422f5bfb3968d196a015bffde538d64391c06dbd9e2307",
+      "localBytecodeHash": "f1c06b02520773bd9bfe778aa6c0ae69f875968fba0141c71b5f14d8cf7716fb",
+      "deployedBytecodeHash": "f1c06b02520773bd9bfe778aa6c0ae69f875968fba0141c71b5f14d8cf7716fb",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -251,33 +107,33 @@
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11119,
+          "astId": 1157,
           "type": "t_bool",
-          "src": "757:24:11"
+          "src": "757:24:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11121,
+          "astId": 1159,
           "type": "t_bool",
-          "src": "876:25:11"
+          "src": "876:25:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11186,
+          "astId": 1224,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:11"
+          "src": "1982:29:10"
         },
         {
-          "contract": "SingleRandomWinnerPrizeStrategyFactory",
-          "path": "contracts/prize-strategy/SingleRandomWinnerPrizeStrategyFactory.sol",
+          "contract": "ControlledTokenProxyFactory",
+          "path": "contracts/token/ControlledTokenProxyFactory.sol",
           "label": "instance",
-          "astId": 17350,
+          "astId": 8794,
           "type": "t_address",
-          "src": "290:47:43"
+          "src": "441:31:53"
         }
       ],
       "warnings": {
@@ -288,81 +144,12 @@
         "uninitializedBaseContracts": []
       }
     },
-    "RNGBlockhash": {
-      "address": "0x30ac06a3AEa3c16Ea0bbfd28155D4f94A0b9A07d",
-      "constructorCode": "608060405234801561001057600080fd5b506102f0806100206000396000f3fe",
-      "bodyBytecodeHash": "1c534a5c051925f9fae78d6b73500f56483de51443b7f4d2c596565a61f00729",
-      "localBytecodeHash": "d9292299ff1f8f0d02e78cfaa62c8f7aabc1c516d0df724dc1eeb21cd613558a",
-      "deployedBytecodeHash": "d9292299ff1f8f0d02e78cfaa62c8f7aabc1c516d0df724dc1eeb21cd613558a",
-      "types": {
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_mapping<t_bool>": {
-          "id": "t_mapping<t_bool>",
-          "valueType": "t_bool",
-          "label": "mapping(key => bool)",
-          "kind": "mapping"
-        },
-        "t_bytes32": {
-          "id": "t_bytes32",
-          "kind": "elementary",
-          "label": "bytes32"
-        },
-        "t_mapping<t_bytes32>": {
-          "id": "t_mapping<t_bytes32>",
-          "valueType": "t_bytes32",
-          "label": "mapping(key => bytes32)",
-          "kind": "mapping"
-        }
-      },
-      "storage": [
-        {
-          "contract": "RNGBlockhash",
-          "path": "contracts/rng/RNGBlockhash.sol",
-          "label": "requestCount",
-          "astId": 17390,
-          "type": "t_uint256",
-          "src": "208:27:44"
-        },
-        {
-          "contract": "RNGBlockhash",
-          "path": "contracts/rng/RNGBlockhash.sol",
-          "label": "completed",
-          "astId": 17394,
-          "type": "t_mapping<t_bool>",
-          "src": "239:41:44"
-        },
-        {
-          "contract": "RNGBlockhash",
-          "path": "contracts/rng/RNGBlockhash.sol",
-          "label": "randomNumbers",
-          "astId": 17398,
-          "type": "t_mapping<t_bytes32>",
-          "src": "284:48:44"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
-      }
-    },
-    "PrizePoolBuilder": {
-      "address": "0xA00A8fDf41e697AEF69627B07f318399aD0e4b92",
-      "constructorCode": "608060405234801561001057600080fd5b50610e9b806100206000396000f3fe",
-      "bodyBytecodeHash": "9047854ace14852dfa5347ad9463c391c9ca238a400d9a1fd02f50abc8276796",
-      "localBytecodeHash": "09e47a23279c281b9111c0fe14977a57c90398b2f0f036d9ff8a68ed3c5c3f32",
-      "deployedBytecodeHash": "09e47a23279c281b9111c0fe14977a57c90398b2f0f036d9ff8a68ed3c5c3f32",
+    "PrizeStrategyProxyFactory": {
+      "address": "0xF16663B1B1ff554Fd7876BA009DFC56e0AD2a034",
+      "constructorCode": "608060405234801561001057600080fd5b5061426b806100206000396000f3fe",
+      "bodyBytecodeHash": "c53bc3797193440d7daf5f348df4eecdefc24ba90fa382af1a7881f7c9761612",
+      "localBytecodeHash": "69f2cc6d1bfcdcae9b7ee0679d751ee12d739457e5bd417df51c68131e8c46bd",
+      "deployedBytecodeHash": "69f2cc6d1bfcdcae9b7ee0679d751ee12d739457e5bd417df51c68131e8c46bd",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -392,153 +179,145 @@
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 11119,
+          "astId": 1157,
           "type": "t_bool",
-          "src": "757:24:11"
+          "src": "757:24:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 11121,
+          "astId": 1159,
           "type": "t_bool",
-          "src": "876:25:11"
+          "src": "876:25:10"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 11186,
+          "astId": 1224,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:11"
+          "src": "1982:29:10"
         },
         {
-          "contract": "PrizePoolBuilder",
-          "path": "contracts/builder/PrizePoolBuilder.sol",
+          "contract": "PrizeStrategyProxyFactory",
+          "path": "contracts/prize-strategy/PrizeStrategyProxyFactory.sol",
+          "label": "instance",
+          "astId": 7470,
+          "type": "t_address",
+          "src": "259:29:38"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
+    "PrizeStrategyBuilder": {
+      "address": "0x007492D65a619D3F8e5f1a38aFF4D022b713C706",
+      "constructorCode": "608060405234801561001057600080fd5b50610e0b806100206000396000f3fe",
+      "bodyBytecodeHash": "34fe088544ca99c8bcc67bb82ec22f31bcc5c29eec93b8c46a20ae86b1255b30",
+      "localBytecodeHash": "b2c177541a66a9fcd4b8eba35e2330f0821746c8748536a57007f32a6cf5ddef",
+      "deployedBytecodeHash": "b2c177541a66a9fcd4b8eba35e2330f0821746c8748536a57007f32a6cf5ddef",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 1157,
+          "type": "t_bool",
+          "src": "757:24:10"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 1159,
+          "type": "t_bool",
+          "src": "876:25:10"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 1224,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:10"
+        },
+        {
+          "contract": "PrizeStrategyBuilder",
+          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
           "label": "governor",
-          "astId": 13887,
+          "astId": 7087,
           "type": "t_address",
-          "src": "560:33:28"
+          "src": "607:33:37"
         },
         {
-          "contract": "PrizePoolBuilder",
-          "path": "contracts/builder/PrizePoolBuilder.sol",
-          "label": "periodicPrizePoolFactory",
-          "astId": 13889,
+          "contract": "PrizeStrategyBuilder",
+          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
+          "label": "compoundPrizePoolProxyFactory",
+          "astId": 7089,
           "type": "t_address",
-          "src": "597:64:28"
+          "src": "644:66:37"
         },
         {
-          "contract": "PrizePoolBuilder",
-          "path": "contracts/builder/PrizePoolBuilder.sol",
-          "label": "ticketFactory",
-          "astId": 13891,
+          "contract": "PrizeStrategyBuilder",
+          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
+          "label": "controlledTokenProxyFactory",
+          "astId": 7091,
           "type": "t_address",
-          "src": "665:34:28"
+          "src": "714:62:37"
         },
         {
-          "contract": "PrizePoolBuilder",
-          "path": "contracts/builder/PrizePoolBuilder.sol",
-          "label": "controlledTokenFactory",
-          "astId": 13893,
+          "contract": "PrizeStrategyBuilder",
+          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
+          "label": "prizeStrategyProxyFactory",
+          "astId": 7093,
           "type": "t_address",
-          "src": "703:52:28"
+          "src": "780:58:37"
         },
         {
-          "contract": "PrizePoolBuilder",
-          "path": "contracts/builder/PrizePoolBuilder.sol",
+          "contract": "PrizeStrategyBuilder",
+          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
           "label": "rng",
-          "astId": 13895,
+          "astId": 7095,
           "type": "t_address",
-          "src": "759:23:28"
+          "src": "842:23:37"
         },
         {
-          "contract": "PrizePoolBuilder",
-          "path": "contracts/builder/PrizePoolBuilder.sol",
+          "contract": "PrizeStrategyBuilder",
+          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
           "label": "trustedForwarder",
-          "astId": 13897,
+          "astId": 7097,
           "type": "t_address",
-          "src": "786:31:28"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
-      }
-    },
-    "SingleRandomWinnerPrizePoolBuilder": {
-      "address": "0x2a34A42d5a8D5BBf02cbDC9D1F72E2a532123934",
-      "constructorCode": "608060405234801561001057600080fd5b506106ed806100206000396000f3fe",
-      "bodyBytecodeHash": "41ff37b0d5033bdab1ca14b11e92db62b7981819eef797b710e386c2d625ed53",
-      "localBytecodeHash": "bfcc250c94665a5ba994700a331a61fba02a5299c3855f774029aac64d6b5180",
-      "deployedBytecodeHash": "bfcc250c94665a5ba994700a331a61fba02a5299c3855f774029aac64d6b5180",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_address": {
-          "id": "t_address",
-          "kind": "elementary",
-          "label": "address"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 11119,
-          "type": "t_bool",
-          "src": "757:24:11"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 11121,
-          "type": "t_bool",
-          "src": "876:25:11"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 11186,
-          "type": "t_array:50<t_uint256>",
-          "src": "1982:29:11"
-        },
-        {
-          "contract": "SingleRandomWinnerPrizePoolBuilder",
-          "path": "contracts/builder/SingleRandomWinnerPrizePoolBuilder.sol",
-          "label": "prizePoolBuilder",
-          "astId": 14266,
-          "type": "t_address",
-          "src": "365:40:29"
-        },
-        {
-          "contract": "SingleRandomWinnerPrizePoolBuilder",
-          "path": "contracts/builder/SingleRandomWinnerPrizePoolBuilder.sol",
-          "label": "prizeStrategyFactory",
-          "astId": 14268,
-          "type": "t_address",
-          "src": "409:66:29"
+          "src": "869:31:37"
         }
       ],
       "warnings": {
@@ -552,66 +331,39 @@
   },
   "solidityLibs": {},
   "proxies": {
-    "PoolTogether3/CompoundPeriodicPrizePoolFactory": [
+    "PoolTogether3/CompoundPrizePoolProxyFactory": [
       {
-        "address": "0x9AA7bF2679C2D1f841c9e743e0c4b5C0979ad2cb",
+        "address": "0x44be81CC37CcA4837129fd4E5Ef4516d5f89b761",
         "version": "0.3.0",
-        "implementation": "0x0d21851920D6196b1F8f400f4cc1309e41209E9B",
-        "admin": "0xFa46b4F01698F7C083206FBaD58c808084e9879f",
+        "implementation": "0x6F4b497eC3594a9b65777786FC5422d049E3fFd2",
+        "admin": "0x8ebA7f388821053bAb30f19D11B0E8F20A9ad4fb",
         "kind": "Upgradeable"
       }
     ],
-    "PoolTogether3/TicketFactory": [
+    "PoolTogether3/ControlledTokenProxyFactory": [
       {
-        "address": "0x1b6514bF268a29317115172A761702ef6D01F08d",
+        "address": "0x2d89d84400b85b3A10c41F3E567E6169337069d0",
         "version": "0.3.0",
-        "implementation": "0xAd18e608F34FC2bFA1047cf5b100cB61b9DEc604",
-        "admin": "0xFa46b4F01698F7C083206FBaD58c808084e9879f",
+        "implementation": "0xEB0CeC43379C01C55c1df1DaC0C66d8d41795091",
+        "admin": "0x8ebA7f388821053bAb30f19D11B0E8F20A9ad4fb",
         "kind": "Upgradeable"
       }
     ],
-    "PoolTogether3/ControlledTokenFactory": [
+    "PoolTogether3/PrizeStrategyProxyFactory": [
       {
-        "address": "0xf8C68BDEdB45cD339b27DAF01aDEaB7d7497509D",
+        "address": "0xbBBab98cD13Aef08b8C105A23b8A95b35DDa421D",
         "version": "0.3.0",
-        "implementation": "0x98A36Aae2cf9f3C582Dd1abdC6D0450230Bd5C2a",
-        "admin": "0xFa46b4F01698F7C083206FBaD58c808084e9879f",
+        "implementation": "0xF16663B1B1ff554Fd7876BA009DFC56e0AD2a034",
+        "admin": "0x8ebA7f388821053bAb30f19D11B0E8F20A9ad4fb",
         "kind": "Upgradeable"
       }
     ],
-    "PoolTogether3/SingleRandomWinnerPrizeStrategyFactory": [
+    "PoolTogether3/PrizeStrategyBuilder": [
       {
-        "address": "0x90b48fE539D595163cdE688cBBBDbf22dd66e1d7",
+        "address": "0xE9d7a31c49ea7F6d8C1Eaf622CCe4aee14D4214a",
         "version": "0.3.0",
-        "implementation": "0x190Dc2791E5B4AF1c7c51072B9CB20DFB5C4389f",
-        "admin": "0xFa46b4F01698F7C083206FBaD58c808084e9879f",
-        "kind": "Upgradeable"
-      }
-    ],
-    "PoolTogether3/RNGBlockhash": [
-      {
-        "address": "0x9Ec08025263F1130dbECac3df2bD651d6eCC5087",
-        "version": "0.3.0",
-        "implementation": "0x30ac06a3AEa3c16Ea0bbfd28155D4f94A0b9A07d",
-        "admin": "0xFa46b4F01698F7C083206FBaD58c808084e9879f",
-        "kind": "Upgradeable"
-      }
-    ],
-    "PoolTogether3/PrizePoolBuilder": [
-      {
-        "address": "0x8AeB3b4C55569C5893b2BEBe25AFF87bAC3705ad",
-        "version": "0.3.0",
-        "implementation": "0xA00A8fDf41e697AEF69627B07f318399aD0e4b92",
-        "admin": "0xFa46b4F01698F7C083206FBaD58c808084e9879f",
-        "kind": "Upgradeable"
-      }
-    ],
-    "PoolTogether3/SingleRandomWinnerPrizePoolBuilder": [
-      {
-        "address": "0x7E2f3700677A558e41A8CAEaE6d75D5A8E5eB72E",
-        "version": "0.3.0",
-        "implementation": "0x2a34A42d5a8D5BBf02cbDC9D1F72E2a532123934",
-        "admin": "0xFa46b4F01698F7C083206FBaD58c808084e9879f",
+        "implementation": "0x007492D65a619D3F8e5f1a38aFF4D022b713C706",
+        "admin": "0x8ebA7f388821053bAb30f19D11B0E8F20A9ad4fb",
         "kind": "Upgradeable"
       }
     ]
@@ -619,6 +371,6 @@
   "manifestVersion": "2.2",
   "version": "0.3.0",
   "proxyAdmin": {
-    "address": "0xFa46b4F01698F7C083206FBaD58c808084e9879f"
+    "address": "0x8ebA7f388821053bAb30f19D11B0E8F20A9ad4fb"
   }
 }

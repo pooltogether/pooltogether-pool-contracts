@@ -1,13 +1,12 @@
 {
   "manifestVersion": "2.2",
   "contracts": {
-    "PrizePoolBuilder": "PrizePoolBuilder",
-    "TicketFactory": "TicketFactory",
-    "RNGBlockhash": "RNGBlockhash",
-    "SingleRandomWinnerPrizePoolBuilder": "SingleRandomWinnerPrizePoolBuilder",
-    "SingleRandomWinnerPrizeStrategyFactory": "SingleRandomWinnerPrizeStrategyFactory",
-    "CompoundPeriodicPrizePoolFactory": "CompoundPeriodicPrizePoolFactory",
-    "ControlledTokenFactory": "ControlledTokenFactory"
+    "RNGServiceMock": "RNGServiceMock",
+    "PrizeStrategyBuilder": "PrizeStrategyBuilder",
+    "PrizeStrategyProxyFactory": "PrizeStrategyProxyFactory",
+    "CompoundPrizePoolProxyFactory": "CompoundPrizePoolProxyFactory",
+    "ControlledTokenProxyFactory": "ControlledTokenProxyFactory",
+    "CounterfactualActionFactory": "CounterfactualActionFactory"
   },
   "dependencies": {},
   "name": "PoolTogether3",

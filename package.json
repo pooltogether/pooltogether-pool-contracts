@@ -16,17 +16,25 @@
     "start": "buidler node --port $LOCAL_BUIDLEREVM_PORT",
     "coverage": "rm -rf build cache test-results.xml && buidler compile && buidler coverage --network coverage --temp build; rm -rf cache",
     "gas": "REPORT_GAS=true buidler test --network local",
+
     "migrate": "./scripts/cli.js",
-    "migrate-local": "oz compile; ./scripts/cli.js migrate -n local -a $LOCAL_ADMIN_ADDRESS",
-    "migrate-kovan": "oz compile; ./scripts/cli.js migrate -n kovan",
-    "migrate-ropsten": "oz compile; ./scripts/cli.js migrate -n ropsten",
-    "console-kovan": "oz-console -n kovan",
-    "session-kovan": "oz session --network kovan --from $ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50",
+
     "session-local": "oz session --network local --from $LOCAL_ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50",
+    "migrate-local": "oz compile; ./scripts/cli.js migrate -n local -a $LOCAL_ADMIN_ADDRESS",
     "console-local": "oz-console -n local -a $LOCAL_ADMIN_ADDRESS_2",
     "deploy-ctoken-local": "./scripts/deployCTokenMock.js -n local -a $LOCAL_ADMIN_ADDRESS",
-    "clean": "rm -rf build cache abis",
+
+    "session-kovan": "oz session --network kovan --from $ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50 --no-interactive",
+    "migrate-kovan": "oz compile; ./scripts/cli.js migrate -n kovan -v",
     "verify-kovan": "oz verify -n kovan --remote etherscan --api-key $ETHERSCAN_API_KEY",
+    "console-kovan": "oz-console -n kovan",
+
+    "session-ropsten": "oz session --network ropsten --from $ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50 --no-interactive",
+    "migrate-ropsten": "oz compile; ./scripts/cli.js migrate -n ropsten -v",
+    "verify-ropsten": "oz verify -n ropsten --remote etherscan --api-key $ETHERSCAN_API_KEY",
+    "console-ropsten": "oz-console -n ropsten",
+
+    "clean": "rm -rf build cache abis",
     "clean-local": "rm -f .oz-migrate/dev-31337; rm -f .openzeppelin/dev-31337.json",
     "prepack": "rm -rf build cache && buidler compile && truffle-extract -b build -o abis",
     "postpublish": "PACKAGE_VERSION=$(./scripts/package-version.sh) && git tag -ae v$PACKAGE_VERSION && git push --tags"

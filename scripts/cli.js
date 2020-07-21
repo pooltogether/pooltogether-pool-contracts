@@ -33,7 +33,7 @@ program
     await migration.migrate(2, async () => {
       if (program.network == 'local') {
         console.log(chalk.dim('Deploying ERC1820 Registry...'))
-        await deploy1820(context.signer)        
+        await deploy1820(context.signer)
       }
     })
 
@@ -49,60 +49,52 @@ program
       }
     })
 
-    let trustedForwarder, governor
+    await migration.migrate(8, async () => {
+      if (program.network == 'local') {
+        runShell(`oz deploy -n ${program.network} -k regular RNGServiceMock`)
+      }
+    })
+
+    let trustedForwarder, governor, rng
     if (program.network == 'kovan') {
       trustedForwarder = '0x6453D37248Ab2C16eBd1A8f782a2CBC65860E60B'
       governor = '0x2f935900D89b0815256a3f2c4c69e1a0230b5860'
+      rng = '0xF273BAD9EEbc61D38e0280362e2b856e658cD641' // RNGVeeDo connected to Mock Beacon @ 0x505cc58A0c67C511333E63bf089AdA16578F126D
     } else if (program.network == 'ropsten') {
       trustedForwarder = '0xcC87aa60a6457D9606995C4E7E9c38A2b627Da88'
       governor = '0xD215CF8D8bC151414A9c5c145fE219E746E5cE80'
+      rng = '0x976D4481dB98FC5140eDC3B382F043419813c351' // RNGVeeDo connected to Mock Beacon @ 0xfd480d2b719e28B3B76c8e06B66BA774703628BA
     } else {
       context = await buildContext({ network: program.network, address: program.address })
       trustedForwarder = context.networkFile.data.proxies['PoolTogether3/Forwarder'][0].address
       governor = context.networkFile.data.proxies['PoolTogether3/MockGovernor'][0].address
+      rng = context.networkFile.data.proxies['PoolTogether3/RNGServiceMock'][0].address
     }
 
     await migration.migrate(10, async () => {
-      runShell(`oz create CompoundPeriodicPrizePoolFactory --force ${flags} --init initialize`)
-    })
-
-    await migration.migrate(15, async () => {
-      runShell(`oz create TicketFactory --force ${flags} --init initialize`)
+      runShell(`oz create CompoundPrizePoolProxyFactory --force ${flags} --init initialize`)
     })
 
     await migration.migrate(20, async () => {
-      runShell(`oz create ControlledTokenFactory --force ${flags} --init initialize`)
+      runShell(`oz create ControlledTokenProxyFactory --force ${flags} --init initialize`)
     })
 
     await migration.migrate(25, async () => {
-      runShell(`oz create SingleRandomWinnerPrizeStrategyFactory --force ${flags} --init initialize`)
-    })
-
-    await migration.migrate(30, async () => {
-      runShell(`oz create RNGBlockhash --force ${flags}`)
+      runShell(`oz create PrizeStrategyProxyFactory --force ${flags} --init initialize`)
     })
 
     context = await buildContext({ network: program.network, address: program.address })
     const {
-      CompoundPeriodicPrizePoolFactory,
-      TicketFactory,
-      ControlledTokenFactory,
-      SingleRandomWinnerPrizeStrategyFactory,
-      RNGBlockhash
+      CompoundPrizePoolProxyFactory,
+      ControlledTokenProxyFactory,
+      PrizeStrategyProxyFactory,
     } = context.contracts
 
     await migration.migrate(35, async () => {
-      runShell(`oz create PrizePoolBuilder --force ${flags} --init initialize --args ${governor},${CompoundPeriodicPrizePoolFactory.address},${TicketFactory.address},${ControlledTokenFactory.address},${RNGBlockhash.address},${trustedForwarder}`)
+      runShell(`oz create PrizeStrategyBuilder --force ${flags} --init initialize --args ${governor},${PrizeStrategyProxyFactory.address},${trustedForwarder},${CompoundPrizePoolProxyFactory.address},${ControlledTokenProxyFactory.address},${rng}`)
     })
 
     context = await buildContext({ network: program.network, address: program.address })
-    const {
-      PrizePoolBuilder,
-    } = context.contracts
-
-    await migration.migrate(40, async () => {
-      runShell(`oz create SingleRandomWinnerPrizePoolBuilder --force ${flags} --init initialize --args ${PrizePoolBuilder.address},${SingleRandomWinnerPrizeStrategyFactory.address}`)
-    })
 
     console.log(chalk.green(`Completed deployment.`))
     process.exit(0)
