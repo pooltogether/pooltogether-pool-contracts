@@ -61,7 +61,7 @@ describe('Withdraw Feature', () => {
 
     it('should consume a users credit to shorten the timelock', async () => {
       await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
-      
+
       // buy at time zero so that it is considered a 'full' ticket
       await env.buyTicketsAtTime({ user: 1, tickets: 100, elapsed: 0 })
 
@@ -83,7 +83,7 @@ describe('Withdraw Feature', () => {
 
     it('should not have any timelock when a user accrues all the credit', async () => {
       await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
-      
+
       // buy at time zero so that it is considered a 'full' ticket
       await env.buyTicketsAtTime({ user: 1, tickets: 100, elapsed: 0 })
 
