@@ -129,26 +129,4 @@ contract PrizeStrategyBuilder is Initializable {
     token.initialize(string(name), string(symbol), trustedForwarder, controller);
     return token;
   }
-
-  function createPrizePool(
-    PrizeStrategy prizeStrategy,
-    CTokenInterface _cToken,
-    ControlledToken ticket,
-    ControlledToken sponsorship,
-    uint256 _maxExitFeeMultiple,
-    uint256 _maxTimelockDuration
-  ) internal returns (CompoundPrizePool) {
-    address[] memory tokens = new address[](2);
-    tokens[0] = address(ticket);
-    tokens[1] = address(sponsorship);
-    CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
-    prizePool.initialize(
-      trustedForwarder,
-      prizeStrategy,
-      tokens,
-      _maxExitFeeMultiple,
-      _maxTimelockDuration,
-      _cToken
-    );
-  }
 }
