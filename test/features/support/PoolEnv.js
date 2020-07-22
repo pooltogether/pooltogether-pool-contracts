@@ -184,7 +184,7 @@ function PoolEnv() {
     let wallet = await this.wallet(user)
     let ticket = await this.ticket(wallet)
     let prizePool = await this.prizePool(wallet)
-    await prizePool.withdrawInstantlyFrom(wallet._address, toWei(tickets), ticket.address, '0')
+    await prizePool.withdrawInstantlyFrom(wallet._address, toWei(tickets), ticket.address, '0', toWei('1000'))
   }
 
   this.withdrawInstantlyAtTime = async function ({ user, tickets, elapsed }) {
