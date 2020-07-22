@@ -39,9 +39,32 @@ contract PrizeStrategy is PrizeStrategyStorage,
   uint256 constant private MAX_TREE_LEAVES = 5;
   uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
-  event PrizePoolOpened(address indexed operator, uint256 indexed prizePeriodStartedAt);
-  event PrizePoolAwardStarted(address indexed operator, address indexed prizePool, uint32 indexed rngRequestId, uint32 rngLockBlock);
-  event PrizePoolAwarded(address indexed operator, uint256 prize, uint256 reserveFee);
+  event PrizePoolOpened(
+    address indexed operator,
+    uint256 indexed prizePeriodStartedAt
+  );
+
+  event PrizePoolAwardStarted(
+    address indexed operator,
+    address indexed prizePool,
+    uint32 indexed rngRequestId,
+    uint32 rngLockBlock
+  );
+
+  event PrizePoolAwarded(
+    address indexed operator,
+    uint256 randomNumber,
+    uint256 prize,
+    uint256 reserveFee
+  );
+
+  event ExitFeeUpdated(
+    uint256 exitFeeMantissa
+  );
+
+  event CreditRateUpdated(
+    uint256 creditRateMantissa
+  );
 
   function initialize (
     address _trustedForwarder,
@@ -81,6 +104,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     exitFeeMantissa = _exitFeeMantissa;
     creditRateMantissa = _creditRateMantissa;
 
+    emit ExitFeeUpdated(exitFeeMantissa);
+    emit CreditRateUpdated(creditRateMantissa);
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
@@ -607,7 +632,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
     prizePeriodStartedAt = _currentTime();
 
-    emit PrizePoolAwarded(_msgSender(), prize, reserveFee);
+    emit PrizePoolAwarded(_msgSender(), randomNumber, prize, reserveFee);
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
@@ -638,12 +663,16 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param _exitFeeMantissa The exit fee to set
   function setExitFeeMantissa(uint256 _exitFeeMantissa) external onlyOwner {
     exitFeeMantissa = _exitFeeMantissa;
+
+    emit ExitFeeUpdated(exitFeeMantissa);
   }
 
   /// @notice Sets the rate at which credit accrues per second.  The credit rate is a fixed point 18 number (like Ether).
   /// @param _creditRateMantissa The credit rate to set
   function setCreditRateMantissa(uint256 _creditRateMantissa) external onlyOwner {
     creditRateMantissa = _creditRateMantissa;
+
+    emit CreditRateUpdated(creditRateMantissa);
   }
 
   function _requireNotLocked() internal view {
