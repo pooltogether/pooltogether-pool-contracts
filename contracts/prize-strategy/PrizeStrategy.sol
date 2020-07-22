@@ -466,7 +466,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
       uint256 balance = IERC20(currentToken).balanceOf(address(prizePool));
       if (balance > 0) {
-        prizePool.award(winner, balance, currentToken);
+        prizePool.awardExternal(winner, balance, currentToken);
         currentToken = externalAwardMapping.addressMap[currentToken];
       }
     }
