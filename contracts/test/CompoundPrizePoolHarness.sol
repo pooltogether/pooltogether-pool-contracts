@@ -11,7 +11,7 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
     address _trustedForwarder,
     PrizeStrategyInterface _prizeStrategy,
     address[] memory _controlledTokens,
-    uint256 _maxExitFeeMultiple,
+    uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
     CTokenInterface _cToken
   )
@@ -21,7 +21,7 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
       _trustedForwarder,
       _prizeStrategy,
       _controlledTokens,
-      _maxExitFeeMultiple,
+      _maxExitFeeMantissa,
       _maxTimelockDuration,
       _cToken
     );

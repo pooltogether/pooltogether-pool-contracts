@@ -19,7 +19,7 @@ contract PrizeStrategyBuilder is Initializable {
     string ticketSymbol;
     string sponsorshipName;
     string sponsorshipSymbol;
-    uint256 maxExitFeeMultiple;
+    uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
     uint256 exitFeeMantissa;
     uint256 creditRateMantissa;
@@ -70,7 +70,7 @@ contract PrizeStrategyBuilder is Initializable {
       config.ticketSymbol,
       config.sponsorshipName,
       config.sponsorshipSymbol,
-      config.maxExitFeeMultiple,
+      config.maxExitFeeMantissa,
       config.maxTimelockDuration
     );
 
@@ -103,7 +103,7 @@ contract PrizeStrategyBuilder is Initializable {
     string memory ticketSymbol,
     string memory sponsorshipName,
     string memory sponsorshipSymbol,
-    uint256 _maxExitFeeMultiple,
+    uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration
   ) internal returns (CompoundPrizePool prizePool, address[] memory tokens) {
     prizePool = compoundPrizePoolProxyFactory.create();
@@ -114,7 +114,7 @@ contract PrizeStrategyBuilder is Initializable {
       trustedForwarder,
       prizeStrategy,
       tokens,
-      _maxExitFeeMultiple,
+      _maxExitFeeMantissa,
       _maxTimelockDuration,
       _cToken
     );
