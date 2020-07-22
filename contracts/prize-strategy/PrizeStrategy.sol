@@ -225,6 +225,23 @@ contract PrizeStrategy is PrizeStrategyStorage,
     }
   }
 
+  /// @notice Calculates the fee to withdraw collateral instantly.
+  /// @param from The user who is withdrawing
+  /// @param amount The amount of collateral they are withdrawing
+  /// @param controlledToken The type of collateral they are withdrawing (i.e. ticket or sponsorship)
+  /// @return remainingFee The fee that the user will be charged
+  /// @return burnedCredit The amount of credit that will be burned
+  function calculateInstantWithdrawalFee(
+    address from,
+    uint256 amount,
+    address controlledToken
+  )
+    external
+    returns (uint256 remainingFee, uint256 burnedCredit)
+  {
+    return _calculateInstantWithdrawalFee(from, amount, controlledToken);
+  }
+
   /// @notice Calculates the withdrawal unlock timestamp by estimated how long it would take to pay off the exit fee.
   /// This function also accrues their ticket credit.
   /// @param user The user who wishes to withdraw
