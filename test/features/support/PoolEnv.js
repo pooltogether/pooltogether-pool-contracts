@@ -86,6 +86,22 @@ function PoolEnv() {
     debug(`Bought tickets`)
   }
 
+  this.timelockBuyTickets = async function ({ user, tickets }) {
+    debug(`Buying tickets with timelocked tokens...`)
+    let wallet = await this.wallet(user)
+
+    debug('wallet is ', wallet._address)
+
+    let ticket = await this.ticket(wallet)
+    let prizePool = await this.prizePool(wallet)
+
+    let amount = toWei('' + tickets)
+
+    await prizePool.timelockDepositTo(wallet._address, amount, ticket.address, this.overrides)
+
+    debug(`Bought tickets with timelocked tokens`)
+  }
+
   this.buyTicketsAtTime = async function ({ user, tickets, elapsed }) {
     await this.atTime(elapsed, async () => {
       await this.buyTickets({ user, tickets })
