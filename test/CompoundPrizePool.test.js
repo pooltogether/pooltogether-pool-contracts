@@ -23,7 +23,7 @@ let overrides = { gasLimit: 20000000 }
 
 const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
-describe('PrizePool contract', function() {
+describe('CompoundPrizePool', function() {
   let wallet, wallet2
 
   let prizePool, token, cToken, prizeStrategy
@@ -55,7 +55,7 @@ describe('PrizePool contract', function() {
         FORWARDER,
         prizeStrategy.address,
         [ticket.address],
-        '50',    // Max Exit Fee
+        toWei('0.5'),    // Max Exit Fee
         '10000', // Max Timelock
         cToken.address
       )
@@ -112,9 +112,6 @@ describe('PrizePool contract', function() {
 
     describe('withdrawWithTimelockFrom()', () => {
       it('should allow a user to withdraw with a timelock', async () => {
-        const currentBlock = await getBlockNumber()
-        const timelockBlock = currentBlock + 10
-
         // updateAwardBalance
         await cToken.mock.balanceOfUnderlying.returns('0')
         await ticket.mock.totalSupply.returns('0')
@@ -125,7 +122,7 @@ describe('PrizePool contract', function() {
         // ensure withdraw is later than now
         await prizeStrategy.mock.beforeWithdrawWithTimelockFrom
           .withArgs(wallet._address, toWei('10'), ticket.address)
-          .returns(timelockBlock)
+          .returns('10')
 
         // expect a ticket burn
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, toWei('10')).returns()
@@ -137,7 +134,7 @@ describe('PrizePool contract', function() {
         await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('10'), ticket.address)
 
         expect(await prizePool.timelockBalanceOf(wallet._address)).to.equal(toWei('10'))
-        expect(await prizePool.timelockBalanceAvailableAt(wallet._address)).to.equal(timelockBlock)
+        expect(await prizePool.timelockBalanceAvailableAt(wallet._address)).to.equal('10')
         expect(await prizePool.timelockTotalSupply()).to.equal(toWei('10'))
       })
     })
@@ -160,8 +157,6 @@ describe('PrizePool contract', function() {
       })
 
       it('should sweep only balances that are unlocked', async () => {
-        const currentBlock = await getBlockNumber()
-
         // updateAwardBalance
         await cToken.mock.balanceOfUnderlying.returns(toWei('33'))
         await ticket.mock.totalSupply.returns('0')
@@ -173,17 +168,17 @@ describe('PrizePool contract', function() {
         await ticket.mock.controllerBurnFrom.returns()
 
         // withdraw for a user, and it's eligible at 10 seconds
-        await prizeStrategy.mock.beforeWithdrawWithTimelockFrom.returns(currentBlock + 10)
+        await prizeStrategy.mock.beforeWithdrawWithTimelockFrom.returns(10)
         await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('11'), ticket.address).returns()
         await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('11'), ticket.address)
 
         // withdraw for a user, and it's eligible at 20 seconds
-        await prizeStrategy.mock.beforeWithdrawWithTimelockFrom.returns(currentBlock + 20)
+        await prizeStrategy.mock.beforeWithdrawWithTimelockFrom.returns(20)
         await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet2._address, toWei('22'), ticket.address).returns()
         await prizePool.withdrawWithTimelockFrom(wallet2._address, toWei('22'), ticket.address)
 
         // Only first deposit is unlocked
-        await prizePool.setCurrentTime(currentBlock + 15)
+        await prizePool.setCurrentTime(15)
 
         // expect the redeem && transfer for only the unlocked amount
         await cToken.mock.redeemUnderlying.withArgs(toWei('11')).returns('0')
@@ -201,14 +196,12 @@ describe('PrizePool contract', function() {
 
         // second has not
         expect(await prizePool.timelockBalanceOf(wallet2._address)).to.equal(toWei('22'))
-        expect(await prizePool.timelockBalanceAvailableAt(wallet2._address)).to.equal(currentBlock + 20)
+        expect(await prizePool.timelockBalanceAvailableAt(wallet2._address)).to.equal(20)
 
         expect(await prizePool.timelockTotalSupply()).to.equal(toWei('22'))
       })
 
       it('should sweep timelock balances that have unlocked', async () => {
-        const currentBlock = await getBlockNumber()
-
         // updateAwardBalance
         await cToken.mock.balanceOfUnderlying.returns('0')
         await ticket.mock.totalSupply.returns('0')
@@ -219,7 +212,7 @@ describe('PrizePool contract', function() {
         // ensure withdraw is later than now
         await prizeStrategy.mock.beforeWithdrawWithTimelockFrom
           .withArgs(wallet._address, toWei('10'), ticket.address)
-          .returns(currentBlock + 10)
+          .returns(10)
 
         // expect a ticket burn
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, toWei('10')).returns()
@@ -236,7 +229,7 @@ describe('PrizePool contract', function() {
         await prizeStrategy.mock.afterSweepTimelockedWithdrawal.withArgs(wallet._address, wallet._address, toWei('10')).returns()
 
         // ensure time is after
-        await prizePool.setCurrentTime(currentBlock + 11)
+        await prizePool.setCurrentTime(11)
 
         // now execute timelock withdrawal
         await expect(prizePool.sweepTimelockBalances([wallet._address]))
@@ -257,29 +250,6 @@ describe('PrizePool contract', function() {
         await cToken.mock.supplyRatePerBlock.returns(supplyRate)
 
         expect(await prizePool.estimateAccruedInterestOverBlocks(deposit, numBlocks)).to.deep.equal(toWei('1'))
-      })
-    })
-
-    describe('supply()', () => {
-      it('should give the first depositer tokens at the initial exchange rate', async function () {
-        await token.mock.transferFrom.withArgs(wallet._address, prizePool.address, toWei('1')).returns(true)
-        await token.mock.approve.withArgs(cToken.address, toWei('1')).returns(true)
-        await cToken.mock.mint.withArgs(toWei('1')).returns(0)
-
-        await expect(prizePool.supply(toWei('1')))
-          .to.emit(prizePool, 'PrincipalSupplied')
-          .withArgs(wallet._address, toWei('1'))
-      })
-    })
-
-    describe('redeem()', () => {
-      it('should allow redeeming principal', async function () {
-        await cToken.mock.redeemUnderlying.withArgs(toWei('1')).returns('0')
-        await token.mock.transfer.withArgs(wallet._address, toWei('1')).returns(true)
-
-        await expect(prizePool.redeem(toWei('1')))
-          .to.emit(prizePool, 'PrincipalRedeemed')
-          .withArgs(wallet._address, toWei('1'));
       })
     })
 

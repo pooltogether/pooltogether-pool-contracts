@@ -20,14 +20,14 @@ contract CompoundPrizePool is PrizePool {
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
   /// @param _prizeStrategy Address of the component-controller that manages the prize-strategy
   /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
-  /// @param _maxExitFeeMultiple The maximum exit fee size, relative to the withdrawal amount
+  /// @param _maxExitFeeMantissa The maximum exit fee size, relative to the withdrawal amount
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
   /// @param _cToken Address of the Compound cToken interface
   function initialize (
     address _trustedForwarder,
     PrizeStrategyInterface _prizeStrategy,
     address[] memory _controlledTokens,
-    uint256 _maxExitFeeMultiple,
+    uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
     CTokenInterface _cToken
   )
@@ -38,7 +38,7 @@ contract CompoundPrizePool is PrizePool {
       _trustedForwarder,
       _prizeStrategy,
       _controlledTokens,
-      _maxExitFeeMultiple,
+      _maxExitFeeMantissa,
       _maxTimelockDuration
     );
     cToken = _cToken;
@@ -85,8 +85,6 @@ contract CompoundPrizePool is PrizePool {
     IERC20 assetToken = _token();
     assetToken.approve(address(cToken), amount);
     cToken.mint(amount);
-
-    emit PrincipalSupplied(msg.sender, amount);
   }
 
   /// @dev Checks with the Prize Pool if a specific token type may be awarded as a prize enhancement
@@ -101,8 +99,6 @@ contract CompoundPrizePool is PrizePool {
   /// @param amount The amount of yield-bearing tokens to be redeemed
   function _redeem(uint256 amount) internal override {
     cToken.redeemUnderlying(amount);
-
-    emit PrincipalRedeemed(msg.sender, amount);
   }
 
   /// @dev Gets the underlying asset token used by the Yield Service

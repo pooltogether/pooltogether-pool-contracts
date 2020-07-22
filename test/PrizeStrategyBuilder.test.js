@@ -37,7 +37,7 @@ describe('PrizeStrategyBuilder', () => {
         ticketSymbol: "TICK",
         sponsorshipName: "Sponsorship",
         sponsorshipSymbol: "SPON",
-        maxExitFeeMultiple: 50,
+        maxExitFeeMantissa: toWei('0.5'),
         maxTimelockDuration: 1000,
         exitFeeMantissa: toWei('0.1'),
         creditRateMantissa: toWei('0.001'),
@@ -63,7 +63,7 @@ describe('PrizeStrategyBuilder', () => {
       expect(await sponsorship.name()).to.equal(config.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(config.sponsorshipSymbol)
 
-      expect(await prizePool.maxExitFeeMultiple()).to.equal(config.maxExitFeeMultiple)
+      expect(await prizePool.maxExitFeeMantissa()).to.equal(config.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(config.maxTimelockDuration)
       expect(await prizeStrategy.exitFeeMantissa()).to.equal(config.exitFeeMantissa)
       expect(await prizeStrategy.creditRateMantissa()).to.equal(config.creditRateMantissa)

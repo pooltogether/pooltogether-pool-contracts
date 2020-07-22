@@ -17,7 +17,7 @@ const debug = require('debug')('ptv3:deployTestPool')
 async function deployTestPool({
   wallet,
   prizePeriodSeconds,
-  maxExitFeePercentage,
+  maxExitFeeMantissa,
   maxTimelockDuration,
   exitFee,
   creditRate,
@@ -62,7 +62,7 @@ async function deployTestPool({
     forwarder.address,
     prizeStrategy.address,
     [ticket.address, sponsorship.address],
-    maxExitFeePercentage || toWei('0.5'),
+    maxExitFeeMantissa || toWei('0.5'),
     maxTimelockDuration || prizePeriodSeconds,
     cToken.address
   )
