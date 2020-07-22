@@ -74,6 +74,8 @@ contract PrizeStrategyBuilder is Initializable {
       config.maxTimelockDuration
     );
 
+    prizePool.transferOwnership(msg.sender);
+
     prizeStrategy.initialize(
       trustedForwarder,
       governor,
@@ -86,6 +88,8 @@ contract PrizeStrategyBuilder is Initializable {
       config.creditRateMantissa,
       config.externalAwards
     );
+
+    prizeStrategy.transferOwnership(msg.sender);
 
     emit PrizeStrategyBuilt(
       msg.sender,
