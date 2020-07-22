@@ -1,7 +1,7 @@
 const RNGServiceMock = require('../build/RNGServiceMock.json')
 const Forwarder = require('../build/Forwarder.json')
 const MockGovernor = require('../build/MockGovernor.json')
-const PrizeStrategyBuilder = require('../build/PrizeStrategyBuilder.json')
+const CompoundPrizePoolBuilder = require('../build/CompoundPrizePoolBuilder.json')
 const CompoundPrizePoolProxyFactory = require('../build/CompoundPrizePoolProxyFactory.json')
 const ControlledTokenProxyFactory = require('../build/ControlledTokenProxyFactory.json')
 const PrizeStrategyProxyFactory = require('../build/PrizeStrategyProxyFactory.json')
@@ -47,8 +47,8 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
   
   debug('deploying prize strategy builder')
 
-  let prizeStrategyBuilder = await deployContract(wallet, PrizeStrategyBuilder, [], overrides)
-  await prizeStrategyBuilder.initialize(
+  let compoundPrizePoolBuilder = await deployContract(wallet, CompoundPrizePoolBuilder, [], overrides)
+  await compoundPrizePoolBuilder.initialize(
     governor.address,
     prizeStrategyProxyFactory.address,
     forwarder.address,
@@ -70,7 +70,7 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
     prizeStrategyProxyFactory,
     controlledTokenProxyFactory,
     compoundPrizePoolProxyFactory,
-    prizeStrategyBuilder
+    compoundPrizePoolBuilder
   }
 }
 
