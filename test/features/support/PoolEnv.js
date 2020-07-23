@@ -66,6 +66,12 @@ function PoolEnv() {
     return await buidler.ethers.getContractAt('ControlledToken', ticketAddress, wallet)
   }
 
+  this.sponsorship = async function (wallet) {
+    let prizePool = await this.prizeStrategy(wallet)
+    let sponsorshipAddress = await prizePool.sponsorship()
+    return await buidler.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
+  }
+
   this.wallet = async function (id) {
     let wallet = this.wallets[id]
     return wallet
@@ -101,6 +107,38 @@ function PoolEnv() {
     debug(`Bought tickets`)
   }
 
+  this.timelockBuyTickets = async function ({ user, tickets }) {
+    debug(`Buying tickets with timelocked tokens...`)
+    let wallet = await this.wallet(user)
+
+    debug('wallet is ', wallet._address)
+
+    let ticket = await this.ticket(wallet)
+    let prizePool = await this.prizePool(wallet)
+
+    let amount = toWei('' + tickets)
+
+    await prizePool.timelockDepositTo(wallet._address, amount, ticket.address, this.overrides)
+
+    debug(`Bought tickets with timelocked tokens`)
+  }
+
+  this.timelockBuySponsorship = async function ({ user, sponsorship }) {
+    debug(`Buying sponsorship with timelocked tokens...`)
+    let wallet = await this.wallet(user)
+
+    debug('wallet is ', wallet._address)
+
+    let sponsorshipContract = await this.sponsorship(wallet)
+    let prizePool = await this.prizePool(wallet)
+
+    let amount = toWei('' + sponsorship)
+
+    await prizePool.timelockDepositTo(wallet._address, amount, sponsorshipContract.address, this.overrides)
+
+    debug(`Bought sponsorship with timelocked tokens`)
+  }
+
   this.buyTicketsAtTime = async function ({ user, tickets, elapsed }) {
     await this.atTime(elapsed, async () => {
       await this.buyTickets({ user, tickets })
@@ -133,6 +171,13 @@ function PoolEnv() {
     let token = await this.token(wallet)
     let amount = toWei(tokens)
     expect(await token.balanceOf(wallet._address)).to.equalish(amount, 300)
+  }
+
+  this.expectUserToHaveSponsorship = async function ({ user, sponsorship }) {
+    let wallet = await this.wallet(user)
+    let sponsorshipContract = await this.sponsorship(wallet)
+    let amount = toWei(sponsorship)
+    expect(await sponsorshipContract.balanceOf(wallet._address)).to.equalish(amount, 300)
   }
 
   this.poolAccrues = async function ({ tickets }) {

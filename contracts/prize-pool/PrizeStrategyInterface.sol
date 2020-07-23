@@ -13,10 +13,18 @@ interface PrizeStrategyInterface {
   function beforeTokenTransfer(address from, address to, uint256 amount, address controlledToken) external;
 
   /// @dev Inheriting contract must handle deposits into the Prize Pool and account for balance changes
-  /// @param to The address of the account who performed the deposit
+  /// @param to The address of the account who is receiving the deposit
   /// @param amount The amount of the deposit to account for
   /// @param controlledToken The address of the token that was deposited
   function afterDepositTo(address to, uint256 amount, address controlledToken) external;
+
+  /// @notice Called by the Prize Pool after a user converts their timelocked tokens into a deposit
+  /// @dev Inheriting contract must handle deposits into the Prize Pool and account for balance changes
+  /// @param operator The user whose timelock was re-deposited
+  /// @param to The address of the account who is receiving the deposit
+  /// @param amount The amount of the deposit to account for
+  /// @param controlledToken The address of the token that was deposited
+  function afterTimelockDepositTo(address operator, address to, uint256 amount, address controlledToken) external;
 
   /// @dev Inheriting contract must provide a view into the unlock timestamp for a timelocked withdrawal
   /// @param from The address of the account to withdraw from

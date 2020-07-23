@@ -536,6 +536,32 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param amount The amount of collateral they deposited
   /// @param controlledToken The type of collateral they deposited
   function afterDepositTo(address to, uint256 amount, address controlledToken) external override onlyPrizePool requireNotLocked {
+    _afterDepositTo(to, amount, controlledToken);
+  }
+
+  /// @notice Called by the prize pool after a deposit has been made.
+  /// @param to The user who deposited collateral
+  /// @param amount The amount of collateral they deposited
+  /// @param controlledToken The type of collateral they deposited
+  function afterTimelockDepositTo(
+    address,
+    address to,
+    uint256 amount,
+    address controlledToken
+  )
+    external
+    override
+    onlyPrizePool
+    requireNotLocked
+  {
+    _afterDepositTo(to, amount, controlledToken);
+  }
+
+  /// @notice Called by the prize pool after a deposit has been made.
+  /// @param to The user who deposited collateral
+  /// @param amount The amount of collateral they deposited
+  /// @param controlledToken The type of collateral they deposited
+  function _afterDepositTo(address to, uint256 amount, address controlledToken) internal {
     if (controlledToken == address(ticket)) {
       uint256 toBalance = ticket.balanceOf(to);
       _accrueCredit(to, toBalance.sub(amount));

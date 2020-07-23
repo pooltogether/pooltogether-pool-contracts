@@ -24,6 +24,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
   }
 
   event CapturedAward(uint256 amount);
+  event TimelockDeposited(address indexed operator, address indexed to, address indexed token, uint256 amount);
   event Deposited(address indexed operator, address indexed to, address indexed token, uint256 amount);
   event Awarded(address indexed winner, address indexed token, uint256 amount);
   event AwardedExternal(address indexed winner, address indexed token, uint256 amount);
@@ -121,6 +122,29 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
   /// @return True if the token may be awarded, false otherwise
   function canAwardExternal(address _externalToken) external virtual view returns (bool) {
     return _canAwardExternal(_externalToken);
+  }
+
+  function timelockDepositTo(
+    address to,
+    uint256 amount,
+    address controlledToken
+  )
+    external
+    onlyControlledToken(controlledToken)
+    nonReentrant
+  {
+    require(_hasPrizeStrategy(), "PrizePool/prize-strategy-detached");
+    _updateAwardBalance();
+
+    address operator = _msgSender();
+
+    ControlledToken(controlledToken).controllerMint(to, amount);
+    timelockBalances[operator] = timelockBalances[operator].sub(amount);
+    timelockTotalSupply = timelockTotalSupply.sub(amount);
+
+    prizeStrategy.afterTimelockDepositTo(operator, to, amount, controlledToken);
+
+    emit TimelockDeposited(operator, to, controlledToken, amount);
   }
 
   /// @notice Deposit assets into the Prize Pool to Purchase Tickets
