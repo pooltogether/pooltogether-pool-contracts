@@ -100,9 +100,25 @@ describe('CompoundPrizePool', function() {
         await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
         await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
 
-        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0'))
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('1')))
           .to.emit(prizePool, 'InstantWithdrawal')
           .withArgs(wallet._address, wallet._address, ticket.address, amount, toWei('1'), '0')
+      })
+
+      it('should allow a user to set a maximum exit fee', async () => {
+        let amount = toWei('11')
+
+        // updateAwardBalance
+        await cToken.mock.balanceOfUnderlying.returns('0')
+        await ticket.mock.totalSupply.returns('0')
+
+        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
+        await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
+        await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
+        await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
+
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('0.5'))).to.be.revertedWith('PrizePool/exit-fee-exceeds-user-maximum')
       })
     })
 
@@ -394,7 +410,7 @@ describe('CompoundPrizePool', function() {
         await token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
         // await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
 
-        await expect(detachedPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, '0'))
+        await expect(detachedPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, '0', toWei('1')))
           .to.emit(detachedPrizePool, 'InstantWithdrawal')
           .withArgs(wallet._address, wallet._address, ticket2.address, amount, toWei('0'), '0')
       })

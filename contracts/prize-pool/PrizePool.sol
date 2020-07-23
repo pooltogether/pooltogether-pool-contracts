@@ -147,12 +147,14 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
   /// @param amount The amount of assets to redeem for tickets
   /// @param controlledToken The address of the asset token being withdrawn
   /// @param sponsorAmount An optional amount of assets paid by the operator used to cover exit fees
+  /// @param maximumExitFee The maximum exit fee the user is willing to pay.  This should be pre-calculated
   /// @return exitFee The amount of the fairness fee paid
   function withdrawInstantlyFrom(
     address from,
     uint256 amount,
     address controlledToken,
-    uint256 sponsorAmount
+    uint256 sponsorAmount,
+    uint256 maximumExitFee
   )
     external
     nonReentrant
@@ -170,6 +172,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     if (exitFee > maxFee) {
       exitFee = maxFee;
     }
+    require(exitFee <= maximumExitFee, "PrizePool/exit-fee-exceeds-user-maximum");
 
     address operator = _msgSender();
     uint256 sponsoredExitFeePortion = (exitFee > sponsorAmount) ? sponsorAmount : exitFee;
