@@ -1,6 +1,5 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
-const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
 const PrizeStrategyInterface = require('../build/PrizeStrategyInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CTokenInterface = require('../build/CTokenInterface.json')
@@ -9,13 +8,10 @@ const IERC20 = require('../build/IERC20.json')
 const { ethers } = require('./helpers/ethers')
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
-const getIterable = require('./helpers/iterable')
 const { call } = require('./helpers/call')
+const { AddressZero } = require('ethers/constants')
 
 const toWei = ethers.utils.parseEther
-const toBytes = ethers.utils.toUtf8Bytes
-const now = () => Math.floor((new Date()).getTime() / 1000)
-const getBlockNumber = async () => await buidler.waffle.provider.getBlockNumber()
 
 const debug = require('debug')('ptv3:PrizePool.test')
 
@@ -274,6 +270,18 @@ describe('CompoundPrizePool', function() {
 
       it('should not allow ctoken', async () => {
         expect(await prizePool.canAwardExternal(cToken.address)).to.be.false
+      })
+    })
+
+    describe('detachPrizeStrategy()', () => {
+      it('should allow owner to detach', async () => {
+        await prizePool.detachPrizeStrategy()
+        expect(await prizePool.prizeStrategy()).to.equal(AddressZero)
+      })
+
+      it('should not allow anyone else to call', async () => {
+        prizePool2 = prizePool.connect(wallet2)
+        await expect(prizePool2.detachPrizeStrategy()).to.be.revertedWith('Ownable: caller is not the owner')
       })
     })
   })

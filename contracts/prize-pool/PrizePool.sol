@@ -1,9 +1,10 @@
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@nomiclabs/buidler/console.sol";
 
 import "./PrizeStrategyInterface.sol";
 import "../token/ControlledToken.sol";
@@ -13,7 +14,7 @@ import "./MappedSinglyLinkedList.sol";
 /// @title Base Prize Pool for managing escrowed assets
 /// @notice Manages depositing and withdrawing assets from the Prize Pool
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
-abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
+abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
   using SafeMath for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
@@ -65,6 +66,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
       require(ControlledToken(_controlledTokens[i]).controller() == this, "PrizePool/token-ctrlr-mismatch");
     }
+    __Ownable_init();
     __ReentrancyGuard_init();
     trustedForwarder = _trustedForwarder;
     prizeStrategy = _prizeStrategy;
@@ -218,7 +220,8 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
       unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken);
     }
 
-    if (unlockTimestamp > 0 && unlockTimestamp.sub(blockTime) > maxTimelockDuration) {
+    uint256 lockDuration = unlockTimestamp > blockTime ? unlockTimestamp.sub(blockTime) : 0;
+    if (lockDuration > maxTimelockDuration) {
       unlockTimestamp = blockTime.add(maxTimelockDuration);
     }
 
@@ -393,7 +396,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
 
   /// @notice Emergency shutdown of the Prize Pool by detaching the Prize Strategy
   /// @dev Called by the PrizeStrategy contract to issue an Emergency Shutdown of a corrupted Prize Strategy
-  function detachPrizeStrategy() external onlyPrizeStrategy {
+  function detachPrizeStrategy() external onlyOwner {
     delete prizeStrategy;
     emit PrizeStrategyDetached();
   }
@@ -452,6 +455,10 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @return True if the token is a controlled token, false otherwise
   function isControlled(address controlledToken) internal view returns (bool) {
     return _tokens.contains(controlledToken);
+  }
+
+  function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
+    return BaseRelayRecipient._msgSender();
   }
 
   /// @dev Function modifier to ensure usage of tokens controlled by the Prize Pool
