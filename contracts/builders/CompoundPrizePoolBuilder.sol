@@ -4,12 +4,12 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 
-import "./PrizeStrategyProxyFactory.sol";
+import "../prize-strategy/PrizeStrategyProxyFactory.sol";
 import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 
-contract PrizeStrategyBuilder is Initializable {
+contract CompoundPrizePoolBuilder is Initializable {
   using SafeMath for uint256;
 
   struct Config {
@@ -26,7 +26,7 @@ contract PrizeStrategyBuilder is Initializable {
     address[] externalAwards;
   }
 
-  event PrizeStrategyBuilt (
+  event CompoundPrizePoolCreated (
     address indexed creator,
     address indexed prizePool,
     address indexed prizeStrategy
@@ -47,11 +47,11 @@ contract PrizeStrategyBuilder is Initializable {
     ControlledTokenProxyFactory _controlledTokenProxyFactory,
     RNGInterface _rng
   ) public initializer {
-    require(address(_governor) != address(0), "PrizeStrategyBuilder/governor-not-zero");
-    require(address(_prizeStrategyProxyFactory) != address(0), "PrizeStrategyBuilder/prize-strategy-factory-not-zero");
-    require(address(_compoundPrizePoolProxyFactory) != address(0), "PrizeStrategyBuilder/compound-prize-pool-builder-not-zero");
-    require(address(_controlledTokenProxyFactory) != address(0), "PrizeStrategyBuilder/controlled-token-proxy-factory-not-zero");
-    require(address(_rng) != address(0), "PrizeStrategyBuilder/rng-not-zero");
+    require(address(_governor) != address(0), "CompoundPrizePoolBuilder/governor-not-zero");
+    require(address(_prizeStrategyProxyFactory) != address(0), "CompoundPrizePoolBuilder/prize-strategy-factory-not-zero");
+    require(address(_compoundPrizePoolProxyFactory) != address(0), "CompoundPrizePoolBuilder/compound-prize-pool-builder-not-zero");
+    require(address(_controlledTokenProxyFactory) != address(0), "CompoundPrizePoolBuilder/controlled-token-proxy-factory-not-zero");
+    require(address(_rng) != address(0), "CompoundPrizePoolBuilder/rng-not-zero");
     rng = _rng;
     governor = _governor;
     prizeStrategyProxyFactory = _prizeStrategyProxyFactory;
@@ -91,7 +91,7 @@ contract PrizeStrategyBuilder is Initializable {
 
     prizeStrategy.transferOwnership(msg.sender);
 
-    emit PrizeStrategyBuilt(
+    emit CompoundPrizePoolCreated(
       msg.sender,
       address(prizePool),
       address(prizeStrategy)

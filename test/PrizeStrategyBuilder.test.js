@@ -5,7 +5,7 @@ const { ethers } = require('ethers')
 
 const toWei = ethers.utils.parseEther
 
-describe('PrizeStrategyBuilder', () => {
+describe('CompoundPrizePoolBuilder', () => {
   
   let wallet, env
 
@@ -14,7 +14,7 @@ describe('PrizeStrategyBuilder', () => {
   beforeEach(async () => {
     [wallet] = await buidler.ethers.getSigners()
     env = await deployContracts(wallet)
-    builder = env.prizeStrategyBuilder
+    builder = env.compoundPrizePoolBuilder
   })
 
   describe('initialize()', () => {
@@ -47,7 +47,7 @@ describe('PrizeStrategyBuilder', () => {
       let receipt = await buidler.ethers.provider.getTransactionReceipt(tx.hash)
       let event = builder.interface.parseLog(receipt.logs[receipt.logs.length - 1])
 
-      expect(event.name).to.equal('PrizeStrategyBuilt')
+      expect(event.name).to.equal('CompoundPrizePoolCreated')
 
       let prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategyHarness', event.values.prizeStrategy, wallet)
       let prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.values.prizePool, wallet)

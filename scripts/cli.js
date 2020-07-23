@@ -91,7 +91,7 @@ program
     } = context.contracts
 
     await migration.migrate(35, async () => {
-      runShell(`oz create PrizeStrategyBuilder --force ${flags} --init initialize --args ${governor},${PrizeStrategyProxyFactory.address},${trustedForwarder},${CompoundPrizePoolProxyFactory.address},${ControlledTokenProxyFactory.address},${rng}`)
+      runShell(`oz create CompoundPrizePoolBuilder --force ${flags} --init initialize --args ${governor},${PrizeStrategyProxyFactory.address},${trustedForwarder},${CompoundPrizePoolProxyFactory.address},${ControlledTokenProxyFactory.address},${rng}`)
     })
 
     context = await buildContext({ network: program.network, address: program.address })
