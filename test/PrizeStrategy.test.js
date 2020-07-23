@@ -133,6 +133,32 @@ describe('PrizeStrategy', function() {
     })
   })
 
+  describe('setCreditRateMantissa', () => {
+    it('should only allow the owner to change it', async () => {
+      await expect(prizeStrategy.setCreditRateMantissa(toWei('0.1')))
+        .to.emit(prizeStrategy, 'CreditRateUpdated')
+        .withArgs(toWei('0.1'))
+    })
+
+    it('should not allow anyone but the owner to change', async () => {
+      prizeStrategy2 = prizeStrategy.connect(wallet2)
+      await expect(prizeStrategy2.setCreditRateMantissa(toWei('0.1'))).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
+  describe('setExitFeeMantissa', () => {
+    it('should only allow the owner to change it', async () => {
+      await expect(prizeStrategy.setExitFeeMantissa(toWei('0.1')))
+        .to.emit(prizeStrategy, 'ExitFeeUpdated')
+        .withArgs(toWei('0.1'))
+    })
+
+    it('should not allow anyone but the owner to change', async () => {
+      prizeStrategy2 = prizeStrategy.connect(wallet2)
+      await expect(prizeStrategy2.setExitFeeMantissa(toWei('0.1'))).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
   describe('estimatePrizeWithBlockTime()', () => {
     it('should calculate the estimated prize', async () => {
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
