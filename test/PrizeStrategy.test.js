@@ -22,7 +22,7 @@ let overrides = { gasLimit: 20000000 }
 describe('PrizeStrategy', function() {
   let wallet, wallet2
 
-  let registry, governor, prizePool, prizeStrategy, token
+  let registry, governor, prizePool, prizeStrategy, token, externalAward
 
   let ticket, sponsorship, rng
 
@@ -45,9 +45,12 @@ describe('PrizeStrategy', function() {
     ticket = await deployMockContract(wallet, ControlledToken.abi, overrides)
     sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)
     rng = await deployMockContract(wallet, RNGInterface.abi, overrides)
+    externalAward = await deployMockContract(wallet, IERC20.abi, overrides)
 
     debug('deploying prizeStrategy...')
     prizeStrategy = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
+
+    await prizePool.mock.canAwardExternal.withArgs(externalAward.address).returns(true)
 
     debug('initializing prizeStrategy...')
     await prizeStrategy.initialize(
@@ -60,7 +63,7 @@ describe('PrizeStrategy', function() {
       rng.address,
       toWei('0.1'),
       toWei('0.1').div(prizePeriodSeconds),
-      []
+      [externalAward.address]
     )
 
     debug('initialized!')

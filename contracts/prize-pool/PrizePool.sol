@@ -316,17 +316,17 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
   /// @dev Used to award any arbitrary tokens held by the Prize Pool
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of external assets to be awarded
-  /// @param controlledToken The addess of the external asset token being awarded
-  function awardExternal(address to, uint256 amount, address controlledToken) external onlyPrizeStrategy {
-    require(_canAwardExternal(controlledToken), "PrizePool/invalid-external-token");
+  /// @param externalToken The addess of the external asset token being awarded
+  function awardExternal(address to, uint256 amount, address externalToken) external onlyPrizeStrategy {
+    require(_canAwardExternal(externalToken), "PrizePool/invalid-external-token");
 
     if (amount == 0) {
       return;
     }
 
-    IERC20(controlledToken).transfer(to, amount);
+    IERC20(externalToken).transfer(to, amount);
 
-    emit AwardedExternal(to, controlledToken, amount);
+    emit AwardedExternal(to, externalToken, amount);
   }
 
   /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
