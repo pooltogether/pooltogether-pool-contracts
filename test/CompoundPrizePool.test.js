@@ -1,6 +1,5 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
-const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
 const PrizeStrategyInterface = require('../build/PrizeStrategyInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CTokenInterface = require('../build/CTokenInterface.json')
@@ -9,13 +8,10 @@ const IERC20 = require('../build/IERC20.json')
 const { ethers } = require('./helpers/ethers')
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
-const getIterable = require('./helpers/iterable')
 const { call } = require('./helpers/call')
+const { AddressZero } = require('ethers/constants')
 
 const toWei = ethers.utils.parseEther
-const toBytes = ethers.utils.toUtf8Bytes
-const now = () => Math.floor((new Date()).getTime() / 1000)
-const getBlockNumber = async () => await buidler.waffle.provider.getBlockNumber()
 
 const debug = require('debug')('ptv3:PrizePool.test')
 
@@ -104,9 +100,25 @@ describe('CompoundPrizePool', function() {
         await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
         await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
 
-        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0'))
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('1')))
           .to.emit(prizePool, 'InstantWithdrawal')
           .withArgs(wallet._address, wallet._address, ticket.address, amount, toWei('1'), '0')
+      })
+
+      it('should allow a user to set a maximum exit fee', async () => {
+        let amount = toWei('11')
+
+        // updateAwardBalance
+        await cToken.mock.balanceOfUnderlying.returns('0')
+        await ticket.mock.totalSupply.returns('0')
+
+        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
+        await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
+        await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
+        await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
+
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('0.5'))).to.be.revertedWith('PrizePool/exit-fee-exceeds-user-maximum')
       })
     })
 
@@ -276,6 +288,18 @@ describe('CompoundPrizePool', function() {
         expect(await prizePool.canAwardExternal(cToken.address)).to.be.false
       })
     })
+
+    describe('detachPrizeStrategy()', () => {
+      it('should allow owner to detach', async () => {
+        await prizePool.detachPrizeStrategy()
+        expect(await prizePool.prizeStrategy()).to.equal(AddressZero)
+      })
+
+      it('should not allow anyone else to call', async () => {
+        prizePool2 = prizePool.connect(wallet2)
+        await expect(prizePool2.detachPrizeStrategy()).to.be.revertedWith('Ownable: caller is not the owner')
+      })
+    })
   })
 
   describe('with a multi-token prize pool', () => {
@@ -386,7 +410,7 @@ describe('CompoundPrizePool', function() {
         await token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
         // await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
 
-        await expect(detachedPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, '0'))
+        await expect(detachedPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, '0', toWei('1')))
           .to.emit(detachedPrizePool, 'InstantWithdrawal')
           .withArgs(wallet._address, wallet._address, ticket2.address, amount, toWei('0'), '0')
       })

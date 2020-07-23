@@ -1,9 +1,10 @@
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@nomiclabs/buidler/console.sol";
 
 import "./PrizeStrategyInterface.sol";
 import "../token/ControlledToken.sol";
@@ -13,7 +14,7 @@ import "./MappedSinglyLinkedList.sol";
 /// @title Base Prize Pool for managing escrowed assets
 /// @notice Manages depositing and withdrawing assets from the Prize Pool
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
-abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
+abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
   using SafeMath for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
@@ -23,6 +24,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   }
 
   event CapturedAward(uint256 amount);
+  event TimelockDeposited(address indexed operator, address indexed to, address indexed token, uint256 amount);
   event Deposited(address indexed operator, address indexed to, address indexed token, uint256 amount);
   event Awarded(address indexed winner, address indexed token, uint256 amount);
   event AwardedExternal(address indexed winner, address indexed token, uint256 amount);
@@ -65,6 +67,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
       require(ControlledToken(_controlledTokens[i]).controller() == this, "PrizePool/token-ctrlr-mismatch");
     }
+    __Ownable_init();
     __ReentrancyGuard_init();
     trustedForwarder = _trustedForwarder;
     prizeStrategy = _prizeStrategy;
@@ -121,6 +124,29 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     return _canAwardExternal(_externalToken);
   }
 
+  function timelockDepositTo(
+    address to,
+    uint256 amount,
+    address controlledToken
+  )
+    external
+    onlyControlledToken(controlledToken)
+    nonReentrant
+  {
+    require(_hasPrizeStrategy(), "PrizePool/prize-strategy-detached");
+    _updateAwardBalance();
+
+    address operator = _msgSender();
+
+    ControlledToken(controlledToken).controllerMint(to, amount);
+    timelockBalances[operator] = timelockBalances[operator].sub(amount);
+    timelockTotalSupply = timelockTotalSupply.sub(amount);
+
+    prizeStrategy.afterTimelockDepositTo(operator, to, amount, controlledToken);
+
+    emit TimelockDeposited(operator, to, controlledToken, amount);
+  }
+
   /// @notice Deposit assets into the Prize Pool to Purchase Tickets
   /// @param to The address receiving the Tickets
   /// @param amount The amount of assets to deposit to purchase tickets
@@ -145,12 +171,14 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @param amount The amount of assets to redeem for tickets
   /// @param controlledToken The address of the asset token being withdrawn
   /// @param sponsorAmount An optional amount of assets paid by the operator used to cover exit fees
+  /// @param maximumExitFee The maximum exit fee the user is willing to pay.  This should be pre-calculated
   /// @return exitFee The amount of the fairness fee paid
   function withdrawInstantlyFrom(
     address from,
     uint256 amount,
     address controlledToken,
-    uint256 sponsorAmount
+    uint256 sponsorAmount,
+    uint256 maximumExitFee
   )
     external
     nonReentrant
@@ -168,6 +196,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
     if (exitFee > maxFee) {
       exitFee = maxFee;
     }
+    require(exitFee <= maximumExitFee, "PrizePool/exit-fee-exceeds-user-maximum");
 
     address operator = _msgSender();
     uint256 sponsoredExitFeePortion = (exitFee > sponsorAmount) ? sponsorAmount : exitFee;
@@ -218,7 +247,8 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
       unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken);
     }
 
-    if (unlockTimestamp > 0 && unlockTimestamp.sub(blockTime) > maxTimelockDuration) {
+    uint256 lockDuration = unlockTimestamp > blockTime ? unlockTimestamp.sub(blockTime) : 0;
+    if (lockDuration > maxTimelockDuration) {
       unlockTimestamp = blockTime.add(maxTimelockDuration);
     }
 
@@ -310,17 +340,17 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @dev Used to award any arbitrary tokens held by the Prize Pool
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of external assets to be awarded
-  /// @param controlledToken The addess of the external asset token being awarded
-  function awardExternal(address to, uint256 amount, address controlledToken) external onlyPrizeStrategy {
-    require(_canAwardExternal(controlledToken), "PrizePool/invalid-external-token");
+  /// @param externalToken The addess of the external asset token being awarded
+  function awardExternal(address to, uint256 amount, address externalToken) external onlyPrizeStrategy {
+    require(_canAwardExternal(externalToken), "PrizePool/invalid-external-token");
 
     if (amount == 0) {
       return;
     }
 
-    IERC20(controlledToken).transfer(to, amount);
+    IERC20(externalToken).transfer(to, amount);
 
-    emit AwardedExternal(to, controlledToken, amount);
+    emit AwardedExternal(to, externalToken, amount);
   }
 
   /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
@@ -393,7 +423,7 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
 
   /// @notice Emergency shutdown of the Prize Pool by detaching the Prize Strategy
   /// @dev Called by the PrizeStrategy contract to issue an Emergency Shutdown of a corrupted Prize Strategy
-  function detachPrizeStrategy() external onlyPrizeStrategy {
+  function detachPrizeStrategy() external onlyOwner {
     delete prizeStrategy;
     emit PrizeStrategyDetached();
   }
@@ -452,6 +482,10 @@ abstract contract PrizePool is Initializable, BaseRelayRecipient, ReentrancyGuar
   /// @return True if the token is a controlled token, false otherwise
   function isControlled(address controlledToken) internal view returns (bool) {
     return _tokens.contains(controlledToken);
+  }
+
+  function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
+    return BaseRelayRecipient._msgSender();
   }
 
   /// @dev Function modifier to ensure usage of tokens controlled by the Prize Pool

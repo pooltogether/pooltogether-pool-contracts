@@ -22,7 +22,7 @@ let overrides = { gasLimit: 20000000 }
 describe('PrizeStrategy', function() {
   let wallet, wallet2
 
-  let registry, governor, prizePool, prizeStrategy, token
+  let registry, governor, prizePool, prizeStrategy, token, externalAward
 
   let ticket, sponsorship, rng
 
@@ -45,9 +45,12 @@ describe('PrizeStrategy', function() {
     ticket = await deployMockContract(wallet, ControlledToken.abi, overrides)
     sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)
     rng = await deployMockContract(wallet, RNGInterface.abi, overrides)
+    externalAward = await deployMockContract(wallet, IERC20.abi, overrides)
 
     debug('deploying prizeStrategy...')
     prizeStrategy = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
+
+    await prizePool.mock.canAwardExternal.withArgs(externalAward.address).returns(true)
 
     debug('initializing prizeStrategy...')
     await prizeStrategy.initialize(
@@ -60,7 +63,7 @@ describe('PrizeStrategy', function() {
       rng.address,
       toWei('0.1'),
       toWei('0.1').div(prizePeriodSeconds),
-      []
+      [externalAward.address]
     )
 
     debug('initialized!')
@@ -127,6 +130,32 @@ describe('PrizeStrategy', function() {
         .returns('10')
 
       expect(await call(prizeStrategy, 'estimatePrize')).to.equal('110')
+    })
+  })
+
+  describe('setCreditRateMantissa', () => {
+    it('should only allow the owner to change it', async () => {
+      await expect(prizeStrategy.setCreditRateMantissa(toWei('0.1')))
+        .to.emit(prizeStrategy, 'CreditRateUpdated')
+        .withArgs(toWei('0.1'))
+    })
+
+    it('should not allow anyone but the owner to change', async () => {
+      prizeStrategy2 = prizeStrategy.connect(wallet2)
+      await expect(prizeStrategy2.setCreditRateMantissa(toWei('0.1'))).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
+  describe('setExitFeeMantissa', () => {
+    it('should only allow the owner to change it', async () => {
+      await expect(prizeStrategy.setExitFeeMantissa(toWei('0.1')))
+        .to.emit(prizeStrategy, 'ExitFeeUpdated')
+        .withArgs(toWei('0.1'))
+    })
+
+    it('should not allow anyone but the owner to change', async () => {
+      prizeStrategy2 = prizeStrategy.connect(wallet2)
+      await expect(prizeStrategy2.setExitFeeMantissa(toWei('0.1'))).to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
 
