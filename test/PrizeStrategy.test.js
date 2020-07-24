@@ -1,6 +1,6 @@
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
-const { call } = require('./helpers/call')
+const { call, callRaw } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
 const GovernorInterface = require('../build/GovernorInterface.json')
 const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
@@ -173,6 +173,33 @@ describe('PrizeStrategy', function() {
         .returns('10')
 
       expect(await call(prizeStrategy, 'estimatePrizeWithBlockTime', 100)).to.equal('110')
+    })
+  })
+
+  describe('calculateInstantWithdrawalFee()', () => {
+    it('should calculate fee for instant withdrawal with no credit', async () => {
+      const withdrawalAmount = 50
+      const exitFee = withdrawalAmount * exitFeeMantissa
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('100'))
+
+      expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal('0')
+
+      let fees = await callRaw(prizeStrategy, 'calculateInstantWithdrawalFee', wallet._address, toWei(withdrawalAmount), ticket.address)
+      expect(fees.remainingFee).to.equal(toWei(exitFee))
+      expect(fees.burnedCredit).to.equal('0')
+    })
+  })
+
+  describe('calculateTimelockDurationAndFee()', () => {
+    it('should calculate timelock duration for scheduled withdrawals with no credit', async () => {
+      const timelockDuration = prizePeriodSeconds / exitFeeMantissa
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('100'))
+
+      expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal('0')
+
+      let fees = await callRaw(prizeStrategy, 'calculateTimelockDurationAndFee', wallet._address, toWei('50'), ticket.address)
+      expect(fees.durationSeconds).to.equal('' + timelockDuration)
+      expect(fees.burnedCredit).to.equal('0')
     })
   })
 

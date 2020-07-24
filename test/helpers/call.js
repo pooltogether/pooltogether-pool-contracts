@@ -1,3 +1,10 @@
+async function callRaw(contract, functionName, ...args) {
+  let fxn = contract.interface.functions[functionName]
+  let call = fxn.encode(args)
+  let result = await contract.provider.call({ to: contract.address, data: call })
+  return fxn.decode(result)
+}
+
 async function call(contract, functionName, ...args) {
   let fxn = contract.interface.functions[functionName]
   let call = fxn.encode(args)
@@ -6,4 +13,4 @@ async function call(contract, functionName, ...args) {
   return ret[0]
 }
 
-module.exports = { call }
+module.exports = { call, callRaw }
