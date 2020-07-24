@@ -435,8 +435,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param secondsPerBlockMantissa The seconds per block to use for the calculation.  Should be a fixed point 18 number like Ether.
   /// @return The estimated remaining prize
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockMantissa) public view returns (uint256) {
-    uint256 accounted = prizePool.accountedBalance();
-    uint256 remainingBlocks = estimateRemainingBlocksToPrize(secondsPerBlockMantissa);
     uint256 remaining = prizePool.estimateAccruedInterestOverBlocks(
       prizePool.accountedBalance(),
       estimateRemainingBlocksToPrize(secondsPerBlockMantissa)

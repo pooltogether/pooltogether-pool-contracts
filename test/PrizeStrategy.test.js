@@ -29,7 +29,7 @@ describe('PrizeStrategy', function() {
   let prizePeriodSeconds = 1000
 
   let exitFeeMantissa = 0.1
-  let creditRateMantissa = 0.01
+  let creditRateMantissa = exitFeeMantissa / prizePeriodSeconds
 
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
@@ -65,7 +65,7 @@ describe('PrizeStrategy', function() {
       sponsorship.address,
       rng.address,
       toWei('' + exitFeeMantissa),
-      toWei('' + creditRateMantissa).div(prizePeriodSeconds),
+      toWei('' + creditRateMantissa),
       [externalAward.address]
     )
 
@@ -192,13 +192,12 @@ describe('PrizeStrategy', function() {
 
   describe('calculateTimelockDurationAndFee()', () => {
     it('should calculate timelock duration for scheduled withdrawals with no credit', async () => {
-      const timelockDuration = prizePeriodSeconds / exitFeeMantissa
       await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('100'))
 
       expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal('0')
 
       let fees = await callRaw(prizeStrategy, 'calculateTimelockDurationAndFee', wallet._address, toWei('50'), ticket.address)
-      expect(fees.durationSeconds).to.equal('' + timelockDuration)
+      expect(fees.durationSeconds).to.equal('' + prizePeriodSeconds)
       expect(fees.burnedCredit).to.equal('0')
     })
   })
@@ -315,7 +314,7 @@ describe('PrizeStrategy', function() {
       expect(await prizeStrategy.estimateCreditAccrualTime(
         ticketBalance,
         interest
-      )).to.equal(prizePeriodSeconds / exitFeeMantissa)
+      )).to.equal(prizePeriodSeconds)
     })
 
     it('should calculate the accrual time', async () => {
@@ -324,7 +323,7 @@ describe('PrizeStrategy', function() {
       expect(await prizeStrategy.estimateCreditAccrualTime(
         ticketBalance,
         interest
-      )).to.equal(prizePeriodSeconds * 3 / exitFeeMantissa)
+      )).to.equal(prizePeriodSeconds * 3)
     })
   })
 });
