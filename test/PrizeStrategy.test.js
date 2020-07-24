@@ -162,6 +162,17 @@ describe('PrizeStrategy', function() {
     })
   })
 
+  describe('setRngService', () => {
+    it('should only allow the owner to change it', async () => {
+      await expect(prizeStrategy.setRngService(token.address)).to.not.be.revertedWith('Ownable: caller is not the owner')
+    })
+
+    it('should not allow anyone but the owner to change', async () => {
+      prizeStrategy2 = prizeStrategy.connect(wallet2)
+      await expect(prizeStrategy2.setRngService(token.address)).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
   describe('estimatePrizeWithBlockTime()', () => {
     it('should calculate the estimated prize', async () => {
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
