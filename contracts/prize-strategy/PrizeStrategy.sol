@@ -167,11 +167,13 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param ticketBalance The current balance of the user's tickets.
   /// @return accruedCredit The credit that has accrued since the last credit update.
   function calculateAccruedCredit(address user, uint256 ticketBalance) internal view returns (uint256 accruedCredit) {
-    if (creditBalances[user].timestamp >= _currentTime()) {
+    uint256 userTimestamp = creditBalances[user].timestamp;
+
+    if (userTimestamp == 0 || userTimestamp >= _currentTime()) {
       return 0;
     }
 
-    uint256 deltaTime = _currentTime().sub(creditBalances[user].timestamp);
+    uint256 deltaTime = _currentTime().sub(userTimestamp);
     uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(ticketBalance, creditRateMantissa);
     return deltaTime.mul(creditPerSecond);
   }
