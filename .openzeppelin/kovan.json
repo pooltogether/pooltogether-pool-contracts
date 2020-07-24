@@ -1,11 +1,11 @@
 {
   "contracts": {
     "CompoundPrizePoolProxyFactory": {
-      "address": "0x28775581a78Cf376851A72B6A702c7dcA3411f08",
-      "constructorCode": "608060405234801561001057600080fd5b50613173806100206000396000f3fe",
-      "bodyBytecodeHash": "7a6f718887a66c4d4366a6f0404aaecefd6e8f8af0a48d6d464291d66d5d6ede",
-      "localBytecodeHash": "0ae47a2ded53ba87d652bc2cc6771bd268bc9d7dc4c4a5a96e45cee631aac8d0",
-      "deployedBytecodeHash": "0ae47a2ded53ba87d652bc2cc6771bd268bc9d7dc4c4a5a96e45cee631aac8d0",
+      "address": "0xDDE44b1c5110B2e961264FCf973CBDcc6f631Ceb",
+      "constructorCode": "608060405234801561001057600080fd5b506138e4806100206000396000f3fe",
+      "bodyBytecodeHash": "d52772ca653be7af0f171e7fd7c33a3f692a9bd641c85bb502a6fb147f8a187e",
+      "localBytecodeHash": "49450b2d36c5613c5360ae5adc47e5dd1993b64ee5985cc86ba6f11ded456816",
+      "deployedBytecodeHash": "49450b2d36c5613c5360ae5adc47e5dd1993b64ee5985cc86ba6f11ded456816",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -59,9 +59,9 @@
           "contract": "CompoundPrizePoolProxyFactory",
           "path": "contracts/prize-pool/compound/CompoundPrizePoolProxyFactory.sol",
           "label": "instance",
-          "astId": 13207,
+          "astId": 13665,
           "type": "t_address",
-          "src": "447:33:36"
+          "src": "447:33:37"
         }
       ],
       "warnings": {
@@ -73,7 +73,7 @@
       }
     },
     "ControlledTokenProxyFactory": {
-      "address": "0x8b97673B9D4dC654c9EbCf21a0eB1293d13ADdea",
+      "address": "0x88972Cf5Eaae666d3cC6b77B7F22Ef323f1E4A20",
       "constructorCode": "608060405234801561001057600080fd5b50611b44806100206000396000f3fe",
       "bodyBytecodeHash": "10dd6e0102379b5f0f422f5bfb3968d196a015bffde538d64391c06dbd9e2307",
       "localBytecodeHash": "f1c06b02520773bd9bfe778aa6c0ae69f875968fba0141c71b5f14d8cf7716fb",
@@ -131,7 +131,7 @@
           "contract": "ControlledTokenProxyFactory",
           "path": "contracts/token/ControlledTokenProxyFactory.sol",
           "label": "instance",
-          "astId": 16742,
+          "astId": 16921,
           "type": "t_address",
           "src": "441:31:54"
         }
@@ -145,11 +145,11 @@
       }
     },
     "PrizeStrategyProxyFactory": {
-      "address": "0x09386444f6522731C40928709ACD40D4fb38c34c",
-      "constructorCode": "608060405234801561001057600080fd5b50614465806100206000396000f3fe",
-      "bodyBytecodeHash": "638613044493d99edcd0a7941fec70199ff2f33bbf0b1f667afd4640925ea8c7",
-      "localBytecodeHash": "cddc93067f9ed11869f5a1b4b9302cb5e3e0090ea3858c6315f8899375841f24",
-      "deployedBytecodeHash": "cddc93067f9ed11869f5a1b4b9302cb5e3e0090ea3858c6315f8899375841f24",
+      "address": "0xbf4BABFA6E99BDc3eECD911b55c87E31e648c042",
+      "constructorCode": "608060405234801561001057600080fd5b5061449b806100206000396000f3fe",
+      "bodyBytecodeHash": "c1ae7e5614495d40b3a67f6d988832d249489d9a118b2aab4f580676b03432f7",
+      "localBytecodeHash": "a4324fcdeadb8268027a320264c9c3f395c9bf55879265819fb86cd31e88834b",
+      "deployedBytecodeHash": "a4324fcdeadb8268027a320264c9c3f395c9bf55879265819fb86cd31e88834b",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -203,7 +203,7 @@
           "contract": "PrizeStrategyProxyFactory",
           "path": "contracts/prize-strategy/PrizeStrategyProxyFactory.sol",
           "label": "instance",
-          "astId": 15450,
+          "astId": 15629,
           "type": "t_address",
           "src": "259:29:39"
         }
@@ -216,12 +216,12 @@
         "uninitializedBaseContracts": []
       }
     },
-    "PrizeStrategyBuilder": {
-      "address": "0x1E29040A367EE9cAb8ba4aA1d654CDcb20ecD2FE",
-      "constructorCode": "608060405234801561001057600080fd5b50610e38806100206000396000f3fe",
-      "bodyBytecodeHash": "3fdc6e1c6644c6defc9dd23b2d2f95b27f3aad9a56c2ef2173bedc1c20ac4fc9",
-      "localBytecodeHash": "b48497c81f3ffaa4bcb1f38e128c44e56b5991d001e55971a3a85aa84c57d186",
-      "deployedBytecodeHash": "b48497c81f3ffaa4bcb1f38e128c44e56b5991d001e55971a3a85aa84c57d186",
+    "CompoundPrizePoolBuilder": {
+      "address": "0xE003D9E9F87f360e457f183dd59dc77535431389",
+      "constructorCode": "608060405234801561001057600080fd5b50610ef2806100206000396000f3fe",
+      "bodyBytecodeHash": "86f2256a18e1524d1f2cfd7d7248b56670eaac36d4080a1a21766944fa393ed7",
+      "localBytecodeHash": "f26350efbf7f2289116af2f552edf063c8a2007cb474d190fd1b6cb35d11ef8f",
+      "deployedBytecodeHash": "f26350efbf7f2289116af2f552edf063c8a2007cb474d190fd1b6cb35d11ef8f",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -272,52 +272,52 @@
           "src": "1982:29:11"
         },
         {
-          "contract": "PrizeStrategyBuilder",
-          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
+          "contract": "CompoundPrizePoolBuilder",
+          "path": "contracts/builders/CompoundPrizePoolBuilder.sol",
           "label": "governor",
-          "astId": 15135,
+          "astId": 11031,
           "type": "t_address",
-          "src": "982:33:38"
+          "src": "1008:33:28"
         },
         {
-          "contract": "PrizeStrategyBuilder",
-          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
+          "contract": "CompoundPrizePoolBuilder",
+          "path": "contracts/builders/CompoundPrizePoolBuilder.sol",
           "label": "compoundPrizePoolProxyFactory",
-          "astId": 15137,
+          "astId": 11033,
           "type": "t_address",
-          "src": "1019:66:38"
+          "src": "1045:66:28"
         },
         {
-          "contract": "PrizeStrategyBuilder",
-          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
+          "contract": "CompoundPrizePoolBuilder",
+          "path": "contracts/builders/CompoundPrizePoolBuilder.sol",
           "label": "controlledTokenProxyFactory",
-          "astId": 15139,
+          "astId": 11035,
           "type": "t_address",
-          "src": "1089:62:38"
+          "src": "1115:62:28"
         },
         {
-          "contract": "PrizeStrategyBuilder",
-          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
+          "contract": "CompoundPrizePoolBuilder",
+          "path": "contracts/builders/CompoundPrizePoolBuilder.sol",
           "label": "prizeStrategyProxyFactory",
-          "astId": 15141,
+          "astId": 11037,
           "type": "t_address",
-          "src": "1155:58:38"
+          "src": "1181:58:28"
         },
         {
-          "contract": "PrizeStrategyBuilder",
-          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
+          "contract": "CompoundPrizePoolBuilder",
+          "path": "contracts/builders/CompoundPrizePoolBuilder.sol",
           "label": "rng",
-          "astId": 15143,
+          "astId": 11039,
           "type": "t_address",
-          "src": "1217:23:38"
+          "src": "1243:23:28"
         },
         {
-          "contract": "PrizeStrategyBuilder",
-          "path": "contracts/prize-strategy/PrizeStrategyBuilder.sol",
+          "contract": "CompoundPrizePoolBuilder",
+          "path": "contracts/builders/CompoundPrizePoolBuilder.sol",
           "label": "trustedForwarder",
-          "astId": 15145,
+          "astId": 11041,
           "type": "t_address",
-          "src": "1244:31:38"
+          "src": "1270:31:28"
         }
       ],
       "warnings": {
@@ -333,37 +333,37 @@
   "proxies": {
     "PoolTogether3/CompoundPrizePoolProxyFactory": [
       {
-        "address": "0xEEADD978e66D4ccfcD3D87C54Ff7dD82A7f68935",
+        "address": "0x1AE2bD1247764F879e41536615558bb6b62896Fa",
         "version": "0.3.0",
-        "implementation": "0x28775581a78Cf376851A72B6A702c7dcA3411f08",
-        "admin": "0xC07ec792a4e42bBe8d0d92AFe2f6A9e21d6f71b9",
+        "implementation": "0xDDE44b1c5110B2e961264FCf973CBDcc6f631Ceb",
+        "admin": "0x3bbfFB3180f961d4BcED79959FD947f3462e20D9",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/ControlledTokenProxyFactory": [
       {
-        "address": "0xA7a3Cf1d3Cc180B689977475B34aD735D14aDab8",
+        "address": "0xE970cdB4bCed56393EA973D64a063cA0E0F30A40",
         "version": "0.3.0",
-        "implementation": "0x8b97673B9D4dC654c9EbCf21a0eB1293d13ADdea",
-        "admin": "0xC07ec792a4e42bBe8d0d92AFe2f6A9e21d6f71b9",
+        "implementation": "0x88972Cf5Eaae666d3cC6b77B7F22Ef323f1E4A20",
+        "admin": "0x3bbfFB3180f961d4BcED79959FD947f3462e20D9",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/PrizeStrategyProxyFactory": [
       {
-        "address": "0x631405c421382380A963a9df02BDab6feed28797",
+        "address": "0x7e96C333E40580307FE8d0098E54517Ee821EDa3",
         "version": "0.3.0",
-        "implementation": "0x09386444f6522731C40928709ACD40D4fb38c34c",
-        "admin": "0xC07ec792a4e42bBe8d0d92AFe2f6A9e21d6f71b9",
+        "implementation": "0xbf4BABFA6E99BDc3eECD911b55c87E31e648c042",
+        "admin": "0x3bbfFB3180f961d4BcED79959FD947f3462e20D9",
         "kind": "Upgradeable"
       }
     ],
-    "PoolTogether3/PrizeStrategyBuilder": [
+    "PoolTogether3/CompoundPrizePoolBuilder": [
       {
-        "address": "0x5b346F2bCD7Da95160A8C9D14a5F0ace70D78DBf",
+        "address": "0x5b38576410F9C0087F58676076aB84cEF44aD9c2",
         "version": "0.3.0",
-        "implementation": "0x1E29040A367EE9cAb8ba4aA1d654CDcb20ecD2FE",
-        "admin": "0xC07ec792a4e42bBe8d0d92AFe2f6A9e21d6f71b9",
+        "implementation": "0xE003D9E9F87f360e457f183dd59dc77535431389",
+        "admin": "0x3bbfFB3180f961d4BcED79959FD947f3462e20D9",
         "kind": "Upgradeable"
       }
     ]
@@ -371,6 +371,6 @@
   "manifestVersion": "2.2",
   "version": "0.3.0",
   "proxyAdmin": {
-    "address": "0xC07ec792a4e42bBe8d0d92AFe2f6A9e21d6f71b9"
+    "address": "0x3bbfFB3180f961d4BcED79959FD947f3462e20D9"
   }
 }

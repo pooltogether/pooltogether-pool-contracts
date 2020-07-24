@@ -2,7 +2,7 @@
   "manifestVersion": "2.2",
   "contracts": {
     "RNGServiceMock": "RNGServiceMock",
-    "PrizeStrategyBuilder": "PrizeStrategyBuilder",
+    "CompoundPrizePoolBuilder": "CompoundPrizePoolBuilder",
     "PrizeStrategyProxyFactory": "PrizeStrategyProxyFactory",
     "CompoundPrizePoolProxyFactory": "CompoundPrizePoolProxyFactory",
     "ControlledTokenProxyFactory": "ControlledTokenProxyFactory",
