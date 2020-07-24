@@ -28,6 +28,9 @@ describe('PrizeStrategy', function() {
 
   let prizePeriodSeconds = 1000
 
+  let exitFeeMantissa = 0.1
+  let creditRateMantissa = 0.01
+
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
 
@@ -61,8 +64,8 @@ describe('PrizeStrategy', function() {
       ticket.address,
       sponsorship.address,
       rng.address,
-      toWei('0.1'),
-      toWei('0.1').div(prizePeriodSeconds),
+      toWei('' + exitFeeMantissa),
+      toWei('' + creditRateMantissa).div(prizePeriodSeconds),
       [externalAward.address]
     )
 
@@ -285,7 +288,7 @@ describe('PrizeStrategy', function() {
       expect(await prizeStrategy.estimateCreditAccrualTime(
         ticketBalance,
         interest
-      )).to.equal(prizePeriodSeconds)
+      )).to.equal(prizePeriodSeconds / exitFeeMantissa)
     })
 
     it('should calculate the accrual time', async () => {
@@ -294,7 +297,7 @@ describe('PrizeStrategy', function() {
       expect(await prizeStrategy.estimateCreditAccrualTime(
         ticketBalance,
         interest
-      )).to.equal(prizePeriodSeconds * 3)
+      )).to.equal(prizePeriodSeconds * 3 / exitFeeMantissa)
     })
   })
 });
