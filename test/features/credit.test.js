@@ -29,7 +29,8 @@ describe('Credit Feature', () => {
     await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
     await env.buyTicketsAtTime({ user: 1, tickets: 100, elapsed: 5 })
     await env.expectUserToHaveCreditAtTime({ user: 1, credit: 0, elapsed: 5 }) // 10% credit
-    // // should not accrue more than exit fee
-    await env.expectUserToHaveCreditAtTime({ user: 1, credit: '0.05', elapsed: 10 }) // 10% credit
+    await env.expectUserToHaveCreditAtTime({ user: 1, credit: 5, elapsed: 10 }) // 10% credit over half a prize period
+    // should not accrue more than exit fee
+    await env.expectUserToHaveCreditAtTime({ user: 1, credit: 10, elapsed: 30 }) // 10% credit
   })
 })
