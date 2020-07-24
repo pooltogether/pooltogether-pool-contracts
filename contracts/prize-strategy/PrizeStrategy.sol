@@ -12,7 +12,6 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
-import "@nomiclabs/buidler/console.sol";
 
 import "./PrizeStrategyStorage.sol";
 import "../token/TokenControllerInterface.sol";
@@ -167,11 +166,13 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param ticketBalance The current balance of the user's tickets.
   /// @return accruedCredit The credit that has accrued since the last credit update.
   function calculateAccruedCredit(address user, uint256 ticketBalance) internal view returns (uint256 accruedCredit) {
-    if (creditBalances[user].timestamp >= _currentTime()) {
+    uint256 userTimestamp = creditBalances[user].timestamp;
+
+    if (userTimestamp == 0 || userTimestamp >= _currentTime()) {
       return 0;
     }
 
-    uint256 deltaTime = _currentTime().sub(creditBalances[user].timestamp);
+    uint256 deltaTime = _currentTime().sub(userTimestamp);
     uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(ticketBalance, creditRateMantissa);
     return deltaTime.mul(creditPerSecond);
   }
@@ -223,6 +224,23 @@ contract PrizeStrategy is PrizeStrategyStorage,
     if (controlledToken == address(ticket)) {
       return _calculateEarlyExitFeeLessCredit(from, amount);
     }
+  }
+
+  /// @notice Calculates the fee to withdraw collateral instantly.
+  /// @param from The user who is withdrawing
+  /// @param amount The amount of collateral they are withdrawing
+  /// @param controlledToken The type of collateral they are withdrawing (i.e. ticket or sponsorship)
+  /// @return remainingFee The fee that the user will be charged
+  /// @return burnedCredit The amount of credit that will be burned
+  function calculateInstantWithdrawalFee(
+    address from,
+    uint256 amount,
+    address controlledToken
+  )
+    external
+    returns (uint256 remainingFee, uint256 burnedCredit)
+  {
+    return _calculateInstantWithdrawalFee(from, amount, controlledToken);
   }
 
   /// @notice Calculates the withdrawal unlock timestamp by estimated how long it would take to pay off the exit fee.
@@ -419,7 +437,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockMantissa) public view returns (uint256) {
     uint256 accounted = prizePool.accountedBalance();
     uint256 remainingBlocks = estimateRemainingBlocksToPrize(secondsPerBlockMantissa);
-    console.log("accoutned; %s, remaining: %s", accounted, remainingBlocks);
     uint256 remaining = prizePool.estimateAccruedInterestOverBlocks(
       prizePool.accountedBalance(),
       estimateRemainingBlocksToPrize(secondsPerBlockMantissa)

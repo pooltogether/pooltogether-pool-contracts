@@ -196,8 +196,8 @@ function PoolEnv() {
   }
 
   this.expectUserToHaveCreditAtTime = async function ({ user, credit, elapsed }) {
-    this.atTime(elapsed, async () => {
-      this.expectUserToHaveCredit({ user, credit })
+    await this.atTime(elapsed, async () => {
+      await this.expectUserToHaveCredit({ user, credit })
     })
   }
 
