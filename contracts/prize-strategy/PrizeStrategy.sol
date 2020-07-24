@@ -716,6 +716,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
     emit CreditRateUpdated(creditRateMantissa);
   }
 
+  /// @notice Sets the RNG service that the Prize Strategy is connected to
+  /// @param rngService The address of the new RNG service interface
+  function setRngService(RNGInterface rngService) external onlyOwner {
+    rng = rngService;
+  }
+
   function _requireNotLocked() internal view {
     require(rngRequest.lockBlock == 0 || block.number < rngRequest.lockBlock, "PrizeStrategy/rng-in-flight");
   }
