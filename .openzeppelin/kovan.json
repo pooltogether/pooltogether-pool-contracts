@@ -1,7 +1,7 @@
 {
   "contracts": {
     "CompoundPrizePoolProxyFactory": {
-      "address": "0xDDE44b1c5110B2e961264FCf973CBDcc6f631Ceb",
+      "address": "0x3165915db142E01563D88072bF1eCA863dDe2eDE",
       "constructorCode": "608060405234801561001057600080fd5b506138e4806100206000396000f3fe",
       "bodyBytecodeHash": "d52772ca653be7af0f171e7fd7c33a3f692a9bd641c85bb502a6fb147f8a187e",
       "localBytecodeHash": "49450b2d36c5613c5360ae5adc47e5dd1993b64ee5985cc86ba6f11ded456816",
@@ -73,7 +73,7 @@
       }
     },
     "ControlledTokenProxyFactory": {
-      "address": "0x88972Cf5Eaae666d3cC6b77B7F22Ef323f1E4A20",
+      "address": "0x01d88Ab3EE1a162f4E6EF8c189e3D7b92909CF05",
       "constructorCode": "608060405234801561001057600080fd5b50611b44806100206000396000f3fe",
       "bodyBytecodeHash": "10dd6e0102379b5f0f422f5bfb3968d196a015bffde538d64391c06dbd9e2307",
       "localBytecodeHash": "f1c06b02520773bd9bfe778aa6c0ae69f875968fba0141c71b5f14d8cf7716fb",
@@ -131,7 +131,7 @@
           "contract": "ControlledTokenProxyFactory",
           "path": "contracts/token/ControlledTokenProxyFactory.sol",
           "label": "instance",
-          "astId": 16921,
+          "astId": 16934,
           "type": "t_address",
           "src": "441:31:54"
         }
@@ -145,11 +145,11 @@
       }
     },
     "PrizeStrategyProxyFactory": {
-      "address": "0xbf4BABFA6E99BDc3eECD911b55c87E31e648c042",
-      "constructorCode": "608060405234801561001057600080fd5b5061449b806100206000396000f3fe",
-      "bodyBytecodeHash": "c1ae7e5614495d40b3a67f6d988832d249489d9a118b2aab4f580676b03432f7",
-      "localBytecodeHash": "a4324fcdeadb8268027a320264c9c3f395c9bf55879265819fb86cd31e88834b",
-      "deployedBytecodeHash": "a4324fcdeadb8268027a320264c9c3f395c9bf55879265819fb86cd31e88834b",
+      "address": "0x61f35b81650CEd2D3Cb2CFDD89A190db99A29998",
+      "constructorCode": "608060405234801561001057600080fd5b50614556806100206000396000f3fe",
+      "bodyBytecodeHash": "96f136a35923e12258ccb3e2e35beb51aedbac9de30206cc17dab2d66639545c",
+      "localBytecodeHash": "1a533b7baae7b12a5dba5123e1e03e641612457b60ae35226b160c76aef2103e",
+      "deployedBytecodeHash": "1a533b7baae7b12a5dba5123e1e03e641612457b60ae35226b160c76aef2103e",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -203,7 +203,7 @@
           "contract": "PrizeStrategyProxyFactory",
           "path": "contracts/prize-strategy/PrizeStrategyProxyFactory.sol",
           "label": "instance",
-          "astId": 15629,
+          "astId": 15642,
           "type": "t_address",
           "src": "259:29:39"
         }
@@ -217,7 +217,7 @@
       }
     },
     "CompoundPrizePoolBuilder": {
-      "address": "0xE003D9E9F87f360e457f183dd59dc77535431389",
+      "address": "0x42AdF94B467Ef65C89B546C57b253A212cd09f95",
       "constructorCode": "608060405234801561001057600080fd5b50610ef2806100206000396000f3fe",
       "bodyBytecodeHash": "86f2256a18e1524d1f2cfd7d7248b56670eaac36d4080a1a21766944fa393ed7",
       "localBytecodeHash": "f26350efbf7f2289116af2f552edf063c8a2007cb474d190fd1b6cb35d11ef8f",
@@ -333,37 +333,37 @@
   "proxies": {
     "PoolTogether3/CompoundPrizePoolProxyFactory": [
       {
-        "address": "0x1AE2bD1247764F879e41536615558bb6b62896Fa",
+        "address": "0xE07a5CFfA31936A46bdCa5e8207aB6bF93c98A6D",
         "version": "0.3.0",
-        "implementation": "0xDDE44b1c5110B2e961264FCf973CBDcc6f631Ceb",
-        "admin": "0x3bbfFB3180f961d4BcED79959FD947f3462e20D9",
+        "implementation": "0x3165915db142E01563D88072bF1eCA863dDe2eDE",
+        "admin": "0x850cF69C1268f84f4E18b7835cdeD304597d8209",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/ControlledTokenProxyFactory": [
       {
-        "address": "0xE970cdB4bCed56393EA973D64a063cA0E0F30A40",
+        "address": "0x3012bE7A2fB759B3978C2531d41d83C6496F14D9",
         "version": "0.3.0",
-        "implementation": "0x88972Cf5Eaae666d3cC6b77B7F22Ef323f1E4A20",
-        "admin": "0x3bbfFB3180f961d4BcED79959FD947f3462e20D9",
+        "implementation": "0x01d88Ab3EE1a162f4E6EF8c189e3D7b92909CF05",
+        "admin": "0x850cF69C1268f84f4E18b7835cdeD304597d8209",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/PrizeStrategyProxyFactory": [
       {
-        "address": "0x7e96C333E40580307FE8d0098E54517Ee821EDa3",
+        "address": "0xAC784E37C896F15F5798da46F81B81D2B6eEb8D0",
         "version": "0.3.0",
-        "implementation": "0xbf4BABFA6E99BDc3eECD911b55c87E31e648c042",
-        "admin": "0x3bbfFB3180f961d4BcED79959FD947f3462e20D9",
+        "implementation": "0x61f35b81650CEd2D3Cb2CFDD89A190db99A29998",
+        "admin": "0x850cF69C1268f84f4E18b7835cdeD304597d8209",
         "kind": "Upgradeable"
       }
     ],
     "PoolTogether3/CompoundPrizePoolBuilder": [
       {
-        "address": "0x5b38576410F9C0087F58676076aB84cEF44aD9c2",
+        "address": "0x6e12233ac8ccD7cC0d0481787D7e7dd943315984",
         "version": "0.3.0",
-        "implementation": "0xE003D9E9F87f360e457f183dd59dc77535431389",
-        "admin": "0x3bbfFB3180f961d4BcED79959FD947f3462e20D9",
+        "implementation": "0x42AdF94B467Ef65C89B546C57b253A212cd09f95",
+        "admin": "0x850cF69C1268f84f4E18b7835cdeD304597d8209",
         "kind": "Upgradeable"
       }
     ]
@@ -371,6 +371,6 @@
   "manifestVersion": "2.2",
   "version": "0.3.0",
   "proxyAdmin": {
-    "address": "0x3bbfFB3180f961d4BcED79959FD947f3462e20D9"
+    "address": "0x850cF69C1268f84f4E18b7835cdeD304597d8209"
   }
 }
