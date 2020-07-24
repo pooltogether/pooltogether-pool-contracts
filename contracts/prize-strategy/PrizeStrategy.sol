@@ -12,7 +12,6 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
-import "@nomiclabs/buidler/console.sol";
 
 import "./PrizeStrategyStorage.sol";
 import "../token/TokenControllerInterface.sol";
@@ -438,7 +437,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockMantissa) public view returns (uint256) {
     uint256 accounted = prizePool.accountedBalance();
     uint256 remainingBlocks = estimateRemainingBlocksToPrize(secondsPerBlockMantissa);
-    console.log("accoutned; %s, remaining: %s", accounted, remainingBlocks);
     uint256 remaining = prizePool.estimateAccruedInterestOverBlocks(
       prizePool.accountedBalance(),
       estimateRemainingBlocksToPrize(secondsPerBlockMantissa)
