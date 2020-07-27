@@ -59,7 +59,7 @@ program
     if (program.network == 'kovan') {
       trustedForwarder = '0x6453D37248Ab2C16eBd1A8f782a2CBC65860E60B'
       governor = '0x2f935900D89b0815256a3f2c4c69e1a0230b5860'
-      rng = '0x9843BE095a3B8cAF41D4B2266b5489B08ED902b0' // RNGVeeDo connected to Mock Beacon @ 0xAF4be1011af30a7D77bf74Dee1a719186F1E4EB3
+      rng = '0x92766898334e9966308bD9436e366470b5c546c4' // RNGVeeDo connected to Mock Beacon @ 0x7c1398cb8a310B5737102009F628d76c0520241F
     } else if (program.network == 'ropsten') {
       trustedForwarder = '0xcC87aa60a6457D9606995C4E7E9c38A2b627Da88'
       governor = '0xD215CF8D8bC151414A9c5c145fE219E746E5cE80'
