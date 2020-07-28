@@ -164,7 +164,9 @@ describe('PrizeStrategy', function() {
 
   describe('setRngService', () => {
     it('should only allow the owner to change it', async () => {
-      await expect(prizeStrategy.setRngService(token.address)).to.not.be.revertedWith('Ownable: caller is not the owner')
+      await expect(prizeStrategy.setRngService(token.address))
+        .to.emit(prizeStrategy, 'RngServiceUpdated')
+        .withArgs(token.address)
     })
 
     it('should not allow anyone but the owner to change', async () => {
