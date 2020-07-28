@@ -65,6 +65,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
     uint256 creditRateMantissa
   );
 
+  event RngServiceUpdated(
+    address rngService
+  );
+
   function initialize (
     address _trustedForwarder,
     GovernorInterface _governor,
@@ -718,8 +722,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   /// @notice Sets the RNG service that the Prize Strategy is connected to
   /// @param rngService The address of the new RNG service interface
-  function setRngService(RNGInterface rngService) external onlyOwner {
+  function setRngService(RNGInterface rngService) external onlyOwner requireNotLocked {
     rng = rngService;
+
+    emit RngServiceUpdated(address(rngService));
   }
 
   function _requireNotLocked() internal view {
