@@ -2,6 +2,7 @@ pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
@@ -27,7 +28,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
   event TimelockDeposited(address indexed operator, address indexed to, address indexed token, uint256 amount);
   event Deposited(address indexed operator, address indexed to, address indexed token, uint256 amount);
   event Awarded(address indexed winner, address indexed token, uint256 amount);
-  event AwardedExternal(address indexed winner, address indexed token, uint256 amount);
+  event AwardedExternalERC20(address indexed winner, address indexed token, uint256 amount);
+  event AwardedExternalERC721(address indexed winner, address indexed token, uint256[] tokenIds);
   event InstantWithdrawal(address indexed operator, address indexed from, address indexed token, uint256 amount, uint256 exitFee, uint256 sponsoredExitFee);
   event TimelockedWithdrawal(address indexed operator, address indexed from, address indexed token, uint256 amount, uint256 unlockTimestamp);
   event TimelockedWithdrawalSwept(address indexed operator, address indexed from, uint256 amount);
@@ -341,7 +343,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of external assets to be awarded
   /// @param externalToken The addess of the external asset token being awarded
-  function awardExternal(address to, uint256 amount, address externalToken) external onlyPrizeStrategy {
+  function awardExternalERC20(address to, address externalToken, uint256 amount) external onlyPrizeStrategy {
     require(_canAwardExternal(externalToken), "PrizePool/invalid-external-token");
 
     if (amount == 0) {
@@ -350,7 +352,26 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
 
     IERC20(externalToken).transfer(to, amount);
 
-    emit AwardedExternal(to, externalToken, amount);
+    emit AwardedExternalERC20(to, externalToken, amount);
+  }
+
+  /// @notice Called by the Prize-Strategy to Award Secondary (external) Prize NFTs to a specific account
+  /// @dev Used to award any arbitrary NFTs held by the Prize Pool
+  /// @param to The address of the winner that receives the award
+  /// @param externalToken The addess of the external NFT token being awarded
+  /// @param tokenIds An array of NFT Token IDs to be transferred
+  function awardExternalERC721(address to, address externalToken, uint256[] calldata tokenIds) external onlyPrizeStrategy {
+    require(_canAwardExternal(externalToken), "PrizePool/invalid-external-token");
+
+    if (tokenIds.length == 0) {
+      return;
+    }
+
+    for (uint256 i = 0; i < tokenIds.length; i++) {
+      IERC721(externalToken).transferFrom(address(this), to, tokenIds[i]);
+    }
+
+    emit AwardedExternalERC721(to, externalToken, tokenIds);
   }
 
   /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts

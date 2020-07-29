@@ -36,8 +36,13 @@ contract PrizeStrategyStorage {
 
   RngRequest internal rngRequest;
 
-  // external tokens awarded as part of prize
-  MappedSinglyLinkedList.Mapping internal externalAwardMapping;
+  // External tokens awarded as part of prize
+  MappedSinglyLinkedList.Mapping internal externalErc20s;
+  MappedSinglyLinkedList.Mapping internal externalErc721s;
+
+  // External NFT token IDs to be awarded
+  //   NFT Address => TokenIds
+  mapping (address => uint256[]) internal externalErc721TokenIds;
 
   uint256 public exitFeeMantissa;
 

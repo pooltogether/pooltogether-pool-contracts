@@ -54,4 +54,9 @@ library MappedSinglyLinkedList {
   function contains(Mapping storage self, address addr) internal view returns (bool) {
     return addr != address(0) && self.addressMap[addr] != address(0);
   }
+
+  function reset(Mapping storage self) internal {
+    self.addressMap[SENTINAL_TOKEN] = SENTINAL_TOKEN;
+    self.count = 0;
+  }
 }

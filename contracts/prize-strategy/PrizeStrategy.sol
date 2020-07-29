@@ -79,7 +79,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     RNGInterface _rng,
     uint256 _exitFeeMantissa,
     uint256 _creditRateMantissa,
-    address[] memory _externalAwards
+    address[] memory _externalErc20s
   ) public initializer {
     require(address(_governor) != address(0), "PrizeStrategy/governor-not-zero");
     require(_prizePeriodSeconds > 0, "PrizeStrategy/prize-period-greater-than-zero");
@@ -99,10 +99,11 @@ contract PrizeStrategy is PrizeStrategyStorage,
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
     prizePeriodStartedAt = _currentTime();
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
-    externalAwardMapping.initialize(_externalAwards);
-    for (uint256 i = 0; i < _externalAwards.length; i++) {
-      require(prizePool.canAwardExternal(_externalAwards[i]), "PrizeStrategy/cannot-award-external");
+    for (uint256 i = 0; i < _externalErc20s.length; i++) {
+      require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
     }
+    externalErc20s.initialize(_externalErc20s);
+    // externalErc721s.initialize([]);
 
     exitFeeMantissa = _exitFeeMantissa;
     creditRateMantissa = _creditRateMantissa;
@@ -506,14 +507,39 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.
   /// @param winner The user to transfer the tokens to
   function _awardAllExternalTokens(address winner) internal {
-    address currentToken = externalAwardMapping.addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
+    _awardExternalErc20s(winner);
+    _awardExternalErc721s(winner);
+  }
+
+  /// @notice Awards all external ERC20 tokens with non-zero balances to the given user.
+  /// The external tokens must be held by the PrizePool contract.
+  /// @param winner The user to transfer the tokens to
+  function _awardExternalErc20s(address winner) internal {
+    address currentToken = externalErc20s.addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
     while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
       uint256 balance = IERC20(currentToken).balanceOf(address(prizePool));
       if (balance > 0) {
-        prizePool.awardExternal(winner, balance, currentToken);
-        currentToken = externalAwardMapping.addressMap[currentToken];
+        prizePool.awardExternalERC20(winner, currentToken, balance);
+        currentToken = externalErc20s.addressMap[currentToken];
       }
     }
+  }
+
+  /// @notice Awards all external ERC721 tokens to the given user.
+  /// The external tokens must be held by the PrizePool contract.
+  /// @dev The list of ERC721s is reset after every award
+  /// @param winner The user to transfer the tokens to
+  function _awardExternalErc721s(address winner) internal {
+    address currentToken = externalErc721s.addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
+    while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
+      uint256 balance = IERC721(currentToken).balanceOf(address(prizePool));
+      if (balance > 0) {
+        prizePool.awardExternalERC721(winner, currentToken, externalErc721TokenIds[currentToken]);
+        delete externalErc721TokenIds[currentToken];
+        currentToken = externalErc721s.addressMap[currentToken];
+      }
+    }
+    externalErc721s.reset();
   }
 
   /// @notice Returns the timestamp at which the prize period ends
@@ -726,6 +752,32 @@ contract PrizeStrategy is PrizeStrategyStorage,
     rng = rngService;
 
     emit RngServiceUpdated(address(rngService));
+  }
+
+  /// @notice Adds an external ERC20 token type as an additional prize that can be awarded
+  /// @dev Only the Prize-Strategy owner/creator can assign external tokens,
+  /// and they must be approved by the Prize-Pool
+  /// @param _externalErc20 The address of an ERC20 token to be awarded
+  function addExternalErc20Award(address _externalErc20) external onlyOwner {
+    require(prizePool.canAwardExternal(_externalErc20), "PrizeStrategy/cannot-award-external");
+    externalErc20s.addAddress(_externalErc20);
+  }
+
+  /// @notice Adds an external ERC721 token as an additional prize that can be awarded
+  /// @dev Only the Prize-Strategy owner/creator can assign external tokens,
+  /// and they must be approved by the Prize-Pool
+  /// NOTE: The NFT must already be owned by the Prize-Pool
+  /// @param _externalErc721 The address of an ERC721 token to be awarded
+  /// @param _tokenIds An array of token IDs of the ERC721 to be awarded
+  function addExternalErc721Award(address _externalErc721, uint256[] calldata _tokenIds) external onlyOwner {
+    require(prizePool.canAwardExternal(_externalErc721), "PrizeStrategy/cannot-award-external");
+    externalErc721s.addAddress(_externalErc721);
+
+    for (uint256 i = 0; i < _tokenIds.length; i++) {
+      uint256 tokenId = _tokenIds[i];
+      require(IERC721(_externalErc721).ownerOf(tokenId) == address(prizePool), "PrizeStrategy/unavailable-token");
+      externalErc721TokenIds[_externalErc721].push(tokenId);
+    }
   }
 
   function _requireNotLocked() internal view {
