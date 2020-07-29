@@ -87,26 +87,28 @@ contract PrizeStrategy is PrizeStrategyStorage,
     require(address(_ticket) != address(0), "PrizeStrategy/ticket-not-zero");
     require(address(_sponsorship) != address(0), "PrizeStrategy/sponsorship-not-zero");
     require(address(_rng) != address(0), "PrizeStrategy/rng-not-zero");
+    governor = _governor;
     prizePool = _prizePool;
     ticket = IERC20(_ticket);
     rng = _rng;
     sponsorship = IERC20(_sponsorship);
     trustedForwarder = _trustedForwarder;
+
     __Ownable_init();
     __ReentrancyGuard_init();
-    governor = _governor;
-    prizePeriodSeconds = _prizePeriodSeconds;
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+
+    prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = _currentTime();
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
+    exitFeeMantissa = _exitFeeMantissa;
+    creditRateMantissa = _creditRateMantissa;
+
     for (uint256 i = 0; i < _externalErc20s.length; i++) {
       require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
     }
     externalErc20s.initialize(_externalErc20s);
     // externalErc721s.initialize([]);
-
-    exitFeeMantissa = _exitFeeMantissa;
-    creditRateMantissa = _creditRateMantissa;
 
     emit ExitFeeUpdated(exitFeeMantissa);
     emit CreditRateUpdated(creditRateMantissa);
@@ -667,10 +669,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return uint256(creditBalances[user].balance);
   }
 
-  function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
-    return BaseRelayRecipient._msgSender();
-  }
-
   /// @notice Starts the award process by starting random number request.  The prize period must have ended.
   function startAward() external requireCanStartAward {
     (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber(address(0), 0);
@@ -707,26 +705,40 @@ contract PrizeStrategy is PrizeStrategyStorage,
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
-  modifier requireCanStartAward() {
-    require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
-    require(!isRngRequested(), "PrizeStrategy/rng-already-requested");
-    _;
+  /// @notice Returns whether an award process can be started
+  /// @return True if an award can be started, false otherwise.
+  function canStartAward() external view returns (bool) {
+    return _isPrizePeriodOver() && !isRngRequested();
   }
 
-  modifier requireCanCompleteAward() {
-    require(isRngRequested(), "PrizeStrategy/rng-not-requested");
-    require(isRngCompleted(), "PrizeStrategy/rng-not-complete");
-    _;
+  /// @notice Returns whether an award process can be completed
+  /// @return True if an award can be completed, false otherwise.
+  function canCompleteAward() external view returns (bool) {
+    return isRngRequested() && isRngCompleted();
   }
 
-  modifier requireNotLocked() {
-    _requireNotLocked();
-    _;
+  /// @notice Returns whether a random number has been requested
+  /// @return True if a random number has been requested, false otherwise.
+  function isRngRequested() public view returns (bool) {
+    return rngRequest.id != 0;
   }
 
-  modifier onlyPrizePool() {
-    require(_msgSender() == address(prizePool), "PrizeStrategy/only-prize-pool");
-    _;
+  /// @notice Returns whether the random number request has completed.
+  /// @return True if a random number request has completed, false otherwise.
+  function isRngCompleted() public view returns (bool) {
+    return rng.isRequestComplete(rngRequest.id);
+  }
+
+  /// @notice Returns the block number that the current RNG request has been locked to
+  /// @return The block number that the RNG request is locked to
+  function getLastRngLockBlock() public view returns (uint32) {
+    return rngRequest.lockBlock;
+  }
+
+  /// @notice Returns the current RNG Request ID
+  /// @return The current Request ID
+  function getLastRngRequestId() public view returns (uint32) {
+    return rngRequest.id;
   }
 
   /// @notice Allows the owner to set the exit fee.  The exit fee is a fixed point 18 number (like Ether).
@@ -784,32 +796,30 @@ contract PrizeStrategy is PrizeStrategyStorage,
     require(rngRequest.lockBlock == 0 || block.number < rngRequest.lockBlock, "PrizeStrategy/rng-in-flight");
   }
 
-  function canStartAward() external view returns (bool) {
-    return _isPrizePeriodOver() && !isRngRequested();
+  modifier requireNotLocked() {
+    _requireNotLocked();
+    _;
   }
 
-  function canCompleteAward() external view returns (bool) {
-    return isRngRequested() && isRngCompleted();
+  modifier requireCanStartAward() {
+    require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
+    require(!isRngRequested(), "PrizeStrategy/rng-already-requested");
+    _;
   }
 
-  /// @notice Returns whether a random number has been requested
-  /// @return True if a random number has been requested, false otherwise.
-  function isRngRequested() public view returns (bool) {
-    return rngRequest.id != 0;
+  modifier requireCanCompleteAward() {
+    require(isRngRequested(), "PrizeStrategy/rng-not-requested");
+    require(isRngCompleted(), "PrizeStrategy/rng-not-complete");
+    _;
   }
 
-  /// @notice Returns whether the random number request has completed.
-  /// @return True if a random number request has completed, false otherwise.
-  function isRngCompleted() public view returns (bool) {
-    return rng.isRequestComplete(rngRequest.id);
+  modifier onlyPrizePool() {
+    require(_msgSender() == address(prizePool), "PrizeStrategy/only-prize-pool");
+    _;
   }
 
-  function getLastRngLockBlock() public view returns (uint32) {
-    return rngRequest.lockBlock;
-  }
-
-  function getLastRngRequestId() public view returns (uint32) {
-    return rngRequest.id;
+  function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
+    return BaseRelayRecipient._msgSender();
   }
 
   /// @notice Called by an ERC777 token after tokens have been received.

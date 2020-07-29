@@ -16,25 +16,34 @@ contract PrizeStrategyStorage {
     uint64 timestamp;
   }
 
-  mapping(address => Credit) internal creditBalances;
+  struct RngRequest {
+    uint32 id;
+    uint32 lockBlock;
+  }
 
+  // Contract Interfaces
   PrizePool public prizePool;
   GovernorInterface public governor;
   IERC20 public ticket;
   IERC20 public sponsorship;
   RNGInterface public rng;
 
+  // Current RNG Request
+  RngRequest internal rngRequest;
+
+  // EOA credit balances on collateral supplied to pool
+  mapping(address => Credit) internal creditBalances;
+
+  // EOA mapping for ticket-weighted odds
   SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
 
-  struct RngRequest {
-    uint32 id;
-    uint32 lockBlock;
-  }
-
+  // Prize period
   uint256 public prizePeriodSeconds;
   uint256 public prizePeriodStartedAt;
 
-  RngRequest internal rngRequest;
+  // Credit rate & Exit fee
+  uint256 public exitFeeMantissa;
+  uint256 public creditRateMantissa;
 
   // External tokens awarded as part of prize
   MappedSinglyLinkedList.Mapping internal externalErc20s;
@@ -43,8 +52,4 @@ contract PrizeStrategyStorage {
   // External NFT token IDs to be awarded
   //   NFT Address => TokenIds
   mapping (address => uint256[]) internal externalErc721TokenIds;
-
-  uint256 public exitFeeMantissa;
-
-  uint256 public creditRateMantissa;
 }
