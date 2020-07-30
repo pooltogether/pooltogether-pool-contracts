@@ -13,7 +13,7 @@ describe('PrizeStrategyProxyFactory', () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
     provider = buidler.ethers.provider
 
-    factory = await deployContract(wallet, PrizeStrategyProxyFactory, [])
+    factory = await deployContract(wallet, PrizeStrategyProxyFactory, [], { gasLimit: 20000000 })
     await factory.initialize()
   })
 

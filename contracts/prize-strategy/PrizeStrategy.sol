@@ -108,7 +108,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
       require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
     }
     externalErc20s.initialize(_externalErc20s);
-    externalErc721s.reset();
+    externalErc721s.initialize();
 
     emit ExitFeeUpdated(exitFeeMantissa);
     emit CreditRateUpdated(creditRateMantissa);
@@ -541,7 +541,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
         currentToken = externalErc721s.addressMap[currentToken];
       }
     }
-    externalErc721s.reset();
+    externalErc721s.clearAll();
   }
 
   /// @notice Returns the timestamp at which the prize period ends

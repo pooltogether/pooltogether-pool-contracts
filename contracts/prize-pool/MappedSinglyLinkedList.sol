@@ -39,6 +39,11 @@ library MappedSinglyLinkedList {
     self.count = self.count - 1;
   }
 
+  function initialize(Mapping storage self) internal {
+    self.addressMap[SENTINAL_TOKEN] = SENTINAL_TOKEN;
+    self.count = 0;
+  }
+
   function initialize(Mapping storage self, address[] memory addresses) internal {
     uint256 count = 0;
     self.addressMap[SENTINAL_TOKEN] = SENTINAL_TOKEN;
@@ -55,7 +60,7 @@ library MappedSinglyLinkedList {
     return addr != address(0) && self.addressMap[addr] != address(0);
   }
 
-  function reset(Mapping storage self) internal {
+  function clearAll(Mapping storage self) internal {
     address currentToken = self.addressMap[SENTINAL_TOKEN];
     while (currentToken != address(0) && currentToken != SENTINAL_TOKEN) {
       address nextToken = self.addressMap[currentToken];
