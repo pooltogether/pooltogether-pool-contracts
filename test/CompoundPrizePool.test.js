@@ -289,7 +289,7 @@ describe('CompoundPrizePool', function() {
       })
     })
 
-    describe.only('addControlledToken()', () => {
+    describe('addControlledToken()', () => {
       let newToken
 
       beforeEach(async () => {
