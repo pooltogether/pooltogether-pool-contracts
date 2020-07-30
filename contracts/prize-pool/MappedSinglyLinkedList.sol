@@ -56,7 +56,12 @@ library MappedSinglyLinkedList {
   }
 
   function reset(Mapping storage self) internal {
-    self.addressMap[SENTINAL_TOKEN] = SENTINAL_TOKEN;
+    address currentToken = self.addressMap[SENTINAL_TOKEN];
+    while (currentToken != address(0) && currentToken != SENTINAL_TOKEN) {
+      address nextToken = self.addressMap[currentToken];
+      self.addressMap[currentToken] = address(0);
+      currentToken = nextToken;
+    }
     self.count = 0;
   }
 }
