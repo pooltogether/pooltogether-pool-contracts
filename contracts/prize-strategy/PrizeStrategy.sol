@@ -108,7 +108,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
       require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
     }
     externalErc20s.initialize(_externalErc20s);
-    // externalErc721s.initialize([]);
+    externalErc721s.reset();
 
     emit ExitFeeUpdated(exitFeeMantissa);
     emit CreditRateUpdated(creditRateMantissa);

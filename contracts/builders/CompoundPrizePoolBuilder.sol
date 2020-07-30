@@ -23,7 +23,7 @@ contract CompoundPrizePoolBuilder is Initializable {
     uint256 maxTimelockDuration;
     uint256 exitFeeMantissa;
     uint256 creditRateMantissa;
-    address[] externalAwards;
+    address[] externalERC20Awards;
   }
 
   event CompoundPrizePoolCreated (
@@ -86,7 +86,7 @@ contract CompoundPrizePoolBuilder is Initializable {
       rng,
       config.exitFeeMantissa,
       config.creditRateMantissa,
-      config.externalAwards
+      config.externalERC20Awards
     );
 
     prizeStrategy.transferOwnership(msg.sender);

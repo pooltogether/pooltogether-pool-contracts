@@ -2,6 +2,7 @@
 const buidler = require("@nomiclabs/buidler")
 const ethers = require('ethers')
 const ERC20Mintable = require('../../../build/ERC20Mintable.json')
+const ERC721Mintable = require('../../../build/ERC721Mintable.json')
 const { expect } = require('chai')
 const { call } = require('../../helpers/call')
 const { deployTestPool } = require('../../../js/deployTestPool')
@@ -18,15 +19,17 @@ function PoolEnv() {
 
   this.overrides = { gasLimit: 40000000 }
 
-  this.createPool = async function ({ prizePeriodSeconds, exitFee, creditRate, externalAwards = [] }) {
+  this.createPool = async function ({ prizePeriodSeconds, exitFee, creditRate, externalERC20Awards = [] }) {
     this.wallets = await buidler.ethers.getSigners()
 
     const externalAwardAddresses = []
-    this.externalAwards = {}
-    for (var i = 0; i < externalAwards.length; i++) {
-      this.externalAwards[externalAwards[i]] = await deployContract(this.wallets[0], ERC20Mintable, [])
-      externalAwardAddresses.push(this.externalAwards[externalAwards[i]].address)
+    this.externalERC20Awards = {}
+    for (var i = 0; i < externalERC20Awards.length; i++) {
+      this.externalERC20Awards[externalERC20Awards[i]] = await deployContract(this.wallets[0], ERC20Mintable, [])
+      externalAwardAddresses.push(this.externalERC20Awards[externalERC20Awards[i]].address)
     }
+
+    this.externalErc721Award = await deployContract(this.wallets[0], ERC721Mintable, [])
 
     debug(`Fetched ${this.wallets.length} wallets`)
     debug(`Creating pool with prize period ${prizePeriodSeconds}...`)
@@ -38,7 +41,7 @@ function PoolEnv() {
       exitFee: toWei(exitFee),
       creditRate: toWei(creditRate),
       overrides: this.overrides,
-      externalAwards: externalAwardAddresses
+      externalERC20Awards: externalAwardAddresses
     })
     debug(`CompoundPrizePool created with address ${this.env.compoundPrizePool.address}`)
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
@@ -78,7 +81,7 @@ function PoolEnv() {
   }
 
   this.accrueExternalAwardAmount = async function ({ externalAward, amount }) {
-    await this.externalAwards[externalAward].mint(this.env.compoundPrizePool.address, toWei(amount))
+    await this.externalERC20Awards[externalAward].mint(this.env.compoundPrizePool.address, toWei(amount))
   }
 
   this.buyTickets = async function ({ user, tickets }) {
@@ -219,7 +222,7 @@ function PoolEnv() {
 
   this.expectUserToHaveExternalAwardAmount = async function ({ user, externalAward, amount }) {
     let wallet = await this.wallet(user)
-    expect(await this.externalAwards[externalAward].balanceOf(wallet._address)).to.equalish(toWei(amount), 300)
+    expect(await this.externalERC20Awards[externalAward].balanceOf(wallet._address)).to.equalish(toWei(amount), 300)
   }
 
   this.awardPrize = async function () {
@@ -287,6 +290,21 @@ function PoolEnv() {
     let wallet = await this.wallet(user)
     let ticket = await this.ticket(wallet)
     return fromWei(await ticket.balanceOf(wallet._address))
+  }
+
+  this.addExternalAwardERC721 = async function ({ user, tokenId }) {
+    let wallet = await this.wallet(user)
+    let prizePool = await this.prizePool(wallet)
+    let prizeStrategy = await this.prizeStrategy(wallet)
+
+    await this.externalErc721Award.mint(prizePool.address, tokenId)
+
+    await prizeStrategy.addExternalErc721Award(this.externalErc721Award.address, [tokenId])
+  }
+
+  this.expectUserToHaveExternalAwardToken = async function ({ user, tokenId }) {
+    let wallet = await this.wallet(user)
+    expect(await this.externalErc721Award.ownerOf(tokenId)).to.equal(wallet._address)
   }
 
 }

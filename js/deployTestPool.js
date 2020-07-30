@@ -21,7 +21,7 @@ async function deployTestPool({
   maxTimelockDuration,
   exitFee,
   creditRate,
-  externalAwards,
+  externalERC20Awards,
   overrides = { gasLimit: 20000000 }
 }) {
   let registry = await deploy1820(wallet)
@@ -80,7 +80,7 @@ async function deployTestPool({
     rng.address,
     exitFee || toWei('0.1'),
     creditRate || toWei('0.1').div(prizePeriodSeconds),
-    externalAwards
+    externalERC20Awards
   )
 
   debug("Addresses: \n", {
