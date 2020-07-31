@@ -1,4 +1,4 @@
-pragma solidity ^0.6.4;
+pragma solidity 0.6.4;
 
 /// @title Controlled ERC20 Token Interface
 /// @notice Required interface for Controlled ERC20 Tokens linked to a Prize Pool
