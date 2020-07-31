@@ -1,4 +1,5 @@
-const { deployContract, deployMockContract } = require('ethereum-waffle')
+const { deployContract } = require('ethereum-waffle')
+const { deployMockContract } = require('./helpers/deployMockContract')
 const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
 const PrizeStrategyInterface = require('../build/PrizeStrategyInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
@@ -68,6 +69,10 @@ describe('CompoundPrizePool', function() {
       it('should not allow uncontrolled tokens to call', async () => {
         await expect(prizePool.beforeTokenTransfer(wallet._address, wallet2._address, toWei('1')))
           .to.be.revertedWith('PrizePool/unknown-token')
+      })
+      it('should allow controlled tokens to call', async () => {
+        await prizeStrategy.mock.beforeTokenTransfer.withArgs(wallet._address, wallet2._address, toWei('1'), ticket.address).returns()
+        await ticket.call(prizePool, 'beforeTokenTransfer', wallet._address, wallet2._address, toWei('1'))
       })
     })
 
