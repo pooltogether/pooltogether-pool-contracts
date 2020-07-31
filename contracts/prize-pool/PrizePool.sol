@@ -93,8 +93,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
   mapping(address => uint256) internal timelockBalances;
   mapping(address => uint256) internal unlockTimestamps;
 
-  uint256 internal __awardBalance;
-
   /// @notice Initializes the Prize Pool with required contract connections
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
   /// @param _prizeStrategy Address of the component-controller that manages the prize-strategy
@@ -174,6 +172,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     return _canAwardExternal(_externalToken);
   }
 
+  /// @notice Deposits timelocked tokens for a user back into the Prize Pool as another asset.
+  /// @param to The address receiving the tokens
+  /// @param amount The amount of timelocked assets to re-deposit
+  /// @param controlledToken The type of token to be minted in exchange (i.e. tickets or sponsorship)
   function timelockDepositTo(
     address to,
     uint256 amount,
@@ -185,7 +187,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     nonReentrant
   {
     require(_hasPrizeStrategy(), "PrizePool/prize-strategy-detached");
-    _updateAwardBalance();
 
     address operator = _msgSender();
 
@@ -198,10 +199,11 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     emit TimelockDeposited(operator, to, controlledToken, amount);
   }
 
-  /// @notice Deposit assets into the Prize Pool to Purchase Tickets
-  /// @param to The address receiving the Tickets
-  /// @param amount The amount of assets to deposit to purchase tickets
-  /// @param controlledToken The address of the Asset Token being deposited
+  /// @notice Deposit assets into the Prize Pool in exchange for tokens
+  /// @param to The address receiving the newly minted tokens
+  /// @param amount The amount of assets to deposit
+  /// @param controlledToken The address of the type of token the user is minting
+  /// @param data Call data to be passed to the Prize Strategy
   function depositTo(
     address to,
     uint256 amount,
@@ -213,7 +215,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     nonReentrant
   {
     require(_hasPrizeStrategy(), "PrizePool/prize-strategy-detached");
-    _updateAwardBalance();
 
     address operator = _msgSender();
 
@@ -226,12 +227,12 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     emit Deposited(operator, to, controlledToken, amount);
   }
 
-  /// @notice Withdraw assets from the Prize Pool instantly by paying a Fairness fee if exiting early
-  /// @param from The address to withdraw assets from by redeeming tickets
-  /// @param amount The amount of assets to redeem for tickets
-  /// @param controlledToken The address of the asset token being withdrawn
-  /// @param sponsorAmount An optional amount of assets paid by the operator used to cover exit fees
-  /// @param maximumExitFee The maximum exit fee the user is willing to pay.  This should be pre-calculated
+  /// @notice Withdraw assets from the Prize Pool instantly.  A fairness fee may be charged for an early exit.
+  /// @param from The address to redeem tokens from.
+  /// @param amount The amount of tokens to redeem for assets.
+  /// @param controlledToken The address of the token to redeem (i.e. ticket or sponsorship)
+  /// @param sponsorAmount An optional amount of assets paid by the caller to cover exit fees
+  /// @param maximumExitFee The maximum exit fee the caller is willing to pay.  This can be pre-calculated.
   /// @return exitFee The amount of the fairness fee paid
   function withdrawInstantlyFrom(
     address from,
@@ -246,7 +247,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     onlyControlledToken(controlledToken)
     returns (uint256 exitFee)
   {
-    _updateAwardBalance();
 
     if (_hasPrizeStrategy()) {
       exitFee = limitExitFee(amount, prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken, data));
@@ -291,13 +291,12 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     return exitFee;
   }
 
-  /// @notice Withdraw assets from the Prize Pool with a timelock on the assets
-  /// @dev The timelock is used to ensure that the tickets have contributed their equal weight
-  /// in the Prize before being withdrawn, in order to prevent gaming the system
-  /// @param from The address to withdraw assets from by redeeming tickets
-  /// @param amount The amount of assets to redeem for tickets
-  /// @param controlledToken The address of the asset token being withdrawn
-  /// @return unlockTimestamp The unlock timestamp that the assets will be released upon
+  /// @notice Withdraw assets from the Prize Pool by placing them into the timelock.
+  /// @dev The timelock is used to ensure that the tickets have contributed their fair share of the prize.
+  /// @param from The address to withdraw from
+  /// @param amount The amount to withdraw
+  /// @param controlledToken The type of token being withdrawn
+  /// @return unlockTimestamp The timestamp after which the funds can be swept
   function withdrawWithTimelockFrom(
     address from,
     uint256 amount,
@@ -310,7 +309,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     returns (uint256 unlockTimestamp)
   {
     uint256 blockTime = _currentTime();
-    _updateAwardBalance();
 
     if (_hasPrizeStrategy()) {
       unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken, data);
@@ -350,10 +348,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     }
   }
 
-  /// @notice Updates the Prize Strategy when Tickets are transferred between holders
-  /// @param from The address the tickets are being transferred from
-  /// @param to The address the tickets are being transferred to
-  /// @param amount The amount of tickets being trasferred
+  /// @notice Updates the Prize Strategy when tokens are transferred between holders.  Only transfers, not minting or burning.
+  /// @param from The address the tokens are being transferred from
+  /// @param to The address the tokens are being transferred to
+  /// @param amount The amount of tokens being trasferred
   function beforeTokenTransfer(address from, address to, uint256 amount) external override onlyControlledToken(msg.sender) {
     // minting and redeeming are handled separately
     if (from != address(0) && to != address(0) && _hasPrizeStrategy()) {
@@ -361,24 +359,17 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     }
   }
 
-  /// @notice Pokes the current award balance of the Prize Pool
+  /// @notice Updates and returns the current prize.
   /// @dev Updates the internal rolling interest rate since the last poke
   /// @return award The total amount of assets to be awarded for the current prize
-  function awardBalance() external returns (uint256 award) {
-    _updateAwardBalance();
-    return __awardBalance;
-  }
-
-  /// @dev Calculates the current award balance based on the collateral & rolling interest rate
-  /// @dev The interest-index is the rolling or "accrued" exchange-rate on the unaccounted collateral since the last update.
-  function _updateAwardBalance() internal {
+  function awardBalance() public returns (uint256 award) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
     uint256 bal = _balance();
 
     if (bal > tokenTotalSupply) {
-      __awardBalance = bal.sub(tokenTotalSupply);
+      return bal.sub(tokenTotalSupply);
     } else {
-      __awardBalance = 0;
+      return 0;
     }
   }
 
@@ -399,9 +390,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
       return;
     }
 
-    _updateAwardBalance();
+    require(amount <= awardBalance(), "PrizePool/award-exceeds-avail");
     ControlledToken(controlledToken).controllerMint(to, amount);
-    __awardBalance = __awardBalance.sub(amount);
 
     emit Awarded(to, controlledToken, amount);
   }
@@ -456,7 +446,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     }
 
     _redeem(totalWithdrawal);
-
 
     BalanceChange[] memory changes = new BalanceChange[](users.length);
 
