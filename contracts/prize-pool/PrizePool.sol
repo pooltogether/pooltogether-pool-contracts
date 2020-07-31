@@ -284,7 +284,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
   /// @param from The address the tickets are being transferred from
   /// @param to The address the tickets are being transferred to
   /// @param amount The amount of tickets being trasferred
-  function beforeTokenTransfer(address from, address to, uint256 amount) external override {
+  function beforeTokenTransfer(address from, address to, uint256 amount) external override onlyControlledToken(msg.sender) {
     // minting and redeeming are handled separately
     if (from != address(0) && to != address(0) && _hasPrizeStrategy()) {
       prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
