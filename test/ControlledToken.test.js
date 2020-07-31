@@ -32,6 +32,30 @@ describe('ControlledToken', () => {
     )
   })
 
+  describe('controllerMint()', () => {
+    it('should allow the controller to mint tokens', async () => {
+      // allow all transfers
+      await controller.mock.beforeTokenTransfer.returns()
+
+      await controller.call(token, 'controllerMint', wallet._address, toWei('10'))
+
+      expect(await token.balanceOf(wallet._address)).to.equal(toWei('10'))
+    })
+  })
+
+  describe('controllerBurn()', () => {
+    it('should allow the controller to burn tokens', async () => {
+      // allow all transfers
+      await controller.mock.beforeTokenTransfer.returns()
+
+      await controller.call(token, 'controllerMint', wallet._address, toWei('10'))
+      expect(await token.balanceOf(wallet._address)).to.equal(toWei('10'))
+
+      await controller.call(token, 'controllerBurn', wallet._address, toWei('10'))
+      expect(await token.balanceOf(wallet._address)).to.equal('0')
+    })
+  })
+
   describe('controllerBurnFrom()', () => {
     it('should allow the controller to burn for someone', async () => {
       // allow all transfers

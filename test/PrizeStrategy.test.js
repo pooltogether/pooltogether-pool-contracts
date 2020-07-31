@@ -87,7 +87,7 @@ describe('PrizeStrategy', function() {
 
   describe('initialize()', () => {
     it('should set the params', async () => {
-      expect(await prizeStrategy.getTrustedForwarder()).to.equal(FORWARDER)
+      expect(await prizeStrategy.isTrustedForwarder(FORWARDER)).to.equal(true)
       expect(await prizeStrategy.comptroller()).to.equal(comptroller.address)
       expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(prizePeriodSeconds)
@@ -388,7 +388,7 @@ describe('PrizeStrategy', function() {
         .to.be.revertedWith('PrizeStrategy/unavailable-token')
     })
   })
-  
+
   describe('completeAward()', () => {
     it('should accrue credit to the winner', async () => {
       debug('Setting time')
@@ -420,7 +420,7 @@ describe('PrizeStrategy', function() {
       // rng is done
       await rng.mock.isRequestComplete.returns(true)
       await rng.mock.randomNumber.returns('0x6c00000000000000000000000000000000000000000000000000000000000000')
-      // draw winner      
+      // draw winner
       await ticket.mock.totalSupply.returns(toWei('10'))
 
       // 1 dai to give
@@ -428,7 +428,7 @@ describe('PrizeStrategy', function() {
 
       // no reserve
       await comptroller.mock.reserveRateMantissa.returns(Zero) // no reserve
-      
+
       await prizePool.mock.award.withArgs(wallet._address, toWei('1'), ticket.address).returns()
 
       debug('Completing award...')
