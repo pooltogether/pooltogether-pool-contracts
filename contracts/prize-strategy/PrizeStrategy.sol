@@ -12,9 +12,9 @@ import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 
 import "./PrizeStrategyStorage.sol";
+import "./PrizeStrategyInterface.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
-import "../prize-pool/PrizeStrategyInterface.sol";
 import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
 
