@@ -5,7 +5,7 @@ import "@nomiclabs/buidler/console.sol";
 
 import "../utils/ExtendedSafeCast.sol";
 import "../utils/UInt256Array.sol";
-import "../prize-pool/MappedSinglyLinkedList.sol";
+import "../utils/MappedSinglyLinkedList.sol";
 import "./VolumeDrip.sol";
 
 library VolumeDripManager {

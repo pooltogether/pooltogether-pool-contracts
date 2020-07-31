@@ -1,6 +1,6 @@
 pragma solidity ^0.6.4;
 
-import "../prize-pool/MappedSinglyLinkedList.sol";
+import "../utils/MappedSinglyLinkedList.sol";
 import "./BalanceDrip.sol";
 
 library BalanceDripManager {
@@ -21,8 +21,8 @@ library BalanceDripManager {
     uint256 measureTotalSupply,
     uint256 currentTime
   ) internal {
-    address currentDripToken = self.activeBalanceDrips[measure].addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
-    while (currentDripToken != address(0) && currentDripToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
+    address currentDripToken = self.activeBalanceDrips[measure].addressMap[MappedSinglyLinkedList.SENTINAL];
+    while (currentDripToken != address(0) && currentDripToken != MappedSinglyLinkedList.SENTINAL) {
       BalanceDrip.State storage dripState = self.balanceDrips[measure][currentDripToken];
       dripState.drip(
         user,
