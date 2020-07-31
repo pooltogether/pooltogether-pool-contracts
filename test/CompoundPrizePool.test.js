@@ -289,6 +289,31 @@ describe('CompoundPrizePool', function() {
       })
     })
 
+    describe('addControlledToken()', () => {
+      let newToken
+
+      beforeEach(async () => {
+        newToken = await deployMockContract(wallet, ControlledToken.abi, overrides)
+      })
+
+      it('should allow owner to add controlled tokens', async () => {
+        await newToken.mock.controller.returns(prizePool.address)
+        await expect(prizePool.addControlledToken(newToken.address))
+          .to.not.be.revertedWith('PrizePool/token-ctrlr-mismatch')
+      })
+
+      it('should not allow adding uncontrolled tokens', async () => {
+        await newToken.mock.controller.returns(newToken.address)
+        await expect(prizePool.addControlledToken(newToken.address))
+          .to.be.revertedWith('PrizePool/token-ctrlr-mismatch')
+      })
+
+      it('should not allow anyone else to call', async () => {
+        await expect(prizePool.connect(wallet2).addControlledToken(newToken.address))
+          .to.be.revertedWith('Ownable: caller is not the owner')
+      })
+    })
+
     describe('detachPrizeStrategy()', () => {
       it('should allow owner to detach', async () => {
         await prizePool.detachPrizeStrategy()

@@ -421,6 +421,13 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
     }
   }
 
+  /// @notice Allows the Governor to add Controlled Tokens to the Prize Pool
+  /// @param _controlledToken The address of the Controlled Token to add
+  function addControlledToken(address _controlledToken) external onlyOwner {
+    require(ControlledToken(_controlledToken).controller() == this, "PrizePool/token-ctrlr-mismatch");
+    _tokens.addAddress(_controlledToken);
+  }
+
   /// @notice Emergency shutdown of the Prize Pool by detaching the Prize Strategy
   /// @dev Called by the PrizeStrategy contract to issue an Emergency Shutdown of a corrupted Prize Strategy
   function detachPrizeStrategy() external onlyOwner {
