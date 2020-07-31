@@ -743,10 +743,20 @@ contract PrizeStrategy is PrizeStrategyStorage,
       _awardAllExternalTokens(winner);
     }
 
-    prizePeriodStartedAt = _currentTime();
+    // to avoid clock drift, we should calculate the start time based on the previous period start time.
+    prizePeriodStartedAt = _calculateNextPrizePeriodStartTime(_currentTime());
 
     emit PrizePoolAwarded(_msgSender(), randomNumber, prize, reserveFee);
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
+  }
+
+  function _calculateNextPrizePeriodStartTime(uint256 currentTime) internal view returns (uint256) {
+    uint256 elapsedPeriods = currentTime.sub(prizePeriodStartedAt).div(prizePeriodSeconds);
+    return prizePeriodStartedAt.add(elapsedPeriods.mul(prizePeriodSeconds));
+  }
+
+  function calculateNextPrizePeriodStartTime(uint256 currentTime) external view returns (uint256) {
+    return _calculateNextPrizePeriodStartTime(currentTime);
   }
 
   /// @notice Returns whether an award process can be started

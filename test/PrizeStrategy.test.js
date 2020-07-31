@@ -433,14 +433,35 @@ describe('PrizeStrategy', function() {
 
       debug('Completing award...')
 
+      let startedAt = await prizeStrategy.prizePeriodStartedAt();
+
       // complete the award
       await prizeStrategy.completeAward()
 
       // ensure new balance is correct
       await ticket.mock.balanceOf.returns(toWei('11'))
 
+      expect(await prizeStrategy.prizePeriodStartedAt()).to.equal(startedAt.add(prizePeriodSeconds))
+
       expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal(toWei('1.1'))
 
+    })
+  })
+
+  describe('calculateNextPrizePeriodStartTime()', () => {
+    it('should always sync to the last period start time', async () => {
+      let startedAt = await prizeStrategy.prizePeriodStartedAt();
+      expect(await prizeStrategy.calculateNextPrizePeriodStartTime(startedAt.add(prizePeriodSeconds * 14))).to.equal(startedAt.add(prizePeriodSeconds * 14))
+    })
+
+    it('should return the current if it is within', async () => {
+      let startedAt = await prizeStrategy.prizePeriodStartedAt();
+      expect(await prizeStrategy.calculateNextPrizePeriodStartTime(startedAt.add(prizePeriodSeconds / 2))).to.equal(startedAt)
+    })
+
+    it('should return the next if it is after', async () => {
+      let startedAt = await prizeStrategy.prizePeriodStartedAt();
+      expect(await prizeStrategy.calculateNextPrizePeriodStartTime(startedAt.add(parseInt(prizePeriodSeconds * 1.5)))).to.equal(startedAt.add(prizePeriodSeconds))
     })
   })
 });
