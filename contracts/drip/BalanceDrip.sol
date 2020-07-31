@@ -4,7 +4,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-import "@nomiclabs/buidler/console.sol";
 
 library BalanceDrip {
   using SafeMath for uint256;
@@ -43,10 +42,9 @@ library BalanceDrip {
       uint256 newTokens = newSeconds.mul(self.dripRatePerSecond);
       uint256 indexDeltaMantissa = measureTotalSupply > 0 ? FixedPoint.calculateMantissa(newTokens, measureTotalSupply) : 0;
       self.exchangeRateMantissa = uint256(self.exchangeRateMantissa).add(indexDeltaMantissa).toUint128();
-      self.timestamp = timestamp.toUint32();
-    } else {
-      self.timestamp = timestamp.toUint32();
     }
+
+    self.timestamp = timestamp.toUint32();
   }
 
   function drip(

@@ -3,7 +3,6 @@ pragma solidity ^0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-import "@nomiclabs/buidler/console.sol";
 
 import "../utils/ExtendedSafeCast.sol";
 
@@ -66,9 +65,7 @@ library VolumeDrip {
     internal view
     returns (uint256)
   {
-    // first let's check to see if the previous period has completed
     if (depositPeriod < _currentPeriodIndex(self) && self.periods[depositPeriod].totalSupply > 0) {
-      // claim their past period
       uint256 fractionMantissa = FixedPoint.calculateMantissa(balance, self.periods[depositPeriod].totalSupply);
       return FixedPoint.multiplyUintByMantissa(self.dripAmount, fractionMantissa);
     }
@@ -77,13 +74,11 @@ library VolumeDrip {
   }
 
   function mint(State storage self, address user, uint256 amount, uint256 currentTime) internal {
-    // console.log("mint() mint %s to %s at %s", amount, user, currentTime);
     if (isPeriodOver(self, currentTime)) {
       completePeriod(self, currentTime);
     }
     uint256 accrued = calculateAccrued(self, self.deposits[user].period, self.deposits[user].balance);
     uint16 currentPeriod = _currentPeriodIndex(self);
-    // console.log("mint() currentPeriod: %s", currentPeriod);
     if (accrued > 0) {
       self.deposits[user] = Deposit({
         balance: amount.toUint112(),
@@ -98,25 +93,19 @@ library VolumeDrip {
       });
     }
     self.periods[currentPeriod].totalSupply = uint256(self.periods[currentPeriod].totalSupply).add(amount).toUint128();
-    // console.log("mint() totalSupply: %s", self.periods[currentPeriod].totalSupply);
   }
 
   function balanceOf(State storage self, address user, uint256 currentTime) internal returns (Deposit memory) {
-    // console.log("balanceOf() user and currentTime: %s, %s", user, currentTime);
     if (isPeriodOver(self, currentTime)) {
-      // console.log("balanceOf() period is over");
       completePeriod(self, currentTime);
     }
-    // console.log("balanceOf() period / balance: %s / %s", self.deposits[user].period, self.deposits[user].balance);
     uint256 accrued = calculateAccrued(self, self.deposits[user].period, self.deposits[user].balance);
-    // console.log("balanceOf() accrued: %s", accrued);
     uint112 newBalance;
     if (accrued > 0) {
       newBalance = 0;
     } else {
       newBalance = self.deposits[user].balance;
     }
-    // console.log("VolumeDrip balanceOf(): newBalance: %s", newBalance);
     accrued = accrued.add(self.deposits[user].accrued);
     return Deposit({
       balance: newBalance,
@@ -127,9 +116,6 @@ library VolumeDrip {
 
   function burnDrip(State storage self, address user, uint256 currentTime) internal returns (uint256 accrued) {
     Deposit memory deposit = balanceOf(self, user, currentTime);
-    // console.log("burnDrip balance of %s is %s for period %s", user, deposit.balance, deposit.period);
-    // console.log("current time: %s", currentTime);
-    // console.log("period start: %s", self.periods[_currentPeriodIndex(self)].startTime);
     accrued = deposit.accrued;
     deposit.accrued = 0;
     self.deposits[user] = deposit;

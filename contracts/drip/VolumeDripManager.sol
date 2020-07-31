@@ -1,7 +1,6 @@
 pragma solidity ^0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
-import "@nomiclabs/buidler/console.sol";
 
 import "../utils/ExtendedSafeCast.sol";
 import "../utils/UInt256Array.sol";

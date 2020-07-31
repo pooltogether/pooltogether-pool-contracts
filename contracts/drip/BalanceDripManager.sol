@@ -35,7 +35,7 @@ library BalanceDripManager {
   }
 
   function addDrip(State storage self, address measure, address dripToken, uint256 dripRatePerSecond, uint256 currentTime) internal {
-    require(!self.activeBalanceDrips[measure].contains(dripToken), "DripManager/drip-exists");
+    require(!self.activeBalanceDrips[measure].contains(dripToken), "BalanceDripManager/drip-exists");
     if (self.activeBalanceDrips[measure].count == 0) {
       address[] memory single = new address[](1);
       single[0] = dripToken;
@@ -60,7 +60,7 @@ library BalanceDripManager {
   }
 
   function setDripRate(State storage self, address measure, address dripToken, uint256 dripRatePerSecond) internal {
-    require(self.activeBalanceDrips[measure].contains(dripToken), "DripManager/drip-not-exists");
+    require(self.activeBalanceDrips[measure].contains(dripToken), "BalanceDripManager/drip-not-exists");
     self.balanceDrips[measure][dripToken].dripRatePerSecond = dripRatePerSecond;
   }
 
@@ -92,23 +92,4 @@ library BalanceDripManager {
     require(IERC20(dripToken).transfer(user, balance), "BalanceDripManager/transfer-failed");
     return balance;
   }
-
-  function batchClaimDripTokens(State storage self, address user, address[] memory measures, address dripToken) internal {
-    uint256 availableSupply = IERC20(dripToken).balanceOf(address(this));
-    uint256 burnedBalance;
-    for (uint256 i = 0; i < measures.length; i++) {
-      if (burnedBalance >= availableSupply) {
-        break;
-      }
-      BalanceDrip.State storage dripState = self.balanceDrips[measures[i]][dripToken];
-      uint256 balance = dripState.userStates[user].dripBalance;
-      if (burnedBalance.add(balance) > availableSupply) {
-        balance = availableSupply.sub(burnedBalance);
-      }
-      burnedBalance = burnedBalance.add(balance);
-      dripState.burnDrip(user, balance);
-    }
-    IERC20(dripToken).transfer(user, burnedBalance);
-  }
-
 }
