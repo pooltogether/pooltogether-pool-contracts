@@ -1,13 +1,13 @@
 pragma solidity 0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
-import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 
+import "../utils/RelayRecipient.sol";
 import "./TokenControllerInterface.sol";
 
 /// @title Controlled ERC20 Token
 /// @notice ERC20 Tokens with a controller for minting & burning
-contract ControlledToken is ERC20UpgradeSafe, BaseRelayRecipient {
+contract ControlledToken is ERC20UpgradeSafe, RelayRecipient {
 
   /// @notice Interface to the contract responsible for controlling mint/burn
   TokenControllerInterface public controller;

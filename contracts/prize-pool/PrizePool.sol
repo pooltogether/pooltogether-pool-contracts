@@ -3,18 +3,18 @@ pragma solidity 0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
-import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "../prize-strategy/PrizeStrategyInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
+import "../utils/RelayRecipient.sol";
 
 /// @title Base Prize Pool for managing escrowed assets
 /// @notice Manages depositing and withdrawing assets from the Prize Pool
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
-abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
+abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
   using SafeMath for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
