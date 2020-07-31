@@ -4,12 +4,10 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-import "@pooltogether/governor-contracts/contracts/GovernorInterface.sol";
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 
@@ -26,8 +24,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
                           OwnableUpgradeSafe,
                           BaseRelayRecipient,
                           ReentrancyGuardUpgradeSafe,
-                          PrizeStrategyInterface,
-                          IERC777Recipient {
+                          PrizeStrategyInterface {
 
   using SafeMath for uint256;
   using SafeCast for uint256;
@@ -71,23 +68,20 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   function initialize (
     address _trustedForwarder,
-    GovernorInterface _governor,
+    ComptrollerInterface _comptroller,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
     address _ticket,
     address _sponsorship,
     RNGInterface _rng,
-    uint256 _exitFeeMantissa,
-    uint256 _creditRateMantissa,
     address[] memory _externalErc20s
   ) public initializer {
-    require(address(_governor) != address(0), "PrizeStrategy/governor-not-zero");
+    require(address(_comptroller) != address(0), "PrizeStrategy/comptroller-not-zero");
     require(_prizePeriodSeconds > 0, "PrizeStrategy/prize-period-greater-than-zero");
     require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-zero");
     require(address(_ticket) != address(0), "PrizeStrategy/ticket-not-zero");
     require(address(_sponsorship) != address(0), "PrizeStrategy/sponsorship-not-zero");
     require(address(_rng) != address(0), "PrizeStrategy/rng-not-zero");
-    governor = _governor;
     prizePool = _prizePool;
     ticket = IERC20(_ticket);
     rng = _rng;
@@ -96,13 +90,19 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
     __Ownable_init();
     __ReentrancyGuard_init();
+    comptroller = _comptroller;
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = _currentTime();
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
-    exitFeeMantissa = _exitFeeMantissa;
-    creditRateMantissa = _creditRateMantissa;
+    externalErc20s.initialize(_externalErc20s);
+    for (uint256 i = 0; i < _externalErc20s.length; i++) {
+      require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
+    }
+
+    exitFeeMantissa = 0.1 ether;
+    creditRateMantissa = exitFeeMantissa.div(prizePeriodSeconds);
 
     for (uint256 i = 0; i < _externalErc20s.length; i++) {
       require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
@@ -200,7 +200,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function beforeWithdrawInstantlyFrom(
     address from,
     uint256 amount,
-    address controlledToken
+    address controlledToken,
+    bytes calldata
   )
     external
     override
@@ -258,7 +259,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function beforeWithdrawWithTimelockFrom(
     address user,
     uint256 amount,
-    address controlledToken
+    address controlledToken,
+    bytes calldata
   )
     external
     override
@@ -412,10 +414,11 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param amount The prize amount
   /// @return The size of the reserve portion of the prize
   function _calculateReserveFee(uint256 amount) internal view returns (uint256) {
-    if (governor.reserve() == address(0) || governor.reserveFeeMantissa() == 0) {
+    uint256 reserveRateMantissa = comptroller.reserveRateMantissa();
+    if (reserveRateMantissa == 0) {
       return 0;
     }
-    return FixedPoint.multiplyUintByMantissa(amount, governor.reserveFeeMantissa());
+    return FixedPoint.multiplyUintByMantissa(amount, reserveRateMantissa);
   }
 
   /// @notice Estimates the prize size using the default ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA
@@ -502,7 +505,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function _awardTickets(address user, uint256 amount) internal {
     _accrueCredit(user, ticket.balanceOf(user));
     uint256 creditEarned = _calculateEarlyExitFee(amount);
-    creditBalances[user].balance = uint256(creditBalances[user].balance).add(uint256(creditEarned)).toUint128();
+    creditBalances[user].balance = uint256(creditBalances[user].balance).add(creditEarned).toUint128();
     prizePool.award(user, amount, address(ticket));
   }
 
@@ -522,8 +525,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
       uint256 balance = IERC20(currentToken).balanceOf(address(prizePool));
       if (balance > 0) {
         prizePool.awardExternalERC20(winner, currentToken, balance);
-        currentToken = externalErc20s.addressMap[currentToken];
       }
+      currentToken = externalErc20s.addressMap[currentToken];
     }
   }
 
@@ -538,8 +541,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
       if (balance > 0) {
         prizePool.awardExternalERC721(winner, currentToken, externalErc721TokenIds[currentToken]);
         delete externalErc721TokenIds[currentToken];
-        currentToken = externalErc721s.addressMap[currentToken];
       }
+      currentToken = externalErc721s.addressMap[currentToken];
     }
     externalErc721s.clearAll();
   }
@@ -582,8 +585,18 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param to The user who deposited collateral
   /// @param amount The amount of collateral they deposited
   /// @param controlledToken The type of collateral they deposited
-  function afterDepositTo(address to, uint256 amount, address controlledToken) external override onlyPrizePool requireNotLocked {
-    _afterDepositTo(to, amount, controlledToken);
+  function afterDepositTo(
+    address to,
+    uint256 amount,
+    address controlledToken,
+    bytes calldata data
+  )
+    external
+    override
+    onlyPrizePool
+    requireNotLocked
+  {
+    _afterDepositTo(to, amount, controlledToken, data);
   }
 
   /// @notice Called by the prize pool after a deposit has been made.
@@ -594,35 +607,58 @@ contract PrizeStrategy is PrizeStrategyStorage,
     address,
     address to,
     uint256 amount,
-    address controlledToken
+    address controlledToken,
+    bytes calldata
   )
     external
     override
     onlyPrizePool
     requireNotLocked
   {
-    _afterDepositTo(to, amount, controlledToken);
+    _afterDepositTo(to, amount, controlledToken, "");
   }
 
   /// @notice Called by the prize pool after a deposit has been made.
   /// @param to The user who deposited collateral
   /// @param amount The amount of collateral they deposited
   /// @param controlledToken The type of collateral they deposited
-  function _afterDepositTo(address to, uint256 amount, address controlledToken) internal {
+  function _afterDepositTo(address to, uint256 amount, address controlledToken, bytes memory data) internal {
+    uint256 balance = IERC20(controlledToken).balanceOf(to);
+    uint256 oldBalance = balance.sub(amount);
+    uint256 totalSupply = IERC20(controlledToken).totalSupply();
+
+    address referrer;
+    if (data.length > 0) {
+      (address ref) = abi.decode(data, (address));
+      referrer = ref;
+    }
+
+    comptroller.afterDepositTo(to, amount, balance, totalSupply, controlledToken, referrer);
+
     if (controlledToken == address(ticket)) {
-      uint256 toBalance = ticket.balanceOf(to);
-      _accrueCredit(to, toBalance.sub(amount));
-      sortitionSumTrees.set(TREE_KEY, toBalance, bytes32(uint256(to)));
+      _accrueCredit(to, oldBalance);
+      sortitionSumTrees.set(TREE_KEY, balance, bytes32(uint256(to)));
     }
   }
 
   /// @notice Called by the prize pool after a withdrawal with timelock has been made.
   /// @param from The user who withdrew
   /// @param controlledToken The type of collateral that was withdrawn
-  function afterWithdrawWithTimelockFrom(address from, uint256, address controlledToken) external override onlyPrizePool requireNotLocked {
+  function afterWithdrawWithTimelockFrom(
+    address from,
+    uint256 amount,
+    address controlledToken,
+    bytes calldata
+  )
+    external
+    override
+    onlyPrizePool
+    requireNotLocked
+  {
+    uint256 balance = IERC20(controlledToken).balanceOf(from);
+    comptroller.afterWithdrawFrom(from, amount, balance, IERC20(controlledToken).totalSupply(), controlledToken);
     if (controlledToken == address(ticket)) {
-      uint256 fromBalance = ticket.balanceOf(from);
-      sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));
+      sortitionSumTrees.set(TREE_KEY, balance, bytes32(uint256(from)));
     }
   }
 
@@ -632,19 +668,21 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function afterWithdrawInstantlyFrom(
     address,
     address from,
-    uint256,
+    uint256 amount,
     address controlledToken,
     uint256,
-    uint256
+    uint256,
+    bytes calldata
   )
     external
     override
     onlyPrizePool
     requireNotLocked
   {
+    uint256 balance = IERC20(controlledToken).balanceOf(from);
+    comptroller.afterWithdrawFrom(from, amount, balance, IERC20(controlledToken).totalSupply(), controlledToken);
     if (controlledToken == address(ticket)) {
-      uint256 fromBalance = ticket.balanceOf(from);
-      sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));
+      sortitionSumTrees.set(TREE_KEY, balance, bytes32(uint256(from)));
     }
   }
 
@@ -659,6 +697,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @return The current time (block.timestamp)
   function _currentTime() internal virtual view returns (uint256) {
     return block.timestamp;
+  }
+
+  /// @notice returns the current time.  Used for testing.
+  /// @return The current time (block.timestamp)
+  function _currentBlock() internal virtual view returns (uint256) {
+    return block.number;
   }
 
   /// @notice Returns the credit balance for a given user.  Not that this includes both minted credit and pending credit.
@@ -690,7 +734,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     delete rngRequest;
 
     if (reserveFee > 0) {
-      _awardSponsorship(governor.reserve(), reserveFee);
+      _awardSponsorship(address(comptroller), reserveFee);
     }
 
     address winner = draw(randomNumber);
@@ -820,17 +864,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
     return BaseRelayRecipient._msgSender();
-  }
-
-  /// @notice Called by an ERC777 token after tokens have been received.
-  function tokensReceived(
-    address operator,
-    address from,
-    address to,
-    uint256 amount,
-    bytes calldata userData,
-    bytes calldata operatorData
-  ) external override {
   }
 
 }

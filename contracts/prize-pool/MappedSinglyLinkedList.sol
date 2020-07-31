@@ -52,8 +52,9 @@ library MappedSinglyLinkedList {
       self.addressMap[SENTINAL_TOKEN] = addresses[i];
       count += 1;
     }
-    // console.log("sentinal initialized to %s", self.addressMap[SENTINAL_TOKEN]);
-    self.count = count;
+    if (count > 0) {
+      self.count = count;
+    }
   }
 
   function contains(Mapping storage self, address addr) internal view returns (bool) {

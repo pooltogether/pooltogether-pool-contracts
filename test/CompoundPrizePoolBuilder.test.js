@@ -19,7 +19,7 @@ describe('CompoundPrizePoolBuilder', () => {
 
   describe('initialize()', () => {
     it('should setup all factories', async () => {
-      expect(await builder.governor()).to.equal(env.governor.address)
+      expect(await builder.comptroller()).to.equal(env.comptroller.address)
       expect(await builder.prizeStrategyProxyFactory()).to.equal(env.prizeStrategyProxyFactory.address)
       expect(await builder.trustedForwarder()).to.equal(env.forwarder.address)
       expect(await builder.compoundPrizePoolProxyFactory()).to.equal(env.compoundPrizePoolProxyFactory.address)

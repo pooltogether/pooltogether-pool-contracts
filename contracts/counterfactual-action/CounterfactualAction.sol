@@ -4,11 +4,11 @@ import "../prize-pool/PrizePool.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
 contract CounterfactualAction {
-  function depositTo(address payable user, PrizePool prizePool, address output) external {
+  function depositTo(address payable user, PrizePool prizePool, address output, bytes calldata data) external {
     IERC20 token = prizePool.token();
     uint256 amount = token.balanceOf(address(this));
     token.approve(address(prizePool), amount);
-    prizePool.depositTo(user, amount, output);
+    prizePool.depositTo(user, amount, output, data);
     selfdestruct(user);
   }
 

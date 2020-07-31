@@ -35,7 +35,8 @@ module.exports = {
     },
     local: {
       url: 'http://127.0.0.1:' + process.env.LOCAL_BUIDLEREVM_PORT || '8545',
-      blockGasLimit: 200000000
+      blockGasLimit: 200000000,
+      allowUnlimitedContractSize: true
     }
   },
   gasReporter: {

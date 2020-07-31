@@ -45,7 +45,7 @@ program
 
     await migration.migrate(7, async () => {
       if (program.network == 'local') {
-        runShell(`oz deploy -n ${program.network} -k regular MockGovernor`)
+        runShell(`oz deploy -n ${program.network} -k regular MockComptroller`)
       }
     })
 
@@ -67,7 +67,7 @@ program
     } else {
       context = await buildContext({ network: program.network, address: program.address })
       trustedForwarder = context.networkFile.data.proxies['PoolTogether3/Forwarder'][0].address
-      governor = context.networkFile.data.proxies['PoolTogether3/MockGovernor'][0].address
+      governor = context.networkFile.data.proxies['PoolTogether3/MockComptroller'][0].address
       rng = context.networkFile.data.proxies['PoolTogether3/RNGServiceMock'][0].address
     }
 
