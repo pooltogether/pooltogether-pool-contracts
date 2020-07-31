@@ -60,7 +60,7 @@ describe('CompoundPrizePool', function() {
     describe("beforeTokenTransfer()", () => {
       it('should not allow uncontrolled tokens to call', async () => {
         await expect(prizePool.beforeTokenTransfer(wallet._address, wallet2._address, toWei('1')))
-          .to.be.revertedWith('PrizePool/uncontrolled-token')
+          .to.be.revertedWith('PrizePool/unknown-token')
       })
     })
 
