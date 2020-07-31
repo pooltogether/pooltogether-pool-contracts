@@ -35,8 +35,6 @@ describe('CompoundPrizePool', function() {
 
   let ticket, sponsorship
 
-  let maxTimelockDuration = 1000
-
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
     debug(`using wallet ${wallet._address}`)
@@ -135,16 +133,16 @@ describe('CompoundPrizePool', function() {
         await cToken.mock.balanceOfUnderlying.returns('0')
         await ticket.mock.totalSupply.returns('0')
 
-        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
+        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address, []).returns(toWei('1'))
         await ticket.mock.controllerBurnFrom.withArgs(wallet2._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(amount.sub(halfFee)).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, amount.sub(halfFee)).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet2._address, wallet._address, amount, ticket.address, toWei('1'), halfFee).returns()
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet2._address, wallet._address, amount, ticket.address, toWei('1'), halfFee, []).returns()
 
         // expect sponsor fee transfer
         await erc20token.mock.transferFrom.withArgs(wallet2._address, prizePool.address, halfFee).returns(true)
 
-        await expect(prizePool.connect(wallet2).withdrawInstantlyFrom(wallet._address, amount, ticket.address, halfFee, toWei('1')))
+        await expect(prizePool.connect(wallet2).withdrawInstantlyFrom(wallet._address, amount, ticket.address, halfFee, toWei('1'), []))
           .to.emit(prizePool, 'InstantWithdrawal')
           .withArgs(wallet2._address, wallet._address, ticket.address, amount, toWei('1'), halfFee)
       })
@@ -157,16 +155,16 @@ describe('CompoundPrizePool', function() {
         await cToken.mock.balanceOfUnderlying.returns('0')
         await ticket.mock.totalSupply.returns('0')
 
-        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
+        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address, []).returns(toWei('1'))
         await ticket.mock.controllerBurnFrom.withArgs(wallet2._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(amount.sub(halfFee)).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, amount.sub(halfFee)).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet2._address, wallet._address, amount, ticket.address, toWei('1'), halfFee).returns()
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet2._address, wallet._address, amount, ticket.address, toWei('1'), halfFee, []).returns()
 
         // expect sponsor fee transfer
         await erc20token.mock.transferFrom.withArgs(wallet2._address, prizePool.address, halfFee).returns(true)
 
-        await expect(prizePool.connect(wallet2).withdrawInstantlyFrom(wallet._address, amount, ticket.address, halfFee, toWei('1')))
+        await expect(prizePool.connect(wallet2).withdrawInstantlyFrom(wallet._address, amount, ticket.address, halfFee, toWei('1'), []))
           .to.emit(prizePool, 'InstantWithdrawal')
           .withArgs(wallet2._address, wallet._address, ticket.address, amount, toWei('1'), halfFee)
       })
@@ -234,14 +232,14 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.totalSupply.returns('0')
 
         // excessive exit fee from prize-strategy
-        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address).returns(toWei('100'))
+        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address, []).returns(toWei('100'))
 
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0', []).returns()
 
-        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('0.3')))
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('0.3'), []))
           .to.be.revertedWith('PrizePool/exit-fee-exceeds-user-maximum')
       })
 
@@ -253,17 +251,17 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.totalSupply.returns('0')
 
         // excessive exit fee from prize-strategy
-        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address).returns(toWei('100'))
+        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address, []).returns(toWei('100'))
 
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0', []).returns()
 
         // PrizeStrategy exit fee: 100.0
         // PrizePool max exit fee: 5.5  (should be capped at this)
         // User max exit fee:      5.6
-        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('5.6')))
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('5.6'), []))
           .to.not.be.revertedWith('PrizePool/exit-fee-exceeds-user-maximum')
       })
     })
@@ -307,7 +305,7 @@ describe('CompoundPrizePool', function() {
         // ensure withdraw is later than now
         await prizeStrategy.mock.beforeWithdrawWithTimelockFrom
           .withArgs(wallet._address, toWei('10'), ticket.address, [])
-          .returns(maxTimelockDuration * 2) // 20000 is double the 10000 limit
+          .returns(20000) // 20000 is double the 10000 limit
 
         // expect a ticket burn
         await ticket.mock.controllerBurnFrom
@@ -323,7 +321,7 @@ describe('CompoundPrizePool', function() {
         await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('10'), ticket.address, [])
 
         expect(await prizePool.timelockBalanceOf(wallet._address)).to.equal(toWei('10'))
-        expect(await prizePool.timelockBalanceAvailableAt(wallet._address)).to.equal(1001) // current time + 1000
+        expect(await prizePool.timelockBalanceAvailableAt(wallet._address)).to.equal(10001) // current time + 10000
         expect(await prizePool.timelockTotalSupply()).to.equal(toWei('10'))
       })
 
@@ -339,17 +337,17 @@ describe('CompoundPrizePool', function() {
 
         // excessive timelock from prize-strategy
         await prizeStrategy.mock.beforeWithdrawWithTimelockFrom
-          .withArgs(wallet._address, toWei('10'), ticket.address)
+          .withArgs(wallet._address, toWei('10'), ticket.address, [])
           .returns(poolMaxTimelockDuration * 10)
 
         // expect a ticket burn
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, toWei('10')).returns()
 
         // expect finish
-        await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('10'), ticket.address).returns()
+        await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('10'), ticket.address, []).returns()
 
         // setup timelocked withdrawal
-        await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('10'), ticket.address)
+        await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('10'), ticket.address, [])
 
         expect(await prizePool.timelockBalanceOf(wallet._address)).to.equal(toWei('10'))
         expect(await prizePool.timelockBalanceAvailableAt(wallet._address)).to.equal(poolMaxTimelockDuration + currentTime)
@@ -368,17 +366,17 @@ describe('CompoundPrizePool', function() {
 
         // excessive timelock from prize-strategy
         await prizeStrategy.mock.beforeWithdrawWithTimelockFrom
-          .withArgs(wallet._address, toWei('10'), ticket.address)
+          .withArgs(wallet._address, toWei('10'), ticket.address, [])
           .returns(poolMaxTimelockDuration * 10)
 
         // expect a ticket burn
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, toWei('10')).returns()
 
         // expect finish
-        await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('10'), ticket.address).returns()
+        await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, toWei('10'), ticket.address, []).returns()
 
         // setup timelocked withdrawal
-        await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('10'), ticket.address)
+        await prizePool.withdrawWithTimelockFrom(wallet._address, toWei('10'), ticket.address, [])
 
         expect(await prizePool.timelockBalanceOf(wallet._address)).to.equal(toWei('10'))
         expect(await prizePool.timelockBalanceAvailableAt(wallet._address)).to.equal(poolMaxTimelockDuration + currentTime)
