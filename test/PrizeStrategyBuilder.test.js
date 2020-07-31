@@ -6,7 +6,7 @@ const { ethers } = require('ethers')
 const toWei = ethers.utils.parseEther
 
 describe('CompoundPrizePoolBuilder', () => {
-  
+
   let wallet, env
 
   let builder
@@ -41,7 +41,7 @@ describe('CompoundPrizePoolBuilder', () => {
         maxTimelockDuration: 1000,
         exitFeeMantissa: toWei('0.1'),
         creditRateMantissa: toWei('0.001'),
-        externalAwards: []
+        externalERC20Awards: []
       }
       let tx = await builder.create(config)
       let receipt = await buidler.ethers.provider.getTransactionReceipt(tx.hash)
@@ -54,7 +54,7 @@ describe('CompoundPrizePoolBuilder', () => {
 
       expect(await prizePool.cToken()).to.equal(config.cToken)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(config.prizePeriodSeconds)
-      
+
       let ticket = await buidler.ethers.getContractAt('ControlledToken', await prizeStrategy.ticket(), wallet)
       expect(await ticket.name()).to.equal(config.ticketName)
       expect(await ticket.symbol()).to.equal(config.ticketSymbol)

@@ -7,6 +7,7 @@ const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
 const IERC20 = require('../build/IERC20.json')
+const IERC721 = require('../build/IERC721.json')
 const ControlledToken = require('../build/ControlledToken.json')
 
 const { expect } = require('chai')
@@ -22,7 +23,9 @@ let overrides = { gasLimit: 20000000 }
 describe('PrizeStrategy', function() {
   let wallet, wallet2
 
-  let registry, governor, prizePool, prizeStrategy, token, externalAward
+  let registry, governor, prizePool, prizeStrategy, token
+
+  let externalERC20Award, externalERC721Award
 
   let ticket, sponsorship, rng
 
@@ -30,6 +33,8 @@ describe('PrizeStrategy', function() {
 
   let exitFeeMantissa = 0.1
   let creditRateMantissa = exitFeeMantissa / prizePeriodSeconds
+
+  const invalidExternalToken = '0x0000000000000000000000000000000000000001'
 
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
@@ -48,12 +53,14 @@ describe('PrizeStrategy', function() {
     ticket = await deployMockContract(wallet, ControlledToken.abi, overrides)
     sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)
     rng = await deployMockContract(wallet, RNGInterface.abi, overrides)
-    externalAward = await deployMockContract(wallet, IERC20.abi, overrides)
+    externalERC20Award = await deployMockContract(wallet, IERC20.abi, overrides)
+    externalERC721Award = await deployMockContract(wallet, IERC721.abi, overrides)
 
     debug('deploying prizeStrategy...')
     prizeStrategy = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
 
-    await prizePool.mock.canAwardExternal.withArgs(externalAward.address).returns(true)
+    await prizePool.mock.canAwardExternal.withArgs(externalERC20Award.address).returns(true)
+    await prizePool.mock.canAwardExternal.withArgs(externalERC721Award.address).returns(true)
 
     debug('initializing prizeStrategy...')
     await prizeStrategy.initialize(
@@ -66,7 +73,7 @@ describe('PrizeStrategy', function() {
       rng.address,
       toWei('' + exitFeeMantissa),
       toWei('' + creditRateMantissa),
-      [externalAward.address]
+      [externalERC20Award.address]
     )
 
     debug('initialized!')
@@ -84,7 +91,6 @@ describe('PrizeStrategy', function() {
     })
 
     it('should disallow unapproved external prize tokens', async () => {
-      const invalidExternalToken = '0x0000000000000000000000000000000000000001'
       const initArgs = [
         FORWARDER,
         governor.address,
@@ -337,6 +343,39 @@ describe('PrizeStrategy', function() {
         ticketBalance,
         interest
       )).to.equal(prizePeriodSeconds * 3)
+    })
+  })
+
+  describe('addExternalErc20Award()', () => {
+    it('should allow the owner to add external ERC20 tokens to the prize', async () => {
+      await expect(prizeStrategy.addExternalErc20Award(externalERC20Award.address))
+        .to.not.be.revertedWith('PrizeStrategy/cannot-award-external')
+    })
+
+    it('should disallow unapproved external ERC20 prize tokens', async () => {
+      await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
+      await expect(prizeStrategy.addExternalErc20Award(invalidExternalToken))
+        .to.be.revertedWith('PrizeStrategy/cannot-award-external')
+    })
+  })
+
+  describe('addExternalErc721Award()', () => {
+    it('should allow the owner to add external ERC721 tokens to the prize', async () => {
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
+      await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
+        .to.not.be.revertedWith('PrizeStrategy/unavailable-token')
+    })
+
+    it('should disallow unapproved external ERC721 prize tokens', async () => {
+      await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
+      await expect(prizeStrategy.addExternalErc721Award(invalidExternalToken, [1]))
+        .to.be.revertedWith('PrizeStrategy/cannot-award-external')
+    })
+
+    it('should disallow ERC721 tokens that are not held by the Prize Pool', async () => {
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(wallet._address)
+      await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
+        .to.be.revertedWith('PrizeStrategy/unavailable-token')
     })
   })
 });

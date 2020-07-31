@@ -27,4 +27,8 @@ contract MappedSinglyLinkedListExposed {
     return list.contains(addr);
   }
 
+  function clearAll() external {
+    list.clearAll();
+  }
+
 }

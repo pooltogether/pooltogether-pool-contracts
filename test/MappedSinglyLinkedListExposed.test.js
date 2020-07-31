@@ -20,7 +20,7 @@ describe('PrizePool contract', function() {
 
   beforeEach(async () => {
     [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
-    
+
     list = await deployContract(wallet, MappedSinglyLinkedListExposed, [[wallet2._address]], overrides)
   })
 
@@ -35,7 +35,7 @@ describe('PrizePool contract', function() {
       expect(await list.addressArray()).to.deep.equal([wallet2._address])
     })
   })
-  
+
   describe('addAddress', () => {
     it('should not allow adding the SENTINAL address', async () => {
       await expect(list.addAddress(SENTINAL)).to.be.revertedWith("Invalid address")
@@ -44,7 +44,7 @@ describe('PrizePool contract', function() {
     it('should not allow adding a zero address', async () => {
       await expect(list.addAddress(AddressZero)).to.be.revertedWith("Invalid address")
     })
-    
+
     it('should allow the user to add an address', async () => {
       await list.addAddress(wallet._address)
 
@@ -72,6 +72,23 @@ describe('PrizePool contract', function() {
 
       expect(await list.addressArray()).to.deep.equal([wallet._address])
       expect(await list.contains(wallet2._address)).to.be.false
+    })
+  })
+
+  describe('clearAll', () =>{
+    it('should clear the list', async () => {
+      await list.addAddress(wallet._address)
+      await list.addAddress(wallet3._address)
+      await list.addAddress(wallet4._address)
+
+      expect(await list.addressArray()).to.deep.equal([wallet4._address, wallet3._address, wallet._address, wallet2._address])
+
+      await list.clearAll()
+
+      expect(await list.contains(wallet._address)).to.be.false
+      expect(await list.contains(wallet2._address)).to.be.false
+      expect(await list.contains(wallet3._address)).to.be.false
+      expect(await list.contains(wallet4._address)).to.be.false
     })
   })
 });

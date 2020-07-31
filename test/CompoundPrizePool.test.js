@@ -4,6 +4,7 @@ const PrizeStrategyInterface = require('../build/PrizeStrategyInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CTokenInterface = require('../build/CTokenInterface.json')
 const IERC20 = require('../build/IERC20.json')
+const IERC721 = require('../build/IERC721.json')
 
 const { ethers } = require('./helpers/ethers')
 const { expect } = require('chai')
@@ -19,10 +20,12 @@ let overrides = { gasLimit: 20000000 }
 
 const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
+const NFT_TOKEN_ID = 1
+
 describe('CompoundPrizePool', function() {
   let wallet, wallet2
 
-  let prizePool, token, cToken, prizeStrategy
+  let prizePool, erc20token, erc721token, cToken, prizeStrategy
   let multiTokenPrizePool, multiTokenPrizeStrategy
 
   let ticket, sponsorship
@@ -32,9 +35,10 @@ describe('CompoundPrizePool', function() {
     debug(`using wallet ${wallet._address}`)
 
     debug('mocking tokens...')
-    token = await deployMockContract(wallet, IERC20.abi, overrides)
+    erc20token = await deployMockContract(wallet, IERC20.abi, overrides)
+    erc721token = await deployMockContract(wallet, IERC721.abi, overrides)
     cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
-    await cToken.mock.underlying.returns(token.address)
+    await cToken.mock.underlying.returns(erc20token.address)
 
     prizeStrategy = await deployMockContract(wallet, PrizeStrategyInterface.abi, overrides)
 
@@ -67,7 +71,7 @@ describe('CompoundPrizePool', function() {
     describe('initialize()', () => {
       it('should set all the vars', async () => {
         expect(await prizePool.cToken()).to.equal(cToken.address)
-        expect(await prizePool.token()).to.equal(token.address)
+        expect(await prizePool.token()).to.equal(erc20token.address)
       })
     })
 
@@ -79,8 +83,8 @@ describe('CompoundPrizePool', function() {
         await cToken.mock.balanceOfUnderlying.returns('0')
         await ticket.mock.totalSupply.returns('0')
 
-        await token.mock.transferFrom.withArgs(wallet._address, prizePool.address, amount).returns(true)
-        await token.mock.approve.withArgs(cToken.address, amount).returns(true)
+        await erc20token.mock.transferFrom.withArgs(wallet._address, prizePool.address, amount).returns(true)
+        await erc20token.mock.approve.withArgs(cToken.address, amount).returns(true)
         await cToken.mock.mint.withArgs(amount).returns('0')
         await prizeStrategy.mock.afterDepositTo.withArgs(wallet2._address, amount, ticket.address).returns()
         await ticket.mock.controllerMint.withArgs(wallet2._address, amount).returns()
@@ -104,7 +108,7 @@ describe('CompoundPrizePool', function() {
         await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
-        await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+        await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
         await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
 
         await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('1')))
@@ -122,7 +126,7 @@ describe('CompoundPrizePool', function() {
         await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
-        await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+        await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
         await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
 
         await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('0.5'))).to.be.revertedWith('PrizePool/exit-fee-exceeds-user-maximum')
@@ -201,7 +205,7 @@ describe('CompoundPrizePool', function() {
 
         // expect the redeem && transfer for only the unlocked amount
         await cToken.mock.redeemUnderlying.withArgs(toWei('11')).returns('0')
-        await token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
+        await erc20token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
         await prizeStrategy.mock.afterSweepTimelockedWithdrawal.withArgs(wallet._address, wallet._address, toWei('11')).returns()
 
         // Let's sweep
@@ -244,7 +248,7 @@ describe('CompoundPrizePool', function() {
 
         // expect the redeem && transfer
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
-        await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+        await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
         await prizeStrategy.mock.afterSweepTimelockedWithdrawal.withArgs(wallet._address, wallet._address, toWei('10')).returns()
 
         // ensure time is after
@@ -368,7 +372,7 @@ describe('CompoundPrizePool', function() {
     })
   })
 
-  describe('awardExternal()', () => {
+  describe('awardExternalERC20()', () => {
     beforeEach(async () => {
       await prizePool.initializeAll(
         FORWARDER,
@@ -380,18 +384,49 @@ describe('CompoundPrizePool', function() {
       )
     })
 
-    it('should only allow the prizeStrategy to award external', async () => {
+    it('should only allow the prizeStrategy to award external ERC20s', async () => {
       let prizePool2 = prizePool.connect(wallet2)
-      await expect(prizePool2.awardExternal(wallet._address, toWei('10'), FORWARDER)).to.be.revertedWith('PrizePool/only-prizeStrategy')
+      await expect(prizePool2.awardExternalERC20(wallet._address, FORWARDER, toWei('10')))
+        .to.be.revertedWith('PrizePool/only-prizeStrategy')
     })
 
     it('should require the token to be allowed', async () => {
-      await expect(prizePool.awardExternal(wallet._address, toWei('10'), cToken.address)).to.be.revertedWith('PrizePool/invalid-external-token')
+      await expect(prizePool.awardExternalERC20(wallet._address, cToken.address, toWei('10')))
+        .to.be.revertedWith('PrizePool/invalid-external-token')
     })
 
     it('should allow arbitrary tokens to be transferred', async () => {
-      await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-      await prizePool.awardExternal(wallet._address, toWei('10'), token.address)
+      await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+      await prizePool.awardExternalERC20(wallet._address, erc20token.address, toWei('10'))
+    })
+  })
+
+  describe('awardExternalERC721()', () => {
+    beforeEach(async () => {
+      await prizePool.initializeAll(
+        FORWARDER,
+        wallet._address, // wallet is the prizeStrategy
+        [ticket.address],
+        '50',    // Max Exit Fee
+        '10000', // Max Timelock
+        cToken.address
+      )
+    })
+
+    it('should only allow the prizeStrategy to award external ERC721s', async () => {
+      let prizePool2 = prizePool.connect(wallet2)
+      await expect(prizePool2.awardExternalERC721(wallet._address, erc721token.address, [NFT_TOKEN_ID]))
+        .to.be.revertedWith('PrizePool/only-prizeStrategy')
+    })
+
+    it('should require the token to be allowed', async () => {
+      await expect(prizePool.awardExternalERC721(wallet._address, cToken.address, [NFT_TOKEN_ID]))
+        .to.be.revertedWith('PrizePool/invalid-external-token')
+    })
+
+    it('should allow arbitrary tokens to be transferred', async () => {
+      await erc721token.mock.transferFrom.withArgs(prizePool.address, wallet._address, NFT_TOKEN_ID).returns()
+      await prizePool.awardExternalERC721(wallet._address, erc721token.address, [NFT_TOKEN_ID])
     })
   })
 
@@ -439,7 +474,7 @@ describe('CompoundPrizePool', function() {
         // await prizeStrategy.mock.calculateInstantWithdrawalFee.withArgs(wallet._address, amount, ticket.address).returns(toWei('1'))
         await ticket2.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('11')).returns('0')
-        await token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
+        await erc20token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
         // await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
 
         await expect(detachedPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, '0', toWei('1')))
@@ -462,7 +497,7 @@ describe('CompoundPrizePool', function() {
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
 
         // full-amount should be tansferred
-        await token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+        await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
         await detachedPrizePool.withdrawWithTimelockFrom(wallet._address, toWei('10'), ticket2.address)
 
         expect(await detachedPrizePool.timelockBalanceOf(wallet._address)).to.equal(toWei('0'))
