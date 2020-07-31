@@ -4,7 +4,7 @@ import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 
 import "../comptroller/ComptrollerInterface.sol";
-import "../prize-pool/MappedSinglyLinkedList.sol";
+import "../utils/MappedSinglyLinkedList.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../prize-pool/PrizePool.sol";
