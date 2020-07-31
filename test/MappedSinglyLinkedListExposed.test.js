@@ -75,7 +75,7 @@ describe('PrizePool contract', function() {
     })
   })
 
-  describe.only('clearAll', () =>{
+  describe('clearAll', () =>{
     it('should clear the list', async () => {
       await list.addAddress(wallet._address)
       await list.addAddress(wallet3._address)
