@@ -1,6 +1,6 @@
 pragma solidity 0.6.4;
 
-import "../prize-pool/MappedSinglyLinkedList.sol";
+import "../utils/MappedSinglyLinkedList.sol";
 
 contract MappedSinglyLinkedListExposed {
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;

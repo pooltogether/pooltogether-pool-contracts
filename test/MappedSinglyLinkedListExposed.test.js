@@ -90,5 +90,20 @@ describe('PrizePool contract', function() {
       expect(await list.contains(wallet3._address)).to.be.false
       expect(await list.contains(wallet4._address)).to.be.false
     })
+
+    it('should allow addresses to be added again', async () => {
+      await list.addAddress(wallet._address)
+      await list.addAddress(wallet4._address)
+
+      expect(await list.addressArray()).to.deep.equal([wallet4._address, wallet._address, wallet2._address])
+
+      await list.clearAll()
+
+      expect(await list.addressArray()).to.deep.equal([])
+
+      await list.addAddress(wallet3._address)
+
+      expect(await list.addressArray()).to.deep.equal([wallet3._address])
+    })
   })
 });

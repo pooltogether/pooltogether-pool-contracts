@@ -10,7 +10,7 @@ import "@nomiclabs/buidler/console.sol";
 import "./PrizeStrategyInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
-import "./MappedSinglyLinkedList.sol";
+import "../utils/MappedSinglyLinkedList.sol";
 
 /// @title Base Prize Pool for managing escrowed assets
 /// @notice Manages depositing and withdrawing assets from the Prize Pool
@@ -555,8 +555,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, BaseRelayRecipient, Reentranc
   /// @return total The currently accounted-for balance
   function _tokenTotalSupply() internal view returns (uint256 total) {
     total = timelockTotalSupply;
-    address currentToken = _tokens.addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
-    while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
+    address currentToken = _tokens.addressMap[MappedSinglyLinkedList.SENTINAL];
+    while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL) {
       total = total.add(IERC20(currentToken).totalSupply());
       currentToken = _tokens.addressMap[currentToken];
     }

@@ -520,8 +520,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// The external tokens must be held by the PrizePool contract.
   /// @param winner The user to transfer the tokens to
   function _awardExternalErc20s(address winner) internal {
-    address currentToken = externalErc20s.addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
-    while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
+    address currentToken = externalErc20s.addressMap[MappedSinglyLinkedList.SENTINAL];
+    while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL) {
       uint256 balance = IERC20(currentToken).balanceOf(address(prizePool));
       if (balance > 0) {
         prizePool.awardExternalERC20(winner, currentToken, balance);
@@ -535,8 +535,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @dev The list of ERC721s is reset after every award
   /// @param winner The user to transfer the tokens to
   function _awardExternalErc721s(address winner) internal {
-    address currentToken = externalErc721s.addressMap[MappedSinglyLinkedList.SENTINAL_TOKEN];
-    while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL_TOKEN) {
+    address currentToken = externalErc721s.addressMap[MappedSinglyLinkedList.SENTINAL];
+    while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL) {
       uint256 balance = IERC721(currentToken).balanceOf(address(prizePool));
       if (balance > 0) {
         prizePool.awardExternalERC721(winner, currentToken, externalErc721TokenIds[currentToken]);
