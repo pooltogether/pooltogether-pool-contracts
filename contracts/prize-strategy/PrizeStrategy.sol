@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-import "@opengsn/gsn/contracts/BaseRelayRecipient.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
@@ -17,12 +16,13 @@ import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
+import "../utils/RelayRecipient.sol";
 
 /* solium-disable security/no-block-members */
 contract PrizeStrategy is PrizeStrategyStorage,
                           Initializable,
                           OwnableUpgradeSafe,
-                          BaseRelayRecipient,
+                          RelayRecipient,
                           ReentrancyGuardUpgradeSafe,
                           PrizeStrategyInterface {
 
