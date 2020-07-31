@@ -18,13 +18,13 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   using SafeMath for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
+  /// @dev Helpful data structure to organize timelock sweeps
   struct BalanceChange {
     address user;
     uint256 balance;
   }
 
-  event CapturedAward(uint256 amount);
-
+  /// @dev Event emitted when assets are deposited
   event Deposited(
     address indexed operator,
     address indexed to,
@@ -32,6 +32,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 amount
   );
 
+  /// @dev Event emitted when timelocked funds are re-deposited
   event TimelockDeposited(
     address indexed operator,
     address indexed to,
@@ -39,24 +40,28 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 amount
   );
 
+  /// @dev Event emitted when interest is awarded to a winner
   event Awarded(
     address indexed winner,
     address indexed token,
     uint256 amount
   );
   
+  /// @dev Event emitted when external ERC20s are awarded to a winner
   event AwardedExternalERC20(
     address indexed winner,
     address indexed token,
     uint256 amount
   );
 
+  /// @dev Event emitted when external ERC721s are awarded to a winner
   event AwardedExternalERC721(
     address indexed winner,
     address indexed token,
     uint256[] tokenIds
   );
   
+  /// @dev Event emitted when assets are withdrawn instantly
   event InstantWithdrawal(
     address indexed operator,
     address indexed from,
@@ -66,6 +71,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 sponsoredExitFee
   );
   
+  /// @dev Event emitted when assets are withdrawn into a timelock
   event TimelockedWithdrawal(
     address indexed operator,
     address indexed from,
@@ -74,22 +80,36 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 unlockTimestamp
   );
   
+  /// @dev Event emitted when timelocked funds are swept back to a user
   event TimelockedWithdrawalSwept(
     address indexed operator,
     address indexed from,
     uint256 amount
   );
 
+  /// @dev Event emitted when the prize strategy is detached from the Prize Pool.
   event PrizeStrategyDetached();
 
+  /// @dev A linked list of all the controlled tokens
   MappedSinglyLinkedList.Mapping internal _tokens;
+
+  /// @dev The Prize Strategy that this Prize Pool is bound to.
   PrizeStrategyInterface public prizeStrategy;
 
+  /// @dev The maximum possible exit fee fraction as a fixed point 18 number.
+  /// For example, if the maxExitFeeMantissa is "0.1 ether", then the maximum exit fee for a withdrawal of 100 will be 10.
   uint256 public maxExitFeeMantissa;
+
+  /// @dev The maximum possible timelock duration for a timelocked withdrawal.
   uint256 public maxTimelockDuration;
 
+  /// @dev The total funds that are timelocked.
   uint256 public timelockTotalSupply;
+
+  /// @dev The timelocked balances for each user
   mapping(address => uint256) internal timelockBalances;
+
+  /// @dev The unlock timestamps for each user
   mapping(address => uint256) internal unlockTimestamps;
 
   /// @notice Initializes the Prize Pool with required contract connections
@@ -218,7 +238,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address operator = _msgSender();
 
     ControlledToken(controlledToken).controllerMint(to, amount);
-    _token().transferFrom(operator, address(this), amount);
+    require(_token().transferFrom(operator, address(this), amount), "PrizePool/deposit-transfer-failed");
     _supply(amount);
 
     prizeStrategy.afterDepositTo(to, amount, controlledToken, data);
@@ -263,7 +283,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
     if (sponsoredExitFeePortion > 0) {
       // transfer the fee to this contract
-      _token().transferFrom(_msgSender(), address(this), sponsoredExitFeePortion);
+      require(_token().transferFrom(_msgSender(), address(this), sponsoredExitFeePortion), "PrizePool/sponsor-transfer-failed");
     }
 
     // burn the tickets
@@ -273,7 +293,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 amountLessFee = amount.sub(userExitFee);
     _redeem(amountLessFee);
 
-    _token().transfer(from, amountLessFee);
+    require(_token().transfer(from, amountLessFee), "PrizePool/instant-transfer-failed");
 
     if (_hasPrizeStrategy()) {
       prizeStrategy.afterWithdrawInstantlyFrom(_msgSender(), from, amount, controlledToken, exitFee, sponsoredExitFeePortion, data);
@@ -335,7 +355,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     // Sweep the old balance, if any
     address[] memory users = new address[](1);
     users[0] = user;
-    sweepTimelockBalances(users);
+    _sweepTimelockBalances(users);
 
     timelockTotalSupply = timelockTotalSupply.add(amount);
     timelockBalances[user] = timelockBalances[user].add(amount);
@@ -343,7 +363,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
     // if the funds should already be unlocked
     if (timestamp <= _currentTime()) {
-      sweepTimelockBalances(users);
+      _sweepTimelockBalances(users);
     }
   }
 
@@ -400,14 +420,21 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of external assets to be awarded
   /// @param externalToken The addess of the external asset token being awarded
-  function awardExternalERC20(address to, address externalToken, uint256 amount) external onlyPrizeStrategy {
+  function awardExternalERC20(
+    address to,
+    address externalToken,
+    uint256 amount
+  )
+    external
+    onlyPrizeStrategy
+  {
     require(_canAwardExternal(externalToken), "PrizePool/invalid-external-token");
 
     if (amount == 0) {
       return;
     }
 
-    IERC20(externalToken).transfer(to, amount);
+    require(IERC20(externalToken).transfer(to, amount), "PrizePool/award-ex-erc20-failed");
 
     emit AwardedExternalERC20(to, externalToken, amount);
   }
@@ -417,7 +444,14 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param to The address of the winner that receives the award
   /// @param externalToken The addess of the external NFT token being awarded
   /// @param tokenIds An array of NFT Token IDs to be transferred
-  function awardExternalERC721(address to, address externalToken, uint256[] calldata tokenIds) external onlyPrizeStrategy {
+  function awardExternalERC721(
+    address to,
+    address externalToken,
+    uint256[] calldata tokenIds
+  )
+    external
+    onlyPrizeStrategy
+  {
     require(_canAwardExternal(externalToken), "PrizePool/invalid-external-token");
 
     if (tokenIds.length == 0) {
@@ -434,7 +468,25 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
   /// @param users An array of account addresses to sweep balances for
   /// @return totalWithdrawal The total amount of assets swept from the Prize Pool
-  function sweepTimelockBalances(address[] memory users) public returns (uint256 totalWithdrawal) {
+  function sweepTimelockBalances(
+    address[] calldata users
+  )
+    external
+    nonReentrant
+    returns (uint256 totalWithdrawal)
+  {
+    totalWithdrawal = _sweepTimelockBalances(users);
+  }
+
+  /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
+  /// @param users An array of account addresses to sweep balances for
+  /// @return totalWithdrawal The total amount of assets swept from the Prize Pool
+  function _sweepTimelockBalances(
+    address[] memory users
+  )
+    internal
+    returns (uint256 totalWithdrawal)
+  {
     address operator = _msgSender();
 
     // first gather the total withdrawal and fee
@@ -458,7 +510,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
           timelockTotalSupply = timelockTotalSupply.sub(userBalance);
           delete timelockBalances[user];
           delete unlockTimestamps[user];
-          underlyingToken.transfer(user, userBalance);
+          require(underlyingToken.transfer(user, userBalance), "PrizePool/sweep-transfer-failed");
           emit TimelockedWithdrawalSwept(operator, user, userBalance);
         }
         changes[i] = BalanceChange(user, userBalance);
@@ -475,7 +527,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param users An array of account addresses to sweep balances for
   /// @return totalWithdrawal The total amount of assets that can be swept from the Prize Pool
   function _calculateTotalForSweep(address[] memory users) internal view returns (uint256 totalWithdrawal) {
-
     for (uint256 i = 0; i < users.length; i++) {
       address user = users[i];
       if (unlockTimestamps[user] <= _currentTime()) {
