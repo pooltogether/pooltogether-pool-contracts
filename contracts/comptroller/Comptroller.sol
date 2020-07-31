@@ -49,8 +49,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     address indexed measure,
     address indexed dripToken,
     uint256 index,
-    uint256 periodBlocks,
-    uint256 dripRatePerSecond
+    uint256 periodSeconds,
+    uint256 dripAmount
   );
 
   event VolumeDripRemoved(
@@ -65,13 +65,21 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 dripAmount
   );
 
+  event VolumeDripClaimed(
+    address prizeStrategy,
+    uint256 index,
+    address user,
+    address dripToken,
+    uint256 amount
+  );
+
   event ReferralVolumeDripAdded(
     address indexed prizeStrategy,
     address indexed measure,
     address indexed dripToken,
     uint256 index,
-    uint256 periodBlocks,
-    uint256 dripRatePerSecond
+    uint256 periodSeconds,
+    uint256 dripAmount
   );
 
   event ReferralVolumeDripRemoved(
@@ -84,6 +92,14 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     address prizeStrategy,
     uint256 index,
     uint256 dripAmount
+  );
+
+  event ReferralVolumeDripClaimed(
+    address prizeStrategy,
+    uint256 index,
+    address user,
+    address dripToken,
+    uint256 amount
   );
 
   function initialize() public initializer {
@@ -208,6 +224,23 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     );
   }
 
+  function getVolumeDrip(
+    address prizeStrategy,
+    uint256 index
+  )
+    external
+    view
+    returns (
+      uint32 periodSeconds,
+      uint128 dripAmount,
+      uint32 startTime
+    )
+  {
+    periodSeconds = volumeDrips[prizeStrategy].volumeDrips[index].periodSeconds;
+    dripAmount = volumeDrips[prizeStrategy].volumeDrips[index].dripAmount;
+    startTime = volumeDrips[prizeStrategy].volumeDrips[index].currentPeriod().startTime;
+  }
+
   function removeVolumeDrip(address prizeStrategy, address measure, uint256 index) external onlyOwner {
     volumeDrips[prizeStrategy].removeDrip(measure, index);
 
@@ -231,7 +264,25 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   function claimVolumeDrip(address prizeStrategy, address user, uint256 index) external {
     (address token, uint256 amount) = volumeDrips[prizeStrategy].claimDripTokens(index, user, _currentTime().toUint32());
     require(IERC20(token).transfer(user, amount), "Comptroller/volume-drip-transfer-failed");
+
+    emit VolumeDripClaimed(
+      prizeStrategy,
+      index,
+      user,
+      token,
+      amount
+    );
   }
+
+
+
+
+
+
+
+
+
+
 
   function addReferralVolumeDrip(
     address prizeStrategy,
@@ -256,6 +307,23 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     );
   }
 
+  function getReferralVolumeDrip(
+    address prizeStrategy,
+    uint256 index
+  )
+    external
+    view
+    returns (
+      uint32 periodSeconds,
+      uint128 dripAmount,
+      uint32 startTime
+    )
+  {
+    periodSeconds = referralVolumeDrips[prizeStrategy].volumeDrips[index].periodSeconds;
+    dripAmount = referralVolumeDrips[prizeStrategy].volumeDrips[index].dripAmount;
+    startTime = referralVolumeDrips[prizeStrategy].volumeDrips[index].currentPeriod().startTime;
+  }
+
   function removeReferralVolumeDrip(address prizeStrategy, address measure, uint256 index) external onlyOwner {
     referralVolumeDrips[prizeStrategy].removeDrip(measure, index);
 
@@ -278,8 +346,25 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
 
   function claimReferralVolumeDrip(address prizeStrategy, address user, uint256 index) external {
     (address token, uint256 amount) = referralVolumeDrips[prizeStrategy].claimDripTokens(index, user, _currentTime().toUint32());
-    require(IERC20(token).transfer(user, amount), "Comptroller/volume-drip-transfer-failed");
+    require(IERC20(token).transfer(user, amount), "Comptroller/referral-drip-transfer-failed");
+
+    emit ReferralVolumeDripClaimed(
+      prizeStrategy,
+      index,
+      user,
+      token,
+      amount
+    );
   }
+
+
+
+
+
+
+
+
+
 
   function afterDepositTo(
     address to,
