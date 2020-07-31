@@ -814,7 +814,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   /// @notice Sets the RNG service that the Prize Strategy is connected to
   /// @param rngService The address of the new RNG service interface
-  function setRngService(RNGInterface rngService) external onlyOwner requireNotLocked {
+  function setRngService(RNGInterface rngService) external onlyOwner {
+    require(!isRngRequested(), "PrizeStrategy/rng-requested");
+
     rng = rngService;
 
     emit RngServiceUpdated(address(rngService));
