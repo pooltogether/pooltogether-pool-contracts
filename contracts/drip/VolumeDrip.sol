@@ -114,6 +114,10 @@ library VolumeDrip {
     });
   }
 
+  function currentPeriod(State storage self) internal view returns (Period memory) {
+    return self.periods[_currentPeriodIndex(self)];
+  }
+
   function burnDrip(State storage self, address user, uint256 currentTime) internal returns (uint256 accrued) {
     Deposit memory deposit = balanceOf(self, user, currentTime);
     accrued = deposit.accrued;
@@ -123,6 +127,7 @@ library VolumeDrip {
   }
 
   function _currentPeriodIndex(State storage self) internal view returns (uint16) {
+    require(self.periods.length > 0, "VolumeDrip/no-period");
     return self.periods.length.sub(1).toUint16();
   }
 
