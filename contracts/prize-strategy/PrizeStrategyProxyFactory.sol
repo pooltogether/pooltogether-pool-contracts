@@ -1,4 +1,4 @@
-pragma solidity ^0.6.4;
+pragma solidity 0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 

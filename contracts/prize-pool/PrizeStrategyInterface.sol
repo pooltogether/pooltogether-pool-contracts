@@ -1,4 +1,4 @@
-pragma solidity ^0.6.4;
+pragma solidity 0.6.4;
 
 /// @title Prize Strategy Interface
 /// @notice Required interface for a Prize Strategy to implement controls over various components

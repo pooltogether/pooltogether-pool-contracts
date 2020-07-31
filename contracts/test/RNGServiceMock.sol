@@ -1,4 +1,4 @@
-pragma solidity ^0.6.4;
+pragma solidity 0.6.4;
 
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 
