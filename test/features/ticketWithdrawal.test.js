@@ -39,6 +39,54 @@ describe('Withdraw Feature', () => {
       // user still has credit
       await env.expectUserToHaveCredit({ user: 1, credit: 10 })
     })
+
+    describe('with very large amounts', () => {
+      let largeAmount = '999999999999999999' // 999 quadrillion
+
+      it('should calculate correct exit-fees at 10%', async () => {
+        await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+        await env.buyTicketsAtTime({ user: 1, tickets: largeAmount, elapsed: 0 })
+        await env.poolAccrues({ tickets: '99999999999999999.9' }) // 10% collateralized
+        await env.awardPrize()
+        await env.withdrawInstantlyAtTime({ user: 1, tickets: '1099999999999999998.9', elapsed: 0 })
+        await env.expectUserToHaveTokens({ user: 1, tokens: '1099999999999999998.9' })
+        // all of their credit was burned
+        await env.expectUserToHaveCredit({ user: 1, credit: 0 })
+      })
+
+      it('should calculate correct exit-fees at 25%', async () => {
+        await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.25', creditRate: '0.025' })
+        await env.buyTicketsAtTime({ user: 1, tickets: largeAmount, elapsed: 0 })
+        await env.poolAccrues({ tickets: '249999999999999999.75' }) // 25% collateralized
+        await env.awardPrize()
+        await env.withdrawInstantlyAtTime({ user: 1, tickets: '1249999999999999998.75', elapsed: 0 })
+        await env.expectUserToHaveTokens({ user: 1, tokens: '1249999999999999998.75' })
+        // all of their credit was burned
+        await env.expectUserToHaveCredit({ user: 1, credit: 0 })
+      })
+
+      it('should calculate correct exit-fees at 37%', async () => {
+        await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.37', creditRate: '0.037' })
+        await env.buyTicketsAtTime({ user: 1, tickets: largeAmount, elapsed: 0 })
+        await env.poolAccrues({ tickets: '369999999999999999.63' }) // 37% collateralized
+        await env.awardPrize()
+        await env.withdrawInstantlyAtTime({ user: 1, tickets: '1369999999999999998.63', elapsed: 0 })
+        await env.expectUserToHaveTokens({ user: 1, tokens: '1369999999999999998.63' })
+        // all of their credit was burned
+        await env.expectUserToHaveCredit({ user: 1, credit: 0 })
+      })
+
+      it('should calculate correct exit-fees at 99%', async () => {
+        await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.99', creditRate: '0.099' })
+        await env.buyTicketsAtTime({ user: 1, tickets: largeAmount, elapsed: 0 })
+        await env.poolAccrues({ tickets: '989999999999999999.01' }) // 99% collateralized
+        await env.awardPrize()
+        await env.withdrawInstantlyAtTime({ user: 1, tickets: '1989999999999999998.01', elapsed: 0 })
+        await env.expectUserToHaveTokens({ user: 1, tokens: '1989999999999999998.01' })
+        // all of their credit was burned
+        await env.expectUserToHaveCredit({ user: 1, credit: 0 })
+      })
+    })
   })
 
   describe('timelocked', () => {
