@@ -348,23 +348,17 @@ contract PrizeStrategy is PrizeStrategyStorage,
     If the exit fee on their withdrawal is less than the remaining exit fee, then they have to pay.
     */
 
-    uint256 totalEarlyExitFee = _calculateEarlyExitFee(balance);
-    uint256 remainingEarlyExitFee;
-
-    // if the credit balance is less than the total fees for the account
-    if (creditBalances[from].balance < totalEarlyExitFee) {
-      remainingEarlyExitFee = totalEarlyExitFee.sub(creditBalances[from].balance);
+    // Determine available usable credit based on withdraw amount
+    uint256 availableCredit;
+    uint256 remainingExitFee = _calculateEarlyExitFee(balance.sub(amount));
+    if (creditBalances[from].balance >= remainingExitFee) {
+      availableCredit = uint256(creditBalances[from].balance).sub(remainingExitFee);
     }
 
-    earlyExitFee = _calculateEarlyExitFee(amount);
-    // if the fees that aren't covered is less than the exit fee
-    if (earlyExitFee > remainingEarlyExitFee) {
-      // calculate how much is credit
-      creditToBeBurned = earlyExitFee.sub(remainingEarlyExitFee);
-      // the remainder is the actual fee
-      earlyExitFee = earlyExitFee.sub(creditToBeBurned);
-    }
-
+    // Determine amount of credit to burn and amount of fees required
+    uint256 totalExitFee = _calculateEarlyExitFee(amount);
+    creditToBeBurned = (availableCredit > totalExitFee) ? totalExitFee : availableCredit;
+    earlyExitFee = totalExitFee.sub(creditToBeBurned);
   }
 
   /// @notice Calculates the early exit fee for the given amount
