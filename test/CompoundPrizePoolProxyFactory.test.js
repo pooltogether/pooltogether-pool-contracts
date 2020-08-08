@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const CompoundPrizePoolProxyFactory = require('../build/CompoundPrizePoolProxyFactory.json')
-const buidler = require('./helpers/buidler')
+const buidler = require('@nomiclabs/buidler')
 const { deployContract } = require('ethereum-waffle')
 
 let overrides = { gasLimit: 20000000 }

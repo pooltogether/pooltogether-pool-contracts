@@ -1,6 +1,6 @@
 const { deployContracts } = require('../js/deployContracts')
 const { expect } = require('chai')
-const buidler = require('./helpers/buidler')
+const buidler = require('@nomiclabs/buidler')
 const { ethers } = require('ethers')
 
 const toWei = ethers.utils.parseEther
@@ -49,8 +49,8 @@ describe('CompoundPrizePoolBuilder', () => {
 
       expect(event.name).to.equal('CompoundPrizePoolCreated')
 
-      let prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategyHarness', event.values.prizeStrategy, wallet)
-      let prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.values.prizePool, wallet)
+      let prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategyHarness', event.args.prizeStrategy, wallet)
+      let prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
 
       expect(await prizePool.cToken()).to.equal(config.cToken)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(config.prizePeriodSeconds)

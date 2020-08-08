@@ -1,10 +1,10 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const MappedSinglyLinkedListExposed = require('../build/MappedSinglyLinkedListExposed.json')
 
-const { ethers } = require('./helpers/ethers')
+const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('./helpers/buidler')
-const { AddressZero } = require('ethers/constants')
+const buidler = require('@nomiclabs/buidler')
+const { AddressZero } = require('ethers').constants
 
 const toWei = ethers.utils.parseEther
 

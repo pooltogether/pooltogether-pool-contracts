@@ -7,11 +7,11 @@ const CTokenInterface = require('../build/CTokenInterface.json')
 const IERC20 = require('../build/IERC20.json')
 const IERC721 = require('../build/IERC721.json')
 
-const { ethers } = require('./helpers/ethers')
+const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('./helpers/buidler')
+const buidler = require('@nomiclabs/buidler')
 const { call } = require('./helpers/call')
-const { AddressZero } = require('ethers/constants')
+const { AddressZero } = require('ethers').constants
 
 const toWei = ethers.utils.parseEther
 const getBlockNumber = async () => await buidler.waffle.provider.getBlockNumber()

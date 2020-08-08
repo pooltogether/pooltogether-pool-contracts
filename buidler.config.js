@@ -10,6 +10,7 @@ usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("buidler-gas-reporter");
 usePlugin("solidity-coverage");
 usePlugin("@nomiclabs/buidler-etherscan");
+usePlugin("buidler-deploy");
 
 module.exports = {
   solc: {
@@ -36,12 +37,21 @@ module.exports = {
     local: {
       url: 'http://127.0.0.1:' + process.env.LOCAL_BUIDLEREVM_PORT || '8545',
       blockGasLimit: 200000000,
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
+      accounts: {
+        mnemonic: process.env.HDWALLET_MNEMONIC
+      }
     }
   },
   gasReporter: {
     currency: 'CHF',
     gasPrice: 21,
     enabled: (process.env.REPORT_GAS) ? true : false
+  },
+  namedAccounts: {
+    deployer: {
+      default: 0,
+      1: process.env.ADMIN_ADDRESS
+    }
   }
 };
