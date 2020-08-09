@@ -14,7 +14,7 @@ usePlugin("buidler-deploy");
 
 const testnetAdmin = '0x11BA3d40F7549485D5B821217E3f4474Ae90FeCd'
 
-module.exports = {
+const config = {
   solc: {
     version: "0.6.4",
     optimizer: {
@@ -40,19 +40,7 @@ module.exports = {
       url: 'http://127.0.0.1:' + process.env.LOCAL_BUIDLEREVM_PORT || '8545',
       blockGasLimit: 200000000,
       allowUnlimitedContractSize: true
-    },
-    kovan: {
-      url: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
-      accounts: {
-        mnemonic: process.env.HDWALLET_MNEMONIC
-      }
-    },
-    ropsten: {
-      url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
-      accounts: {
-        mnemonic: process.env.HDWALLET_MNEMONIC
-      }
-    },
+    }
   },
   gasReporter: {
     currency: 'CHF',
@@ -79,3 +67,23 @@ module.exports = {
     }
   }
 };
+
+if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
+  config.networks.kovan = {
+    url: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
+  }
+
+  config.networks.ropsten = {
+    url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
+  }
+} else {
+  console.warn('No infura or hdwallet available for testnets')
+}
+
+module.exports = config
