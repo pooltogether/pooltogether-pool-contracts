@@ -1,16 +1,17 @@
 const {TASK_COMPILE_GET_COMPILER_INPUT} = require("@nomiclabs/buidler/builtin-tasks/task-names");
 
-task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
-  const input = await runSuper();
-  input.settings.metadata.useLiteralContent = false;
-  return input;
-})
-
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("buidler-gas-reporter");
 usePlugin("solidity-coverage");
 usePlugin("@nomiclabs/buidler-etherscan");
 usePlugin("buidler-deploy");
+
+// This must occur after buidler-deploy!
+task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
+  const input = await runSuper();
+  input.settings.metadata.useLiteralContent = false;
+  return input;
+})
 
 const testnetAdmin = '0x11BA3d40F7549485D5B821217E3f4474Ae90FeCd'
 

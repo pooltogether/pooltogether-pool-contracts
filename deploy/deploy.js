@@ -26,7 +26,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     adminAccount
   } = await getNamedAccounts()
   const chainId = await getChainId()
-  const isLocal = chainId == 31337
+  const isLocal = [1, 3, 4, 42].indexOf(chainId) == -1
   let usingSignerAsAdmin = false
   const signer = await ethers.provider.getSigner(deployer)
 
