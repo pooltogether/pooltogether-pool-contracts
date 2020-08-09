@@ -16,7 +16,6 @@ describe('CompoundPrizePoolProxyFactory', () => {
     provider = buidler.ethers.provider
 
     factory = await deployContract(wallet, CompoundPrizePoolProxyFactory, [], overrides)
-    await factory.initialize()
   })
 
   describe('create()', () => {

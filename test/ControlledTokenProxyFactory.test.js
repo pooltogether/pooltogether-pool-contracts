@@ -14,7 +14,6 @@ describe('ControlledTokenProxyFactory', () => {
     provider = buidler.ethers.provider
 
     factory = await deployContract(wallet, ControlledTokenProxyFactory, [])
-    await factory.initialize()
   })
 
   describe('create()', () => {

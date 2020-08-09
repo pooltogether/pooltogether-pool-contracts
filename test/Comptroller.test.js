@@ -39,7 +39,7 @@ describe('Comptroller', () => {
     dripToken = await deployMockContract(wallet, IERC20.abi)
     comptroller = await deployContract(wallet, ComptrollerHarness, [], overrides)
     comptroller2 = comptroller.connect(wallet2)
-    await comptroller.initialize()
+    await comptroller.initialize(wallet._address)
   })
 
   describe('initialize()', () => {
