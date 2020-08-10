@@ -1,15 +1,13 @@
 pragma solidity 0.6.4;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
-
 import "./PrizeStrategy.sol";
 import "../external/openzeppelin/ProxyFactory.sol";
 
-contract PrizeStrategyProxyFactory is Initializable, ProxyFactory {
+contract PrizeStrategyProxyFactory is ProxyFactory {
 
   PrizeStrategy public instance;
 
-  function initialize () public initializer {
+  constructor () public {
     instance = new PrizeStrategy();
   }
 

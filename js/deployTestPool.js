@@ -1,6 +1,6 @@
 const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
 const RNGServiceMock = require('../build/RNGServiceMock.json')
-const Forwarder = require('../build/Forwarder.json')
+const TrustedForwarder = require('../build/TrustedForwarder.json')
 const ComptrollerHarness = require('../build/ComptrollerHarness.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
@@ -29,7 +29,7 @@ async function deployTestPool({
   debug('beforeEach deploy rng, forwarder etc...')
 
   let rng = await deployContract(wallet, RNGServiceMock, [], overrides)
-  let forwarder = await deployContract(wallet, Forwarder, [], overrides)
+  let forwarder = await deployContract(wallet, TrustedForwarder, [], overrides)
   let token = await deployContract(wallet, ERC20Mintable, [], overrides)
   let cToken = await deployContract(wallet, CTokenMock, [
     token.address, ethers.utils.parseEther('0.01')
@@ -40,7 +40,7 @@ async function deployTestPool({
   let governanceToken = await deployContract(wallet, ERC20Mintable, [], overrides)
 
   let comptroller = await deployContract(wallet, ComptrollerHarness, [], overrides)
-  await comptroller.initialize()
+  await comptroller.initialize(wallet._address)
 
   debug('Deploying PrizeStrategy...')
 
