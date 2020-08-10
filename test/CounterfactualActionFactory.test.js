@@ -2,8 +2,8 @@ const { expect } = require('chai')
 const CounterfactualActionFactory = require('../build/CounterfactualActionFactory.json')
 const PrizePool = require('../build/PrizePool.json')
 const IERC20 = require('../build/IERC20.json')
-const { ethers } = require('./helpers/ethers')
-const buidler = require('./helpers/buidler')
+const { ethers } = require('ethers')
+const buidler = require('@nomiclabs/buidler')
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 
 const toWei = ethers.utils.parseEther

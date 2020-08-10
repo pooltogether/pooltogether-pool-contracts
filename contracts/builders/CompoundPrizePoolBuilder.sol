@@ -1,18 +1,19 @@
 pragma solidity 0.6.4;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
-
 import "../comptroller/ComptrollerInterface.sol";
 import "../prize-strategy/PrizeStrategyProxyFactory.sol";
 import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
 import "../external/compound/CTokenInterface.sol";
+import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 
-contract CompoundPrizePoolBuilder is Initializable {
+/* solium-disable security/no-block-members */
+contract CompoundPrizePoolBuilder {
   using SafeMath for uint256;
 
   struct Config {
+    address proxyAdmin;
     CTokenInterface cToken;
     uint256 prizePeriodSeconds;
     string ticketName;
@@ -37,21 +38,25 @@ contract CompoundPrizePoolBuilder is Initializable {
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
   PrizeStrategyProxyFactory public prizeStrategyProxyFactory;
   RNGInterface public rng;
+  OpenZeppelinProxyFactoryInterface public proxyFactory;
   address public trustedForwarder;
 
-  function initialize (
+  constructor (
     ComptrollerInterface _comptroller,
     PrizeStrategyProxyFactory _prizeStrategyProxyFactory,
     address _trustedForwarder,
     CompoundPrizePoolProxyFactory _compoundPrizePoolProxyFactory,
     ControlledTokenProxyFactory _controlledTokenProxyFactory,
-    RNGInterface _rng
-  ) public initializer {
+    RNGInterface _rng,
+    OpenZeppelinProxyFactoryInterface _proxyFactory
+  ) public {
     require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
     require(address(_prizeStrategyProxyFactory) != address(0), "CompoundPrizePoolBuilder/prize-strategy-factory-not-zero");
     require(address(_compoundPrizePoolProxyFactory) != address(0), "CompoundPrizePoolBuilder/compound-prize-pool-builder-not-zero");
     require(address(_controlledTokenProxyFactory) != address(0), "CompoundPrizePoolBuilder/controlled-token-proxy-factory-not-zero");
     require(address(_rng) != address(0), "CompoundPrizePoolBuilder/rng-not-zero");
+    require(address(_proxyFactory) != address(0), "CompoundPrizePoolBuilder/proxy-factory-not-zero");
+    proxyFactory = _proxyFactory;
     rng = _rng;
     comptroller = _comptroller;
     prizeStrategyProxyFactory = _prizeStrategyProxyFactory;
@@ -61,7 +66,14 @@ contract CompoundPrizePoolBuilder is Initializable {
   }
 
   function create(Config calldata config) external returns (PrizeStrategy) {
-    PrizeStrategy prizeStrategy = prizeStrategyProxyFactory.create();
+    PrizeStrategy prizeStrategy;
+    if (config.proxyAdmin != address(0)) {
+      prizeStrategy = PrizeStrategy(
+        proxyFactory.deploy(block.timestamp, address(prizeStrategyProxyFactory.instance()), config.proxyAdmin, "")
+      );
+    } else {
+      prizeStrategy = prizeStrategyProxyFactory.create();
+    }
 
     (CompoundPrizePool prizePool, address[] memory tokens) = createPrizePoolAndTokens(
       prizeStrategy,

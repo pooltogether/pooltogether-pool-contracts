@@ -1,6 +1,6 @@
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
-const { call, callRaw } = require('./helpers/call')
+const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
 const  ComptrollerInterface = require('../build/ComptrollerInterface.json')
 const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
@@ -11,8 +11,8 @@ const IERC721 = require('../build/IERC721.json')
 const ControlledToken = require('../build/ControlledToken.json')
 
 const { expect } = require('chai')
-const buidler = require('./helpers/buidler')
-const { AddressZero, Zero } = require('ethers/constants')
+const buidler = require('@nomiclabs/buidler')
+const { AddressZero, Zero } = require('ethers').constants
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
@@ -206,7 +206,7 @@ describe('PrizeStrategy', function() {
 
       expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal('0')
 
-      let fees = await callRaw(prizeStrategy, 'calculateInstantWithdrawalFee', wallet._address, toWei(withdrawalAmount), ticket.address)
+      let fees = await call(prizeStrategy, 'calculateInstantWithdrawalFee', wallet._address, toWei(withdrawalAmount), ticket.address)
       expect(fees.remainingFee).to.equal(toWei(exitFee))
       expect(fees.burnedCredit).to.equal('0')
     })
@@ -218,7 +218,7 @@ describe('PrizeStrategy', function() {
 
       expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal('0')
 
-      let fees = await callRaw(prizeStrategy, 'calculateTimelockDurationAndFee', wallet._address, toWei('50'), ticket.address)
+      let fees = await call(prizeStrategy, 'calculateTimelockDurationAndFee', wallet._address, toWei('50'), ticket.address)
       expect(fees.durationSeconds).to.equal('' + prizePeriodSeconds)
       expect(fees.burnedCredit).to.equal('0')
     })
