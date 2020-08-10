@@ -346,7 +346,7 @@ function PoolEnv() {
     debug(`Starting award with token ${token}...`)
     await this.env.prizeStrategy.startAward(this.overrides)
 
-    let randomNumber = ethers.utils.hexlify(ethers.utils.padZeros(ethers.utils.bigNumberify('' + token), 32))
+    let randomNumber = ethers.utils.hexlify(ethers.utils.zeroPad(ethers.BigNumber.from('' + token), 32))
     await this.env.rng.setRandomNumber(randomNumber, this.overrides)
 
     debug(`Completing award...`)

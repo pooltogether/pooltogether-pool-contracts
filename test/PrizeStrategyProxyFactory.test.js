@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const PrizeStrategyProxyFactory = require('../build/PrizeStrategyProxyFactory.json')
-const buidler = require('./helpers/buidler')
+const buidler = require('@nomiclabs/buidler')
 const { deployContract } = require('ethereum-waffle')
 
 let overrides = { gasLimit: 20000000 }
@@ -16,7 +16,6 @@ describe('PrizeStrategyProxyFactory', () => {
     provider = buidler.ethers.provider
 
     factory = await deployContract(wallet, PrizeStrategyProxyFactory, [], overrides)
-    await factory.initialize(overrides)
   })
 
   describe('create()', () => {

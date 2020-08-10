@@ -2,9 +2,9 @@ const { deployContract } = require('ethereum-waffle')
 const BalanceDripExposed = require('../build/BalanceDripExposed.json')
 
 const { call } = require('./helpers/call')
-const { ethers } = require('./helpers/ethers')
+const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('./helpers/buidler')
+const buidler = require('@nomiclabs/buidler')
 
 const toWei = ethers.utils.parseEther
 

@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const ControlledTokenProxyFactory = require('../build/ControlledTokenProxyFactory.json')
-const buidler = require('./helpers/buidler')
+const buidler = require('@nomiclabs/buidler')
 const { deployContract } = require('ethereum-waffle')
 
 describe('ControlledTokenProxyFactory', () => {
@@ -14,7 +14,6 @@ describe('ControlledTokenProxyFactory', () => {
     provider = buidler.ethers.provider
 
     factory = await deployContract(wallet, ControlledTokenProxyFactory, [])
-    await factory.initialize()
   })
 
   describe('create()', () => {
