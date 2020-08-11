@@ -115,6 +115,22 @@ describe('Comptroller', () => {
     })
   })
 
+  describe('balanceOfBalanceDrip()', () => {
+    it('should return a users current balance within the balance-drip', async () => {
+      await comptroller.setCurrentTime(1)
+      await comptroller.addBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
+      await comptroller.afterDepositTo(wallet._address, toWei('10'), toWei('10'), toWei('10'), measure.address, AddressZero)
+      await comptroller.setCurrentTime(11)
+      // should have accrued 10 blocks worth of the drip: 10 * 0.001 = 0.01
+
+      await measure.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
+      await measure.mock.totalSupply.returns(toWei('10'))
+
+      expect(await call(comptroller, 'balanceOfBalanceDrip', prizeStrategyAddress, measure.address, dripToken.address, wallet._address))
+        .to.equal(toWei('0.01'))
+    })
+  })
+
 
 
 
