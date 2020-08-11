@@ -96,10 +96,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = _currentTime();
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
-    externalErc20s.initialize(_externalErc20s);
-    for (uint256 i = 0; i < _externalErc20s.length; i++) {
-      require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
-    }
 
     exitFeeMantissa = 0.1 ether;
     creditRateMantissa = exitFeeMantissa.div(prizePeriodSeconds);
