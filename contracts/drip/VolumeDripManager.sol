@@ -117,7 +117,7 @@ library VolumeDripManager {
   }
 
   function setDripAmount(State storage self, uint256 index, uint128 dripAmount) internal {
-    require(index <= self.lastVolumeDripId, "DripManager/drip-not-exists");
+    require(index <= self.lastVolumeDripId, "VolumeDripManager/drip-not-exists");
     self.volumeDrips[index].dripAmount = dripAmount;
   }
 
