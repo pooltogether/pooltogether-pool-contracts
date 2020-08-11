@@ -145,6 +145,49 @@ describe('PrizeStrategy', function() {
     })
   })
 
+  describe('estimateRemainingPrize()', () => {
+    it('should calculate the estimated remaining prize to accrue', async () => {
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
+      await prizePool.mock.accountedBalance.returns('1000')
+      await comptroller.mock.reserveRateMantissa.returns(Zero)
+      await prizePool.mock.estimateAccruedInterestOverBlocks.returns('10')
+
+      expect(await call(prizeStrategy, 'estimateRemainingPrize')).to.equal('10')
+    })
+  })
+
+  describe('prizePeriodRemainingSeconds()', () => {
+    it('should calculate the remaining seconds of the prize period', async () => {
+      const startTime = await prizeStrategy.prizePeriodStartedAt()
+      const halfTime = prizePeriodSeconds / 2
+      const overTime = prizePeriodSeconds + 1
+
+      // Half-time
+      await prizeStrategy.setCurrentTime(startTime.add(halfTime))
+      expect(await prizeStrategy.prizePeriodRemainingSeconds()).to.equal(halfTime)
+
+      // Over-time
+      await prizeStrategy.setCurrentTime(startTime.add(overTime))
+      expect(await prizeStrategy.prizePeriodRemainingSeconds()).to.equal(0)
+    })
+  })
+
+  describe('isPrizePeriodOver()', () => {
+    it('should determine if the prize-period is over', async () => {
+      const startTime = await prizeStrategy.prizePeriodStartedAt()
+      const halfTime = prizePeriodSeconds / 2
+      const overTime = prizePeriodSeconds + 1
+
+      // Half-time
+      await prizeStrategy.setCurrentTime(startTime.add(halfTime))
+      expect(await prizeStrategy.isPrizePeriodOver()).to.equal(false)
+
+      // Over-time
+      await prizeStrategy.setCurrentTime(startTime.add(overTime))
+      expect(await prizeStrategy.isPrizePeriodOver()).to.equal(true)
+    })
+  })
+
   describe('setCreditRateMantissa', () => {
     it('should only allow the owner to change it', async () => {
       await expect(prizeStrategy.setCreditRateMantissa(toWei('0.1')))
@@ -237,6 +280,13 @@ describe('PrizeStrategy', function() {
     })
   })
 
+  describe('draw()', () => {
+    it('should return zero for an empty prize pool', async () => {
+      await ticket.mock.totalSupply.returns(0)
+      expect(await prizeStrategy.draw(123)).to.be.equal(AddressZero)
+    })
+  })
+
   describe('afterDepositTo()', () => {
     it('should only be called by the prize pool', async () => {
       prizeStrategy2 = await prizeStrategy.connect(wallet2)
@@ -315,6 +365,28 @@ describe('PrizeStrategy', function() {
         ))
         .to.be.revertedWith('PrizeStrategy/rng-in-flight')
     })
+
+    it('should account for transferred tickets', async () => {
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('100'))
+      await ticket.mock.balanceOf.withArgs(wallet2._address).returns(toWei('100'))
+
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
+      await prizeStrategy.accrueTicketCredit(wallet._address)
+      await prizeStrategy.accrueTicketCredit(wallet2._address)
+
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt())
+      await prizePool.call(
+        prizeStrategy,
+        'beforeTokenTransfer(address,address,uint256,address)',
+        wallet._address,
+        wallet2._address,
+        toWei('10'),
+        ticket.address
+      )
+
+      expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal(toWei('9'))
+      expect(await call(prizeStrategy, 'balanceOfCredit', wallet2._address)).to.equal(toWei('10'))
+    })
   })
 
   describe("afterWithdrawWithTimelockFrom()", () => {
@@ -356,6 +428,17 @@ describe('PrizeStrategy', function() {
     })
   })
 
+  describe('accrueTicketCredit()', () => {
+    it('should accrue credit on ticket balance', async () => {
+      await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('100'))
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt());
+      await prizeStrategy.accrueTicketCredit(wallet._address)
+
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
+      expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal(toWei('10'))
+    })
+  })
+
   describe('addExternalErc20Award()', () => {
     it('should allow the owner to add external ERC20 tokens to the prize', async () => {
       await expect(prizeStrategy.addExternalErc20Award(externalERC20Award.address))
@@ -386,6 +469,71 @@ describe('PrizeStrategy', function() {
       await externalERC721Award.mock.ownerOf.withArgs(1).returns(wallet._address)
       await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
         .to.be.revertedWith('PrizeStrategy/unavailable-token')
+    })
+  })
+
+  describe('canStartAward()', () => {
+    it('should determine if a prize is able to be awarded', async () => {
+      const startTime = await prizeStrategy.prizePeriodStartedAt()
+
+      // Prize-period not over, RNG not requested
+      await prizeStrategy.setCurrentTime(startTime.add(10))
+      await prizeStrategy.setRngRequest(0, 0)
+      expect(await prizeStrategy.canStartAward()).to.equal(false)
+
+      // Prize-period not over, RNG requested
+      await prizeStrategy.setCurrentTime(startTime.add(10))
+      await prizeStrategy.setRngRequest(1, 100)
+      expect(await prizeStrategy.canStartAward()).to.equal(false)
+
+      // Prize-period over, RNG requested
+      await prizeStrategy.setCurrentTime(startTime.add(prizePeriodSeconds))
+      await prizeStrategy.setRngRequest(1, 100)
+      expect(await prizeStrategy.canStartAward()).to.equal(false)
+
+      // Prize-period over, RNG not requested
+      await prizeStrategy.setCurrentTime(startTime.add(prizePeriodSeconds))
+      await prizeStrategy.setRngRequest(0, 0)
+      expect(await prizeStrategy.canStartAward()).to.equal(true)
+    })
+  })
+
+  describe('canCompleteAward()', () => {
+    it('should determine if a prize is able to be completed', async () => {
+      // RNG not requested, RNG not completed
+      await prizeStrategy.setRngRequest(0, 0)
+      await rng.mock.isRequestComplete.returns(false)
+      expect(await prizeStrategy.canCompleteAward()).to.equal(false)
+
+      // RNG requested, RNG not completed
+      await prizeStrategy.setRngRequest(1, 100)
+      await rng.mock.isRequestComplete.returns(false)
+      expect(await prizeStrategy.canCompleteAward()).to.equal(false)
+
+      // RNG requested, RNG completed
+      await prizeStrategy.setRngRequest(1, 100)
+      await rng.mock.isRequestComplete.returns(true)
+      expect(await prizeStrategy.canCompleteAward()).to.equal(true)
+    })
+  })
+
+  describe('getLastRngLockBlock()', () => {
+    it('should return the lock-block for the last RNG request', async () => {
+      await prizeStrategy.setRngRequest(0, 0)
+      expect(await prizeStrategy.getLastRngLockBlock()).to.equal(0)
+
+      await prizeStrategy.setRngRequest(1, 123)
+      expect(await prizeStrategy.getLastRngLockBlock()).to.equal(123)
+    })
+  })
+
+  describe('getLastRngRequestId()', () => {
+    it('should return the Request ID for the last RNG request', async () => {
+      await prizeStrategy.setRngRequest(0, 0)
+      expect(await prizeStrategy.getLastRngRequestId()).to.equal(0)
+
+      await prizeStrategy.setRngRequest(1, 123)
+      expect(await prizeStrategy.getLastRngRequestId()).to.equal(1)
     })
   })
 
@@ -426,8 +574,8 @@ describe('PrizeStrategy', function() {
       // 1 dai to give
       await prizePool.mock.awardBalance.returns(toWei('1'))
 
-      // no reserve
-      await comptroller.mock.reserveRateMantissa.returns(Zero) // no reserve
+      // Reserve fee
+      await comptroller.mock.reserveRateMantissa.returns(Zero)
 
       await prizePool.mock.award.withArgs(wallet._address, toWei('1'), ticket.address).returns()
 
@@ -445,6 +593,15 @@ describe('PrizeStrategy', function() {
 
       expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal(toWei('1.1'))
 
+    })
+    it('should award reserve fees to comptroller', async () => {
+      await prizePool.mock.awardBalance.returns(toWei('1'))
+
+      // Reserve fee
+      await comptroller.mock.reserveRateMantissa.returns(toWei('0.0001'))
+      await prizePool.mock.award.withArgs(comptroller.address, toWei('0.0001'), sponsorship.address).returns()
+
+      await prizeStrategy.awardReserveFeesTest()
     })
   })
 
