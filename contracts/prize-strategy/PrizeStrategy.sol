@@ -78,7 +78,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   ) public initializer {
     require(address(_comptroller) != address(0), "PrizeStrategy/comptroller-not-zero");
     require(_prizePeriodSeconds > 0, "PrizeStrategy/prize-period-greater-than-zero");
-    require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-zero");
+    require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-not-zero");
     require(address(_ticket) != address(0), "PrizeStrategy/ticket-not-zero");
     require(address(_sponsorship) != address(0), "PrizeStrategy/sponsorship-not-zero");
     require(address(_rng) != address(0), "PrizeStrategy/rng-not-zero");
@@ -805,7 +805,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Sets the RNG service that the Prize Strategy is connected to
   /// @param rngService The address of the new RNG service interface
   function setRngService(RNGInterface rngService) external onlyOwner {
-    require(!isRngRequested(), "PrizeStrategy/rng-requested");
+    require(!isRngRequested(), "PrizeStrategy/rng-in-flight");
 
     rng = rngService;
 

@@ -11,9 +11,11 @@ const debug = require('debug')('ptv3:VolumeDripManagerExposed.test')
 
 let overrides = { gasLimit: 20000000 }
 
-let MEASURE1 = '0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c'
+let MEASURE1 = '0x5A0b54D5dc17e0AadC383d2db43B0a0D3E029c4c'
 let DRIP_TOKEN1 = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 let DRIP_TOKEN2 = '0x3EcEf08D0e2DaD803847E052249bb4F8bFf2D5bB'
+
+let INVALID_MEASURE = '0x0000000000000000000000000000000000000002'
 
 describe('VolumeDripManagerExposed', function() {
 
@@ -21,7 +23,7 @@ describe('VolumeDripManagerExposed', function() {
 
   beforeEach(async () => {
     [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
-    
+
     manager = await deployContract(wallet, VolumeDripManagerExposed, [], overrides)
 
     debug({ manager: manager.address })
@@ -66,6 +68,11 @@ describe('VolumeDripManagerExposed', function() {
   })
 
   describe('removeDrip()', () => {
+    it('should revert for non-existant measure drips', async () => {
+      await expect(manager.removeDrip(INVALID_MEASURE, 1))
+        .to.be.revertedWith('VolumeDripManager/unknown-measure-drip')
+    })
+
     it('should remove a drip', async () => {
       await manager.addDrip(
         MEASURE1,
@@ -83,7 +90,11 @@ describe('VolumeDripManagerExposed', function() {
   })
 
   describe('setDripAmount()', () => {
-  
+    it('should revert for non-existant drips', async () => {
+      await expect(manager.setDripAmount('5', toWei('0.99')))
+        .to.be.revertedWith('VolumeDripManager/drip-not-exists')
+    })
+
     it('should allow one to set the drip rate', async () => {
       await manager.addDrip(
         MEASURE1,
@@ -151,6 +162,11 @@ describe('VolumeDripManagerExposed', function() {
   })
 
   describe('deactivateDrip()', () => {
+    it('should revert for non-existant measure drips', async () => {
+      await expect(manager.deactivateDrip(INVALID_MEASURE, 1))
+        .to.be.revertedWith('VolumeDripManager/unknown-measure-drip')
+    })
+
     it('should allow drips to be deactivated but still claimed', async () => {
       await manager.addDrip(
         MEASURE1,
@@ -181,6 +197,18 @@ describe('VolumeDripManagerExposed', function() {
   })
 
   describe('activateDrip', () => {
+    it('should revert for already activated drips', async () => {
+      await manager.addDrip(
+        MEASURE1,
+        DRIP_TOKEN1,
+        10,
+        toWei('1'),
+        10
+      )
+      await expect(manager.activateDrip(MEASURE1, '1'))
+        .to.be.revertedWith('VolumeDripManager/drip-active')
+    })
+
     it('should be possible to reactivate a volume drip', async () => {
       await manager.addDrip(
         MEASURE1,
