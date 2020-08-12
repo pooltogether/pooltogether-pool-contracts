@@ -69,6 +69,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function initialize (
     address _trustedForwarder,
     ComptrollerInterface _comptroller,
+    uint256 _prizePeriodStart,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
     address _ticket,
@@ -95,6 +96,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
     prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = _currentTime();
+    if (_prizePeriodStart > prizePeriodStartedAt) {
+      prizePeriodStartedAt = _prizePeriodStart;
+    }
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
     externalErc20s.initialize(_externalErc20s);
     for (uint256 i = 0; i < _externalErc20s.length; i++) {
@@ -474,6 +478,18 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return endAt.sub(time);
   }
 
+  /// @notice Returns whether the prize period has started
+  /// @return True if the prize period has started, false otherwise
+  function isPrizePeriodStarted() external view returns (bool) {
+    return _isPrizePeriodStarted();
+  }
+
+  /// @notice Returns whether the prize period has started
+  /// @return True if the prize period has started, false otherwise
+  function _isPrizePeriodStarted() internal view returns (bool) {
+    return _currentTime() >= prizePeriodStartedAt;
+  }
+
   /// @notice Returns whether the prize period is over
   /// @return True if the prize period is over, false otherwise
   function isPrizePeriodOver() external view returns (bool) {
@@ -718,8 +734,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   /// @notice Completes the award process and awards the winners.  The random number must have been requested and is now available.
   function completeAward() external requireCanCompleteAward {
-    require(_isPrizePeriodOver(), "PrizeStrategy/not-over");
-
     uint256 randomNumber = rng.randomNumber(rngRequest.id);
     uint256 balance = prizePool.awardBalance();
     uint256 reserveFee = _calculateReserveFee(balance);
@@ -852,12 +866,15 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   modifier requireCanStartAward() {
+    require(_isPrizePeriodStarted(), "PrizeStrategy/prize-period-not-started");
     require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
     require(!isRngRequested(), "PrizeStrategy/rng-already-requested");
     _;
   }
 
   modifier requireCanCompleteAward() {
+    require(_isPrizePeriodStarted(), "PrizeStrategy/prize-period-not-started");
+    require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
     require(isRngRequested(), "PrizeStrategy/rng-not-requested");
     require(isRngCompleted(), "PrizeStrategy/rng-not-complete");
     _;

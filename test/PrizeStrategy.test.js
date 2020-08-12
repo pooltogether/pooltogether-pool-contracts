@@ -29,6 +29,7 @@ describe('PrizeStrategy', function() {
 
   let ticket, sponsorship, rng
 
+  let prizePeriodStart = 0
   let prizePeriodSeconds = 1000
 
   let exitFeeMantissa = 0.1
@@ -66,6 +67,7 @@ describe('PrizeStrategy', function() {
     await prizeStrategy.initialize(
       FORWARDER,
       comptroller.address,
+      prizePeriodStart,
       prizePeriodSeconds,
       prizePool.address,
       ticket.address,
@@ -100,6 +102,7 @@ describe('PrizeStrategy', function() {
       const initArgs = [
         FORWARDER,
         comptroller.address,
+        prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
         ticket.address,
@@ -463,5 +466,54 @@ describe('PrizeStrategy', function() {
       let startedAt = await prizeStrategy.prizePeriodStartedAt();
       expect(await prizeStrategy.calculateNextPrizePeriodStartTime(startedAt.add(parseInt(prizePeriodSeconds * 1.5)))).to.equal(startedAt.add(prizePeriodSeconds))
     })
+  })
+
+  describe('with a prize-period scheduled in the future', () => {
+    let prizeStrategy2
+
+    beforeEach(async () => {
+      prizePeriodStart = 10000
+
+      debug('deploying secondary prizeStrategy...')
+      prizeStrategy2 = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
+
+      debug('initializing secondary prizeStrategy...')
+      await prizeStrategy2.initialize(
+        FORWARDER,
+        comptroller.address,
+        prizePeriodStart,
+        prizePeriodSeconds,
+        prizePool.address,
+        ticket.address,
+        sponsorship.address,
+        rng.address,
+        [externalERC20Award.address]
+      )
+
+      await prizeStrategy2.setExitFeeMantissa(
+        toWei(exitFeeMantissa)
+      )
+
+      await prizeStrategy2.setCreditRateMantissa(
+        toWei(creditRateMantissa)
+      )
+
+      debug('initialized!')
+    })
+
+    describe('startAward()', () => {
+      it('should prevent starting an award', async () => {
+        await prizeStrategy2.setCurrentTime(100);
+        await expect(prizeStrategy2.startAward()).to.be.revertedWith('PrizeStrategy/prize-period-not-started')
+      })
+    })
+
+    describe('completeAward()', () => {
+      it('should prevent completing an award', async () => {
+        await prizeStrategy2.setCurrentTime(100);
+        await expect(prizeStrategy2.startAward()).to.be.revertedWith('PrizeStrategy/prize-period-not-started')
+      })
+    })
+
   })
 });

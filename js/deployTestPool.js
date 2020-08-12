@@ -16,6 +16,7 @@ const debug = require('debug')('ptv3:deployTestPool')
 
 async function deployTestPool({
   wallet,
+  prizePeriodStart,
   prizePeriodSeconds,
   maxExitFeeMantissa,
   maxTimelockDuration,
@@ -76,6 +77,7 @@ async function deployTestPool({
   await prizeStrategy.initialize(
     forwarder.address,
     comptroller.address,
+    prizePeriodStart,
     prizePeriodSeconds,
     compoundPrizePool.address,
     ticket.address,
