@@ -631,6 +631,9 @@ describe('PrizeStrategy', function() {
       // have the mock update the number of prize tickets
       await prizePool.call(prizeStrategy, 'afterDepositTo', wallet._address, toWei('10'), ticket.address, []);
 
+      // confirm odds of winning
+      expect(await prizeStrategy.chanceOf(wallet._address)).to.equal(toWei('10'))
+
       // ensure prize period is over
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
 
@@ -670,6 +673,8 @@ describe('PrizeStrategy', function() {
 
       expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal(toWei('1.1'))
 
+      // confirm increased odds of winning
+      expect(await prizeStrategy.chanceOf(wallet._address)).to.equal(toWei('11'))
     })
     it('should award reserve fees to comptroller', async () => {
       await prizePool.mock.awardBalance.returns(toWei('1'))

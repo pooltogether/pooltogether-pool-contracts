@@ -493,10 +493,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param user The user to whom the tickets are minted
   /// @param amount The amount of interest to mint as tickets.
   function _awardTickets(address user, uint256 amount) internal {
-    _accrueCredit(user, ticket.balanceOf(user));
+    uint256 userBalance = ticket.balanceOf(user);
+    _accrueCredit(user, userBalance);
     uint256 creditEarned = _calculateEarlyExitFee(amount);
     creditBalances[user].balance = uint256(creditBalances[user].balance).add(creditEarned).toUint128();
     prizePool.award(user, amount, address(ticket));
+    sortitionSumTrees.set(TREE_KEY, userBalance.add(amount), bytes32(uint256(user)));
   }
 
   /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.
