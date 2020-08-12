@@ -32,19 +32,18 @@ contract VolumeDripExposed {
     return state.calculateAccrued(depositPeriod, balance);
   }
 
-  function burnDrip(address user, uint256 currentTime) external {
-    uint256 amount = state.burnDrip(user, currentTime);
+  function burnDrip(address user) external {
+    uint256 amount = state.burnDrip(user);
     emit DripTokensBurned(user, amount);
   }
 
   function balanceOf(
-    address user,
-    uint256 currentTime
+    address user
   )
-    external
+    external view
     returns (uint256 accrued)
   {
-    accrued = state.balanceOf(user, currentTime).accrued;
+    accrued = state.balanceOf(user).accrued;
   }
 
   function getDrip()
@@ -59,7 +58,7 @@ contract VolumeDripExposed {
     dripAmount = state.dripAmount;
   }
 
-  function getPeriod(uint256 periodIndex)
+  function getPeriod(uint16 index)
     external
     view
     returns (
@@ -67,8 +66,8 @@ contract VolumeDripExposed {
       uint32 startTime
     )
   {
-    totalSupply = state.periods[periodIndex].totalSupply;
-    startTime = state.periods[periodIndex].startTime;
+    totalSupply = state.periods[index].totalSupply;
+    startTime = state.periods[index].startTime;
   }
 
   function getDeposit(address user)
