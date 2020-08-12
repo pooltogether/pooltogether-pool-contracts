@@ -46,7 +46,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address indexed token,
     uint256 amount
   );
-  
+
   /// @dev Event emitted when external ERC20s are awarded to a winner
   event AwardedExternalERC20(
     address indexed winner,
@@ -60,7 +60,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address indexed token,
     uint256[] tokenIds
   );
-  
+
   /// @dev Event emitted when assets are withdrawn instantly
   event InstantWithdrawal(
     address indexed operator,
@@ -70,7 +70,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 exitFee,
     uint256 sponsoredExitFee
   );
-  
+
   /// @dev Event emitted when assets are withdrawn into a timelock
   event TimelockedWithdrawal(
     address indexed operator,
@@ -79,7 +79,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 amount,
     uint256 unlockTimestamp
   );
-  
+
   /// @dev Event emitted when timelocked funds are swept back to a user
   event TimelockedWithdrawalSwept(
     address indexed operator,
@@ -128,8 +128,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     public
     initializer
   {
-    require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-zero");
-    require(_trustedForwarder != address(0), "PrizePool/forwarder-zero");
+    require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
+    require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
     _tokens.initialize(_controlledTokens);
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
       require(ControlledToken(_controlledTokens[i]).controller() == this, "PrizePool/token-ctrlr-mismatch");
@@ -275,7 +275,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     if (exitFee > maxFee) {
       exitFee = maxFee;
     }
-    
+
     require(exitFee <= maximumExitFee, "PrizePool/exit-fee-exceeds-user-maximum");
 
     uint256 sponsoredExitFeePortion = (exitFee > sponsorAmount) ? sponsorAmount : exitFee;

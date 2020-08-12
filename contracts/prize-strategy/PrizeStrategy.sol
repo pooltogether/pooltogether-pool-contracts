@@ -78,7 +78,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   ) public initializer {
     require(address(_comptroller) != address(0), "PrizeStrategy/comptroller-not-zero");
     require(_prizePeriodSeconds > 0, "PrizeStrategy/prize-period-greater-than-zero");
-    require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-zero");
+    require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-not-zero");
     require(address(_ticket) != address(0), "PrizeStrategy/ticket-not-zero");
     require(address(_sponsorship) != address(0), "PrizeStrategy/sponsorship-not-zero");
     require(address(_rng) != address(0), "PrizeStrategy/rng-not-zero");
@@ -96,10 +96,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = _currentTime();
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
-    externalErc20s.initialize(_externalErc20s);
-    for (uint256 i = 0; i < _externalErc20s.length; i++) {
-      require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
-    }
 
     exitFeeMantissa = 0.1 ether;
     creditRateMantissa = exitFeeMantissa.div(prizePeriodSeconds);
@@ -809,7 +805,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Sets the RNG service that the Prize Strategy is connected to
   /// @param rngService The address of the new RNG service interface
   function setRngService(RNGInterface rngService) external onlyOwner {
-    require(!isRngRequested(), "PrizeStrategy/rng-requested");
+    require(!isRngRequested(), "PrizeStrategy/rng-in-flight");
 
     rng = rngService;
 
