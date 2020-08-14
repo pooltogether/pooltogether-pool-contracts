@@ -386,7 +386,7 @@ function PoolEnv() {
   this.sweepTimelockBalances = async function ({ user }) {
     let wallet = await this.wallet(user)
     let prizePool = await this.prizePool(wallet)
-    await prizePool.sweepTimelockBalances([wallet._address])
+    await prizePool.sweepTimelockBalances([wallet._address, wallet._address])
   }
 
   this.sweepTimelockBalancesAtTime = async function ({ user, elapsed }) {

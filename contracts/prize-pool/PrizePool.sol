@@ -18,12 +18,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   using SafeMath for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
-  /// @dev Helpful data structure to organize timelock sweeps
-  struct BalanceChange {
-    address user;
-    uint256 balance;
-  }
-
   /// @dev Event emitted when assets are deposited
   event Deposited(
     address indexed operator,
@@ -489,62 +483,42 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   {
     address operator = _msgSender();
 
-    // first gather the total withdrawal and fee
-    totalWithdrawal = _calculateTotalForSweep(users);
+    uint256[] memory balances = new uint256[](users.length);
+
+    uint256 i;
+    for (i = 0; i < users.length; i++) {
+      address user = users[i];
+      if (unlockTimestamps[user] <= _currentTime()) {
+        totalWithdrawal = totalWithdrawal.add(timelockBalances[user]);
+        balances[i] = timelockBalances[user];
+        delete timelockBalances[user];
+      }
+    }
+
     // if there is nothing to do, just quit
     if (totalWithdrawal == 0) {
       return 0;
     }
 
+    timelockTotalSupply = timelockTotalSupply.sub(totalWithdrawal);
+
     _redeem(totalWithdrawal);
 
-    BalanceChange[] memory changes = new BalanceChange[](users.length);
-
     IERC20 underlyingToken = IERC20(_token());
-    uint256 i;
+
     for (i = 0; i < users.length; i++) {
-      address user = users[i];
-      if (unlockTimestamps[user] <= _currentTime()) {
-        uint256 userBalance = timelockBalances[user];
-        if (userBalance > 0) {
-          timelockTotalSupply = timelockTotalSupply.sub(userBalance);
-          delete timelockBalances[user];
-          delete unlockTimestamps[user];
-          require(underlyingToken.transfer(user, userBalance), "PrizePool/sweep-transfer-failed");
-          emit TimelockedWithdrawalSwept(operator, user, userBalance);
+      if (balances[i] > 0) {
+        delete unlockTimestamps[users[i]];
+        require(underlyingToken.transfer(users[i], balances[i]), "PrizePool/sweep-transfer-failed");
+        emit TimelockedWithdrawalSwept(operator, users[i], balances[i]);
+      }
+    }
+
+    if (_hasPrizeStrategy()) {
+      for (i = 0; i < users.length; i++) {
+        if (balances[i] > 0) {
+          prizeStrategy.afterSweepTimelockedWithdrawal(operator, users[i], balances[i]);
         }
-        changes[i] = BalanceChange(user, userBalance);
-      } else {
-        changes[i] = BalanceChange(user, 0);
-      }
-    }
-
-    // Update prize strategy after sweep
-    _updateAfterSweep(changes, operator);
-  }
-
-  /// @dev Calculates the total amount of unlocked assets available to be withdrawn via Sweep
-  /// @param users An array of account addresses to sweep balances for
-  /// @return totalWithdrawal The total amount of assets that can be swept from the Prize Pool
-  function _calculateTotalForSweep(address[] memory users) internal view returns (uint256 totalWithdrawal) {
-    for (uint256 i = 0; i < users.length; i++) {
-      address user = users[i];
-      if (unlockTimestamps[user] <= _currentTime()) {
-        totalWithdrawal = totalWithdrawal.add(timelockBalances[user]);
-      }
-    }
-  }
-
-  /// @dev Updates the Prize Strategy after a sweep has been performed on timelocked balances
-  /// @param changes An array of user-balance changes
-  /// @param operator The address of the operator performing the update
-  function _updateAfterSweep(BalanceChange[] memory changes, address operator) internal {
-    if (!_hasPrizeStrategy()) { return; }
-
-    for (uint256 i = 0; i < changes.length; i++) {
-      BalanceChange memory change = changes[i];
-      if (change.balance > 0) {
-        prizeStrategy.afterSweepTimelockedWithdrawal(operator, change.user, change.balance);
       }
     }
   }
