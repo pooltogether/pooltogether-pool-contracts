@@ -104,9 +104,45 @@ describe('CompoundPrizePool', function() {
           .withArgs(wallet._address, wallet2._address, ticket.address, amount)
 
       })
+
+      it('should revert on Compound failure', async () => {
+        const amount = toWei('11')
+
+        // updateAwardBalance
+        await cToken.mock.balanceOfUnderlying.returns('0')
+        await ticket.mock.totalSupply.returns('0')
+
+        await erc20token.mock.transferFrom.withArgs(wallet._address, prizePool.address, amount).returns(true)
+        await erc20token.mock.approve.withArgs(cToken.address, amount).returns(true)
+        await cToken.mock.mint.withArgs(amount).returns('1')
+        await prizeStrategy.mock.afterDepositTo.withArgs(wallet2._address, amount, ticket.address, []).returns()
+        await ticket.mock.controllerMint.withArgs(wallet2._address, amount).returns()
+
+        // Test depositTo
+        await expect(prizePool.depositTo(wallet2._address, amount, ticket.address, []))
+          .to.be.revertedWith("CompoundPrizePool/mint-failed")
+        
+      })
     })
 
     describe('withdrawInstantlyFrom()', () => {
+      it('should revert on Compound error', async () => {
+        let amount = toWei('11')
+
+        // updateAwardBalance
+        await cToken.mock.balanceOfUnderlying.returns('0')
+        await ticket.mock.totalSupply.returns('0')
+
+        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address, []).returns(toWei('1'))
+        await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
+        await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('1')
+        await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0', []).returns()
+
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('1'), []))
+          .to.be.revertedWith('CompoundPrizePool/redeem-failed')
+      })
+
       it('should allow a user to withdraw instantly', async () => {
         let amount = toWei('11')
 

@@ -84,7 +84,7 @@ contract CompoundPrizePool is PrizePool {
   function _supply(uint256 amount) internal override {
     IERC20 assetToken = _token();
     assetToken.approve(address(cToken), amount);
-    cToken.mint(amount);
+    require(cToken.mint(amount) == 0, "CompoundPrizePool/mint-failed");
   }
 
   /// @dev Checks with the Prize Pool if a specific token type may be awarded as a prize enhancement
@@ -98,7 +98,7 @@ contract CompoundPrizePool is PrizePool {
   /// asset tokens held in escrow by the Yield Service
   /// @param amount The amount of yield-bearing tokens to be redeemed
   function _redeem(uint256 amount) internal override {
-    cToken.redeemUnderlying(amount);
+    require(cToken.redeemUnderlying(amount) == 0, "CompoundPrizePool/redeem-failed");
   }
 
   /// @dev Gets the underlying asset token used by the Yield Service
