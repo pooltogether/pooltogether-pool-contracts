@@ -250,7 +250,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param amount The amount of tokens to redeem for assets.
   /// @param controlledToken The address of the token to redeem (i.e. ticket or sponsorship)
   /// @param maximumExitFee The maximum exit fee the caller is willing to pay.  This can be pre-calculated.
-  /// @return exitFee The amount of the fairness fee paid
+  /// @return The amount of the fairness fee paid
   function withdrawInstantlyFrom(
     address from,
     uint256 amount,
@@ -261,9 +261,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     external
     nonReentrant
     onlyControlledToken(controlledToken)
-    returns (uint256 exitFee)
+    returns (uint256)
   {
 
+    uint256 exitFee;
     if (_hasPrizeStrategy()) {
       exitFee = _limitExitFee(amount, prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken, data));
     }
@@ -284,6 +285,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     }
 
     emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, exitFee);
+
+    return exitFee;
   }
 
   function _limitExitFee(uint256 withdrawalAmount, uint256 exitFee) internal view returns (uint256) {
@@ -300,7 +303,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param from The address to withdraw from
   /// @param amount The amount to withdraw
   /// @param controlledToken The type of token being withdrawn
-  /// @return unlockTimestamp The timestamp from which the funds can be swept
+  /// @return The timestamp from which the funds can be swept
   function withdrawWithTimelockFrom(
     address from,
     uint256 amount,
@@ -310,9 +313,11 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     external
     nonReentrant
     onlyControlledToken(controlledToken)
-    returns (uint256 unlockTimestamp)
+    returns (uint256)
   {
     uint256 blockTime = _currentTime();
+
+    uint256 unlockTimestamp;
 
     if (_hasPrizeStrategy()) {
       unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken, data);
@@ -365,8 +370,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
   /// @notice Updates and returns the current prize.
   /// @dev Updates the internal rolling interest rate since the last poke
-  /// @return award The total amount of assets to be awarded for the current prize
-  function awardBalance() public returns (uint256 award) {
+  /// @return The total amount of assets to be awarded for the current prize
+  function awardBalance() public returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
     uint256 bal = _balance();
 
@@ -452,29 +457,31 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
   /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
   /// @param users An array of account addresses to sweep balances for
-  /// @return totalWithdrawal The total amount of assets swept from the Prize Pool
+  /// @return The total amount of assets swept from the Prize Pool
   function sweepTimelockBalances(
     address[] calldata users
   )
     external
     nonReentrant
-    returns (uint256 totalWithdrawal)
+    returns (uint256)
   {
-    totalWithdrawal = _sweepTimelockBalances(users);
+    return _sweepTimelockBalances(users);
   }
 
   /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
   /// @param users An array of account addresses to sweep balances for
-  /// @return totalWithdrawal The total amount of assets swept from the Prize Pool
+  /// @return The total amount of assets swept from the Prize Pool
   function _sweepTimelockBalances(
     address[] memory users
   )
     internal
-    returns (uint256 totalWithdrawal)
+    returns (uint256)
   {
     address operator = _msgSender();
 
     uint256[] memory balances = new uint256[](users.length);
+
+    uint256 totalWithdrawal;
 
     uint256 i;
     for (i = 0; i < users.length; i++) {
@@ -512,6 +519,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
         }
       }
     }
+
+    return totalWithdrawal;
   }
 
   /// @notice Allows the Governor to add Controlled Tokens to the Prize Pool
@@ -537,46 +546,47 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   }
 
   /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
-  /// @return controlledTokens An array of controlled token addresses
-  function tokens() external view returns (address[] memory controlledTokens) {
+  /// @return An array of controlled token addresses
+  function tokens() external view returns (address[] memory) {
     return _tokens.addressArray();
   }
 
   /// @dev Gets the current time as represented by the current block
-  /// @return timestamp The timestamp of the current block
-  function _currentTime() internal virtual view returns (uint256 timestamp) {
+  /// @return The timestamp of the current block
+  function _currentTime() internal virtual view returns (uint256) {
     return block.timestamp;
   }
 
   /// @notice The timestamp at which an accounts timelocked balance will be made available
   /// @param user The address of an account with timelocked assets
-  /// @return unlockTimestamp The timestamp at which the locked assets will be made available
-  function timelockBalanceAvailableAt(address user) external view returns (uint256 unlockTimestamp) {
+  /// @return The timestamp at which the locked assets will be made available
+  function timelockBalanceAvailableAt(address user) external view returns (uint256) {
     return _unlockTimestamps[user];
   }
 
   /// @notice The balance of timelocked assets for an account
   /// @param user The address of an account with timelocked assets
-  /// @return timelockBalance The amount of assets that have been timelocked
-  function timelockBalanceOf(address user) external view returns (uint256 timelockBalance) {
+  /// @return The amount of assets that have been timelocked
+  function timelockBalanceOf(address user) external view returns (uint256) {
     return _timelockBalances[user];
   }
 
   /// @notice The currently accounted-for balance in relation to the rolling exchange-rate
-  /// @return totalAccounted The currently accounted-for balance
-  function accountedBalance() external view returns (uint256 totalAccounted) {
+  /// @return The currently accounted-for balance
+  function accountedBalance() external view returns (uint256) {
     return _tokenTotalSupply();
   }
 
   /// @dev The currently accounted-for balance in relation to the rolling exchange-rate
-  /// @return total The currently accounted-for balance
-  function _tokenTotalSupply() internal view returns (uint256 total) {
-    total = timelockTotalSupply;
+  /// @return The currently accounted-for balance
+  function _tokenTotalSupply() internal view returns (uint256) {
+    uint256 total = timelockTotalSupply;
     address currentToken = _tokens.start();
     while (currentToken != address(0) && currentToken != _tokens.end()) {
       total = total.add(IERC20(currentToken).totalSupply());
       currentToken = _tokens.next(currentToken);
     }
+    return total;
   }
 
   /// @dev Checks if a specific token is controlled by the Prize Pool
