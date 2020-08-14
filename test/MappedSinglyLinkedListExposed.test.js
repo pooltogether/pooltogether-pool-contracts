@@ -76,6 +76,16 @@ describe('MappedSinglyLinkedListExposed', function() {
     })
   })
 
+  describe('contains()', () => {
+    it('should return false for sentinel', async () => {
+      expect(await list.contains(SENTINAL)).to.be.false
+    })
+
+    it('should return false for the zero address', async () => {
+      expect(await list.contains(AddressZero)).to.be.false
+    })
+  })
+
   describe('clearAll', () =>{
     it('should clear the list', async () => {
       await list.addAddress(wallet._address)

@@ -57,7 +57,7 @@ library MappedSinglyLinkedList {
   /// @param addr The address to check
   /// @return True if the address is contained, false otherwise.
   function contains(Mapping storage self, address addr) internal view returns (bool) {
-    return addr != address(0) && self.addressMap[addr] != address(0);
+    return addr != SENTINAL && addr != address(0) && self.addressMap[addr] != address(0);
   }
 
   /// @notice Returns an address array of all the addresses in this list
