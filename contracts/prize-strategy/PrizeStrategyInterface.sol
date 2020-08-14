@@ -52,14 +52,12 @@ interface PrizeStrategyInterface {
   /// @param amount The amount of the withdrawal to account for
   /// @param controlledToken The address of the token withdrawn
   /// @param exitFee The amount of the exit "fairness" fee charged for the withdrawal
-  /// @param sponsoredExitFee The amount of asset tokens paid by the operator to cover the exit fee on behalf of the owner
   function afterWithdrawInstantlyFrom(
     address operator,
     address from,
     uint256 amount,
     address controlledToken,
     uint256 exitFee,
-    uint256 sponsoredExitFee,
     bytes calldata data
   ) external;
 

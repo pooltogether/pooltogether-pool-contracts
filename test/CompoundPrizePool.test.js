@@ -137,9 +137,9 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('1')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0', []).returns()
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), []).returns()
 
-        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('1'), []))
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('1'), []))
           .to.be.revertedWith('CompoundPrizePool/redeem-failed')
       })
 
@@ -154,55 +154,30 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0', []).returns()
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), []).returns()
 
-        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('1'), []))
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('1'), []))
           .to.emit(prizePool, 'InstantWithdrawal')
-          .withArgs(wallet._address, wallet._address, ticket.address, amount, toWei('1'), '0')
-      })
-
-      it('should allow a sponsor to cover the exit fee', async () => {
-        let amount = toWei('11')
-        let halfFee = toWei('0.5')
-
-        // updateAwardBalance
-        await cToken.mock.balanceOfUnderlying.returns('0')
-        await ticket.mock.totalSupply.returns('0')
-
-        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address, []).returns(toWei('1'))
-        await ticket.mock.controllerBurnFrom.withArgs(wallet2._address, wallet._address, amount).returns()
-        await cToken.mock.redeemUnderlying.withArgs(amount.sub(halfFee)).returns('0')
-        await erc20token.mock.transfer.withArgs(wallet._address, amount.sub(halfFee)).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet2._address, wallet._address, amount, ticket.address, toWei('1'), halfFee, []).returns()
-
-        // expect sponsor fee transfer
-        await erc20token.mock.transferFrom.withArgs(wallet2._address, prizePool.address, halfFee).returns(true)
-
-        await expect(prizePool.connect(wallet2).withdrawInstantlyFrom(wallet._address, amount, ticket.address, halfFee, toWei('1'), []))
-          .to.emit(prizePool, 'InstantWithdrawal')
-          .withArgs(wallet2._address, wallet._address, ticket.address, amount, toWei('1'), halfFee)
+          .withArgs(wallet._address, wallet._address, ticket.address, amount, toWei('1'))
       })
 
       it('should allow a user to set a maximum exit fee', async () => {
         let amount = toWei('11')
-        let halfFee = toWei('0.5')
+        let fee = toWei('1')
 
         // updateAwardBalance
         await cToken.mock.balanceOfUnderlying.returns('0')
         await ticket.mock.totalSupply.returns('0')
 
-        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address, []).returns(toWei('1'))
+        await prizeStrategy.mock.beforeWithdrawInstantlyFrom.withArgs(wallet._address, amount, ticket.address, []).returns(fee)
         await ticket.mock.controllerBurnFrom.withArgs(wallet2._address, wallet._address, amount).returns()
-        await cToken.mock.redeemUnderlying.withArgs(amount.sub(halfFee)).returns('0')
-        await erc20token.mock.transfer.withArgs(wallet._address, amount.sub(halfFee)).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet2._address, wallet._address, amount, ticket.address, toWei('1'), halfFee, []).returns()
+        await cToken.mock.redeemUnderlying.withArgs(amount.sub(fee)).returns('0')
+        await erc20token.mock.transfer.withArgs(wallet._address, amount.sub(fee)).returns(true)
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet2._address, wallet._address, amount, ticket.address, fee, []).returns()
 
-        // expect sponsor fee transfer
-        await erc20token.mock.transferFrom.withArgs(wallet2._address, prizePool.address, halfFee).returns(true)
-
-        await expect(prizePool.connect(wallet2).withdrawInstantlyFrom(wallet._address, amount, ticket.address, halfFee, toWei('1'), []))
+        await expect(prizePool.connect(wallet2).withdrawInstantlyFrom(wallet._address, amount, ticket.address, fee, []))
           .to.emit(prizePool, 'InstantWithdrawal')
-          .withArgs(wallet2._address, wallet._address, ticket.address, amount, toWei('1'), halfFee)
+          .withArgs(wallet2._address, wallet._address, ticket.address, amount, fee)
       })
 
       it('should allow a user to set a maximum exit fee', async () => {
@@ -216,9 +191,9 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0', []).returns()
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), []).returns()
 
-        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('0.3'), []))
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('0.3'), []))
           .to.be.revertedWith('PrizePool/exit-fee-exceeds-user-maximum')
       })
 
@@ -251,13 +226,13 @@ describe('CompoundPrizePool', function() {
 
         // exit fee is limited to 5
         await prizeStrategy.mock.afterWithdrawInstantlyFrom
-          .withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('10'), '0', [])
+          .withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('10'), [])
           .returns()
 
         // max exit fee is 10, well above
-        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('10'), []))
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('10'), []))
           .to.emit(prizePool, 'InstantWithdrawal')
-          .withArgs(wallet._address, wallet._address, ticket.address, amount, toWei('10'), '0')
+          .withArgs(wallet._address, wallet._address, ticket.address, amount, toWei('10'))
       })
 
       it('should not allow the prize-strategy to set exit fees exceeding the max', async () => {
@@ -273,9 +248,9 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0', []).returns()
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), []).returns()
 
-        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('0.3'), []))
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('0.3'), []))
           .to.be.revertedWith('PrizePool/exit-fee-exceeds-user-maximum')
       })
 
@@ -292,12 +267,12 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0', []).returns()
+        await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), []).returns()
 
         // PrizeStrategy exit fee: 100.0
         // PrizePool max exit fee: 5.5  (should be capped at this)
         // User max exit fee:      5.6
-        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, '0', toWei('5.6'), []))
+        await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('5.6'), []))
           .to.not.be.revertedWith('PrizePool/exit-fee-exceeds-user-maximum')
       })
     })
@@ -746,11 +721,10 @@ describe('CompoundPrizePool', function() {
         await ticket2.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('11')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
-        // await prizeStrategy.mock.afterWithdrawInstantlyFrom.withArgs(wallet._address, wallet._address, amount, ticket.address, toWei('1'), '0').returns()
 
-        await expect(detachedPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, '0', toWei('1'), []))
+        await expect(detachedPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, toWei('1'), []))
           .to.emit(detachedPrizePool, 'InstantWithdrawal')
-          .withArgs(wallet._address, wallet._address, ticket2.address, amount, toWei('0'), '0')
+          .withArgs(wallet._address, wallet._address, ticket2.address, amount, toWei('0'))
       })
     })
 

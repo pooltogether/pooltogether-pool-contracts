@@ -671,7 +671,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     uint256 amount,
     address controlledToken,
     uint256,
-    uint256,
     bytes calldata
   )
     external

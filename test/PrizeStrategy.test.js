@@ -276,7 +276,6 @@ describe('PrizeStrategy', function() {
           toWei('10'),
           ticket.address,
           toWei('0'),
-          toWei('0'),
           []
         ))
         .to.be.revertedWith('PrizeStrategy/rng-in-flight')

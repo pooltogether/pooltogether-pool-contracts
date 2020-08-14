@@ -61,8 +61,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address indexed from,
     address indexed token,
     uint256 amount,
-    uint256 exitFee,
-    uint256 sponsoredExitFee
+    uint256 exitFee
   );
   
   /// @dev Event emitted when assets are withdrawn into a timelock
@@ -244,14 +243,12 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param from The address to redeem tokens from.
   /// @param amount The amount of tokens to redeem for assets.
   /// @param controlledToken The address of the token to redeem (i.e. ticket or sponsorship)
-  /// @param sponsorAmount An optional amount of assets paid by the caller to cover exit fees
   /// @param maximumExitFee The maximum exit fee the caller is willing to pay.  This can be pre-calculated.
   /// @return exitFee The amount of the fairness fee paid
   function withdrawInstantlyFrom(
     address from,
     uint256 amount,
     address controlledToken,
-    uint256 sponsorAmount,
     uint256 maximumExitFee,
     bytes calldata data
   )
@@ -272,28 +269,20 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     
     require(exitFee <= maximumExitFee, "PrizePool/exit-fee-exceeds-user-maximum");
 
-    uint256 sponsoredExitFeePortion = (exitFee > sponsorAmount) ? sponsorAmount : exitFee;
-    uint256 userExitFee = exitFee.sub(sponsoredExitFeePortion);
-
-    if (sponsoredExitFeePortion > 0) {
-      // transfer the fee to this contract
-      require(_token().transferFrom(_msgSender(), address(this), sponsoredExitFeePortion), "PrizePool/sponsor-transfer-failed");
-    }
-
     // burn the tickets
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
 
     // redeem the tickets less the fee
-    uint256 amountLessFee = amount.sub(userExitFee);
+    uint256 amountLessFee = amount.sub(exitFee);
     _redeem(amountLessFee);
 
     require(_token().transfer(from, amountLessFee), "PrizePool/instant-transfer-failed");
 
     if (_hasPrizeStrategy()) {
-      prizeStrategy.afterWithdrawInstantlyFrom(_msgSender(), from, amount, controlledToken, exitFee, sponsoredExitFeePortion, data);
+      prizeStrategy.afterWithdrawInstantlyFrom(_msgSender(), from, amount, controlledToken, exitFee, data);
     }
 
-    emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, exitFee, sponsoredExitFeePortion);
+    emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, exitFee);
   }
 
   function limitExitFee(uint256 withdrawalAmount, uint256 exitFee) internal view returns (uint256) {
