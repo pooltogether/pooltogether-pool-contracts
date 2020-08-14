@@ -22,12 +22,17 @@ describe('MappedSinglyLinkedListExposed', function() {
     [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
 
     list = await deployContract(wallet, MappedSinglyLinkedListExposed, [], overrides)
+    await list.initialize()
     await list.addAddresses([wallet2._address])
   })
 
   describe('initialize()', () => {
     it('should have initialized with a value', async () => {
       expect(await list.contains(wallet2._address)).to.be.true
+    })
+
+    it('should not be initialized after it contains values', async () => {
+      await expect(list.initialize()).to.be.revertedWith('Already init')
     })
   })
 

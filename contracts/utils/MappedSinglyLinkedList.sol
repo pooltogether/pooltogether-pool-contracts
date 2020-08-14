@@ -19,8 +19,8 @@ library MappedSinglyLinkedList {
   /// @notice Initializes the list.
   /// @dev It is important that this is called so that the SENTINAL is correctly setup.
   function initialize(Mapping storage self) internal {
+    require(self.count == 0, "Already init");
     self.addressMap[SENTINAL] = SENTINAL;
-    self.count = 0;
   }
 
   function addAddresses(Mapping storage self, address[] memory addresses) internal {

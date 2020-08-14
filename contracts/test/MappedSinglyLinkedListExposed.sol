@@ -7,7 +7,7 @@ contract MappedSinglyLinkedListExposed {
 
   MappedSinglyLinkedList.Mapping list;
 
-  constructor () public {
+  function initialize() external {
     list.initialize();
   }
 
