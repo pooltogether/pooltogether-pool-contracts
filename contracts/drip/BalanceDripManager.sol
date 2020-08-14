@@ -37,12 +37,9 @@ library BalanceDripManager {
   function addDrip(State storage self, address measure, address dripToken, uint256 dripRatePerSecond, uint256 currentTime) internal {
     require(!self.activeBalanceDrips[measure].contains(dripToken), "BalanceDripManager/drip-exists");
     if (self.activeBalanceDrips[measure].count == 0) {
-      address[] memory single = new address[](1);
-      single[0] = dripToken;
-      self.activeBalanceDrips[measure].initialize(single);
-    } else {
-      self.activeBalanceDrips[measure].addAddress(dripToken);
+      self.activeBalanceDrips[measure].initialize();
     }
+    self.activeBalanceDrips[measure].addAddress(dripToken);
     self.balanceDrips[measure][dripToken].initialize(currentTime);
     self.balanceDrips[measure][dripToken].dripRatePerSecond = dripRatePerSecond;
   }

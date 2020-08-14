@@ -7,12 +7,16 @@ contract MappedSinglyLinkedListExposed {
 
   MappedSinglyLinkedList.Mapping list;
 
-  constructor (address[] memory addresses) public {
-    list.initialize(addresses);
+  constructor () public {
+    list.initialize();
   }
 
   function addressArray() external view returns (address[] memory) {
     return list.addressArray();
+  }
+
+  function addAddresses(address[] calldata addresses) external {
+    list.addAddresses(addresses);
   }
 
   function addAddress(address newAddress) external {

@@ -23,19 +23,10 @@ library MappedSinglyLinkedList {
     self.count = 0;
   }
 
-  /// @notice Initializes the list with an array of addresses.
-  /// @param self The Mapping struct that this function is attached to
-  /// @param addresses The addresses to be added to the list.  They will be added in reverse order.
-  function initialize(Mapping storage self, address[] memory addresses) internal {
-    uint256 count = 0;
-    self.addressMap[SENTINAL] = SENTINAL;
+  function addAddresses(Mapping storage self, address[] memory addresses) internal {
     for (uint256 i = 0; i < addresses.length; i++) {
-      self.addressMap[addresses[i]] = self.addressMap[SENTINAL];
-      self.addressMap[SENTINAL] = addresses[i];
-      count += 1;
+      addAddress(self, addresses[i]);
     }
-    // console.log("sentinal initialized to %s", self.addressMap[SENTINAL]);
-    self.count = count;
   }
 
   /// @notice Adds an address to the front of the list.

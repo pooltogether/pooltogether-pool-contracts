@@ -93,21 +93,18 @@ contract PrizeStrategy is PrizeStrategyStorage,
     comptroller = _comptroller;
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
+    for (uint256 i = 0; i < _externalErc20s.length; i++) {
+      require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
+    }
+    externalErc20s.initialize();
+    externalErc20s.addAddresses(_externalErc20s);
+
     prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = _currentTime();
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
-    externalErc20s.initialize(_externalErc20s);
-    for (uint256 i = 0; i < _externalErc20s.length; i++) {
-      require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
-    }
 
     exitFeeMantissa = 0.1 ether;
     creditRateMantissa = exitFeeMantissa.div(prizePeriodSeconds);
-
-    for (uint256 i = 0; i < _externalErc20s.length; i++) {
-      require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
-    }
-    externalErc20s.initialize(_externalErc20s);
     externalErc721s.initialize();
 
     emit ExitFeeUpdated(exitFeeMantissa);

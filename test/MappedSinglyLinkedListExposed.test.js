@@ -14,14 +14,15 @@ let overrides = { gasLimit: 20000000 }
 
 const SENTINAL = '0x0000000000000000000000000000000000000001'
 
-describe('PrizePool contract', function() {
+describe('MappedSinglyLinkedListExposed', function() {
 
   let list
 
   beforeEach(async () => {
     [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
 
-    list = await deployContract(wallet, MappedSinglyLinkedListExposed, [[wallet2._address]], overrides)
+    list = await deployContract(wallet, MappedSinglyLinkedListExposed, [], overrides)
+    await list.addAddresses([wallet2._address])
   })
 
   describe('initialize()', () => {
