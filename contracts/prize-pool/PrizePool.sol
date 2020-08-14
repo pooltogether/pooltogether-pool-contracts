@@ -263,11 +263,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
       exitFee = limitExitFee(amount, prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken, data));
     }
 
-    uint256 maxFee = FixedPoint.multiplyUintByMantissa(amount, maxExitFeeMantissa);
-    if (exitFee > maxFee) {
-      exitFee = maxFee;
-    }
-    
     require(exitFee <= maximumExitFee, "PrizePool/exit-fee-exceeds-user-maximum");
 
     // burn the tickets
