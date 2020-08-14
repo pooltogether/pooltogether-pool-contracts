@@ -299,7 +299,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param from The address to withdraw from
   /// @param amount The amount to withdraw
   /// @param controlledToken The type of token being withdrawn
-  /// @return unlockTimestamp The timestamp after which the funds can be swept
+  /// @return unlockTimestamp The timestamp from which the funds can be swept
   function withdrawWithTimelockFrom(
     address from,
     uint256 amount,
