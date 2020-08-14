@@ -1,11 +1,11 @@
 pragma solidity ^0.6.4;
 
 /// @notice An efficient implementation of a singly linked list of addresses
-/// @dev A mapping(address => address) tracks the 'next' pointer.  A special address called the SENTINAL is used to denote the beginning and end of the list.
+/// @dev A mapping(address => address) tracks the 'next' pointer.  A special address called the SENTINEL is used to denote the beginning and end of the list.
 library MappedSinglyLinkedList {
 
   /// @notice The special value address used to denote the end of the list
-  address public constant SENTINAL = address(0x1);
+  address public constant SENTINEL = address(0x1);
 
   /// @notice The data structure to use for the list.
   struct Mapping {
@@ -17,10 +17,22 @@ library MappedSinglyLinkedList {
   }
 
   /// @notice Initializes the list.
-  /// @dev It is important that this is called so that the SENTINAL is correctly setup.
+  /// @dev It is important that this is called so that the SENTINEL is correctly setup.
   function initialize(Mapping storage self) internal {
     require(self.count == 0, "Already init");
-    self.addressMap[SENTINAL] = SENTINAL;
+    self.addressMap[SENTINEL] = SENTINEL;
+  }
+
+  function start(Mapping storage self) internal view returns (address) {
+    return self.addressMap[SENTINEL];
+  }
+
+  function next(Mapping storage self, address current) internal view returns (address) {
+    return self.addressMap[current];
+  }
+
+  function end(Mapping storage) internal pure returns (address) {
+    return SENTINEL;
   }
 
   function addAddresses(Mapping storage self, address[] memory addresses) internal {
@@ -33,19 +45,19 @@ library MappedSinglyLinkedList {
   /// @param self The Mapping struct that this function is attached to
   /// @param newAddress The address to shift to the front of the list
   function addAddress(Mapping storage self, address newAddress) internal {
-    require(newAddress != SENTINAL && newAddress != address(0), "Invalid address");
+    require(newAddress != SENTINEL && newAddress != address(0), "Invalid address");
     require(self.addressMap[newAddress] == address(0), "Already added");
-    self.addressMap[newAddress] = self.addressMap[SENTINAL];
-    self.addressMap[SENTINAL] = newAddress;
+    self.addressMap[newAddress] = self.addressMap[SENTINEL];
+    self.addressMap[SENTINEL] = newAddress;
     self.count = self.count + 1;
   }
 
   /// @notice Removes an address from the list
   /// @param self The Mapping struct that this function is attached to
-  /// @param prevAddress The address that precedes the address to be removed.  This may be the SENTINAL if at the start.
+  /// @param prevAddress The address that precedes the address to be removed.  This may be the SENTINEL if at the start.
   /// @param addr The address to remove from the list.
   function removeAddress(Mapping storage self, address prevAddress, address addr) internal {
-    require(addr != SENTINAL && addr != address(0), "Invalid address");
+    require(addr != SENTINEL && addr != address(0), "Invalid address");
     require(self.addressMap[prevAddress] == addr, "Invalid prevAddress");
     self.addressMap[prevAddress] = self.addressMap[addr];
     self.addressMap[addr] = address(0);
@@ -57,7 +69,7 @@ library MappedSinglyLinkedList {
   /// @param addr The address to check
   /// @return True if the address is contained, false otherwise.
   function contains(Mapping storage self, address addr) internal view returns (bool) {
-    return addr != SENTINAL && addr != address(0) && self.addressMap[addr] != address(0);
+    return addr != SENTINEL && addr != address(0) && self.addressMap[addr] != address(0);
   }
 
   /// @notice Returns an address array of all the addresses in this list
@@ -67,10 +79,10 @@ library MappedSinglyLinkedList {
   function addressArray(Mapping storage self) internal view returns (address[] memory) {
     address[] memory array = new address[](self.count);
     uint256 count;
-    address currentToken = self.addressMap[SENTINAL];
-    while (currentToken != address(0) && currentToken != SENTINAL) {
-      array[count] = currentToken;
-      currentToken = self.addressMap[currentToken];
+    address currentAddress = self.addressMap[SENTINEL];
+    while (currentAddress != address(0) && currentAddress != SENTINEL) {
+      array[count] = currentAddress;
+      currentAddress = self.addressMap[currentAddress];
       count++;
     }
     return array;
@@ -79,13 +91,13 @@ library MappedSinglyLinkedList {
   /// @notice Removes every address from the list
   /// @param self The Mapping struct that this function is attached to
   function clearAll(Mapping storage self) internal {
-    address currentToken = self.addressMap[SENTINAL];
-    while (currentToken != address(0) && currentToken != SENTINAL) {
-      address nextToken = self.addressMap[currentToken];
-      delete self.addressMap[currentToken];
-      currentToken = nextToken;
+    address currentAddress = self.addressMap[SENTINEL];
+    while (currentAddress != address(0) && currentAddress != SENTINEL) {
+      address nextToken = self.addressMap[currentAddress];
+      delete self.addressMap[currentAddress];
+      currentAddress = nextToken;
     }
-    self.addressMap[SENTINAL] = SENTINAL;
+    self.addressMap[SENTINEL] = SENTINEL;
     self.count = 0;
   }
 }

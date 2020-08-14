@@ -21,8 +21,8 @@ library BalanceDripManager {
     uint256 measureTotalSupply,
     uint256 currentTime
   ) internal {
-    address currentDripToken = self.activeBalanceDrips[measure].addressMap[MappedSinglyLinkedList.SENTINAL];
-    while (currentDripToken != address(0) && currentDripToken != MappedSinglyLinkedList.SENTINAL) {
+    address currentDripToken = self.activeBalanceDrips[measure].start();
+    while (currentDripToken != address(0) && currentDripToken != self.activeBalanceDrips[measure].end()) {
       BalanceDrip.State storage dripState = self.balanceDrips[measure][currentDripToken];
       dripState.drip(
         user,
@@ -30,7 +30,7 @@ library BalanceDripManager {
         measureTotalSupply,
         currentTime
       );
-      currentDripToken = self.activeBalanceDrips[measure].addressMap[currentDripToken];
+      currentDripToken = self.activeBalanceDrips[measure].next(currentDripToken);
     }
   }
 

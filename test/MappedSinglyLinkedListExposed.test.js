@@ -12,7 +12,7 @@ const debug = require('debug')('ptv3:MappedSinglyLinkedListExposed.test')
 
 let overrides = { gasLimit: 20000000 }
 
-const SENTINAL = '0x0000000000000000000000000000000000000001'
+const SENTINEL = '0x0000000000000000000000000000000000000001'
 
 describe('MappedSinglyLinkedListExposed', function() {
 
@@ -43,8 +43,8 @@ describe('MappedSinglyLinkedListExposed', function() {
   })
 
   describe('addAddress', () => {
-    it('should not allow adding the SENTINAL address', async () => {
-      await expect(list.addAddress(SENTINAL)).to.be.revertedWith("Invalid address")
+    it('should not allow adding the SENTINEL address', async () => {
+      await expect(list.addAddress(SENTINEL)).to.be.revertedWith("Invalid address")
     })
 
     it('should not allow adding a zero address', async () => {
@@ -59,8 +59,8 @@ describe('MappedSinglyLinkedListExposed', function() {
   })
 
   describe('removeAddress', () => {
-    it('should not allow removing the SENTINAL address', async () => {
-      await expect(list.removeAddress(SENTINAL, SENTINAL)).to.be.revertedWith("Invalid address")
+    it('should not allow removing the SENTINEL address', async () => {
+      await expect(list.removeAddress(SENTINEL, SENTINEL)).to.be.revertedWith("Invalid address")
     })
 
     it('should not allow removing an address that does not exist', async () => {
@@ -83,7 +83,7 @@ describe('MappedSinglyLinkedListExposed', function() {
 
   describe('contains()', () => {
     it('should return false for sentinel', async () => {
-      expect(await list.contains(SENTINAL)).to.be.false
+      expect(await list.contains(SENTINEL)).to.be.false
     })
 
     it('should return false for the zero address', async () => {

@@ -571,10 +571,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @return total The currently accounted-for balance
   function _tokenTotalSupply() internal view returns (uint256 total) {
     total = timelockTotalSupply;
-    address currentToken = _tokens.addressMap[MappedSinglyLinkedList.SENTINAL];
-    while (currentToken != address(0) && currentToken != MappedSinglyLinkedList.SENTINAL) {
+    address currentToken = _tokens.start();
+    while (currentToken != address(0) && currentToken != _tokens.end()) {
       total = total.add(IERC20(currentToken).totalSupply());
-      currentToken = _tokens.addressMap[currentToken];
+      currentToken = _tokens.next(currentToken);
     }
   }
 
