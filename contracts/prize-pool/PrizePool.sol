@@ -18,6 +18,11 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   using SafeMath for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
+  /// @dev Event emitted when controlled token is added
+  event ControlledTokenAdded(
+    address indexed token
+  );
+
   /// @dev Event emitted when assets are deposited
   event Deposited(
     address indexed operator,
@@ -513,6 +518,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   function addControlledToken(address _controlledToken) external onlyOwner {
     require(ControlledToken(_controlledToken).controller() == this, "PrizePool/token-ctrlr-mismatch");
     _tokens.addAddress(_controlledToken);
+
+    emit ControlledTokenAdded(_controlledToken);
   }
 
   /// @notice Emergency shutdown of the Prize Pool by detaching the Prize Strategy
