@@ -68,7 +68,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
-    rng = rngServiceMockResult.address
 
     const daiResult = await deploy("Dai", {
       contract: ERC20Mintable,
@@ -88,7 +87,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       skipIfAlreadyDeployed: true
     })
   }
-  
+
   const comptrollerImplementationResult = await deploy("ComptrollerImplementation", {
     contract: Comptroller,
     from: deployer,
@@ -123,12 +122,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
-  
+
   const controlledTokenProxyFactoryResult = await deploy("ControlledTokenProxyFactory", {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
-  
+
   const prizeStrategyProxyFactoryResult = await deploy("PrizeStrategyProxyFactory", {
     from: deployer,
     skipIfAlreadyDeployed: true
@@ -141,7 +140,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       trustedForwarder,
       compoundPrizePoolProxyFactoryResult.address,
       controlledTokenProxyFactoryResult.address,
-      rng,
       proxyFactoryResult.address
     ],
     from: deployer,
