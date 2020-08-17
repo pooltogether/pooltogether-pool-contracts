@@ -1,5 +1,9 @@
 const {TASK_COMPILE_GET_COMPILER_INPUT} = require("@nomiclabs/buidler/builtin-tasks/task-names");
 
+const RNGBlockhashRopsten = require('@pooltogether/pooltogether-rng-contracts/deployments/ropsten/RNGBlockhash.json')
+const RNGBlockhashRinkeby = require('@pooltogether/pooltogether-rng-contracts/deployments/rinkeby/RNGBlockhash.json')
+const RNGBlockhashKovan = require('@pooltogether/pooltogether-rng-contracts/deployments/kovan/RNGBlockhash.json')
+
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("buidler-gas-reporter");
 usePlugin("solidity-coverage");
@@ -54,11 +58,13 @@ const config = {
     },
     trustedForwarder: {
       42: '0x6453D37248Ab2C16eBd1A8f782a2CBC65860E60B',
+      4: '0xd6cC1FEAB6E1DbDc3c0a6F2798c8089c72F78E64',
       3: '0xcC87aa60a6457D9606995C4E7E9c38A2b627Da88'
     },
     rng: {
-      42: '0x92766898334e9966308bD9436e366470b5c546c4',
-      3: '0x976D4481dB98FC5140eDC3B382F043419813c351'
+      42: RNGBlockhashKovan.address,
+      4: RNGBlockhashRinkeby.address,
+      3: RNGBlockhashRopsten.address
     },
     adminAccount: {
       default: testnetAdmin,
@@ -79,6 +85,13 @@ if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
 
   config.networks.ropsten = {
     url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
+  }
+
+  config.networks.rinkeby = {
+    url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
