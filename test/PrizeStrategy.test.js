@@ -74,14 +74,6 @@ describe('PrizeStrategy', function() {
       [externalERC20Award.address]
     )
 
-    await prizeStrategy.setExitFeeMantissa(
-      toWei(exitFeeMantissa)
-    )
-
-    await prizeStrategy.setCreditRateMantissa(
-      toWei(creditRateMantissa)
-    )
-
     debug('initialized!')
   })
 
@@ -145,32 +137,6 @@ describe('PrizeStrategy', function() {
     })
   })
 
-  describe('setCreditRateMantissa', () => {
-    it('should only allow the owner to change it', async () => {
-      await expect(prizeStrategy.setCreditRateMantissa(toWei('0.1')))
-        .to.emit(prizeStrategy, 'CreditRateUpdated')
-        .withArgs(toWei('0.1'))
-    })
-
-    it('should not allow anyone but the owner to change', async () => {
-      prizeStrategy2 = prizeStrategy.connect(wallet2)
-      await expect(prizeStrategy2.setCreditRateMantissa(toWei('0.1'))).to.be.revertedWith('Ownable: caller is not the owner')
-    })
-  })
-
-  describe('setExitFeeMantissa', () => {
-    it('should only allow the owner to change it', async () => {
-      await expect(prizeStrategy.setExitFeeMantissa(toWei('0.1')))
-        .to.emit(prizeStrategy, 'ExitFeeUpdated')
-        .withArgs(toWei('0.1'))
-    })
-
-    it('should not allow anyone but the owner to change', async () => {
-      prizeStrategy2 = prizeStrategy.connect(wallet2)
-      await expect(prizeStrategy2.setExitFeeMantissa(toWei('0.1'))).to.be.revertedWith('Ownable: caller is not the owner')
-    })
-  })
-
   describe('setRngService', () => {
     it('should only allow the owner to change it', async () => {
       await expect(prizeStrategy.setRngService(token.address))
@@ -195,32 +161,6 @@ describe('PrizeStrategy', function() {
         .returns('10')
 
       expect(await call(prizeStrategy, 'estimatePrizeWithBlockTime', 100)).to.equal('110')
-    })
-  })
-
-  describe('calculateInstantWithdrawalFee()', () => {
-    it('should calculate fee for instant withdrawal with no credit', async () => {
-      const withdrawalAmount = 50
-      const exitFee = withdrawalAmount * exitFeeMantissa
-      await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('100'))
-
-      expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal('0')
-
-      let fees = await callRaw(prizeStrategy, 'calculateInstantWithdrawalFee', wallet._address, toWei(withdrawalAmount), ticket.address)
-      expect(fees.remainingFee).to.equal(toWei(exitFee))
-      expect(fees.burnedCredit).to.equal('0')
-    })
-  })
-
-  describe('calculateTimelockDurationAndFee()', () => {
-    it('should calculate timelock duration for scheduled withdrawals with no credit', async () => {
-      await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('100'))
-
-      expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal('0')
-
-      let fees = await callRaw(prizeStrategy, 'calculateTimelockDurationAndFee', wallet._address, toWei('50'), ticket.address)
-      expect(fees.durationSeconds).to.equal('' + prizePeriodSeconds)
-      expect(fees.burnedCredit).to.equal('0')
     })
   })
 
@@ -335,26 +275,6 @@ describe('PrizeStrategy', function() {
     })
   })
 
-  describe('estimateCreditAccrualTime()', () => {
-    it('should calculate the accrual time', async () => {
-      let ticketBalance = toWei('100')
-      let interest = toWei('10')
-      expect(await prizeStrategy.estimateCreditAccrualTime(
-        ticketBalance,
-        interest
-      )).to.equal(prizePeriodSeconds)
-    })
-
-    it('should calculate the accrual time', async () => {
-      let ticketBalance = toWei('100')
-      let interest = toWei('30')
-      expect(await prizeStrategy.estimateCreditAccrualTime(
-        ticketBalance,
-        interest
-      )).to.equal(prizePeriodSeconds * 3)
-    })
-  })
-
   describe('addExternalErc20Award()', () => {
     it('should allow the owner to add external ERC20 tokens to the prize', async () => {
       await expect(prizeStrategy.addExternalErc20Award(externalERC20Award.address))
@@ -389,7 +309,7 @@ describe('PrizeStrategy', function() {
   })
 
   describe('completeAward()', () => {
-    it('should accrue credit to the winner', async () => {
+    it('should award the winner', async () => {
       debug('Setting time')
 
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt());
@@ -441,9 +361,6 @@ describe('PrizeStrategy', function() {
       await ticket.mock.balanceOf.returns(toWei('11'))
 
       expect(await prizeStrategy.prizePeriodStartedAt()).to.equal(startedAt.add(prizePeriodSeconds))
-
-      expect(await call(prizeStrategy, 'balanceOfCredit', wallet._address)).to.equal(toWei('1.1'))
-
     })
   })
 

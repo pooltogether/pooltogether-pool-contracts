@@ -55,6 +55,7 @@ function PoolEnv() {
       overrides: this.overrides,
       externalERC20Awards: externalAwardAddresses
     })
+
     debug(`CompoundPrizePool created with address ${this.env.compoundPrizePool.address}`)
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
   }
@@ -302,8 +303,9 @@ function PoolEnv() {
 
   this.expectUserToHaveCredit = async function ({ user, credit }) {
     let wallet = await this.wallet(user)
-    let prizeStrategy = await this.prizeStrategy(wallet)
-    let ticketInterest = await call(prizeStrategy, 'balanceOfCredit', wallet._address)
+    let prizePool = await this.prizePool(wallet)
+    let ticketInterest = await call(prizePool, 'balanceOfCredit', wallet._address, this.env.ticket.address)
+    debug(`expectUserToHaveCredit ticketInterest ${ticketInterest.toString()}`)
     expect(ticketInterest).to.equalish(toWei(credit), 300)
   }
 

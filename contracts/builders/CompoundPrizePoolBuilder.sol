@@ -11,6 +11,7 @@ import "../external/compound/CTokenInterface.sol";
 
 contract CompoundPrizePoolBuilder is Initializable {
   using SafeMath for uint256;
+  using SafeCast for uint256;
 
   struct Config {
     CTokenInterface cToken;
@@ -74,6 +75,8 @@ contract CompoundPrizePoolBuilder is Initializable {
       config.maxTimelockDuration
     );
 
+    prizePool.setCreditRateOf(tokens[0], config.creditRateMantissa.toUint128(), config.exitFeeMantissa.toUint128());
+
     prizePool.transferOwnership(msg.sender);
 
     prizeStrategy.initialize(
@@ -86,9 +89,6 @@ contract CompoundPrizePoolBuilder is Initializable {
       rng,
       config.externalERC20Awards
     );
-
-    prizeStrategy.setExitFeeMantissa(config.exitFeeMantissa);
-    prizeStrategy.setCreditRateMantissa(config.creditRateMantissa);
 
     prizeStrategy.transferOwnership(msg.sender);
 
