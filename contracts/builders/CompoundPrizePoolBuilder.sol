@@ -11,6 +11,7 @@ import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 /* solium-disable security/no-block-members */
 contract CompoundPrizePoolBuilder {
   using SafeMath for uint256;
+  using SafeCast for uint256;
 
   struct Config {
     address proxyAdmin;
@@ -84,6 +85,8 @@ contract CompoundPrizePoolBuilder {
       config.maxTimelockDuration
     );
 
+    prizePool.setCreditRateOf(tokens[0], config.creditRateMantissa.toUint128(), config.exitFeeMantissa.toUint128());
+
     prizePool.transferOwnership(msg.sender);
 
     prizeStrategy.initialize(
@@ -97,9 +100,6 @@ contract CompoundPrizePoolBuilder {
       config.rngService,
       config.externalERC20Awards
     );
-
-    prizeStrategy.setExitFeeMantissa(config.exitFeeMantissa);
-    prizeStrategy.setCreditRateMantissa(config.creditRateMantissa);
 
     prizeStrategy.transferOwnership(msg.sender);
 

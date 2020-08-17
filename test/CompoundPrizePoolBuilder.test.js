@@ -122,8 +122,7 @@ describe('CompoundPrizePoolBuilder', () => {
 
       expect(await prizePool.maxExitFeeMantissa()).to.equal(config.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(config.maxTimelockDuration)
-      expect(await prizeStrategy.exitFeeMantissa()).to.equal(config.exitFeeMantissa)
-      expect(await prizeStrategy.creditRateMantissa()).to.equal(config.creditRateMantissa)
+      expect(await prizePool.creditRateOf(ticket.address)).to.deep.equal([config.exitFeeMantissa, config.creditRateMantissa])
 
       expect(await prizePool.owner()).to.equal(wallet._address)
       expect(await prizeStrategy.owner()).to.equal(wallet._address)

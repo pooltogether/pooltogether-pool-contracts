@@ -11,12 +11,6 @@ import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
 
 contract PrizeStrategyStorage {
-  struct Credit {
-    uint192 balance;
-    uint32 timestamp;
-    bool initialized;
-  }
-
   struct RngRequest {
     uint32 id;
     uint32 lockBlock;
@@ -32,19 +26,12 @@ contract PrizeStrategyStorage {
   // Current RNG Request
   RngRequest internal rngRequest;
 
-  // EOA credit balances on collateral supplied to pool
-  mapping(address => Credit) internal creditBalances;
-
   // EOA mapping for ticket-weighted odds
   SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
 
   // Prize period
   uint256 public prizePeriodSeconds;
   uint256 public prizePeriodStartedAt;
-
-  // Credit rate & Exit fee
-  uint256 public exitFeeMantissa;
-  uint256 public creditRateMantissa;
 
   // External tokens awarded as part of prize
   MappedSinglyLinkedList.Mapping internal externalErc20s;

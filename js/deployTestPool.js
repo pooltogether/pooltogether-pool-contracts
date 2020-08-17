@@ -93,8 +93,7 @@ async function deployTestPool({
     externalERC20Awards
   )
 
-  await prizeStrategy.setExitFeeMantissa(exitFee || toWei('0.1'))
-  await prizeStrategy.setCreditRateMantissa(creditRate || toWei('0.1').div(prizePeriodSeconds))
+  await compoundPrizePool.setCreditRateOf(ticket.address, creditRate || toWei('0.1').div(prizePeriodSeconds), exitFee || toWei('0.1'))
 
   debug("Addresses: \n", {
     rngService: rngServiceMock.address,
