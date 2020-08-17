@@ -1,13 +1,9 @@
 const ProxyAdmin = require('@openzeppelin/upgrades/build/contracts/ProxyAdmin.json')
 const ProxyFactory = require('@openzeppelin/upgrades/build/contracts/ProxyFactory.json')
 const { deploy1820 } = require('deploy-eip-1820')
-const buidler = require('@nomiclabs/buidler')
-const ethers = buidler.ethers
 const ERC20Mintable = require('../build/ERC20Mintable.json')
 const Comptroller = require("../build/Comptroller.json")
 const CTokenMock = require('../build/CTokenMock.json')
-
-const debug = require('debug')('ptv3:deploy.js')
 
 // const solcOutput = require('../cache/solc-output.json')
 
@@ -17,27 +13,51 @@ const debug = require('debug')('ptv3:deploy.js')
 //   return solcOutput.contracts[contractPath].metadata
 // }
 
-module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
-  const { deploy, getOrNull, save } = deployments;
+const chainName = (chainId) => {
+  switch(chainId) {
+    case 1: return 'Mainnet';
+    case 3: return 'Ropsten';
+    case 4: return 'Rinkeby';
+    case 5: return 'Goerli';
+    case 42: return 'Kovan';
+    case 31337: return 'BuidlerEVM';
+    default: return 'Unknown';
+  }
+}
+
+module.exports = async (buidler) => {
+  const { getNamedAccounts, deployments, getChainId, ethers } = buidler
+  const { deploy, getOrNull, save, log } = deployments
   let {
     deployer,
     rng,
     trustedForwarder,
     adminAccount
   } = await getNamedAccounts()
-  const chainId = await getChainId()
+  const chainId = parseInt(await getChainId(), 10)
   const isLocal = [1, 3, 4, 42].indexOf(chainId) == -1
   let usingSignerAsAdmin = false
   const signer = await ethers.provider.getSigner(deployer)
 
+  // Run with CLI flag --silent to suppress log output
+
+  log("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+  log("PoolTogether Pool Contracts - Deploy Script")
+  log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+
+  const locus = isLocal ? 'local' : 'remote'
+  log(`  Deploying to Network: ${chainName(chainId)} (${locus})`)
+
   if (!adminAccount) {
-    debug("Using deployer as adminAccount...")
+    log("  Using deployer as adminAccount;")
     adminAccount = signer._address
     usingSignerAsAdmin = true
   }
+  log("\n  adminAccount:  ", adminAccount)
 
   await deploy1820(signer)
 
+  log("\n  Deploying ProxyAdmin...")
   const proxyAdminResult = await deploy("ProxyAdmin", {
     contract: ProxyAdmin,
     from: deployer,
@@ -46,10 +66,11 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   const proxyAdmin = new ethers.Contract(proxyAdminResult.address, ProxyAdmin.abi, signer)
   if (await proxyAdmin.isOwner() && !usingSignerAsAdmin) {
-    debug(`Transferring ProxyAdmin ownership to ${adminAccount}...`)
+    log(`Transferring ProxyAdmin ownership to ${adminAccount}...`)
     await proxyAdmin.transferOwnership(adminAccount)
   }
 
+  log("\n  Deploying ProxyFactory...")
   const proxyFactoryResult = await deploy("ProxyFactory", {
     contract: ProxyFactory,
     from: deployer,
@@ -58,24 +79,28 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const proxyFactory = new ethers.Contract(proxyFactoryResult.address, ProxyFactory.abi, signer)
 
   if (isLocal) {
+    log("\n  Deploying TrustedForwarder...")
     const deployResult = await deploy("TrustedForwarder", {
       from: deployer,
       skipIfAlreadyDeployed: true
     });
     trustedForwarder = deployResult.address
 
+    log("\n  Deploying RNGService...")
     const rngServiceMockResult = await deploy("RNGServiceMock", {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
     rng = rngServiceMockResult.address
 
+    log("\n  Deploying Dai...")
     const daiResult = await deploy("Dai", {
       contract: ERC20Mintable,
       from: deployer,
       skipIfAlreadyDeployed: true
     })
 
+    log("\n  Deploying cDai...")
     // should be about 20% APR
     let supplyRate = '8888888888888'
     await deploy("cDai", {
@@ -87,8 +112,14 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
+
+    // Display Contract Addresses
+    log("\n  Local Contract Deployments;\n")
+    log("  - TrustedForwarder: ", trustedForwarder)
+    log("  - RNGService:       ", rng)
+    log("  - Dai:              ", daiResult.address)
   }
-  
+
   const comptrollerImplementationResult = await deploy("ComptrollerImplementation", {
     contract: Comptroller,
     from: deployer,
@@ -98,7 +129,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let comptrollerAddress
   const comptrollerDeployment = await getOrNull("Comptroller")
   if (!comptrollerDeployment) {
-    debug("Deploying new Comptroller Proxy...")
+    log("\n  Deploying new Comptroller Proxy...")
     const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32))
 
     // form initialize() data
@@ -119,22 +150,26 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     comptrollerAddress = comptrollerDeployment.address
   }
 
+  log("\n  Deploying CompoundPrizePoolProxyFactory...")
   const compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolProxyFactory", {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
-  
+
+  log("\n  Deploying ControlledTokenProxyFactory...")
   const controlledTokenProxyFactoryResult = await deploy("ControlledTokenProxyFactory", {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
-  
+
+  log("\n  Deploying PrizeStrategyProxyFactory...")
   const prizeStrategyProxyFactoryResult = await deploy("PrizeStrategyProxyFactory", {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
 
-  await deploy("CompoundPrizePoolBuilder", {
+  log("\n  Deploying CompoundPrizePoolBuilder...")
+  const compoundPrizePoolBuilderResult = await deploy("CompoundPrizePoolBuilder", {
     args: [
       comptrollerAddress,
       prizeStrategyProxyFactoryResult.address,
@@ -147,4 +182,16 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
+
+  // Display Contract Addresses
+  log("\n  Contract Deployments Complete!\n")
+  log("  - ProxyFactory:                  ", proxyFactoryResult.address)
+  log("  - ComptrollerImplementation:     ", comptrollerImplementationResult.address)
+  log("  - Comptroller:                   ", comptrollerAddress)
+  log("  - CompoundPrizePoolProxyFactory: ", compoundPrizePoolProxyFactoryResult.address)
+  log("  - ControlledTokenProxyFactory:   ", controlledTokenProxyFactoryResult.address)
+  log("  - PrizeStrategyProxyFactory:     ", prizeStrategyProxyFactoryResult.address)
+  log("  - CompoundPrizePoolBuilder:      ", compoundPrizePoolBuilderResult.address)
+
+  log("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 };

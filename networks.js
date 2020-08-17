@@ -11,6 +11,15 @@ module.exports = {
       ),
       networkId: 42
     },
+    rinkeby: {
+      provider: () => new HDWalletProvider(
+        process.env.HDWALLET_MNEMONIC,
+        `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
+        0,
+        3
+      ),
+      networkId: 4
+    },
     ropsten: {
       provider: () => new HDWalletProvider(
         process.env.HDWALLET_MNEMONIC,
