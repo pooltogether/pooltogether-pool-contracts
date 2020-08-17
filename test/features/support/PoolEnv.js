@@ -54,8 +54,8 @@ function PoolEnv() {
       maxTimelockDuration,
       exitFee: toWei(exitFee),
       creditRate: toWei(creditRate),
+      externalERC20Awards: externalAwardAddresses,
       overrides: this.overrides,
-      externalERC20Awards: externalAwardAddresses
     })
     debug(`CompoundPrizePool created with address ${this.env.compoundPrizePool.address}`)
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
@@ -188,34 +188,17 @@ function PoolEnv() {
     )
   }
 
-  this.claimVolumeDripGovernanceTokens = async function ({ user }) {
+  this.claimVolumeDrip = async function ({ index, user }) {
     let wallet = await this.wallet(user)
     await this.env.comptroller.claimVolumeDrip(
-      this.env.prizeStrategy.address,
-      wallet._address,
-      '1'
+      index,
+      wallet._address
     )
   }
 
-  this.claimVolumeDripGovernanceTokensAtTime = async function ({ user, elapsed }) {
+  this.claimVolumeDripAtTime = async function ({ user, elapsed, index }) {
     await this.atTime(elapsed, async () => {
-      await this.claimVolumeDripGovernanceTokens({ user })
-    })
-  }
-
-  this.claimReferralVolumeDripGovernanceTokens = async function ({ user }) {
-    let wallet = await this.wallet(user)
-    debug(`CLAIMING REFERRAL VOLUME FOR ${wallet._address}`)
-    await this.env.comptroller.claimReferralVolumeDrip(
-      this.env.prizeStrategy.address,
-      wallet._address,
-      '1'
-    )
-  }
-
-  this.claimReferralVolumeDripGovernanceTokensAtTime = async function ({ user, elapsed }) {
-    await this.atTime(elapsed, async () => {
-      await this.claimReferralVolumeDripGovernanceTokens({ user })
+      await this.claimVolumeDrip({ user, index })
     })
   }
 
@@ -224,7 +207,7 @@ function PoolEnv() {
     await this.env.comptroller.addBalanceDrip(this.env.prizeStrategy.address, this.env.ticket.address, this.env.governanceToken.address, dripRatePerSecond)
   }
 
-  this.volumeDripGovernanceToken = async function ({ dripAmount, periodSeconds, startTime }) {
+  this.volumeDripGovernanceToken = async function ({ dripAmount, periodSeconds, startTime, isReferral }) {
     let periodStartedAt = await this.env.prizeStrategy.prizePeriodStartedAt()
     await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
     await this.env.comptroller.addVolumeDrip(
@@ -233,20 +216,8 @@ function PoolEnv() {
       this.env.governanceToken.address,
       periodSeconds,
       toWei(dripAmount),
-      periodStartedAt.add(startTime)
-    )
-  }
-
-  this.referralVolumeDripGovernanceToken = async function ({ dripAmount, periodSeconds, startTime }) {
-    let periodStartedAt = await this.env.prizeStrategy.prizePeriodStartedAt()
-    await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
-    await this.env.comptroller.addReferralVolumeDrip(
-      this.env.prizeStrategy.address,
-      this.env.ticket.address,
-      this.env.governanceToken.address,
-      periodSeconds,
-      toWei(dripAmount),
-      periodStartedAt.add(startTime)
+      periodStartedAt.add(startTime),
+      !!isReferral
     )
   }
 
@@ -349,7 +320,7 @@ function PoolEnv() {
     await this.env.prizeStrategy.startAward(this.overrides)
 
     let randomNumber = ethers.utils.hexlify(ethers.utils.zeroPad(ethers.BigNumber.from('' + token), 32))
-    await this.env.rng.setRandomNumber(randomNumber, this.overrides)
+    await this.env.rngService.setRandomNumber(randomNumber, this.overrides)
 
     debug(`Completing award...`)
     await this.env.prizeStrategy.completeAward(this.overrides)

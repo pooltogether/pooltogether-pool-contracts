@@ -34,7 +34,6 @@ library MappedSinglyLinkedList {
       self.addressMap[SENTINAL] = addresses[i];
       count += 1;
     }
-    // console.log("sentinal initialized to %s", self.addressMap[SENTINAL]);
     self.count = count;
   }
 

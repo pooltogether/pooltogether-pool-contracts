@@ -36,7 +36,7 @@
     "@pooltogether/fixed-point": "pooltogether/fixed-point.git#0.1.0-upgradeable.1",
     "@pooltogether/governor-contracts": "0.1.1",
     "@pooltogether/oz-migrate": "0.2.5",
-    "@pooltogether/pooltogether-rng-contracts": "3.0.0-alpha.4",
+    "@pooltogether/pooltogether-rng-contracts": "^1.0.0-alpha.7",
     "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
     "@resolver-engine/core": "0.3.3",
     "@truffle/hdwallet-provider": "1.0.34",
