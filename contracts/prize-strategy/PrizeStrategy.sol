@@ -54,14 +54,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     uint256 reserveFee
   );
 
-  event ExitFeeUpdated(
-    uint256 exitFeeMantissa
-  );
-
-  event CreditRateUpdated(
-    uint256 creditRateMantissa
-  );
-
   event RngServiceUpdated(
     address rngService
   );
@@ -104,12 +96,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     prizePeriodStartedAt = _prizePeriodStart;
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
 
-    exitFeeMantissa = 0.1 ether;
-    creditRateMantissa = exitFeeMantissa.div(prizePeriodSeconds);
     externalErc721s.initialize();
 
-    emit ExitFeeUpdated(exitFeeMantissa);
-    emit CreditRateUpdated(creditRateMantissa);
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
@@ -133,274 +121,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return selected;
   }
 
-  /// @notice Accrues ticket credit for a user.
-  /// @param user The user for whom to accrue credit
-  function accrueTicketCredit(address user) public {
-    _accrueCredit(user, ticket.balanceOf(user));
-  }
-
-  /// @notice Accrues ticket credit for a user assuming their current balance is the passed balance.
-  /// @param user The user for whom to accrue credit
-  /// @param balance The balance to use for the user
-  function _accrueCredit(address user, uint256 balance) internal {
-    uint256 credit = calculateAccruedCredit(user, balance);
-    creditBalances[user] = Credit({
-      balance: _addCredit(user, balance, credit).toUint128(),
-      timestamp: _currentTime().toUint32(),
-      initialized: true
-    });
-  }
-
-  /// @notice Adds credit to a users credit balance.  The balance cannot exceed the credit limit, which is calculated based on the exit fee.
-  /// @param user The user who is receiving the new credit
-  /// @param balance The users ticket balance (used to calculate credit limit)
-  /// @param newCredit The credit to be added
-  /// @return creditBalance The users new credit balance.  Will not exceed the credit limit.
-  function _addCredit(address user, uint256 balance, uint256 newCredit) internal view returns (uint256 creditBalance) {
-    uint256 creditLimit = FixedPoint.multiplyUintByMantissa(
-      balance,
-      exitFeeMantissa
-    );
-    creditBalance = uint256(creditBalances[user].balance).add(newCredit);
-    if (creditBalance > creditLimit) {
-      creditBalance = creditLimit;
-    }
-  }
-
-  /// @notice Calculates the accrued interest for a user
-  /// @param user The user whose credit should be calculated.
-  /// @param ticketBalance The current balance of the user's tickets.
-  /// @return accruedCredit The credit that has accrued since the last credit update.
-  function calculateAccruedCredit(address user, uint256 ticketBalance) internal view returns (uint256 accruedCredit) {
-    uint256 userTimestamp = creditBalances[user].timestamp;
-    if (!creditBalances[user].initialized) {
-      return 0;
-    }
-
-    uint256 deltaTime = _currentTime().sub(userTimestamp);
-    uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(ticketBalance, creditRateMantissa);
-
-    return deltaTime.mul(creditPerSecond);
-  }
-
   /// @notice Calculates and returns the currently accrued prize
   /// @return The current prize size
   function currentPrize() public returns (uint256) {
     uint256 balance = prizePool.awardBalance();
     uint256 reserveFee = _calculateReserveFee(balance);
     return balance.sub(reserveFee);
-  }
-
-  /// @notice Called by the PrizePool before an instant withdrawal.  Calculates and returns the withdrawal fee
-  /// @param from The user who is withdrawing
-  /// @param amount The amount of collateral they are withdrawing
-  /// @param controlledToken The collateral type they are withdrawing
-  /// @return withdrawalFee The fee the user should be charged
-  function beforeWithdrawInstantlyFrom(
-    address from,
-    uint256 amount,
-    address controlledToken,
-    bytes calldata
-  )
-    external
-    override
-    onlyPrizePool
-    returns (uint256 withdrawalFee)
-  {
-    (uint256 remainingFee, uint256 burnedCredit) = _calculateInstantWithdrawalFee(from, amount, controlledToken);
-    if (burnedCredit > 0) {
-      _burnCredit(from, burnedCredit);
-    }
-    return remainingFee;
-  }
-
-  /// @notice Calculates the fee to withdraw collateral instantly.
-  /// @param from The user who is withdrawing
-  /// @param amount The amount of collateral they are withdrawing
-  /// @param controlledToken The type of collateral they are withdrawing (i.e. ticket or sponsorship)
-  /// @return remainingFee The fee that the user will be charged
-  /// @return burnedCredit The amount of credit that will be burned
-  function _calculateInstantWithdrawalFee(
-    address from,
-    uint256 amount,
-    address controlledToken
-  )
-    internal
-    returns (uint256 remainingFee, uint256 burnedCredit)
-  {
-    if (controlledToken == address(ticket)) {
-      return _calculateEarlyExitFeeLessCredit(from, amount);
-    }
-  }
-
-  /// @notice Calculates the fee to withdraw collateral instantly.
-  /// @param from The user who is withdrawing
-  /// @param amount The amount of collateral they are withdrawing
-  /// @param controlledToken The type of collateral they are withdrawing (i.e. ticket or sponsorship)
-  /// @return remainingFee The fee that the user will be charged
-  /// @return burnedCredit The amount of credit that will be burned
-  function calculateInstantWithdrawalFee(
-    address from,
-    uint256 amount,
-    address controlledToken
-  )
-    external
-    returns (uint256 remainingFee, uint256 burnedCredit)
-  {
-    return _calculateInstantWithdrawalFee(from, amount, controlledToken);
-  }
-
-  /// @notice Calculates the withdrawal unlock timestamp by estimated how long it would take to pay off the exit fee.
-  /// This function also accrues their ticket credit.
-  /// @param user The user who wishes to withdraw
-  /// @param controlledToken The token they are withdrawing
-  /// @return timestamp The absolute timestamp after which they are allowed to withdraw
-  function beforeWithdrawWithTimelockFrom(
-    address user,
-    uint256 amount,
-    address controlledToken,
-    bytes calldata
-  )
-    external
-    override
-    onlyPrizePool
-    returns (uint256 timestamp)
-  {
-    (uint256 durationSeconds, uint256 burnedCredit) = _calculateTimelockDurationAndFee(user, amount, controlledToken);
-    if (burnedCredit > 0) {
-      _burnCredit(user, burnedCredit);
-    }
-    timestamp = _currentTime().add(durationSeconds);
-    return timestamp;
-  }
-
-  /// @notice Calculates a timelocked withdrawal duration and credit consumption.
-  /// @param from The user who is withdrawing
-  /// @param amount The amount the user is withdrawing
-  /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
-  /// @return durationSeconds The duration of the timelock in seconds
-  /// @return burnedCredit The credit that will be burned.
-  function calculateTimelockDurationAndFee(
-    address from,
-    uint256 amount,
-    address controlledToken
-  )
-    external
-    returns (uint256 durationSeconds, uint256 burnedCredit)
-  {
-    return _calculateTimelockDurationAndFee(from, amount, controlledToken);
-  }
-
-  /// @notice Calculates a timelocked withdrawal duration and credit consumption.
-  /// @param from The user who is withdrawing
-  /// @param amount The amount the user is withdrawing
-  /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
-  /// @return durationSeconds The duration of the timelock in seconds
-  /// @return burnedCredit The credit that will be burned.
-  function _calculateTimelockDurationAndFee(
-    address from,
-    uint256 amount,
-    address controlledToken
-  )
-    internal
-    returns (uint256 durationSeconds, uint256 burnedCredit)
-  {
-    if (controlledToken == address(ticket)) {
-      (uint256 remainingFee, uint256 burned) = _calculateEarlyExitFeeLessCredit(from, amount);
-      burnedCredit = burned;
-      if (remainingFee > 0) {
-        // calculate how long it would take to accrue
-        durationSeconds = _estimateCreditAccrualTime(amount, remainingFee);
-      }
-    }
-  }
-
-  /// @notice Burns a users credit
-  /// @param user The user whose credit should be burned
-  /// @param credit The amount of credit to burn
-  function _burnCredit(address user, uint256 credit) internal {
-    creditBalances[user].balance = uint256(creditBalances[user].balance).sub(credit).toUint128();
-  }
-
-  /// @notice Calculate the early exit for a user given a withdrawal amount.  The user's credit is taken into account.
-  /// @param from The user who is withdrawing
-  /// @param amount The amount of funds they are withdrawing
-  /// @return earlyExitFee The exit fee that the user should be charged.
-  /// @return creditToBeBurned The amount of credit for the user that should be burned.
-  function _calculateEarlyExitFeeLessCredit(
-    address from,
-    uint256 amount
-  )
-    internal
-    returns (uint256 earlyExitFee, uint256 creditToBeBurned)
-  {
-    uint256 balance = ticket.balanceOf(from);
-    _accrueCredit(from, balance);
-
-    /*
-    The credit is used *last*.  Always charge the fees up-front.
-
-    How to calculate?
-
-    calculate their remaining exit fee.  I.e. full exit fee of their balance less their credit.
-
-    If the exit fee on their withdrawal is less than the remaining exit fee, then they have to pay.
-    */
-
-    // Determine available usable credit based on withdraw amount
-    uint256 availableCredit;
-    uint256 remainingExitFee = _calculateEarlyExitFee(balance.sub(amount));
-    if (creditBalances[from].balance >= remainingExitFee) {
-      availableCredit = uint256(creditBalances[from].balance).sub(remainingExitFee);
-    }
-
-    // Determine amount of credit to burn and amount of fees required
-    uint256 totalExitFee = _calculateEarlyExitFee(amount);
-    creditToBeBurned = (availableCredit > totalExitFee) ? totalExitFee : availableCredit;
-    earlyExitFee = totalExitFee.sub(creditToBeBurned);
-  }
-
-  /// @notice Calculates the early exit fee for the given amount
-  /// @param amount The amount of collateral to be withdrawn
-  /// @return Exit fee
-  function _calculateEarlyExitFee(uint256 amount) internal view returns (uint256) {
-    return FixedPoint.multiplyUintByMantissa(amount, exitFeeMantissa);
-  }
-
-  /// @notice Estimates the amount of time it will take for a given amount of funds to accrue the given amount of credit.
-  /// @param _principal The principal amount on which interest is accruing
-  /// @param _interest The amount of interest that must accrue
-  /// @return durationSeconds The duration of time it will take to accrue the given amount of interest, in seconds.
-  function estimateCreditAccrualTime(
-    uint256 _principal,
-    uint256 _interest
-  )
-    external
-    view
-    returns (uint256 durationSeconds)
-  {
-    return _estimateCreditAccrualTime(
-      _principal,
-      _interest
-    );
-  }
-
-  /// @notice Estimates the amount of time it will take for a given amount of funds to accrue the given amount of credit
-  /// @param _principal The principal amount on which interest is accruing
-  /// @param _interest The amount of interest that must accrue
-  /// @return durationSeconds The duration of time it will take to accrue the given amount of interest, in seconds.
-  function _estimateCreditAccrualTime(
-    uint256 _principal,
-    uint256 _interest
-  )
-    internal
-    view
-    returns (uint256 durationSeconds)
-  {
-    // interest = credit rate * principal * time
-    // => time = interest / (credit rate * principal)
-    uint256 accruedPerSecond = FixedPoint.multiplyUintByMantissa(_principal, creditRateMantissa);
-    return _interest.div(accruedPerSecond);
   }
 
   /// @notice Calculates the reserve portion of the given amount of funds.  If there is no reserve address, the portion will be zero.
@@ -496,11 +222,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param user The user to whom the tickets are minted
   /// @param amount The amount of interest to mint as tickets.
   function _awardTickets(address user, uint256 amount) internal {
-    uint256 userBalance = ticket.balanceOf(user);
-    _accrueCredit(user, userBalance);
-    uint256 creditEarned = _calculateEarlyExitFee(amount);
-    creditBalances[user].balance = uint256(creditBalances[user].balance).add(creditEarned).toUint128();
     prizePool.award(user, amount, address(ticket));
+    uint256 userBalance = ticket.balanceOf(user);
     sortitionSumTrees.set(TREE_KEY, userBalance.add(amount), bytes32(uint256(user)));
   }
 
@@ -567,11 +290,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
       _requireNotLocked();
 
       uint256 fromBalance = ticket.balanceOf(from).sub(amount);
-      _accrueCredit(from, fromBalance);
       sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));
 
       uint256 toBalance = ticket.balanceOf(to).add(amount);
-      _accrueCredit(to, toBalance);
       sortitionSumTrees.set(TREE_KEY, toBalance, bytes32(uint256(to)));
     }
   }
@@ -619,7 +340,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param controlledToken The type of collateral they deposited
   function _afterDepositTo(address to, uint256 amount, address controlledToken, bytes memory data) internal {
     uint256 balance = IERC20(controlledToken).balanceOf(to);
-    uint256 oldBalance = balance.sub(amount);
     uint256 totalSupply = IERC20(controlledToken).totalSupply();
 
     address referrer;
@@ -631,7 +351,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     comptroller.afterDepositTo(to, amount, balance, totalSupply, controlledToken, referrer);
 
     if (controlledToken == address(ticket)) {
-      _accrueCredit(to, oldBalance);
       sortitionSumTrees.set(TREE_KEY, balance, bytes32(uint256(to)));
     }
   }
@@ -697,14 +416,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @return The current time (block.timestamp)
   function _currentBlock() internal virtual view returns (uint256) {
     return block.number;
-  }
-
-  /// @notice Returns the credit balance for a given user.  Not that this includes both minted credit and pending credit.
-  /// @param user The user whose credit balance should be returned
-  /// @return creditBalance The balance of the users credit
-  function balanceOfCredit(address user) external returns (uint256 creditBalance) {
-    _accrueCredit(user, ticket.balanceOf(user));
-    return uint256(creditBalances[user].balance);
   }
 
   /// @notice Starts the award process by starting random number request.  The prize period must have ended.
@@ -791,23 +502,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @return The current Request ID
   function getLastRngRequestId() public view returns (uint32) {
     return rngRequest.id;
-  }
-
-  /// @notice Allows the owner to set the exit fee.  The exit fee is a fixed point 18 number (like Ether).
-  /// the exit fee is calculated using the exit fee mantissa- it's their deposit * the exit fee mantissa.  This also serves as the users credit limit.
-  /// @param _exitFeeMantissa The exit fee to set
-  function setExitFeeMantissa(uint256 _exitFeeMantissa) external onlyOwner {
-    exitFeeMantissa = _exitFeeMantissa;
-
-    emit ExitFeeUpdated(exitFeeMantissa);
-  }
-
-  /// @notice Sets the rate at which credit accrues per second.  The credit rate is a fixed point 18 number (like Ether).
-  /// @param _creditRateMantissa The credit rate to set
-  function setCreditRateMantissa(uint256 _creditRateMantissa) external onlyOwner {
-    creditRateMantissa = _creditRateMantissa;
-
-    emit CreditRateUpdated(creditRateMantissa);
   }
 
   /// @notice Sets the RNG service that the Prize Strategy is connected to

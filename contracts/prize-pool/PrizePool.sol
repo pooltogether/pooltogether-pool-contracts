@@ -1,6 +1,7 @@
 pragma solidity 0.6.4;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
@@ -16,6 +17,7 @@ import "../utils/RelayRecipient.sol";
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
 abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
   using SafeMath for uint256;
+  using SafeCast for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
   /// @dev Event emitted when controlled token is added
@@ -85,8 +87,25 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 amount
   );
 
+  event CreditRateSet(
+    address controlledToken,
+    uint128 creditLimitMantissa,
+    uint128 creditRateMantissa
+  );
+
   /// @dev Event emitted when the prize strategy is detached from the Prize Pool.
   event PrizeStrategyDetached();
+
+  struct CreditRate {
+    uint128 creditLimitMantissa;
+    uint128 creditRateMantissa;
+  }
+
+  struct CreditBalance {
+    uint192 balance;
+    uint32 timestamp;
+    bool initialized;
+  }
 
   /// @dev A linked list of all the controlled tokens
   MappedSinglyLinkedList.Mapping internal _tokens;
@@ -109,6 +128,12 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
   /// @dev The unlock timestamps for each user
   mapping(address => uint256) internal _unlockTimestamps;
+
+  // Mapping from token => TokenCredit
+  mapping(address => CreditRate) internal tokenCreditRates;
+
+  // Mapping from token address => user address => CreditBalance
+  mapping(address => mapping(address => CreditBalance)) internal tokenCreditBalances;
 
   /// @notice Initializes the Prize Pool with required contract connections
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
@@ -263,27 +288,17 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     onlyControlledToken(controlledToken)
     returns (uint256)
   {
-
-    uint256 exitFee;
-    if (_hasPrizeStrategy()) {
-      exitFee = _limitExitFee(amount, prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken, data));
-    }
-
+    uint256 exitFee = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
     require(exitFee <= maximumExitFee, "PrizePool/exit-fee-exceeds-user-maximum");
-
     // burn the tickets
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
-
     // redeem the tickets less the fee
     uint256 amountLessFee = amount.sub(exitFee);
     _redeem(amountLessFee);
-
     require(_token().transfer(from, amountLessFee), "PrizePool/instant-transfer-failed");
-
     if (_hasPrizeStrategy()) {
       prizeStrategy.afterWithdrawInstantlyFrom(_msgSender(), from, amount, controlledToken, exitFee, data);
     }
-
     emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, exitFee);
 
     return exitFee;
@@ -316,17 +331,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     returns (uint256)
   {
     uint256 blockTime = _currentTime();
-
-    uint256 unlockTimestamp;
-
-    if (_hasPrizeStrategy()) {
-      unlockTimestamp = prizeStrategy.beforeWithdrawWithTimelockFrom(from, amount, controlledToken, data);
-    }
-
-    uint256 lockDuration = unlockTimestamp > blockTime ? unlockTimestamp.sub(blockTime) : 0;
-    if (lockDuration > maxTimelockDuration) {
-      unlockTimestamp = blockTime.add(maxTimelockDuration);
-    }
+    uint256 lockDuration = _calculateTimelockDuration(from, controlledToken, amount);
+    uint256 unlockTimestamp = blockTime.add(lockDuration);
 
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
     _mintTimelock(from, amount, unlockTimestamp);
@@ -362,6 +368,12 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param to The address the tokens are being transferred to
   /// @param amount The amount of tokens being trasferred
   function beforeTokenTransfer(address from, address to, uint256 amount) external override onlyControlledToken(msg.sender) {
+    if (from != address(0)) {
+      _accrueCredit(from, msg.sender, IERC20(msg.sender).balanceOf(from));
+    }
+    if (to != address(0)) {
+      _accrueCredit(to, msg.sender, IERC20(msg.sender).balanceOf(to));
+    }
     // minting and redeeming are handled separately
     if (from != address(0) && to != address(0) && _hasPrizeStrategy()) {
       prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
@@ -401,6 +413,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
     require(amount <= awardBalance(), "PrizePool/award-exceeds-avail");
     ControlledToken(controlledToken).controllerMint(to, amount);
+
+    uint256 extraCredit = _calculateEarlyExitFee(controlledToken, amount);
+    _accrueCredit(to, controlledToken, IERC20(controlledToken).balanceOf(to), extraCredit);
 
     emit Awarded(to, controlledToken, amount);
   }
@@ -521,6 +536,217 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     }
 
     return totalWithdrawal;
+  }
+
+  /// @notice Calculates a timelocked withdrawal duration and credit consumption.
+  /// @param from The user who is withdrawing
+  /// @param amount The amount the user is withdrawing
+  /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
+  /// @return durationSeconds The duration of the timelock in seconds
+  function _calculateTimelockDuration(
+    address from,
+    address controlledToken,
+    uint256 amount
+  )
+    internal
+    returns (uint256)
+  {
+    uint256 exitFee = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
+    uint256 duration = _estimateCreditAccrualTime(controlledToken, amount, exitFee);
+    if (duration > maxTimelockDuration) {
+      duration = maxTimelockDuration;
+    }
+    return duration;
+  }
+
+  /// @notice Calculates the early exit fee for the given amount
+  /// @param amount The amount of collateral to be withdrawn
+  /// @return Exit fee
+  function _calculateEarlyExitFee(address controlledToken, uint256 amount) internal view returns (uint256) {
+    uint256 exitFee = FixedPoint.multiplyUintByMantissa(amount, tokenCreditRates[controlledToken].creditLimitMantissa);
+    uint256 maxFee = FixedPoint.multiplyUintByMantissa(amount, maxExitFeeMantissa);
+    if (exitFee > maxFee) {
+      exitFee = maxFee;
+    }
+    return exitFee;
+  }
+
+  /// @notice Estimates the amount of time it will take for a given amount of funds to accrue the given amount of credit.
+  /// @param _principal The principal amount on which interest is accruing
+  /// @param _interest The amount of interest that must accrue
+  /// @return durationSeconds The duration of time it will take to accrue the given amount of interest, in seconds.
+  function estimateCreditAccrualTime(
+    address _controlledToken,
+    uint256 _principal,
+    uint256 _interest
+  )
+    external
+    view
+    returns (uint256 durationSeconds)
+  {
+    return _estimateCreditAccrualTime(
+      _controlledToken,
+      _principal,
+      _interest
+    );
+  }
+
+  /// @notice Estimates the amount of time it will take for a given amount of funds to accrue the given amount of credit
+  /// @param _principal The principal amount on which interest is accruing
+  /// @param _interest The amount of interest that must accrue
+  /// @return durationSeconds The duration of time it will take to accrue the given amount of interest, in seconds.
+  function _estimateCreditAccrualTime(
+    address _controlledToken,
+    uint256 _principal,
+    uint256 _interest
+  )
+    internal
+    view
+    returns (uint256 durationSeconds)
+  {
+    // interest = credit rate * principal * time
+    // => time = interest / (credit rate * principal)
+    uint256 accruedPerSecond = FixedPoint.multiplyUintByMantissa(_principal, tokenCreditRates[_controlledToken].creditRateMantissa);
+    if (accruedPerSecond == 0) {
+      return 0;
+    }
+    return _interest.div(accruedPerSecond);
+  }
+
+  /// @notice Burns a users credit
+  /// @param user The user whose credit should be burned
+  /// @param credit The amount of credit to burn
+  function _burnCredit(address user, address controlledToken, uint256 credit) internal {
+    tokenCreditBalances[controlledToken][user].balance = uint256(tokenCreditBalances[controlledToken][user].balance).sub(credit).toUint128();
+  }
+ 
+  function _accrueCredit(address user, address controlledToken, uint256 controlledTokenBalance) internal {
+    _accrueCredit(user, controlledToken, controlledTokenBalance, 0);
+  }
+
+  /// @notice Accrues ticket credit for a user assuming their current balance is the passed balance.
+  /// @param user The user for whom to accrue credit
+  /// @param controlledToken The controlled token whose balance we are checking
+  /// @param controlledTokenBalance The balance to use for the user
+  function _accrueCredit(address user, address controlledToken, uint256 controlledTokenBalance, uint256 extra) internal {
+    uint256 credit = calculateAccruedCredit(user, controlledToken, controlledTokenBalance);
+    CreditBalance storage creditBalance = tokenCreditBalances[controlledToken][user];
+    uint128 newBalance = _applyCreditLimit(controlledToken, controlledTokenBalance, uint256(creditBalance.balance).add(credit).add(extra)).toUint128();
+    if (creditBalance.balance != newBalance || creditBalance.timestamp == 0) {
+      tokenCreditBalances[controlledToken][user] = CreditBalance({
+        balance: newBalance,
+        timestamp: _currentTime().toUint32(),
+        initialized: true
+      });
+    }
+  }
+
+  /// @notice Applies the credit limit to a credit balance.  The balance cannot exceed the credit limit.
+  /// @param controlledToken The controlled token that the user holds
+  /// @param controlledTokenBalance The users ticket balance (used to calculate credit limit)
+  /// @param creditBalance The new credit balance to be checked
+  /// @return The users new credit balance.  Will not exceed the credit limit.
+  function _applyCreditLimit(address controlledToken, uint256 controlledTokenBalance, uint256 creditBalance) internal view returns (uint256) {
+    uint256 creditLimit = FixedPoint.multiplyUintByMantissa(
+      controlledTokenBalance,
+      tokenCreditRates[controlledToken].creditLimitMantissa
+    );
+    if (creditBalance > creditLimit) {
+      creditBalance = creditLimit;
+    }
+
+    return creditBalance;
+  }
+
+  /// @notice Calculates the accrued interest for a user
+  /// @param user The user whose credit should be calculated.
+  /// @param controlledToken The controlled token that the user holds
+  /// @param controlledTokenBalance The user's current balance of the controlled tokens.
+  /// @return The credit that has accrued since the last credit update.
+  function calculateAccruedCredit(address user, address controlledToken, uint256 controlledTokenBalance) internal view returns (uint256) {
+    uint256 userTimestamp = tokenCreditBalances[controlledToken][user].timestamp;
+
+    if (!tokenCreditBalances[controlledToken][user].initialized) {
+      return 0;
+    }
+
+    uint256 deltaTime = _currentTime().sub(userTimestamp);
+    uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(controlledTokenBalance, tokenCreditRates[controlledToken].creditRateMantissa);
+    return deltaTime.mul(creditPerSecond);
+  }
+
+  /// @notice Returns the credit balance for a given user.  Not that this includes both minted credit and pending credit.
+  /// @param user The user whose credit balance should be returned
+  /// @return The balance of the users credit
+  function balanceOfCredit(address user, address controlledToken) external onlyControlledToken(controlledToken) returns (uint256) {
+    _accrueCredit(user, controlledToken, IERC20(controlledToken).balanceOf(user));
+    return tokenCreditBalances[controlledToken][user].balance;
+  }
+
+  /// @notice Sets the rate at which credit accrues per second.  The credit rate is a fixed point 18 number (like Ether).
+  /// @param _creditRateMantissa The credit rate to set
+  function setCreditRateOf(address controlledToken, uint128 _creditRateMantissa, uint128 _creditLimitMantissa) external onlyControlledToken(controlledToken) onlyOwner {
+    tokenCreditRates[controlledToken] = CreditRate({
+      creditLimitMantissa: _creditLimitMantissa,
+      creditRateMantissa: _creditRateMantissa
+    });
+
+    emit CreditRateSet(controlledToken, _creditLimitMantissa, _creditRateMantissa);
+  }
+
+  /// @notice Returns the credit rate of a controlled token
+  /// @param controlledToken The controlled token to retrieve the credit rates for
+  /// @return creditLimitMantissa The credit limit fraction.  This number is used to calculate both the credit limit and early exit fee.
+  /// @return creditRateMantissa The credit rate. This is the amount of tokens that accrue per second.
+  function creditRateOf(address controlledToken) external view returns (uint128 creditLimitMantissa, uint128 creditRateMantissa) {
+    creditLimitMantissa = tokenCreditRates[controlledToken].creditLimitMantissa;
+    creditRateMantissa = tokenCreditRates[controlledToken].creditRateMantissa;
+  }
+
+  /// @notice Calculate the early exit for a user given a withdrawal amount.  The user's credit is taken into account.
+  /// @param from The user who is withdrawing
+  /// @param controlledToken The token they are withdrawing
+  /// @param amount The amount of funds they are withdrawing
+  /// @return earlyExitFee The additional exit fee that should be charged.
+  function _calculateEarlyExitFeeLessBurnedCredit(
+    address from,
+    address controlledToken,
+    uint256 amount
+  )
+    internal
+    returns (uint256)
+  {
+    uint256 controlledTokenBalance = IERC20(controlledToken).balanceOf(from);
+    _accrueCredit(from, controlledToken, controlledTokenBalance);
+
+    /*
+    The credit is used *last*.  Always charge the fees up-front.
+
+    How to calculate:
+
+    Calculate their remaining exit fee.  I.e. full exit fee of their balance less their credit.
+
+    If the exit fee on their withdrawal is greater than the remaining exit fee, then they'll have to pay the difference.
+    */
+
+
+    // Determine available usable credit based on withdraw amount
+    uint256 availableCredit;
+    uint256 remainingExitFee = _calculateEarlyExitFee(controlledToken, controlledTokenBalance.sub(amount));
+    if (tokenCreditBalances[controlledToken][from].balance >= remainingExitFee) {
+      availableCredit = uint256(tokenCreditBalances[controlledToken][from].balance).sub(remainingExitFee);
+    }
+
+    // Determine amount of credit to burn and amount of fees required
+    uint256 totalExitFee = _calculateEarlyExitFee(controlledToken, amount);
+    uint256 creditBurned = (availableCredit > totalExitFee) ? totalExitFee : availableCredit;
+    uint256 earlyExitFee = totalExitFee.sub(creditBurned);
+
+    if (creditBurned > 0) {
+      _burnCredit(from, controlledToken, creditBurned);
+    }
+
+    return earlyExitFee;
   }
 
   /// @notice Allows the Governor to add Controlled Tokens to the Prize Pool
