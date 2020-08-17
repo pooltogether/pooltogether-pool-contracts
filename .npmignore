@@ -7,3 +7,4 @@ scripts
 /test
 utils
 build/contracts
+deployments/local*

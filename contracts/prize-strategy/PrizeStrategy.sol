@@ -69,6 +69,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function initialize (
     address _trustedForwarder,
     ComptrollerInterface _comptroller,
+    uint256 _prizePeriodStart,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
     address _ticket,
@@ -94,7 +95,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     prizePeriodSeconds = _prizePeriodSeconds;
-    prizePeriodStartedAt = _currentTime();
+    prizePeriodStartedAt = _prizePeriodStart;
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
 
     exitFeeMantissa = 0.1 ether;
@@ -706,8 +707,14 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   /// @notice Starts the award process by starting random number request.  The prize period must have ended.
+  /// @dev The RNG-Request-Fee is expected to be held within this contract before calling this function
   function startAward() external requireCanStartAward {
-    (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber(address(0), 0);
+    (address feeToken, uint256 requestFee) = rng.getRequestFee();
+    if (feeToken != address(0) && requestFee > 0) {
+      IERC20(feeToken).approve(address(rng), requestFee);
+    }
+
+    (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber();
     rngRequest.id = requestId;
     rngRequest.lockBlock = lockBlock;
 
@@ -716,8 +723,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   /// @notice Completes the award process and awards the winners.  The random number must have been requested and is now available.
   function completeAward() external requireCanCompleteAward {
-    require(_isPrizePeriodOver(), "PrizeStrategy/not-over");
-
     uint256 randomNumber = rng.randomNumber(rngRequest.id);
     uint256 balance = prizePool.awardBalance();
     uint256 reserveFee = _calculateReserveFee(balance);
@@ -810,7 +815,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     require(!isRngRequested(), "PrizeStrategy/rng-in-flight");
 
     rng = rngService;
-
     emit RngServiceUpdated(address(rngService));
   }
 
@@ -856,6 +860,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   modifier requireCanCompleteAward() {
+    require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
     require(isRngRequested(), "PrizeStrategy/rng-not-requested");
     require(isRngCompleted(), "PrizeStrategy/rng-not-complete");
     _;

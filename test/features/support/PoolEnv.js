@@ -19,6 +19,7 @@ function PoolEnv() {
   this.overrides = { gasLimit: 40000000 }
 
   this.createPool = async function ({
+    prizePeriodStart = 0,
     prizePeriodSeconds,
     exitFee,
     creditRate,
@@ -47,13 +48,14 @@ function PoolEnv() {
     debug(`Creating pool with prize period ${prizePeriodSeconds}...`)
     this.env = await deployTestPool({
       wallet: this.wallets[0],
+      prizePeriodStart,
       prizePeriodSeconds,
       maxExitFeeMantissa,
       maxTimelockDuration,
       exitFee: toWei(exitFee),
       creditRate: toWei(creditRate),
+      externalERC20Awards: externalAwardAddresses,
       overrides: this.overrides,
-      externalERC20Awards: externalAwardAddresses
     })
     debug(`CompoundPrizePool created with address ${this.env.compoundPrizePool.address}`)
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
@@ -318,7 +320,7 @@ function PoolEnv() {
     await this.env.prizeStrategy.startAward(this.overrides)
 
     let randomNumber = ethers.utils.hexlify(ethers.utils.zeroPad(ethers.BigNumber.from('' + token), 32))
-    await this.env.rng.setRandomNumber(randomNumber, this.overrides)
+    await this.env.rngService.setRandomNumber(randomNumber, this.overrides)
 
     debug(`Completing award...`)
     await this.env.prizeStrategy.completeAward(this.overrides)

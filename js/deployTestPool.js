@@ -10,12 +10,15 @@ const ERC20Mintable = require('../build/ERC20Mintable.json')
 const ethers = require('ethers')
 const { deploy1820 } = require('deploy-eip-1820')
 const { deployContract } = require('ethereum-waffle')
+
+const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
 
 const debug = require('debug')('ptv3:deployTestPool')
 
 async function deployTestPool({
   wallet,
+  prizePeriodStart,
   prizePeriodSeconds,
   maxExitFeeMantissa,
   maxTimelockDuration,
@@ -28,7 +31,6 @@ async function deployTestPool({
 
   debug('beforeEach deploy rng, forwarder etc...')
 
-  let rng = await deployContract(wallet, RNGServiceMock, [], overrides)
   let forwarder = await deployContract(wallet, TrustedForwarder, [], overrides)
   let token = await deployContract(wallet, ERC20Mintable, [], overrides)
   let cToken = await deployContract(wallet, CTokenMock, [
@@ -41,6 +43,12 @@ async function deployTestPool({
 
   let comptroller = await deployContract(wallet, ComptrollerHarness, [], overrides)
   await comptroller.initialize(wallet._address)
+
+  debug('Deploying Mock RNG service...')
+
+  let linkToken = await deployContract(wallet, ERC20Mintable, [], overrides)
+  let rngServiceMock = await deployContract(wallet, RNGServiceMock, [], overrides)
+  await rngServiceMock.setRequestFee(linkToken.address, toWei('1'))
 
   debug('Deploying PrizeStrategy...')
 
@@ -73,14 +81,18 @@ async function deployTestPool({
 
   debug('Initializing PrizeStrategy...')
 
+  if (prizePeriodStart === 0) {
+    prizePeriodStart = now() + 1000
+  }
   await prizeStrategy.initialize(
     forwarder.address,
     comptroller.address,
+    prizePeriodStart,
     prizePeriodSeconds,
     compoundPrizePool.address,
     ticket.address,
     sponsorship.address,
-    rng.address,
+    rngServiceMock.address,
     externalERC20Awards
   )
 
@@ -88,7 +100,7 @@ async function deployTestPool({
   await prizeStrategy.setCreditRateMantissa(creditRate || toWei('0.1').div(prizePeriodSeconds))
 
   debug("Addresses: \n", {
-    rng: rng.address,
+    rngService: rngServiceMock.address,
     registry: registry.address,
     forwarder: forwarder.address,
     token: token.address,
@@ -103,7 +115,7 @@ async function deployTestPool({
   })
 
   return {
-    rng,
+    rngService: rngServiceMock,
     registry,
     forwarder,
     token,

@@ -16,6 +16,7 @@ contract CompoundPrizePoolBuilder {
     address proxyAdmin;
     CTokenInterface cToken;
     RNGInterface rngService;
+    uint256 prizePeriodStart;
     uint256 prizePeriodSeconds;
     string ticketName;
     string ticketSymbol;
@@ -88,6 +89,7 @@ contract CompoundPrizePoolBuilder {
     prizeStrategy.initialize(
       trustedForwarder,
       comptroller,
+      config.prizePeriodStart,
       config.prizePeriodSeconds,
       prizePool,
       tokens[0],
