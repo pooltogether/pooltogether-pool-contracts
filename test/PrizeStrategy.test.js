@@ -13,6 +13,9 @@ const ControlledToken = require('../build/ControlledToken.json')
 const { expect } = require('chai')
 const buidler = require('@nomiclabs/buidler')
 const { AddressZero, Zero } = require('ethers').constants
+
+
+const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
@@ -29,7 +32,7 @@ describe('PrizeStrategy', function() {
 
   let ticket, sponsorship, rng
 
-  let prizePeriodStart = 0
+  let prizePeriodStart = now()
   let prizePeriodSeconds = 1000
 
   let exitFeeMantissa = 0.1
@@ -504,14 +507,14 @@ describe('PrizeStrategy', function() {
     describe('startAward()', () => {
       it('should prevent starting an award', async () => {
         await prizeStrategy2.setCurrentTime(100);
-        await expect(prizeStrategy2.startAward()).to.be.revertedWith('PrizeStrategy/prize-period-not-started')
+        await expect(prizeStrategy2.startAward()).to.be.revertedWith('PrizeStrategy/prize-period-not-over')
       })
     })
 
     describe('completeAward()', () => {
       it('should prevent completing an award', async () => {
         await prizeStrategy2.setCurrentTime(100);
-        await expect(prizeStrategy2.startAward()).to.be.revertedWith('PrizeStrategy/prize-period-not-started')
+        await expect(prizeStrategy2.startAward()).to.be.revertedWith('PrizeStrategy/prize-period-not-over')
       })
     })
 

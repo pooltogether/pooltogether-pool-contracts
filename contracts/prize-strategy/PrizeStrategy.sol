@@ -95,10 +95,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     prizePeriodSeconds = _prizePeriodSeconds;
-    prizePeriodStartedAt = _currentTime();
-    if (_prizePeriodStart > prizePeriodStartedAt) {
-      prizePeriodStartedAt = _prizePeriodStart;
-    }
+    prizePeriodStartedAt = _prizePeriodStart;
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
     externalErc20s.initialize(_externalErc20s);
     for (uint256 i = 0; i < _externalErc20s.length; i++) {
@@ -478,18 +475,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     return endAt.sub(time);
   }
 
-  /// @notice Returns whether the prize period has started
-  /// @return True if the prize period has started, false otherwise
-  function isPrizePeriodStarted() external view returns (bool) {
-    return _isPrizePeriodStarted();
-  }
-
-  /// @notice Returns whether the prize period has started
-  /// @return True if the prize period has started, false otherwise
-  function _isPrizePeriodStarted() internal view returns (bool) {
-    return _currentTime() >= prizePeriodStartedAt;
-  }
-
   /// @notice Returns whether the prize period is over
   /// @return True if the prize period is over, false otherwise
   function isPrizePeriodOver() external view returns (bool) {
@@ -866,14 +851,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   modifier requireCanStartAward() {
-    require(_isPrizePeriodStarted(), "PrizeStrategy/prize-period-not-started");
     require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
     require(!isRngRequested(), "PrizeStrategy/rng-already-requested");
     _;
   }
 
   modifier requireCanCompleteAward() {
-    require(_isPrizePeriodStarted(), "PrizeStrategy/prize-period-not-started");
     require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
     require(isRngRequested(), "PrizeStrategy/rng-not-requested");
     require(isRngCompleted(), "PrizeStrategy/rng-not-complete");
