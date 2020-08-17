@@ -58,7 +58,7 @@ const config = {
     },
     trustedForwarder: {
       42: '0x6453D37248Ab2C16eBd1A8f782a2CBC65860E60B',
-      4: '0x6453D37248Ab2C16eBd1A8f782a2CBC65860E60B', // TODO
+      4: '0xd6cC1FEAB6E1DbDc3c0a6F2798c8089c72F78E64',
       3: '0xcC87aa60a6457D9606995C4E7E9c38A2b627Da88'
     },
     rng: {
