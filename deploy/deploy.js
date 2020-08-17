@@ -14,7 +14,7 @@ const CTokenMock = require('../build/CTokenMock.json')
 // }
 
 const chainName = (chainId) => {
-  switch(parseInt(chainId, 10)) {
+  switch(chainId) {
     case 1: return 'Mainnet';
     case 3: return 'Ropsten';
     case 4: return 'Rinkeby';
@@ -34,7 +34,7 @@ module.exports = async (buidler) => {
     trustedForwarder,
     adminAccount
   } = await getNamedAccounts()
-  const chainId = await getChainId()
+  const chainId = parseInt(await getChainId(), 10)
   const isLocal = [1, 3, 4, 42].indexOf(chainId) == -1
   let usingSignerAsAdmin = false
   const signer = await ethers.provider.getSigner(deployer)
@@ -45,7 +45,8 @@ module.exports = async (buidler) => {
   log("PoolTogether Pool Contracts - Deploy Script")
   log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
-  log("  Deploying to Network: ", chainName(chainId))
+  const locus = isLocal ? 'local' : 'remote'
+  log(`  Deploying to Network: ${chainName(chainId)} (${locus})`)
 
   if (!adminAccount) {
     log("  Using deployer as adminAccount;")
