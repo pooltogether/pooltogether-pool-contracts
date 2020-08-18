@@ -94,7 +94,6 @@ contract CompoundPrizePoolBuilder is Initializable {
 
     prizeStrategy.initialize(
       trustedForwarder,
-      comptroller,
       config.prizePeriodSeconds,
       prizePool,
       tokens[0],

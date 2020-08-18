@@ -77,7 +77,6 @@ async function deployTestPool({
 
   await prizeStrategy.initialize(
     forwarder.address,
-    comptroller.address,
     prizePeriodSeconds,
     compoundPrizePool.address,
     ticket.address,

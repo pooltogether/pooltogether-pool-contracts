@@ -44,8 +44,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   event PrizePoolAwarded(
     address indexed operator,
     uint256 randomNumber,
-    uint256 prize,
-    uint256 reserveFee
+    uint256 prize
   );
 
   event RngServiceUpdated(
@@ -54,7 +53,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   function initialize (
     address _trustedForwarder,
-    ComptrollerInterface _comptroller,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
     address _ticket,
@@ -62,7 +60,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     RNGInterface _rng,
     address[] memory _externalErc20s
   ) public initializer {
-    require(address(_comptroller) != address(0), "PrizeStrategy/comptroller-not-zero");
     require(_prizePeriodSeconds > 0, "PrizeStrategy/prize-period-greater-than-zero");
     require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-zero");
     require(address(_ticket) != address(0), "PrizeStrategy/ticket-not-zero");
@@ -76,7 +73,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
     __Ownable_init();
     __ReentrancyGuard_init();
-    comptroller = _comptroller;
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     for (uint256 i = 0; i < _externalErc20s.length; i++) {
@@ -96,20 +92,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Calculates and returns the currently accrued prize
   /// @return The current prize size
   function currentPrize() public returns (uint256) {
-    uint256 balance = prizePool.awardBalance();
-    uint256 reserveFee = _calculateReserveFee(balance);
-    return balance.sub(reserveFee);
-  }
-
-  /// @notice Calculates the reserve portion of the given amount of funds.  If there is no reserve address, the portion will be zero.
-  /// @param amount The prize amount
-  /// @return The size of the reserve portion of the prize
-  function _calculateReserveFee(uint256 amount) internal view returns (uint256) {
-    uint256 reserveRateMantissa = comptroller.reserveRateMantissa();
-    if (reserveRateMantissa == 0) {
-      return 0;
-    }
-    return FixedPoint.multiplyUintByMantissa(amount, reserveRateMantissa);
+    return prizePool.awardBalance();
   }
 
   /// @notice Estimates the prize size using the default ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA
@@ -140,7 +123,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
       prizePool.accountedBalance(),
       estimateRemainingBlocksToPrize(secondsPerBlockMantissa)
     );
-    uint256 reserveFee = _calculateReserveFee(remaining);
+    uint256 reserveFee = prizePool.calculateReserveFee(remaining);
     return remaining.sub(reserveFee);
   }
 
@@ -181,13 +164,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @return True if the prize period is over, false otherwise
   function _isPrizePeriodOver() internal view returns (bool) {
     return _currentTime() >= _prizePeriodEndAt();
-  }
-
-  /// @notice Awards the given amount of collateral to a user as sponsorship.
-  /// @param user The user to award
-  /// @param amount The amount of sponsorship to award
-  function _awardSponsorship(address user, uint256 amount) internal {
-    prizePool.award(user, amount, address(sponsorship));
   }
 
   /// @notice Awards collateral as tickets to a user
@@ -303,15 +279,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
     require(_isPrizePeriodOver(), "PrizeStrategy/not-over");
 
     uint256 randomNumber = rng.randomNumber(rngRequest.id);
-    uint256 balance = prizePool.awardBalance();
-    uint256 reserveFee = _calculateReserveFee(balance);
-    uint256 prize = balance.sub(reserveFee);
+    uint256 prize = prizePool.awardBalance();
 
     delete rngRequest;
-
-    if (reserveFee > 0) {
-      _awardSponsorship(address(comptroller), reserveFee);
-    }
 
     address winner = ticket.draw(randomNumber);
     if (winner != address(0)) {
@@ -322,7 +292,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     // to avoid clock drift, we should calculate the start time based on the previous period start time.
     prizePeriodStartedAt = _calculateNextPrizePeriodStartTime(_currentTime());
 
-    emit PrizePoolAwarded(_msgSender(), randomNumber, prize, reserveFee);
+    emit PrizePoolAwarded(_msgSender(), randomNumber, prize);
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
