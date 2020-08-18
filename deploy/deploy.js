@@ -91,7 +91,6 @@ module.exports = async (buidler) => {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
-    rng = rngServiceMockResult.address
 
     log("\n  Deploying Dai...")
     const daiResult = await deploy("Dai", {
@@ -176,7 +175,6 @@ module.exports = async (buidler) => {
       trustedForwarder,
       compoundPrizePoolProxyFactoryResult.address,
       controlledTokenProxyFactoryResult.address,
-      rng,
       proxyFactoryResult.address
     ],
     from: deployer,

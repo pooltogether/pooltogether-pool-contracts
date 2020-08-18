@@ -82,7 +82,7 @@ async function deployTestPool({
   debug('Initializing PrizeStrategy...')
 
   if (prizePeriodStart === 0) {
-    prizePeriodStart = now() + 1000
+    prizePeriodStart = now()
   }
   await prizeStrategy.initialize(
     forwarder.address,
