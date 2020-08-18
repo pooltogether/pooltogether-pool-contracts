@@ -69,16 +69,35 @@ contract CompoundPrizePoolBuilder is Initializable {
   function create(Config calldata config) external returns (PrizeStrategy) {
     PrizeStrategy prizeStrategy = prizeStrategyProxyFactory.create();
 
-    (CompoundPrizePool prizePool, address[] memory tokens) = createPrizePoolAndTokens(
-      prizeStrategy,
-      config.cToken,
+    CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
+    address[] memory tokens = createTokens(
+      prizePool,
       config.ticketName,
       config.ticketSymbol,
       config.sponsorshipName,
-      config.sponsorshipSymbol,
-      config.maxExitFeeMantissa,
-      config.maxTimelockDuration
+      config.sponsorshipSymbol
     );
+
+    prizePool.initialize(
+      trustedForwarder,
+      prizeStrategy,
+      comptroller,
+      tokens,
+      config.maxExitFeeMantissa,
+      config.maxTimelockDuration,
+      config.cToken
+    );
+
+    // (CompoundPrizePool prizePool, address[] memory tokens) = initializePrizePool(
+    //   prizeStrategy,
+    //   config.cToken,
+    //   config.ticketName,
+    //   config.ticketSymbol,
+    //   config.sponsorshipName,
+    //   config.sponsorshipSymbol,
+    //   config.maxExitFeeMantissa,
+    //   config.maxTimelockDuration
+    // );
 
     prizePool.setCreditRateOf(tokens[0], config.creditRateMantissa.toUint128(), config.exitFeeMantissa.toUint128());
 
@@ -106,28 +125,36 @@ contract CompoundPrizePoolBuilder is Initializable {
     return prizeStrategy;
   }
 
-  function createPrizePoolAndTokens(
-    PrizeStrategy prizeStrategy,
-    CTokenInterface _cToken,
+  // function initializePrizePool(
+  //   CompoundPrizePool prizePool,
+  //   PrizeStrategy prizeStrategy,
+  //   CTokenInterface _cToken,
+  //   address[] memory tokens,
+  //   uint256 _maxExitFeeMantissa,
+  //   uint256 _maxTimelockDuration
+  // ) internal {
+  //   prizePool.initialize(
+  //     trustedForwarder,
+  //     prizeStrategy,
+  //     comptroller,
+  //     tokens,
+  //     _maxExitFeeMantissa,
+  //     _maxTimelockDuration,
+  //     _cToken
+  //   );
+  // }
+
+  function createTokens(
+    PrizePool prizePool,
     string memory ticketName,
     string memory ticketSymbol,
     string memory sponsorshipName,
-    string memory sponsorshipSymbol,
-    uint256 _maxExitFeeMantissa,
-    uint256 _maxTimelockDuration
-  ) internal returns (CompoundPrizePool prizePool, address[] memory tokens) {
-    prizePool = compoundPrizePoolProxyFactory.create();
-    tokens = new address[](2);
+    string memory sponsorshipSymbol
+  ) internal returns (address[] memory) {
+    address[] memory tokens = new address[](2);
     tokens[0] = address(createTicket(prizePool, ticketName, ticketSymbol));
     tokens[1] = address(createControlledToken(prizePool, sponsorshipName, sponsorshipSymbol));
-    prizePool.initialize(
-      trustedForwarder,
-      prizeStrategy,
-      tokens,
-      _maxExitFeeMantissa,
-      _maxTimelockDuration,
-      _cToken
-    );
+    return tokens;
   }
 
   function createControlledToken(

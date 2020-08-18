@@ -66,6 +66,7 @@ async function deployTestPool({
   await compoundPrizePool.initializeAll(
     forwarder.address,
     prizeStrategy.address,
+    comptroller.address,
     [ticket.address, sponsorship.address],
     maxExitFeeMantissa || toWei('0.5'),
     maxTimelockDuration || '10000',

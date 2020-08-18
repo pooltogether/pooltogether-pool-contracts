@@ -19,9 +19,9 @@ contract CounterfactualActionFactory {
     return Create2.computeAddress(salt(user), keccak256(MinimalProxyLibrary.minimalProxy(address(depositor))));
   }
 
-  function depositTo(address payable user, address token, bytes calldata data) external {
+  function depositTo(address payable user, address token, address referrer) external {
     CounterfactualAction d = newAction(user);
-    d.depositTo(user, prizePool, token, data);
+    d.depositTo(user, prizePool, token, referrer);
   }
 
   function cancel(address payable user) external {
