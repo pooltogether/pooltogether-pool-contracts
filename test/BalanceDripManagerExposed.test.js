@@ -1,6 +1,7 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const BalanceDripManagerExposed = require('../build/BalanceDripManagerExposed.json')
 const ERC20Mintable = require('../build/ERC20Mintable.json')
+const IERC20 = require('../build/IERC20.json')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
@@ -17,11 +18,13 @@ describe('BalanceDripManagerExposed', function() {
 
   let dripExposed
 
-  let measure, drip1, drip2
+  let measure, drip1, drip2, drip3
+
+  let invalidDrip = '0x0000000000000000000000000000000000000003'
 
   beforeEach(async () => {
     [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
-    
+
     dripExposed = await deployContract(wallet, BalanceDripManagerExposed, [], overrides)
 
     debug({ dripExposed: dripExposed.address })
@@ -29,6 +32,7 @@ describe('BalanceDripManagerExposed', function() {
     measure = await deployContract(wallet, ERC20Mintable, [], overrides)
     drip1 = await deployContract(wallet, ERC20Mintable, [], overrides)
     drip2 = await deployContract(wallet, ERC20Mintable, [], overrides)
+    drip3 = await deployMockContract(wallet, IERC20.abi)
   })
 
   describe('addDrip()', () => {
@@ -37,13 +41,25 @@ describe('BalanceDripManagerExposed', function() {
       expect(await dripExposed.hasDrip(measure.address, drip1.address)).to.be.true
     })
 
+    it('should support a second drip token', async () => {
+      await dripExposed.addDrip(measure.address, drip1.address, toWei('0.001'), '1')
+      await dripExposed.addDrip(measure.address, drip2.address, toWei('0.001'), '1')
+      expect(await dripExposed.hasDrip(measure.address, drip1.address)).to.be.true
+      expect(await dripExposed.hasDrip(measure.address, drip2.address)).to.be.true
+    })
+
     it('should not add a drip token twice', async () => {
       await dripExposed.addDrip(measure.address, drip1.address, toWei('0.001'), '1')
-      await expect(dripExposed.addDrip(measure.address, drip1.address, toWei('0.001'), '2')).to.be.revertedWith('DripManager/drip-exists')
+      await expect(dripExposed.addDrip(measure.address, drip1.address, toWei('0.001'), '2')).to.be.revertedWith('BalanceDripManager/drip-exists')
     })
   })
 
   describe('setDripRate()', () => {
+    it('should revert when setting non-existant drips', async () => {
+      await expect(dripExposed.setDripRate(measure.address, invalidDrip, toWei('0.001')))
+        .to.be.revertedWith('BalanceDripManager/drip-not-exists')
+    })
+
     it('should allow the drip rate to be changed', async () => {
       await dripExposed.addDrip(measure.address, drip1.address, toWei('0.001'), '1')
       await dripExposed.setDripRate(measure.address, drip1.address, toWei('0.1'))
@@ -107,6 +123,13 @@ describe('BalanceDripManagerExposed', function() {
 
       expect(await drip1.balanceOf(wallet._address)).to.equal(toWei('0.001'))
       expect(await dripExposed.balanceOfDrip(wallet._address, measure.address, drip1.address)).to.equal(toWei('0'))
+    })
+
+    it('should revert if transfer fails', async () => {
+      await dripExposed.addDrip(measure.address, drip3.address, toWei('0.001'), '1')
+      await drip3.mock.transfer.withArgs(wallet._address, 0).returns(false)
+      await expect(dripExposed.claimDripTokens(wallet._address, measure.address, drip3.address))
+        .to.be.revertedWith('BalanceDripManager/transfer-failed')
     })
   })
 

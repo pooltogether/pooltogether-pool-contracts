@@ -5,12 +5,27 @@ import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 contract RNGServiceMock is RNGInterface {
 
   uint256 internal random;
+  address internal feeToken;
+  uint256 internal requestFee;
 
-  function setRandomNumber(uint256 rando) external {
-    random = rando;
+  function getLastRequestId() external override view returns (uint32 requestId) {
+    return 1;
   }
 
-  function requestRandomNumber(address, uint256) external override returns (uint32, uint32) {
+  function setRequestFee(address _feeToken, uint256 _requestFee) external {
+    feeToken = _feeToken;
+    requestFee = _requestFee;
+  }
+
+  function getRequestFee() external override view returns (address _feeToken, uint256 _requestFee) {
+    return (feeToken, requestFee);
+  }
+
+  function setRandomNumber(uint256 _random) external {
+    random = _random;
+  }
+
+  function requestRandomNumber() external override returns (uint32, uint32) {
     return (1, 1);
   }
 
@@ -18,7 +33,7 @@ contract RNGServiceMock is RNGInterface {
     return true;
   }
 
-  function randomNumber(uint32) external override view returns (uint256) {
+  function randomNumber(uint32) external override returns (uint256) {
     return random;
   }
 }

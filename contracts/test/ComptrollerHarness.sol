@@ -8,7 +8,6 @@ contract ComptrollerHarness is Comptroller {
   uint256 internal time;
 
   function setCurrentTime(uint256 _time) external {
-    // console.log("setCurrentTime( %s )", _time);
     time = _time;
   }
 
@@ -16,7 +15,6 @@ contract ComptrollerHarness is Comptroller {
     if (time == 0) {
       return block.timestamp;
     }
-    // console.log("_currentTime(): %s", time);
     return time;
   }
 

@@ -31,7 +31,6 @@ async function deployTestPool({
 
   debug('beforeEach deploy rng, forwarder etc...')
 
-  let rng = await deployContract(wallet, RNGServiceMock, [], overrides)
   let forwarder = await deployContract(wallet, TrustedForwarder, [], overrides)
   let token = await deployContract(wallet, ERC20Mintable, [], overrides)
   let cToken = await deployContract(wallet, CTokenMock, [
@@ -44,6 +43,12 @@ async function deployTestPool({
 
   let comptroller = await deployContract(wallet, ComptrollerHarness, [], overrides)
   await comptroller.initialize(wallet._address)
+
+  debug('Deploying Mock RNG service...')
+
+  let linkToken = await deployContract(wallet, ERC20Mintable, [], overrides)
+  let rngServiceMock = await deployContract(wallet, RNGServiceMock, [], overrides)
+  await rngServiceMock.setRequestFee(linkToken.address, toWei('1'))
 
   debug('Deploying PrizeStrategy...')
 
@@ -87,7 +92,7 @@ async function deployTestPool({
     compoundPrizePool.address,
     ticket.address,
     sponsorship.address,
-    rng.address,
+    rngServiceMock.address,
     externalERC20Awards
   )
 
@@ -95,7 +100,7 @@ async function deployTestPool({
   await prizeStrategy.setCreditRateMantissa(creditRate || toWei('0.1').div(prizePeriodSeconds))
 
   debug("Addresses: \n", {
-    rng: rng.address,
+    rngService: rngServiceMock.address,
     registry: registry.address,
     forwarder: forwarder.address,
     token: token.address,
@@ -110,7 +115,7 @@ async function deployTestPool({
   })
 
   return {
-    rng,
+    rngService: rngServiceMock,
     registry,
     forwarder,
     token,
