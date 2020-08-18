@@ -10,12 +10,15 @@ const ERC20Mintable = require('../build/ERC20Mintable.json')
 const ethers = require('ethers')
 const { deploy1820 } = require('deploy-eip-1820')
 const { deployContract } = require('ethereum-waffle')
+
+const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
 
 const debug = require('debug')('ptv3:deployTestPool')
 
 async function deployTestPool({
   wallet,
+  prizePeriodStart,
   prizePeriodSeconds,
   maxExitFeeMantissa,
   maxTimelockDuration,
@@ -78,9 +81,13 @@ async function deployTestPool({
 
   debug('Initializing PrizeStrategy...')
 
+  if (prizePeriodStart === 0) {
+    prizePeriodStart = now() + 1000
+  }
   await prizeStrategy.initialize(
     forwarder.address,
     comptroller.address,
+    prizePeriodStart,
     prizePeriodSeconds,
     compoundPrizePool.address,
     ticket.address,

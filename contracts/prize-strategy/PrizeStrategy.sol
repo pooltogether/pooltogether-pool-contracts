@@ -69,6 +69,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function initialize (
     address _trustedForwarder,
     ComptrollerInterface _comptroller,
+    uint256 _prizePeriodStart,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
     address _ticket,
@@ -100,7 +101,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     externalErc20s.addAddresses(_externalErc20s);
 
     prizePeriodSeconds = _prizePeriodSeconds;
-    prizePeriodStartedAt = _currentTime();
+    prizePeriodStartedAt = _prizePeriodStart;
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
 
     exitFeeMantissa = 0.1 ether;
