@@ -7,6 +7,7 @@ import "../comptroller/ComptrollerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
+import "../token/TicketInterface.sol";
 import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
 
@@ -19,15 +20,12 @@ contract PrizeStrategyStorage {
   // Contract Interfaces
   PrizePool public prizePool;
   ComptrollerInterface public comptroller;
-  IERC20 public ticket;
+  TicketInterface public ticket;
   IERC20 public sponsorship;
   RNGInterface public rng;
 
   // Current RNG Request
   RngRequest internal rngRequest;
-
-  // EOA mapping for ticket-weighted odds
-  SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
 
   // Prize period
   uint256 public prizePeriodSeconds;

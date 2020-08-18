@@ -3,6 +3,7 @@ const RNGServiceMock = require('../build/RNGServiceMock.json')
 const TrustedForwarder = require('../build/TrustedForwarder.json')
 const ComptrollerHarness = require('../build/ComptrollerHarness.json')
 const ControlledToken = require('../build/ControlledToken.json')
+const Ticket = require('../build/Ticket.json')
 const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
 const CTokenMock = require('../build/CTokenMock.json')
 const ERC20Mintable = require('../build/ERC20Mintable.json')
@@ -65,7 +66,7 @@ async function deployTestPool({
 
   debug('Deploying Ticket...')
 
-  let ticket = await deployContract(wallet, ControlledToken, [], overrides)
+  let ticket = await deployContract(wallet, Ticket, [], overrides)
   await ticket.initialize("Ticket", "TICK", forwarder.address, compoundPrizePool.address)
 
   debug('Initializing CompoundPrizePoolHarness...')
