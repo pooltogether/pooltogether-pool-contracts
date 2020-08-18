@@ -4,6 +4,7 @@ const MockComptroller = require('../build/MockComptroller.json')
 const CompoundPrizePoolBuilder = require('../build/CompoundPrizePoolBuilder.json')
 const CompoundPrizePoolProxyFactory = require('../build/CompoundPrizePoolProxyFactory.json')
 const ControlledTokenProxyFactory = require('../build/ControlledTokenProxyFactory.json')
+const TicketProxyFactory = require('../build/TicketProxyFactory.json')
 const PrizeStrategyProxyFactory = require('../build/PrizeStrategyProxyFactory.json')
 const CTokenMock = require('../build/CTokenMock.json')
 const ERC20Mintable = require('../build/ERC20Mintable.json')
@@ -35,6 +36,11 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
   let controlledTokenProxyFactory = await deployContract(wallet, ControlledTokenProxyFactory, [], overrides)
   await controlledTokenProxyFactory.initialize(overrides)
 
+  debug('deploying ticket factory')
+
+  let ticketProxyFactory = await deployContract(wallet, TicketProxyFactory, [], overrides)
+  await ticketProxyFactory.initialize(overrides)
+
   debug('deploying compound prize pool proxy factory')
 
   let compoundPrizePoolProxyFactory = await deployContract(wallet, CompoundPrizePoolProxyFactory, [], overrides)
@@ -54,6 +60,7 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
     forwarder.address,
     compoundPrizePoolProxyFactory.address,
     controlledTokenProxyFactory.address,
+    ticketProxyFactory.address,
     rng.address,
     overrides
   )
@@ -69,6 +76,7 @@ async function deployContracts(wallet, overrides = { gasLimit: 20000000 }) {
     comptroller,
     prizeStrategyProxyFactory,
     controlledTokenProxyFactory,
+    ticketProxyFactory,
     compoundPrizePoolProxyFactory,
     compoundPrizePoolBuilder
   }

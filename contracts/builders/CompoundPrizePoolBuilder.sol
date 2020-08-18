@@ -7,6 +7,7 @@ import "../comptroller/ComptrollerInterface.sol";
 import "../prize-strategy/PrizeStrategyProxyFactory.sol";
 import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
+import "../token/TicketProxyFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 
 contract CompoundPrizePoolBuilder is Initializable {
@@ -36,6 +37,7 @@ contract CompoundPrizePoolBuilder is Initializable {
   ComptrollerInterface public comptroller;
   CompoundPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
+  TicketProxyFactory public ticketProxyFactory;
   PrizeStrategyProxyFactory public prizeStrategyProxyFactory;
   RNGInterface public rng;
   address public trustedForwarder;
@@ -46,14 +48,17 @@ contract CompoundPrizePoolBuilder is Initializable {
     address _trustedForwarder,
     CompoundPrizePoolProxyFactory _compoundPrizePoolProxyFactory,
     ControlledTokenProxyFactory _controlledTokenProxyFactory,
+    TicketProxyFactory _ticketProxyFactory,
     RNGInterface _rng
   ) public initializer {
     require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
     require(address(_prizeStrategyProxyFactory) != address(0), "CompoundPrizePoolBuilder/prize-strategy-factory-not-zero");
     require(address(_compoundPrizePoolProxyFactory) != address(0), "CompoundPrizePoolBuilder/compound-prize-pool-builder-not-zero");
     require(address(_controlledTokenProxyFactory) != address(0), "CompoundPrizePoolBuilder/controlled-token-proxy-factory-not-zero");
+    require(address(_ticketProxyFactory) != address(0), "CompoundPrizePoolBuilder/ticket-proxy-factory-not-zero");
     require(address(_rng) != address(0), "CompoundPrizePoolBuilder/rng-not-zero");
     rng = _rng;
+    ticketProxyFactory = _ticketProxyFactory;
     comptroller = _comptroller;
     prizeStrategyProxyFactory = _prizeStrategyProxyFactory;
     trustedForwarder = _trustedForwarder;
@@ -113,7 +118,7 @@ contract CompoundPrizePoolBuilder is Initializable {
   ) internal returns (CompoundPrizePool prizePool, address[] memory tokens) {
     prizePool = compoundPrizePoolProxyFactory.create();
     tokens = new address[](2);
-    tokens[0] = address(createControlledToken(prizePool, ticketName, ticketSymbol));
+    tokens[0] = address(createTicket(prizePool, ticketName, ticketSymbol));
     tokens[1] = address(createControlledToken(prizePool, sponsorshipName, sponsorshipSymbol));
     prizePool.initialize(
       trustedForwarder,
@@ -131,6 +136,16 @@ contract CompoundPrizePoolBuilder is Initializable {
     string memory symbol
   ) internal returns (ControlledToken) {
     ControlledToken token = controlledTokenProxyFactory.create();
+    token.initialize(string(name), string(symbol), trustedForwarder, controller);
+    return token;
+  }
+
+  function createTicket(
+    TokenControllerInterface controller,
+    string memory name,
+    string memory symbol
+  ) internal returns (Ticket) {
+    Ticket token = ticketProxyFactory.create();
     token.initialize(string(name), string(symbol), trustedForwarder, controller);
     return token;
   }

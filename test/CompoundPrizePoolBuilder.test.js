@@ -24,6 +24,7 @@ describe('CompoundPrizePoolBuilder', () => {
       expect(await builder.trustedForwarder()).to.equal(env.forwarder.address)
       expect(await builder.compoundPrizePoolProxyFactory()).to.equal(env.compoundPrizePoolProxyFactory.address)
       expect(await builder.controlledTokenProxyFactory()).to.equal(env.controlledTokenProxyFactory.address)
+      expect(await builder.ticketProxyFactory()).to.equal(env.ticketProxyFactory.address)
       expect(await builder.rng()).to.equal(env.rng.address)
     })
   })
@@ -55,7 +56,7 @@ describe('CompoundPrizePoolBuilder', () => {
       expect(await prizePool.cToken()).to.equal(config.cToken)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(config.prizePeriodSeconds)
 
-      let ticket = await buidler.ethers.getContractAt('ControlledToken', await prizeStrategy.ticket(), wallet)
+      let ticket = await buidler.ethers.getContractAt('Ticket', await prizeStrategy.ticket(), wallet)
       expect(await ticket.name()).to.equal(config.ticketName)
       expect(await ticket.symbol()).to.equal(config.ticketSymbol)
 

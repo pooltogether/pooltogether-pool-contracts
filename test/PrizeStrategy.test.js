@@ -2,13 +2,14 @@ const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const { call, callRaw } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
-const  ComptrollerInterface = require('../build/ComptrollerInterface.json')
+const ComptrollerInterface = require('../build/ComptrollerInterface.json')
 const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
 const IERC20 = require('../build/IERC20.json')
 const IERC721 = require('../build/IERC721.json')
 const ControlledToken = require('../build/ControlledToken.json')
+const Ticket = require('../build/Ticket.json')
 
 const { expect } = require('chai')
 const buidler = require('./helpers/buidler')
@@ -50,7 +51,7 @@ describe('PrizeStrategy', function() {
     debug('mocking tokens...')
     token = await deployMockContract(wallet, IERC20.abi, overrides)
     prizePool = await deployMockContract(wallet, PrizePool.abi, overrides)
-    ticket = await deployMockContract(wallet, ControlledToken.abi, overrides)
+    ticket = await deployMockContract(wallet, Ticket.abi, overrides)
     sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)
     rng = await deployMockContract(wallet, RNGInterface.abi, overrides)
     externalERC20Award = await deployMockContract(wallet, IERC20.abi, overrides)
@@ -61,6 +62,9 @@ describe('PrizeStrategy', function() {
 
     await prizePool.mock.canAwardExternal.withArgs(externalERC20Award.address).returns(true)
     await prizePool.mock.canAwardExternal.withArgs(externalERC721Award.address).returns(true)
+
+    // wallet 1 always wins
+    await ticket.mock.draw.returns(wallet._address)
 
     debug('initializing prizeStrategy...')
     await prizeStrategy.initialize(
@@ -164,19 +168,6 @@ describe('PrizeStrategy', function() {
     })
   })
 
-  describe('chanceOf()', () => {
-    it('should show the odds for a user to win the prize', async () => {
-      const amount = toWei('10')
-      await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
-      await ticket.mock.totalSupply.returns(amount)
-      await comptroller.mock.afterDepositTo
-        .withArgs(wallet._address, amount, amount, amount, ticket.address, AddressZero)
-        .returns()
-      await prizePool.call(prizeStrategy, 'afterDepositTo', wallet._address, amount, ticket.address, [])
-      expect(await prizeStrategy.chanceOf(wallet._address)).to.be.equal(amount)
-    })
-  })
-
   describe('afterDepositTo()', () => {
     it('should only be called by the prize pool', async () => {
       prizeStrategy2 = await prizeStrategy.connect(wallet2)
@@ -188,7 +179,6 @@ describe('PrizeStrategy', function() {
       await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('22'))
       await comptroller.mock.afterDepositTo.returns()
       await prizePool.call(prizeStrategy, 'afterDepositTo', wallet._address, toWei('10'), ticket.address, [])
-      expect(await prizeStrategy.draw(1)).to.equal(wallet._address) // they exist in the sortition sum tree
     })
 
     it('should not be called if an rng request is in flight', async () => {
