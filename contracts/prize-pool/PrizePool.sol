@@ -5,7 +5,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-import "@nomiclabs/buidler/console.sol";
 
 import "../comptroller/ComptrollerInterface.sol";
 import "../token/ControlledToken.sol";
@@ -450,7 +449,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     }
 
     uint256 creditEarned = _calculateEarlyExitFee(controlledToken, amount);
-    console.log("award(): amount: %s, creditEarned: %s", amount, creditEarned);
     _addCredit(to, controlledToken, IERC20(controlledToken).balanceOf(to), creditEarned);
 
     emit Awarded(to, controlledToken, amount, reserveFee);
