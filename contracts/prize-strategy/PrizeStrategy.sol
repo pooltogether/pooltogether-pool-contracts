@@ -69,6 +69,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function initialize (
     address _trustedForwarder,
     ComptrollerInterface _comptroller,
+    uint256 _prizePeriodStart,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
     address _ticket,
@@ -94,7 +95,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     prizePeriodSeconds = _prizePeriodSeconds;
-    prizePeriodStartedAt = _currentTime();
+    prizePeriodStartedAt = _prizePeriodStart;
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
 
     exitFeeMantissa = 0.1 ether;

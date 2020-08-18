@@ -13,6 +13,9 @@ const ControlledToken = require('../build/ControlledToken.json')
 const { expect } = require('chai')
 const buidler = require('@nomiclabs/buidler')
 const { AddressZero, Zero } = require('ethers').constants
+
+
+const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
@@ -29,6 +32,7 @@ describe('PrizeStrategy', function() {
 
   let ticket, sponsorship, rng, rngFeeToken
 
+  let prizePeriodStart = now()
   let prizePeriodSeconds = 1000
 
   let exitFeeMantissa = 0.1
@@ -69,6 +73,7 @@ describe('PrizeStrategy', function() {
     await prizeStrategy.initialize(
       FORWARDER,
       comptroller.address,
+      prizePeriodStart,
       prizePeriodSeconds,
       prizePool.address,
       ticket.address,
@@ -103,6 +108,7 @@ describe('PrizeStrategy', function() {
       const _initArgs = [
         FORWARDER,
         comptroller.address,
+        prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
         ticket.address,
@@ -118,15 +124,15 @@ describe('PrizeStrategy', function() {
       debug('testing initialization of secondary prizeStrategy...')
       initArgs = _initArgs.slice(); initArgs[1] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/comptroller-not-zero')
-      initArgs = _initArgs.slice(); initArgs[2] = 0
+      initArgs = _initArgs.slice(); initArgs[3] = 0
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/prize-period-greater-than-zero')
-      initArgs = _initArgs.slice(); initArgs[3] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/prize-pool-not-zero')
       initArgs = _initArgs.slice(); initArgs[4] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/ticket-not-zero')
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/prize-pool-not-zero')
       initArgs = _initArgs.slice(); initArgs[5] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/sponsorship-not-zero')
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/ticket-not-zero')
       initArgs = _initArgs.slice(); initArgs[6] = AddressZero
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/sponsorship-not-zero')
+      initArgs = _initArgs.slice(); initArgs[7] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/rng-not-zero')
 
       initArgs = _initArgs.slice()
@@ -138,6 +144,7 @@ describe('PrizeStrategy', function() {
       const initArgs = [
         FORWARDER,
         comptroller.address,
+        prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
         ticket.address,
@@ -713,5 +720,54 @@ describe('PrizeStrategy', function() {
       let startedAt = await prizeStrategy.prizePeriodStartedAt();
       expect(await prizeStrategy.calculateNextPrizePeriodStartTime(startedAt.add(parseInt(prizePeriodSeconds * 1.5)))).to.equal(startedAt.add(prizePeriodSeconds))
     })
+  })
+
+  describe('with a prize-period scheduled in the future', () => {
+    let prizeStrategy2
+
+    beforeEach(async () => {
+      prizePeriodStart = 10000
+
+      debug('deploying secondary prizeStrategy...')
+      prizeStrategy2 = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
+
+      debug('initializing secondary prizeStrategy...')
+      await prizeStrategy2.initialize(
+        FORWARDER,
+        comptroller.address,
+        prizePeriodStart,
+        prizePeriodSeconds,
+        prizePool.address,
+        ticket.address,
+        sponsorship.address,
+        rng.address,
+        [externalERC20Award.address]
+      )
+
+      await prizeStrategy2.setExitFeeMantissa(
+        toWei(exitFeeMantissa)
+      )
+
+      await prizeStrategy2.setCreditRateMantissa(
+        toWei(creditRateMantissa)
+      )
+
+      debug('initialized!')
+    })
+
+    describe('startAward()', () => {
+      it('should prevent starting an award', async () => {
+        await prizeStrategy2.setCurrentTime(100);
+        await expect(prizeStrategy2.startAward()).to.be.revertedWith('PrizeStrategy/prize-period-not-over')
+      })
+    })
+
+    describe('completeAward()', () => {
+      it('should prevent completing an award', async () => {
+        await prizeStrategy2.setCurrentTime(100);
+        await expect(prizeStrategy2.startAward()).to.be.revertedWith('PrizeStrategy/prize-period-not-over')
+      })
+    })
+
   })
 });

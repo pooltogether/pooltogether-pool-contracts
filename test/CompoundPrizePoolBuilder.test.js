@@ -58,6 +58,7 @@ describe('CompoundPrizePoolBuilder', () => {
       const config = {
         proxyAdmin,
         cToken: cToken,
+        prizePeriodStart: 0,
         prizePeriodSeconds: 10,
         ticketName: "Ticket",
         ticketSymbol: "TICK",
@@ -86,6 +87,7 @@ describe('CompoundPrizePoolBuilder', () => {
       const config = {
         proxyAdmin: AddressZero,
         cToken: cToken,
+        prizePeriodStart: 0,
         prizePeriodSeconds: 10,
         ticketName: "Ticket",
         ticketSymbol: "TICK",

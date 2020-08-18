@@ -19,6 +19,7 @@ function PoolEnv() {
   this.overrides = { gasLimit: 40000000 }
 
   this.createPool = async function ({
+    prizePeriodStart = 0,
     prizePeriodSeconds,
     exitFee,
     creditRate,
@@ -47,6 +48,7 @@ function PoolEnv() {
     debug(`Creating pool with prize period ${prizePeriodSeconds}...`)
     this.env = await deployTestPool({
       wallet: this.wallets[0],
+      prizePeriodStart,
       prizePeriodSeconds,
       maxExitFeeMantissa,
       maxTimelockDuration,
