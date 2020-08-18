@@ -108,6 +108,7 @@ describe('PrizeStrategy', function() {
       const _initArgs = [
         FORWARDER,
         comptroller.address,
+        prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
         ticket.address,
@@ -123,15 +124,15 @@ describe('PrizeStrategy', function() {
       debug('testing initialization of secondary prizeStrategy...')
       initArgs = _initArgs.slice(); initArgs[1] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/comptroller-not-zero')
-      initArgs = _initArgs.slice(); initArgs[2] = 0
+      initArgs = _initArgs.slice(); initArgs[3] = 0
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/prize-period-greater-than-zero')
-      initArgs = _initArgs.slice(); initArgs[3] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/prize-pool-not-zero')
       initArgs = _initArgs.slice(); initArgs[4] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/ticket-not-zero')
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/prize-pool-not-zero')
       initArgs = _initArgs.slice(); initArgs[5] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/sponsorship-not-zero')
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/ticket-not-zero')
       initArgs = _initArgs.slice(); initArgs[6] = AddressZero
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/sponsorship-not-zero')
+      initArgs = _initArgs.slice(); initArgs[7] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/rng-not-zero')
 
       initArgs = _initArgs.slice()
