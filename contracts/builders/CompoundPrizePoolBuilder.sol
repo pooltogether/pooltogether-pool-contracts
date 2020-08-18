@@ -98,17 +98,6 @@ contract CompoundPrizePoolBuilder {
       config.cToken
     );
 
-    // (CompoundPrizePool prizePool, address[] memory tokens) = initializePrizePool(
-    //   prizeStrategy,
-    //   config.cToken,
-    //   config.ticketName,
-    //   config.ticketSymbol,
-    //   config.sponsorshipName,
-    //   config.sponsorshipSymbol,
-    //   config.maxExitFeeMantissa,
-    //   config.maxTimelockDuration
-    // );
-
     prizePool.setCreditRateOf(tokens[0], config.creditRateMantissa.toUint128(), config.exitFeeMantissa.toUint128());
 
     prizePool.transferOwnership(msg.sender);
@@ -135,25 +124,6 @@ contract CompoundPrizePoolBuilder {
 
     return prizeStrategy;
   }
-
-  // function initializePrizePool(
-  //   CompoundPrizePool prizePool,
-  //   PrizeStrategy prizeStrategy,
-  //   CTokenInterface _cToken,
-  //   address[] memory tokens,
-  //   uint256 _maxExitFeeMantissa,
-  //   uint256 _maxTimelockDuration
-  // ) internal {
-  //   prizePool.initialize(
-  //     trustedForwarder,
-  //     prizeStrategy,
-  //     comptroller,
-  //     tokens,
-  //     _maxExitFeeMantissa,
-  //     _maxTimelockDuration,
-  //     _cToken
-  //   );
-  // }
 
   function createTokens(
     PrizePool prizePool,
