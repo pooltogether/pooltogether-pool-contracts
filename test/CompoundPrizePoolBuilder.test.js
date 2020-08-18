@@ -47,7 +47,6 @@ describe('CompoundPrizePoolBuilder', () => {
       expect(await builder.trustedForwarder()).to.equal(trustedForwarder)
       expect(await builder.compoundPrizePoolProxyFactory()).to.equal(compoundPrizePoolProxyFactory)
       expect(await builder.controlledTokenProxyFactory()).to.equal(controlledTokenProxyFactory)
-      expect(await builder.rng()).to.equal(rngServiceMock)
       expect(await builder.proxyFactory()).to.equal(proxyFactory)
     })
   })
@@ -58,6 +57,7 @@ describe('CompoundPrizePoolBuilder', () => {
       const config = {
         proxyAdmin,
         cToken: cToken,
+        rngService: rngServiceMock,
         prizePeriodStart: 0,
         prizePeriodSeconds: 10,
         ticketName: "Ticket",
@@ -87,6 +87,7 @@ describe('CompoundPrizePoolBuilder', () => {
       const config = {
         proxyAdmin: AddressZero,
         cToken: cToken,
+        rngService: rngServiceMock,
         prizePeriodStart: 0,
         prizePeriodSeconds: 10,
         ticketName: "Ticket",
