@@ -164,6 +164,22 @@ describe('CompoundPrizePool', function() {
       })
     })
 
+    describe('awardBalance()', () => { 
+      it('should return the yield less the total token supply', async () => {
+        await comptroller.mock.reserveRateMantissa.returns(0)
+        await ticket.mock.totalSupply.returns(toWei('100'))
+        await cToken.mock.balanceOfUnderlying.returns(toWei('110'))
+        expect(await call(prizePool, 'awardBalance')).to.equal(toWei('10'))
+      })
+
+      it('should take the reserve fee into account', async () => {
+        await comptroller.mock.reserveRateMantissa.returns(toWei('0.5'))
+        await ticket.mock.totalSupply.returns(toWei('100'))
+        await cToken.mock.balanceOfUnderlying.returns(toWei('110'))
+        expect(await call(prizePool, 'awardBalance')).to.equal(toWei('5'))
+      })
+    })
+
     describe('withdrawInstantlyFrom()', () => {
       it('should revert on Compound error', async () => {
         let amount = toWei('10')

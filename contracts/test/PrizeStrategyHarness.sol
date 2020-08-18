@@ -19,12 +19,4 @@ contract PrizeStrategyHarness is PrizeStrategy {
     rngRequest.lockBlock = lockBlock;
   }
 
-  function awardReserveFeesTest() external {
-    uint256 balance = prizePool.awardBalance();
-    uint256 reserveFee = _calculateReserveFee(balance);
-    if (reserveFee > 0) {
-      _awardSponsorship(address(comptroller), reserveFee);
-    }
-  }
-
 }
