@@ -1419,6 +1419,11 @@
   resolved "https://registry.yarnpkg.com/@truffle/error/-/error-0.0.8.tgz#dc94ca36393403449d4b7461bf9452c241e53ec1"
   integrity sha512-x55rtRuNfRO1azmZ30iR0pf0OJ6flQqbax1hJz+Avk1K5fdmOv5cr22s9qFnwTWnS6Bw0jvJEoR0ITsM7cPKtQ==
 
+"@truffle/error@^0.0.9":
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/@truffle/error/-/error-0.0.9.tgz#d8177899ffd4c3ff033c2bf48b79a3446e08c801"
+  integrity sha512-afT1ssCQ1wq0LbZMPIJ7Lc5SjyOMAP2IHRNrrkoUJQtjAw3rvcE2i2Jq1BNMa5K548nUSM9C9MqX/Eo7csq8cQ==
+
 "@truffle/hdwallet-provider@1.0.34":
   version "1.0.34"
   resolved "https://registry.yarnpkg.com/@truffle/hdwallet-provider/-/hdwallet-provider-1.0.34.tgz#1e642c415c28e9ae3bb8142bbdbc8506adaaa06a"
