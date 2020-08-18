@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "../prize-strategy/PrizeStrategyInterface.sol";
+import "../comptroller/ComptrollerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
@@ -107,6 +108,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     bool initialized;
   }
 
+  ComptrollerInterface public comptroller;
+
   /// @dev A linked list of all the controlled tokens
   MappedSinglyLinkedList.Mapping internal _tokens;
 
@@ -144,6 +147,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   function initialize (
     address _trustedForwarder,
     PrizeStrategyInterface _prizeStrategy,
+    ComptrollerInterface _comptroller,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration
@@ -151,8 +155,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     public
     initializer
   {
+    require(address(_comptroller) != address(0), "PrizePool/comptroller-not-zero");
     require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
+    comptroller = _comptroller;
     _tokens.initialize();
     _tokens.addAddresses(_controlledTokens);
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
@@ -222,8 +228,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   function timelockDepositTo(
     address to,
     uint256 amount,
-    address controlledToken,
-    bytes calldata data
+    address controlledToken
   )
     external
     onlyControlledToken(controlledToken)
@@ -237,8 +242,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     _timelockBalances[operator] = _timelockBalances[operator].sub(amount);
     timelockTotalSupply = timelockTotalSupply.sub(amount);
 
-    prizeStrategy.afterTimelockDepositTo(operator, to, amount, controlledToken, data);
-
     emit TimelockDeposited(operator, to, controlledToken, amount);
   }
 
@@ -246,12 +249,12 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param to The address receiving the newly minted tokens
   /// @param amount The amount of assets to deposit
   /// @param controlledToken The address of the type of token the user is minting
-  /// @param data Call data to be passed to the Prize Strategy
+  /// @param referrer The referrer of the deposit
   function depositTo(
     address to,
     uint256 amount,
     address controlledToken,
-    bytes calldata data
+    address referrer
   )
     external
     onlyControlledToken(controlledToken)
@@ -265,7 +268,14 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     require(_token().transferFrom(operator, address(this), amount), "PrizePool/deposit-transfer-failed");
     _supply(amount);
 
-    prizeStrategy.afterDepositTo(to, amount, controlledToken, data);
+    comptroller.afterDepositTo(
+      to,
+      amount,
+      IERC20(controlledToken).balanceOf(to),
+      IERC20(controlledToken).totalSupply(),
+      controlledToken,
+      referrer
+    );
 
     emit Deposited(operator, to, controlledToken, amount);
   }
@@ -280,8 +290,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address from,
     uint256 amount,
     address controlledToken,
-    uint256 maximumExitFee,
-    bytes calldata data
+    uint256 maximumExitFee
   )
     external
     nonReentrant
@@ -296,9 +305,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 amountLessFee = amount.sub(exitFee);
     _redeem(amountLessFee);
     require(_token().transfer(from, amountLessFee), "PrizePool/instant-transfer-failed");
-    if (_hasPrizeStrategy()) {
-      prizeStrategy.afterWithdrawInstantlyFrom(_msgSender(), from, amount, controlledToken, exitFee, data);
-    }
+    
+    _afterWithdrawalFrom(from, amount, controlledToken);
+
     emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, exitFee);
 
     return exitFee;
@@ -322,8 +331,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   function withdrawWithTimelockFrom(
     address from,
     uint256 amount,
-    address controlledToken,
-    bytes calldata data
+    address controlledToken
   )
     external
     nonReentrant
@@ -337,9 +345,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
     _mintTimelock(from, amount, unlockTimestamp);
 
-    if (_hasPrizeStrategy()) {
-      prizeStrategy.afterWithdrawWithTimelockFrom(from, amount, controlledToken, data);
-    }
+    _afterWithdrawalFrom(from, amount, controlledToken);
 
     emit TimelockedWithdrawal(_msgSender(), from, controlledToken, amount, unlockTimestamp);
 
@@ -375,7 +381,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
       _accrueCredit(to, msg.sender, IERC20(msg.sender).balanceOf(to));
     }
     // minting and redeeming are handled separately
-    if (from != address(0) && to != address(0) && _hasPrizeStrategy()) {
+    if (_hasPrizeStrategy()) {
       prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
     }
   }
@@ -483,6 +489,25 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     return _sweepTimelockBalances(users);
   }
 
+  /// @notice Called by the prize pool after a withdrawal with timelock has been made.
+  /// @param from The user who withdrew
+  /// @param controlledToken The type of collateral that was withdrawn
+  function _afterWithdrawalFrom(
+    address from,
+    uint256 amount,
+    address controlledToken
+  )
+    internal
+  {
+    comptroller.afterWithdrawFrom(
+      from,
+      amount,
+      IERC20(controlledToken).balanceOf(from),
+      IERC20(controlledToken).totalSupply(),
+      controlledToken
+    );
+  }
+
   /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
   /// @param users An array of account addresses to sweep balances for
   /// @return The total amount of assets swept from the Prize Pool
@@ -524,14 +549,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
         delete _unlockTimestamps[users[i]];
         require(underlyingToken.transfer(users[i], balances[i]), "PrizePool/sweep-transfer-failed");
         emit TimelockedWithdrawalSwept(operator, users[i], balances[i]);
-      }
-    }
-
-    if (_hasPrizeStrategy()) {
-      for (i = 0; i < users.length; i++) {
-        if (balances[i] > 0) {
-          prizeStrategy.afterSweepTimelockedWithdrawal(operator, users[i], balances[i]);
-        }
       }
     }
 
