@@ -14,7 +14,7 @@
     "test": "buidler test",
     "compile": "buidler --show-stack-traces --max-memory 8192 compile",
     "start": "buidler node --port $LOCAL_BUIDLEREVM_PORT",
-    "coverage": "rm -rf build cache test-results.xml && buidler compile && buidler coverage --network coverage --temp build; rm -rf cache",
+    "coverage": "rm -rf build cache test-results.xml && buidler compile && buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network local",
     "migrate": "./scripts/cli.js",
     "session-local": "oz session --network local --from $LOCAL_ADMIN_ADDRESS --expires 3600 --timeout 600 --blockTimeout 50",
