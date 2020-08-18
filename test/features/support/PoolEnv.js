@@ -61,6 +61,18 @@ function PoolEnv() {
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
   }
 
+  this.setCurrentTime = async function (elapsed) {
+    let wallet = await this.wallet(0)
+    let prizeStrategy = await this.prizeStrategy(wallet)
+    let prizePool = await this.prizePool(wallet)
+    let startTime = await prizeStrategy.prizePeriodStartedAt()
+    let time = startTime.add(elapsed)
+    debug(`setCurrentTime(${elapsed}): startTime: ${startTime.toString()}, time: ${time.toString()}`)
+    await prizeStrategy.setCurrentTime(time, this.overrides)
+    await prizePool.setCurrentTime(time, this.overrides)
+    await this.env.comptroller.setCurrentTime(time, this.overrides)
+  }
+
   this.prizeStrategy = async function (wallet) {
     let prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategyHarness', this.env.prizeStrategy.address, wallet)
     this._prizeStrategy = prizeStrategy
@@ -166,18 +178,6 @@ function PoolEnv() {
     debug(`Bought sponsorship with timelocked tokens`)
   }
 
-  this.buyTicketsAtTime = async function ({ user, tickets, referrer, elapsed }) {
-    await this.atTime(elapsed, async () => {
-      await this.buyTickets({ user, tickets, referrer })
-    })
-  }
-
-  this.claimBalanceDripGovernanceTokensAtTime = async function ({ user, elapsed }) {
-    await this.atTime(elapsed, async () => {
-      await this.claimBalanceDripGovernanceTokens({ user })
-    })
-  }
-
   this.claimBalanceDripGovernanceTokens = async function ({ user }) {
     let wallet = await this.wallet(user)
     await this.env.comptroller.claimBalanceDrip(
@@ -194,12 +194,6 @@ function PoolEnv() {
       index,
       wallet._address
     )
-  }
-
-  this.claimVolumeDripAtTime = async function ({ user, elapsed, index }) {
-    await this.atTime(elapsed, async () => {
-      await this.claimVolumeDrip({ user, index })
-    })
   }
 
   this.balanceDripGovernanceTokenAtRate = async function ({ dripRatePerSecond }) {
@@ -219,22 +213,6 @@ function PoolEnv() {
       periodStartedAt.add(startTime),
       !!isReferral
     )
-  }
-
-  this.atTime = async function (elapsed, callback) {
-    let wallet = await this.wallet(0)
-    let prizeStrategy = await this.prizeStrategy(wallet)
-    let prizePool = await this.prizePool(wallet)
-    let startTime = await prizeStrategy.prizePeriodStartedAt()
-    let time = startTime.add(elapsed)
-    debug(`atTime(${elapsed}): startTime: ${startTime.toString()}, time: ${time.toString()}`)
-    await prizeStrategy.setCurrentTime(time, this.overrides)
-    await prizePool.setCurrentTime(time, this.overrides)
-    await this.env.comptroller.setCurrentTime(time, this.overrides)
-    await callback()
-    await this.env.comptroller.setCurrentTime('0', this.overrides)
-    await prizePool.setCurrentTime('0', this.overrides)
-    await prizeStrategy.setCurrentTime('0', this.overrides)
   }
 
   this.expectUserToHaveTickets = async function ({ user, tickets }) {
@@ -278,12 +256,6 @@ function PoolEnv() {
     let prizeStrategy = await this.prizeStrategy(wallet)
     let ticketInterest = await call(prizeStrategy, 'balanceOfCredit', wallet._address)
     expect(ticketInterest).to.equalish(toWei(credit), 300)
-  }
-
-  this.expectUserToHaveCreditAtTime = async function ({ user, credit, elapsed }) {
-    await this.atTime(elapsed, async () => {
-      await this.expectUserToHaveCredit({ user, credit })
-    })
   }
 
   this.expectUserToHaveTimelock = async function ({ user, timelock }) {
@@ -337,12 +309,6 @@ function PoolEnv() {
     await prizePool.withdrawInstantlyFrom(wallet._address, toWei(tickets), ticket.address, '0', toWei('1000'), [])
   }
 
-  this.withdrawInstantlyAtTime = async function ({ user, tickets, elapsed }) {
-    await this.atTime(elapsed, async () => {
-      await this.withdrawInstantly({ user, tickets })
-    })
-  }
-
   this.withdrawWithTimelock = async function ({user, tickets}) {
     let wallet = await this.wallet(user)
     let ticket = await this.ticket(wallet)
@@ -350,22 +316,10 @@ function PoolEnv() {
     await prizePool.withdrawWithTimelockFrom(wallet._address, toWei(tickets), ticket.address, [])
   }
 
-  this.withdrawWithTimelockAtTime = async function ({ user, tickets, elapsed }) {
-    await this.atTime(elapsed, async () => {
-      await this.withdrawWithTimelock({ user, tickets })
-    })
-  }
-
   this.sweepTimelockBalances = async function ({ user }) {
     let wallet = await this.wallet(user)
     let prizePool = await this.prizePool(wallet)
     await prizePool.sweepTimelockBalances([wallet._address])
-  }
-
-  this.sweepTimelockBalancesAtTime = async function ({ user, elapsed }) {
-    await this.atTime(elapsed, async () => {
-      await this.sweepTimelockBalances({ user })
-    })
   }
 
   this.balanceOfTickets = async function ({ user }) {
