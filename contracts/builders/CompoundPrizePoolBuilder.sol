@@ -104,7 +104,6 @@ contract CompoundPrizePoolBuilder {
 
     prizeStrategy.initialize(
       trustedForwarder,
-      comptroller,
       config.prizePeriodStart,
       config.prizePeriodSeconds,
       prizePool,

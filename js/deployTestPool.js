@@ -85,7 +85,6 @@ async function deployTestPool({
 
   await prizeStrategy.initialize(
     forwarder.address,
-    comptroller.address,
     prizePeriodStart,
     prizePeriodSeconds,
     compoundPrizePool.address,

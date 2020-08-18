@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@nomiclabs/buidler/console.sol";
 
 import "../comptroller/ComptrollerInterface.sol";
 import "../token/ControlledToken.sol";
@@ -22,6 +23,11 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
   /// @dev Event emitted when controlled token is added
   event ControlledTokenAdded(
+    address indexed token
+  );
+
+  /// @dev Set when the comptroller changes the type of reserve token
+  event ReserveFeeControlledTokenSet(
     address indexed token
   );
 
@@ -45,7 +51,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   event Awarded(
     address indexed winner,
     address indexed token,
-    uint256 amount
+    uint256 amount,
+    uint256 reserveFee
   );
 
   /// @dev Event emitted when external ERC20s are awarded to a winner
@@ -108,6 +115,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   }
 
   ComptrollerInterface public comptroller;
+
+  /// @dev Controlled token to serve as the reserve fee
+  address public reserveFeeControlledToken;
 
   /// @dev A linked list of all the controlled tokens
   MappedSinglyLinkedList.Mapping internal _tokens;
@@ -218,6 +228,12 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @return True if the token may be awarded, false otherwise
   function canAwardExternal(address _externalToken) external virtual view returns (bool) {
     return _canAwardExternal(_externalToken);
+  }
+
+  function setReserveFeeControlledToken(address controlledToken) external onlyControlledToken(controlledToken) onlyOwner {
+    reserveFeeControlledToken = controlledToken;
+
+    emit ReserveFeeControlledTokenSet(controlledToken);
   }
 
   /// @notice Deposits timelocked tokens for a user back into the Prize Pool as another asset.
@@ -403,9 +419,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   function awardBalance() public returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
     uint256 bal = _balance();
-
     if (bal > tokenTotalSupply) {
-      return bal.sub(tokenTotalSupply);
+      uint256 interest = bal.sub(tokenTotalSupply);
+      uint256 reserveFee = calculateReserveFee(interest);
+      return interest.sub(reserveFee);
     } else {
       return 0;
     }
@@ -431,11 +448,16 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     require(amount <= awardBalance(), "PrizePool/award-exceeds-avail");
 
     _mint(to, amount, controlledToken, address(0));
+    
+    uint256 reserveFee = calculateReserveFee(amount);
+    if (reserveFee > 0) {
+      _mint(address(comptroller), reserveFee, reserveFeeControlledToken, address(0));
+    }
 
     uint256 extraCredit = _calculateEarlyExitFee(controlledToken, amount);
     _accrueCredit(to, controlledToken, IERC20(controlledToken).balanceOf(to), extraCredit);
 
-    emit Awarded(to, controlledToken, amount);
+    emit Awarded(to, controlledToken, amount, reserveFee);
   }
 
   /// @notice Called by the Prize-Strategy to Award Secondary (external) Prize amounts to a specific account
@@ -491,6 +513,17 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     }
 
     emit AwardedExternalERC721(to, externalToken, tokenIds);
+  }
+
+  /// @notice Calculates the reserve portion of the given amount of funds.  If there is no reserve address, the portion will be zero.
+  /// @param amount The prize amount
+  /// @return The size of the reserve portion of the prize
+  function calculateReserveFee(uint256 amount) public view returns (uint256) {
+    uint256 reserveRateMantissa = comptroller.reserveRateMantissa();
+    if (reserveRateMantissa == 0 && reserveFeeControlledToken != address(0)) {
+      return 0;
+    }
+    return FixedPoint.multiplyUintByMantissa(amount, reserveRateMantissa);
   }
 
   /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
