@@ -79,7 +79,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   ) public initializer {
     require(address(_comptroller) != address(0), "PrizeStrategy/comptroller-not-zero");
     require(_prizePeriodSeconds > 0, "PrizeStrategy/prize-period-greater-than-zero");
-    require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-not-zero");
+    require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-zero");
     require(address(_ticket) != address(0), "PrizeStrategy/ticket-not-zero");
     require(address(_sponsorship) != address(0), "PrizeStrategy/sponsorship-not-zero");
     require(address(_rng) != address(0), "PrizeStrategy/rng-not-zero");
@@ -97,6 +97,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
     prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = _prizePeriodStart;
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
+    externalErc20s.initialize(_externalErc20s);
+    for (uint256 i = 0; i < _externalErc20s.length; i++) {
+      require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
+    }
 
     exitFeeMantissa = 0.1 ether;
     creditRateMantissa = exitFeeMantissa.div(prizePeriodSeconds);
@@ -494,12 +498,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param user The user to whom the tickets are minted
   /// @param amount The amount of interest to mint as tickets.
   function _awardTickets(address user, uint256 amount) internal {
-    uint256 userBalance = ticket.balanceOf(user);
-    _accrueCredit(user, userBalance);
+    _accrueCredit(user, ticket.balanceOf(user));
     uint256 creditEarned = _calculateEarlyExitFee(amount);
     creditBalances[user].balance = uint256(creditBalances[user].balance).add(creditEarned).toUint128();
     prizePool.award(user, amount, address(ticket));
-    sortitionSumTrees.set(TREE_KEY, userBalance.add(amount), bytes32(uint256(user)));
   }
 
   /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.
@@ -707,14 +709,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   /// @notice Starts the award process by starting random number request.  The prize period must have ended.
-  /// @dev The RNG-Request-Fee is expected to be held within this contract before calling this function
   function startAward() external requireCanStartAward {
-    (address feeToken, uint256 requestFee) = rng.getRequestFee();
-    if (feeToken != address(0) && requestFee > 0) {
-      IERC20(feeToken).approve(address(rng), requestFee);
-    }
-
-    (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber();
+    (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber(address(0), 0);
     rngRequest.id = requestId;
     rngRequest.lockBlock = lockBlock;
 
@@ -812,9 +808,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Sets the RNG service that the Prize Strategy is connected to
   /// @param rngService The address of the new RNG service interface
   function setRngService(RNGInterface rngService) external onlyOwner {
-    require(!isRngRequested(), "PrizeStrategy/rng-in-flight");
+    require(!isRngRequested(), "PrizeStrategy/rng-requested");
 
     rng = rngService;
+
     emit RngServiceUpdated(address(rngService));
   }
 

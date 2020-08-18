@@ -90,23 +90,25 @@ describe('VolumeDripExposed', function() {
 
     it('should increment a users balance and set their current period', async () => {
       await drip.completePeriod(30) // complete the first period
-      await drip.mint(wallet._address, toWei('55'), 31)
+      await drip.mint(wallet._address, toWei('55'), 20)
       let deposit = await drip.getDeposit(wallet._address)
       expect(deposit.balance).to.equal(toWei('55'))
       expect(deposit.period).to.equal(1)
     })
 
-    it('should revert if the period is over', async () => {
-      await expect(drip.mint(wallet._address, toWei('55'), 30)).to.be.revertedWith('VolumeDrip/period-over')
+    it('should complete the period', async () => {
+      await drip.mint(wallet._address, toWei('55'), 30)
+      let deposit = await drip.getDeposit(wallet._address)
+      expect(deposit.balance).to.equal(toWei('55'))
+      expect(deposit.period).to.equal(1)
+      expect(deposit.accrued).to.equal('0')
     })
 
     it('should accrue their previous amounts', async () => {
-      await drip.completePeriod(30)
       // period 0 closes with 0, and period 1 is opened with 55
-      await drip.mint(wallet._address, toWei('55'), 31)
+      await drip.mint(wallet._address, toWei('55'), 30)
       // period 1 closes with 55, and period 2 opened with 17
-      await drip.completePeriod(40)
-      await drip.mint(wallet._address, toWei('17'), 41)
+      await drip.mint(wallet._address, toWei('17'), 40)
 
       let deposit = await drip.getDeposit(wallet._address)
       // belongs in period 2
@@ -119,8 +121,7 @@ describe('VolumeDripExposed', function() {
       expect(period.totalSupply).to.equal(toWei('17'))
 
       // now mint for period 3
-      await drip.completePeriod(50)
-      await drip.mint(wallet._address, toWei('3'), 51)
+      await drip.mint(wallet._address, toWei('3'), 50)
 
       deposit = await drip.getDeposit(wallet._address)
       // belongs in period 2
@@ -133,14 +134,13 @@ describe('VolumeDripExposed', function() {
 
   describe('burnDrip()', () => {
     it('should do nothing if a user burns nothing', async () => {
-      await drip.burnDrip(wallet._address)
+      await drip.burnDrip(wallet._address, 0)
     })
 
     it('should consume a users available accrued balance', async () => {
       // user now has period 1
-      await drip.mint(wallet._address, toWei('55'), 29)
-      await drip.completePeriod(30)
-      await expect(drip.burnDrip(wallet._address))
+      await drip.mint(wallet._address, toWei('55'), 30)
+      await expect(drip.burnDrip(wallet._address, 40))
         .to.emit(drip, 'DripTokensBurned')
         .withArgs(wallet._address, dripAmount)
       let deposit = await drip.getDeposit(wallet._address)
@@ -150,14 +150,12 @@ describe('VolumeDripExposed', function() {
 
     it('should ignore balances that havent accrued', async () => {
       // user now has period 1
-      await drip.mint(wallet._address, toWei('55'), 29)
+      await drip.mint(wallet._address, toWei('55'), 30)
       
-      await drip.completePeriod(30)
-
       // user now has period 2
-      await drip.mint(wallet._address, toWei('17'), 31)
+      await drip.mint(wallet._address, toWei('17'), 45)
 
-      await expect(drip.burnDrip(wallet._address))
+      await expect(drip.burnDrip(wallet._address, 46))
         .to.emit(drip, 'DripTokensBurned')
         .withArgs(wallet._address, dripAmount)
 
@@ -170,14 +168,13 @@ describe('VolumeDripExposed', function() {
   describe('balanceOf()', () => {
 
     it('should be zero if there is no deposit', async () => {
-      expect(await drip.balanceOf(wallet._address)).to.equal(toWei('0'))
+      expect(await call(drip, 'balanceOf', wallet._address, 70)).to.equal(toWei('0'))
     })
 
     it('should compute and return the correct balance', async () => {
       // user now has period 1
-      await drip.mint(wallet._address, toWei('55'), 29)
-      await drip.completePeriod(30)
-      expect(await drip.balanceOf(wallet._address)).to.equal(toWei('10'))
+      await drip.mint(wallet._address, toWei('55'), 30)
+      expect(await call(drip, 'balanceOf', wallet._address, 70)).to.equal(toWei('10'))
     })
 
   })
