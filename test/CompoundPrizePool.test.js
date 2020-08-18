@@ -289,7 +289,6 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.totalSupply.returns('0')
         await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
 
-        // excessive exit fee from prize-strategy
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
@@ -390,14 +389,12 @@ describe('CompoundPrizePool', function() {
         // expect ticket burns from both
         await ticket.mock.controllerBurnFrom.returns()
 
-        // withdraw for a user, and it's eligible at 10 seconds
         await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet._address, amount1, ticket.address, []).returns()
         await prizePool.withdrawWithTimelockFrom(wallet._address, amount1, ticket.address, [])
 
         // Second will unlock at 21
         await prizePool.setCurrentTime(11)
 
-        // withdraw for a user, and it's eligible at 20 seconds
         await prizeStrategy.mock.afterWithdrawWithTimelockFrom.withArgs(wallet2._address, amount2, ticket.address, []).returns()
         await prizePool.withdrawWithTimelockFrom(wallet2._address, amount2, ticket.address, [])
 
