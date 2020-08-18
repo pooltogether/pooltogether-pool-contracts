@@ -14,7 +14,7 @@
     "test": "buidler test",
     "compile": "buidler --show-stack-traces --max-memory 8192 compile",
     "start": "buidler node --port $LOCAL_BUIDLEREVM_PORT",
-    "coverage": "rm -rf build cache test-results.xml && buidler coverage --network coverage --temp build; rm -rf cache",
+    "coverage": "rm -rf build cache test-results.xml && buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network local",
     "deploy": "buidler deploy --write true --network",
     "etherscan-verify": "buidler etherscan-verify --solc-input --api-key $ETHERSCAN_API_KEY --network",

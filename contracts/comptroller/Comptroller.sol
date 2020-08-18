@@ -1,4 +1,5 @@
 pragma solidity ^0.6.4;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 
@@ -19,29 +20,28 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 reserveRateMantissa
   );
 
-  event BalanceDripAdded(
-    address indexed prizeStrategy,
+  event BalanceDripActivated(
+    address indexed operator,
     address indexed measure,
     address indexed dripToken,
     uint256 dripRatePerSecond
   );
 
-  event BalanceDripRemoved(
-    address indexed prizeStrategy,
+  event BalanceDripDeactivated(
+    address indexed operator,
     address indexed measure,
     address indexed dripToken
   );
 
   event BalanceDripRateSet(
-    address indexed prizeStrategy,
+    address indexed operator,
     address indexed measure,
     address indexed dripToken,
     uint256 dripRatePerSecond
   );
 
-  event BalanceDripClaimed(
-    address indexed prizeStrategy,
-    address indexed measure,
+  event DripTokenClaimed(
+    address indexed operator,
     address indexed dripToken,
     address user,
     uint256 amount
@@ -56,7 +56,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
 
   event VolumeDripActivated(
     uint256 indexed index,
-    address indexed prizeStrategy,
+    address indexed operator,
     address indexed measure,
     bool isReferral,
     uint256 activeIndex
@@ -96,11 +96,21 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
 
   event VolumeDripDeactivated(
     uint256 indexed index,
-    address indexed prizeStrategy,
+    address indexed operator,
     address indexed measure,
     bool isReferral,
     uint256 activeIndex
   );
+
+  struct UpdatePair {
+    address operator;
+    address measure;
+  }
+
+  struct DripTokenBalance {
+    address dripToken;
+    uint256 balance;
+  }
 
   function initialize(address owner) public initializer {
     __Ownable_init();
@@ -117,25 +127,25 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     emit ReserveRateMantissaSet(_reserveRateMantissa);
   }
 
-  function addBalanceDrip(address prizeStrategy, address measure, address dripToken, uint256 dripRatePerSecond) external onlyOwner {
-    balanceDrips[prizeStrategy].addDrip(measure, dripToken, dripRatePerSecond, _currentTime());
+  function activateBalanceDrip(address operator, address measure, address dripToken, uint256 dripRatePerSecond) external onlyOwner {
+    balanceDrips[operator].activateDrip(measure, dripToken, dripRatePerSecond, _currentTime().toUint32());
 
-    emit BalanceDripAdded(
-      prizeStrategy,
+    emit BalanceDripActivated(
+      operator,
       measure,
       dripToken,
       dripRatePerSecond
     );
   }
 
-  function removeBalanceDrip(address prizeStrategy, address measure, address prevDripToken, address dripToken) external onlyOwner {
-    balanceDrips[prizeStrategy].removeDrip(measure, prevDripToken, dripToken);
+  function deactivateBalanceDrip(address operator, address measure, address dripToken, address prevDripToken) external onlyOwner {
+    balanceDrips[operator].deactivateDrip(measure, dripToken, prevDripToken, _currentTime().toUint32());
 
-    emit BalanceDripRemoved(prizeStrategy, measure, dripToken);
+    emit BalanceDripDeactivated(operator, measure, dripToken);
   }
 
   function getBalanceDrip(
-    address prizeStrategy,
+    address operator,
     address measure,
     address dripToken
   )
@@ -147,60 +157,23 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
       uint32 timestamp
     )
   {
-    BalanceDrip.State storage balanceDrip = balanceDrips[prizeStrategy].getDrip(measure, dripToken);
+    BalanceDrip.State storage balanceDrip = balanceDrips[operator].getDrip(measure, dripToken);
     dripRatePerSecond = balanceDrip.dripRatePerSecond;
     exchangeRateMantissa = balanceDrip.exchangeRateMantissa;
     timestamp = balanceDrip.timestamp;
   }
 
-  function setBalanceDripRate(address prizeStrategy, address measure, address dripToken, uint256 dripRatePerSecond) external onlyOwner {
-    balanceDrips[prizeStrategy].setDripRate(measure, dripToken, dripRatePerSecond);
+  function setBalanceDripRate(address operator, address measure, address dripToken, uint256 dripRatePerSecond) external onlyOwner {
+    balanceDrips[operator].setDripRate(measure, dripToken, dripRatePerSecond, _currentTime().toUint32());
 
     emit BalanceDripRateSet(
-      prizeStrategy,
+      operator,
       measure,
       dripToken,
       dripRatePerSecond
     );
   }
 
-  function balanceOfBalanceDrip(
-    address prizeStrategy,
-    address measure,
-    address dripToken,
-    address user
-  )
-    external
-    returns (uint256)
-  {
-    balanceDrips[prizeStrategy].updateDrips(
-      measure,
-      user,
-      IERC20(measure).balanceOf(user), // we want the original balance
-      IERC20(measure).totalSupply(),
-      _currentTime()
-    );
-    return balanceDrips[prizeStrategy].balanceDrips[measure][dripToken].userStates[user].dripBalance;
-  }
-
-  function claimBalanceDrip(address prizeStrategy, address user, address measure, address dripToken) external {
-    balanceDrips[prizeStrategy].updateDrips(
-      measure,
-      user,
-      IERC20(measure).balanceOf(user), // we want the original balance
-      IERC20(measure).totalSupply(),
-      _currentTime()
-    );
-    uint256 amount = balanceDrips[prizeStrategy].claimDripTokens(user, measure, dripToken);
-
-    emit BalanceDripClaimed(
-      prizeStrategy,
-      user,
-      measure,
-      dripToken,
-      amount
-    );
-  }
 
 
 
@@ -213,11 +186,10 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
 
 
 
-
-
+/*
 
   function addVolumeDrip(
-    address prizeStrategy,
+    address operator,
     address measure,
     address dripToken,
     uint32 periodSeconds,
@@ -229,7 +201,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     onlyOwner
     returns (uint256 index)
   {
-    PrizeStrategyVolumeDripManager storage prizeStrategyVolumeDripManager = prizeStrategyVolumeDripManagers[prizeStrategy];
+    PrizeStrategyVolumeDripManager storage operatorVolumeDripManager = operatorVolumeDripManagers[operator];
 
     index = ++lastVolumeDripId;
     VolumeDrip.State storage drip = volumeDrips[index];
@@ -238,11 +210,11 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
 
     uint256 activeIndex;
     if (isReferral) {
-      activeIndex = prizeStrategyVolumeDripManager.activeMeasureReferralVolumeDripIndices[measure].length;
-      prizeStrategyVolumeDripManager.activeMeasureReferralVolumeDripIndices[measure].push(index);
+      activeIndex = operatorVolumeDripManager.activeMeasureReferralVolumeDripIndices[measure].length;
+      operatorVolumeDripManager.activeMeasureReferralVolumeDripIndices[measure].push(index);
     } else {
-      activeIndex = prizeStrategyVolumeDripManager.activeMeasureVolumeDripIndices[measure].length;
-      prizeStrategyVolumeDripManager.activeMeasureVolumeDripIndices[measure].push(index);
+      activeIndex = operatorVolumeDripManager.activeMeasureVolumeDripIndices[measure].length;
+      operatorVolumeDripManager.activeMeasureVolumeDripIndices[measure].push(index);
     }
 
     emit VolumeDripCreated(
@@ -254,7 +226,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
 
     emit VolumeDripActivated(
       index,
-      prizeStrategy,
+      operator,
       measure,
       isReferral,
       activeIndex
@@ -268,7 +240,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   }
 
   function deactivateVolumeDrip(
-    address prizeStrategy,
+    address operator,
     address measure,
     bool isReferral,
     uint256 index,
@@ -276,12 +248,12 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   )
     public
   {
-    PrizeStrategyVolumeDripManager storage prizeStrategyVolumeDripManager = prizeStrategyVolumeDripManagers[prizeStrategy];
-    require(prizeStrategyVolumeDripManager.activeMeasureVolumeDripIndices[measure][activeIndex] == index, "Comptroller/volume-drip-not-active");
-    prizeStrategyVolumeDripManager.activeMeasureVolumeDripIndices[measure].remove(activeIndex);
+    PrizeStrategyVolumeDripManager storage operatorVolumeDripManager = operatorVolumeDripManagers[operator];
+    require(operatorVolumeDripManager.activeMeasureVolumeDripIndices[measure][activeIndex] == index, "Comptroller/volume-drip-not-active");
+    operatorVolumeDripManager.activeMeasureVolumeDripIndices[measure].remove(activeIndex);
     emit VolumeDripDeactivated(
       index,
-      prizeStrategy,
+      operator,
       measure,
       isReferral,
       activeIndex
@@ -289,7 +261,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   }
 
   function findActiveMeasureVolumeDripIndex(
-    PrizeStrategyVolumeDripManager storage prizeStrategyVolumeDripManager,
+    PrizeStrategyVolumeDripManager storage operatorVolumeDripManager,
     address measure,
     uint256 index
   )
@@ -301,8 +273,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     )
   {
     // This for loop may blow up, so have a backup!
-    for (uint256 i = 0; i < prizeStrategyVolumeDripManager.activeMeasureVolumeDripIndices[measure].length; i++) {
-      if (prizeStrategyVolumeDripManager.activeMeasureVolumeDripIndices[measure][i] == index) {
+    for (uint256 i = 0; i < operatorVolumeDripManager.activeMeasureVolumeDripIndices[measure].length; i++) {
+      if (operatorVolumeDripManager.activeMeasureVolumeDripIndices[measure][i] == index) {
         activeMeasureVolumeDripIndex = i;
         found = true;
         break;
@@ -403,31 +375,19 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
       amount
     );
   }
+*/
 
+  function balanceOfDrip(address dripToken, address user) external view returns (uint256) {
+    return dripTokenBalances[dripToken][user];
+  }
 
-  // function removeDrip(
-  //   address measure,
-  //   uint256 index,
-  //   uint256 activeMeasureVolumeDripIndex
-  // )
-  //   internal
-  // {
-  //   require(self.activeMeasureVolumeDripIndices[measure][activeMeasureVolumeDripIndex] == index, "VolumeDripManager/index-mismatch");
-  //   self.activeMeasureVolumeDripIndices[measure].remove(activeMeasureVolumeDripIndex);
-  //   delete self.volumeDripTokens[index];
-  //   delete self.volumeDrips[index].periodSeconds;
-  //   delete self.volumeDrips[index].dripAmount;
-  //   delete self.volumeDrips[index];
-  // }
+  function claimDrip(address user, address dripToken, uint256 amount) external {
+    address sender = _msgSender();
+    dripTokenBalances[dripToken][user] = dripTokenBalances[dripToken][user].sub(amount);
+    require(IERC20(dripToken).transfer(user, amount), "Comptroller/claim-transfer-failed");
 
-
-
-
-
-
-
-
-
+    emit DripTokenClaimed(sender, user, dripToken, amount);
+  }
 
 
 
@@ -446,6 +406,38 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
 
 
   function updateBalanceDrips(
+    UpdatePair[] calldata pairs,
+    address user,
+    address[] calldata dripTokens
+  )
+    external
+    returns (DripTokenBalance[] memory)
+  {
+    uint256 i;
+    for (i = 0; i < pairs.length; i++) {
+      UpdatePair memory pair = pairs[i];
+      updateBalanceDrips(
+        balanceDrips[pair.operator],
+        pair.measure,
+        user,
+        IERC20(pair.measure).balanceOf(user),
+        IERC20(pair.measure).totalSupply(),
+        _currentTime()
+      );
+    }
+
+    DripTokenBalance[] memory balances = new DripTokenBalance[](dripTokens.length);
+    for (i = 0; i < dripTokens.length; i++) {
+      balances[i] = DripTokenBalance({
+        dripToken: dripTokens[i],
+        balance: dripTokenBalances[dripTokens[i]][user]
+      });
+    }
+
+    return balances;
+  }
+
+  function updateBalanceDrips(
     BalanceDripManager.State storage self,
     address measure,
     address user,
@@ -456,16 +448,18 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     address currentDripToken = self.activeBalanceDrips[measure].addressMap[MappedSinglyLinkedList.SENTINAL];
     while (currentDripToken != address(0) && currentDripToken != MappedSinglyLinkedList.SENTINAL) {
       BalanceDrip.State storage dripState = self.balanceDrips[measure][currentDripToken];
-      dripState.drip(
+      uint128 newTokens = dripState.drip(
         user,
         measureBalance,
         measureTotalSupply,
         currentTime
       );
+      if (newTokens > 0) {
+        dripTokenBalances[currentDripToken][user] = dripTokenBalances[currentDripToken][user].add(newTokens);
+      }
       currentDripToken = self.activeBalanceDrips[measure].addressMap[currentDripToken];
     }
   }
-
 
   function afterDepositTo(
     address to,
@@ -487,21 +481,23 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
       _currentTime()
     );
 
-    PrizeStrategyVolumeDripManager storage prizeStrategyVolumeDripManager = prizeStrategyVolumeDripManagers[msg.sender];
+/*
+    PrizeStrategyVolumeDripManager storage operatorVolumeDripManager = operatorVolumeDripManagers[msg.sender];
 
     depositVolumeDrip(
       to,
       amount,
-      prizeStrategyVolumeDripManager.activeMeasureVolumeDripIndices[controlledToken]
+      operatorVolumeDripManager.activeMeasureVolumeDripIndices[controlledToken]
     );
 
     if (referrer != address(0)) {
       depositVolumeDrip(
         referrer,
         amount,
-        prizeStrategyVolumeDripManager.activeMeasureReferralVolumeDripIndices[controlledToken]
+        operatorVolumeDripManager.activeMeasureReferralVolumeDripIndices[controlledToken]
       );
     }
+    */
   }
 
   function afterWithdrawFrom(
@@ -514,7 +510,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     external
     override
   {
-    balanceDrips[msg.sender].updateDrips(
+    updateBalanceDrips(
+      balanceDrips[msg.sender],
       controlledToken,
       from,
       balance.add(amount), // we want the original balance

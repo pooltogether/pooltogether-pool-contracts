@@ -19,4 +19,6 @@ contract ComptrollerStorage is OwnableUpgradeSafe {
 
   mapping(address => PrizeStrategyVolumeDripManager) internal prizeStrategyVolumeDripManagers;
   mapping(address => BalanceDripManager.State) internal balanceDrips;
+
+  mapping(address => mapping(address => uint256)) internal dripTokenBalances;
 }

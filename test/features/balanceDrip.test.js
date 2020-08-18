@@ -19,7 +19,7 @@ describe('Balance drip', () => {
     await env.buyTickets({ user: 1, tickets: '10' })
     await env.setCurrentTime(50)
     await env.withdrawInstantly({ user: 1, tickets: '10' })
-    await env.claimBalanceDripGovernanceTokens({ user: 1 })
+    await env.claimGovernanceDripTokens({ user: 1 })
     await env.expectUserToHaveTokens({ user: 1, tokens: '10' })
     await env.expectUserToHaveGovernanceTokens({ user: 1, tokens: '0.004' })
   })
