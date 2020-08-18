@@ -380,7 +380,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     if (to != address(0)) {
       _accrueCredit(to, msg.sender, IERC20(msg.sender).balanceOf(to));
     }
-    // minting and redeeming are handled separately
     if (_hasPrizeStrategy()) {
       prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
     }
