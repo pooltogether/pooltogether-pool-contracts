@@ -7,8 +7,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC182
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
-import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 
 import "./PrizeStrategyStorage.sol";
 import "./PrizeStrategyInterface.sol";
@@ -28,11 +26,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   using SafeMath for uint256;
   using SafeCast for uint256;
-  using SortitionSumTreeFactory for SortitionSumTreeFactory.SortitionSumTrees;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
-  bytes32 constant private TREE_KEY = keccak256("PoolTogether/Ticket");
-  uint256 constant private MAX_TREE_LEAVES = 5;
   uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
   event PrizePoolOpened(
@@ -76,7 +71,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     require(address(_sponsorship) != address(0), "PrizeStrategy/sponsorship-not-zero");
     require(address(_rng) != address(0), "PrizeStrategy/rng-not-zero");
     prizePool = _prizePool;
-    ticket = IERC20(_ticket);
+    ticket = TicketInterface(_ticket);
     rng = _rng;
     sponsorship = IERC20(_sponsorship);
     trustedForwarder = _trustedForwarder;
@@ -94,31 +89,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
     prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = _prizePeriodStart;
-    sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
 
     externalErc721s.initialize();
 
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
-  }
-
-  /// @notice Returns the user's chance of winning.
-  function chanceOf(address user) external view returns (uint256) {
-    return sortitionSumTrees.stakeOf(TREE_KEY, bytes32(uint256(user)));
-  }
-
-  /// @notice Selects a user using a random number.  The random number will be uniformly bounded to the ticket totalSupply.
-  /// @param randomNumber The random number to use to select a user.
-  /// @return The winner
-  function draw(uint256 randomNumber) public view returns (address) {
-    uint256 bound = ticket.totalSupply();
-    address selected;
-    if (bound == 0) {
-      selected = address(0);
-    } else {
-      uint256 token = UniformRandomNumber.uniform(randomNumber, bound);
-      selected = address(uint256(sortitionSumTrees.draw(TREE_KEY, token)));
-    }
-    return selected;
   }
 
   /// @notice Calculates and returns the currently accrued prize
@@ -223,8 +197,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param amount The amount of interest to mint as tickets.
   function _awardTickets(address user, uint256 amount) internal {
     prizePool.award(user, amount, address(ticket));
-    uint256 userBalance = ticket.balanceOf(user);
-    sortitionSumTrees.set(TREE_KEY, userBalance.add(amount), bytes32(uint256(user)));
   }
 
   /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.
@@ -288,12 +260,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function beforeTokenTransfer(address from, address to, uint256 amount, address controlledToken) external override onlyPrizePool {
     if (controlledToken == address(ticket)) {
       _requireNotLocked();
-
-      uint256 fromBalance = ticket.balanceOf(from).sub(amount);
-      sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));
-
-      uint256 toBalance = ticket.balanceOf(to).add(amount);
-      sortitionSumTrees.set(TREE_KEY, toBalance, bytes32(uint256(to)));
     }
   }
 
@@ -349,10 +315,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
     }
 
     comptroller.afterDepositTo(to, amount, balance, totalSupply, controlledToken, referrer);
-
-    if (controlledToken == address(ticket)) {
-      sortitionSumTrees.set(TREE_KEY, balance, bytes32(uint256(to)));
-    }
   }
 
   /// @notice Called by the prize pool after a withdrawal with timelock has been made.
@@ -371,9 +333,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   {
     uint256 balance = IERC20(controlledToken).balanceOf(from);
     comptroller.afterWithdrawFrom(from, amount, balance, IERC20(controlledToken).totalSupply(), controlledToken);
-    if (controlledToken == address(ticket)) {
-      sortitionSumTrees.set(TREE_KEY, balance, bytes32(uint256(from)));
-    }
   }
 
   /// @notice Called by the prize pool after a user withdraws collateral instantly
@@ -394,9 +353,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   {
     uint256 balance = IERC20(controlledToken).balanceOf(from);
     comptroller.afterWithdrawFrom(from, amount, balance, IERC20(controlledToken).totalSupply(), controlledToken);
-    if (controlledToken == address(ticket)) {
-      sortitionSumTrees.set(TREE_KEY, balance, bytes32(uint256(from)));
-    }
   }
 
   /// @notice Called by the prize pool after a timelocked withdrawal has been swept
@@ -446,7 +402,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
       _awardSponsorship(address(comptroller), reserveFee);
     }
 
-    address winner = draw(randomNumber);
+    address winner = ticket.draw(randomNumber);
     if (winner != address(0)) {
       _awardTickets(winner, prize);
       _awardAllExternalTokens(winner);

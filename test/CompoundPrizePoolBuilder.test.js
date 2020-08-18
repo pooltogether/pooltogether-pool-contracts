@@ -15,10 +15,10 @@ describe('CompoundPrizePoolBuilder', () => {
   let comptroller,
       trustedForwarder,
       prizeStrategyProxyFactory,
+      proxyFactory,
       compoundPrizePoolProxyFactory,
       controlledTokenProxyFactory,
       rngServiceMock,
-      proxyFactory,
       cToken
 
   beforeEach(async () => {
@@ -30,24 +30,26 @@ describe('CompoundPrizePoolBuilder', () => {
       wallet
     )
 
-    comptroller = (await deployments.get("Comptroller")).address
-    trustedForwarder = (await deployments.get("TrustedForwarder")).address
-    prizeStrategyProxyFactory = (await deployments.get("PrizeStrategyProxyFactory")).address
-    compoundPrizePoolProxyFactory = (await deployments.get("CompoundPrizePoolProxyFactory")).address
-    controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory")).address
-    rngServiceMock = (await deployments.get("RNGServiceMock")).address
-    proxyFactory = (await deployments.get("ProxyFactory")).address
-    cToken = (await deployments.get("cDai")).address
+    comptroller = (await deployments.get("Comptroller"))
+    trustedForwarder = (await deployments.get("TrustedForwarder"))
+    prizeStrategyProxyFactory = (await deployments.get("PrizeStrategyProxyFactory"))
+    compoundPrizePoolProxyFactory = (await deployments.get("CompoundPrizePoolProxyFactory"))
+    controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
+    ticketProxyFactory = (await deployments.get("TicketProxyFactory"))
+    proxyFactory = (await deployments.get("ProxyFactory"))
+    rngServiceMock = (await deployments.get("RNGServiceMock"))
+    cToken = (await deployments.get("cDai"))
   })
 
   describe('initialize()', () => {
     it('should setup all factories', async () => {
-      expect(await builder.comptroller()).to.equal(comptroller)
-      expect(await builder.prizeStrategyProxyFactory()).to.equal(prizeStrategyProxyFactory)
-      expect(await builder.trustedForwarder()).to.equal(trustedForwarder)
-      expect(await builder.compoundPrizePoolProxyFactory()).to.equal(compoundPrizePoolProxyFactory)
-      expect(await builder.controlledTokenProxyFactory()).to.equal(controlledTokenProxyFactory)
-      expect(await builder.proxyFactory()).to.equal(proxyFactory)
+      expect(await builder.comptroller()).to.equal(comptroller.address)
+      expect(await builder.prizeStrategyProxyFactory()).to.equal(prizeStrategyProxyFactory.address)
+      expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
+      expect(await builder.compoundPrizePoolProxyFactory()).to.equal(compoundPrizePoolProxyFactory.address)
+      expect(await builder.controlledTokenProxyFactory()).to.equal(controlledTokenProxyFactory.address)
+      expect(await builder.proxyFactory()).to.equal(proxyFactory.address)
+      expect(await builder.ticketProxyFactory()).to.equal(ticketProxyFactory.address)
     })
   })
 
@@ -56,8 +58,8 @@ describe('CompoundPrizePoolBuilder', () => {
       const proxyAdmin = (await deployments.get("ProxyAdmin")).address
       const config = {
         proxyAdmin,
-        cToken: cToken,
-        rngService: rngServiceMock,
+        cToken: cToken.address,
+        rngService: rngServiceMock.address,
         prizePeriodStart: 0,
         prizePeriodSeconds: 10,
         ticketName: "Ticket",
@@ -86,8 +88,8 @@ describe('CompoundPrizePoolBuilder', () => {
     it('should create a new prize strategy and pool', async () => {
       const config = {
         proxyAdmin: AddressZero,
-        cToken: cToken,
-        rngService: rngServiceMock,
+        cToken: cToken.address,
+        rngService: rngServiceMock.address,
         prizePeriodStart: 0,
         prizePeriodSeconds: 10,
         ticketName: "Ticket",
@@ -112,7 +114,7 @@ describe('CompoundPrizePoolBuilder', () => {
       expect(await prizePool.cToken()).to.equal(config.cToken)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(config.prizePeriodSeconds)
 
-      let ticket = await buidler.ethers.getContractAt('ControlledToken', await prizeStrategy.ticket(), wallet)
+      let ticket = await buidler.ethers.getContractAt('Ticket', await prizeStrategy.ticket(), wallet)
       expect(await ticket.name()).to.equal(config.ticketName)
       expect(await ticket.symbol()).to.equal(config.ticketSymbol)
 
