@@ -15,6 +15,7 @@ contract CompoundPrizePoolBuilder {
   struct Config {
     address proxyAdmin;
     CTokenInterface cToken;
+    RNGInterface rngService;
     uint256 prizePeriodStart;
     uint256 prizePeriodSeconds;
     string ticketName;
@@ -38,7 +39,6 @@ contract CompoundPrizePoolBuilder {
   CompoundPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
   PrizeStrategyProxyFactory public prizeStrategyProxyFactory;
-  RNGInterface public rng;
   OpenZeppelinProxyFactoryInterface public proxyFactory;
   address public trustedForwarder;
 
@@ -48,17 +48,14 @@ contract CompoundPrizePoolBuilder {
     address _trustedForwarder,
     CompoundPrizePoolProxyFactory _compoundPrizePoolProxyFactory,
     ControlledTokenProxyFactory _controlledTokenProxyFactory,
-    RNGInterface _rng,
     OpenZeppelinProxyFactoryInterface _proxyFactory
   ) public {
     require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
     require(address(_prizeStrategyProxyFactory) != address(0), "CompoundPrizePoolBuilder/prize-strategy-factory-not-zero");
     require(address(_compoundPrizePoolProxyFactory) != address(0), "CompoundPrizePoolBuilder/compound-prize-pool-builder-not-zero");
     require(address(_controlledTokenProxyFactory) != address(0), "CompoundPrizePoolBuilder/controlled-token-proxy-factory-not-zero");
-    require(address(_rng) != address(0), "CompoundPrizePoolBuilder/rng-not-zero");
     require(address(_proxyFactory) != address(0), "CompoundPrizePoolBuilder/proxy-factory-not-zero");
     proxyFactory = _proxyFactory;
-    rng = _rng;
     comptroller = _comptroller;
     prizeStrategyProxyFactory = _prizeStrategyProxyFactory;
     trustedForwarder = _trustedForwarder;
@@ -97,7 +94,7 @@ contract CompoundPrizePoolBuilder {
       prizePool,
       tokens[0],
       tokens[1],
-      rng,
+      config.rngService,
       config.externalERC20Awards
     );
 
