@@ -46,20 +46,14 @@ $ yarn start
 Now deploy the contracts:
 
 ```bash
-$ yarn migrate-local
-```
-
-Deploy a mock cToken contract:
-
-```bash
-$ yarn deploy-ctoken-local
+$ yarn deploy local
 ```
 
 Interact with the contracts on the command line using [oz-console](https://github.com/pooltogether/oz-console):
 
 ```bash
 $ yarn console-local
-local> contracts.SingleRandomWinnerPrizePoolBuilder.address
+local> contracts.CompoundPrizePoolBuilder.address
 ```
 
 To give test eth to an account, use the console:
