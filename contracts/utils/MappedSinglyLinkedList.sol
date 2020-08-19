@@ -93,9 +93,9 @@ library MappedSinglyLinkedList {
   function clearAll(Mapping storage self) internal {
     address currentAddress = self.addressMap[SENTINEL];
     while (currentAddress != address(0) && currentAddress != SENTINEL) {
-      address nextToken = self.addressMap[currentAddress];
+      address nextAddress = self.addressMap[currentAddress];
       delete self.addressMap[currentAddress];
-      currentAddress = nextToken;
+      currentAddress = nextAddress;
     }
     self.addressMap[SENTINEL] = SENTINEL;
     self.count = 0;
