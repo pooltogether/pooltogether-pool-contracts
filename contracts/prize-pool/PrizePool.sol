@@ -279,6 +279,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     _mint(to, amount, controlledToken, referrer);
 
     require(_token().transferFrom(operator, address(this), amount), "PrizePool/deposit-transfer-failed");
+    
     _supply(amount);
 
     emit Deposited(operator, to, controlledToken, amount);

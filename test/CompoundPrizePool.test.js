@@ -253,6 +253,7 @@ describe('CompoundPrizePool', function() {
           .returns(true)
 
         await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
+        await prizeStrategy.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         // max exit fee is 10, well above
         await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('10')))
@@ -662,28 +663,26 @@ describe('CompoundPrizePool', function() {
       debug('deploying CompoundPrizePoolHarness...')
       shutdownPrizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
 
-      debug('deploying ControlledToken...')
-      ticket2 = await deployMockContract(wallet, ControlledToken.abi, overrides)
-      await ticket2.mock.controller.returns(shutdownPrizePool.address)
+      await ticket.mock.controller.returns(shutdownPrizePool.address)
 
       debug('initializing PrizePool...')
       await shutdownPrizePool.initializeAll(
         FORWARDER,
-        wallet._address,    // Prize Strategy
+        prizeStrategy.address,    // Prize Strategy
         comptroller.address,
-        [ticket2.address],
+        [ticket.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
         cToken.address
       )
 
-      debug('detaching PrizeStrategy from PrizePool...')
+      debug('shutting down pool...')
       await shutdownPrizePool.emergencyShutdown();
     })
 
     describe('depositTo()', () => {
       it('should NOT mint tokens to the user', async () => {
-        await expect(shutdownPrizePool.depositTo(wallet2._address, toWei('1'), ticket2.address, AddressZero))
+        await expect(shutdownPrizePool.depositTo(wallet2._address, toWei('1'), ticket.address, AddressZero))
           .to.be.revertedWith('PrizePool/shutdown')
       })
     })
@@ -694,17 +693,17 @@ describe('CompoundPrizePool', function() {
 
         // updateAwardBalance
         await cToken.mock.balanceOfUnderlying.returns('0')
-        await ticket2.mock.totalSupply.returns('0')
-        await ticket2.mock.balanceOf.withArgs(wallet._address).returns(amount)
+        await ticket.mock.totalSupply.returns('0')
+        await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
 
-        await ticket2.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
+        await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('11')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
-        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket2.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
-        await expect(shutdownPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, toWei('1')))
+        await expect(shutdownPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('1')))
           .to.emit(shutdownPrizePool, 'InstantWithdrawal')
-          .withArgs(wallet._address, wallet._address, ticket2.address, amount, toWei('0'))
+          .withArgs(wallet._address, wallet._address, ticket.address, amount, toWei('0'))
       })
     })
 
@@ -714,21 +713,21 @@ describe('CompoundPrizePool', function() {
 
         // updateAwardBalance
         await cToken.mock.balanceOfUnderlying.returns('0')
-        await ticket2.mock.totalSupply.returns(amount)
-        await ticket2.mock.balanceOf.withArgs(wallet._address).returns(amount)
+        await ticket.mock.totalSupply.returns(amount)
+        await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
 
         // force current time
         await shutdownPrizePool.setCurrentTime('1')
 
         // expect a ticket burn
-        await ticket2.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
+        await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(amount).returns('0')
 
         // expect comptroller signal
-        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket2.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
         // full-amount should be tansferred
         await erc20token.mock.transfer.withArgs(wallet._address, amount).returns(true)
-        await shutdownPrizePool.withdrawWithTimelockFrom(wallet._address, amount, ticket2.address)
+        await shutdownPrizePool.withdrawWithTimelockFrom(wallet._address, amount, ticket.address)
 
         expect(await shutdownPrizePool.timelockBalanceOf(wallet._address)).to.equal(toWei('0'))
         expect(await shutdownPrizePool.timelockBalanceAvailableAt(wallet._address)).to.equal('0')
