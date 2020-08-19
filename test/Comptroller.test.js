@@ -11,6 +11,8 @@ const toWei = ethers.utils.parseEther
 
 const overrides = { gasLimit: 20000000 }
 
+const debug = require('debug')('ptv3:Comptroller.test')
+
 const SENTINAL = '0x0000000000000000000000000000000000000001'
 
 async function getLastEvent(contract, tx) {
@@ -235,10 +237,11 @@ describe('Comptroller', () => {
       await measure.mock.totalSupply.returns(toWei('10'))
 
       // first do a pre-flight to get balances
-      let balances = await call(comptroller, 'updateBalanceDrips', 
-        [{ operator: prizeStrategyAddress, measure: measure.address }],
+      let balances = await call(comptroller, 'updateDrips', 
+        [{ source: prizeStrategyAddress, measure: measure.address }],
         wallet._address, 
-        [dripToken.address])
+        [dripToken.address]
+      )
 
       expect(balances).to.deep.equal([[
         dripToken.address,
@@ -246,8 +249,8 @@ describe('Comptroller', () => {
       ]])
 
       // now run it
-      await comptroller.updateBalanceDrips(
-        [{ operator: prizeStrategyAddress, measure: measure.address }],
+      await comptroller.updateDrips(
+        [{ source: prizeStrategyAddress, measure: measure.address }],
         wallet._address, 
         []
       )

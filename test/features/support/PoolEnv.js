@@ -185,6 +185,10 @@ function PoolEnv() {
   this.claimGovernanceDripTokens = async function ({ user }) {
     let wallet = await this.wallet(user)
     let comptroller = await this.comptroller(wallet)
+    await comptroller.updateDrips([{
+      source: this.env.prizeStrategy.address,
+      measure: this.env.ticket.address
+    }], wallet._address, [])
     let balance = await comptroller.balanceOfDrip(this.env.governanceToken.address, wallet._address)
     await comptroller.claimDrip(
       wallet._address,
@@ -193,30 +197,26 @@ function PoolEnv() {
     )
   }
 
-  this.claimVolumeDrip = async function ({ index, user }) {
-    let wallet = await this.wallet(user)
-    await this.env.comptroller.claimVolumeDrip(
-      index,
-      wallet._address
-    )
-  }
-
   this.balanceDripGovernanceTokenAtRate = async function ({ dripRatePerSecond }) {
     await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
-    await this.env.comptroller.activateBalanceDrip(this.env.prizeStrategy.address, this.env.ticket.address, this.env.governanceToken.address, dripRatePerSecond)
-  }
-
-  this.volumeDripGovernanceToken = async function ({ dripAmount, periodSeconds, startTime, isReferral }) {
-    let periodStartedAt = await this.env.prizeStrategy.prizePeriodStartedAt()
-    await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
-    await this.env.comptroller.addVolumeDrip(
+    await this.env.comptroller.activateBalanceDrip(
       this.env.prizeStrategy.address,
       this.env.ticket.address,
       this.env.governanceToken.address,
+      dripRatePerSecond
+    )
+  }
+
+  this.volumeDripGovernanceToken = async function ({ dripAmount, periodSeconds, endTime, isReferral }) {
+    await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
+    await this.env.comptroller.activateVolumeDrip(
+      this.env.prizeStrategy.address,
+      this.env.ticket.address,
+      this.env.governanceToken.address,
+      !!isReferral,
       periodSeconds,
       toWei(dripAmount),
-      periodStartedAt.add(startTime),
-      !!isReferral
+      endTime
     )
   }
 
