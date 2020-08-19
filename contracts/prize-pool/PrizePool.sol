@@ -100,8 +100,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint128 creditRateMantissa
   );
 
-  /// @dev Event emitted when the prize strategy is detached from the Prize Pool.
-  event PrizeStrategyDetached();
+  event PrizeStrategySet(address indexed prizeStrategy);
+
+  /// @dev Event emitted when the prize pool enters emergency shutdown mode
+  event EmergencyShutdown();
 
   struct CreditRate {
     uint128 creditLimitMantissa;
@@ -247,10 +249,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   )
     external
     onlyControlledToken(controlledToken)
+    notShutdown
     nonReentrant
   {
-    require(_hasPrizeStrategy(), "PrizePool/prize-strategy-detached");
-
     address operator = _msgSender();
     _mint(to, amount, controlledToken, address(0));
     _timelockBalances[operator] = _timelockBalances[operator].sub(amount);
@@ -272,10 +273,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   )
     external
     onlyControlledToken(controlledToken)
+    notShutdown
     nonReentrant
   {
-    require(_hasPrizeStrategy(), "PrizePool/prize-strategy-detached");
-
     address operator = _msgSender();
     
     _mint(to, amount, controlledToken, referrer);
@@ -373,9 +373,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   }
 
   function _beforeTokenMint(address to, uint256 amount, address controlledToken, address referrer) internal {
-    if (_hasPrizeStrategy()) {
-      prizeStrategy.beforeTokenMint(to, amount, controlledToken, referrer);
-    }
+    prizeStrategy.beforeTokenMint(to, amount, controlledToken, referrer);
     if (address(comptroller) != address(0)) {
       comptroller.beforeTokenMint(
         to,
@@ -399,9 +397,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     }
     // if we aren't minting
     if (from != address(0)) {
-      if (_hasPrizeStrategy()) {
-        prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
-      }
+      prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
       if (address(comptroller) != address(0)) {
         comptroller.beforeTokenTransfer(
           from,
@@ -519,6 +515,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param amount The prize amount
   /// @return The size of the reserve portion of the prize
   function calculateReserveFee(uint256 amount) public view returns (uint256) {
+    if (address(comptroller) == address(0)) {
+      return 0;
+    }
     uint256 reserveRateMantissa = comptroller.reserveRateMantissa();
     if (reserveRateMantissa == 0 && reserveFeeControlledToken != address(0)) {
       return 0;
@@ -805,17 +804,25 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     emit ControlledTokenAdded(_controlledToken);
   }
 
+  function setPrizeStrategy(address _prizeStrategy) external onlyOwner {
+    require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-zero");
+    prizeStrategy = PrizePoolTokenListenerInterface(_prizeStrategy);
+
+    emit PrizeStrategySet(_prizeStrategy);
+  }
+
   /// @notice Emergency shutdown of the Prize Pool by detaching the Prize Strategy
   /// @dev Called by the PrizeStrategy contract to issue an Emergency Shutdown of a corrupted Prize Strategy
-  function detachPrizeStrategy() external onlyOwner {
-    delete prizeStrategy;
-    emit PrizeStrategyDetached();
+  function emergencyShutdown() external onlyOwner {
+    delete comptroller;
+
+    emit EmergencyShutdown();
   }
 
   /// @notice Check if the Prize Pool has an active Prize Strategy
   /// @dev When the prize strategy is detached deposits are disabled, and only withdrawals are permitted
-  function _hasPrizeStrategy() internal view returns (bool) {
-    return (address(prizeStrategy) != address(0x0));
+  function isShutdown() public view returns (bool) {
+    return address(comptroller) != address(0);
   }
 
   /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
@@ -885,4 +892,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     require(msg.sender == address(prizeStrategy), "PrizePool/only-prizeStrategy");
     _;
   }
+
+  modifier notShutdown() {
+    require(address(comptroller) != address(0), "PrizePool/shutdown");
+    _;
+  }  
 }
