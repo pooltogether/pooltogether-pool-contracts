@@ -5,14 +5,19 @@ import "../drip/BalanceDrip.sol";
 contract BalanceDripExposed {
   using BalanceDrip for BalanceDrip.State;
 
+  event Dripped(
+    address indexed user,
+    uint256 newTokens
+  );
+
   BalanceDrip.State internal dripState;
 
-  function initialize(
+  function setDripRate(
+    uint256 measureTotalSupply,
     uint256 dripRatePerSecond,
-    uint256 currentTime
+    uint32 currentTime
   ) external {
-    dripState.initialize(currentTime);
-    dripState.dripRatePerSecond = dripRatePerSecond;
+    dripState.setDripRate(measureTotalSupply, dripRatePerSecond, currentTime);
   }
 
   function drip(
@@ -20,24 +25,42 @@ contract BalanceDripExposed {
     uint256 userMeasureBalance,
     uint256 measureTotalSupply,
     uint256 currentTime
-  ) external {
-    dripState.drip(
+  ) external returns (uint256) {
+    uint256 newTokens = dripState.drip(
       user,
       userMeasureBalance,
       measureTotalSupply,
       currentTime
     );
+
+    emit Dripped(user, newTokens);
+
+    return newTokens;
   }
 
-  function burnDrip(
+  function dripTwice(
     address user,
-    uint256 amount
-  ) external {
-    dripState.burnDrip(user, amount);
-  }
+    uint256 userMeasureBalance,
+    uint256 measureTotalSupply,
+    uint256 currentTime
+  ) external returns (uint256) {
+    uint256 newTokens = dripState.drip(
+      user,
+      userMeasureBalance,
+      measureTotalSupply,
+      currentTime
+    );
 
-  function balanceOf(address user) external view returns (uint256) {
-    return dripState.userStates[user].dripBalance;
+    newTokens = newTokens + dripState.drip(
+      user,
+      userMeasureBalance,
+      measureTotalSupply,
+      currentTime
+    );
+
+    emit Dripped(user, newTokens);
+
+    return newTokens;
   }
 
   function exchangeRateMantissa() external view returns (uint256) {
