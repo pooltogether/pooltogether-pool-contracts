@@ -1,6 +1,5 @@
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
@@ -11,7 +10,6 @@ library BalanceDrip {
 
   struct UserState {
     uint128 lastExchangeRateMantissa;
-    uint128 dripBalance;
   }
 
   struct State {
@@ -21,12 +19,34 @@ library BalanceDrip {
     mapping(address => UserState) userStates;
   }
 
-  function initialize(State storage self, uint256 timestamp) internal {
-    self.exchangeRateMantissa = FixedPoint.SCALE.toUint128();
-    self.timestamp = timestamp.toUint32();
+  function drip(
+    State storage self,
+    address user,
+    uint256 userMeasureBalance,
+    uint256 measureTotalSupply,
+    uint256 timestamp
+  ) internal returns (uint128) {
+    _updateExchangeRate(self, measureTotalSupply, timestamp);
+    return _dripUser(
+      self,
+      user,
+      userMeasureBalance
+    );
   }
 
-  function updateExchangeRate(
+  function setDripRate(
+    State storage self,
+    uint256 measureTotalSupply,
+    uint256 dripRatePerSecond,
+    uint32 currentTime
+  )
+    internal
+  {
+    _updateExchangeRate(self, measureTotalSupply, currentTime);
+    self.dripRatePerSecond = dripRatePerSecond;
+  }
+
+  function _updateExchangeRate(
     State storage self,
     uint256 measureTotalSupply,
     uint256 timestamp
@@ -36,33 +56,22 @@ library BalanceDrip {
       return;
     }
 
-    uint256 newSeconds = timestamp.sub(self.timestamp);
+    uint256 lastTime = self.timestamp == 0 ? timestamp : self.timestamp;
+    uint256 newSeconds = timestamp.sub(lastTime);
+
+    uint128 exchangeRateMantissa = self.exchangeRateMantissa == 0 ? FixedPoint.SCALE.toUint128() : self.exchangeRateMantissa;
 
     if (newSeconds > 0 && self.dripRatePerSecond > 0) {
       uint256 newTokens = newSeconds.mul(self.dripRatePerSecond);
       uint256 indexDeltaMantissa = measureTotalSupply > 0 ? FixedPoint.calculateMantissa(newTokens, measureTotalSupply) : 0;
-      self.exchangeRateMantissa = uint256(self.exchangeRateMantissa).add(indexDeltaMantissa).toUint128();
+      exchangeRateMantissa = uint256(exchangeRateMantissa).add(indexDeltaMantissa).toUint128();
     }
 
+    self.exchangeRateMantissa = exchangeRateMantissa;
     self.timestamp = timestamp.toUint32();
   }
 
-  function drip(
-    State storage self,
-    address user,
-    uint256 userMeasureBalance,
-    uint256 measureTotalSupply,
-    uint256 timestamp
-  ) internal returns (uint128) {
-    updateExchangeRate(self, measureTotalSupply, timestamp);
-    return dripUser(
-      self,
-      user,
-      userMeasureBalance
-    );
-  }
-
-  function dripUser(
+  function _dripUser(
     State storage self,
     address user,
     uint256 userMeasureBalance
@@ -75,22 +84,12 @@ library BalanceDrip {
     }
 
     uint256 deltaExchangeRateMantissa = uint256(self.exchangeRateMantissa).sub(lastExchangeRateMantissa);
-    uint256 newTokens = FixedPoint.multiplyUintByMantissa(userMeasureBalance, deltaExchangeRateMantissa);
-    uint128 newDripBalance = uint256(userState.dripBalance).add(newTokens).toUint128();
+    uint128 newTokens = FixedPoint.multiplyUintByMantissa(userMeasureBalance, deltaExchangeRateMantissa).toUint128();
+
     self.userStates[user] = UserState({
-      lastExchangeRateMantissa: self.exchangeRateMantissa,
-      dripBalance: newDripBalance
+      lastExchangeRateMantissa: self.exchangeRateMantissa
     });
 
-    return newDripBalance;
-  }
-
-  function burnDrip(
-    State storage self,
-    address user,
-    uint256 amount
-  ) internal {
-    UserState storage userState = self.userStates[user];
-    userState.dripBalance = uint256(userState.dripBalance).sub(amount).toUint128();
+    return newTokens;
   }
 }
