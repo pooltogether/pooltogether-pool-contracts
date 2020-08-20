@@ -129,7 +129,7 @@ describe('BalanceDripExposed', function() {
       await expect(
         dripExposed.drip(
           wallet2._address,
-          toWei('40'), // user has 100 tokens
+          toWei('40'), // user has 40 tokens
           toWei('100'), // total supply of tokens
           2 // current timestamp
         )

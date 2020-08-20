@@ -44,9 +44,6 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
   }
 
   function _currentTime() internal override view returns (uint256) {
-    if (currentTime == 0) {
-      return block.timestamp;
-    }
     return currentTime;
   }
 

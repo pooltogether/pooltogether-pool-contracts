@@ -108,11 +108,11 @@ library VolumeDrip {
     return self.periods[self.periodCount];
   }
 
-  function _isPeriodOver(State storage self, uint256 currentTime) internal view returns (bool) {
+  function _isPeriodOver(State storage self, uint256 currentTime) private view returns (bool) {
     return currentTime >= self.periods[self.periodCount].endTime;
   }
 
-  function _completePeriod(State storage self, uint256 currentTime) internal onlyPeriodOver(self, currentTime) {
+  function _completePeriod(State storage self, uint256 currentTime) private onlyPeriodOver(self, currentTime) {
     uint256 lastEndTime = self.periods[self.periodCount].endTime;
     uint256 numberOfPeriods = currentTime.sub(lastEndTime).div(self.periodSeconds).add(1);
     uint256 endTime = lastEndTime.add(numberOfPeriods.mul(self.periodSeconds));
@@ -129,7 +129,7 @@ library VolumeDrip {
     uint16 depositPeriod,
     uint128 balance
   )
-    internal view
+    private view
     returns (uint256)
   {
     uint256 accrued;
