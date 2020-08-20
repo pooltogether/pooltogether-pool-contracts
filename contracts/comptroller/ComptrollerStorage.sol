@@ -8,9 +8,9 @@ import "../drip/VolumeDrip.sol";
 contract ComptrollerStorage is OwnableUpgradeSafe {
   uint256 internal _reserveRateMantissa;
 
-  uint256 lastVolumeDripId;
-  mapping(uint256 => VolumeDrip.State) volumeDrips;
-  mapping(uint256 => address) volumeDripTokens;
+  uint256 internal lastVolumeDripId;
+  mapping(uint256 => VolumeDrip.State) internal volumeDrips;
+  mapping(uint256 => address) internal volumeDripTokens;
 
   struct PrizeStrategyVolumeDripManager {
     mapping(address => uint256[]) activeMeasureVolumeDripIndices;

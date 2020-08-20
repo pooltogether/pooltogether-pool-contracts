@@ -30,7 +30,7 @@ describe('BalanceDripExposed', function() {
     it('should do nothing when run twice', async () => {
       await dripExposed.drip(
         wallet._address,
-        toWei('0'), // user has 100 tokens
+        toWei('0'), // user has 0 tokens
         toWei('0'), // total supply of tokens
         1 // current timestamp
       )

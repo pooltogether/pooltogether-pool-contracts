@@ -112,9 +112,9 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 balance;
   }
 
-  function initialize(address owner) public initializer {
+  function initialize(address _owner) public initializer {
     __Ownable_init();
-    transferOwnership(owner);
+    transferOwnership(_owner);
   }
 
   function reserveRateMantissa() external view override returns (uint256) {
@@ -416,7 +416,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 i;
     for (i = 0; i < pairs.length; i++) {
       UpdatePair memory pair = pairs[i];
-      updateBalanceDrips(
+      _updateBalanceDrips(
         balanceDrips[pair.operator],
         pair.measure,
         user,
@@ -437,7 +437,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     return balances;
   }
 
-  function updateBalanceDrips(
+  function _updateBalanceDrips(
     BalanceDripManager.State storage self,
     address measure,
     address user,
@@ -467,12 +467,12 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 balance,
     uint256 totalSupply,
     address controlledToken,
-    address referrer
+    address
   )
     external
     override
   {
-    updateBalanceDrips(
+    _updateBalanceDrips(
       balanceDrips[msg.sender],
       controlledToken,
       to,
@@ -510,7 +510,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     external
     override
   {
-    updateBalanceDrips(
+    _updateBalanceDrips(
       balanceDrips[msg.sender],
       controlledToken,
       from,
