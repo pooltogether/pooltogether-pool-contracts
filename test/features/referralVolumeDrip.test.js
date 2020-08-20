@@ -3,7 +3,7 @@ const ethers = require('ethers')
 
 const toWei = (val) => ethers.utils.parseEther('' + val)
 
-describe('Referral volume drip', () => {
+xdescribe('Referral volume drip', () => {
 
   let env
 

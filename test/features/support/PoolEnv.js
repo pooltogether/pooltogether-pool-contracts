@@ -93,6 +93,10 @@ function PoolEnv() {
     return this.env.governanceToken.connect(wallet)
   }
 
+  this.comptroller = async function (wallet) {
+    return this.env.comptroller.connect(wallet)
+  }
+
   this.ticket = async function (wallet) {
     let prizeStrategy = await this.prizeStrategy(wallet)
     let ticketAddress = await prizeStrategy.ticket()
@@ -178,13 +182,14 @@ function PoolEnv() {
     debug(`Bought sponsorship with timelocked tokens`)
   }
 
-  this.claimBalanceDripGovernanceTokens = async function ({ user }) {
+  this.claimGovernanceDripTokens = async function ({ user }) {
     let wallet = await this.wallet(user)
-    await this.env.comptroller.claimBalanceDrip(
-      this.env.prizeStrategy.address,
+    let comptroller = await this.comptroller(wallet)
+    let balance = await comptroller.balanceOfDrip(this.env.governanceToken.address, wallet._address)
+    await comptroller.claimDrip(
       wallet._address,
-      this.env.ticket.address,
-      this.env.governanceToken.address
+      this.env.governanceToken.address,
+      balance
     )
   }
 
@@ -198,7 +203,7 @@ function PoolEnv() {
 
   this.balanceDripGovernanceTokenAtRate = async function ({ dripRatePerSecond }) {
     await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
-    await this.env.comptroller.addBalanceDrip(this.env.prizeStrategy.address, this.env.ticket.address, this.env.governanceToken.address, dripRatePerSecond)
+    await this.env.comptroller.activateBalanceDrip(this.env.prizeStrategy.address, this.env.ticket.address, this.env.governanceToken.address, dripRatePerSecond)
   }
 
   this.volumeDripGovernanceToken = async function ({ dripAmount, periodSeconds, startTime, isReferral }) {

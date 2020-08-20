@@ -7,30 +7,20 @@ contract BalanceDripManagerExposed {
 
   BalanceDripManager.State dripManager;
 
-  function updateDrips(
-    address measure,
-    address user,
-    uint256 measureBalance,
-    uint256 measureTotalSupply,
-    uint256 currentTime
-  ) external {
-    dripManager.updateDrips(measure, user, measureBalance, measureTotalSupply, currentTime);
+  function activateDrip(address measure, address dripToken, uint256 dripRatePerSecond, uint32 currentTime) external {
+    dripManager.activateDrip(measure, dripToken, dripRatePerSecond, currentTime);
   }
 
-  function addDrip(address measure, address dripToken, uint256 dripRatePerSecond, uint256 currentTime) external {
-    dripManager.addDrip(measure, dripToken, dripRatePerSecond, currentTime);
+  function deactivateDrip(address measure, address prevDripToken, address dripToken, uint32 currentTime) external {
+    dripManager.deactivateDrip(measure, prevDripToken, dripToken, currentTime);
   }
 
-  function hasDrip(address measure, address dripToken) external view returns (bool) {
-    return dripManager.hasDrip(measure, dripToken);
+  function isDripActive(address measure, address dripToken) external view returns (bool) {
+    return dripManager.isDripActive(measure, dripToken);
   }
 
-  function setDripRate(address measure, address dripToken, uint256 dripRatePerSecond) external {
-    dripManager.setDripRate(measure, dripToken, dripRatePerSecond);
-  }
-
-  function balanceOfDrip(address user, address measure, address dripToken) external view returns (uint256) {
-    return dripManager.balanceOfDrip(user, measure, dripToken);
+  function setDripRate(address measure, address dripToken, uint256 dripRatePerSecond, uint32 currentTime) external {
+    dripManager.setDripRate(measure, dripToken, dripRatePerSecond, currentTime);
   }
 
   function getDrip(
@@ -49,9 +39,5 @@ contract BalanceDripManagerExposed {
     dripRatePerSecond = dripState.dripRatePerSecond;
     exchangeRateMantissa = dripState.exchangeRateMantissa;
     timestamp = dripState.timestamp;
-  }
-
-  function claimDripTokens(address user, address measure, address dripToken) external {
-    dripManager.claimDripTokens(user, measure, dripToken);
   }
 }
