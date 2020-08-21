@@ -294,8 +294,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     return exitFee;
   }
 
-  /// @notice Withdraw assets from the Prize Pool by placing them into the timelock.
-  /// @dev The timelock is used to ensure that the tickets have contributed their fair share of the prize.
+  /// @notice Withdraw assets from the Prize Pool by placing them into the timelock. The timelock is used to ensure that the tickets have contributed their fair share of the prize.
+  /// @dev Note that if the user has previously timelocked funds then this contract will try to sweep them.  If the existing timelocked funds are still locked, then the incoming
+  /// balance is added to their existing balance and the new timelock unlock timestamp will overwrite the old one.
   /// @param from The address to withdraw from
   /// @param amount The amount to withdraw
   /// @param controlledToken The type of token being withdrawn
