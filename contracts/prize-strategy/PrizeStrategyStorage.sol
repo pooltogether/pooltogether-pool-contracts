@@ -13,7 +13,8 @@ import "../Constants.sol";
 contract PrizeStrategyStorage {
   struct Credit {
     uint192 balance;
-    uint64 timestamp;
+    uint32 timestamp;
+    bool initialized;
   }
 
   struct RngRequest {
