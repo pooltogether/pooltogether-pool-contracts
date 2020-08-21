@@ -12,21 +12,27 @@ const debug = require('debug')('ptv3:MappedSinglyLinkedListExposed.test')
 
 let overrides = { gasLimit: 20000000 }
 
-const SENTINAL = '0x0000000000000000000000000000000000000001'
+const SENTINEL = '0x0000000000000000000000000000000000000001'
 
-describe('PrizePool contract', function() {
+describe('MappedSinglyLinkedListExposed', function() {
 
   let list
 
   beforeEach(async () => {
     [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
 
-    list = await deployContract(wallet, MappedSinglyLinkedListExposed, [[wallet2._address]], overrides)
+    list = await deployContract(wallet, MappedSinglyLinkedListExposed, [], overrides)
+    await list.initialize()
+    await list.addAddresses([wallet2._address])
   })
 
   describe('initialize()', () => {
     it('should have initialized with a value', async () => {
       expect(await list.contains(wallet2._address)).to.be.true
+    })
+
+    it('should not be initialized after it contains values', async () => {
+      await expect(list.initialize()).to.be.revertedWith('Already init')
     })
   })
 
@@ -37,8 +43,8 @@ describe('PrizePool contract', function() {
   })
 
   describe('addAddress', () => {
-    it('should not allow adding the SENTINAL address', async () => {
-      await expect(list.addAddress(SENTINAL)).to.be.revertedWith("Invalid address")
+    it('should not allow adding the SENTINEL address', async () => {
+      await expect(list.addAddress(SENTINEL)).to.be.revertedWith("Invalid address")
     })
 
     it('should not allow adding a zero address', async () => {
@@ -53,8 +59,8 @@ describe('PrizePool contract', function() {
   })
 
   describe('removeAddress', () => {
-    it('should not allow removing the SENTINAL address', async () => {
-      await expect(list.removeAddress(SENTINAL, SENTINAL)).to.be.revertedWith("Invalid address")
+    it('should not allow removing the SENTINEL address', async () => {
+      await expect(list.removeAddress(SENTINEL, SENTINEL)).to.be.revertedWith("Invalid address")
     })
 
     it('should not allow removing an address that does not exist', async () => {
@@ -72,6 +78,16 @@ describe('PrizePool contract', function() {
 
       expect(await list.addressArray()).to.deep.equal([wallet._address])
       expect(await list.contains(wallet2._address)).to.be.false
+    })
+  })
+
+  describe('contains()', () => {
+    it('should return false for sentinel', async () => {
+      expect(await list.contains(SENTINEL)).to.be.false
+    })
+
+    it('should return false for the zero address', async () => {
+      expect(await list.contains(AddressZero)).to.be.false
     })
   })
 

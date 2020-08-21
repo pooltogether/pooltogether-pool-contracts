@@ -21,8 +21,8 @@ library BalanceDripManager {
     uint256 measureTotalSupply,
     uint256 currentTime
   ) internal {
-    address currentDripToken = self.activeBalanceDrips[measure].addressMap[MappedSinglyLinkedList.SENTINAL];
-    while (currentDripToken != address(0) && currentDripToken != MappedSinglyLinkedList.SENTINAL) {
+    address currentDripToken = self.activeBalanceDrips[measure].start();
+    while (currentDripToken != address(0) && currentDripToken != self.activeBalanceDrips[measure].end()) {
       BalanceDrip.State storage dripState = self.balanceDrips[measure][currentDripToken];
       dripState.drip(
         user,
@@ -30,19 +30,16 @@ library BalanceDripManager {
         measureTotalSupply,
         currentTime
       );
-      currentDripToken = self.activeBalanceDrips[measure].addressMap[currentDripToken];
+      currentDripToken = self.activeBalanceDrips[measure].next(currentDripToken);
     }
   }
 
   function addDrip(State storage self, address measure, address dripToken, uint256 dripRatePerSecond, uint256 currentTime) internal {
     require(!self.activeBalanceDrips[measure].contains(dripToken), "BalanceDripManager/drip-exists");
     if (self.activeBalanceDrips[measure].count == 0) {
-      address[] memory single = new address[](1);
-      single[0] = dripToken;
-      self.activeBalanceDrips[measure].initialize(single);
-    } else {
-      self.activeBalanceDrips[measure].addAddress(dripToken);
+      self.activeBalanceDrips[measure].initialize();
     }
+    self.activeBalanceDrips[measure].addAddress(dripToken);
     self.balanceDrips[measure][dripToken].initialize(currentTime);
     self.balanceDrips[measure][dripToken].dripRatePerSecond = dripRatePerSecond;
   }
