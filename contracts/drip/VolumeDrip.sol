@@ -13,7 +13,7 @@ library VolumeDrip {
 
   struct Deposit {
     uint112 balance;
-    uint16 period;
+    uint32 period;
   }
 
   struct Period {
@@ -27,7 +27,7 @@ library VolumeDrip {
     mapping(uint32 => Period) periods;
     uint32 periodSeconds;
     uint112 dripAmount;
-    uint16 periodCount;
+    uint32 periodCount;
   }
 
   function setNewPeriod(
@@ -87,7 +87,7 @@ library VolumeDrip {
   {
     isNewPeriod = poke(self, currentTime);
     accrued = _lastBalanceAccruedAmount(self, self.deposits[user].period, self.deposits[user].balance);
-    uint16 currentPeriod = self.periodCount;
+    uint32 currentPeriod = self.periodCount;
     if (accrued > 0) {
       self.deposits[user] = Deposit({
         balance: amount.toUint112(),
@@ -126,7 +126,7 @@ library VolumeDrip {
 
   function _lastBalanceAccruedAmount(
     State storage self,
-    uint16 depositPeriod,
+    uint32 depositPeriod,
     uint128 balance
   )
     private view

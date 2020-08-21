@@ -32,6 +32,7 @@ library VolumeDripManager {
     uint32 endTime
   )
     internal
+    returns (uint32)
   {
     require(!self.activeVolumeDrips[measure].contains(dripToken), "VolumeDripManager/drip-active");
     if (self.activeVolumeDrips[measure].count == 0) {
@@ -42,6 +43,8 @@ library VolumeDripManager {
       self.activeVolumeDrips[measure].addAddress(dripToken);
     }
     self.volumeDrips[measure][dripToken].setNewPeriod(periodSeconds, dripAmount, endTime);
+
+    return self.volumeDrips[measure][dripToken].periodCount;
   }
 
   /// @notice Deactivates the volume drip for the given (measure, dripToken) pair.

@@ -42,7 +42,7 @@ contract VolumeDripExposed {
     dripAmount = state.dripAmount;
   }
 
-  function getPeriod(uint16 period)
+  function getPeriod(uint32 period)
     external
     view
     returns (
@@ -61,7 +61,7 @@ contract VolumeDripExposed {
     view
     returns (
       uint112 balance,
-      uint16 period
+      uint32 period
     )
   {
     balance = state.deposits[user].balance;
