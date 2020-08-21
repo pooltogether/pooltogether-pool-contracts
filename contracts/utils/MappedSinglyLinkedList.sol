@@ -60,7 +60,7 @@ library MappedSinglyLinkedList {
     require(addr != SENTINEL && addr != address(0), "Invalid address");
     require(self.addressMap[prevAddress] == addr, "Invalid prevAddress");
     self.addressMap[prevAddress] = self.addressMap[addr];
-    self.addressMap[addr] = address(0);
+    delete self.addressMap[addr];
     self.count = self.count - 1;
   }
 
