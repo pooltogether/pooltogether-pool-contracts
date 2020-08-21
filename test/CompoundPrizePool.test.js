@@ -543,7 +543,8 @@ describe('CompoundPrizePool', function() {
       it('should allow owner to add controlled tokens', async () => {
         await newToken.mock.controller.returns(prizePool.address)
         await expect(prizePool.addControlledToken(newToken.address))
-          .to.not.be.revertedWith('PrizePool/token-ctrlr-mismatch')
+          .to.emit(prizePool, 'ControlledTokenAdded')
+          .withArgs(newToken.address)
       })
 
       it('should not allow adding uncontrolled tokens', async () => {
