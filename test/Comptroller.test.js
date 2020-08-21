@@ -11,7 +11,7 @@ const toWei = ethers.utils.parseEther
 
 const overrides = { gasLimit: 20000000 }
 
-const SENTINAL = '0x0000000000000000000000000000000000000001'
+const SENTINEL = '0x0000000000000000000000000000000000000001'
 
 async function getLastEvent(contract, tx) {
   let receipt = await buidler.ethers.provider.getTransactionReceipt(tx.hash)
@@ -83,7 +83,7 @@ describe('Comptroller', () => {
     })
 
     it('should remove a balance drip', async () => {
-      await expect(comptroller.removeBalanceDrip(prizeStrategyAddress, measure.address, SENTINAL, dripToken.address))
+      await expect(comptroller.removeBalanceDrip(prizeStrategyAddress, measure.address, SENTINEL, dripToken.address))
         .to.emit(comptroller, 'BalanceDripRemoved')
         .withArgs(wallet._address, measure.address, dripToken.address)
 
@@ -92,7 +92,7 @@ describe('Comptroller', () => {
     })
 
     it('should allow only the owner to remove drips', async () => {
-      await expect(comptroller2.removeBalanceDrip(prizeStrategyAddress, measure.address, SENTINAL, dripToken.address)).to.be.revertedWith("Ownable: caller is not the owner")
+      await expect(comptroller2.removeBalanceDrip(prizeStrategyAddress, measure.address, SENTINEL, dripToken.address)).to.be.revertedWith("Ownable: caller is not the owner")
     })
   })
 
