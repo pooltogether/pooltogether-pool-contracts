@@ -5,7 +5,7 @@ import "../prize-pool/compound/CompoundPrizePool.sol";
 /* solium-disable security/no-block-members */
 contract CompoundPrizePoolHarness is CompoundPrizePool {
 
-  uint256 internal time;
+  uint256 public currentTime;
 
   function initializeAll(
     address _trustedForwarder,
@@ -35,8 +35,8 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
     _redeem(redeemAmount);
   }
 
-  function setCurrentTime(uint256 _time) external {
-    time = _time;
+  function setCurrentTime(uint256 _currentTime) external {
+    currentTime = _currentTime;
   }
 
   function setTimelockBalance(uint256 _timelockBalance) external {
@@ -44,10 +44,7 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
   }
 
   function _currentTime() internal override view returns (uint256) {
-    if (time == 0) {
-      return block.timestamp;
-    }
-    return time;
+    return currentTime;
   }
 
 }

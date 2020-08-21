@@ -145,7 +145,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     uint256 credit = calculateAccruedCredit(user, balance);
     creditBalances[user] = Credit({
       balance: _addCredit(user, balance, credit).toUint128(),
-      timestamp: _currentTime().toUint64()
+      timestamp: _currentTime().toUint32(),
+      initialized: true
     });
   }
 
@@ -171,13 +172,13 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @return accruedCredit The credit that has accrued since the last credit update.
   function calculateAccruedCredit(address user, uint256 ticketBalance) internal view returns (uint256 accruedCredit) {
     uint256 userTimestamp = creditBalances[user].timestamp;
-
-    if (userTimestamp == 0 || userTimestamp >= _currentTime()) {
+    if (!creditBalances[user].initialized) {
       return 0;
     }
 
     uint256 deltaTime = _currentTime().sub(userTimestamp);
     uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(ticketBalance, creditRateMantissa);
+
     return deltaTime.mul(creditPerSecond);
   }
 
@@ -845,7 +846,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   function _requireNotLocked() internal view {
-    require(rngRequest.lockBlock == 0 || block.number < rngRequest.lockBlock, "PrizeStrategy/rng-in-flight");
+    require(rngRequest.lockBlock == 0 || _currentBlock() < rngRequest.lockBlock, "PrizeStrategy/rng-in-flight");
   }
 
   modifier requireNotLocked() {
