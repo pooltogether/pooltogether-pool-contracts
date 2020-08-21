@@ -13,9 +13,6 @@ contract ComptrollerHarness is Comptroller {
   }
 
   function _currentTime() internal override view returns (uint256) {
-    if (time == 0) {
-      return block.timestamp;
-    }
     return time;
   }
 

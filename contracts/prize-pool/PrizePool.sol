@@ -126,8 +126,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     public
     initializer
   {
-    require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
     require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
+    require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
     _tokens.initialize();
     _tokens.addAddresses(_controlledTokens);
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
