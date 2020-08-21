@@ -12,7 +12,7 @@ contract ControlledToken is ERC20UpgradeSafe, RelayRecipient {
   /// @notice Interface to the contract responsible for controlling mint/burn
   TokenControllerInterface public controller;
 
-  /// @notice Initializes the Controlled Token with Toen Details and the Controller
+  /// @notice Initializes the Controlled Token with Token Details and the Controller
   /// @param _name The name of the Token
   /// @param _symbol The symbol for the Token
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
