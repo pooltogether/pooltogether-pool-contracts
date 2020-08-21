@@ -190,9 +190,12 @@ describe('Comptroller', () => {
       let tx = await comptroller.addVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
       let volumeDripAdded = await getLastEvent(comptroller, tx)
 
+      await measure.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
+      await measure.mock.totalSupply.returns(toWei('10'))
+
       // volume drip activates at 10
       await comptroller.setCurrentTime(12)
-      await comptroller.afterDepositTo(wallet._address, toWei('10'), toWei('10'), toWei('10'), measure.address, AddressZero)
+      await comptroller.beforeTokenMint(wallet._address, toWei('10'), measure.address, AddressZero)
       // volume drip period is over
       await comptroller.setCurrentTime(22)
 
@@ -205,9 +208,12 @@ describe('Comptroller', () => {
       let tx = await comptroller.addVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
       let volumeDripAdded = await getLastEvent(comptroller, tx)
 
+      await measure.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
+      await measure.mock.totalSupply.returns(toWei('10'))
+
       // volume drip activates at 10
       await comptroller.setCurrentTime(12)
-      await comptroller.afterDepositTo(wallet._address, toWei('10'), toWei('10'), toWei('10'), measure.address, AddressZero)
+      await comptroller.beforeTokenMint(wallet._address, toWei('10'), measure.address, AddressZero)
       // volume drip period is over
       await comptroller.setCurrentTime(22)
 
@@ -295,9 +301,12 @@ describe('Comptroller', () => {
       let tx = await comptroller.addReferralVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
       let volumeDripAdded = await getLastEvent(comptroller, tx)
 
+      await measure.mock.balanceOf.withArgs(wallet2._address).returns(toWei('10'))
+      await measure.mock.totalSupply.returns(toWei('10'))
+
       // volume drip activates at 10
       await comptroller.setCurrentTime(12)
-      await comptroller.afterDepositTo(wallet2._address, toWei('10'), toWei('10'), toWei('10'), measure.address, wallet._address)
+      await comptroller.beforeTokenMint(wallet2._address, toWei('10'), measure.address, wallet._address)
       // volume drip period is over
       await comptroller.setCurrentTime(22)
 
@@ -310,9 +319,12 @@ describe('Comptroller', () => {
       let tx = await comptroller.addReferralVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
       let volumeDripAdded = await getLastEvent(comptroller, tx)
 
+      await measure.mock.balanceOf.withArgs(wallet2._address).returns(toWei('10'))
+      await measure.mock.totalSupply.returns(toWei('10'))
+
       // volume drip activates at 10
       await comptroller.setCurrentTime(12)
-      await comptroller.afterDepositTo(wallet2._address, toWei('10'), toWei('10'), toWei('10'), measure.address, wallet._address)
+      await comptroller.beforeTokenMint(wallet2._address, toWei('10'), measure.address, wallet._address)
       // volume drip period is over
       await comptroller.setCurrentTime(22)
 
@@ -332,11 +344,15 @@ describe('Comptroller', () => {
 
 
 
-  describe('afterDepositTo()', () => {
+  describe('beforeTokenMint()', () => {
     it('should update the balance drips', async () => {
       await comptroller.setCurrentTime(1)
       await comptroller.addBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
-      await comptroller.afterDepositTo(wallet._address, toWei('10'), toWei('10'), toWei('10'), measure.address, AddressZero)
+
+      await measure.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
+      await measure.mock.totalSupply.returns(toWei('10'))
+
+      await comptroller.beforeTokenMint(wallet._address, toWei('10'), measure.address, AddressZero)
       await comptroller.setCurrentTime(11)
       // should have accrued 10 blocks worth of the drip: 10 * 0.001 = 0.01
 
@@ -350,13 +366,17 @@ describe('Comptroller', () => {
     })
   })
 
-  describe('afterWithdrawFrom()', () => {
+  describe('beforeTokenTransfer()', () => {
     it('should update the balance drips', async () => {
       await comptroller.setCurrentTime(1)
       await comptroller.addBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
-      await comptroller.afterDepositTo(wallet._address, toWei('10'), toWei('10'), toWei('10'), measure.address, AddressZero)
+
+      await measure.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
+      await measure.mock.totalSupply.returns(toWei('10'))
+
+      await comptroller.beforeTokenMint(wallet._address, toWei('10'), measure.address, AddressZero)
       await comptroller.setCurrentTime(11)
-      await comptroller.afterWithdrawFrom(wallet._address, toWei('10'), toWei('0'), toWei('0'), measure.address)
+      await comptroller.beforeTokenTransfer(wallet._address, AddressZero, toWei('10'), measure.address)
 
       // user should have accrued 0.01 tokens, now they should be accruing none.
 

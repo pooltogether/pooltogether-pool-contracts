@@ -9,7 +9,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./PrizeStrategyStorage.sol";
-import "./PrizeStrategyInterface.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../prize-pool/PrizePool.sol";
@@ -22,7 +21,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
                           OwnableUpgradeSafe,
                           RelayRecipient,
                           ReentrancyGuardUpgradeSafe,
-                          PrizeStrategyInterface {
+                          PrizePoolTokenListenerInterface {
 
   using SafeMath for uint256;
   using SafeCast for uint256;
@@ -261,6 +260,22 @@ contract PrizeStrategy is PrizeStrategyStorage,
       _requireNotLocked();
     }
   }
+
+  /// @notice Called by the PrizePool when minting controlled tokens
+  /// @param to The user who is receiving the tokens.
+  /// @param amount The amount of tokens being minted.
+  /// @param controlledToken The type of collateral that is being minted
+  /// @param referrer The address that referred the mint
+  function beforeTokenMint(
+    address to,
+    uint256 amount,
+    address controlledToken,
+    address referrer
+  )
+    external
+    override
+    onlyPrizePool
+  {}
 
   /// @notice returns the current time.  Used for testing.
   /// @return The current time (block.timestamp)

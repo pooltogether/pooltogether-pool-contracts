@@ -1,7 +1,7 @@
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
-const PrizeStrategyInterface = require('../build/PrizeStrategyInterface.json')
+const PrizePoolTokenListenerInterface = require('../build/PrizePoolTokenListenerInterface.json')
 const ComptrollerInterface = require('../build/ComptrollerInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CTokenInterface = require('../build/CTokenInterface.json')
@@ -46,7 +46,7 @@ describe('CompoundPrizePool', function() {
     cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
     await cToken.mock.underlying.returns(erc20token.address)
 
-    prizeStrategy = await deployMockContract(wallet, PrizeStrategyInterface.abi, overrides)
+    prizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi, overrides)
     comptroller = await deployMockContract(wallet, ComptrollerInterface.abi, overrides)
 
     debug('deploying CompoundPrizePoolHarness...')
@@ -75,11 +75,13 @@ describe('CompoundPrizePool', function() {
         await expect(prizePool.beforeTokenTransfer(wallet._address, wallet2._address, toWei('1')))
           .to.be.revertedWith('PrizePool/unknown-token')
       })
+
       it('should allow controlled tokens to call', async () => {
         await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
         await ticket.mock.balanceOf.withArgs(wallet2._address).returns(toWei('10'))
 
         await prizeStrategy.mock.beforeTokenTransfer.withArgs(wallet._address, wallet2._address, toWei('1'), ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, wallet2._address, toWei('1'), ticket.address).returns()
         await ticket.call(prizePool, 'beforeTokenTransfer', wallet._address, wallet2._address, toWei('1'))
       })
     })
@@ -103,7 +105,8 @@ describe('CompoundPrizePool', function() {
         await erc20token.mock.transferFrom.withArgs(wallet._address, prizePool.address, amount).returns(true)
         await erc20token.mock.approve.withArgs(cToken.address, amount).returns(true)
         await cToken.mock.mint.withArgs(amount).returns('0')
-        await comptroller.mock.afterDepositTo.withArgs(wallet2._address, amount, amount, amount, ticket.address, AddressZero).returns()
+        await comptroller.mock.beforeTokenMint.withArgs(wallet2._address, amount, ticket.address, AddressZero).returns()
+        await prizeStrategy.mock.beforeTokenMint.withArgs(wallet2._address, amount, ticket.address, AddressZero).returns()
         await ticket.mock.controllerMint.withArgs(wallet2._address, amount).returns()
 
         // Test depositTo
@@ -124,7 +127,8 @@ describe('CompoundPrizePool', function() {
         await erc20token.mock.transferFrom.withArgs(wallet._address, prizePool.address, amount).returns(true)
         await erc20token.mock.approve.withArgs(cToken.address, amount).returns(true)
         await cToken.mock.mint.withArgs(amount).returns('1')
-        await comptroller.mock.afterDepositTo.withArgs(wallet2._address, amount, amount, toWei('0'), ticket.address, AddressZero).returns()
+        await comptroller.mock.beforeTokenMint.withArgs(wallet2._address, amount, ticket.address, AddressZero).returns()
+        await prizeStrategy.mock.beforeTokenMint.withArgs(wallet2._address, amount, ticket.address, AddressZero).returns()
         await ticket.mock.controllerMint.withArgs(wallet2._address, amount).returns()
 
         // Test depositTo
@@ -146,7 +150,7 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('9')).returns('1')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount, amount, amount, ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('1')))
           .to.be.revertedWith('CompoundPrizePool/redeem-failed')
@@ -163,7 +167,7 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('9')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('9')).returns(true)
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount, amount, toWei('0'), ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('1')))
           .to.emit(prizePool, 'InstantWithdrawal')
@@ -182,7 +186,7 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet2._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(amount.sub(fee)).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, amount.sub(fee)).returns(true)
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount, amount, amount, ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         await expect(prizePool.connect(wallet2).withdrawInstantlyFrom(wallet._address, amount, ticket.address, fee))
           .to.emit(prizePool, 'InstantWithdrawal')
@@ -200,7 +204,7 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('9')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount, amount, amount, ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('0.3')))
           .to.be.revertedWith('PrizePool/exit-fee-exceeds-user-maximum')
@@ -232,10 +236,7 @@ describe('CompoundPrizePool', function() {
           .withArgs(wallet._address, toWei('10'))
           .returns(true)
 
-        // exit fee is limited to 5
-        await comptroller.mock.afterWithdrawFrom
-          .withArgs(wallet._address, amount, amount, amount, ticket.address)
-          .returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         // max exit fee is 10, well above
         await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('10')))
@@ -254,7 +255,7 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount, amount, amount, ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         await expect(prizePool.withdrawInstantlyFrom(wallet._address, amount, ticket.address, toWei('0.3')))
           .to.be.revertedWith('PrizePool/exit-fee-exceeds-user-maximum')
@@ -271,7 +272,7 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('10')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount, amount, amount, ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         // PrizeStrategy exit fee: 100.0
         // PrizePool max exit fee: 5.5  (should be capped at this)
@@ -296,7 +297,7 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
 
         // expect finish
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount, amount, amount, ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         // setup timelocked withdrawal
         await prizePool.withdrawWithTimelockFrom(wallet._address, amount, ticket.address)
@@ -326,9 +327,7 @@ describe('CompoundPrizePool', function() {
           .returns()
 
         // expect finish
-        await comptroller.mock.afterWithdrawFrom
-          .withArgs(wallet._address, amount, amount, amount, ticket.address)
-          .returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         // setup timelocked withdrawal
         await prizePool.withdrawWithTimelockFrom(wallet._address, amount, ticket.address)
@@ -368,13 +367,13 @@ describe('CompoundPrizePool', function() {
         // expect ticket burns from both
         await ticket.mock.controllerBurnFrom.returns()
 
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount1, amount1, toWei('33'), ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount1, ticket.address).returns()
         await prizePool.withdrawWithTimelockFrom(wallet._address, amount1, ticket.address)
 
         // Second will unlock at 21
         await prizePool.setCurrentTime(11)
 
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet2._address, amount2, amount2, toWei('33'), ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet2._address, AddressZero, amount2, ticket.address).returns()
         await prizePool.withdrawWithTimelockFrom(wallet2._address, amount2, ticket.address)
 
         // Only first deposit is unlocked
@@ -415,7 +414,7 @@ describe('CompoundPrizePool', function() {
         await ticket.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
 
         // expect finish
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount, amount, amount, ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket.address).returns()
 
         // setup timelocked withdrawal
         await prizePool.withdrawWithTimelockFrom(wallet._address, amount, ticket.address)
@@ -517,7 +516,7 @@ describe('CompoundPrizePool', function() {
     beforeEach(async () => {
 
       debug('deploying CompoundPrizePoolHarness...')
-      multiTokenPrizeStrategy = await deployMockContract(wallet, PrizeStrategyInterface.abi, overrides)
+      multiTokenPrizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi, overrides)
       multiTokenPrizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
 
       sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)
@@ -671,7 +670,7 @@ describe('CompoundPrizePool', function() {
         await ticket2.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
         await cToken.mock.redeemUnderlying.withArgs(toWei('11')).returns('0')
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount, amount, toWei('0'), ticket2.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket2.address).returns()
 
         await expect(detachedPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, toWei('1')))
           .to.emit(detachedPrizePool, 'InstantWithdrawal')
@@ -696,7 +695,7 @@ describe('CompoundPrizePool', function() {
         await cToken.mock.redeemUnderlying.withArgs(amount).returns('0')
 
         // expect comptroller signal
-        await comptroller.mock.afterWithdrawFrom.withArgs(wallet._address, amount, amount, amount, ticket2.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket2.address).returns()
 
         // full-amount should be tansferred
         await erc20token.mock.transfer.withArgs(wallet._address, amount).returns(true)

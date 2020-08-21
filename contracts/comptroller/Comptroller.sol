@@ -362,30 +362,28 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
 
 
 
-
-
-
-
-  function afterDepositTo(
+  function beforeTokenMint(
     address to,
     uint256 amount,
-    uint256 balance,
-    uint256 totalSupply,
     address controlledToken,
     address referrer
   )
     external
     override
   {
-    balanceDrips[msg.sender].updateDrips(
+    address source = msg.sender;
+    uint256 balance = IERC20(controlledToken).balanceOf(to);
+    uint256 totalSupply = IERC20(controlledToken).totalSupply();
+
+    balanceDrips[source].updateDrips(
       controlledToken,
       to,
-      balance.sub(amount), // we want the previous balance
-      totalSupply.sub(amount), // previous totalSupply
+      balance,
+      totalSupply,
       _currentTime()
     );
 
-    volumeDrips[msg.sender].deposit(
+    volumeDrips[source].deposit(
       controlledToken,
       to,
       amount,
@@ -393,7 +391,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     );
 
     if (referrer != address(0)) {
-      referralVolumeDrips[msg.sender].deposit(
+      referralVolumeDrips[source].deposit(
         controlledToken,
         referrer,
         amount,
@@ -402,23 +400,28 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     }
   }
 
-  function afterWithdrawFrom(
+  function beforeTokenTransfer(
     address from,
-    uint256 amount,
-    uint256 balance,
-    uint256 totalSupply,
+    address to,
+    uint256,
     address controlledToken
   )
     external
     override
   {
-    balanceDrips[msg.sender].updateDrips(
-      controlledToken,
-      from,
-      balance.add(amount), // we want the original balance
-      totalSupply.add(amount),
-      _currentTime()
-    );
+    // if we are burning
+    if (to == address(0)) {
+      uint256 balance = IERC20(controlledToken).balanceOf(from);
+      uint256 totalSupply = IERC20(controlledToken).totalSupply();
+
+      balanceDrips[msg.sender].updateDrips(
+        controlledToken,
+        from,
+        balance, // we want the original balance
+        totalSupply,
+        _currentTime()
+      );
+    }
   }
 
   /// @notice returns the current time.  Used for testing.
