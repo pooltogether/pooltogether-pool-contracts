@@ -105,10 +105,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   uint256 public timelockTotalSupply;
 
   /// @dev The timelocked balances for each user
-  mapping(address => uint256) internal timelockBalances;
+  mapping(address => uint256) internal _timelockBalances;
 
   /// @dev The unlock timestamps for each user
-  mapping(address => uint256) internal unlockTimestamps;
+  mapping(address => uint256) internal _unlockTimestamps;
 
   /// @notice Initializes the Prize Pool with required contract connections
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
@@ -209,7 +209,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address operator = _msgSender();
 
     ControlledToken(controlledToken).controllerMint(to, amount);
-    timelockBalances[operator] = timelockBalances[operator].sub(amount);
+    _timelockBalances[operator] = _timelockBalances[operator].sub(amount);
     timelockTotalSupply = timelockTotalSupply.sub(amount);
 
     prizeStrategy.afterTimelockDepositTo(operator, to, amount, controlledToken, data);
@@ -265,7 +265,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   {
 
     if (_hasPrizeStrategy()) {
-      exitFee = limitExitFee(amount, prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken, data));
+      exitFee = _limitExitFee(amount, prizeStrategy.beforeWithdrawInstantlyFrom(from, amount, controlledToken, data));
     }
 
     require(exitFee <= maximumExitFee, "PrizePool/exit-fee-exceeds-user-maximum");
@@ -286,7 +286,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, exitFee);
   }
 
-  function limitExitFee(uint256 withdrawalAmount, uint256 exitFee) internal view returns (uint256) {
+  function _limitExitFee(uint256 withdrawalAmount, uint256 exitFee) internal view returns (uint256) {
     uint256 maxFee = FixedPoint.multiplyUintByMantissa(withdrawalAmount, maxExitFeeMantissa);
     if (exitFee > maxFee) {
       exitFee = maxFee;
@@ -342,8 +342,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     _sweepTimelockBalances(users);
 
     timelockTotalSupply = timelockTotalSupply.add(amount);
-    timelockBalances[user] = timelockBalances[user].add(amount);
-    unlockTimestamps[user] = timestamp;
+    _timelockBalances[user] = _timelockBalances[user].add(amount);
+    _unlockTimestamps[user] = timestamp;
 
     // if the funds should already be unlocked
     if (timestamp <= _currentTime()) {
@@ -478,10 +478,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 i;
     for (i = 0; i < users.length; i++) {
       address user = users[i];
-      if (unlockTimestamps[user] <= _currentTime()) {
-        totalWithdrawal = totalWithdrawal.add(timelockBalances[user]);
-        balances[i] = timelockBalances[user];
-        delete timelockBalances[user];
+      if (_unlockTimestamps[user] <= _currentTime()) {
+        totalWithdrawal = totalWithdrawal.add(_timelockBalances[user]);
+        balances[i] = _timelockBalances[user];
+        delete _timelockBalances[user];
       }
     }
 
@@ -498,7 +498,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
     for (i = 0; i < users.length; i++) {
       if (balances[i] > 0) {
-        delete unlockTimestamps[users[i]];
+        delete _unlockTimestamps[users[i]];
         require(underlyingToken.transfer(users[i], balances[i]), "PrizePool/sweep-transfer-failed");
         emit TimelockedWithdrawalSwept(operator, users[i], balances[i]);
       }
@@ -551,14 +551,14 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param user The address of an account with timelocked assets
   /// @return unlockTimestamp The timestamp at which the locked assets will be made available
   function timelockBalanceAvailableAt(address user) external view returns (uint256 unlockTimestamp) {
-    return unlockTimestamps[user];
+    return _unlockTimestamps[user];
   }
 
   /// @notice The balance of timelocked assets for an account
   /// @param user The address of an account with timelocked assets
   /// @return timelockBalance The amount of assets that have been timelocked
   function timelockBalanceOf(address user) external view returns (uint256 timelockBalance) {
-    return timelockBalances[user];
+    return _timelockBalances[user];
   }
 
   /// @notice The currently accounted-for balance in relation to the rolling exchange-rate
@@ -581,7 +581,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @dev Checks if a specific token is controlled by the Prize Pool
   /// @param controlledToken The address of the token to check
   /// @return True if the token is a controlled token, false otherwise
-  function isControlled(address controlledToken) internal view returns (bool) {
+  function _isControlled(address controlledToken) internal view returns (bool) {
     return _tokens.contains(controlledToken);
   }
 
@@ -592,7 +592,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @dev Function modifier to ensure usage of tokens controlled by the Prize Pool
   /// @param controlledToken The address of the token to check
   modifier onlyControlledToken(address controlledToken) {
-    require(isControlled(controlledToken), "PrizePool/unknown-token");
+    require(_isControlled(controlledToken), "PrizePool/unknown-token");
     _;
   }
 
