@@ -24,4 +24,19 @@ describe('Tickets Feature', () => {
     await env.expectUserToHaveTickets({ user: 1, tickets: 200 })
   })
 
+  it('should not be possible to buy or transfer tickets during award', async () => {
+    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.buyTickets({ user: 2, tickets: 100 })
+    await env.startAward()
+
+    await env.expectRevertWith(env.buyTickets({ user: 1, tickets: 100 }), "PrizeStrategy/rng-in-flight")
+
+    await env.expectRevertWith(env.transferTickets({ user: 2, tickets: 100, to: 3 }), "PrizeStrategy/rng-in-flight")
+
+    await env.completeAward({ token: 0 })
+
+    await env.buyTickets({ user: 1, tickets: 100 })
+    await env.transferTickets({ user: 2, tickets: 100, to: 3 })
+  })
+
 })
