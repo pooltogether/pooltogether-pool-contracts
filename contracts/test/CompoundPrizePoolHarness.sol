@@ -9,7 +9,7 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
 
   function initializeAll(
     address _trustedForwarder,
-    PrizeStrategyInterface _prizeStrategy,
+    PrizePoolTokenListenerInterface _prizeStrategy,
     ComptrollerInterface _comptroller,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,

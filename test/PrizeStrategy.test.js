@@ -409,10 +409,9 @@ describe('PrizeStrategy', function() {
       // no external award
       await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns('0')
 
-      debug('Calling afterDepositTo')
       await ticket.mock.balanceOf.returns(toWei('10'))
       await ticket.mock.totalSupply.returns(toWei('10'))
-      await comptroller.mock.afterDepositTo.returns()
+      await comptroller.mock.beforeTokenMint.returns()
 
       // ensure prize period is over
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
