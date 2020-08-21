@@ -385,7 +385,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @notice Called by the Prize-Strategy to Award a Prize to a specific account
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of assets to be awarded
-  /// @param controlledToken The addess of the asset token being awarded
+  /// @param controlledToken The address of the asset token being awarded
   function award(
     address to,
     uint256 amount,
@@ -409,7 +409,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @dev Used to award any arbitrary tokens held by the Prize Pool
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of external assets to be awarded
-  /// @param externalToken The addess of the external asset token being awarded
+  /// @param externalToken The address of the external asset token being awarded
   function awardExternalERC20(
     address to,
     address externalToken,
@@ -432,7 +432,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @notice Called by the Prize-Strategy to Award Secondary (external) Prize NFTs to a specific account
   /// @dev Used to award any arbitrary NFTs held by the Prize Pool
   /// @param to The address of the winner that receives the award
-  /// @param externalToken The addess of the external NFT token being awarded
+  /// @param externalToken The address of the external NFT token being awarded
   /// @param tokenIds An array of NFT Token IDs to be transferred
   function awardExternalERC721(
     address to,
@@ -557,7 +557,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     return block.timestamp;
   }
 
-  /// @notice The timestamp at which an accounts timelocked balance will be made available
+  /// @notice The timestamp at which an account's timelocked balance will be made available
   /// @param user The address of an account with timelocked assets
   /// @return The timestamp at which the locked assets will be made available
   function timelockBalanceAvailableAt(address user) external view returns (uint256) {
