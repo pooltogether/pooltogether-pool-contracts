@@ -96,7 +96,7 @@ contract CompoundPrizePool is PrizePool {
 
   /// @dev Allows a user to redeem yield-bearing tokens in exchange for the underlying
   /// asset tokens held in escrow by the Yield Service
-  /// @param amount The amount of yield-bearing tokens to be redeemed
+  /// @param amount The amount of underlying tokens to be redeemed
   function _redeem(uint256 amount) internal override {
     require(cToken.redeemUnderlying(amount) == 0, "CompoundPrizePool/redeem-failed");
   }
