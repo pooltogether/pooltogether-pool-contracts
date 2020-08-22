@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "../utils/UInt256Array.sol";
 import "./ComptrollerStorage.sol";
 import "./ComptrollerInterface.sol";
+import "../drip/DripManager.sol";
 
 /// @title The Comptroller disburses rewards to pool users and captures reserve fees from Prize Pools.
 /* solium-disable security/no-block-members */
@@ -16,8 +17,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   using ExtendedSafeCast for uint256;
   using BalanceDrip for BalanceDrip.State;
   using VolumeDrip for VolumeDrip.State;
-  using BalanceDripManager for BalanceDripManager.State;
-  using VolumeDripManager for VolumeDripManager.State;
+  // using BalanceDripManager for BalanceDripManager.State;
+  // using VolumeDripManager for VolumeDripManager.State;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
   /// @notice Emitted when the reserve rate mantissa is changed
@@ -25,51 +26,19 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 reserveRateMantissa
   );
 
-  /// @notice Emitted when a balance drip is actived
-  event BalanceDripActivated(
+  event SourceDripManagerAdded(
     address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    uint256 dripRatePerSecond
+    address indexed dripManager
   );
 
-  /// @notice Emitted when a balance drip is deactivated
-  event BalanceDripDeactivated(
+  event SourceDripManagerRemoved(
     address indexed source,
-    address indexed measure,
-    address indexed dripToken
-  );
-
-  /// @notice Emitted when a balance drip rate is updated
-  event BalanceDripRateSet(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    uint256 dripRatePerSecond
-  );
-
-  /// @notice Emitted when a balance drip drips tokens
-  event BalanceDripDripped(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    address user,
-    uint256 amount
+    address indexed dripManager
   );
 
   event DripTokenDripped(
     address indexed dripToken,
     address indexed user,
-    uint256 amount
-  );
-
-  /// @notice Emitted when a volue drip drips tokens
-  event VolumeDripDripped(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    bool isReferral,
-    address user,
     uint256 amount
   );
 
@@ -79,67 +48,6 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     address indexed dripToken,
     address indexed user,
     uint256 amount
-  );
-
-  /// @notice Emitted when a volume drip is activated
-  event VolumeDripActivated(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    bool isReferral,
-    uint256 periodSeconds,
-    uint256 dripAmount
-  );
-
-  /// @notice Emitted when a new volume drip period has started
-  event VolumeDripPeriodStarted(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    bool isReferral,
-    uint32 period,
-    uint256 dripAmount,
-    uint256 endTime
-  );
-
-  /// @notice Emitted when a volume drip period has ended
-  event VolumeDripPeriodEnded(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    bool isReferral,
-    uint32 period,
-    uint256 totalSupply
-  );
-
-  /// @notice Emitted when a user deposit triggers a volume drip update
-  event VolumeDripDeposited(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    bool isReferral,
-    address user,
-    uint256 amount,
-    uint256 balance,
-    uint256 accrued
-  );
-
-  /// @notice Emitted when a volume drip is updated
-  event VolumeDripSet(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    bool isReferral,
-    uint256 periodSeconds,
-    uint256 dripAmount
-  );
-
-  /// @notice Emitted when a volume drip is deactivated.
-  event VolumeDripDeactivated(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    bool isReferral
   );
 
   /// @notice Convenience struct used when updating drips
@@ -176,320 +84,11 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     emit ReserveRateMantissaSet(_reserveRateMantissa);
   }
 
-  /// @notice Activates a balance drip.  Only callable by the owner.
-  /// @param source The balance drip "source"; i.e. a Prize Pool address.
-  /// @param measure The ERC20 token whose balances determines user's share of the drip rate.
-  /// @param dripToken The token that is dripped to users.
-  /// @param dripRatePerSecond The amount of drip tokens that are awarded each second to the total supply of measure.
-  function activateBalanceDrip(address source, address measure, address dripToken, uint256 dripRatePerSecond) external onlyOwner {
-    balanceDrips[source].activateDrip(measure, dripToken, dripRatePerSecond, _currentTime().toUint32());
-
-    emit BalanceDripActivated(
-      source,
-      measure,
-      dripToken,
-      dripRatePerSecond
-    );
-  }
-
-  /// @notice Deactivates a balance drip.  Only callable by the owner.
-  /// @param source The balance drip "source"; i.e. a Prize Pool address.
-  /// @param measure The ERC20 token whose balances determines user's share of the drip rate.
-  /// @param dripToken The token that is dripped to users.
-  /// @param prevDripToken The previous drip token in the balance drip list.  If the dripToken is the first address, then the previous address is the SENTINEL address: 0x0000000000000000000000000000000000000001
-  function deactivateBalanceDrip(address source, address measure, address dripToken, address prevDripToken) external onlyOwner {
-    balanceDrips[source].deactivateDrip(measure, dripToken, prevDripToken, _currentTime().toUint32());
-
-    emit BalanceDripDeactivated(source, measure, dripToken);
-  }
-
-  /// @notice Returns the state of a balance drip.
-  /// @param source The balance drip "source"; i.e. Prize Pool
-  /// @param measure The token that measure's a users share of the drip
-  /// @param dripToken The token that is being dripped to users
-  /// @return dripRatePerSecond The current drip rate of the balance drip.
-  /// @return exchangeRateMantissa The current exchange rate from measure to dripTokens
-  /// @return timestamp The timestamp at which the balance drip was last updated.
-  function getBalanceDrip(
-    address source,
-    address measure,
-    address dripToken
-  )
-    external
-    view
-    returns (
-      uint256 dripRatePerSecond,
-      uint128 exchangeRateMantissa,
-      uint32 timestamp
-    )
-  {
-    BalanceDrip.State storage balanceDrip = balanceDrips[source].getDrip(measure, dripToken);
-    dripRatePerSecond = balanceDrip.dripRatePerSecond;
-    exchangeRateMantissa = balanceDrip.exchangeRateMantissa;
-    timestamp = balanceDrip.timestamp;
-  }
-
-  /// @notice Sets the drip rate for a balance drip.  The drip rate is the number of drip tokens given to the entire supply of measure tokens.  Only callable by the owner.
-  /// @param source The balance drip "source"; i.e. Prize Pool
-  /// @param measure The token to use to measure a user's share of the drip rate
-  /// @param dripToken The token that is dripped to the user
-  /// @param dripRatePerSecond The new drip rate per second
-  function setBalanceDripRate(address source, address measure, address dripToken, uint256 dripRatePerSecond) external onlyOwner {
-    balanceDrips[source].setDripRate(measure, dripToken, dripRatePerSecond, _currentTime().toUint32());
-
-    emit BalanceDripRateSet(
-      source,
-      measure,
-      dripToken,
-      dripRatePerSecond
-    );
-  }
-
-  /// @notice Activates a volume drip.  Volume drips distribute tokens to users based on their share of the activity within a period.
-  /// @param source The Prize Pool for which to bind to
-  /// @param measure The Prize Pool controlled token whose volume should be measured
-  /// @param dripToken The token that is being disbursed
-  /// @param isReferral Whether this volume drip is for referrals
-  /// @param periodSeconds The period of the volume drip, in seconds
-  /// @param dripAmount The amount of dripTokens disbursed each period.
-  /// @param endTime The time at which the first period ends.
-  function activateVolumeDrip(
-    address source,
-    address measure,
-    address dripToken,
-    bool isReferral,
-    uint32 periodSeconds,
-    uint112 dripAmount,
-    uint32 endTime
-  )
-    external
-    onlyOwner
-  {
-    uint32 period;
-
-    if (isReferral) {
-      period = referralVolumeDrips[source].activate(measure, dripToken, periodSeconds, dripAmount, endTime);
-    } else {
-      period = volumeDrips[source].activate(measure, dripToken, periodSeconds, dripAmount, endTime);
-    }
-
-    emit VolumeDripActivated(
-      source,
-      measure,
-      dripToken,
-      isReferral,
-      periodSeconds,
-      dripAmount
-    );
-
-    emit VolumeDripPeriodStarted(
-      source,
-      measure,
-      dripToken,
-      isReferral,
-      period,
-      dripAmount,
-      endTime
-    );
-  }
-
-  /// @notice Deactivates a volume drip.  Volume drips distribute tokens to users based on their share of the activity within a period.
-  /// @param source The Prize Pool for which to bind to
-  /// @param measure The Prize Pool controlled token whose volume should be measured
-  /// @param dripToken The token that is being disbursed
-  /// @param isReferral Whether this volume drip is for referrals
-  /// @param prevDripToken The previous drip token in the volume drip list.  Is different for referrals vs non-referral volume drips.
-  function deactivateVolumeDrip(
-    address source,
-    address measure,
-    address dripToken,
-    bool isReferral,
-    address prevDripToken
-  )
-    external
-    onlyOwner
-  {
-    if (isReferral) {
-      referralVolumeDrips[source].deactivate(measure, dripToken, prevDripToken);
-    } else {
-      volumeDrips[source].deactivate(measure, dripToken, prevDripToken);
-    }
-
-    emit VolumeDripDeactivated(
-      source,
-      measure,
-      dripToken,
-      isReferral
-    );
-  }
-
-  /// @notice Sets the parameters for the *next* volume drip period.  The source, measure, dripToken and isReferral combined are used to uniquely identify a volume drip.  Only callable by the owner.
-  /// @param source The Prize Pool of the volume drip
-  /// @param measure The token whose volume is being measured
-  /// @param dripToken The token that is being disbursed
-  /// @param isReferral Whether this volume drip is a referral
-  /// @param periodSeconds The length to use for the next period
-  /// @param dripAmount The amount of tokens to drip for the next period
-  function setVolumeDrip(
-    address source,
-    address measure,
-    address dripToken,
-    bool isReferral,
-    uint32 periodSeconds,
-    uint112 dripAmount
-  )
-    external
-    onlyOwner
-  {
-    if (isReferral) {
-      referralVolumeDrips[source].set(measure, dripToken, periodSeconds, dripAmount);
-    } else {
-      volumeDrips[source].set(measure, dripToken, periodSeconds, dripAmount);
-    }
-
-    emit VolumeDripSet(
-      source,
-      measure,
-      dripToken,
-      isReferral,
-      periodSeconds,
-      dripAmount
-    );
-  }
-
-  function getVolumeDrip(
-    address source,
-    address measure,
-    address dripToken,
-    bool isReferral
-  )
-    external
-    view
-    returns (
-      uint256 periodSeconds,
-      uint256 dripAmount,
-      uint256 periodCount
-    )
-  {
-    VolumeDrip.State memory drip;
-
-    if (isReferral) {
-      drip = referralVolumeDrips[source].volumeDrips[measure][dripToken];
-    } else {
-      drip = volumeDrips[source].volumeDrips[measure][dripToken];
-    }
-
-    return (
-      drip.periodSeconds,
-      drip.dripAmount,
-      drip.periodCount
-    );
-  }
-
-  function isVolumeDripActive(
-    address source,
-    address measure,
-    address dripToken,
-    bool isReferral
-  )
-    external
-    view
-    returns (bool)
-  {
-    if (isReferral) {
-      return referralVolumeDrips[source].isActive(measure, dripToken);
-    } else {
-      return volumeDrips[source].isActive(measure, dripToken);
-    }
-  }
-
-  function getVolumeDripPeriod(
-    address source,
-    address measure,
-    address dripToken,
-    bool isReferral,
-    uint16 period
-  )
-    external
-    view
-    returns (
-      uint112 totalSupply,
-      uint112 dripAmount,
-      uint32 endTime
-    )
-  {
-    VolumeDrip.Period memory periodState;
-
-    if (isReferral) {
-      periodState = referralVolumeDrips[source].volumeDrips[measure][dripToken].periods[period];
-    } else {
-      periodState = volumeDrips[source].volumeDrips[measure][dripToken].periods[period];
-    }
-
-    return (
-      periodState.totalSupply,
-      periodState.dripAmount,
-      periodState.endTime
-    );
-  }
-
-  /// @notice Records a deposit for a volume drip
-  /// @param manager The VolumeDripManager containing the drips that need to be iterated through.
-  /// @param isReferral Whether the passed manager contains referral volume drip
-  /// @param measure The token that was deposited
-  /// @param user The user that deposited measure tokens
-  /// @param amount The amount that the user deposited.
-  function depositVolumeDrip(
-    address source,
-    VolumeDripManager.State storage manager,
-    bool isReferral,
-    address measure,
-    address user,
-    uint256 amount
-  )
-    internal
-  {
-    uint256 currentTime = _currentTime();
-    address currentDripToken = manager.activeVolumeDrips[measure].start();
-    while (currentDripToken != address(0) && currentDripToken != manager.activeVolumeDrips[measure].end()) {
-      VolumeDrip.State storage dripState = manager.volumeDrips[measure][currentDripToken];
-      (uint256 newTokens, bool isNewPeriod) = dripState.mint(
-        user,
-        amount,
-        currentTime
-      );
-
-      if (newTokens > 0) {
-        _addDripBalance(currentDripToken, user, newTokens);
-        emit VolumeDripDripped(source, measure, currentDripToken, isReferral, user, newTokens);
-      }
-
-      if (isNewPeriod) {
-        uint16 lastPeriod = uint256(dripState.periodCount).sub(1).toUint16();
-        emit VolumeDripPeriodEnded(
-          source,
-          measure,
-          currentDripToken,
-          isReferral,
-          lastPeriod,
-          dripState.periods[lastPeriod].totalSupply
-        );
-        emit VolumeDripPeriodStarted(
-          source,
-          measure,
-          currentDripToken,
-          isReferral,
-          dripState.periodCount,
-          dripState.periods[dripState.periodCount].dripAmount,
-          dripState.periods[dripState.periodCount].endTime
-        );
-      }
-
-      currentDripToken = manager.activeVolumeDrips[measure].next(currentDripToken);
-    }
-  }
-
   function _addDripBalance(address dripToken, address user, uint256 amount) internal {
+    if (amount == 0) {
+      return;
+    }
+
     dripTokenBalances[dripToken][user] = dripTokenBalances[dripToken][user].add(amount);
 
     emit DripTokenDripped(dripToken, user, amount);
@@ -516,6 +115,20 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     emit DripTokenClaimed(sender, user, dripToken, amount);
   }
 
+  function addSourceDripManager(address source, address dripManager) external onlyOwner {
+    sourceDripManagers[source].addAddress(dripManager);
+
+    emit SourceDripManagerAdded(source, dripManager);
+  }
+
+  function removeSourceDripManager(address source, address dripManager, address prevDripManager) external onlyOwner {
+    sourceDripManagers[source].removeAddress(prevDripManager, dripManager);
+
+    emit SourceDripManagerRemoved(source, dripManager);
+  }
+
+
+
   /// @notice Updates all drips. Drip may need to be "poked" from time-to-time if there is little transaction activity.  This call will
   /// poke all of the drips and update the claim balances for the given user.
   /// @dev This function will be useful to check the *current* claim balances for a user.  Just need to run this as a constant function to see the latest balances.
@@ -532,45 +145,27 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     public
     returns (DripTokenBalance[] memory)
   {
-    uint256 currentTime = _currentTime();
+    uint256 pairIndex;
+    for (pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
+      UpdatePair memory pair = pairs[pairIndex];
 
-    uint256 i;
-    for (i = 0; i < pairs.length; i++) {
-      UpdatePair memory pair = pairs[i];
-      _updateBalanceDrips(
-        pair.source,
-        balanceDrips[pair.source],
-        pair.measure,
-        user,
-        IERC20(pair.measure).balanceOf(user),
-        IERC20(pair.measure).totalSupply(),
-        currentTime
-      );
-
-      depositVolumeDrip(
-        pair.source,
-        volumeDrips[pair.source],
-        false,
-        pair.measure,
-        user,
-        0
-      );
-
-      depositVolumeDrip(
-        pair.source,
-        referralVolumeDrips[pair.source],
-        true,
-        pair.measure,
-        user,
-        0
-      );
+      address currentDripManager = sourceDripManagers[pair.source].start();
+      while (currentDripManager != sourceDripManagers[pair.source].end()) {
+        DripManager.DrippedToken[] memory drips = DripManager(currentDripManager).update(
+          user,
+          pair.measure
+        );
+        for (uint256 dripIndex = 0; dripIndex < drips.length; dripIndex++) {
+          _addDripBalance(drips[dripIndex].token, drips[dripIndex].user, drips[dripIndex].amount);
+        }
+      }
     }
 
     DripTokenBalance[] memory balances = new DripTokenBalance[](dripTokens.length);
-    for (i = 0; i < dripTokens.length; i++) {
-      balances[i] = DripTokenBalance({
-        dripToken: dripTokens[i],
-        balance: dripTokenBalances[dripTokens[i]][user]
+    for (uint256 dripTokenIndex = 0; dripTokenIndex < dripTokens.length; dripTokenIndex++) {
+      balances[dripTokenIndex] = DripTokenBalance({
+        dripToken: dripTokens[dripTokenIndex],
+        balance: dripTokenBalances[dripTokens[dripTokenIndex]][user]
       });
     }
 
@@ -594,40 +189,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     }
   }
 
-  /// @notice Updates the balance drips
-  /// @param self The BalanceDripManager whose drips should be updated
-  /// @param measure The measure token whose balance is changing
-  /// @param user The user whose balance is changing
-  /// @param measureBalance The users last balance of the measure tokens
-  /// @param measureTotalSupply The last total supply of the measure tokens
-  /// @param currentTime The current
-  function _updateBalanceDrips(
-    address source,
-    BalanceDripManager.State storage self,
-    address measure,
-    address user,
-    uint256 measureBalance,
-    uint256 measureTotalSupply,
-    uint256 currentTime
-  ) internal {
-    address currentDripToken = self.activeBalanceDrips[measure].start();
-    while (currentDripToken != address(0) && currentDripToken != self.activeBalanceDrips[measure].end()) {
-      BalanceDrip.State storage dripState = self.balanceDrips[measure][currentDripToken];
-      uint128 newTokens = dripState.drip(
-        user,
-        measureBalance,
-        measureTotalSupply,
-        currentTime
-      );
-      if (newTokens > 0) {
-        _addDripBalance(currentDripToken, user, newTokens);
-        emit BalanceDripDripped(source, measure, currentDripToken, user, newTokens);
-      }
-      currentDripToken = self.activeBalanceDrips[measure].next(currentDripToken);
-    }
-  }
-
-  /// @notice Called by a "source" (i.e. Prize Pool) when a user mints new "measure" tokens.
+  /// @notice Called by a "source" (i.e. Prize Pool) when a user mints new "measure" tokens.  Separate from beforeTokenTransfer so that the referrer can be passed
   /// @param to The user who is minting the tokens
   /// @param amount The amount of tokens they are minting
   /// @param measure The measure token they are minting
@@ -642,38 +204,14 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     override
   {
     address source = _msgSender();
-    uint256 balance = IERC20(measure).balanceOf(to);
-    uint256 totalSupply = IERC20(measure).totalSupply();
-
-    _updateBalanceDrips(
+    _beforeMeasureTokenTransfer(
       source,
-      balanceDrips[source],
-      measure,
+      address(0),
       to,
-      balance,
-      totalSupply,
-      _currentTime()
-    );
-
-    depositVolumeDrip(
-      source,
-      volumeDrips[source],
-      false,
+      amount,
       measure,
-      to,
-      amount
+      referrer
     );
-
-    if (referrer != address(0)) {
-      depositVolumeDrip(
-        source,
-        referralVolumeDrips[source],
-        true,
-        measure,
-        referrer,
-        amount
-      );
-    }
   }
 
   /// @notice Called by a "source" (i.e. Prize Pool) when tokens change hands or are burned
@@ -695,30 +233,38 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
       return;
     }
     address source = _msgSender();
-    uint256 totalSupply = IERC20(measure).totalSupply();
-
-    uint256 fromBalance = IERC20(measure).balanceOf(from);
-    _updateBalanceDrips(
+    _beforeMeasureTokenTransfer(
       source,
-      balanceDrips[source],
-      measure,
       from,
-      fromBalance, // we want the original balance
-      totalSupply,
-      _currentTime()
+      to,
+      amount,
+      measure,
+      address(0)
     );
+  }
 
-    if (to != address(0)) {
-      uint256 toBalance = IERC20(measure).balanceOf(to);
-      _updateBalanceDrips(
-        source,
-        balanceDrips[source],
-        measure,
+  function _beforeMeasureTokenTransfer(
+    address source,
+    address from,
+    address to,
+    uint256 amount,
+    address measure,
+    address referrer
+  )
+    internal
+  {
+    address currentDripManager = sourceDripManagers[source].start();
+    while (currentDripManager != sourceDripManagers[source].end()) {
+      DripManager.DrippedToken[] memory drips = DripManager(currentDripManager).beforeMeasureTokenTransfer(
+        from,
         to,
-        toBalance, // we want the original balance
-        totalSupply,
-        _currentTime()
+        amount,
+        measure,
+        referrer
       );
+      for (uint256 i = 0; i < drips.length; i++) {
+        _addDripBalance(drips[i].token, drips[i].user, drips[i].amount);
+      }
     }
   }
 
