@@ -18,6 +18,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   using VolumeDrip for VolumeDrip.State;
   using BalanceDripManager for BalanceDripManager.State;
   using VolumeDripManager for VolumeDripManager.State;
+  using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
   /// @notice Emitted when the reserve rate mantissa is changed
   event ReserveRateMantissaSet(
@@ -449,19 +450,19 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     internal
   {
     uint256 currentTime = _currentTime();
-    address currentDripToken = manager.activeVolumeDrips[measure].addressMap[MappedSinglyLinkedList.SENTINAL];
-    while (currentDripToken != address(0) && currentDripToken != MappedSinglyLinkedList.SENTINAL) {
+    address currentDripToken = manager.activeVolumeDrips[measure].start();
+    while (currentDripToken != address(0) && currentDripToken != manager.activeVolumeDrips[measure].end()) {
       VolumeDrip.State storage dripState = manager.volumeDrips[measure][currentDripToken];
       (uint256 newTokens, bool isNewPeriod) = dripState.mint(
         user,
         amount,
         currentTime
       );
+
       if (newTokens > 0) {
         _addDripBalance(currentDripToken, user, newTokens);
         emit VolumeDripDripped(source, measure, currentDripToken, isReferral, user, newTokens);
       }
-      currentDripToken = manager.activeVolumeDrips[measure].addressMap[currentDripToken];
 
       if (isNewPeriod) {
         uint16 lastPeriod = uint256(dripState.periodCount).sub(1).toUint16();
@@ -483,6 +484,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
           dripState.periods[dripState.periodCount].endTime
         );
       }
+
+      currentDripToken = manager.activeVolumeDrips[measure].next(currentDripToken);
     }
   }
 
@@ -607,8 +610,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 measureTotalSupply,
     uint256 currentTime
   ) internal {
-    address currentDripToken = self.activeBalanceDrips[measure].addressMap[MappedSinglyLinkedList.SENTINAL];
-    while (currentDripToken != address(0) && currentDripToken != MappedSinglyLinkedList.SENTINAL) {
+    address currentDripToken = self.activeBalanceDrips[measure].start();
+    while (currentDripToken != address(0) && currentDripToken != self.activeBalanceDrips[measure].end()) {
       BalanceDrip.State storage dripState = self.balanceDrips[measure][currentDripToken];
       uint128 newTokens = dripState.drip(
         user,
@@ -620,7 +623,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
         _addDripBalance(currentDripToken, user, newTokens);
         emit BalanceDripDripped(source, measure, currentDripToken, user, newTokens);
       }
-      currentDripToken = self.activeBalanceDrips[measure].addressMap[currentDripToken];
+      currentDripToken = self.activeBalanceDrips[measure].next(currentDripToken);
     }
   }
 

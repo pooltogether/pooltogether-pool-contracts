@@ -36,12 +36,9 @@ library VolumeDripManager {
   {
     require(!self.activeVolumeDrips[measure].contains(dripToken), "VolumeDripManager/drip-active");
     if (self.activeVolumeDrips[measure].count == 0) {
-      address[] memory single = new address[](1);
-      single[0] = dripToken;
-      self.activeVolumeDrips[measure].initialize(single);
-    } else {
-      self.activeVolumeDrips[measure].addAddress(dripToken);
+      self.activeVolumeDrips[measure].initialize();
     }
+    self.activeVolumeDrips[measure].addAddress(dripToken);
     self.volumeDrips[measure][dripToken].setNewPeriod(periodSeconds, dripAmount, endTime);
 
     return self.volumeDrips[measure][dripToken].periodCount;
