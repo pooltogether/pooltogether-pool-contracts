@@ -56,6 +56,42 @@ describe('CompoundPrizePool', function() {
     await ticket.mock.controller.returns(prizePool.address)
   })
 
+  describe('initialize()', () => {
+    it('should fire the events', async () => {
+      let tx = prizePool.initializeAll(
+        FORWARDER,
+        prizeStrategy.address,
+        comptroller.address,
+        [ticket.address],
+        poolMaxExitFee,
+        poolMaxTimelockDuration,
+        cToken.address
+      )
+
+      await expect(tx)
+        .to.emit(prizePool, 'Initialized')
+        .withArgs(
+          FORWARDER,
+          comptroller.address,
+          poolMaxExitFee,
+          poolMaxTimelockDuration
+        )
+
+      await expect(tx)
+        .to.emit(prizePool, 'PrizeStrategySet')
+        .withArgs(
+          prizeStrategy.address
+        )
+
+      await expect(tx)
+        .to.emit(prizePool, 'ControlledTokenAdded')
+        .withArgs(
+          ticket.address
+        )
+
+    })
+  })
+
   describe('with a mocked prize pool', () => {
     beforeEach(async () => {
       await prizePool.initializeAll(
@@ -108,8 +144,10 @@ describe('CompoundPrizePool', function() {
         const prizePool2 = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
 
         debug('testing initialization of secondary prizeStrategy...')
+        
         initArgs = _initArgs.slice(); initArgs[0] = AddressZero
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/forwarder-not-zero')
+        
         initArgs = _initArgs.slice(); initArgs[1] = AddressZero
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/prizeStrategy-not-zero')
 
