@@ -122,6 +122,7 @@ describe('CompoundPrizePoolBuilder', () => {
       expect(await sponsorship.name()).to.equal(config.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(config.sponsorshipSymbol)
 
+      expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorship.address)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(config.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(config.maxTimelockDuration)
       expect(await prizePool.creditRateOf(ticket.address)).to.deep.equal([config.exitFeeMantissa, config.creditRateMantissa])

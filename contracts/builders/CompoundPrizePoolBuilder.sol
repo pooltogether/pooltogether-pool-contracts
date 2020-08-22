@@ -100,6 +100,8 @@ contract CompoundPrizePoolBuilder {
 
     prizePool.setCreditRateOf(tokens[0], config.creditRateMantissa.toUint128(), config.exitFeeMantissa.toUint128());
 
+    prizePool.setReserveFeeControlledToken(tokens[1]);
+
     prizePool.transferOwnership(msg.sender);
 
     prizeStrategy.initialize(
