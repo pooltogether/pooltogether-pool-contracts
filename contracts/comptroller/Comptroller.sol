@@ -53,7 +53,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     address indexed measure,
     address indexed dripToken,
     address user,
-    uint256 amount
+    uint256 userExchangeRate
   );
 
   event DripTokenDripped(
@@ -585,9 +585,9 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   )
     external
   {
-    DripTokenBalance[] memory dripTokenBalances = updateDrips(pairs, user, dripTokens);
-    for (uint256 i = 0; i < dripTokenBalances.length; i++) {
-      claimDrip(user, dripTokenBalances[i].dripToken, dripTokenBalances[i].balance);
+    DripTokenBalance[] memory _dripTokenBalances = updateDrips(pairs, user, dripTokens);
+    for (uint256 i = 0; i < _dripTokenBalances.length; i++) {
+      claimDrip(user, _dripTokenBalances[i].dripToken, _dripTokenBalances[i].balance);
     }
   }
 
@@ -617,8 +617,9 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
         currentTime
       );
       if (newTokens > 0) {
+        uint256 userLastExchangeRateMantissa = dripState.userStates[user].lastExchangeRateMantissa;
         _addDripBalance(currentDripToken, user, newTokens);
-        emit BalanceDripDripped(source, measure, currentDripToken, user, newTokens);
+        emit BalanceDripDripped(source, measure, currentDripToken, user, userLastExchangeRateMantissa);
       }
       currentDripToken = self.activeBalanceDrips[measure].addressMap[currentDripToken];
     }
