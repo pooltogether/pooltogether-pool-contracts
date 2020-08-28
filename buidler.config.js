@@ -17,7 +17,10 @@ task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
   return input;
 })
 
-const testnetAdmin = '0x11BA3d40F7549485D5B821217E3f4474Ae90FeCd'
+const testnetAdmin = '0x11BA3d40F7549485D5B821217E3f4474Ae90FeCd' // Account 1
+const testnetUser1 = '0x573bd3868b7672332c4D22076f55Cb0b597eb5Fd' // Account 3
+const testnetUser2 = '0x7Cfc5a12506d92F29D52EC7B8d1148f46e9296ED' // Account 4
+const testnetUser3 = '0x50D6d6195b102f9b58A29a57E3D71822881033a5' // Account 5
 
 const config = {
   solc: {
@@ -57,21 +60,39 @@ const config = {
       default: 0
     },
     trustedForwarder: {
-      42: '0x6453D37248Ab2C16eBd1A8f782a2CBC65860E60B',
+      3: '0xcC87aa60a6457D9606995C4E7E9c38A2b627Da88',
       4: '0xd6cC1FEAB6E1DbDc3c0a6F2798c8089c72F78E64',
-      3: '0xcC87aa60a6457D9606995C4E7E9c38A2b627Da88'
+      42: '0x6453D37248Ab2C16eBd1A8f782a2CBC65860E60B',
     },
     rng: {
-      42: RNGBlockhashKovan.address,
+      3: RNGBlockhashRopsten.address,
       4: RNGBlockhashRinkeby.address,
-      3: RNGBlockhashRopsten.address
+      42: RNGBlockhashKovan.address,
     },
     adminAccount: {
       default: testnetAdmin,
-      42: testnetAdmin,
+      3: testnetAdmin,
       4: testnetAdmin,
-      3: testnetAdmin
-    }
+      42: testnetAdmin,
+    },
+    testnetUser1: {
+      default: testnetUser1,
+      3: testnetUser1,
+      4: testnetUser1,
+      42: testnetUser1,
+    },
+    testnetUser2: {
+      default: testnetUser2,
+      3: testnetUser2,
+      4: testnetUser2,
+      42: testnetUser2,
+    },
+    testnetUser3: {
+      default: testnetUser3,
+      3: testnetUser3,
+      4: testnetUser3,
+      42: testnetUser3,
+    },
   }
 };
 
