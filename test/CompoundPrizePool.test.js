@@ -144,10 +144,10 @@ describe('CompoundPrizePool', function() {
         const prizePool2 = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
 
         debug('testing initialization of secondary prizeStrategy...')
-        
+
         initArgs = _initArgs.slice(); initArgs[0] = AddressZero
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/forwarder-not-zero')
-        
+
         initArgs = _initArgs.slice(); initArgs[1] = AddressZero
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/prizeStrategy-not-zero')
 
@@ -198,11 +198,11 @@ describe('CompoundPrizePool', function() {
         // Test depositTo
         await expect(prizePool.depositTo(wallet2._address, amount, ticket.address, AddressZero))
           .to.be.revertedWith("CompoundPrizePool/mint-failed")
-        
+
       })
     })
 
-    describe('awardBalance()', () => { 
+    describe('awardBalance()', () => {
       it('should return the yield less the total token supply', async () => {
         await comptroller.mock.reserveRateMantissa.returns(0)
         await ticket.mock.totalSupply.returns(toWei('100'))
@@ -214,7 +214,31 @@ describe('CompoundPrizePool', function() {
         await comptroller.mock.reserveRateMantissa.returns(toWei('0.5'))
         await ticket.mock.totalSupply.returns(toWei('100'))
         await cToken.mock.balanceOfUnderlying.returns(toWei('110'))
+        await prizePool.setReserveFeeControlledToken(ticket.address)
         expect(await call(prizePool, 'awardBalance')).to.equal(toWei('5'))
+      })
+    })
+
+    describe('calculateReserveFee()', () => {
+      it('should return zero when no comptroller is set', async () => {
+        await prizePool.emergencyShutdown()
+        expect(await prizePool.calculateReserveFee(toWei('1'))).to.equal(toWei('0'))
+      })
+
+      it('should return zero when no reserve token is set', async () => {
+        await comptroller.mock.reserveRateMantissa.returns(toWei('0.5'))
+        expect(await prizePool.calculateReserveFee(toWei('1'))).to.equal(toWei('0'))
+      })
+
+      it('should return zero when no reserve fee is set', async () => {
+        await comptroller.mock.reserveRateMantissa.returns(toWei('0'))
+        expect(await prizePool.calculateReserveFee(toWei('1'))).to.equal(toWei('0'))
+      })
+
+      it('should calculate an accurate reserve fee on a given amount', async () => {
+        await comptroller.mock.reserveRateMantissa.returns(toWei('0.5'))
+        await prizePool.setReserveFeeControlledToken(ticket.address)
+        expect(await prizePool.calculateReserveFee(toWei('1'))).to.equal(toWei('0.5'))
       })
     })
 
