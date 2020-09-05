@@ -112,18 +112,6 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 totalSupply
   );
 
-  /// @notice Emitted when a user deposit triggers a volume drip update
-  event VolumeDripDeposited(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    bool isReferral,
-    address user,
-    uint256 amount,
-    uint256 balance,
-    uint256 accrued
-  );
-
   /// @notice Emitted when a volume drip is updated
   event VolumeDripSet(
     address indexed source,
@@ -588,9 +576,9 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   )
     external
   {
-    DripTokenBalance[] memory dripTokenBalances = updateDrips(pairs, user, dripTokens);
-    for (uint256 i = 0; i < dripTokenBalances.length; i++) {
-      claimDrip(user, dripTokenBalances[i].dripToken, dripTokenBalances[i].balance);
+    DripTokenBalance[] memory _dripTokenBalances = updateDrips(pairs, user, dripTokens);
+    for (uint256 i = 0; i < _dripTokenBalances.length; i++) {
+      claimDrip(user, _dripTokenBalances[i].dripToken, _dripTokenBalances[i].balance);
     }
   }
 

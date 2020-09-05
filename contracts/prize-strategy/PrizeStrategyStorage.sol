@@ -19,7 +19,6 @@ contract PrizeStrategyStorage {
 
   // Contract Interfaces
   PrizePool public prizePool;
-  ComptrollerInterface public comptroller;
   TicketInterface public ticket;
   IERC20 public sponsorship;
   RNGInterface public rng;
