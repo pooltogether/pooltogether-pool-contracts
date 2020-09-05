@@ -33,21 +33,21 @@ async function deployTestPool({
   debug('beforeEach deploy rng, forwarder etc...')
 
   let forwarder = await deployContract(wallet, TrustedForwarder, [], overrides)
-  let token = await deployContract(wallet, ERC20Mintable, [], overrides)
+  let token = await deployContract(wallet, ERC20Mintable, ['Test Token', 'TEST'], overrides)
   let cToken = await deployContract(wallet, CTokenMock, [
     token.address, ethers.utils.parseEther('0.01')
   ], overrides)
 
   debug('Deploying Governor...')
 
-  let governanceToken = await deployContract(wallet, ERC20Mintable, [], overrides)
+  let governanceToken = await deployContract(wallet, ERC20Mintable, ['Governance Token', 'GOV'], overrides)
 
   let comptroller = await deployContract(wallet, ComptrollerHarness, [], overrides)
   await comptroller.initialize(wallet._address)
 
   debug('Deploying Mock RNG service...')
 
-  let linkToken = await deployContract(wallet, ERC20Mintable, [], overrides)
+  let linkToken = await deployContract(wallet, ERC20Mintable, ['Link Token', 'LINK'], overrides)
   let rngServiceMock = await deployContract(wallet, RNGServiceMock, [], overrides)
   await rngServiceMock.setRequestFee(linkToken.address, toWei('1'))
 
