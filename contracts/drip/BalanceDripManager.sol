@@ -39,10 +39,12 @@ library BalanceDripManager {
     self.balanceDrips[measure][dripToken].setDripRate(IERC20(measure).totalSupply(), dripRatePerSecond, currentTime);
   }
 
-  /// @notice Deactivates an active balance drip.  The balance drip is removed from the active balance drips list.  The drip rate for the balance drip will be set to zero to ensure it's "frozen".
+  /// @notice Deactivates an active balance drip.  The balance drip is removed from the active balance drips list.
+  /// The drip rate for the balance drip will be set to zero to ensure it's "frozen".
   /// @param measure The measure token
   /// @param dripToken The drip token
-  /// @param prevDripToken The previous drip token previous in the list.  If no previous, then pass the SENTINEL address: 0x0000000000000000000000000000000000000001
+  /// @param prevDripToken The previous drip token previous in the list.
+  /// If no previous, then pass the SENTINEL address: 0x0000000000000000000000000000000000000001
   /// @param currentTime The current time
   function deactivateDrip(
     State storage self,
