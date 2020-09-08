@@ -199,9 +199,39 @@ describe('CompoundPrizePool', function() {
         await expect(prizePool.depositTo(wallet2._address, amount, ticket.address, AddressZero))
           .to.be.revertedWith("CompoundPrizePool/mint-failed")
 
+<<<<<<< HEAD
       })
     })
 
+=======
+      })
+
+      it('should revert when deposit exceeds liquidity cap', async () => {
+        const amount = toWei('1')
+        const liquidityCap = toWei('1000')
+
+        await ticket.mock.totalSupply.returns(liquidityCap)
+        await prizePool.setLiquidityCap(liquidityCap)
+
+        await expect(prizePool.depositTo(wallet2._address, amount, ticket.address, AddressZero))
+          .to.be.revertedWith("PrizePool/exceeds-liquidity-cap")
+      })
+    })
+
+    describe('timelockDepositTo', () => {
+      it('should revert when deposit exceeds liquidity cap', async () => {
+        const amount = toWei('1')
+        const liquidityCap = toWei('1000')
+
+        await ticket.mock.totalSupply.returns(liquidityCap)
+        await prizePool.setLiquidityCap(liquidityCap)
+
+        await expect(prizePool.timelockDepositTo(wallet2._address, amount, ticket.address))
+          .to.be.revertedWith("PrizePool/exceeds-liquidity-cap")
+      })
+    })
+
+>>>>>>> Add governance controlled liquidity cap to prize pool
     describe('awardBalance()', () => {
       it('should return the yield less the total token supply', async () => {
         await comptroller.mock.reserveRateMantissa.returns(0)
@@ -625,6 +655,33 @@ describe('CompoundPrizePool', function() {
       it('should not allow anyone else to call', async () => {
         prizePool2 = prizePool.connect(wallet2)
         await expect(prizePool2.emergencyShutdown()).to.be.revertedWith('Ownable: caller is not the owner')
+      })
+    })
+
+    describe('setLiquidityCap', () => {
+      it('should allow the owner to set the liquidity cap', async () => {
+        const liquidityCap = toWei('1000')
+
+        await ticket.mock.totalSupply.returns('0')
+
+        await expect(prizePool.setLiquidityCap(liquidityCap))
+          .to.emit(prizePool, 'LiquidityCapSet')
+          .withArgs(liquidityCap)
+        expect(await prizePool.liquidityCap()).to.equal(liquidityCap)
+      })
+
+      it('should revert when the current supply exceeds the new liquidity cap', async () => {
+        const liquidityCap = toWei('999')
+
+        await ticket.mock.totalSupply.returns(toWei('1000'))
+
+        await expect(prizePool.setLiquidityCap(liquidityCap))
+          .to.be.revertedWith("PrizePool/supply-exceeds-cap")
+      })
+
+      it('should not allow anyone else to call', async () => {
+        prizePool2 = prizePool.connect(wallet2)
+        await expect(prizePool2.setLiquidityCap(toWei('1000'))).to.be.revertedWith('Ownable: caller is not the owner')
       })
     })
   })
