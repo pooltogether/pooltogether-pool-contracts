@@ -195,6 +195,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     trustedForwarder = _trustedForwarder;
     maxExitFeeMantissa = _maxExitFeeMantissa;
     maxTimelockDuration = _maxTimelockDuration;
+    liquidityCap = uint256(-1);
 
     emit Initialized(
       _trustedForwarder,
@@ -840,7 +841,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @notice Allows the Governor to set a cap on the amount of liquidity that he pool can hold
   /// @param _liquidityCap The new liquidity cap for the prize pool
   function setLiquidityCap(uint256 _liquidityCap) external onlyOwner {
-    require(_liquidityCap == 0 || _tokenTotalSupply() <= _liquidityCap, "PrizePool/supply-exceeds-cap");
     liquidityCap = _liquidityCap;
     emit LiquidityCapSet(_liquidityCap);
   }
@@ -937,9 +937,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param _amount The amount of liquidity to be added to the Prize Pool
   /// @return True if the Prize Pool can receive the specified amount of liquidity
   function _canAddLiquidity(uint256 _amount) internal view returns (bool) {
-    if (liquidityCap == 0) {
-      return true;
-    }
     uint256 tokenTotalSupply = _tokenTotalSupply();
     return (tokenTotalSupply.add(_amount) <= liquidityCap);
   }
