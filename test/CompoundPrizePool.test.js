@@ -226,11 +226,37 @@ describe('CompoundPrizePool', function() {
       })
     })
 
-    describe('awardBalance()', () => {
-      it('should return the yield less the total token supply', async () => {
+    describe('captureAwardBalance()', () => {
+      it('should track the yield less the total token supply', async () => {
         await ticket.mock.totalSupply.returns(toWei('100'))
         await cToken.mock.balanceOfUnderlying.returns(toWei('110'))
-        expect(await call(prizePool, 'awardBalance')).to.equal(toWei('10'))
+        await comptroller.mock.reserveRateMantissa.returns('0')
+
+        await expect(prizePool.captureAwardBalance()).to.not.emit(prizePool, 'ReserveFeeCaptured');
+        expect(await prizePool.awardBalance()).to.equal(toWei('10'))
+      })
+
+      it('should capture the reserve fees', async () => {
+        const reserveFee = toWei('1')
+
+        await comptroller.mock.reserveRateMantissa.returns(toWei('0.01'))
+        await prizePool.setReserveFeeControlledToken(ticket.address);
+
+        await comptroller.mock.beforeTokenTransfer.withArgs(AddressZero, comptroller.address, reserveFee, wallet._address).returns()
+        await comptroller.mock.beforeTokenMint.withArgs(comptroller.address, reserveFee, ticket.address, AddressZero).returns()
+
+        await prizeStrategy.mock.beforeTokenTransfer.withArgs(AddressZero, comptroller.address, reserveFee, wallet._address).returns()
+        await prizeStrategy.mock.beforeTokenMint.withArgs(comptroller.address, reserveFee, ticket.address, AddressZero).returns()
+
+        await ticket.mock.totalSupply.returns(toWei('1000'))
+        await ticket.mock.controllerMint.withArgs(comptroller.address, reserveFee).returns()
+        await cToken.mock.balanceOfUnderlying.returns(toWei('1100'))
+
+        await expect(prizePool.captureAwardBalance())
+          .to.emit(prizePool, 'ReserveFeeCaptured')
+          .withArgs(reserveFee)
+
+        expect(await prizePool.awardBalance()).to.equal(toWei('99'))
       })
 
       it('should take the reserve fee into account', async () => {
