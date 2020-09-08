@@ -441,9 +441,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 tokenTotalSupply = _tokenTotalSupply();
     uint256 bal = _balance();
     if (bal > tokenTotalSupply) {
-      uint256 interest = bal.sub(tokenTotalSupply);
-      uint256 reserveFee = calculateReserveFee(interest);
-      return interest.sub(reserveFee);
+      return bal.sub(tokenTotalSupply);
     } else {
       return 0;
     }
@@ -468,14 +466,16 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
     require(amount <= awardBalance(), "PrizePool/award-exceeds-avail");
 
-    _mint(to, amount, controlledToken, address(0));
-
     uint256 reserveFee = calculateReserveFee(amount);
+    uint256 awardAmount = amount.sub(reserveFee);
+
+    _mint(to, awardAmount, controlledToken, address(0));
+
     if (reserveFee > 0) {
       _mint(address(comptroller), reserveFee, reserveFeeControlledToken, address(0));
     }
 
-    uint256 extraCredit = _calculateEarlyExitFee(controlledToken, amount);
+    uint256 extraCredit = _calculateEarlyExitFee(controlledToken, awardAmount);
     _accrueCredit(to, controlledToken, IERC20(controlledToken).balanceOf(to), extraCredit);
 
     emit Awarded(to, controlledToken, amount, reserveFee);

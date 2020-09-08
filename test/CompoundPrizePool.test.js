@@ -199,11 +199,6 @@ describe('CompoundPrizePool', function() {
         await expect(prizePool.depositTo(wallet2._address, amount, ticket.address, AddressZero))
           .to.be.revertedWith("CompoundPrizePool/mint-failed")
 
-<<<<<<< HEAD
-      })
-    })
-
-=======
       })
 
       it('should revert when deposit exceeds liquidity cap', async () => {
@@ -231,10 +226,8 @@ describe('CompoundPrizePool', function() {
       })
     })
 
->>>>>>> Add governance controlled liquidity cap to prize pool
     describe('awardBalance()', () => {
       it('should return the yield less the total token supply', async () => {
-        await comptroller.mock.reserveRateMantissa.returns(0)
         await ticket.mock.totalSupply.returns(toWei('100'))
         await cToken.mock.balanceOfUnderlying.returns(toWei('110'))
         expect(await call(prizePool, 'awardBalance')).to.equal(toWei('10'))
