@@ -52,8 +52,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
   );
 
   event ExternalErc721AwardAdded(
-    address indexed _externalErc721,
-    uint256[] _tokenIds
+    address indexed externalErc721,
+    uint256[] tokenIds
+  );
+
+  event ExternalErc20AwardAdded(
+    address indexed externalErc20
   );
 
   function initialize (
@@ -370,6 +374,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function addExternalErc20Award(address _externalErc20) external onlyOwner {
     require(prizePool.canAwardExternal(_externalErc20), "PrizeStrategy/cannot-award-external");
     externalErc20s.addAddress(_externalErc20);
+    emit ExternalErc20AwardAdded(_externalErc20);
   }
 
   /// @notice Adds an external ERC721 token as an additional prize that can be awarded
