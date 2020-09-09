@@ -9,7 +9,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./PrizeStrategyStorage.sol";
-import "./PrizeStrategyInterface.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../prize-pool/PrizePool.sol";
@@ -22,7 +21,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
                           OwnableUpgradeSafe,
                           RelayRecipient,
                           ReentrancyGuardUpgradeSafe,
-                          PrizeStrategyInterface {
+                          PrizePoolTokenListenerInterface {
 
   using SafeMath for uint256;
   using SafeCast for uint256;
@@ -263,103 +262,24 @@ contract PrizeStrategy is PrizeStrategyStorage,
     }
   }
 
-  /// @notice Called by the prize pool after a deposit has been made.
-  /// @param to The user who deposited collateral
-  /// @param amount The amount of collateral they deposited
-  /// @param controlledToken The type of collateral they deposited
-  function afterDepositTo(
+  /// @notice Called by the PrizePool when minting controlled tokens
+  /// @param to The user who is receiving the tokens.
+  /// @param amount The amount of tokens being minted.
+  /// @param controlledToken The type of collateral that is being minted
+  /// @param referrer The address that referred the mint
+  function beforeTokenMint(
     address to,
     uint256 amount,
     address controlledToken,
-    bytes calldata data
+    address referrer
   )
     external
     override
     onlyPrizePool
-    requireNotLocked
   {
-    _afterDepositTo(to, amount, controlledToken, data);
-  }
-
-  /// @notice Called by the prize pool after a deposit has been made.
-  /// @param to The user who deposited collateral
-  /// @param amount The amount of collateral they deposited
-  /// @param controlledToken The type of collateral they deposited
-  function afterTimelockDepositTo(
-    address,
-    address to,
-    uint256 amount,
-    address controlledToken,
-    bytes calldata
-  )
-    external
-    override
-    onlyPrizePool
-    requireNotLocked
-  {
-    _afterDepositTo(to, amount, controlledToken, "");
-  }
-
-  /// @notice Called by the prize pool after a deposit has been made.
-  /// @param to The user who deposited collateral
-  /// @param amount The amount of collateral they deposited
-  /// @param controlledToken The type of collateral they deposited
-  function _afterDepositTo(address to, uint256 amount, address controlledToken, bytes memory data) internal {
-    uint256 balance = IERC20(controlledToken).balanceOf(to);
-    uint256 totalSupply = IERC20(controlledToken).totalSupply();
-
-    address referrer;
-    if (data.length > 0) {
-      (address ref) = abi.decode(data, (address));
-      referrer = ref;
+    if (controlledToken == address(ticket)) {
+      _requireNotLocked();
     }
-
-    comptroller.afterDepositTo(to, amount, balance, totalSupply, controlledToken, referrer);
-  }
-
-  /// @notice Called by the prize pool after a withdrawal with timelock has been made.
-  /// @param from The user who withdrew
-  /// @param controlledToken The type of collateral that was withdrawn
-  function afterWithdrawWithTimelockFrom(
-    address from,
-    uint256 amount,
-    address controlledToken,
-    bytes calldata
-  )
-    external
-    override
-    onlyPrizePool
-    requireNotLocked
-  {
-    uint256 balance = IERC20(controlledToken).balanceOf(from);
-    comptroller.afterWithdrawFrom(from, amount, balance, IERC20(controlledToken).totalSupply(), controlledToken);
-  }
-
-  /// @notice Called by the prize pool after a user withdraws collateral instantly
-  /// @param from the user who withdrew
-  /// @param controlledToken The type of collateral they withdrew
-  function afterWithdrawInstantlyFrom(
-    address,
-    address from,
-    uint256 amount,
-    address controlledToken,
-    uint256,
-    bytes calldata
-  )
-    external
-    override
-    onlyPrizePool
-    requireNotLocked
-  {
-    uint256 balance = IERC20(controlledToken).balanceOf(from);
-    comptroller.afterWithdrawFrom(from, amount, balance, IERC20(controlledToken).totalSupply(), controlledToken);
-  }
-
-  /// @notice Called by the prize pool after a timelocked withdrawal has been swept
-  /// @param operator The user who swept the funds
-  /// @param from The user whose funds are being swept
-  /// @param amount The amount of funds swept.
-  function afterSweepTimelockedWithdrawal(address operator, address from, uint256 amount) external override {
   }
 
   /// @notice returns the current time.  Used for testing.

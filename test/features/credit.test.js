@@ -39,4 +39,26 @@ describe('Credit Feature', () => {
     await env.setCurrentTime(31)
     await env.expectUserToHaveCredit({ user: 1, credit: 10 }) // 10% credit
   })
+
+  it('should limit a users credit when they transfer tickets', async () => {
+    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.buyTickets({ user: 1, tickets: 100 })
+    await env.setCurrentTime(10)
+    // user 1 has full credit
+    await env.expectUserToHaveCredit({ user: 1, credit: 10 })
+    await env.transferTickets({ user: 1, tickets: 50, to: 2 })
+    // user 1 credit is limited now to *half*
+    await env.expectUserToHaveCredit({ user: 1, credit: 5 })
+    await env.expectUserToHaveCredit({ user: 2, credit: 0 })
+  })
+
+  it('should no longer accrue credit after a full transfer', async () => {
+    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.buyTickets({ user: 1, tickets: 100 })
+    await env.setCurrentTime(10)
+    await env.transferTickets({ user: 1, tickets: 100, to: 2 })
+    await env.expectUserToHaveCredit({ user: 1, credit: 0 })
+    await env.setCurrentTime(20)
+    await env.expectUserToHaveCredit({ user: 2, credit: 10 })
+  })
 })

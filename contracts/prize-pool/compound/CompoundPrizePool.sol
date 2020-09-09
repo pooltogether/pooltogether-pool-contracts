@@ -25,7 +25,8 @@ contract CompoundPrizePool is PrizePool {
   /// @param _cToken Address of the Compound cToken interface
   function initialize (
     address _trustedForwarder,
-    PrizeStrategyInterface _prizeStrategy,
+    PrizePoolTokenListenerInterface _prizeStrategy,
+    ComptrollerInterface _comptroller,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
@@ -37,6 +38,7 @@ contract CompoundPrizePool is PrizePool {
     PrizePool.initialize(
       _trustedForwarder,
       _prizeStrategy,
+      _comptroller,
       _controlledTokens,
       _maxExitFeeMantissa,
       _maxTimelockDuration

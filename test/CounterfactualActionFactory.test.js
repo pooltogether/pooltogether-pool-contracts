@@ -5,6 +5,7 @@ const IERC20 = require('../build/IERC20.json')
 const { ethers } = require('ethers')
 const buidler = require('@nomiclabs/buidler')
 const { deployContract, deployMockContract } = require('ethereum-waffle')
+const { AddressZero } = require('ethers').constants
 
 const toWei = ethers.utils.parseEther
 
@@ -37,9 +38,9 @@ describe('CounterfactualActionFactory', () => {
 
       await token.mock.balanceOf.withArgs(address).returns(depositAmount)
       await token.mock.approve.withArgs(prizePool.address, depositAmount).returns(true)
-      await prizePool.mock.depositTo.withArgs(wallet._address, depositAmount, TICKET_ADDRESS, []).returns()
+      await prizePool.mock.depositTo.withArgs(wallet._address, depositAmount, TICKET_ADDRESS, AddressZero).returns()
 
-      await factory.depositTo(wallet._address, TICKET_ADDRESS, [])
+      await factory.depositTo(wallet._address, TICKET_ADDRESS, AddressZero)
     })
   })
 

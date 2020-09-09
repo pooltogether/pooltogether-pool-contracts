@@ -630,15 +630,11 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   /// @notice Called by a "source" (i.e. Prize Pool) when a user mints new "measure" tokens.
   /// @param to The user who is minting the tokens
   /// @param amount The amount of tokens they are minting
-  /// @param balance Their new balance of measure tokens after minting
-  /// @param totalSupply The new total supply of measure tokens after minting
   /// @param measure The measure token they are minting
   /// @param referrer The user who referred the minting.
-  function afterDepositTo(
+  function beforeTokenMint(
     address to,
     uint256 amount,
-    uint256 balance,
-    uint256 totalSupply,
     address measure,
     address referrer
   )
@@ -646,13 +642,16 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     override
   {
     address source = _msgSender();
+    uint256 balance = IERC20(measure).balanceOf(to);
+    uint256 totalSupply = IERC20(measure).totalSupply();
+
     _updateBalanceDrips(
       source,
       balanceDrips[source],
       measure,
       to,
-      balance.sub(amount), // we want the previous balance
-      totalSupply.sub(amount), // previous totalSupply
+      balance,
+      totalSupply,
       _currentTime()
     );
 
@@ -677,32 +676,50 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     }
   }
 
-  /// @notice Called by a "source" (i.e. Prize Pool) when a user burns "measure" tokens.
-  /// @param from The user who is burning the tokens
+  /// @notice Called by a "source" (i.e. Prize Pool) when tokens change hands or are burned
+  /// @param from The user who is sending the tokens
+  /// @param to The user who is receiving the tokens
   /// @param amount The amount of tokens they are burning
-  /// @param balance Their new balance of measure tokens after burning
-  /// @param totalSupply The new total supply of measure tokens after burning
   /// @param measure The measure token they are burning
-  function afterWithdrawFrom(
+  function beforeTokenTransfer(
     address from,
+    address to,
     uint256 amount,
-    uint256 balance,
-    uint256 totalSupply,
     address measure
   )
     external
     override
   {
+    if (from == address(0)) {
+      // ignore minting
+      return;
+    }
     address source = _msgSender();
+    uint256 totalSupply = IERC20(measure).totalSupply();
+
+    uint256 fromBalance = IERC20(measure).balanceOf(from);
     _updateBalanceDrips(
       source,
       balanceDrips[source],
       measure,
       from,
-      balance.add(amount), // we want the original balance
-      totalSupply.add(amount),
+      fromBalance, // we want the original balance
+      totalSupply,
       _currentTime()
     );
+
+    if (to != address(0)) {
+      uint256 toBalance = IERC20(measure).balanceOf(to);
+      _updateBalanceDrips(
+        source,
+        balanceDrips[source],
+        measure,
+        to,
+        toBalance, // we want the original balance
+        totalSupply,
+        _currentTime()
+      );
+    }
   }
 
   /// @notice returns the current time.  Allows for override in testing.

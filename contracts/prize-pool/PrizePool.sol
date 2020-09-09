@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-import "../prize-strategy/PrizeStrategyInterface.sol";
+import "../comptroller/ComptrollerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
@@ -107,11 +107,13 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     bool initialized;
   }
 
+  ComptrollerInterface public comptroller;
+
   /// @dev A linked list of all the controlled tokens
   MappedSinglyLinkedList.Mapping internal _tokens;
 
   /// @dev The Prize Strategy that this Prize Pool is bound to.
-  PrizeStrategyInterface public prizeStrategy;
+  PrizePoolTokenListenerInterface public prizeStrategy;
 
   /// @dev The maximum possible exit fee fraction as a fixed point 18 number.
   /// For example, if the maxExitFeeMantissa is "0.1 ether", then the maximum exit fee for a withdrawal of 100 will be 10.
@@ -143,7 +145,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
   function initialize (
     address _trustedForwarder,
-    PrizeStrategyInterface _prizeStrategy,
+    PrizePoolTokenListenerInterface _prizeStrategy,
+    ComptrollerInterface _comptroller,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration
@@ -151,8 +154,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     public
     initializer
   {
+    require(address(_comptroller) != address(0), "PrizePool/comptroller-not-zero");
     require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
+    comptroller = _comptroller;
     _tokens.initialize();
     _tokens.addAddresses(_controlledTokens);
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
@@ -222,8 +227,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   function timelockDepositTo(
     address to,
     uint256 amount,
-    address controlledToken,
-    bytes calldata data
+    address controlledToken
   )
     external
     onlyControlledToken(controlledToken)
@@ -232,12 +236,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     require(_hasPrizeStrategy(), "PrizePool/prize-strategy-detached");
 
     address operator = _msgSender();
-
-    ControlledToken(controlledToken).controllerMint(to, amount);
+    _mint(to, amount, controlledToken, address(0));
     _timelockBalances[operator] = _timelockBalances[operator].sub(amount);
     timelockTotalSupply = timelockTotalSupply.sub(amount);
-
-    prizeStrategy.afterTimelockDepositTo(operator, to, amount, controlledToken, data);
 
     emit TimelockDeposited(operator, to, controlledToken, amount);
   }
@@ -246,12 +247,12 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param to The address receiving the newly minted tokens
   /// @param amount The amount of assets to deposit
   /// @param controlledToken The address of the type of token the user is minting
-  /// @param data Call data to be passed to the Prize Strategy
+  /// @param referrer The referrer of the deposit
   function depositTo(
     address to,
     uint256 amount,
     address controlledToken,
-    bytes calldata data
+    address referrer
   )
     external
     onlyControlledToken(controlledToken)
@@ -260,12 +261,11 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     require(_hasPrizeStrategy(), "PrizePool/prize-strategy-detached");
 
     address operator = _msgSender();
+    
+    _mint(to, amount, controlledToken, referrer);
 
-    ControlledToken(controlledToken).controllerMint(to, amount);
     require(_token().transferFrom(operator, address(this), amount), "PrizePool/deposit-transfer-failed");
     _supply(amount);
-
-    prizeStrategy.afterDepositTo(to, amount, controlledToken, data);
 
     emit Deposited(operator, to, controlledToken, amount);
   }
@@ -280,8 +280,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address from,
     uint256 amount,
     address controlledToken,
-    uint256 maximumExitFee,
-    bytes calldata data
+    uint256 maximumExitFee
   )
     external
     nonReentrant
@@ -290,15 +289,14 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   {
     uint256 exitFee = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
     require(exitFee <= maximumExitFee, "PrizePool/exit-fee-exceeds-user-maximum");
+
     // burn the tickets
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
     // redeem the tickets less the fee
     uint256 amountLessFee = amount.sub(exitFee);
     _redeem(amountLessFee);
     require(_token().transfer(from, amountLessFee), "PrizePool/instant-transfer-failed");
-    if (_hasPrizeStrategy()) {
-      prizeStrategy.afterWithdrawInstantlyFrom(_msgSender(), from, amount, controlledToken, exitFee, data);
-    }
+
     emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, exitFee);
 
     return exitFee;
@@ -322,8 +320,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   function withdrawWithTimelockFrom(
     address from,
     uint256 amount,
-    address controlledToken,
-    bytes calldata data
+    address controlledToken
   )
     external
     nonReentrant
@@ -336,10 +333,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
     _mintTimelock(from, amount, unlockTimestamp);
-
-    if (_hasPrizeStrategy()) {
-      prizeStrategy.afterWithdrawWithTimelockFrom(from, amount, controlledToken, data);
-    }
 
     emit TimelockedWithdrawal(_msgSender(), from, controlledToken, amount, unlockTimestamp);
 
@@ -363,6 +356,20 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     }
   }
 
+  function _beforeTokenMint(address to, uint256 amount, address controlledToken, address referrer) internal {
+    if (_hasPrizeStrategy()) {
+      prizeStrategy.beforeTokenMint(to, amount, controlledToken, referrer);
+    }
+    if (address(comptroller) != address(0)) {
+      comptroller.beforeTokenMint(
+        to,
+        amount,
+        controlledToken,
+        referrer
+      );
+    }
+  }
+
   /// @notice Updates the Prize Strategy when tokens are transferred between holders.  Only transfers, not minting or burning.
   /// @param from The address the tokens are being transferred from
   /// @param to The address the tokens are being transferred to
@@ -374,9 +381,19 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     if (to != address(0)) {
       _accrueCredit(to, msg.sender, IERC20(msg.sender).balanceOf(to));
     }
-    // minting and redeeming are handled separately
-    if (from != address(0) && to != address(0) && _hasPrizeStrategy()) {
-      prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
+    // if we aren't minting
+    if (from != address(0)) {
+      if (_hasPrizeStrategy()) {
+        prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
+      }
+      if (address(comptroller) != address(0)) {
+        comptroller.beforeTokenTransfer(
+          from,
+          to,
+          amount,
+          msg.sender
+        );
+      }
     }
   }
 
@@ -412,7 +429,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     }
 
     require(amount <= awardBalance(), "PrizePool/award-exceeds-avail");
-    ControlledToken(controlledToken).controllerMint(to, amount);
+
+    _mint(to, amount, controlledToken, address(0));
 
     uint256 extraCredit = _calculateEarlyExitFee(controlledToken, amount);
     _accrueCredit(to, controlledToken, IERC20(controlledToken).balanceOf(to), extraCredit);
@@ -442,6 +460,11 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     require(IERC20(externalToken).transfer(to, amount), "PrizePool/award-ex-erc20-failed");
 
     emit AwardedExternalERC20(to, externalToken, amount);
+  }
+
+  function _mint(address to, uint256 amount, address controlledToken, address referrer) internal {
+    _beforeTokenMint(to, amount, controlledToken, referrer);
+    ControlledToken(controlledToken).controllerMint(to, amount);
   }
 
   /// @notice Called by the Prize-Strategy to Award Secondary (external) Prize NFTs to a specific account
@@ -524,14 +547,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
         delete _unlockTimestamps[users[i]];
         require(underlyingToken.transfer(users[i], balances[i]), "PrizePool/sweep-transfer-failed");
         emit TimelockedWithdrawalSwept(operator, users[i], balances[i]);
-      }
-    }
-
-    if (_hasPrizeStrategy()) {
-      for (i = 0; i < users.length; i++) {
-        if (balances[i] > 0) {
-          prizeStrategy.afterSweepTimelockedWithdrawal(operator, users[i], balances[i]);
-        }
       }
     }
 
@@ -728,7 +743,6 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
     If the exit fee on their withdrawal is greater than the remaining exit fee, then they'll have to pay the difference.
     */
-
 
     // Determine available usable credit based on withdraw amount
     uint256 availableCredit;
