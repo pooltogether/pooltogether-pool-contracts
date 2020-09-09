@@ -57,6 +57,7 @@ function PoolEnv() {
       externalERC20Awards: externalAwardAddresses,
       overrides: this.overrides,
     })
+
     debug(`CompoundPrizePool created with address ${this.env.compoundPrizePool.address}`)
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
 
@@ -268,8 +269,9 @@ function PoolEnv() {
 
   this.expectUserToHaveCredit = async function ({ user, credit }) {
     let wallet = await this.wallet(user)
-    let prizeStrategy = await this.prizeStrategy(wallet)
-    let ticketInterest = await call(prizeStrategy, 'balanceOfCredit', wallet._address)
+    let prizePool = await this.prizePool(wallet)
+    let ticketInterest = await call(prizePool, 'balanceOfCredit', wallet._address, this.env.ticket.address)
+    debug(`expectUserToHaveCredit ticketInterest ${ticketInterest.toString()}`)
     expect(ticketInterest).to.equalish(toWei(credit), 300)
   }
 
@@ -301,15 +303,17 @@ function PoolEnv() {
   this.awardPrizeToToken = async function ({ token }) {
     let endTime = await this._prizeStrategy.prizePeriodEndAt()
 
-    await this._prizeStrategy.setCurrentTime(endTime, this.overrides)
+    debug(`awardPrizeToToken END TIME: ${endTime}`)
 
-    debug(`Starting award with token ${token}...`)
+    await this.setCurrentTime(endTime)
+
+    debug(`awardPrizeToToken Starting award with token ${token}...`)
     await this.env.prizeStrategy.startAward(this.overrides)
 
     let randomNumber = ethers.utils.hexlify(ethers.utils.zeroPad(ethers.BigNumber.from('' + token), 32))
     await this.env.rngService.setRandomNumber(randomNumber, this.overrides)
 
-    debug(`Completing award...`)
+    debug(`awardPrizeToToken Completing award...`)
     await this.env.prizeStrategy.completeAward(this.overrides)
 
     debug('award completed')

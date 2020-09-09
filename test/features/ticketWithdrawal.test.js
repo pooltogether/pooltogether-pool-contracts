@@ -23,6 +23,8 @@ describe('Withdraw Feature', () => {
       await env.buyTickets({ user: 1, tickets: 100 })
       await env.poolAccrues({ tickets: 10 }) // 10% collateralized
       await env.awardPrize()
+      await env.expectUserToHaveCredit({ user: 1, credit: 11 })
+      await env.expectUserToHaveTickets({ user: 1, tickets: 110 })
       await env.withdrawInstantly({ user: 1, tickets: 110 })
       await env.expectUserToHaveTokens({ user: 1, tokens: 110 })
       // all of their credit was burned

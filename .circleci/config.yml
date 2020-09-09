@@ -11,6 +11,12 @@ jobs:
           name: Install and Test
           command: yarn && yarn hint && yarn coverage
       - coveralls/upload
+      - store_artifacts:
+          path: coverage
+      - store_artifacts:
+          path: test-results.xml
+      - store_artifacts:
+          path: coverage.json
 workflows:
     build-and-test:
       jobs:
