@@ -7,11 +7,11 @@ const CTokenInterface = require('../build/CTokenInterface.json')
 const IERC20 = require('../build/IERC20.json')
 const IERC721 = require('../build/IERC721.json')
 
-const { ethers } = require('./helpers/ethers')
+const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('./helpers/buidler')
+const buidler = require('@nomiclabs/buidler')
 const { call } = require('./helpers/call')
-const { AddressZero } = require('ethers/constants')
+const { AddressZero } = require('ethers').constants
 
 const toWei = ethers.utils.parseEther
 const getBlockNumber = async () => await buidler.waffle.provider.getBlockNumber()
@@ -81,6 +81,31 @@ describe('CompoundPrizePool', function() {
       it('should set all the vars', async () => {
         expect(await prizePool.cToken()).to.equal(cToken.address)
         expect(await prizePool.token()).to.equal(erc20token.address)
+      })
+
+      it('should reject invalid params', async () => {
+        const _initArgs = [
+          FORWARDER,
+          prizeStrategy.address,
+          [ticket.address],
+          poolMaxExitFee,
+          poolMaxTimelockDuration,
+          cToken.address
+        ]
+        let initArgs
+
+        debug('deploying secondary prizePool...')
+        const prizePool2 = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
+
+        debug('testing initialization of secondary prizeStrategy...')
+        initArgs = _initArgs.slice(); initArgs[0] = AddressZero
+        await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/forwarder-not-zero')
+        initArgs = _initArgs.slice(); initArgs[1] = AddressZero
+        await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/prizeStrategy-not-zero')
+
+        initArgs = _initArgs.slice()
+        await ticket.mock.controller.returns(AddressZero)
+        await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/token-ctrlr-mismatch')
       })
     })
 
@@ -707,6 +732,13 @@ describe('CompoundPrizePool', function() {
     describe('depositTo()', () => {
       it('should NOT mint tokens to the user', async () => {
         await expect(detachedPrizePool.depositTo(wallet2._address, toWei('1'), ticket2.address, []))
+          .to.be.revertedWith('PrizePool/prize-strategy-detached')
+      })
+    })
+
+    describe('timelockDepositTo()', () => {
+      it('should NOT mint tokens to the user', async () => {
+        await expect(detachedPrizePool.timelockDepositTo(wallet2._address, toWei('1'), ticket2.address, []))
           .to.be.revertedWith('PrizePool/prize-strategy-detached')
       })
     })

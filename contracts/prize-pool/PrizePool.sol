@@ -45,7 +45,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address indexed token,
     uint256 amount
   );
-  
+
   /// @dev Event emitted when external ERC20s are awarded to a winner
   event AwardedExternalERC20(
     address indexed winner,
@@ -59,7 +59,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address indexed token,
     uint256[] tokenIds
   );
-  
+
   /// @dev Event emitted when assets are withdrawn instantly
   event InstantWithdrawal(
     address indexed operator,
@@ -68,7 +68,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 amount,
     uint256 exitFee
   );
-  
+
   /// @dev Event emitted when assets are withdrawn into a timelock
   event TimelockedWithdrawal(
     address indexed operator,
@@ -77,7 +77,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 amount,
     uint256 unlockTimestamp
   );
-  
+
   /// @dev Event emitted when timelocked funds are swept back to a user
   event TimelockedWithdrawalSwept(
     address indexed operator,
@@ -126,8 +126,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     public
     initializer
   {
-    require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-zero");
-    require(_trustedForwarder != address(0), "PrizePool/forwarder-zero");
+    require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
+    require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
     _tokens.initialize();
     _tokens.addAddresses(_controlledTokens);
     for (uint256 i = 0; i < _controlledTokens.length; i++) {

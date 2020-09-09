@@ -1,175 +1,89 @@
 pragma solidity ^0.6.4;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
-import "../utils/ExtendedSafeCast.sol";
-import "../utils/UInt256Array.sol";
 import "../utils/MappedSinglyLinkedList.sol";
 import "./VolumeDrip.sol";
 
+/// @title Manages the active set of Volume Drips.
 library VolumeDripManager {
   using SafeMath for uint256;
-  using SafeCast for uint256;
-  using UInt256Array for uint256[];
-  using ExtendedSafeCast for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
   using VolumeDrip for VolumeDrip.State;
 
   struct State {
-    mapping(address => uint256[]) activeMeasureVolumeDripIndices;
-    mapping(uint256 => VolumeDrip.State) volumeDrips;
-    mapping(uint256 => address) volumeDripTokens;
-    uint256 lastVolumeDripId;
+    mapping(address => MappedSinglyLinkedList.Mapping) activeVolumeDrips;
+    mapping(address => mapping(address => VolumeDrip.State)) volumeDrips;
   }
 
-  function addDrip(
+  /// @notice Activates a volume drip for the given (measure,dripToken) pair.
+  /// @param self The VolumeDripManager state
+  /// @param measure The measure token
+  /// @param dripToken The drip token
+  /// @param periodSeconds The period of the volume drip in seconds
+  /// @param dripAmount The amount of tokens to drip each period
+  /// @param endTime The end time to set for the current period.
+  function activate(
     State storage self,
     address measure,
     address dripToken,
     uint32 periodSeconds,
-    uint128 dripAmount,
-    uint32 startTime
+    uint112 dripAmount,
+    uint32 endTime
   )
     internal
-    returns (uint256 index)
+    returns (uint32)
   {
-    index = ++self.lastVolumeDripId;
-    VolumeDrip.State storage drip = self.volumeDrips[index];
-    drip.initialize(periodSeconds, dripAmount, startTime);
-    self.activeMeasureVolumeDripIndices[measure].push(index);
-    self.volumeDripTokens[index] = dripToken;
-  }
-
-  function deactivateDrip(
-    State storage self,
-    address measure,
-    uint256 index
-  )
-    internal
-  {
-    (uint256 activeMeasureVolumeDripIndex, bool found) = findActiveMeasureVolumeDripIndex(self, measure, index);
-    require(found, "VolumeDripManager/unknown-measure-drip");
-    self.activeMeasureVolumeDripIndices[measure].remove(activeMeasureVolumeDripIndex);
-  }
-
-  function activateDrip(
-    State storage self,
-    address measure,
-    uint256 index
-  )
-    internal
-    returns (uint256 activeMeasureVolumeDripIndex)
-  {
-    (, bool found) = findActiveMeasureVolumeDripIndex(self, measure, index);
-    require(!found, "VolumeDripManager/drip-active");
-    activeMeasureVolumeDripIndex = self.activeMeasureVolumeDripIndices[measure].length;
-    self.activeMeasureVolumeDripIndices[measure].push(index);
-  }
-
-  function removeDrip(
-    State storage self,
-    address measure,
-    uint256 index
-  )
-    internal
-  {
-    (uint256 activeMeasureVolumeDripIndex, bool found) = findActiveMeasureVolumeDripIndex(self, measure, index);
-    require(found, "VolumeDripManager/unknown-measure-drip");
-    removeDrip(self, measure, index, activeMeasureVolumeDripIndex);
-  }
-
-  function findActiveMeasureVolumeDripIndex(
-    State storage self,
-    address measure,
-    uint256 index
-  )
-    internal
-    view
-    returns (
-      uint256 activeMeasureVolumeDripIndex,
-      bool found
-    )
-  {
-    // This for loop may blow up, so have a backup!
-    for (uint256 i = 0; i < self.activeMeasureVolumeDripIndices[measure].length; i++) {
-      if (self.activeMeasureVolumeDripIndices[measure][i] == index) {
-        activeMeasureVolumeDripIndex = i;
-        found = true;
-        break;
-      }
+    require(!self.activeVolumeDrips[measure].contains(dripToken), "VolumeDripManager/drip-active");
+    if (self.activeVolumeDrips[measure].count == 0) {
+      self.activeVolumeDrips[measure].initialize();
     }
+    self.activeVolumeDrips[measure].addAddress(dripToken);
+    self.volumeDrips[measure][dripToken].setNewPeriod(periodSeconds, dripAmount, endTime);
+
+    return self.volumeDrips[measure][dripToken].periodCount;
   }
 
-  function removeDrip(
+  /// @notice Deactivates the volume drip for the given (measure, dripToken) pair.
+  /// @param self The VolumeDripManager state
+  /// @param measure The measure token
+  /// @param dripToken The drip token
+  /// @param prevDripToken The active drip token previous to the passed on in the list.
+  function deactivate(
     State storage self,
     address measure,
-    uint256 index,
-    uint256 activeMeasureVolumeDripIndex
+    address dripToken,
+    address prevDripToken
   )
     internal
   {
-    require(self.activeMeasureVolumeDripIndices[measure][activeMeasureVolumeDripIndex] == index, "VolumeDripManager/index-mismatch");
-    self.activeMeasureVolumeDripIndices[measure].remove(activeMeasureVolumeDripIndex);
-    delete self.volumeDripTokens[index];
-    delete self.volumeDrips[index].periodSeconds;
-    delete self.volumeDrips[index].dripAmount;
-    delete self.volumeDrips[index];
+    self.activeVolumeDrips[measure].removeAddress(prevDripToken, dripToken);
   }
 
-  function setDripAmount(State storage self, uint256 index, uint128 dripAmount) internal {
-    require(index <= self.lastVolumeDripId, "DripManager/drip-not-exists");
-    self.volumeDrips[index].dripAmount = dripAmount;
+  /// @notice Sets the parameters for the next period of an active volume drip
+  /// @param self The VolumeDripManager state
+  /// @param measure The measure token
+  /// @param dripToken The drip token
+  /// @param periodSeconds The length in seconds to use for the next period
+  /// @param dripAmount The amount of tokens to be dripped in the next period
+  function set(State storage self, address measure, address dripToken, uint32 periodSeconds, uint112 dripAmount) internal {
+    require(self.activeVolumeDrips[measure].contains(dripToken), "VolumeDripManager/drip-not-active");
+    self.volumeDrips[measure][dripToken].setNextPeriod(periodSeconds, dripAmount);
   }
 
-  function deposit(
-    State storage self,
-    address measure,
-    address user,
-    uint256 amount,
-    uint256 currentTime
-  )
-    internal
-  {
-    for (uint256 i = 0; i < self.activeMeasureVolumeDripIndices[measure].length; i++) {
-      uint256 index = self.activeMeasureVolumeDripIndices[measure][i];
-      VolumeDrip.State storage dripState = self.volumeDrips[index];
-      dripState.mint(
-        user,
-        amount,
-        currentTime
-      );
-    }
+  /// @notice Returns whether or not an active volume drip exists for the given (measure, dripToken) pair
+  /// @param self The VolumeDripManager state
+  /// @param measure The measure token
+  /// @param dripToken The drip token
+  function isActive(State storage self, address measure, address dripToken) internal view returns (bool) {
+    return self.activeVolumeDrips[measure].contains(dripToken);
   }
 
-  function claimDripTokens(
-    State storage self,
-    uint256 index,
-    address user,
-    uint256 currentTime
-  )
-    internal
-    returns (address token, uint256 amount)
-  {
-    VolumeDrip.State storage volumeDrip = self.volumeDrips[index];
-    amount = volumeDrip.burnDrip(user, currentTime);
-    token = self.volumeDripTokens[index];
+  /// @notice Returns the VolumeDrip.State for the given (measure, dripToken) pair.
+  /// @param self The VolumeDripManager state
+  /// @param measure The measure token
+  /// @param dripToken The drip token
+  function getDrip(State storage self, address measure, address dripToken) internal view returns (VolumeDrip.State storage) {
+    return self.volumeDrips[measure][dripToken];
   }
-
-  function getDrip(
-    State storage self,
-    uint256 index
-  )
-    internal
-    view
-    returns (
-      uint32 periodSeconds,
-      uint128 dripAmount,
-      address token
-    )
-  {
-    periodSeconds = self.volumeDrips[index].periodSeconds;
-    dripAmount = self.volumeDrips[index].dripAmount;
-    token = self.volumeDripTokens[index];
-  }
-
 }

@@ -69,6 +69,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function initialize (
     address _trustedForwarder,
     ComptrollerInterface _comptroller,
+    uint256 _prizePeriodStart,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
     address _ticket,
@@ -78,7 +79,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   ) public initializer {
     require(address(_comptroller) != address(0), "PrizeStrategy/comptroller-not-zero");
     require(_prizePeriodSeconds > 0, "PrizeStrategy/prize-period-greater-than-zero");
-    require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-zero");
+    require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-not-zero");
     require(address(_ticket) != address(0), "PrizeStrategy/ticket-not-zero");
     require(address(_sponsorship) != address(0), "PrizeStrategy/sponsorship-not-zero");
     require(address(_rng) != address(0), "PrizeStrategy/rng-not-zero");
@@ -100,7 +101,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     externalErc20s.addAddresses(_externalErc20s);
 
     prizePeriodSeconds = _prizePeriodSeconds;
-    prizePeriodStartedAt = _currentTime();
+    prizePeriodStartedAt = _prizePeriodStart;
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
 
     exitFeeMantissa = 0.1 ether;
@@ -145,7 +146,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
     uint256 credit = calculateAccruedCredit(user, balance);
     creditBalances[user] = Credit({
       balance: _addCredit(user, balance, credit).toUint128(),
-      timestamp: _currentTime().toUint64()
+      timestamp: _currentTime().toUint32(),
+      initialized: true
     });
   }
 
@@ -171,13 +173,13 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @return accruedCredit The credit that has accrued since the last credit update.
   function calculateAccruedCredit(address user, uint256 ticketBalance) internal view returns (uint256 accruedCredit) {
     uint256 userTimestamp = creditBalances[user].timestamp;
-
-    if (userTimestamp == 0 || userTimestamp >= _currentTime()) {
+    if (!creditBalances[user].initialized) {
       return 0;
     }
 
     uint256 deltaTime = _currentTime().sub(userTimestamp);
     uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(ticketBalance, creditRateMantissa);
+
     return deltaTime.mul(creditPerSecond);
   }
 
@@ -345,23 +347,17 @@ contract PrizeStrategy is PrizeStrategyStorage,
     If the exit fee on their withdrawal is less than the remaining exit fee, then they have to pay.
     */
 
-    uint256 totalEarlyExitFee = _calculateEarlyExitFee(balance);
-    uint256 remainingEarlyExitFee;
-
-    // if the credit balance is less than the total fees for the account
-    if (creditBalances[from].balance < totalEarlyExitFee) {
-      remainingEarlyExitFee = totalEarlyExitFee.sub(creditBalances[from].balance);
+    // Determine available usable credit based on withdraw amount
+    uint256 availableCredit;
+    uint256 remainingExitFee = _calculateEarlyExitFee(balance.sub(amount));
+    if (creditBalances[from].balance >= remainingExitFee) {
+      availableCredit = uint256(creditBalances[from].balance).sub(remainingExitFee);
     }
 
-    earlyExitFee = _calculateEarlyExitFee(amount);
-    // if the fees that aren't covered is less than the exit fee
-    if (earlyExitFee > remainingEarlyExitFee) {
-      // calculate how much is credit
-      creditToBeBurned = earlyExitFee.sub(remainingEarlyExitFee);
-      // the remainder is the actual fee
-      earlyExitFee = earlyExitFee.sub(creditToBeBurned);
-    }
-
+    // Determine amount of credit to burn and amount of fees required
+    uint256 totalExitFee = _calculateEarlyExitFee(amount);
+    creditToBeBurned = (availableCredit > totalExitFee) ? totalExitFee : availableCredit;
+    earlyExitFee = totalExitFee.sub(creditToBeBurned);
   }
 
   /// @notice Calculates the early exit fee for the given amount
@@ -500,10 +496,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param user The user to whom the tickets are minted
   /// @param amount The amount of interest to mint as tickets.
   function _awardTickets(address user, uint256 amount) internal {
-    _accrueCredit(user, ticket.balanceOf(user));
+    uint256 userBalance = ticket.balanceOf(user);
+    _accrueCredit(user, userBalance);
     uint256 creditEarned = _calculateEarlyExitFee(amount);
     creditBalances[user].balance = uint256(creditBalances[user].balance).add(creditEarned).toUint128();
     prizePool.award(user, amount, address(ticket));
+    sortitionSumTrees.set(TREE_KEY, userBalance.add(amount), bytes32(uint256(user)));
   }
 
   /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.
@@ -710,8 +708,14 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   /// @notice Starts the award process by starting random number request.  The prize period must have ended.
+  /// @dev The RNG-Request-Fee is expected to be held within this contract before calling this function
   function startAward() external requireCanStartAward {
-    (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber(address(0), 0);
+    (address feeToken, uint256 requestFee) = rng.getRequestFee();
+    if (feeToken != address(0) && requestFee > 0) {
+      IERC20(feeToken).approve(address(rng), requestFee);
+    }
+
+    (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber();
     rngRequest.id = requestId;
     rngRequest.lockBlock = lockBlock;
 
@@ -720,8 +724,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   /// @notice Completes the award process and awards the winners.  The random number must have been requested and is now available.
   function completeAward() external requireCanCompleteAward {
-    require(_isPrizePeriodOver(), "PrizeStrategy/not-over");
-
     uint256 randomNumber = rng.randomNumber(rngRequest.id);
     uint256 balance = prizePool.awardBalance();
     uint256 reserveFee = _calculateReserveFee(balance);
@@ -811,10 +813,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Sets the RNG service that the Prize Strategy is connected to
   /// @param rngService The address of the new RNG service interface
   function setRngService(RNGInterface rngService) external onlyOwner {
-    require(!isRngRequested(), "PrizeStrategy/rng-requested");
+    require(!isRngRequested(), "PrizeStrategy/rng-in-flight");
 
     rng = rngService;
-
     emit RngServiceUpdated(address(rngService));
   }
 
@@ -845,7 +846,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   function _requireNotLocked() internal view {
-    require(rngRequest.lockBlock == 0 || block.number < rngRequest.lockBlock, "PrizeStrategy/rng-in-flight");
+    require(rngRequest.lockBlock == 0 || _currentBlock() < rngRequest.lockBlock, "PrizeStrategy/rng-in-flight");
   }
 
   modifier requireNotLocked() {
@@ -860,6 +861,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   modifier requireCanCompleteAward() {
+    require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
     require(isRngRequested(), "PrizeStrategy/rng-not-requested");
     require(isRngCompleted(), "PrizeStrategy/rng-not-complete");
     _;

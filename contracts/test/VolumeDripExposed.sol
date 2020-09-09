@@ -6,45 +6,28 @@ contract VolumeDripExposed {
   using VolumeDrip for VolumeDrip.State;
 
   event DripTokensBurned(address user, uint256 amount);
+  event Minted(uint256 amount, bool isNewPeriod);
 
   VolumeDrip.State state;
 
-  function initialize(uint32 periodSeconds, uint128 dripAmount, uint32 startTime) external {
-    state.initialize(periodSeconds, dripAmount, startTime);
+  function setNewPeriod(uint32 periodSeconds, uint112 dripAmount, uint32 endTime) external {
+    state.setNewPeriod(periodSeconds, dripAmount, endTime);
   }
 
-  function isPeriodOver(uint256 currentTime) external view returns (bool) {
-    return state.isPeriodOver(currentTime);
+  function setNextPeriod(uint32 periodSeconds, uint112 dripAmount) external {
+    state.setNextPeriod(periodSeconds, dripAmount);
   }
 
-  function completePeriod(uint256 currentTime) external {
-    state.completePeriod(currentTime);
+  function poke(uint256 currentTime) external returns (bool) {
+    return state.poke(currentTime);
   }
 
-  function mint(address user, uint256 amount, uint256 currentTime) external {
-    state.mint(user, amount, currentTime);
-  }
+  function mint(address user, uint256 amount, uint256 currentTime) external returns (uint256 accrued, bool isNewPeriod) {
+    (accrued, isNewPeriod) = state.mint(user, amount, currentTime);
 
-  function calculateAccrued(
-    uint16 depositPeriod,
-    uint128 balance
-  ) external view returns (uint256) {
-    return state.calculateAccrued(depositPeriod, balance);
-  }
+    emit Minted(accrued, isNewPeriod);
 
-  function burnDrip(address user, uint256 currentTime) external {
-    uint256 amount = state.burnDrip(user, currentTime);
-    emit DripTokensBurned(user, amount);
-  }
-
-  function balanceOf(
-    address user,
-    uint256 currentTime
-  )
-    external
-    returns (uint256 accrued)
-  {
-    accrued = state.balanceOf(user, currentTime).accrued;
+    return (accrued, isNewPeriod);
   }
 
   function getDrip()
@@ -59,16 +42,18 @@ contract VolumeDripExposed {
     dripAmount = state.dripAmount;
   }
 
-  function getPeriod(uint256 periodIndex)
+  function getPeriod(uint32 period)
     external
     view
     returns (
-      uint224 totalSupply,
-      uint32 startTime
+      uint112 totalSupply,
+      uint112 dripAmount,
+      uint32 endTime
     )
   {
-    totalSupply = state.periods[periodIndex].totalSupply;
-    startTime = state.periods[periodIndex].startTime;
+    totalSupply = state.periods[period].totalSupply;
+    endTime = state.periods[period].endTime;
+    dripAmount = state.periods[period].dripAmount;
   }
 
   function getDeposit(address user)
@@ -76,13 +61,11 @@ contract VolumeDripExposed {
     view
     returns (
       uint112 balance,
-      uint16 period,
-      uint128 accrued
+      uint32 period
     )
   {
     balance = state.deposits[user].balance;
     period = state.deposits[user].period;
-    accrued = state.deposits[user].accrued;
   }
 
 }

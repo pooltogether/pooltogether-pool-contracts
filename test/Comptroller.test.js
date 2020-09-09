@@ -1,15 +1,17 @@
 const { expect } = require("chai");
 const ComptrollerHarness = require('../build/ComptrollerHarness.json')
 const IERC20 = require('../build/IERC20.json')
-const buidler = require('./helpers/buidler')
+const buidler = require('@nomiclabs/buidler')
 const { deployContract } = require('ethereum-waffle')
-const { deployMockContract } = require('./helpers/deployMockContract');
-const { AddressZero } = require("ethers/constants");
+const { deployMockContract } = require('./helpers/deployMockContract')
+const { AddressZero } = require("ethers").constants
 const { call } = require('./helpers/call')
 
 const toWei = ethers.utils.parseEther
 
 const overrides = { gasLimit: 20000000 }
+
+const debug = require('debug')('ptv3:Comptroller.test')
 
 const SENTINEL = '0x0000000000000000000000000000000000000001'
 
@@ -39,7 +41,9 @@ describe('Comptroller', () => {
     dripToken = await deployMockContract(wallet, IERC20.abi)
     comptroller = await deployContract(wallet, ComptrollerHarness, [], overrides)
     comptroller2 = comptroller.connect(wallet2)
-    await comptroller.initialize()
+    await comptroller.initialize(wallet._address)
+
+    await measure.mock.totalSupply.returns('0')
   })
 
   describe('initialize()', () => {
@@ -62,10 +66,10 @@ describe('Comptroller', () => {
     })
   })
 
-  describe('addBalanceDrip()', () => {
+  describe('activateBalanceDrip()', () => {
     it('should add a balance drip', async () => {
-      await expect(comptroller.addBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001')))
-        .to.emit(comptroller, 'BalanceDripAdded')
+      await expect(comptroller.activateBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001')))
+        .to.emit(comptroller, 'BalanceDripActivated')
         .withArgs(wallet._address, measure.address, dripToken.address, toWei('0.001'))
 
       let drip = await comptroller.getBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address)
@@ -73,18 +77,18 @@ describe('Comptroller', () => {
     })
 
     it('should allow only the owner to add drips', async () => {
-      await expect(comptroller2.addBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))).to.be.revertedWith("Ownable: caller is not the owner")
+      await expect(comptroller2.activateBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))).to.be.revertedWith("Ownable: caller is not the owner")
     })
   })
 
-  describe('removeBalanceDrip()', () => {
+  describe('deactivateBalanceDrip()', () => {
     beforeEach(async () => {
-      await comptroller.addBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
+      await comptroller.activateBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
     })
 
     it('should remove a balance drip', async () => {
-      await expect(comptroller.removeBalanceDrip(prizeStrategyAddress, measure.address, SENTINEL, dripToken.address))
-        .to.emit(comptroller, 'BalanceDripRemoved')
+      await expect(comptroller.deactivateBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, SENTINEL))
+        .to.emit(comptroller, 'BalanceDripDeactivated')
         .withArgs(wallet._address, measure.address, dripToken.address)
 
       let drip = await comptroller.getBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address)
@@ -92,13 +96,13 @@ describe('Comptroller', () => {
     })
 
     it('should allow only the owner to remove drips', async () => {
-      await expect(comptroller2.removeBalanceDrip(prizeStrategyAddress, measure.address, SENTINEL, dripToken.address)).to.be.revertedWith("Ownable: caller is not the owner")
+      await expect(comptroller2.deactivateBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, SENTINEL)).to.be.revertedWith("Ownable: caller is not the owner")
     })
   })
 
   describe('setBalanceDripRate()', () => {
     beforeEach(async () => {
-      await comptroller.addBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
+      await comptroller.activateBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
     })
 
     it('should allow the owner to update the drip rate', async () => {
@@ -115,227 +119,206 @@ describe('Comptroller', () => {
     })
   })
 
-
-
-
-
-
-
-
-
-  describe('addVolumeDrip()', () => {
+  describe('activateVolumeDrip()', () => {
     it('should allow the owner to add a volume drip', async () => {
-      let tx = await comptroller.addVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-      expect(volumeDripAdded.name).to.equal('VolumeDripAdded')
+      let tx = comptroller.activateVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, false, 10, toWei('100'), 10)
 
-      expect(volumeDripAdded.values.prizeStrategy).to.equal(prizeStrategyAddress)
-      expect(volumeDripAdded.values.measure).to.equal(measure.address)
-      expect(volumeDripAdded.values.dripToken).to.equal(dripToken.address)
-      expect(volumeDripAdded.values.periodSeconds).to.equal(10)
-      expect(volumeDripAdded.values.dripAmount).to.equal(toWei('100'))
+      await expect(tx)
+        .to.emit(comptroller, 'VolumeDripActivated')
+        .withArgs(
+          prizeStrategyAddress,
+          measure.address,
+          dripToken.address,
+          false,
+          10,
+          toWei('100')
+        )
 
-      let drip = await comptroller.getVolumeDrip(prizeStrategyAddress, volumeDripAdded.values.index)
+      await expect(tx)
+        .to.emit(comptroller, 'VolumeDripPeriodStarted')
+        .withArgs(
+          prizeStrategyAddress,
+          measure.address,
+          dripToken.address,
+          false,
+          1,
+          toWei('100'),
+          10
+        )
 
-      expect(drip.startTime).to.equal(10)
+      let drip = await comptroller.getVolumeDrip(
+        prizeStrategyAddress,
+        measure.address,
+        dripToken.address,
+        false
+      )
+
       expect(drip.periodSeconds).to.equal(10)
       expect(drip.dripAmount).to.equal(toWei('100'))
+
+      let period = await comptroller.getVolumeDripPeriod(
+        prizeStrategyAddress,
+        measure.address,
+        dripToken.address,
+        false,
+        1
+      )
+
+      expect(
+        await comptroller.isVolumeDripActive(
+          prizeStrategyAddress,
+          measure.address,
+          dripToken.address,
+          false
+        )
+      ).to.be.true
+
+      expect(period.totalSupply).to.equal(0)
+      expect(period.dripAmount).to.equal(toWei('100'))
+      expect(period.endTime).to.equal(10)
     })
 
     it('should not allow anyone else', async () => {
-      await expect(comptroller2.addVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)).to.be.revertedWith("Ownable: caller is not the owner")
+      await expect(
+        comptroller2.activateVolumeDrip(
+          prizeStrategyAddress, 
+          measure.address,
+          dripToken.address,
+          false,
+          10,
+          toWei('100'),
+          10
+        )
+      ).to.be.revertedWith("Ownable: caller is not the owner")
     })
   })
 
-  describe('removeVolumeDrip()', () => {
+  describe('deactivateVolumeDrip()', () => {
     it('should allow the owner to remove a volume drip', async () => {
-      let tx = await comptroller.addVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
+      await comptroller.activateVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, false, 10, toWei('100'), 10)
 
-      await comptroller.removeVolumeDrip(prizeStrategyAddress, measure.address, volumeDripAdded.values.index)
+      await expect(
+        comptroller.deactivateVolumeDrip(
+          prizeStrategyAddress,
+          measure.address,
+          dripToken.address,
+          false,
+          SENTINEL
+        )
+      )
+        .to.emit(comptroller, 'VolumeDripDeactivated')
+        .withArgs(
+          prizeStrategyAddress,
+          measure.address,
+          dripToken.address,
+          false
+        )
 
-      await expect(comptroller.getVolumeDrip(prizeStrategyAddress, volumeDripAdded.values.index)).to.be.revertedWith("VolumeDrip/no-period")
+      expect(
+        await comptroller.isVolumeDripActive(
+          prizeStrategyAddress,
+          measure.address,
+          dripToken.address,
+          false
+        )
+      ).to.be.false
+      
     })
 
     it('should not allow anyone else to remove', async () => {
-      let tx = await comptroller.addVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
+      await comptroller.activateVolumeDrip(
+        prizeStrategyAddress,
+        measure.address,
+        dripToken.address,
+        false,
+        10,
+        toWei('100'),
+        10
+      )
 
-      await expect(comptroller2.removeVolumeDrip(prizeStrategyAddress, measure.address, volumeDripAdded.values.index)).to.be.revertedWith("Ownable: caller is not the owner")
+      await expect(
+        comptroller2.deactivateVolumeDrip(
+          prizeStrategyAddress,
+          measure.address,
+          dripToken.address,
+          false,
+          SENTINEL
+        )
+      ).to.be.revertedWith("Ownable: caller is not the owner")
     })
   })
 
-  describe('setVolumeDripAmount()', () => {
+  describe('setVolumeDrip()', () => {
     it('should allow the owner to set the drip amount for a volume drip', async () => {
-      let tx = await comptroller.addVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
+      await comptroller.activateVolumeDrip(
+        prizeStrategyAddress,
+        measure.address,
+        dripToken.address,
+        false,
+        10,
+        toWei('100'),
+        10
+      )
 
-      await comptroller.setVolumeDripAmount(prizeStrategyAddress, volumeDripAdded.values.index, toWei('200'))
+      await expect(
+        comptroller.setVolumeDrip(
+          prizeStrategyAddress,
+          measure.address,
+          dripToken.address,
+          false,
+          20,
+          toWei('200')
+        )
+      )
+        .to.emit(comptroller, 'VolumeDripSet')
+        .withArgs(
+          prizeStrategyAddress,
+          measure.address,
+          dripToken.address,
+          false,
+          20,
+          toWei('200')
+        )
 
-      let drip = await comptroller.getVolumeDrip(prizeStrategyAddress, volumeDripAdded.values.index)
+      let drip = await comptroller.getVolumeDrip(
+        prizeStrategyAddress,
+        measure.address,
+        dripToken.address,
+        false
+      )
 
       expect(drip.dripAmount).to.equal(toWei('200'))
+      expect(drip.periodSeconds).to.equal(20)
     })
 
     it('should not allow anyone else to set the drip amount', async () => {
-      let tx = await comptroller.addVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-
-      await expect(comptroller2.setVolumeDripAmount(prizeStrategyAddress, volumeDripAdded.values.index, toWei('200'))).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-  })
-
-  describe('balanceOfVolumeDrip()', () => {
-    it('should return a users balance of the volume drip', async () => {
-      let tx = await comptroller.addVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-
-      // volume drip activates at 10
-      await comptroller.setCurrentTime(12)
-      await comptroller.afterDepositTo(wallet._address, toWei('10'), toWei('10'), toWei('10'), measure.address, AddressZero)
-      // volume drip period is over
-      await comptroller.setCurrentTime(22)
-
-      expect(await call(comptroller, 'balanceOfVolumeDrip', prizeStrategyAddress, wallet._address, volumeDripAdded.values.index)).to.equal(toWei('100'))
-    })
-  })
-
-  describe('claimVolumeDrip()', () => {
-    it('should allow a users volume drip to be claimed', async () => {
-      let tx = await comptroller.addVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-
-      // volume drip activates at 10
-      await comptroller.setCurrentTime(12)
-      await comptroller.afterDepositTo(wallet._address, toWei('10'), toWei('10'), toWei('10'), measure.address, AddressZero)
-      // volume drip period is over
-      await comptroller.setCurrentTime(22)
-
-      await dripToken.mock.transfer.withArgs(wallet._address, toWei('100')).returns(true)
-      await expect(comptroller.claimVolumeDrip(prizeStrategyAddress, wallet._address, volumeDripAdded.values.index))
-        .to.emit(comptroller, 'VolumeDripClaimed')
-        .withArgs(
+      await comptroller.activateVolumeDrip(
+        prizeStrategyAddress,
+        measure.address,
+        dripToken.address,
+        false,
+        10,
+        toWei('100'),
+        10
+      )
+      
+      await expect(
+        comptroller2.setVolumeDrip(
           prizeStrategyAddress,
-          volumeDripAdded.values.index,
-          wallet._address,
+          measure.address,
           dripToken.address,
-          toWei('100')
+          false,
+          20,
+          toWei('200')
         )
+      ).to.be.revertedWith("Ownable: caller is not the owner")
     })
   })
-
-
-
-
-
-  describe('addReferralVolumeDrip()', () => {
-    it('should allow the owner to add a volume drip', async () => {
-      let tx = await comptroller.addReferralVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-      expect(volumeDripAdded.name).to.equal('ReferralVolumeDripAdded')
-
-      expect(volumeDripAdded.values.prizeStrategy).to.equal(prizeStrategyAddress)
-      expect(volumeDripAdded.values.measure).to.equal(measure.address)
-      expect(volumeDripAdded.values.dripToken).to.equal(dripToken.address)
-      expect(volumeDripAdded.values.periodSeconds).to.equal(10)
-      expect(volumeDripAdded.values.dripAmount).to.equal(toWei('100'))
-
-      let drip = await comptroller.getReferralVolumeDrip(prizeStrategyAddress, volumeDripAdded.values.index)
-
-      expect(drip.startTime).to.equal(10)
-      expect(drip.periodSeconds).to.equal(10)
-      expect(drip.dripAmount).to.equal(toWei('100'))
-    })
-
-    it('should not allow anyone else', async () => {
-      await expect(comptroller2.addReferralVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-  })
-
-  describe('removeReferralVolumeDrip()', () => {
-    it('should allow the owner to remove a volume drip', async () => {
-      let tx = await comptroller.addReferralVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-
-      await comptroller.removeReferralVolumeDrip(prizeStrategyAddress, measure.address, volumeDripAdded.values.index)
-
-      await expect(comptroller.getReferralVolumeDrip(prizeStrategyAddress, volumeDripAdded.values.index)).to.be.revertedWith("VolumeDrip/no-period")
-    })
-
-    it('should not allow anyone else to remove', async () => {
-      let tx = await comptroller.addReferralVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-
-      await expect(comptroller2.removeReferralVolumeDrip(prizeStrategyAddress, measure.address, volumeDripAdded.values.index)).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-  })
-
-  describe('setReferralVolumeDripAmount()', () => {
-    it('should allow the owner to set the drip amount for a volume drip', async () => {
-      let tx = await comptroller.addReferralVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-
-      await comptroller.setReferralVolumeDripAmount(prizeStrategyAddress, volumeDripAdded.values.index, toWei('200'))
-
-      let drip = await comptroller.getReferralVolumeDrip(prizeStrategyAddress, volumeDripAdded.values.index)
-
-      expect(drip.dripAmount).to.equal(toWei('200'))
-    })
-
-    it('should not allow anyone else to set the drip amount', async () => {
-      let tx = await comptroller.addReferralVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-
-      await expect(comptroller2.setReferralVolumeDripAmount(prizeStrategyAddress, volumeDripAdded.values.index, toWei('200'))).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-  })
-
-  describe('balanceOfReferralVolumeDrip()', () => {
-    it('should return a users balance of the volume drip', async () => {
-      let tx = await comptroller.addReferralVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-
-      // volume drip activates at 10
-      await comptroller.setCurrentTime(12)
-      await comptroller.afterDepositTo(wallet2._address, toWei('10'), toWei('10'), toWei('10'), measure.address, wallet._address)
-      // volume drip period is over
-      await comptroller.setCurrentTime(22)
-
-      expect(await call(comptroller, 'balanceOfReferralVolumeDrip', prizeStrategyAddress, wallet._address, volumeDripAdded.values.index)).to.equal(toWei('100'))
-    })
-  })
-
-  describe('claimReferralVolumeDrip()', () => {
-    it('should allow a users volume drip to be claimed', async () => {
-      let tx = await comptroller.addReferralVolumeDrip(prizeStrategyAddress, measure.address, dripToken.address, 10, toWei('100'), 10)
-      let volumeDripAdded = await getLastEvent(comptroller, tx)
-
-      // volume drip activates at 10
-      await comptroller.setCurrentTime(12)
-      await comptroller.afterDepositTo(wallet2._address, toWei('10'), toWei('10'), toWei('10'), measure.address, wallet._address)
-      // volume drip period is over
-      await comptroller.setCurrentTime(22)
-
-      await dripToken.mock.transfer.withArgs(wallet._address, toWei('100')).returns(true)
-      await expect(comptroller.claimReferralVolumeDrip(prizeStrategyAddress, wallet._address, volumeDripAdded.values.index))
-        .to.emit(comptroller, 'ReferralVolumeDripClaimed')
-        .withArgs(
-          prizeStrategyAddress,
-          volumeDripAdded.values.index,
-          wallet._address,
-          dripToken.address,
-          toWei('100')
-        )
-    })
-  })
-
-
-
 
   describe('afterDepositTo()', () => {
     it('should update the balance drips', async () => {
       await comptroller.setCurrentTime(1)
-      await comptroller.addBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
+      await comptroller.activateBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
       await comptroller.afterDepositTo(wallet._address, toWei('10'), toWei('10'), toWei('10'), measure.address, AddressZero)
       await comptroller.setCurrentTime(11)
       // should have accrued 10 blocks worth of the drip: 10 * 0.001 = 0.01
@@ -344,16 +327,35 @@ describe('Comptroller', () => {
       await measure.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
       await measure.mock.totalSupply.returns(toWei('10'))
 
-      await expect(comptroller.claimBalanceDrip(prizeStrategyAddress, wallet._address, measure.address, dripToken.address))
-        .to.emit(comptroller, 'BalanceDripClaimed')
-        .withArgs(wallet._address, wallet._address, measure.address, dripToken.address, toWei('0.01'))
+      // first do a pre-flight to get balances
+      let balances = await call(comptroller, 'updateDrips', 
+        [{ source: prizeStrategyAddress, measure: measure.address }],
+        wallet._address, 
+        [dripToken.address]
+      )
+
+      expect(balances).to.deep.equal([[
+        dripToken.address,
+        toWei('0.01')
+      ]])
+
+      // now run it
+      await comptroller.updateDrips(
+        [{ source: prizeStrategyAddress, measure: measure.address }],
+        wallet._address, 
+        []
+      )
+
+      await expect(comptroller.claimDrip(wallet._address, dripToken.address, toWei('0.01')))
+        .to.emit(comptroller, 'DripTokenClaimed')
+        .withArgs(wallet._address, wallet._address, dripToken.address, toWei('0.01'))
     })
   })
 
   describe('afterWithdrawFrom()', () => {
     it('should update the balance drips', async () => {
       await comptroller.setCurrentTime(1)
-      await comptroller.addBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
+      await comptroller.activateBalanceDrip(prizeStrategyAddress, measure.address, dripToken.address, toWei('0.001'))
       await comptroller.afterDepositTo(wallet._address, toWei('10'), toWei('10'), toWei('10'), measure.address, AddressZero)
       await comptroller.setCurrentTime(11)
       await comptroller.afterWithdrawFrom(wallet._address, toWei('10'), toWei('0'), toWei('0'), measure.address)
@@ -367,9 +369,9 @@ describe('Comptroller', () => {
       await dripToken.mock.transfer.withArgs(wallet._address, toWei('0.01')).returns(true)
       await measure.mock.balanceOf.withArgs(wallet._address).returns(toWei('0'))
       await measure.mock.totalSupply.returns(toWei('0'))
-      await expect(comptroller.claimBalanceDrip(prizeStrategyAddress, wallet._address, measure.address, dripToken.address))
-        .to.emit(comptroller, 'BalanceDripClaimed')
-        .withArgs(wallet._address, wallet._address, measure.address, dripToken.address, toWei('0.01'))
+      await expect(comptroller.claimDrip(wallet._address, dripToken.address, toWei('0.01')))
+        .to.emit(comptroller, 'DripTokenClaimed')
+        .withArgs(wallet._address, wallet._address, dripToken.address, toWei('0.01'))
     })
   })
 })

@@ -13,126 +13,150 @@ library VolumeDrip {
 
   struct Deposit {
     uint112 balance;
-    uint16 period;
-    uint128 accrued;
+    uint32 period;
   }
 
   struct Period {
-    uint224 totalSupply;
-    uint32 startTime;
+    uint112 totalSupply;
+    uint112 dripAmount;
+    uint32 endTime;
   }
 
   struct State {
-    uint32 periodSeconds;
-    uint128 dripAmount;
     mapping(address => Deposit) deposits;
-    Period[] periods;
+    mapping(uint32 => Period) periods;
+    uint32 periodSeconds;
+    uint112 dripAmount;
+    uint32 periodCount;
   }
 
-  function initialize(State storage self, uint32 _periodSeconds, uint128 dripAmount, uint32 startTime) internal {
-    require(_periodSeconds > 0, "VolumeDrip/period-gt-zero");
-    self.periods.push(
-      Period({
-        totalSupply: 0,
-        startTime: startTime
-      })
-    );
+  function setNewPeriod(
+    State storage self,
+    uint32 _periodSeconds,
+    uint112 dripAmount,
+    uint32 endTime
+  )
+    internal
+    minPeriod(_periodSeconds)
+  {
+    self.periodCount = uint256(self.periodCount).add(1).toUint16();
+    self.periods[self.periodCount] = Period({
+      totalSupply: 0,
+      dripAmount: dripAmount,
+      endTime: endTime
+    });
     self.periodSeconds = _periodSeconds;
     self.dripAmount = dripAmount;
   }
 
-  function isPeriodOver(State storage self, uint256 currentTime) internal view returns (bool) {
-    return currentTime >= uint256(self.periods[_currentPeriodIndex(self)].startTime).add(self.periodSeconds);
-  }
-
-  function completePeriod(State storage self, uint256 currentTime) internal onlyPeriodOver(self, currentTime) {
-    uint256 lastStartTime = self.periods[_currentPeriodIndex(self)].startTime;
-    uint256 numberOfPeriods = currentTime.sub(lastStartTime).div(self.periodSeconds);
-    uint256 startTime = lastStartTime.add(numberOfPeriods.mul(self.periodSeconds));
-    self.periods.push(
-      Period({
-        totalSupply: 0,
-        startTime: startTime.toUint32()
-      })
-    );
-  }
-
-  function calculateAccrued(
+  function setNextPeriod(
     State storage self,
-    uint16 depositPeriod,
-    uint128 balance
+    uint32 _periodSeconds,
+    uint112 dripAmount
   )
-    internal view
-    returns (uint256)
+    internal
+    minPeriod(_periodSeconds)
   {
-    if (depositPeriod < _currentPeriodIndex(self) && self.periods[depositPeriod].totalSupply > 0) {
-      uint256 fractionMantissa = FixedPoint.calculateMantissa(balance, self.periods[depositPeriod].totalSupply);
-      return FixedPoint.multiplyUintByMantissa(self.dripAmount, fractionMantissa);
-    }
-
-    return 0;
+    self.periodSeconds = _periodSeconds;
+    self.dripAmount = dripAmount;
   }
 
-  function mint(State storage self, address user, uint256 amount, uint256 currentTime) internal {
-    if (isPeriodOver(self, currentTime)) {
-      completePeriod(self, currentTime);
+  function poke(
+    State storage self,
+    uint256 currentTime
+  )
+    internal
+    returns (bool)
+  {
+    if (_isPeriodOver(self, currentTime)) {
+      _completePeriod(self, currentTime);
+      return true;
     }
-    uint256 accrued = calculateAccrued(self, self.deposits[user].period, self.deposits[user].balance);
-    uint16 currentPeriod = _currentPeriodIndex(self);
+    return false;
+  }
+
+  function mint(
+    State storage self,
+    address user,
+    uint256 amount,
+    uint256 currentTime
+  )
+    internal
+    hasPeriod(self)
+    returns (uint256 accrued, bool isNewPeriod)
+  {
+    isNewPeriod = poke(self, currentTime);
+    accrued = _lastBalanceAccruedAmount(self, self.deposits[user].period, self.deposits[user].balance);
+    uint32 currentPeriod = self.periodCount;
     if (accrued > 0) {
       self.deposits[user] = Deposit({
         balance: amount.toUint112(),
-        period: currentPeriod,
-        accrued: uint256(self.deposits[user].accrued).add(accrued).toUint128()
+        period: currentPeriod
       });
     } else {
       self.deposits[user] = Deposit({
         balance: uint256(self.deposits[user].balance).add(amount).toUint112(),
-        period: currentPeriod,
-        accrued: self.deposits[user].accrued
+        period: currentPeriod
       });
     }
-    self.periods[currentPeriod].totalSupply = uint256(self.periods[currentPeriod].totalSupply).add(amount).toUint128();
-  }
+    self.periods[currentPeriod].totalSupply = uint256(self.periods[currentPeriod].totalSupply).add(amount).toUint112();
 
-  function balanceOf(State storage self, address user, uint256 currentTime) internal returns (Deposit memory) {
-    if (isPeriodOver(self, currentTime)) {
-      completePeriod(self, currentTime);
-    }
-    uint256 accrued = calculateAccrued(self, self.deposits[user].period, self.deposits[user].balance);
-    uint112 newBalance;
-    if (accrued > 0) {
-      newBalance = 0;
-    } else {
-      newBalance = self.deposits[user].balance;
-    }
-    accrued = accrued.add(self.deposits[user].accrued);
-    return Deposit({
-      balance: newBalance,
-      period: _currentPeriodIndex(self),
-      accrued: accrued.toUint128()
-    });
+    return (accrued, isNewPeriod);
   }
 
   function currentPeriod(State storage self) internal view returns (Period memory) {
-    return self.periods[_currentPeriodIndex(self)];
+    return self.periods[self.periodCount];
   }
 
-  function burnDrip(State storage self, address user, uint256 currentTime) internal returns (uint256 accrued) {
-    Deposit memory deposit = balanceOf(self, user, currentTime);
-    accrued = deposit.accrued;
-    deposit.accrued = 0;
-    self.deposits[user] = deposit;
+  function _isPeriodOver(State storage self, uint256 currentTime) private view returns (bool) {
+    return currentTime >= self.periods[self.periodCount].endTime;
+  }
+
+  function _completePeriod(State storage self, uint256 currentTime) private onlyPeriodOver(self, currentTime) {
+    uint256 lastEndTime = self.periods[self.periodCount].endTime;
+    uint256 numberOfPeriods = currentTime.sub(lastEndTime).div(self.periodSeconds).add(1);
+    uint256 endTime = lastEndTime.add(numberOfPeriods.mul(self.periodSeconds));
+    self.periodCount = uint256(self.periodCount).add(1).toUint16();
+    self.periods[self.periodCount] = Period({
+      totalSupply: 0,
+      dripAmount: self.dripAmount,
+      endTime: endTime.toUint32()
+    });
+  }
+
+  function _lastBalanceAccruedAmount(
+    State storage self,
+    uint32 depositPeriod,
+    uint128 balance
+  )
+    private view
+    returns (uint256)
+  {
+    uint256 accrued;
+    if (depositPeriod < self.periodCount && self.periods[depositPeriod].totalSupply > 0) {
+      uint256 fractionMantissa = FixedPoint.calculateMantissa(balance, self.periods[depositPeriod].totalSupply);
+      accrued = FixedPoint.multiplyUintByMantissa(self.dripAmount, fractionMantissa);
+    }
     return accrued;
   }
 
-  function _currentPeriodIndex(State storage self) internal view returns (uint16) {
-    require(self.periods.length > 0, "VolumeDrip/no-period");
-    return self.periods.length.sub(1).toUint16();
+  modifier onlyPeriodNotOver(State storage self, uint256 _currentTime) {
+    require(!_isPeriodOver(self, _currentTime), "VolumeDrip/period-over");
+    _;
   }
 
   modifier onlyPeriodOver(State storage self, uint256 _currentTime) {
-    require(isPeriodOver(self, _currentTime), "VolumeDrip/period-not-over");
+    require(_isPeriodOver(self, _currentTime), "VolumeDrip/period-not-over");
+    _;
+  }
+
+  modifier minPeriod(uint256 _periodSeconds) {
+    require(_periodSeconds > 0, "VolumeDrip/period-gt-zero");
+    _;
+  }
+
+  modifier hasPeriod(State storage self) {
+    require(self.periodCount > 0, "VolumeDrip/no-period");
     _;
   }
 }

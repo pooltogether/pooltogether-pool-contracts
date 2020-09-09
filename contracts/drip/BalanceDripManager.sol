@@ -1,8 +1,11 @@
 pragma solidity ^0.6.4;
 
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+
 import "../utils/MappedSinglyLinkedList.sol";
 import "./BalanceDrip.sol";
 
+/// @title Manages the lifecycle of a set of Balance Drips.
 library BalanceDripManager {
   using SafeMath for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
@@ -13,80 +16,73 @@ library BalanceDripManager {
     mapping(address => mapping(address => BalanceDrip.State)) balanceDrips;
   }
 
-  function updateDrips(
+  /// @notice Activates a drip by setting it's state and adding it to the active balance drips list.
+  /// @param self The BalanceDripManager state
+  /// @param measure The measure token
+  /// @param dripToken The drip token
+  /// @param dripRatePerSecond The amount of the drip token to be dripped per second
+  /// @param currentTime The current time
+  function activateDrip(
     State storage self,
     address measure,
-    address user,
-    uint256 measureBalance,
-    uint256 measureTotalSupply,
-    uint256 currentTime
-  ) internal {
-    address currentDripToken = self.activeBalanceDrips[measure].start();
-    while (currentDripToken != address(0) && currentDripToken != self.activeBalanceDrips[measure].end()) {
-      BalanceDrip.State storage dripState = self.balanceDrips[measure][currentDripToken];
-      dripState.drip(
-        user,
-        measureBalance,
-        measureTotalSupply,
-        currentTime
-      );
-      currentDripToken = self.activeBalanceDrips[measure].next(currentDripToken);
-    }
-  }
-
-  function addDrip(State storage self, address measure, address dripToken, uint256 dripRatePerSecond, uint256 currentTime) internal {
-    require(!self.activeBalanceDrips[measure].contains(dripToken), "BalanceDripManager/drip-exists");
+    address dripToken,
+    uint256 dripRatePerSecond,
+    uint32 currentTime
+  )
+    internal
+  {
+    require(!self.activeBalanceDrips[measure].contains(dripToken), "BalanceDripManager/drip-active");
     if (self.activeBalanceDrips[measure].count == 0) {
       self.activeBalanceDrips[measure].initialize();
     }
     self.activeBalanceDrips[measure].addAddress(dripToken);
-    self.balanceDrips[measure][dripToken].initialize(currentTime);
-    self.balanceDrips[measure][dripToken].dripRatePerSecond = dripRatePerSecond;
+    self.balanceDrips[measure][dripToken].setDripRate(IERC20(measure).totalSupply(), dripRatePerSecond, currentTime);
   }
 
-  function removeDrip(
+  /// @notice Deactivates an active balance drip.  The balance drip is removed from the active balance drips list.  The drip rate for the balance drip will be set to zero to ensure it's "frozen".
+  /// @param measure The measure token
+  /// @param dripToken The drip token
+  /// @param prevDripToken The previous drip token previous in the list.  If no previous, then pass the SENTINEL address: 0x0000000000000000000000000000000000000001
+  /// @param currentTime The current time
+  function deactivateDrip(
     State storage self,
     address measure,
+    address dripToken,
     address prevDripToken,
-    address dripToken
+    uint32 currentTime
   )
     internal
   {
-    delete self.balanceDrips[measure][dripToken];
     self.activeBalanceDrips[measure].removeAddress(prevDripToken, dripToken);
+    self.balanceDrips[measure][dripToken].setDripRate(IERC20(measure).totalSupply(), 0, currentTime);
   }
 
-  function setDripRate(State storage self, address measure, address dripToken, uint256 dripRatePerSecond) internal {
-    require(self.activeBalanceDrips[measure].contains(dripToken), "BalanceDripManager/drip-not-exists");
-    self.balanceDrips[measure][dripToken].dripRatePerSecond = dripRatePerSecond;
+  /// @notice Sets the drip rate for an active balance drip.
+  /// @param self The BalanceDripManager state
+  /// @param measure The measure token
+  /// @param dripToken The drip token
+  /// @param dripRatePerSecond The amount to drip of the token each second
+  /// @param currentTime The current time.
+  function setDripRate(State storage self, address measure, address dripToken, uint256 dripRatePerSecond, uint32 currentTime) internal {
+    require(self.activeBalanceDrips[measure].contains(dripToken), "BalanceDripManager/drip-not-active");
+    self.balanceDrips[measure][dripToken].setDripRate(IERC20(measure).totalSupply(), dripRatePerSecond, currentTime);
   }
 
-  function hasDrip(State storage self, address measure, address dripToken) internal view returns (bool) {
+  /// @notice Returns whether or not a drip is active for the given measure, dripToken pair
+  /// @param self The BalanceDripManager state
+  /// @param measure The measure token
+  /// @param dripToken The drip token
+  /// @return True if there is an active balance drip for the pair, false otherwise
+  function isDripActive(State storage self, address measure, address dripToken) internal view returns (bool) {
     return self.activeBalanceDrips[measure].contains(dripToken);
   }
 
+  /// @notice Returns the BalanceDrip.State for the given measure, dripToken pair
+  /// @param self The BalanceDripManager state
+  /// @param measure The measure token
+  /// @param dripToken The drip token
+  /// @return The BalanceDrip.State for the pair
   function getDrip(State storage self, address measure, address dripToken) internal view returns (BalanceDrip.State storage) {
     return self.balanceDrips[measure][dripToken];
-  }
-
-  function balanceOfDrip(
-    State storage self,
-    address user,
-    address measure,
-    address dripToken
-  )
-    internal view
-    returns (uint256)
-  {
-    BalanceDrip.State storage dripState = self.balanceDrips[measure][dripToken];
-    return dripState.userStates[user].dripBalance;
-  }
-
-  function claimDripTokens(State storage self, address user, address measure, address dripToken) internal returns (uint256) {
-    BalanceDrip.State storage dripState = self.balanceDrips[measure][dripToken];
-    uint256 balance = dripState.userStates[user].dripBalance;
-    dripState.burnDrip(user, balance);
-    require(IERC20(dripToken).transfer(user, balance), "BalanceDripManager/transfer-failed");
-    return balance;
   }
 }

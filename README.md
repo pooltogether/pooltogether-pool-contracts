@@ -18,47 +18,6 @@ $ yarn add @pooltogether/pooltogether-contracts@alpha
 
 Notice the `alpha` tag: this is important!  Otherwise you'll get the old code.
 
-# Integration Tests
-
-If you're building against PoolTogether and want to deploy all of the factories and builders to your test rpc, you can use the `deployContracts` function.
-
-Like so:
-
-```javascript
-#!/usr/bin/env node
-
-const ethers = require('ethers')
-const { deployContracts } = require('@pooltogether/pooltogether-contracts')
-const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
-// This address is the first address in Buidler (https://buidler.dev)
-const signer = provider.getSigner('0xc783df8a850f42e7f7e57013759c285caa701eb6')
-
-let contracts = await deployContracts(signer)
-
-/**
- * 
- * The resuling object fields will include:
- * 
-  rng: The RNG Service
-  registry: The ERC1820Registry
-  forwarder: A OpenGSN TrustedForwarder instance
-  token: An ERC20Mintable asset token
-  cToken: A Mock Compount cToken for the asset
-  governor: A Mock governor instance
-  ownableModuleManagerFactory: factory 
-  yieldServiceFactory: factory
-  prizePoolFactory: factory
-  timelockFactory: factory
-  ticketFactory: factory
-  prizeStrategyFactory: factory
-  collateralFactory: factory
-  sponsorshipFactory: factory
-  prizePoolBuilder: The PrizePool builder
-  singleRandomWinnerPrizePoolBuilder: The SingleRandomWinner prize pool builder 
- * 
- */
-```
-
 # Development
 
 First clone this repository and enter the directory.
@@ -87,20 +46,14 @@ $ yarn start
 Now deploy the contracts:
 
 ```bash
-$ yarn migrate-local
-```
-
-Deploy a mock cToken contract:
-
-```bash
-$ yarn deploy-ctoken-local
+$ yarn deploy local
 ```
 
 Interact with the contracts on the command line using [oz-console](https://github.com/pooltogether/oz-console):
 
 ```bash
 $ yarn console-local
-local> contracts.SingleRandomWinnerPrizePoolBuilder.address
+local> contracts.CompoundPrizePoolBuilder.address
 ```
 
 To give test eth to an account, use the console:

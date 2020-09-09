@@ -4,122 +4,73 @@ import "../drip/VolumeDripManager.sol";
 
 contract VolumeDripManagerExposed {
   using VolumeDripManager for VolumeDripManager.State;
+  using VolumeDrip for VolumeDrip.State;
 
-  VolumeDripManager.State state;
+  VolumeDripManager.State manager;
 
-  event DripTokensClaimed(
-    uint256 index,
-    address user,
-    address dripToken,
-    uint256 amount
-  );
-
-  function addDrip(
+  function activate(
     address measure,
     address dripToken,
     uint32 periodSeconds,
-    uint128 dripAmount,
-    uint32 currentTime
+    uint112 dripAmount,
+    uint32 endTime
   )
     external
   {
-    state.addDrip(measure, dripToken, periodSeconds, dripAmount, currentTime);
+    manager.activate(measure, dripToken, periodSeconds, dripAmount, endTime);
   }
 
-  function removeDrip(
+  function deactivate(
     address measure,
-    uint256 index
+    address dripToken,
+    address prevDripToken
   )
     external
   {
-    state.removeDrip(measure, index);
+    manager.deactivate(measure, dripToken, prevDripToken);
   }
 
-  function setDripAmount(uint256 index, uint128 dripAmount) external {
-    state.setDripAmount(index, dripAmount);
+  function set(address measure, address dripToken, uint32 periodSeconds, uint112 dripAmount) external {
+    manager.set(measure, dripToken, periodSeconds, dripAmount);
   }
 
-  function deposit(
+  function isActive(address measure, address dripToken) external view returns (bool) {
+    return manager.isActive(measure, dripToken);
+  }
+
+  function getPeriod(
     address measure,
-    address user,
-    uint256 amount,
-    uint256 currentTime
+    address dripToken,
+    uint32 period
   )
     external
+    view
+    returns (
+      uint112 totalSupply,
+      uint112 dripAmount,
+      uint32 endTime
+    )
   {
-    state.deposit(measure, user, amount, currentTime);
-  }
-
-  function claimDripTokens(
-    uint256 index,
-    address user,
-    uint256 currentTime
-  )
-    external
-    returns (uint256)
-  {
-    (address token, uint256 amount) = state.claimDripTokens(index, user, currentTime);
-
-    emit DripTokensClaimed(
-      index,
-      user,
-      token,
-      amount
-    );
+    VolumeDrip.State storage drip = manager.getDrip(measure, dripToken);
+    VolumeDrip.Period memory state = drip.periods[period];
+    totalSupply = state.totalSupply;
+    dripAmount = state.dripAmount;
+    endTime = state.endTime;
   }
 
   function getDrip(
-    uint256 index
+    address measure,
+    address dripToken
   )
     external
     view
     returns (
       uint32 periodSeconds,
-      uint128 dripAmount,
-      address token
+      uint112 dripAmount
     )
   {
-    return state.getDrip(index);
+    VolumeDrip.State storage drip = manager.getDrip(measure, dripToken);
+    dripAmount = drip.dripAmount;
+    periodSeconds = drip.periodSeconds;
   }
-
-  function getPeriod(uint256 index, uint256 periodIndex)
-    external
-    view
-    returns (
-      uint224 totalSupply,
-      uint32 startTime
-    )
-  {
-    totalSupply = state.volumeDrips[index].periods[periodIndex].totalSupply;
-    startTime = state.volumeDrips[index].periods[periodIndex].startTime;
-  }
-
-  function getDeposit(uint256 index, address user)
-    external
-    view
-    returns (
-      uint112 balance,
-      uint16 period,
-      uint128 accrued
-    )
-  {
-    balance = state.volumeDrips[index].deposits[user].balance;
-    period = state.volumeDrips[index].deposits[user].period;
-    accrued = state.volumeDrips[index].deposits[user].accrued;
-  }
-
-  function deactivateDrip(
-    address measure,
-    uint256 index
-  ) external {
-    state.deactivateDrip(measure, index);
-  }
-
-  function activateDrip(
-    address measure,
-    uint256 index
-  ) external {
-    state.activateDrip(measure, index);
-  }
-
 }
