@@ -21,6 +21,14 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   using SafeCast for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
+  /// @dev Emitted when an instance is initialized
+  event Initialized(
+    address trustedForwarder,
+    address comptroller,
+    uint256 maxExitFeeMantissa,
+    uint256 maxTimelockDuration
+  );
+
   /// @dev Event emitted when controlled token is added
   event ControlledTokenAdded(
     address indexed token
@@ -116,6 +124,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     bool initialized;
   }
 
+  /// @dev Comptroller to which reserve fees are sent
   ComptrollerInterface public comptroller;
 
   /// @dev Controlled token to serve as the reserve fee
@@ -167,20 +176,25 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     initializer
   {
     require(address(_comptroller) != address(0), "PrizePool/comptroller-not-zero");
-    require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
     comptroller = _comptroller;
+    _setPrizeStrategy(address(_prizeStrategy));
     _tokens.initialize();
-    _tokens.addAddresses(_controlledTokens);
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
-      require(ControlledToken(_controlledTokens[i]).controller() == this, "PrizePool/token-ctrlr-mismatch");
+      _addControlledToken(_controlledTokens[i]);
     }
     __Ownable_init();
     __ReentrancyGuard_init();
     trustedForwarder = _trustedForwarder;
-    prizeStrategy = _prizeStrategy;
     maxExitFeeMantissa = _maxExitFeeMantissa;
     maxTimelockDuration = _maxTimelockDuration;
+
+    emit Initialized(
+      _trustedForwarder,
+      address(_comptroller),
+      maxExitFeeMantissa,
+      maxTimelockDuration
+    );
   }
 
   /// @dev Inheriting contract must determine if a specific token type may be awarded as a prize enhancement
@@ -232,6 +246,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     return _canAwardExternal(_externalToken);
   }
 
+  /// @dev Sets which controlled token will be minted as the reserve fee.  Only callable by the owner.
+  /// @param controlledToken The controlled token to mint.  This must be controlled by the PrizePool.
   function setReserveFeeControlledToken(address controlledToken) external onlyControlledToken(controlledToken) onlyOwner {
     reserveFeeControlledToken = controlledToken;
 
@@ -318,6 +334,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     return exitFee;
   }
 
+  /// @notice Limits the exit fee to the maximum as hard-coded into the contract
+  /// @param withdrawalAmount The amount that is attempting to be withdrawn
+  /// @param exitFee An exit fee to check
+  /// @return The passed exit fee if it is less than the maximum, otherwise the maximum fee is returned.
   function _limitExitFee(uint256 withdrawalAmount, uint256 exitFee) internal view returns (uint256) {
     uint256 maxFee = FixedPoint.multiplyUintByMantissa(withdrawalAmount, maxExitFeeMantissa);
     if (exitFee > maxFee) {
@@ -356,6 +376,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     return unlockTimestamp;
   }
 
+  /// @notice Adds to a user's timelock balance.  It will attempt to sweep before updating the balance.  Note that this will overwrite the previous unlock timestamp.
+  /// @param user The user whose timelock balance should increase
+  /// @param amount The amount to increase by
+  /// @param timestamp The new unlock timestamp
   function _mintTimelock(address user, uint256 amount, uint256 timestamp) internal {
     // Sweep the old balance, if any
     address[] memory users = new address[](1);
@@ -372,28 +396,16 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     }
   }
 
-  function _beforeTokenMint(address to, uint256 amount, address controlledToken, address referrer) internal {
-    prizeStrategy.beforeTokenMint(to, amount, controlledToken, referrer);
-    if (address(comptroller) != address(0)) {
-      comptroller.beforeTokenMint(
-        to,
-        amount,
-        controlledToken,
-        referrer
-      );
-    }
-  }
-
   /// @notice Updates the Prize Strategy when tokens are transferred between holders.  Only transfers, not minting or burning.
   /// @param from The address the tokens are being transferred from
   /// @param to The address the tokens are being transferred to
   /// @param amount The amount of tokens being trasferred
   function beforeTokenTransfer(address from, address to, uint256 amount) external override onlyControlledToken(msg.sender) {
     if (from != address(0)) {
-      _accrueCredit(from, msg.sender, IERC20(msg.sender).balanceOf(from));
+      _accrueCredit(from, msg.sender, IERC20(msg.sender).balanceOf(from), 0);
     }
     if (to != address(0)) {
-      _accrueCredit(to, msg.sender, IERC20(msg.sender).balanceOf(to));
+      _accrueCredit(to, msg.sender, IERC20(msg.sender).balanceOf(to), 0);
     }
     // if we aren't minting
     if (from != address(0)) {
@@ -480,8 +492,21 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     emit AwardedExternalERC20(to, externalToken, amount);
   }
 
+  /// @notice Called to mint controlled tokens.  Ensures that token listener callbacks are fired.
+  /// @param to The user who is receiving the tokens
+  /// @param amount The amount of tokens they are receiving
+  /// @param controlledToken The token that is going to be minted
+  /// @param referrer The user who referred the minting
   function _mint(address to, uint256 amount, address controlledToken, address referrer) internal {
-    _beforeTokenMint(to, amount, controlledToken, referrer);
+    prizeStrategy.beforeTokenMint(to, amount, controlledToken, referrer);
+    if (address(comptroller) != address(0)) {
+      comptroller.beforeTokenMint(
+        to,
+        amount,
+        controlledToken,
+        referrer
+      );
+    }
     ControlledToken(controlledToken).controllerMint(to, amount);
   }
 
@@ -667,14 +692,11 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     tokenCreditBalances[controlledToken][user].balance = uint256(tokenCreditBalances[controlledToken][user].balance).sub(credit).toUint128();
   }
  
-  function _accrueCredit(address user, address controlledToken, uint256 controlledTokenBalance) internal {
-    _accrueCredit(user, controlledToken, controlledTokenBalance, 0);
-  }
-
   /// @notice Accrues ticket credit for a user assuming their current balance is the passed balance.
   /// @param user The user for whom to accrue credit
   /// @param controlledToken The controlled token whose balance we are checking
   /// @param controlledTokenBalance The balance to use for the user
+  /// @param extra Additional credit to be added
   function _accrueCredit(address user, address controlledToken, uint256 controlledTokenBalance, uint256 extra) internal {
     uint256 credit = calculateAccruedCredit(user, controlledToken, controlledTokenBalance);
     CreditBalance storage creditBalance = tokenCreditBalances[controlledToken][user];
@@ -726,7 +748,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param user The user whose credit balance should be returned
   /// @return The balance of the users credit
   function balanceOfCredit(address user, address controlledToken) external onlyControlledToken(controlledToken) returns (uint256) {
-    _accrueCredit(user, controlledToken, IERC20(controlledToken).balanceOf(user));
+    _accrueCredit(user, controlledToken, IERC20(controlledToken).balanceOf(user), 0);
     return tokenCreditBalances[controlledToken][user].balance;
   }
 
@@ -764,7 +786,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     returns (uint256)
   {
     uint256 controlledTokenBalance = IERC20(controlledToken).balanceOf(from);
-    _accrueCredit(from, controlledToken, controlledTokenBalance);
+    _accrueCredit(from, controlledToken, controlledTokenBalance, 0);
 
     /*
     The credit is used *last*.  Always charge the fees up-front.
@@ -798,14 +820,28 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @notice Allows the Governor to add Controlled Tokens to the Prize Pool
   /// @param _controlledToken The address of the Controlled Token to add
   function addControlledToken(address _controlledToken) external onlyOwner {
+    _addControlledToken(_controlledToken);
+  }
+
+  /// @notice Adds a new controlled token
+  /// @param _controlledToken The controlled token to add.  Cannot be a duplicate.
+  function _addControlledToken(address _controlledToken) internal {
     require(ControlledToken(_controlledToken).controller() == this, "PrizePool/token-ctrlr-mismatch");
     _tokens.addAddress(_controlledToken);
 
     emit ControlledTokenAdded(_controlledToken);
   }
 
+  /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.
+  /// @param _prizeStrategy The new prize strategy
   function setPrizeStrategy(address _prizeStrategy) external onlyOwner {
-    require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-zero");
+    _setPrizeStrategy(_prizeStrategy);
+  }
+
+  /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.
+  /// @param _prizeStrategy The new prize strategy
+  function _setPrizeStrategy(address _prizeStrategy) internal {
+    require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
     prizeStrategy = PrizePoolTokenListenerInterface(_prizeStrategy);
 
     emit PrizeStrategySet(_prizeStrategy);
