@@ -689,15 +689,6 @@ describe('CompoundPrizePool', function() {
         expect(await prizePool.liquidityCap()).to.equal(liquidityCap)
       })
 
-      it('should revert when the current supply exceeds the new liquidity cap', async () => {
-        const liquidityCap = toWei('999')
-
-        await ticket.mock.totalSupply.returns(toWei('1000'))
-
-        await expect(prizePool.setLiquidityCap(liquidityCap))
-          .to.be.revertedWith("PrizePool/supply-exceeds-cap")
-      })
-
       it('should not allow anyone else to call', async () => {
         prizePool2 = prizePool.connect(wallet2)
         await expect(prizePool2.setLiquidityCap(toWei('1000'))).to.be.revertedWith('Ownable: caller is not the owner')
@@ -847,6 +838,7 @@ describe('CompoundPrizePool', function() {
 
     describe('depositTo()', () => {
       it('should NOT mint tokens to the user', async () => {
+        await ticket2.mock.totalSupply.returns('10')
         await expect(shutdownPrizePool.depositTo(wallet2._address, toWei('1'), ticket2.address, AddressZero))
           .to.be.revertedWith('PrizePool/shutdown')
       })
@@ -854,6 +846,7 @@ describe('CompoundPrizePool', function() {
 
     describe('timelockDepositTo()', () => {
       it('should NOT mint tokens to the user', async () => {
+        await ticket2.mock.totalSupply.returns('10')
         await expect(shutdownPrizePool.timelockDepositTo(wallet2._address, toWei('1'), ticket2.address, []))
           .to.be.revertedWith('PrizePool/shutdown')
       })

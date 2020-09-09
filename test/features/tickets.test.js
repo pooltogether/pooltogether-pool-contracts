@@ -29,7 +29,7 @@ describe('Tickets Feature', () => {
     await env.setReserveRate({ rate: '0.01' })
     await env.buyTickets({ user: 1, tickets: 100 })
     await env.poolAccrues({ tickets: 100 })
-    await env.awardPrizeToToken({ token: 0 })
+    await env.awardPrize()
     await env.expectUserToHaveTickets({ user: 1, tickets: 199 })
   })
 
