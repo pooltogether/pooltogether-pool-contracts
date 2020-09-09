@@ -76,6 +76,14 @@ function PoolEnv() {
     await this.env.comptroller.setCurrentTime(time, this.overrides)
   }
 
+  this.setReserveRate = async function ({rate}) {
+    let wallet = await this.wallet(0)
+    let prizePool = await this.prizePool(wallet)
+
+    await prizePool.setReserveFeeControlledToken(this.env.ticket.address, this.overrides)
+    await this.env.comptroller.setReserveRateMantissa(toWei(rate), this.overrides)
+  }
+
   this.prizeStrategy = async function (wallet) {
     let prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategyHarness', this.env.prizeStrategy.address, wallet)
     this._prizeStrategy = prizeStrategy

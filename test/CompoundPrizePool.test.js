@@ -199,11 +199,6 @@ describe('CompoundPrizePool', function() {
         await expect(prizePool.depositTo(wallet2._address, amount, ticket.address, AddressZero))
           .to.be.revertedWith("CompoundPrizePool/mint-failed")
 
-<<<<<<< HEAD
-      })
-    })
-
-=======
       })
 
       it('should revert when deposit exceeds liquidity cap', async () => {
@@ -231,13 +226,37 @@ describe('CompoundPrizePool', function() {
       })
     })
 
->>>>>>> Add governance controlled liquidity cap to prize pool
-    describe('awardBalance()', () => {
-      it('should return the yield less the total token supply', async () => {
-        await comptroller.mock.reserveRateMantissa.returns(0)
+    describe('captureAwardBalance()', () => {
+      it('should track the yield less the total token supply', async () => {
         await ticket.mock.totalSupply.returns(toWei('100'))
         await cToken.mock.balanceOfUnderlying.returns(toWei('110'))
-        expect(await call(prizePool, 'awardBalance')).to.equal(toWei('10'))
+        await comptroller.mock.reserveRateMantissa.returns('0')
+
+        await expect(prizePool.captureAwardBalance()).to.not.emit(prizePool, 'ReserveFeeCaptured');
+        expect(await prizePool.awardBalance()).to.equal(toWei('10'))
+      })
+
+      it('should capture the reserve fees', async () => {
+        const reserveFee = toWei('1')
+
+        await comptroller.mock.reserveRateMantissa.returns(toWei('0.01'))
+        await prizePool.setReserveFeeControlledToken(ticket.address);
+
+        await comptroller.mock.beforeTokenTransfer.withArgs(AddressZero, comptroller.address, reserveFee, wallet._address).returns()
+        await comptroller.mock.beforeTokenMint.withArgs(comptroller.address, reserveFee, ticket.address, AddressZero).returns()
+
+        await prizeStrategy.mock.beforeTokenTransfer.withArgs(AddressZero, comptroller.address, reserveFee, wallet._address).returns()
+        await prizeStrategy.mock.beforeTokenMint.withArgs(comptroller.address, reserveFee, ticket.address, AddressZero).returns()
+
+        await ticket.mock.totalSupply.returns(toWei('1000'))
+        await ticket.mock.controllerMint.withArgs(comptroller.address, reserveFee).returns()
+        await cToken.mock.balanceOfUnderlying.returns(toWei('1100'))
+
+        await expect(prizePool.captureAwardBalance())
+          .to.emit(prizePool, 'ReserveFeeCaptured')
+          .withArgs(reserveFee)
+
+        expect(await prizePool.awardBalance()).to.equal(toWei('99'))
       })
 
       it('should take the reserve fee into account', async () => {
@@ -670,15 +689,6 @@ describe('CompoundPrizePool', function() {
         expect(await prizePool.liquidityCap()).to.equal(liquidityCap)
       })
 
-      it('should revert when the current supply exceeds the new liquidity cap', async () => {
-        const liquidityCap = toWei('999')
-
-        await ticket.mock.totalSupply.returns(toWei('1000'))
-
-        await expect(prizePool.setLiquidityCap(liquidityCap))
-          .to.be.revertedWith("PrizePool/supply-exceeds-cap")
-      })
-
       it('should not allow anyone else to call', async () => {
         prizePool2 = prizePool.connect(wallet2)
         await expect(prizePool2.setLiquidityCap(toWei('1000'))).to.be.revertedWith('Ownable: caller is not the owner')
@@ -828,6 +838,7 @@ describe('CompoundPrizePool', function() {
 
     describe('depositTo()', () => {
       it('should NOT mint tokens to the user', async () => {
+        await ticket2.mock.totalSupply.returns('10')
         await expect(shutdownPrizePool.depositTo(wallet2._address, toWei('1'), ticket2.address, AddressZero))
           .to.be.revertedWith('PrizePool/shutdown')
       })
@@ -835,6 +846,7 @@ describe('CompoundPrizePool', function() {
 
     describe('timelockDepositTo()', () => {
       it('should NOT mint tokens to the user', async () => {
+        await ticket2.mock.totalSupply.returns('10')
         await expect(shutdownPrizePool.timelockDepositTo(wallet2._address, toWei('1'), ticket2.address, []))
           .to.be.revertedWith('PrizePool/shutdown')
       })

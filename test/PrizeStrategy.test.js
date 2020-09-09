@@ -420,7 +420,7 @@ describe('PrizeStrategy', function() {
       await ticket.mock.totalSupply.returns(toWei('10'))
 
       // 1 dai to give
-      await prizePool.mock.awardBalance.returns(toWei('1'))
+      await prizePool.mock.captureAwardBalance.returns(toWei('1'))
 
       // no reserve
       await prizePool.mock.calculateReserveFee.returns('0')

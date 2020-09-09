@@ -24,6 +24,15 @@ describe('Tickets Feature', () => {
     await env.expectUserToHaveTickets({ user: 1, tickets: 200 })
   })
 
+  it('should account for reserve fees when awarding prizes', async () => {
+    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.setReserveRate({ rate: '0.01' })
+    await env.buyTickets({ user: 1, tickets: 100 })
+    await env.poolAccrues({ tickets: 100 })
+    await env.awardPrize()
+    await env.expectUserToHaveTickets({ user: 1, tickets: 199 })
+  })
+
   it('should not be possible to buy or transfer tickets during award', async () => {
     await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
     await env.buyTickets({ user: 2, tickets: 100 })

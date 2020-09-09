@@ -288,10 +288,9 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Completes the award process and awards the winners.  The random number must have been requested and is now available.
   function completeAward() external requireCanCompleteAward {
     uint256 randomNumber = rng.randomNumber(rngRequest.id);
-    uint256 prize = prizePool.awardBalance();
-
     delete rngRequest;
 
+    uint256 prize = prizePool.captureAwardBalance();
     address winner = ticket.draw(randomNumber);
     if (winner != address(0)) {
       _awardTickets(winner, prize);

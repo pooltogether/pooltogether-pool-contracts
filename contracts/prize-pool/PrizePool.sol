@@ -38,6 +38,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address indexed token
   );
 
+  event ReserveFeeCaptured(
+    uint256 amount
+  );
+
   /// @dev Event emitted when assets are deposited
   event Deposited(
     address indexed operator,
@@ -58,8 +62,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   event Awarded(
     address indexed winner,
     address indexed token,
-    uint256 amount,
-    uint256 reserveFee
+    uint256 amount
   );
 
   /// @dev Event emitted when external ERC20s are awarded to a winner
@@ -152,6 +155,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
   /// @dev The total amount of funds that the prize pool can hold (default: 0; no cap)
   uint256 public liquidityCap;
+
+  /// @dev the The total awardable balance for the current prize
+  uint256 internal _currentAwardBalance;
 
   /// @dev The timelocked balances for each user
   mapping(address => uint256) internal _timelockBalances;
@@ -434,19 +440,32 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     }
   }
 
-  /// @notice Updates and returns the current prize.
-  /// @dev Updates the internal rolling interest rate since the last poke
+  /// @notice Gets the current prize.
   /// @return The total amount of assets to be awarded for the current prize
-  function awardBalance() public returns (uint256) {
+  function awardBalance() public view returns (uint256) {
+    return _currentAwardBalance;
+  }
+
+  /// @notice Updates and returns the current prize.
+  /// @dev Updates the internal current award balance and captures reserve fees
+  /// @return The total amount of assets to be awarded for the current prize
+  function captureAwardBalance() public returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
-    uint256 bal = _balance();
-    if (bal > tokenTotalSupply) {
-      uint256 interest = bal.sub(tokenTotalSupply);
-      uint256 reserveFee = calculateReserveFee(interest);
-      return interest.sub(reserveFee);
-    } else {
-      return 0;
+    uint256 currentBalance = _balance();
+    uint256 totalInterest = (currentBalance > tokenTotalSupply) ? currentBalance.sub(tokenTotalSupply) : 0;
+    uint256 unaccountedPrizeBalance = totalInterest.sub(_currentAwardBalance);
+
+    if (unaccountedPrizeBalance > 0) {
+      uint256 reserveFee = calculateReserveFee(unaccountedPrizeBalance);
+      if (reserveFee > 0) {
+        unaccountedPrizeBalance = unaccountedPrizeBalance.sub(reserveFee);
+        _mint(address(comptroller), reserveFee, reserveFeeControlledToken, address(0));
+        emit ReserveFeeCaptured(reserveFee);
+      }
     }
+
+    _currentAwardBalance = _currentAwardBalance.add(unaccountedPrizeBalance);
+    return _currentAwardBalance;
   }
 
   /// @notice Called by the Prize-Strategy to Award a Prize to a specific account
@@ -466,19 +485,15 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
       return;
     }
 
-    require(amount <= awardBalance(), "PrizePool/award-exceeds-avail");
+    require(amount <= _currentAwardBalance, "PrizePool/award-exceeds-avail");
+    _currentAwardBalance = _currentAwardBalance.sub(amount);
 
     _mint(to, amount, controlledToken, address(0));
-
-    uint256 reserveFee = calculateReserveFee(amount);
-    if (reserveFee > 0) {
-      _mint(address(comptroller), reserveFee, reserveFeeControlledToken, address(0));
-    }
 
     uint256 extraCredit = _calculateEarlyExitFee(controlledToken, amount);
     _accrueCredit(to, controlledToken, IERC20(controlledToken).balanceOf(to), extraCredit);
 
-    emit Awarded(to, controlledToken, amount, reserveFee);
+    emit Awarded(to, controlledToken, amount);
   }
 
   /// @notice Called by the Prize-Strategy to Award Secondary (external) Prize amounts to a specific account
