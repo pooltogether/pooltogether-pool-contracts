@@ -34,7 +34,9 @@ contract CompoundPrizePoolBuilder {
   event CompoundPrizePoolCreated (
     address indexed creator,
     address indexed prizePool,
-    address indexed prizeStrategy
+    address indexed prizeStrategy,
+    address ticket,
+    address sponsorship
   );
 
   ComptrollerInterface public comptroller;
@@ -117,7 +119,7 @@ contract CompoundPrizePoolBuilder {
 
     prizeStrategy.transferOwnership(msg.sender);
 
-    emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy), tokens[0], tokens[1]);
 
     return prizeStrategy;
   }

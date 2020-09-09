@@ -110,19 +110,24 @@ describe('CompoundPrizePoolBuilder', () => {
 
       let prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategyHarness', event.args.prizeStrategy, wallet)
       let prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
+      let ticketAddress = event.args.ticket
+      let sponsorshipAddress = event.args.sponsorship
+
+      expect(await prizeStrategy.ticket()).to.equal(ticketAddress)
+      expect(await prizeStrategy.sponsorship()).to.equal(sponsorshipAddress)
 
       expect(await prizePool.cToken()).to.equal(config.cToken)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(config.prizePeriodSeconds)
 
-      let ticket = await buidler.ethers.getContractAt('Ticket', await prizeStrategy.ticket(), wallet)
+      let ticket = await buidler.ethers.getContractAt('Ticket', ticketAddress, wallet)
       expect(await ticket.name()).to.equal(config.ticketName)
       expect(await ticket.symbol()).to.equal(config.ticketSymbol)
 
-      let sponsorship = await buidler.ethers.getContractAt('ControlledToken', await prizeStrategy.sponsorship(), wallet)
+      let sponsorship = await buidler.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
       expect(await sponsorship.name()).to.equal(config.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(config.sponsorshipSymbol)
 
-      expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorship.address)
+      expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorshipAddress)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(config.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(config.maxTimelockDuration)
       expect(await prizePool.creditRateOf(ticket.address)).to.deep.equal([config.exitFeeMantissa, config.creditRateMantissa])
