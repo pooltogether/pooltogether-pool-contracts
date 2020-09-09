@@ -95,6 +95,10 @@ module.exports = async (buidler) => {
 
     debug("\n  Deploying Dai...")
     const daiResult = await deploy("Dai", {
+      args: [
+        'DAI Test Token',
+        'DAI'
+      ],
       contract: ERC20Mintable,
       from: deployer,
       skipIfAlreadyDeployed: true

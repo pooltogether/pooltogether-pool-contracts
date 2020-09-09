@@ -30,9 +30,9 @@ describe('BalanceDripManagerExposed', function() {
 
     debug({ dripExposed: dripExposed.address })
 
-    measure = await deployContract(wallet, ERC20Mintable, [], overrides)
-    drip1 = await deployContract(wallet, ERC20Mintable, [], overrides)
-    drip2 = await deployContract(wallet, ERC20Mintable, [], overrides)
+    measure = await deployContract(wallet, ERC20Mintable, ['Measure Token', 'MTKN'], overrides)
+    drip1 = await deployContract(wallet, ERC20Mintable, ['Drip Token 1', 'DRIP1'], overrides)
+    drip2 = await deployContract(wallet, ERC20Mintable, ['Drip Token 2', 'DRIP2'], overrides)
     drip3 = await deployMockContract(wallet, IERC20.abi)
   })
 

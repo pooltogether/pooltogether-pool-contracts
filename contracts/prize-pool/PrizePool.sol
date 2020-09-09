@@ -346,8 +346,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     return exitFee;
   }
 
-  /// @notice Withdraw assets from the Prize Pool by placing them into the timelock. The timelock is used to ensure that the tickets have contributed their fair share of the prize.
-  /// @dev Note that if the user has previously timelocked funds then this contract will try to sweep them.  If the existing timelocked funds are still locked, then the incoming
+  /// @notice Withdraw assets from the Prize Pool by placing them into the timelock.
+  /// The timelock is used to ensure that the tickets have contributed their fair share of the prize.
+  /// @dev Note that if the user has previously timelocked funds then this contract will try to sweep them.
+  /// If the existing timelocked funds are still locked, then the incoming
   /// balance is added to their existing balance and the new timelock unlock timestamp will overwrite the old one.
   /// @param from The address to withdraw from
   /// @param amount The amount to withdraw
@@ -376,7 +378,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     return unlockTimestamp;
   }
 
-  /// @notice Adds to a user's timelock balance.  It will attempt to sweep before updating the balance.  Note that this will overwrite the previous unlock timestamp.
+  /// @notice Adds to a user's timelock balance.  It will attempt to sweep before updating the balance.
+  /// Note that this will overwrite the previous unlock timestamp.
   /// @param user The user whose timelock balance should increase
   /// @param amount The amount to increase by
   /// @param timestamp The new unlock timestamp
@@ -754,7 +757,15 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
   /// @notice Sets the rate at which credit accrues per second.  The credit rate is a fixed point 18 number (like Ether).
   /// @param _creditRateMantissa The credit rate to set
-  function setCreditRateOf(address controlledToken, uint128 _creditRateMantissa, uint128 _creditLimitMantissa) external onlyControlledToken(controlledToken) onlyOwner {
+  function setCreditRateOf(
+    address controlledToken,
+    uint128 _creditRateMantissa,
+    uint128 _creditLimitMantissa
+  )
+    external
+    onlyControlledToken(controlledToken)
+    onlyOwner
+  {
     tokenCreditRates[controlledToken] = CreditRate({
       creditLimitMantissa: _creditLimitMantissa,
       creditRateMantissa: _creditRateMantissa

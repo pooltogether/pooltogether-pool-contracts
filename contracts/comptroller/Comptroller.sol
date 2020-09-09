@@ -112,18 +112,6 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 totalSupply
   );
 
-  /// @notice Emitted when a user deposit triggers a volume drip update
-  event VolumeDripDeposited(
-    address indexed source,
-    address indexed measure,
-    address indexed dripToken,
-    bool isReferral,
-    address user,
-    uint256 amount,
-    uint256 balance,
-    uint256 accrued
-  );
-
   /// @notice Emitted when a volume drip is updated
   event VolumeDripSet(
     address indexed source,
@@ -161,7 +149,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     transferOwnership(_owner);
   }
 
-  /// @notice Returns the reserve rate mantissa.  This is a fixed point 18 number, like "Ether".  Pools will contribute this fraction of the interest they earn to the protocol.
+  /// @notice Returns the reserve rate mantissa.  This is a fixed point 18 number, like "Ether".
+  /// Pools will contribute this fraction of the interest they earn to the protocol.
   /// @return The current reserve rate mantissa
   function reserveRateMantissa() external view override returns (uint256) {
     return _reserveRateMantissa;
@@ -196,7 +185,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   /// @param source The balance drip "source"; i.e. a Prize Pool address.
   /// @param measure The ERC20 token whose balances determines user's share of the drip rate.
   /// @param dripToken The token that is dripped to users.
-  /// @param prevDripToken The previous drip token in the balance drip list.  If the dripToken is the first address, then the previous address is the SENTINEL address: 0x0000000000000000000000000000000000000001
+  /// @param prevDripToken The previous drip token in the balance drip list.  If the dripToken is the first address,
+  /// then the previous address is the SENTINEL address: 0x0000000000000000000000000000000000000001
   function deactivateBalanceDrip(address source, address measure, address dripToken, address prevDripToken) external onlyOwner {
     balanceDrips[source].deactivateDrip(measure, dripToken, prevDripToken, _currentTime().toUint32());
 
@@ -229,7 +219,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     timestamp = balanceDrip.timestamp;
   }
 
-  /// @notice Sets the drip rate for a balance drip.  The drip rate is the number of drip tokens given to the entire supply of measure tokens.  Only callable by the owner.
+  /// @notice Sets the drip rate for a balance drip.  The drip rate is the number of drip tokens given to the
+  /// entire supply of measure tokens.  Only callable by the owner.
   /// @param source The balance drip "source"; i.e. Prize Pool
   /// @param measure The token to use to measure a user's share of the drip rate
   /// @param dripToken The token that is dripped to the user
@@ -323,7 +314,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     );
   }
 
-  /// @notice Sets the parameters for the *next* volume drip period.  The source, measure, dripToken and isReferral combined are used to uniquely identify a volume drip.  Only callable by the owner.
+  /// @notice Sets the parameters for the *next* volume drip period.  The source, measure, dripToken and isReferral combined
+  /// are used to uniquely identify a volume drip.  Only callable by the owner.
   /// @param source The Prize Pool of the volume drip
   /// @param measure The token whose volume is being measured
   /// @param dripToken The token that is being disbursed
@@ -518,7 +510,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
 
   /// @notice Updates all drips. Drip may need to be "poked" from time-to-time if there is little transaction activity.  This call will
   /// poke all of the drips and update the claim balances for the given user.
-  /// @dev This function will be useful to check the *current* claim balances for a user.  Just need to run this as a constant function to see the latest balances.
+  /// @dev This function will be useful to check the *current* claim balances for a user.
+  /// Just need to run this as a constant function to see the latest balances.
   /// in order to claim the values, this function needs to be run alongside a claimDrip function.
   /// @param pairs The (source, measure) pairs to update.  For each pair all of the balance drips, volume drips, and referral volume drips will be updated.
   /// @param user The user whose drips and balances will be updated.
@@ -588,9 +581,9 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   )
     external
   {
-    DripTokenBalance[] memory dripTokenBalances = updateDrips(pairs, user, dripTokens);
-    for (uint256 i = 0; i < dripTokenBalances.length; i++) {
-      claimDrip(user, dripTokenBalances[i].dripToken, dripTokenBalances[i].balance);
+    DripTokenBalance[] memory _dripTokenBalances = updateDrips(pairs, user, dripTokens);
+    for (uint256 i = 0; i < _dripTokenBalances.length; i++) {
+      claimDrip(user, _dripTokenBalances[i].dripToken, _dripTokenBalances[i].balance);
     }
   }
 

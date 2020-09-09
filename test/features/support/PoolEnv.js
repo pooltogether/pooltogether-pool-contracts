@@ -39,7 +39,7 @@ function PoolEnv() {
     const externalAwardAddresses = []
     this.externalERC20Awards = {}
     for (var i = 0; i < externalERC20Awards.length; i++) {
-      this.externalERC20Awards[externalERC20Awards[i]] = await deployContract(this.wallets[0], ERC20Mintable, [])
+      this.externalERC20Awards[externalERC20Awards[i]] = await deployContract(this.wallets[0], ERC20Mintable, [`External ERC20 Token ${i+1}`, `ETKN${i+1}`])
       externalAwardAddresses.push(this.externalERC20Awards[externalERC20Awards[i]].address)
     }
 
@@ -210,7 +210,7 @@ function PoolEnv() {
   this.volumeDripGovernanceToken = async function ({ dripAmount, periodSeconds, endTime, isReferral }) {
     debug(`volumeDripGovernanceToken minting...`)
     await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
-    debug(`volumeDripGovernanceToken: activating...: `, 
+    debug(`volumeDripGovernanceToken: activating...: `,
       this.env.compoundPrizePool.address,
       this.env.ticket.address,
       this.env.governanceToken.address,

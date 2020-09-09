@@ -117,11 +117,7 @@ contract CompoundPrizePoolBuilder {
 
     prizeStrategy.transferOwnership(msg.sender);
 
-    emit CompoundPrizePoolCreated(
-      msg.sender,
-      address(prizePool),
-      address(prizeStrategy)
-    );
+    emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizeStrategy;
   }
