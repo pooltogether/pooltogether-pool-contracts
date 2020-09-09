@@ -76,7 +76,6 @@ describe('PrizeStrategy', function() {
     debug('initializing prizeStrategy...')
     await prizeStrategy.initialize(
       FORWARDER,
-      comptroller.address,
       prizePeriodStart,
       prizePeriodSeconds,
       prizePool.address,
@@ -92,7 +91,6 @@ describe('PrizeStrategy', function() {
   describe('initialize()', () => {
     it('should set the params', async () => {
       expect(await prizeStrategy.isTrustedForwarder(FORWARDER)).to.equal(true)
-      expect(await prizeStrategy.comptroller()).to.equal(comptroller.address)
       expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(prizePeriodSeconds)
       expect(await prizeStrategy.ticket()).to.equal(ticket.address)
@@ -103,7 +101,6 @@ describe('PrizeStrategy', function() {
     it('should reject invalid params', async () => {
       const _initArgs = [
         FORWARDER,
-        comptroller.address,
         prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
@@ -118,17 +115,16 @@ describe('PrizeStrategy', function() {
       const prizeStrategy2 = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
 
       debug('testing initialization of secondary prizeStrategy...')
-      initArgs = _initArgs.slice(); initArgs[1] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/comptroller-not-zero')
-      initArgs = _initArgs.slice(); initArgs[3] = 0
+
+      initArgs = _initArgs.slice(); initArgs[2] = 0
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/prize-period-greater-than-zero')
-      initArgs = _initArgs.slice(); initArgs[4] = AddressZero
+      initArgs = _initArgs.slice(); initArgs[3] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/prize-pool-not-zero')
-      initArgs = _initArgs.slice(); initArgs[5] = AddressZero
+      initArgs = _initArgs.slice(); initArgs[4] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/ticket-not-zero')
-      initArgs = _initArgs.slice(); initArgs[6] = AddressZero
+      initArgs = _initArgs.slice(); initArgs[5] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/sponsorship-not-zero')
-      initArgs = _initArgs.slice(); initArgs[7] = AddressZero
+      initArgs = _initArgs.slice(); initArgs[6] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/rng-not-zero')
 
       initArgs = _initArgs.slice()
@@ -139,7 +135,6 @@ describe('PrizeStrategy', function() {
     it('should disallow unapproved external prize tokens', async () => {
       const initArgs = [
         FORWARDER,
-        comptroller.address,
         prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
@@ -162,14 +157,7 @@ describe('PrizeStrategy', function() {
   describe('currentPrize()', () => {
     it('should return the currently accrued interest when reserve is zero', async () => {
       await prizePool.mock.awardBalance.returns('100')
-      await comptroller.mock.reserveRateMantissa.returns(Zero)
       expect(await call(prizeStrategy, 'currentPrize')).equal('100')
-    })
-
-    it('should return the interest accrued less the reserve when the reserve is non-zero', async () => {
-      await prizePool.mock.awardBalance.returns('100')
-      await comptroller.mock.reserveRateMantissa.returns(toWei('0.1'))
-      expect(await call(prizeStrategy, 'currentPrize')).equal('90')
     })
   })
 
@@ -178,7 +166,7 @@ describe('PrizeStrategy', function() {
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
       await prizePool.mock.awardBalance.returns('100')
       await prizePool.mock.accountedBalance.returns('1000')
-      await comptroller.mock.reserveRateMantissa.returns(Zero)
+      await prizePool.mock.calculateReserveFee.returns('0')
       await prizePool.mock.estimateAccruedInterestOverBlocks
         .returns('10')
 
@@ -190,7 +178,7 @@ describe('PrizeStrategy', function() {
     it('should calculate the estimated remaining prize to accrue', async () => {
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
       await prizePool.mock.accountedBalance.returns('1000')
-      await comptroller.mock.reserveRateMantissa.returns(Zero)
+      await prizePool.mock.calculateReserveFee.returns(Zero)
       await prizePool.mock.estimateAccruedInterestOverBlocks.returns('10')
 
       expect(await call(prizeStrategy, 'estimateRemainingPrize')).to.equal('10')
@@ -257,7 +245,7 @@ describe('PrizeStrategy', function() {
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
       await prizePool.mock.awardBalance.returns('100')
       await prizePool.mock.accountedBalance.returns('1000')
-      await comptroller.mock.reserveRateMantissa.returns(Zero)
+      await prizePool.mock.calculateReserveFee.returns('0')
       await prizePool.mock.estimateAccruedInterestOverBlocks
         .withArgs('1000', toWei('10'))
         .returns('10')
@@ -434,8 +422,8 @@ describe('PrizeStrategy', function() {
       // 1 dai to give
       await prizePool.mock.awardBalance.returns(toWei('1'))
 
-      // Reserve fee
-      await comptroller.mock.reserveRateMantissa.returns(Zero)
+      // no reserve
+      await prizePool.mock.calculateReserveFee.returns('0')
 
       await prizePool.mock.award.withArgs(wallet._address, toWei('1'), ticket.address).returns()
 
@@ -482,7 +470,6 @@ describe('PrizeStrategy', function() {
       debug('initializing secondary prizeStrategy...')
       await prizeStrategy2.initialize(
         FORWARDER,
-        comptroller.address,
         prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
