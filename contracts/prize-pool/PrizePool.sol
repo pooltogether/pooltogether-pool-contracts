@@ -293,7 +293,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     nonReentrant
   {
     address operator = _msgSender();
-    
+
     _mint(to, amount, controlledToken, referrer);
 
     require(_token().transferFrom(operator, address(this), amount), "PrizePool/deposit-transfer-failed");
@@ -456,7 +456,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     require(amount <= awardBalance(), "PrizePool/award-exceeds-avail");
 
     _mint(to, amount, controlledToken, address(0));
-    
+
     uint256 reserveFee = calculateReserveFee(amount);
     if (reserveFee > 0) {
       _mint(address(comptroller), reserveFee, reserveFeeControlledToken, address(0));
@@ -544,7 +544,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
       return 0;
     }
     uint256 reserveRateMantissa = comptroller.reserveRateMantissa();
-    if (reserveRateMantissa == 0 && reserveFeeControlledToken != address(0)) {
+    if (reserveRateMantissa == 0 || reserveFeeControlledToken == address(0)) {
       return 0;
     }
     return FixedPoint.multiplyUintByMantissa(amount, reserveRateMantissa);
@@ -691,7 +691,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   function _burnCredit(address user, address controlledToken, uint256 credit) internal {
     tokenCreditBalances[controlledToken][user].balance = uint256(tokenCreditBalances[controlledToken][user].balance).sub(credit).toUint128();
   }
- 
+
   /// @notice Accrues ticket credit for a user assuming their current balance is the passed balance.
   /// @param user The user for whom to accrue credit
   /// @param controlledToken The controlled token whose balance we are checking
@@ -932,5 +932,5 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   modifier notShutdown() {
     require(address(comptroller) != address(0), "PrizePool/shutdown");
     _;
-  }  
+  }
 }
