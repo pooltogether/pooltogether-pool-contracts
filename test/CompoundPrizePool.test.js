@@ -258,14 +258,6 @@ describe('CompoundPrizePool', function() {
 
         expect(await prizePool.awardBalance()).to.equal(toWei('99'))
       })
-
-      it('should take the reserve fee into account', async () => {
-        await comptroller.mock.reserveRateMantissa.returns(toWei('0.5'))
-        await ticket.mock.totalSupply.returns(toWei('100'))
-        await cToken.mock.balanceOfUnderlying.returns(toWei('110'))
-        await prizePool.setReserveFeeControlledToken(ticket.address)
-        expect(await call(prizePool, 'awardBalance')).to.equal(toWei('5'))
-      })
     })
 
     describe('calculateReserveFee()', () => {
