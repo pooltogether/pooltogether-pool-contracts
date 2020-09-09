@@ -540,15 +540,29 @@ describe('CompoundPrizePool', function() {
       })
     })
 
-    describe('detachPrizeStrategy()', () => {
+    describe('setPrizeStrategy()', () => {
+      it('should allow the owner to swap the prize strategy', async () => {
+        await expect(prizePool.setPrizeStrategy(wallet2._address))
+          .to.emit(prizePool, 'PrizeStrategySet')
+          .withArgs(wallet2._address)
+        expect(await prizePool.prizeStrategy()).to.equal(wallet2._address)
+      })
+
+      it('should not allow anyone else to change the prize strategy', async () => {
+        await expect(prizePool.connect(wallet2).setPrizeStrategy(wallet2._address)).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    describe('emergencyShutdown()', () => {
       it('should allow owner to detach', async () => {
-        await prizePool.detachPrizeStrategy()
-        expect(await prizePool.prizeStrategy()).to.equal(AddressZero)
+        await expect(prizePool.emergencyShutdown())
+          .to.emit(prizePool, 'EmergencyShutdown')
+        expect(await prizePool.comptroller()).to.equal(AddressZero)
       })
 
       it('should not allow anyone else to call', async () => {
         prizePool2 = prizePool.connect(wallet2)
-        await expect(prizePool2.detachPrizeStrategy()).to.be.revertedWith('Ownable: caller is not the owner')
+        await expect(prizePool2.emergencyShutdown()).to.be.revertedWith('Ownable: caller is not the owner')
       })
     })
   })
@@ -666,20 +680,20 @@ describe('CompoundPrizePool', function() {
     })
   })
 
-  describe('with a detached prize strategy', () => {
-    let detachedPrizePool
+  describe('that has been emergency shutdown', () => {
+    let shutdownPrizePool
     let ticket2
 
     beforeEach(async () => {
       debug('deploying CompoundPrizePoolHarness...')
-      detachedPrizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
+      shutdownPrizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
 
       debug('deploying ControlledToken...')
       ticket2 = await deployMockContract(wallet, ControlledToken.abi, overrides)
-      await ticket2.mock.controller.returns(detachedPrizePool.address)
+      await ticket2.mock.controller.returns(shutdownPrizePool.address)
 
       debug('initializing PrizePool...')
-      await detachedPrizePool.initializeAll(
+      await shutdownPrizePool.initializeAll(
         FORWARDER,
         wallet._address,    // Prize Strategy
         comptroller.address,
@@ -690,20 +704,20 @@ describe('CompoundPrizePool', function() {
       )
 
       debug('detaching PrizeStrategy from PrizePool...')
-      await detachedPrizePool.detachPrizeStrategy();
+      await shutdownPrizePool.emergencyShutdown();
     })
 
     describe('depositTo()', () => {
       it('should NOT mint tokens to the user', async () => {
-        await expect(detachedPrizePool.depositTo(wallet2._address, toWei('1'), ticket2.address, AddressZero))
-          .to.be.revertedWith('PrizePool/prize-strategy-detached')
+        await expect(shutdownPrizePool.depositTo(wallet2._address, toWei('1'), ticket2.address, AddressZero))
+          .to.be.revertedWith('PrizePool/shutdown')
       })
     })
 
     describe('timelockDepositTo()', () => {
       it('should NOT mint tokens to the user', async () => {
-        await expect(detachedPrizePool.timelockDepositTo(wallet2._address, toWei('1'), ticket2.address, []))
-          .to.be.revertedWith('PrizePool/prize-strategy-detached')
+        await expect(shutdownPrizePool.timelockDepositTo(wallet2._address, toWei('1'), ticket2.address, []))
+          .to.be.revertedWith('PrizePool/shutdown')
       })
     })
 
@@ -721,8 +735,8 @@ describe('CompoundPrizePool', function() {
         await erc20token.mock.transfer.withArgs(wallet._address, toWei('11')).returns(true)
         await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket2.address).returns()
 
-        await expect(detachedPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, toWei('1')))
-          .to.emit(detachedPrizePool, 'InstantWithdrawal')
+        await expect(shutdownPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, toWei('1')))
+          .to.emit(shutdownPrizePool, 'InstantWithdrawal')
           .withArgs(wallet._address, wallet._address, ticket2.address, amount, toWei('0'))
       })
     })
@@ -737,7 +751,7 @@ describe('CompoundPrizePool', function() {
         await ticket2.mock.balanceOf.withArgs(wallet._address).returns(amount)
 
         // force current time
-        await detachedPrizePool.setCurrentTime('1')
+        await shutdownPrizePool.setCurrentTime('1')
 
         // expect a ticket burn
         await ticket2.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
@@ -745,14 +759,13 @@ describe('CompoundPrizePool', function() {
 
         // expect comptroller signal
         await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, AddressZero, amount, ticket2.address).returns()
-
         // full-amount should be tansferred
         await erc20token.mock.transfer.withArgs(wallet._address, amount).returns(true)
-        await detachedPrizePool.withdrawWithTimelockFrom(wallet._address, amount, ticket2.address)
+        await shutdownPrizePool.withdrawWithTimelockFrom(wallet._address, amount, ticket2.address)
 
-        expect(await detachedPrizePool.timelockBalanceOf(wallet._address)).to.equal(toWei('0'))
-        expect(await detachedPrizePool.timelockBalanceAvailableAt(wallet._address)).to.equal('0')
-        expect(await detachedPrizePool.timelockTotalSupply()).to.equal(toWei('0'))
+        expect(await shutdownPrizePool.timelockBalanceOf(wallet._address)).to.equal(toWei('0'))
+        expect(await shutdownPrizePool.timelockBalanceAvailableAt(wallet._address)).to.equal('0')
+        expect(await shutdownPrizePool.timelockTotalSupply()).to.equal(toWei('0'))
       })
     })
   })
