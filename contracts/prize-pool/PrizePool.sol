@@ -5,7 +5,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
-import "@nomiclabs/buidler/console.sol";
 
 import "../comptroller/ComptrollerInterface.sol";
 import "../token/ControlledToken.sol";
@@ -102,12 +101,17 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     uint256 amount
   );
 
+  /// @dev Eent emitted when the Liquidity Cap has been set or changed
+  event LiquidityCapSet(uint256 liquidityCap);
+
+  /// @dev Eent emitted when the Credit Rate has been set or changed
   event CreditRateSet(
     address controlledToken,
     uint128 creditLimitMantissa,
     uint128 creditRateMantissa
   );
 
+  /// @dev Eent emitted when the Prize Strategy has been set or changed
   event PrizeStrategySet(address indexed prizeStrategy);
 
   /// @dev Event emitted when the prize pool enters emergency shutdown mode
@@ -145,6 +149,9 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
   /// @dev The total funds that are timelocked.
   uint256 public timelockTotalSupply;
+
+  /// @dev The total amount of funds that the prize pool can hold (default: 0; no cap)
+  uint256 public liquidityCap;
 
   /// @dev The timelocked balances for each user
   mapping(address => uint256) internal _timelockBalances;
@@ -188,6 +195,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     trustedForwarder = _trustedForwarder;
     maxExitFeeMantissa = _maxExitFeeMantissa;
     maxTimelockDuration = _maxTimelockDuration;
+    liquidityCap = uint256(-1);
 
     emit Initialized(
       _trustedForwarder,
@@ -265,6 +273,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   )
     external
     onlyControlledToken(controlledToken)
+    canAddLiquidity(amount)
     notShutdown
     nonReentrant
   {
@@ -289,6 +298,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   )
     external
     onlyControlledToken(controlledToken)
+    canAddLiquidity(amount)
     notShutdown
     nonReentrant
   {
@@ -828,6 +838,13 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     return earlyExitFee;
   }
 
+  /// @notice Allows the Governor to set a cap on the amount of liquidity that he pool can hold
+  /// @param _liquidityCap The new liquidity cap for the prize pool
+  function setLiquidityCap(uint256 _liquidityCap) external onlyOwner {
+    liquidityCap = _liquidityCap;
+    emit LiquidityCapSet(_liquidityCap);
+  }
+
   /// @notice Allows the Governor to add Controlled Tokens to the Prize Pool
   /// @param _controlledToken The address of the Controlled Token to add
   function addControlledToken(address _controlledToken) external onlyOwner {
@@ -916,6 +933,14 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     return total;
   }
 
+  /// @dev Checks if the Prize Pool can receive liquidity based on the current cap
+  /// @param _amount The amount of liquidity to be added to the Prize Pool
+  /// @return True if the Prize Pool can receive the specified amount of liquidity
+  function _canAddLiquidity(uint256 _amount) internal view returns (bool) {
+    uint256 tokenTotalSupply = _tokenTotalSupply();
+    return (tokenTotalSupply.add(_amount) <= liquidityCap);
+  }
+
   /// @dev Checks if a specific token is controlled by the Prize Pool
   /// @param controlledToken The address of the token to check
   /// @return True if the token is a controlled token, false otherwise
@@ -937,6 +962,12 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @dev Function modifier to ensure caller is the prize-strategy
   modifier onlyPrizeStrategy() {
     require(msg.sender == address(prizeStrategy), "PrizePool/only-prizeStrategy");
+    _;
+  }
+
+  /// @dev Function modifier to ensure the deposit amount does not exceed the liquidity cap (if set)
+  modifier canAddLiquidity(uint256 _amount) {
+    require(_canAddLiquidity(_amount), "PrizePool/exceeds-liquidity-cap");
     _;
   }
 
