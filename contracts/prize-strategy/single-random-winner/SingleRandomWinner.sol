@@ -8,20 +8,20 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-import "./PrizeStrategyStorage.sol";
-import "../token/TokenControllerInterface.sol";
-import "../token/ControlledToken.sol";
-import "../prize-pool/PrizePool.sol";
-import "../Constants.sol";
-import "../utils/RelayRecipient.sol";
+import "./SingleRandomWinnerStorage.sol";
+import "../../token/TokenControllerInterface.sol";
+import "../../token/ControlledToken.sol";
+import "../../prize-pool/PrizePool.sol";
+import "../../Constants.sol";
+import "../../utils/RelayRecipient.sol";
 
 /* solium-disable security/no-block-members */
-contract PrizeStrategy is PrizeStrategyStorage,
-                          Initializable,
-                          OwnableUpgradeSafe,
-                          RelayRecipient,
-                          ReentrancyGuardUpgradeSafe,
-                          PrizePoolTokenListenerInterface {
+contract SingleRandomWinner is SingleRandomWinnerStorage,
+                               Initializable,
+                               OwnableUpgradeSafe,
+                               RelayRecipient,
+                               ReentrancyGuardUpgradeSafe,
+                               PrizePoolTokenListenerInterface {
 
   using SafeMath for uint256;
   using SafeCast for uint256;
@@ -70,11 +70,11 @@ contract PrizeStrategy is PrizeStrategyStorage,
     RNGInterface _rng,
     address[] memory _externalErc20s
   ) public initializer {
-    require(_prizePeriodSeconds > 0, "PrizeStrategy/prize-period-greater-than-zero");
-    require(address(_prizePool) != address(0), "PrizeStrategy/prize-pool-not-zero");
-    require(address(_ticket) != address(0), "PrizeStrategy/ticket-not-zero");
-    require(address(_sponsorship) != address(0), "PrizeStrategy/sponsorship-not-zero");
-    require(address(_rng) != address(0), "PrizeStrategy/rng-not-zero");
+    require(_prizePeriodSeconds > 0, "SingleRandomWinner/prize-period-greater-than-zero");
+    require(address(_prizePool) != address(0), "SingleRandomWinner/prize-pool-not-zero");
+    require(address(_ticket) != address(0), "SingleRandomWinner/ticket-not-zero");
+    require(address(_sponsorship) != address(0), "SingleRandomWinner/sponsorship-not-zero");
+    require(address(_rng) != address(0), "SingleRandomWinner/rng-not-zero");
     prizePool = _prizePool;
     ticket = TicketInterface(_ticket);
     rng = _rng;
@@ -86,7 +86,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     for (uint256 i = 0; i < _externalErc20s.length; i++) {
-      require(prizePool.canAwardExternal(_externalErc20s[i]), "PrizeStrategy/cannot-award-external");
+      require(prizePool.canAwardExternal(_externalErc20s[i]), "SingleRandomWinner/cannot-award-external");
     }
     externalErc20s.initialize();
     externalErc20s.addAddresses(_externalErc20s);
@@ -101,20 +101,20 @@ contract PrizeStrategy is PrizeStrategyStorage,
 
   /// @notice Calculates and returns the currently accrued prize
   /// @return The current prize size
-  function currentPrize() public returns (uint256) {
+  function currentPrize() public view returns (uint256) {
     return prizePool.awardBalance();
   }
 
   /// @notice Estimates the prize size using the default ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA
   /// @return The estimated final size of the prize
-  function estimatePrize() public returns (uint256) {
+  function estimatePrize() public view returns (uint256) {
     return estimatePrizeWithBlockTime(ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA);
   }
 
   /// @notice Estimates the prize size given the passed number of seconds per block
   /// @param secondsPerBlockMantissa The seconds per block to use for the calculation. Should be a fixed point 18 number like Ether.
   /// @return The estimated final size of the prize.
-  function estimatePrizeWithBlockTime(uint256 secondsPerBlockMantissa) public returns (uint256) {
+  function estimatePrizeWithBlockTime(uint256 secondsPerBlockMantissa) public view returns (uint256) {
     return currentPrize().add(estimateRemainingPrizeWithBlockTime(secondsPerBlockMantissa));
   }
 
@@ -361,7 +361,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @notice Sets the RNG service that the Prize Strategy is connected to
   /// @param rngService The address of the new RNG service interface
   function setRngService(RNGInterface rngService) external onlyOwner {
-    require(!isRngRequested(), "PrizeStrategy/rng-in-flight");
+    require(!isRngRequested(), "SingleRandomWinner/rng-in-flight");
 
     rng = rngService;
     emit RngServiceUpdated(address(rngService));
@@ -372,7 +372,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// and they must be approved by the Prize-Pool
   /// @param _externalErc20 The address of an ERC20 token to be awarded
   function addExternalErc20Award(address _externalErc20) external onlyOwner {
-    require(prizePool.canAwardExternal(_externalErc20), "PrizeStrategy/cannot-award-external");
+    require(prizePool.canAwardExternal(_externalErc20), "SingleRandomWinner/cannot-award-external");
     externalErc20s.addAddress(_externalErc20);
     emit ExternalErc20AwardAdded(_externalErc20);
   }
@@ -384,12 +384,12 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param _externalErc721 The address of an ERC721 token to be awarded
   /// @param _tokenIds An array of token IDs of the ERC721 to be awarded
   function addExternalErc721Award(address _externalErc721, uint256[] calldata _tokenIds) external onlyOwner {
-    require(prizePool.canAwardExternal(_externalErc721), "PrizeStrategy/cannot-award-external");
+    require(prizePool.canAwardExternal(_externalErc721), "SingleRandomWinner/cannot-award-external");
     externalErc721s.addAddress(_externalErc721);
 
     for (uint256 i = 0; i < _tokenIds.length; i++) {
       uint256 tokenId = _tokenIds[i];
-      require(IERC721(_externalErc721).ownerOf(tokenId) == address(prizePool), "PrizeStrategy/unavailable-token");
+      require(IERC721(_externalErc721).ownerOf(tokenId) == address(prizePool), "SingleRandomWinner/unavailable-token");
       externalErc721TokenIds[_externalErc721].push(tokenId);
     }
 
@@ -397,7 +397,7 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   function _requireNotLocked() internal view {
-    require(rngRequest.lockBlock == 0 || _currentBlock() < rngRequest.lockBlock, "PrizeStrategy/rng-in-flight");
+    require(rngRequest.lockBlock == 0 || _currentBlock() < rngRequest.lockBlock, "SingleRandomWinner/rng-in-flight");
   }
 
   modifier requireNotLocked() {
@@ -406,20 +406,20 @@ contract PrizeStrategy is PrizeStrategyStorage,
   }
 
   modifier requireCanStartAward() {
-    require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
-    require(!isRngRequested(), "PrizeStrategy/rng-already-requested");
+    require(_isPrizePeriodOver(), "SingleRandomWinner/prize-period-not-over");
+    require(!isRngRequested(), "SingleRandomWinner/rng-already-requested");
     _;
   }
 
   modifier requireCanCompleteAward() {
-    require(_isPrizePeriodOver(), "PrizeStrategy/prize-period-not-over");
-    require(isRngRequested(), "PrizeStrategy/rng-not-requested");
-    require(isRngCompleted(), "PrizeStrategy/rng-not-complete");
+    require(_isPrizePeriodOver(), "SingleRandomWinner/prize-period-not-over");
+    require(isRngRequested(), "SingleRandomWinner/rng-not-requested");
+    require(isRngCompleted(), "SingleRandomWinner/rng-not-complete");
     _;
   }
 
   modifier onlyPrizePool() {
-    require(_msgSender() == address(prizePool), "PrizeStrategy/only-prize-pool");
+    require(_msgSender() == address(prizePool), "SingleRandomWinner/only-prize-pool");
     _;
   }
 

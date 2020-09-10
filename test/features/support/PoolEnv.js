@@ -85,7 +85,7 @@ function PoolEnv() {
   }
 
   this.prizeStrategy = async function (wallet) {
-    let prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategyHarness', this.env.prizeStrategy.address, wallet)
+    let prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', this.env.prizeStrategy.address, wallet)
     this._prizeStrategy = prizeStrategy
     return prizeStrategy
   }
