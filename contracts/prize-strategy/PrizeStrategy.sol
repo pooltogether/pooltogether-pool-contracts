@@ -377,7 +377,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param _prevExternalErc20 The address of the previous ERC20 token in the `externalErc20s` list.
   /// If the ERC20 is the first address, then the previous address is the SENTINEL address: 0x0000000000000000000000000000000000000001
   function removeExternalErc20Award(address _externalErc20, address _prevExternalErc20) external onlyOwner {
-    require(externalErc20s.contains(_externalErc20), "PrizeStrategy/invalid-external-award");
     externalErc20s.removeAddress(_prevExternalErc20, _externalErc20);
     emit ExternalErc20AwardRemoved(_externalErc20);
   }
