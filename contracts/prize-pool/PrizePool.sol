@@ -643,6 +643,22 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @param amount The amount the user is withdrawing
   /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
   /// @return durationSeconds The duration of the timelock in seconds
+  function calculateTimelockDuration(
+    address from,
+    address controlledToken,
+    uint256 amount
+  )
+    external
+    returns (uint256)
+  {
+    return _calculateTimelockDuration(from, controlledToken, amount);
+  }
+
+  /// @dev Calculates a timelocked withdrawal duration and credit consumption.
+  /// @param from The user who is withdrawing
+  /// @param amount The amount the user is withdrawing
+  /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
+  /// @return durationSeconds The duration of the timelock in seconds
   function _calculateTimelockDuration(
     address from,
     address controlledToken,

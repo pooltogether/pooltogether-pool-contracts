@@ -581,6 +581,20 @@ describe('CompoundPrizePool', function() {
       })
     })
 
+    describe('calculateTimelockDuration()', () => {
+      it('should return the timelock duration', async () => {
+        let amount = toWei('10')
+
+        await cToken.mock.balanceOfUnderlying.returns('0')
+        await ticket.mock.totalSupply.returns(amount)
+        await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
+
+        // force current time and check
+        await prizePool.setCurrentTime('1')
+        expect(await call(prizePool, 'calculateTimelockDuration', wallet._address, ticket.address, amount)).to.equal(10)
+      })
+    })
+
     describe('estimateAccruedInterestOverBlocks()', () => {
       it('should get the supply rate from the yield service to estimate interest per block', async function () {
         const deposit = toWei('100')
