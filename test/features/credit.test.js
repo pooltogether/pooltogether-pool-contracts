@@ -9,7 +9,7 @@ describe('Credit Feature', () => {
   })
 
   it('should earn credit on held tickets', async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.buyTickets({ user: 1, tickets: 100 })
     await env.setCurrentTime(11)
     await env.expectUserToHaveCredit({ user: 1, credit: 10 }) // 10% credit
@@ -19,7 +19,7 @@ describe('Credit Feature', () => {
   })
 
   it('should receive credit when prize is won', async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.buyTickets({ user: 1, tickets: 100 })
     await env.setCurrentTime(21)
     await env.poolAccrues({ tickets: 100 }) // doesn't matter how much it accrues
@@ -29,7 +29,7 @@ describe('Credit Feature', () => {
   })
 
   it('should have no credit after immediately buying tickets', async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.setCurrentTime(6)
     await env.buyTickets({ user: 1, tickets: 100 })
     await env.expectUserToHaveCredit({ user: 1, credit: 0 }) // 10% credit
@@ -41,7 +41,7 @@ describe('Credit Feature', () => {
   })
 
   it('should limit a users credit when they transfer tickets', async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.buyTickets({ user: 1, tickets: 100 })
     await env.setCurrentTime(10)
     // user 1 has full credit
@@ -53,7 +53,7 @@ describe('Credit Feature', () => {
   })
 
   it('should no longer accrue credit after a full transfer', async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.buyTickets({ user: 1, tickets: 100 })
     await env.setCurrentTime(10)
     await env.transferTickets({ user: 1, tickets: 100, to: 2 })

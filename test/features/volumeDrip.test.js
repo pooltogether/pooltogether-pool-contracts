@@ -9,7 +9,7 @@ describe('Volume drip', () => {
   })
 
   it('should drip users governance tokens', async () => {
-    await env.createPool({ prizePeriodStart: 0, prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodStart: 0, prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.volumeDripGovernanceToken({ dripAmount: '100', periodSeconds: 10, endTime: 40 })
     await env.buyTickets({ user: 1, tickets: '5' })
     await env.buyTickets({ user: 1, tickets: '5' })
@@ -22,7 +22,7 @@ describe('Volume drip', () => {
   })
 
   it('should accrue over multiple periods', async () => {
-    await env.createPool({ prizePeriodStart: 0, prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodStart: 0, prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.volumeDripGovernanceToken({ dripAmount: '100', periodSeconds: 10, endTime: 10 })
     await env.setCurrentTime(6)
     await env.buyTickets({ user: 1, tickets: '10' })
@@ -36,7 +36,7 @@ describe('Volume drip', () => {
   })
 
   it('should allow users to claim multiple times', async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.volumeDripGovernanceToken({ dripAmount: '100', periodSeconds: 10, endTime: 10 })
 
     await env.setCurrentTime(5)
@@ -51,7 +51,7 @@ describe('Volume drip', () => {
   })
 
   it("should split the volume between users", async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.setCurrentTime(0)
     await env.volumeDripGovernanceToken({ dripAmount: '100', periodSeconds: 10, endTime: 30 })
     await env.setCurrentTime(30)

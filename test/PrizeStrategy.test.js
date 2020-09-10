@@ -36,8 +36,8 @@ describe('SingleRandomWinner', function() {
   let prizePeriodStart = now()
   let prizePeriodSeconds = 1000
 
-  let exitFeeMantissa = 0.1
-  let creditRateMantissa = exitFeeMantissa / prizePeriodSeconds
+  let creditLimitMantissa = 0.1
+  let creditRateMantissa = creditLimitMantissa / prizePeriodSeconds
 
   const invalidExternalToken = '0x0000000000000000000000000000000000000001'
 

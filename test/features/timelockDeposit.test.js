@@ -10,7 +10,7 @@ describe('Re-deposit Timelocked Tokens', () => {
 
   describe('convert timelock to tickets', () => {
     it('should allow the user to re-deposit timelock as tickets', async () => {
-      await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+      await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
       // buy at time zero so that it is considered a 'full' ticket
       await env.setCurrentTime(0)
       await env.buyTickets({ user: 1, tickets: 100 })
@@ -31,7 +31,7 @@ describe('Re-deposit Timelocked Tokens', () => {
 
   describe('convert timelock to sponsorship', () => {
     it('should allow the user to re-deposit timelock as tickets', async () => {
-      await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+      await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
       // buy at time zero so that it is considered a 'full' ticket
       await env.setCurrentTime(0)
       await env.buyTickets({ user: 1, tickets: 100 })
