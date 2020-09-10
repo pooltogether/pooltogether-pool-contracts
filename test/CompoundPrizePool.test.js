@@ -176,7 +176,7 @@ describe('CompoundPrizePool', function() {
         // Test depositTo
         await expect(prizePool.depositTo(wallet2._address, amount, ticket.address, AddressZero))
           .to.emit(prizePool, 'Deposited')
-          .withArgs(wallet._address, wallet2._address, ticket.address, amount)
+          .withArgs(wallet._address, wallet2._address, ticket.address, amount, AddressZero)
 
       })
 
