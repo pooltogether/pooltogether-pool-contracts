@@ -22,6 +22,7 @@ const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
 const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 const SENTINEL = '0x0000000000000000000000000000000000000001'
+const invalidExternalToken = '0x0000000000000000000000000000000000000002'
 
 let overrides = { gasLimit: 20000000 }
 
@@ -39,8 +40,6 @@ describe('PrizeStrategy', function() {
 
   let exitFeeMantissa = 0.1
   let creditRateMantissa = exitFeeMantissa / prizePeriodSeconds
-
-  const invalidExternalToken = '0x0000000000000000000000000000000000000001'
 
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
@@ -108,7 +107,7 @@ describe('PrizeStrategy', function() {
         ticket.address,
         sponsorship.address,
         rng.address,
-        [invalidExternalToken]
+        [SENTINEL]
       ]
       let initArgs
 
@@ -129,7 +128,7 @@ describe('PrizeStrategy', function() {
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/rng-not-zero')
 
       initArgs = _initArgs.slice()
-      await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
+      await prizePool.mock.canAwardExternal.withArgs(SENTINEL).returns(false)
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/cannot-award-external')
     })
 
@@ -142,14 +141,14 @@ describe('PrizeStrategy', function() {
         ticket.address,
         sponsorship.address,
         rng.address,
-        [invalidExternalToken]
+        [SENTINEL]
       ]
 
       debug('deploying secondary prizeStrategy...')
       const prizeStrategy2 = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
 
       debug('initializing secondary prizeStrategy...')
-      await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
+      await prizePool.mock.canAwardExternal.withArgs(SENTINEL).returns(false)
       await expect(prizeStrategy2.initialize(...initArgs))
         .to.be.revertedWith('PrizeStrategy/cannot-award-external')
     })
@@ -334,7 +333,7 @@ describe('PrizeStrategy', function() {
     })
     it('should revert when removing non-existant external ERC721 tokens from the prize', async () => {
       await expect(prizeStrategy.removeExternalErc721Award(invalidExternalToken, SENTINEL))
-        .to.be.revertedWith('PrizeStrategy/invalid-external-award')
+        .to.be.revertedWith('Invalid prevAddress')
     })
     it('should not allow anyone else to remove external ERC721 tokens from the prize', async () => {
       await expect(prizeStrategy.connect(wallet2).removeExternalErc721Award(externalERC721Award.address, SENTINEL))

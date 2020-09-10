@@ -394,7 +394,6 @@ contract PrizeStrategy is PrizeStrategyStorage,
   /// @param _prevExternalErc721 The address of the previous ERC721 token in the list.
   /// If no previous, then pass the SENTINEL address: 0x0000000000000000000000000000000000000001
   function removeExternalErc721Award(address _externalErc721, address _prevExternalErc721) external onlyOwner {
-    require(externalErc721s.contains(_externalErc721), "PrizeStrategy/invalid-external-award");
     externalErc721s.removeAddress(_prevExternalErc721, _externalErc721);
     delete externalErc721TokenIds[_externalErc721];
     emit ExternalErc721AwardRemoved(_externalErc721);
