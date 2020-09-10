@@ -22,7 +22,7 @@ function PoolEnv() {
   this.createPool = async function ({
     prizePeriodStart = 0,
     prizePeriodSeconds,
-    exitFee,
+    creditLimit,
     creditRate,
     maxExitFeeMantissa = toWei('0.5'),
     maxTimelockDuration = 1000,
@@ -53,7 +53,7 @@ function PoolEnv() {
       prizePeriodSeconds,
       maxExitFeeMantissa,
       maxTimelockDuration,
-      exitFee: toWei(exitFee),
+      creditLimit: toWei(creditLimit),
       creditRate: toWei(creditRate),
       externalERC20Awards: externalAwardAddresses,
       overrides: this.overrides,

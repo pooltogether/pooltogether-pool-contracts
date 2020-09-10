@@ -26,7 +26,7 @@ contract CompoundPrizePoolBuilder {
     string sponsorshipSymbol;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
-    uint256 exitFeeMantissa;
+    uint256 creditLimitMantissa;
     uint256 creditRateMantissa;
     address[] externalERC20Awards;
   }
@@ -100,7 +100,7 @@ contract CompoundPrizePoolBuilder {
       config.cToken
     );
 
-    prizePool.setCreditRateOf(tokens[0], config.creditRateMantissa.toUint128(), config.exitFeeMantissa.toUint128());
+    prizePool.setCreditRateOf(tokens[0], config.creditRateMantissa.toUint128(), config.creditLimitMantissa.toUint128());
 
     prizePool.setReserveFeeControlledToken(tokens[1]);
 

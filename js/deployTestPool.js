@@ -23,7 +23,7 @@ async function deployTestPool({
   prizePeriodSeconds,
   maxExitFeeMantissa,
   maxTimelockDuration,
-  exitFee,
+  creditLimit,
   creditRate,
   externalERC20Awards,
   overrides = { gasLimit: 20000000 }
@@ -94,7 +94,7 @@ async function deployTestPool({
     externalERC20Awards
   )
 
-  await compoundPrizePool.setCreditRateOf(ticket.address, creditRate || toWei('0.1').div(prizePeriodSeconds), exitFee || toWei('0.1'))
+  await compoundPrizePool.setCreditRateOf(ticket.address, creditRate || toWei('0.1').div(prizePeriodSeconds), creditLimit || toWei('0.1'))
 
   debug("Addresses: \n", {
     rngService: rngServiceMock.address,

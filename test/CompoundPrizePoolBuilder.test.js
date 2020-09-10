@@ -68,7 +68,7 @@ describe('CompoundPrizePoolBuilder', () => {
         sponsorshipSymbol: "SPON",
         maxExitFeeMantissa: toWei('0.5'),
         maxTimelockDuration: 1000,
-        exitFeeMantissa: toWei('0.1'),
+        creditLimitMantissa: toWei('0.1'),
         creditRateMantissa: toWei('0.001'),
         externalERC20Awards: []
       }
@@ -98,7 +98,7 @@ describe('CompoundPrizePoolBuilder', () => {
         sponsorshipSymbol: "SPON",
         maxExitFeeMantissa: toWei('0.5'),
         maxTimelockDuration: 1000,
-        exitFeeMantissa: toWei('0.1'),
+        creditLimitMantissa: toWei('0.1'),
         creditRateMantissa: toWei('0.001'),
         externalERC20Awards: []
       }
@@ -130,7 +130,7 @@ describe('CompoundPrizePoolBuilder', () => {
       expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorshipAddress)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(config.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(config.maxTimelockDuration)
-      expect(await prizePool.creditRateOf(ticket.address)).to.deep.equal([config.exitFeeMantissa, config.creditRateMantissa])
+      expect(await prizePool.creditRateOf(ticket.address)).to.deep.equal([config.creditLimitMantissa, config.creditRateMantissa])
 
       expect(await prizePool.owner()).to.equal(wallet._address)
       expect(await prizeStrategy.owner()).to.equal(wallet._address)

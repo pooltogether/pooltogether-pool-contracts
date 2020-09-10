@@ -12,7 +12,7 @@ describe('Balance drip', () => {
   })
 
   it('should drip users governance tokens', async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.balanceDripGovernanceTokenAtRate({ dripRatePerSecond: toWei('0.0001') })
     await env.setCurrentTime(10)
     await env.buyTickets({ user: 1, tickets: '2' })
@@ -26,7 +26,7 @@ describe('Balance drip', () => {
   })
 
   it('should update the drips on transfer', async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.balanceDripGovernanceTokenAtRate({ dripRatePerSecond: toWei('0.01') })
     // offset by 10 seconds just for fun
     await env.setCurrentTime(10)

@@ -10,7 +10,7 @@ describe('Referral volume drip', () => {
   })
 
   it('should drip users governance tokens', async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.setCurrentTime(20)
     await env.volumeDripGovernanceToken({ dripAmount: '100', periodSeconds: 10, endTime: 30, isReferral: true })
     await env.setCurrentTime(30)
@@ -21,7 +21,7 @@ describe('Referral volume drip', () => {
   })
 
   it("should split the volume between users", async () => {
-    await env.createPool({ prizePeriodSeconds: 10, exitFee: '0.1', creditRate: '0.01' })
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
     await env.setCurrentTime(0)
     await env.volumeDripGovernanceToken({ dripAmount: '100', periodSeconds: 10, endTime: 30, isReferral: true })
     await env.setCurrentTime(30)
