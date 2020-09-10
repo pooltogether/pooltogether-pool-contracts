@@ -21,6 +21,7 @@ const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
 const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
+const SENTINEL = '0x0000000000000000000000000000000000000001'
 
 let overrides = { gasLimit: 20000000 }
 
@@ -300,6 +301,18 @@ describe('PrizeStrategy', function() {
       await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
       await expect(prizeStrategy.addExternalErc20Award(invalidExternalToken))
         .to.be.revertedWith('PrizeStrategy/cannot-award-external')
+    })
+  })
+
+  describe('removeExternalErc20Award()', () => {
+    it('should only allow the owner to remove external ERC20 tokens from the prize', async () => {
+      await expect(prizeStrategy.removeExternalErc20Award(externalERC20Award.address, SENTINEL))
+        .to.emit(prizeStrategy, 'ExternalErc20AwardRemoved')
+        .withArgs(externalERC20Award.address)
+    })
+    it('should not allow anyone else to remove external ERC20 tokens from the prize', async () => {
+      await expect(prizeStrategy.connect(wallet2).removeExternalErc20Award(externalERC20Award.address, SENTINEL))
+        .to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
 

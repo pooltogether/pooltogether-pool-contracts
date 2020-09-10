@@ -51,6 +51,10 @@ contract PrizeStrategy is PrizeStrategyStorage,
     address rngService
   );
 
+  event ExternalErc20AwardRemoved(
+    address indexed externalErc20Award
+  );
+
   function initialize (
     address _trustedForwarder,
     uint256 _prizePeriodStart,
@@ -365,6 +369,17 @@ contract PrizeStrategy is PrizeStrategyStorage,
   function addExternalErc20Award(address _externalErc20) external onlyOwner {
     require(prizePool.canAwardExternal(_externalErc20), "PrizeStrategy/cannot-award-external");
     externalErc20s.addAddress(_externalErc20);
+  }
+
+  /// @notice Removes an external ERC20 token type as an additional prize that can be awarded
+  /// @dev Only the Prize-Strategy owner/creator can remove external tokens
+  /// @param _externalErc20 The address of an ERC20 token to be removed
+  /// @param _prevExternalErc20 The address of the previous ERC20 token in the `externalErc20s` list.
+  /// If the ERC20 is the first address, then the previous address is the SENTINEL address: 0x0000000000000000000000000000000000000001
+  function removeExternalErc20Award(address _externalErc20, address _prevExternalErc20) external onlyOwner {
+    require(externalErc20s.contains(_externalErc20), "PrizeStrategy/invalid-external-award");
+    externalErc20s.removeAddress(_prevExternalErc20, _externalErc20);
+    emit ExternalErc20AwardRemoved(_externalErc20);
   }
 
   /// @notice Adds an external ERC721 token as an additional prize that can be awarded
