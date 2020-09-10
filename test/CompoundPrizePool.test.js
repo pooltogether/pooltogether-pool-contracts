@@ -283,6 +283,17 @@ describe('CompoundPrizePool', function() {
       })
     })
 
+    describe('calculateEarlyExitFee', () => {
+      it('should return the early exit for for a withdrawal', async () => {
+        // Rate: 1%, Limit: 10%
+        await prizePool.setCreditRateOf(ticket.address, toWei('0.01'), toWei('0.1'))
+
+        // Full period early = 10%
+        expect(await prizePool.calculateEarlyExitFee(ticket.address, toWei('10')))
+          .to.equal(toWei('1'))
+      })
+    })
+
     describe('withdrawInstantlyFrom()', () => {
       it('should revert on Compound error', async () => {
         let amount = toWei('10')

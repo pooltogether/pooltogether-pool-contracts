@@ -678,6 +678,13 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   /// @notice Calculates the early exit fee for the given amount
   /// @param amount The amount of collateral to be withdrawn
   /// @return Exit fee
+  function calculateEarlyExitFee(address controlledToken, uint256 amount) external view returns (uint256) {
+    return _calculateEarlyExitFee(controlledToken, amount);
+  }
+
+  /// @dev Calculates the early exit fee for the given amount
+  /// @param amount The amount of collateral to be withdrawn
+  /// @return Exit fee
   function _calculateEarlyExitFee(address controlledToken, uint256 amount) internal view returns (uint256) {
     uint256 exitFee = FixedPoint.multiplyUintByMantissa(amount, tokenCreditRates[controlledToken].creditLimitMantissa);
     uint256 maxFee = FixedPoint.multiplyUintByMantissa(amount, maxExitFeeMantissa);
