@@ -381,6 +381,16 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
     emit ExternalErc20AwardAdded(_externalErc20);
   }
 
+  /// @notice Removes an external ERC20 token type as an additional prize that can be awarded
+  /// @dev Only the Prize-Strategy owner/creator can remove external tokens
+  /// @param _externalErc20 The address of an ERC20 token to be removed
+  /// @param _prevExternalErc20 The address of the previous ERC20 token in the `externalErc20s` list.
+  /// If the ERC20 is the first address, then the previous address is the SENTINEL address: 0x0000000000000000000000000000000000000001
+  function removeExternalErc20Award(address _externalErc20, address _prevExternalErc20) external onlyOwner {
+    externalErc20s.removeAddress(_prevExternalErc20, _externalErc20);
+    emit ExternalErc20AwardRemoved(_externalErc20);
+  }
+
   /// @notice Adds an external ERC721 token as an additional prize that can be awarded
   /// @dev Only the Prize-Strategy owner/creator can assign external tokens,
   /// and they must be approved by the Prize-Pool
