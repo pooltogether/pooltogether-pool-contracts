@@ -14,9 +14,8 @@ contract CompoundPrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
-  struct Config {
+  struct SingleRandomWinnerConfig {
     address proxyAdmin;
-    CTokenInterface cToken;
     RNGInterface rngService;
     uint256 prizePeriodStart;
     uint256 prizePeriodSeconds;
@@ -24,19 +23,27 @@ contract CompoundPrizePoolBuilder {
     string ticketSymbol;
     string sponsorshipName;
     string sponsorshipSymbol;
-    uint256 maxExitFeeMantissa;
-    uint256 maxTimelockDuration;
-    uint256 creditLimitMantissa;
-    uint256 creditRateMantissa;
+    uint256 ticketCreditLimitMantissa;
+    uint256 ticketCreditRateMantissa;
     address[] externalERC20Awards;
   }
+
+  struct CompoundPrizePoolConfig {
+    CTokenInterface cToken;
+    uint256 maxExitFeeMantissa;
+    uint256 maxTimelockDuration;
+  }
+
+  event SingleRandomWinnerCreated (
+    address indexed singleRandomWinner,
+    address indexed ticket,
+    address indexed sponsorship
+  );
 
   event CompoundPrizePoolCreated (
     address indexed creator,
     address indexed prizePool,
-    address indexed prizeStrategy,
-    address ticket,
-    address sponsorship
+    address indexed prizeStrategy
   );
 
   ComptrollerInterface public comptroller;
@@ -71,24 +78,80 @@ contract CompoundPrizePoolBuilder {
     controlledTokenProxyFactory = _controlledTokenProxyFactory;
   }
 
-  function create(Config calldata config) external returns (SingleRandomWinner) {
+  function createSingleRandomWinner(
+    CompoundPrizePoolConfig calldata prizePoolConfig,
+    SingleRandomWinnerConfig calldata prizeStrategyConfig
+  ) external returns (SingleRandomWinner) {
+
     SingleRandomWinner prizeStrategy;
-    if (config.proxyAdmin != address(0)) {
+    if (prizeStrategyConfig.proxyAdmin != address(0)) {
       prizeStrategy = SingleRandomWinner(
-        proxyFactory.deploy(block.timestamp, address(singleRandomWinnerProxyFactory.instance()), config.proxyAdmin, "")
+        proxyFactory.deploy(block.timestamp, address(singleRandomWinnerProxyFactory.instance()), prizeStrategyConfig.proxyAdmin, "")
       );
     } else {
       prizeStrategy = singleRandomWinnerProxyFactory.create();
     }
 
-    CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
-    address[] memory tokens = createTokens(
-      prizePool,
-      config.ticketName,
-      config.ticketSymbol,
-      config.sponsorshipName,
-      config.sponsorshipSymbol
+    CompoundPrizePool prizePool = _createCompoundPrizePool(
+      prizePoolConfig,
+      prizeStrategy
     );
+
+    prizePool.addControlledToken(address(
+      _createTicket(
+        prizePool,
+        prizeStrategyConfig.ticketName,
+        prizeStrategyConfig.ticketSymbol
+      )
+    ));
+
+    prizePool.addControlledToken(address(
+      _createControlledToken(
+        prizePool,
+        prizeStrategyConfig.sponsorshipName,
+        prizeStrategyConfig.sponsorshipSymbol
+      )
+    ));
+
+    address[] memory tokens = prizePool.tokens();
+
+    prizePool.setCreditRateOf(
+      tokens[1],
+      prizeStrategyConfig.ticketCreditRateMantissa.toUint128(),
+      prizeStrategyConfig.ticketCreditLimitMantissa.toUint128()
+    );
+
+    prizePool.setReserveFeeControlledToken(tokens[0]);
+
+    prizeStrategy.initialize(
+      trustedForwarder,
+      prizeStrategyConfig.prizePeriodStart,
+      prizeStrategyConfig.prizePeriodSeconds,
+      prizePool,
+      tokens[1],
+      tokens[0],
+      prizeStrategyConfig.rngService,
+      prizeStrategyConfig.externalERC20Awards
+    );
+
+    prizeStrategy.transferOwnership(msg.sender);
+    prizePool.transferOwnership(msg.sender);
+
+    emit SingleRandomWinnerCreated(address(prizeStrategy), tokens[1], tokens[0]);
+
+    return prizeStrategy;
+  }
+
+  function _createCompoundPrizePool(
+    CompoundPrizePoolConfig memory config,
+    PrizePoolTokenListenerInterface prizeStrategy
+  )
+    internal
+    returns (CompoundPrizePool)
+  {
+    CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
+
+    address[] memory tokens;
 
     prizePool.initialize(
       trustedForwarder,
@@ -100,44 +163,24 @@ contract CompoundPrizePoolBuilder {
       config.cToken
     );
 
-    prizePool.setCreditRateOf(tokens[0], config.creditRateMantissa.toUint128(), config.creditLimitMantissa.toUint128());
+    emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
-    prizePool.setReserveFeeControlledToken(tokens[1]);
+    return prizePool;
+  }
 
+  function createCompoundPrizePool(
+    CompoundPrizePoolConfig calldata config,
+    PrizePoolTokenListenerInterface prizeStrategy
+  )
+    external
+    returns (CompoundPrizePool)
+  {
+    CompoundPrizePool prizePool = _createCompoundPrizePool(config, prizeStrategy);
     prizePool.transferOwnership(msg.sender);
-
-    prizeStrategy.initialize(
-      trustedForwarder,
-      config.prizePeriodStart,
-      config.prizePeriodSeconds,
-      prizePool,
-      tokens[0],
-      tokens[1],
-      config.rngService,
-      config.externalERC20Awards
-    );
-
-    prizeStrategy.transferOwnership(msg.sender);
-
-    emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy), tokens[0], tokens[1]);
-
-    return prizeStrategy;
+    return prizePool;
   }
 
-  function createTokens(
-    PrizePool prizePool,
-    string memory ticketName,
-    string memory ticketSymbol,
-    string memory sponsorshipName,
-    string memory sponsorshipSymbol
-  ) internal returns (address[] memory) {
-    address[] memory tokens = new address[](2);
-    tokens[0] = address(createTicket(prizePool, ticketName, ticketSymbol));
-    tokens[1] = address(createControlledToken(prizePool, sponsorshipName, sponsorshipSymbol));
-    return tokens;
-  }
-
-  function createControlledToken(
+  function _createControlledToken(
     TokenControllerInterface controller,
     string memory name,
     string memory symbol
@@ -147,7 +190,7 @@ contract CompoundPrizePoolBuilder {
     return token;
   }
 
-  function createTicket(
+  function _createTicket(
     TokenControllerInterface controller,
     string memory name,
     string memory symbol
