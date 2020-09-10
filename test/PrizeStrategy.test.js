@@ -310,6 +310,10 @@ describe('PrizeStrategy', function() {
         .to.emit(prizeStrategy, 'ExternalErc20AwardRemoved')
         .withArgs(externalERC20Award.address)
     })
+    it('should revert when removing non-existant external ERC20 tokens from the prize', async () => {
+      await expect(prizeStrategy.removeExternalErc20Award(invalidExternalToken, SENTINEL))
+        .to.be.revertedWith('PrizeStrategy/invalid-external-award')
+    })
     it('should not allow anyone else to remove external ERC20 tokens from the prize', async () => {
       await expect(prizeStrategy.connect(wallet2).removeExternalErc20Award(externalERC20Award.address, SENTINEL))
         .to.be.revertedWith('Ownable: caller is not the owner')
