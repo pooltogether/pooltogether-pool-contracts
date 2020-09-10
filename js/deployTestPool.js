@@ -71,7 +71,7 @@ async function deployTestPool({
 
   debug('Initializing CompoundPrizePoolHarness...')
 
-  await compoundPrizePool.initializeAll(
+  await compoundPrizePool['initialize(address,address,address,address[],uint256,uint256,address)'](
     forwarder.address,
     prizeStrategy.address,
     comptroller.address,

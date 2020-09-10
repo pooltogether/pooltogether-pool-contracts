@@ -13,6 +13,8 @@ import "../PrizePool.sol";
 contract CompoundPrizePool is PrizePool {
   using SafeMath for uint256;
 
+  event CompoundPrizePoolInitialized(address indexed cToken);
+
   /// @notice Interface for the Yield-bearing cToken by Compound
   CTokenInterface public cToken;
 
@@ -44,6 +46,8 @@ contract CompoundPrizePool is PrizePool {
       _maxTimelockDuration
     );
     cToken = _cToken;
+
+    emit CompoundPrizePoolInitialized(address(cToken));
   }
 
   /// @notice Estimates the accrued interest of a deposit of a given number of blocks
@@ -99,8 +103,13 @@ contract CompoundPrizePool is PrizePool {
   /// @dev Allows a user to redeem yield-bearing tokens in exchange for the underlying
   /// asset tokens held in escrow by the Yield Service
   /// @param amount The amount of underlying tokens to be redeemed
-  function _redeem(uint256 amount) internal override {
+  /// @return The actual amount of tokens transferred
+  function _redeem(uint256 amount) internal override returns (uint256) {
+    IERC20 token = _token();
+    uint256 before = token.balanceOf(address(this));
     require(cToken.redeemUnderlying(amount) == 0, "CompoundPrizePool/redeem-failed");
+    uint256 diff = token.balanceOf(address(this)).sub(before);
+    return diff;
   }
 
   /// @dev Gets the underlying asset token used by the Yield Service
