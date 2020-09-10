@@ -307,7 +307,8 @@ describe('PrizeStrategy', function() {
     it('should allow the owner to add external ERC721 tokens to the prize', async () => {
       await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
       await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
-        .to.not.be.revertedWith('PrizeStrategy/unavailable-token')
+        .to.emit(prizeStrategy, 'ExternalErc721AwardAdded')
+        .withArgs(externalERC721Award.address, [1])
     })
 
     it('should disallow unapproved external ERC721 prize tokens', async () => {

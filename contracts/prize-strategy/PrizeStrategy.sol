@@ -51,6 +51,11 @@ contract PrizeStrategy is PrizeStrategyStorage,
     address rngService
   );
 
+  event ExternalErc721AwardAdded(
+    address indexed _externalErc721,
+    uint256[] _tokenIds
+  );
+
   function initialize (
     address _trustedForwarder,
     uint256 _prizePeriodStart,
@@ -382,6 +387,8 @@ contract PrizeStrategy is PrizeStrategyStorage,
       require(IERC721(_externalErc721).ownerOf(tokenId) == address(prizePool), "PrizeStrategy/unavailable-token");
       externalErc721TokenIds[_externalErc721].push(tokenId);
     }
+
+    emit ExternalErc721AwardAdded(_externalErc721, _tokenIds);
   }
 
   function _requireNotLocked() internal view {
