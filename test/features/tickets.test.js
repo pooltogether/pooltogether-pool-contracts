@@ -38,9 +38,9 @@ describe('Tickets Feature', () => {
     await env.buyTickets({ user: 2, tickets: 100 })
     await env.startAward()
 
-    await env.expectRevertWith(env.buyTickets({ user: 1, tickets: 100 }), "PrizeStrategy/rng-in-flight")
+    await env.expectRevertWith(env.buyTickets({ user: 1, tickets: 100 }), "SingleRandomWinner/rng-in-flight")
 
-    await env.expectRevertWith(env.transferTickets({ user: 2, tickets: 100, to: 3 }), "PrizeStrategy/rng-in-flight")
+    await env.expectRevertWith(env.transferTickets({ user: 2, tickets: 100, to: 3 }), "SingleRandomWinner/rng-in-flight")
 
     await env.completeAward({ token: 0 })
 

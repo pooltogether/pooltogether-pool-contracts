@@ -2,7 +2,7 @@ pragma solidity 0.6.4;
 pragma experimental ABIEncoderV2;
 
 import "../comptroller/ComptrollerInterface.sol";
-import "../prize-strategy/PrizeStrategyProxyFactory.sol";
+import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
 import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
 import "../token/TicketProxyFactory.sol";
@@ -43,13 +43,13 @@ contract CompoundPrizePoolBuilder {
   CompoundPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
   TicketProxyFactory public ticketProxyFactory;
-  PrizeStrategyProxyFactory public prizeStrategyProxyFactory;
+  SingleRandomWinnerProxyFactory public singleRandomWinnerProxyFactory;
   OpenZeppelinProxyFactoryInterface public proxyFactory;
   address public trustedForwarder;
 
   constructor (
     ComptrollerInterface _comptroller,
-    PrizeStrategyProxyFactory _prizeStrategyProxyFactory,
+    SingleRandomWinnerProxyFactory _singleRandomWinnerProxyFactory,
     address _trustedForwarder,
     CompoundPrizePoolProxyFactory _compoundPrizePoolProxyFactory,
     ControlledTokenProxyFactory _controlledTokenProxyFactory,
@@ -57,7 +57,7 @@ contract CompoundPrizePoolBuilder {
     TicketProxyFactory _ticketProxyFactory
   ) public {
     require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
-    require(address(_prizeStrategyProxyFactory) != address(0), "CompoundPrizePoolBuilder/prize-strategy-factory-not-zero");
+    require(address(_singleRandomWinnerProxyFactory) != address(0), "CompoundPrizePoolBuilder/single-random-winner-factory-not-zero");
     require(address(_compoundPrizePoolProxyFactory) != address(0), "CompoundPrizePoolBuilder/compound-prize-pool-builder-not-zero");
     require(address(_controlledTokenProxyFactory) != address(0), "CompoundPrizePoolBuilder/controlled-token-proxy-factory-not-zero");
     require(address(_proxyFactory) != address(0), "CompoundPrizePoolBuilder/proxy-factory-not-zero");
@@ -65,20 +65,20 @@ contract CompoundPrizePoolBuilder {
     proxyFactory = _proxyFactory;
     ticketProxyFactory = _ticketProxyFactory;
     comptroller = _comptroller;
-    prizeStrategyProxyFactory = _prizeStrategyProxyFactory;
+    singleRandomWinnerProxyFactory = _singleRandomWinnerProxyFactory;
     trustedForwarder = _trustedForwarder;
     compoundPrizePoolProxyFactory = _compoundPrizePoolProxyFactory;
     controlledTokenProxyFactory = _controlledTokenProxyFactory;
   }
 
-  function create(Config calldata config) external returns (PrizeStrategy) {
-    PrizeStrategy prizeStrategy;
+  function create(Config calldata config) external returns (SingleRandomWinner) {
+    SingleRandomWinner prizeStrategy;
     if (config.proxyAdmin != address(0)) {
-      prizeStrategy = PrizeStrategy(
-        proxyFactory.deploy(block.timestamp, address(prizeStrategyProxyFactory.instance()), config.proxyAdmin, "")
+      prizeStrategy = SingleRandomWinner(
+        proxyFactory.deploy(block.timestamp, address(singleRandomWinnerProxyFactory.instance()), config.proxyAdmin, "")
       );
     } else {
-      prizeStrategy = prizeStrategyProxyFactory.create();
+      prizeStrategy = singleRandomWinnerProxyFactory.create();
     }
 
     CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();

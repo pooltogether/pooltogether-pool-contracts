@@ -1,9 +1,9 @@
 pragma solidity 0.6.4;
 
-import "../prize-strategy/PrizeStrategy.sol";
+import "../prize-strategy/single-random-winner/SingleRandomWinner.sol";
 
 /* solium-disable security/no-block-members */
-contract PrizeStrategyHarness is PrizeStrategy {
+contract SingleRandomWinnerHarness is SingleRandomWinner {
 
   uint256 internal time;
   function setCurrentTime(uint256 _time) external {

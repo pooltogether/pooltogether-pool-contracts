@@ -1,4 +1,4 @@
-const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
+const SingleRandomWinnerHarness = require('../build/SingleRandomWinnerHarness.json')
 const RNGServiceMock = require('../build/RNGServiceMock.json')
 const TrustedForwarder = require('../build/TrustedForwarder.json')
 const ComptrollerHarness = require('../build/ComptrollerHarness.json')
@@ -51,9 +51,9 @@ async function deployTestPool({
   let rngServiceMock = await deployContract(wallet, RNGServiceMock, [], overrides)
   await rngServiceMock.setRequestFee(linkToken.address, toWei('1'))
 
-  debug('Deploying PrizeStrategy...')
+  debug('Deploying SingleRandomWinner PrizeStrategy...')
 
-  let prizeStrategy = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
+  let prizeStrategy = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
 
   debug('Deploying CompoundPrizePoolHarness...')
 
@@ -81,7 +81,7 @@ async function deployTestPool({
     cToken.address
   )
 
-  debug('Initializing PrizeStrategy...')
+  debug('Initializing SingleRandomWinner PrizeStrategy...')
 
   await prizeStrategy.initialize(
     forwarder.address,

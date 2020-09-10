@@ -32,7 +32,7 @@ describe('CompoundPrizePoolBuilder', () => {
 
     comptroller = (await deployments.get("Comptroller"))
     trustedForwarder = (await deployments.get("TrustedForwarder"))
-    prizeStrategyProxyFactory = (await deployments.get("PrizeStrategyProxyFactory"))
+    prizeStrategyProxyFactory = (await deployments.get("SingleRandomWinnerProxyFactory"))
     compoundPrizePoolProxyFactory = (await deployments.get("CompoundPrizePoolProxyFactory"))
     controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
     ticketProxyFactory = (await deployments.get("TicketProxyFactory"))
@@ -44,7 +44,7 @@ describe('CompoundPrizePoolBuilder', () => {
   describe('initialize()', () => {
     it('should setup all factories', async () => {
       expect(await builder.comptroller()).to.equal(comptroller.address)
-      expect(await builder.prizeStrategyProxyFactory()).to.equal(prizeStrategyProxyFactory.address)
+      expect(await builder.singleRandomWinnerProxyFactory()).to.equal(prizeStrategyProxyFactory.address)
       expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.compoundPrizePoolProxyFactory()).to.equal(compoundPrizePoolProxyFactory.address)
       expect(await builder.controlledTokenProxyFactory()).to.equal(controlledTokenProxyFactory.address)
@@ -78,7 +78,7 @@ describe('CompoundPrizePoolBuilder', () => {
 
       expect(event.name).to.equal('CompoundPrizePoolCreated')
 
-      let prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategyHarness', event.args.prizeStrategy, wallet)
+      let prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', event.args.prizeStrategy, wallet)
       let prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
 
       expect(await prizePool.cToken()).to.equal(config.cToken)
@@ -108,7 +108,7 @@ describe('CompoundPrizePoolBuilder', () => {
 
       expect(event.name).to.equal('CompoundPrizePoolCreated')
 
-      let prizeStrategy = await buidler.ethers.getContractAt('PrizeStrategyHarness', event.args.prizeStrategy, wallet)
+      let prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', event.args.prizeStrategy, wallet)
       let prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
       let ticketAddress = event.args.ticket
       let sponsorshipAddress = event.args.sponsorship

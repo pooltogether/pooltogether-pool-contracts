@@ -3,7 +3,7 @@ const { deployMockContract } = require('./helpers/deployMockContract')
 const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
 const ComptrollerInterface = require('../build/ComptrollerInterface.json')
-const PrizeStrategyHarness = require('../build/PrizeStrategyHarness.json')
+const SingleRandomWinnerHarness = require('../build/SingleRandomWinnerHarness.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
 const IERC20 = require('../build/IERC20.json')
@@ -24,7 +24,7 @@ const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
 let overrides = { gasLimit: 20000000 }
 
-describe('PrizeStrategy', function() {
+describe('SingleRandomWinner', function() {
   let wallet, wallet2
 
   let externalERC20Award, externalERC721Award
@@ -65,7 +65,7 @@ describe('PrizeStrategy', function() {
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
     debug('deploying prizeStrategy...')
-    prizeStrategy = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
+    prizeStrategy = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
 
     await prizePool.mock.canAwardExternal.withArgs(externalERC20Award.address).returns(true)
     await prizePool.mock.canAwardExternal.withArgs(externalERC721Award.address).returns(true)
@@ -112,24 +112,24 @@ describe('PrizeStrategy', function() {
       let initArgs
 
       debug('deploying secondary prizeStrategy...')
-      const prizeStrategy2 = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
+      const prizeStrategy2 = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
 
       debug('testing initialization of secondary prizeStrategy...')
 
       initArgs = _initArgs.slice(); initArgs[2] = 0
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/prize-period-greater-than-zero')
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('SingleRandomWinner/prize-period-greater-than-zero')
       initArgs = _initArgs.slice(); initArgs[3] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/prize-pool-not-zero')
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('SingleRandomWinner/prize-pool-not-zero')
       initArgs = _initArgs.slice(); initArgs[4] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/ticket-not-zero')
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('SingleRandomWinner/ticket-not-zero')
       initArgs = _initArgs.slice(); initArgs[5] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/sponsorship-not-zero')
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('SingleRandomWinner/sponsorship-not-zero')
       initArgs = _initArgs.slice(); initArgs[6] = AddressZero
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/rng-not-zero')
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('SingleRandomWinner/rng-not-zero')
 
       initArgs = _initArgs.slice()
       await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PrizeStrategy/cannot-award-external')
+      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('SingleRandomWinner/cannot-award-external')
     })
 
     it('should disallow unapproved external prize tokens', async () => {
@@ -145,12 +145,12 @@ describe('PrizeStrategy', function() {
       ]
 
       debug('deploying secondary prizeStrategy...')
-      const prizeStrategy2 = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
+      const prizeStrategy2 = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
 
       debug('initializing secondary prizeStrategy...')
       await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
       await expect(prizeStrategy2.initialize(...initArgs))
-        .to.be.revertedWith('PrizeStrategy/cannot-award-external')
+        .to.be.revertedWith('SingleRandomWinner/cannot-award-external')
     })
   })
 
@@ -236,7 +236,7 @@ describe('PrizeStrategy', function() {
       await prizeStrategy.startAward();
 
       await expect(prizeStrategy.setRngService(token.address))
-        .to.be.revertedWith('PrizeStrategy/rng-in-flight');
+        .to.be.revertedWith('SingleRandomWinner/rng-in-flight');
     });
   })
 
@@ -286,7 +286,7 @@ describe('PrizeStrategy', function() {
           toWei('10'),
           ticket.address
         ))
-        .to.be.revertedWith('PrizeStrategy/rng-in-flight')
+        .to.be.revertedWith('SingleRandomWinner/rng-in-flight')
     })
   })
 
@@ -303,7 +303,7 @@ describe('PrizeStrategy', function() {
     it('should disallow unapproved external ERC20 prize tokens', async () => {
       await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
       await expect(prizeStrategy.addExternalErc20Award(invalidExternalToken))
-        .to.be.revertedWith('PrizeStrategy/cannot-award-external')
+        .to.be.revertedWith('SingleRandomWinner/cannot-award-external')
     })
   })
 
@@ -318,13 +318,13 @@ describe('PrizeStrategy', function() {
     it('should disallow unapproved external ERC721 prize tokens', async () => {
       await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
       await expect(prizeStrategy.addExternalErc721Award(invalidExternalToken, [1]))
-        .to.be.revertedWith('PrizeStrategy/cannot-award-external')
+        .to.be.revertedWith('SingleRandomWinner/cannot-award-external')
     })
 
     it('should disallow ERC721 tokens that are not held by the Prize Pool', async () => {
       await externalERC721Award.mock.ownerOf.withArgs(1).returns(wallet._address)
       await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
-        .to.be.revertedWith('PrizeStrategy/unavailable-token')
+        .to.be.revertedWith('SingleRandomWinner/unavailable-token')
     })
   })
 
@@ -470,7 +470,7 @@ describe('PrizeStrategy', function() {
       prizePeriodStart = 10000
 
       debug('deploying secondary prizeStrategy...')
-      prizeStrategy2 = await deployContract(wallet, PrizeStrategyHarness, [], overrides)
+      prizeStrategy2 = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
 
       debug('initializing secondary prizeStrategy...')
       await prizeStrategy2.initialize(
@@ -490,14 +490,14 @@ describe('PrizeStrategy', function() {
     describe('startAward()', () => {
       it('should prevent starting an award', async () => {
         await prizeStrategy2.setCurrentTime(100);
-        await expect(prizeStrategy2.startAward()).to.be.revertedWith('PrizeStrategy/prize-period-not-over')
+        await expect(prizeStrategy2.startAward()).to.be.revertedWith('SingleRandomWinner/prize-period-not-over')
       })
     })
 
     describe('completeAward()', () => {
       it('should prevent completing an award', async () => {
         await prizeStrategy2.setCurrentTime(100);
-        await expect(prizeStrategy2.startAward()).to.be.revertedWith('PrizeStrategy/prize-period-not-over')
+        await expect(prizeStrategy2.startAward()).to.be.revertedWith('SingleRandomWinner/prize-period-not-over')
       })
     })
 

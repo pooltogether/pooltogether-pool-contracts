@@ -172,8 +172,8 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying PrizeStrategyProxyFactory...")
-  const prizeStrategyProxyFactoryResult = await deploy("PrizeStrategyProxyFactory", {
+  debug("\n  Deploying SingleRandomWinnerProxyFactory...")
+  const prizeStrategyProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
@@ -195,14 +195,14 @@ module.exports = async (buidler) => {
 
   // Display Contract Addresses
   debug("\n  Contract Deployments Complete!\n")
-  debug("  - ProxyFactory:                  ", proxyFactoryResult.address)
-  debug("  - TicketProxyFactory:            ", ticketProxyFactoryResult.address)
-  debug("  - ComptrollerImplementation:     ", comptrollerImplementationResult.address)
-  debug("  - Comptroller:                   ", comptrollerAddress)
-  debug("  - CompoundPrizePoolProxyFactory: ", compoundPrizePoolProxyFactoryResult.address)
-  debug("  - ControlledTokenProxyFactory:   ", controlledTokenProxyFactoryResult.address)
-  debug("  - PrizeStrategyProxyFactory:     ", prizeStrategyProxyFactoryResult.address)
-  debug("  - CompoundPrizePoolBuilder:      ", compoundPrizePoolBuilderResult.address)
+  debug("  - ProxyFactory:                   ", proxyFactoryResult.address)
+  debug("  - TicketProxyFactory:             ", ticketProxyFactoryResult.address)
+  debug("  - ComptrollerImplementation:      ", comptrollerImplementationResult.address)
+  debug("  - Comptroller:                    ", comptrollerAddress)
+  debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
+  debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)
+  debug("  - SingleRandomWinnerProxyFactory: ", prizeStrategyProxyFactoryResult.address)
+  debug("  - CompoundPrizePoolBuilder:       ", compoundPrizePoolBuilderResult.address)
 
   debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 };
