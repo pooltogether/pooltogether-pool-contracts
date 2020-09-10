@@ -292,8 +292,12 @@ describe('PrizeStrategy', function() {
 
   describe('addExternalErc20Award()', () => {
     it('should allow the owner to add external ERC20 tokens to the prize', async () => {
-      await expect(prizeStrategy.addExternalErc20Award(externalERC20Award.address))
-        .to.not.be.revertedWith('PrizeStrategy/cannot-award-external')
+      const externalAward = await deployMockContract(wallet2, IERC20.abi, overrides)
+      await prizePool.mock.canAwardExternal.withArgs(externalAward.address).returns(true)
+
+      await expect(prizeStrategy.addExternalErc20Award(externalAward.address))
+        .to.emit(prizeStrategy, 'ExternalErc20AwardAdded')
+        .withArgs(externalAward.address)
     })
 
     it('should disallow unapproved external ERC20 prize tokens', async () => {
