@@ -47,7 +47,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address indexed operator,
     address indexed to,
     address indexed token,
-    uint256 amount
+    uint256 amount,
+    address referrer
   );
 
   /// @dev Event emitted when timelocked funds are re-deposited
@@ -315,7 +316,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     require(_token().transferFrom(operator, address(this), amount), "PrizePool/deposit-transfer-failed");
     _supply(amount);
 
-    emit Deposited(operator, to, controlledToken, amount);
+    emit Deposited(operator, to, controlledToken, amount, referrer);
   }
 
   /// @notice Withdraw assets from the Prize Pool instantly.  A fairness fee may be charged for an early exit.
