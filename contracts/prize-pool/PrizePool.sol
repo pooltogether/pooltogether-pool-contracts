@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "../comptroller/ComptrollerInterface.sol";
+import "./YieldSource.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
@@ -15,7 +16,7 @@ import "../utils/RelayRecipient.sol";
 /// @title Base Prize Pool for managing escrowed assets
 /// @notice Manages depositing and withdrawing assets from the Prize Pool
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
-abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
+abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
   using SafeMath for uint256;
   using SafeCast for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
@@ -86,6 +87,7 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     address indexed from,
     address indexed token,
     uint256 amount,
+    uint256 redeemed,
     uint256 exitFee
   );
 
@@ -102,7 +104,8 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
   event TimelockedWithdrawalSwept(
     address indexed operator,
     address indexed from,
-    uint256 amount
+    uint256 amount,
+    uint256 redeemed
   );
 
   /// @dev Eent emitted when the Liquidity Cap has been set or changed
@@ -212,52 +215,22 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     );
   }
 
-  /// @dev Inheriting contract must determine if a specific token type may be awarded as a prize enhancement
-  /// @param _externalToken The address of the token to check
-  /// @return True if the token may be awarded, false otherwise
-  function _canAwardExternal(address _externalToken) internal virtual view returns (bool);
-
-  /// @dev Inheriting contract must return an interface to the underlying asset token that conforms to the ERC20 spec
-  /// @return A reference to the interface of the underling asset token
-  function _token() internal virtual view returns (IERC20);
-
-  /// @dev Inheriting contract must return the balance of the underlying assets held by the Yield Service
-  /// @return The underlying balance of asset tokens
-  function _balance() internal virtual returns (uint256);
-
-  /// @dev Inheriting contract must provide the ability to supply asset tokens in exchange
-  /// for yield-bearing tokens to be held in escrow by the Yield Service
-  /// @param mintAmount The amount of asset tokens to be supplied
-  function _supply(uint256 mintAmount) internal virtual;
-
-  /// @dev Inheriting contract must provide the ability to redeem yield-bearing tokens in exchange
-  /// for the underlying asset tokens held in escrow by the Yield Service
-  /// @param redeemAmount The amount of yield-bearing tokens to be redeemed
-  function _redeem(uint256 redeemAmount) internal virtual;
-
-  /// @dev Inheriting contract must provide an estimate for the amount of accrued interest that would
-  /// be applied to the `principal` amount over a given number of `blocks`
-  /// @param principal The amount of asset tokens to provide an estimate on
-  /// @param blocks The number of blocks that the principal would accrue interest over
-  /// @return The estimated interest that would accrue on the principal
-  function estimateAccruedInterestOverBlocks(uint256 principal, uint256 blocks) public virtual view returns (uint256);
-
   /// @dev Gets the underlying asset token used by the Yield Service
   /// @return A reference to the interface of the underling asset token
-  function token() external virtual view returns (IERC20) {
+  function token() external view returns (IERC20) {
     return _token();
   }
 
   /// @dev Gets the balance of the underlying assets held by the Yield Service
   /// @return The underlying balance of asset tokens
-  function balance() external virtual returns (uint256) {
+  function balance() external returns (uint256) {
     return _balance();
   }
 
   /// @dev Checks with the Prize Pool if a specific token type may be awarded as a prize enhancement
   /// @param _externalToken The address of the token to check
   /// @return True if the token may be awarded, false otherwise
-  function canAwardExternal(address _externalToken) external virtual view returns (bool) {
+  function canAwardExternal(address _externalToken) external view returns (bool) {
     return _canAwardExternal(_externalToken);
   }
 
@@ -343,10 +316,10 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
     // redeem the tickets less the fee
     uint256 amountLessFee = amount.sub(exitFee);
-    _redeem(amountLessFee);
-    require(_token().transfer(from, amountLessFee), "PrizePool/instant-transfer-failed");
+    uint256 redeemed = _redeem(amountLessFee);
+    require(_token().transfer(from, redeemed), "PrizePool/instant-transfer-failed");
 
-    emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, exitFee);
+    emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, redeemed, exitFee);
 
     return exitFee;
   }
@@ -624,15 +597,17 @@ abstract contract PrizePool is OwnableUpgradeSafe, RelayRecipient, ReentrancyGua
 
     timelockTotalSupply = timelockTotalSupply.sub(totalWithdrawal);
 
-    _redeem(totalWithdrawal);
+    uint256 redeemed = _redeem(totalWithdrawal);
 
     IERC20 underlyingToken = IERC20(_token());
 
     for (i = 0; i < users.length; i++) {
       if (balances[i] > 0) {
         delete _unlockTimestamps[users[i]];
-        require(underlyingToken.transfer(users[i], balances[i]), "PrizePool/sweep-transfer-failed");
-        emit TimelockedWithdrawalSwept(operator, users[i], balances[i]);
+        uint256 shareMantissa = FixedPoint.calculateMantissa(balances[i], totalWithdrawal);
+        uint256 transferAmount = FixedPoint.multiplyUintByMantissa(redeemed, shareMantissa);
+        require(underlyingToken.transfer(users[i], transferAmount), "PrizePool/sweep-transfer-failed");
+        emit TimelockedWithdrawalSwept(operator, users[i], balances[i], transferAmount);
       }
     }
 

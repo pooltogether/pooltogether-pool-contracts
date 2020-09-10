@@ -7,36 +7,6 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
 
   uint256 public currentTime;
 
-  function initializeAll(
-    address _trustedForwarder,
-    PrizePoolTokenListenerInterface _prizeStrategy,
-    ComptrollerInterface _comptroller,
-    address[] memory _controlledTokens,
-    uint256 _maxExitFeeMantissa,
-    uint256 _maxTimelockDuration,
-    CTokenInterface _cToken
-  )
-    public
-  {
-    CompoundPrizePool.initialize(
-      _trustedForwarder,
-      _prizeStrategy,
-      _comptroller,
-      _controlledTokens,
-      _maxExitFeeMantissa,
-      _maxTimelockDuration,
-      _cToken
-    );
-  }
-
-  function supply(uint256 mintAmount) external {
-    _supply(mintAmount);
-  }
-
-  function redeem(uint256 redeemAmount) external {
-    _redeem(redeemAmount);
-  }
-
   function setCurrentTime(uint256 _currentTime) external {
     currentTime = _currentTime;
   }
@@ -49,4 +19,11 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
     return currentTime;
   }
 
+  function supply(uint256 mintAmount) external {
+    _supply(mintAmount);
+  }
+
+  function redeem(uint256 redeemAmount) external returns (uint256) {
+    return _redeem(redeemAmount);
+  }
 }
