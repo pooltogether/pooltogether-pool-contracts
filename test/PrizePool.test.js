@@ -149,6 +149,9 @@ describe('PrizePool', function() {
         initArgs = _initArgs.slice(); initArgs[1] = AddressZero
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/prizeStrategy-not-zero')
 
+        initArgs = _initArgs.slice(); initArgs[2] = AddressZero
+        await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/comptroller-not-zero')
+
         initArgs = _initArgs.slice()
         await ticket.mock.controller.returns(AddressZero)
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/token-ctrlr-mismatch')

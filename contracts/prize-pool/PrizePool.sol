@@ -662,12 +662,10 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param amount The amount of collateral to be withdrawn
   /// @return Exit fee
   function _calculateEarlyExitFee(address controlledToken, uint256 amount) internal view returns (uint256) {
-    uint256 exitFee = FixedPoint.multiplyUintByMantissa(amount, tokenCreditRates[controlledToken].creditLimitMantissa);
-    uint256 maxFee = FixedPoint.multiplyUintByMantissa(amount, maxExitFeeMantissa);
-    if (exitFee > maxFee) {
-      exitFee = maxFee;
-    }
-    return exitFee;
+    return _limitExitFee(
+      amount,
+      FixedPoint.multiplyUintByMantissa(amount, tokenCreditRates[controlledToken].creditLimitMantissa)
+    );
   }
 
   /// @notice Estimates the amount of time it will take for a given amount of funds to accrue the given amount of credit.
