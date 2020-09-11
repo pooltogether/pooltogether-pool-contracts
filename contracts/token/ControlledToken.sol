@@ -15,11 +15,13 @@ contract ControlledToken is ERC20UpgradeSafe, RelayRecipient {
   /// @notice Initializes the Controlled Token with Token Details and the Controller
   /// @param _name The name of the Token
   /// @param _symbol The symbol for the Token
+  /// @param _decimals The number of decimals for the Token
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
   /// @param _controller Address of the Controller contract for minting & burning
   function initialize(
     string memory _name,
     string memory _symbol,
+    uint8 _decimals,
     address _trustedForwarder,
     TokenControllerInterface _controller
   )
@@ -30,6 +32,7 @@ contract ControlledToken is ERC20UpgradeSafe, RelayRecipient {
     trustedForwarder = _trustedForwarder;
     __ERC20_init(_name, _symbol);
     controller = _controller;
+    _setupDecimals(_decimals);
   }
 
   /// @notice Allows the controller to mint tokens for a user account

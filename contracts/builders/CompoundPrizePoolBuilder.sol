@@ -97,11 +97,14 @@ contract CompoundPrizePoolBuilder {
       prizeStrategy
     );
 
+    uint8 decimals = prizePoolConfig.cToken.decimals();
+
     prizePool.addControlledToken(address(
       _createTicket(
         prizePool,
         prizeStrategyConfig.ticketName,
-        prizeStrategyConfig.ticketSymbol
+        prizeStrategyConfig.ticketSymbol,
+        decimals
       )
     ));
 
@@ -109,7 +112,8 @@ contract CompoundPrizePoolBuilder {
       _createControlledToken(
         prizePool,
         prizeStrategyConfig.sponsorshipName,
-        prizeStrategyConfig.sponsorshipSymbol
+        prizeStrategyConfig.sponsorshipSymbol,
+        decimals
       )
     ));
 
@@ -183,20 +187,22 @@ contract CompoundPrizePoolBuilder {
   function _createControlledToken(
     TokenControllerInterface controller,
     string memory name,
-    string memory symbol
+    string memory symbol,
+    uint8 decimals
   ) internal returns (ControlledToken) {
     ControlledToken token = controlledTokenProxyFactory.create();
-    token.initialize(string(name), string(symbol), trustedForwarder, controller);
+    token.initialize(string(name), string(symbol), decimals, trustedForwarder, controller);
     return token;
   }
 
   function _createTicket(
     TokenControllerInterface controller,
     string memory name,
-    string memory symbol
+    string memory symbol,
+    uint8 decimals
   ) internal returns (Ticket) {
     Ticket ticket = ticketProxyFactory.create();
-    ticket.initialize(string(name), string(symbol), trustedForwarder, controller);
+    ticket.initialize(string(name), string(symbol), decimals, trustedForwarder, controller);
     return ticket;
   }
 }

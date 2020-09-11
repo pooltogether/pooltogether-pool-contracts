@@ -34,6 +34,7 @@ describe('TicketProxyFactory', () => {
       await ticket.initialize(
         "NAME",
         "SYMBOL",
+        18,
         wallet._address, // forwarder
         controller.address, // controller
       )

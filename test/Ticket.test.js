@@ -21,7 +21,7 @@ describe('Ticket', function() {
     [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
     controller = await deployMockContract(wallet, TokenControllerInterface.abi)    
     ticket = await deployContract(wallet, Ticket, [], overrides)
-    await ticket.initialize("Name", "SYMBOL", AddressZero, controller.address)
+    await ticket.initialize("Name", "SYMBOL", 18, AddressZero, controller.address)
     
     // allow all transfers
     await controller.mock.beforeTokenTransfer.returns()
