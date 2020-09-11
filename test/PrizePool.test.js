@@ -102,7 +102,7 @@ describe('PrizePool', function() {
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
-      await prizePool.setCreditRateOf(ticket.address, toWei('0.01'), toWei('0.1'))
+      await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
     describe("beforeTokenTransfer()", () => {
@@ -265,7 +265,7 @@ describe('PrizePool', function() {
     describe('calculateEarlyExitFee', () => {
       it('should return the early exit for for a withdrawal', async () => {
         // Rate: 1%, Limit: 10%
-        await prizePool.setCreditRateOf(ticket.address, toWei('0.01'), toWei('0.1'))
+        await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
 
         // Full period early = 10%
         expect(await prizePool.calculateEarlyExitFee(ticket.address, toWei('10')))
@@ -355,7 +355,7 @@ describe('PrizePool', function() {
         let amount = toWei('20')
 
         // fee is now 4/5 of the withdrawal amount
-        await prizePool.setCreditRateOf(ticket.address, toWei('0.01'), toWei('0.8'))
+        await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.8'))
 
         // updateAwardBalance
         await yieldSourceStub.mock.balance.returns('0')
@@ -450,7 +450,7 @@ describe('PrizePool', function() {
 
       it('should limit the duration of the timelock', async () => {
 
-        await prizePool.setCreditRateOf(ticket.address, toWei('0.000000000000000001'), toWei('0.9'))
+        await prizePool.setCreditPlanOf(ticket.address, toWei('0.000000000000000001'), toWei('0.9'))
 
         let amount = toWei('10')
 
@@ -728,7 +728,7 @@ describe('PrizePool', function() {
         yieldSourceStub.address
       )
 
-      await multiTokenPrizePool.setCreditRateOf(ticket.address, toWei('0.01'), toWei('0.1'))
+      await multiTokenPrizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
     describe('accountedBalance()', () => {
@@ -753,7 +753,7 @@ describe('PrizePool', function() {
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
-      await prizePool.setCreditRateOf(ticket.address, toWei('0.01'), toWei('0.1'))
+      await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
     it('should exit early when amount = 0', async () => {
@@ -789,7 +789,7 @@ describe('PrizePool', function() {
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
-      await prizePool.setCreditRateOf(ticket.address, toWei('0.01'), toWei('0.1'))
+      await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
     it('should exit early when tokenIds list is empty', async () => {

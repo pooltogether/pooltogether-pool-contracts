@@ -115,7 +115,7 @@ contract CompoundPrizePoolBuilder {
 
     address[] memory tokens = prizePool.tokens();
 
-    prizePool.setCreditRateOf(
+    prizePool.setCreditPlanOf(
       tokens[1],
       prizeStrategyConfig.ticketCreditRateMantissa.toUint128(),
       prizeStrategyConfig.ticketCreditLimitMantissa.toUint128()

@@ -149,12 +149,12 @@ describe('CompoundPrizePoolBuilder', () => {
       expect(await prizePool.maxExitFeeMantissa()).to.equal(compoundPrizePoolConfig.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(compoundPrizePoolConfig.maxTimelockDuration)
 
-      expect(await prizePool.creditRateOf(ticket.address)).to.deep.equal([
+      expect(await prizePool.creditPlanOf(ticket.address)).to.deep.equal([
         singleRandomWinnerConfig.ticketCreditLimitMantissa,
         singleRandomWinnerConfig.ticketCreditRateMantissa
       ])
 
-      expect(await prizePool.creditRateOf(sponsorship.address)).to.deep.equal([
+      expect(await prizePool.creditPlanOf(sponsorship.address)).to.deep.equal([
         ethers.BigNumber.from('0'),
         ethers.BigNumber.from('0')
       ])
