@@ -309,8 +309,11 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     onlyControlledToken(controlledToken)
     returns (uint256)
   {
-    uint256 exitFee = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
+    (uint256 exitFee, uint256 burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
     require(exitFee <= maximumExitFee, "PrizePool/exit-fee-exceeds-user-maximum");
+    
+    // burn the credit
+    _burnCredit(from, controlledToken, burnedCredit);
 
     // burn the tickets
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
@@ -356,9 +359,9 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     returns (uint256)
   {
     uint256 blockTime = _currentTime();
-    uint256 lockDuration = _calculateTimelockDuration(from, controlledToken, amount);
+    (uint256 lockDuration, uint256 burnedCredit) = _calculateTimelockDuration(from, controlledToken, amount);
     uint256 unlockTimestamp = blockTime.add(lockDuration);
-
+    _burnCredit(from, controlledToken, burnedCredit);
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
     _mintTimelock(from, amount, unlockTimestamp);
 
@@ -625,7 +628,10 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 amount
   )
     external
-    returns (uint256)
+    returns (
+      uint256 durationSeconds,
+      uint256 burnedCredit
+    )
   {
     return _calculateTimelockDuration(from, controlledToken, amount);
   }
@@ -635,20 +641,24 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param amount The amount the user is withdrawing
   /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
   /// @return durationSeconds The duration of the timelock in seconds
+  /// @return burnedCredit The credit that was burned
   function _calculateTimelockDuration(
     address from,
     address controlledToken,
     uint256 amount
   )
     internal
-    returns (uint256)
+    returns (
+      uint256 durationSeconds,
+      uint256 burnedCredit
+    )
   {
-    uint256 exitFee = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
+    (uint256 exitFee, uint256 _burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
     uint256 duration = _estimateCreditAccrualTime(controlledToken, amount, exitFee);
     if (duration > maxTimelockDuration) {
       duration = maxTimelockDuration;
     }
-    return duration;
+    return (duration, _burnedCredit);
   }
 
   /// @notice Calculates the early exit fee for the given amount
@@ -714,7 +724,9 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param user The user whose credit should be burned
   /// @param credit The amount of credit to burn
   function _burnCredit(address user, address controlledToken, uint256 credit) internal {
-    tokenCreditBalances[controlledToken][user].balance = uint256(tokenCreditBalances[controlledToken][user].balance).sub(credit).toUint128();
+    if (credit > 0) {
+      tokenCreditBalances[controlledToken][user].balance = uint256(tokenCreditBalances[controlledToken][user].balance).sub(credit).toUint128();
+    }
   }
 
   /// @notice Accrues ticket credit for a user assuming their current balance is the passed balance.
@@ -816,7 +828,10 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 amount
   )
     internal
-    returns (uint256)
+    returns (
+      uint256 earlyExitFee,
+      uint256 creditBurned
+    )
   {
     uint256 controlledTokenBalance = IERC20(controlledToken).balanceOf(from);
     _accrueCredit(from, controlledToken, controlledTokenBalance, 0);
@@ -840,14 +855,10 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
     // Determine amount of credit to burn and amount of fees required
     uint256 totalExitFee = _calculateEarlyExitFee(controlledToken, amount);
-    uint256 creditBurned = (availableCredit > totalExitFee) ? totalExitFee : availableCredit;
-    uint256 earlyExitFee = totalExitFee.sub(creditBurned);
+    creditBurned = (availableCredit > totalExitFee) ? totalExitFee : availableCredit;
+    earlyExitFee = totalExitFee.sub(creditBurned);
 
-    if (creditBurned > 0) {
-      _burnCredit(from, controlledToken, creditBurned);
-    }
-
-    return earlyExitFee;
+    return (earlyExitFee, creditBurned);
   }
 
   /// @notice Allows the Governor to set a cap on the amount of liquidity that he pool can hold

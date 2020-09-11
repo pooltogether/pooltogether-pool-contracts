@@ -15,6 +15,7 @@ const { call } = require('./helpers/call')
 const { AddressZero } = require('ethers').constants
 
 const toWei = ethers.utils.parseEther
+const fromWei = ethers.utils.formatEther
 
 const debug = require('debug')('ptv3:PrizePool.test')
 
@@ -603,8 +604,29 @@ describe('PrizePool', function() {
         await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
 
         // force current time and check
-        await prizePool.setCurrentTime('1')
-        expect(await call(prizePool, 'calculateTimelockDuration', wallet._address, ticket.address, amount)).to.equal(10)
+        await prizePool.setCurrentTime('10')
+        expect(await call(prizePool, 'calculateTimelockDuration', wallet._address, ticket.address, amount)).to.deep.equal([
+          ethers.BigNumber.from('10'),
+          ethers.BigNumber.from('0')
+        ])
+
+        // trigger a credit update
+        await prizePool.calculateTimelockDuration(wallet._address, ticket.address, amount)
+
+        // fast forward 5 seconds
+        await prizePool.setCurrentTime('15')
+
+        // timelock duration should be less due to credit
+        expect(await call(prizePool, 'calculateTimelockDuration', wallet._address, ticket.address, amount)).to.deep.equal([
+          ethers.BigNumber.from('5'),
+          toWei('0.5')
+        ])
+
+        // trigger a credit update
+        await prizePool.calculateTimelockDuration(wallet._address, ticket.address, amount)
+
+        // credit should not be burned
+        expect(await call(prizePool, 'balanceOfCredit', wallet._address, ticket.address)).to.equal(toWei('0.5'))
       })
     })
 
