@@ -21,6 +21,8 @@ const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
 const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
+const SENTINEL = '0x0000000000000000000000000000000000000001'
+const invalidExternalToken = '0x0000000000000000000000000000000000000002'
 
 let overrides = { gasLimit: 20000000 }
 
@@ -38,8 +40,6 @@ describe('SingleRandomWinner', function() {
 
   let creditLimitMantissa = 0.1
   let creditRateMantissa = creditLimitMantissa / prizePeriodSeconds
-
-  const invalidExternalToken = '0x0000000000000000000000000000000000000001'
 
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
@@ -107,7 +107,7 @@ describe('SingleRandomWinner', function() {
         ticket.address,
         sponsorship.address,
         rng.address,
-        [invalidExternalToken]
+        [SENTINEL]
       ]
       let initArgs
 
@@ -128,7 +128,7 @@ describe('SingleRandomWinner', function() {
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('SingleRandomWinner/rng-not-zero')
 
       initArgs = _initArgs.slice()
-      await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
+      await prizePool.mock.canAwardExternal.withArgs(SENTINEL).returns(false)
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('SingleRandomWinner/cannot-award-external')
     })
 
@@ -141,14 +141,14 @@ describe('SingleRandomWinner', function() {
         ticket.address,
         sponsorship.address,
         rng.address,
-        [invalidExternalToken]
+        [SENTINEL]
       ]
 
       debug('deploying secondary prizeStrategy...')
       const prizeStrategy2 = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
 
       debug('initializing secondary prizeStrategy...')
-      await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
+      await prizePool.mock.canAwardExternal.withArgs(SENTINEL).returns(false)
       await expect(prizeStrategy2.initialize(...initArgs))
         .to.be.revertedWith('SingleRandomWinner/cannot-award-external')
     })
@@ -325,6 +325,42 @@ describe('SingleRandomWinner', function() {
       await externalERC721Award.mock.ownerOf.withArgs(1).returns(wallet._address)
       await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
         .to.be.revertedWith('SingleRandomWinner/unavailable-token')
+    })
+  })
+
+  describe('removeExternalErc721Award()', () => {
+    it('should only allow the owner to remove external ERC721 tokens from the prize', async () => {
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
+      await prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1])
+      await expect(prizeStrategy.removeExternalErc721Award(externalERC721Award.address, SENTINEL))
+        .to.emit(prizeStrategy, 'ExternalErc721AwardRemoved')
+        .withArgs(externalERC721Award.address)
+    })
+    it('should revert when removing non-existant external ERC721 tokens from the prize', async () => {
+      await expect(prizeStrategy.removeExternalErc721Award(invalidExternalToken, SENTINEL))
+        .to.be.revertedWith('Invalid prevAddress')
+    })
+    it('should not allow anyone else to remove external ERC721 tokens from the prize', async () => {
+      await expect(prizeStrategy.connect(wallet2).removeExternalErc721Award(externalERC721Award.address, SENTINEL))
+        .to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
+  describe('removeExternalErc721Award()', () => {
+    it('should only allow the owner to remove external ERC721 tokens from the prize', async () => {
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
+      await prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1])
+      await expect(prizeStrategy.removeExternalErc721Award(externalERC721Award.address, SENTINEL))
+        .to.emit(prizeStrategy, 'ExternalErc721AwardRemoved')
+        .withArgs(externalERC721Award.address)
+    })
+    it('should revert when removing non-existant external ERC721 tokens from the prize', async () => {
+      await expect(prizeStrategy.removeExternalErc721Award(invalidExternalToken, SENTINEL))
+        .to.be.revertedWith('Invalid prevAddress')
+    })
+    it('should not allow anyone else to remove external ERC721 tokens from the prize', async () => {
+      await expect(prizeStrategy.connect(wallet2).removeExternalErc721Award(externalERC721Award.address, SENTINEL))
+        .to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
 
