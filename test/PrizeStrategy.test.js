@@ -346,6 +346,24 @@ describe('SingleRandomWinner', function() {
     })
   })
 
+  describe('removeExternalErc721Award()', () => {
+    it('should only allow the owner to remove external ERC721 tokens from the prize', async () => {
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
+      await prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1])
+      await expect(prizeStrategy.removeExternalErc721Award(externalERC721Award.address, SENTINEL))
+        .to.emit(prizeStrategy, 'ExternalErc721AwardRemoved')
+        .withArgs(externalERC721Award.address)
+    })
+    it('should revert when removing non-existant external ERC721 tokens from the prize', async () => {
+      await expect(prizeStrategy.removeExternalErc721Award(invalidExternalToken, SENTINEL))
+        .to.be.revertedWith('Invalid prevAddress')
+    })
+    it('should not allow anyone else to remove external ERC721 tokens from the prize', async () => {
+      await expect(prizeStrategy.connect(wallet2).removeExternalErc721Award(externalERC721Award.address, SENTINEL))
+        .to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
   describe('canStartAward()', () => {
     it('should determine if a prize is able to be awarded', async () => {
       const startTime = await prizeStrategy.prizePeriodStartedAt()
