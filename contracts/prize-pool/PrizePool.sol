@@ -467,7 +467,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
     _mint(to, amount, controlledToken, address(0));
 
-    uint256 extraCredit = _calculateEarlyExitFee(controlledToken, amount);
+    uint256 extraCredit = _calculateEarlyExitFeeNoCredit(controlledToken, amount);
     _accrueCredit(to, controlledToken, IERC20(controlledToken).balanceOf(to), extraCredit);
 
     emit Awarded(to, controlledToken, amount);
@@ -662,16 +662,29 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   }
 
   /// @notice Calculates the early exit fee for the given amount
+  /// @param from The user who is withdrawing
+  /// @param controlledToken The type of collateral being withdrawn
   /// @param amount The amount of collateral to be withdrawn
-  /// @return Exit fee
-  function calculateEarlyExitFee(address controlledToken, uint256 amount) external view returns (uint256) {
-    return _calculateEarlyExitFee(controlledToken, amount);
+  /// @return exitFee The exit fee
+  /// @return burnedCredit The user's credit that was burned
+  function calculateEarlyExitFee(
+    address from,
+    address controlledToken,
+    uint256 amount
+  )
+    external
+    returns (
+      uint256 exitFee,
+      uint256 burnedCredit
+    )
+  {
+    return _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
   }
 
   /// @dev Calculates the early exit fee for the given amount
   /// @param amount The amount of collateral to be withdrawn
   /// @return Exit fee
-  function _calculateEarlyExitFee(address controlledToken, uint256 amount) internal view returns (uint256) {
+  function _calculateEarlyExitFeeNoCredit(address controlledToken, uint256 amount) internal view returns (uint256) {
     return _limitExitFee(
       amount,
       FixedPoint.multiplyUintByMantissa(amount, tokenCreditRates[controlledToken].creditLimitMantissa)
@@ -848,13 +861,13 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
     // Determine available usable credit based on withdraw amount
     uint256 availableCredit;
-    uint256 remainingExitFee = _calculateEarlyExitFee(controlledToken, controlledTokenBalance.sub(amount));
+    uint256 remainingExitFee = _calculateEarlyExitFeeNoCredit(controlledToken, controlledTokenBalance.sub(amount));
     if (tokenCreditBalances[controlledToken][from].balance >= remainingExitFee) {
       availableCredit = uint256(tokenCreditBalances[controlledToken][from].balance).sub(remainingExitFee);
     }
 
     // Determine amount of credit to burn and amount of fees required
-    uint256 totalExitFee = _calculateEarlyExitFee(controlledToken, amount);
+    uint256 totalExitFee = _calculateEarlyExitFeeNoCredit(controlledToken, amount);
     creditBurned = (availableCredit > totalExitFee) ? totalExitFee : availableCredit;
     earlyExitFee = totalExitFee.sub(creditBurned);
 

@@ -268,9 +268,35 @@ describe('PrizePool', function() {
         // Rate: 1%, Limit: 10%
         await prizePool.setCreditRateOf(ticket.address, toWei('0.01'), toWei('0.1'))
 
+        let amount = toWei('10')
+
+        // await yieldSourceStub.mock.balance.returns('0')
+        await ticket.mock.totalSupply.returns(amount)
+        await ticket.mock.balanceOf.withArgs(wallet._address).returns(amount)
+
+        // force current time
+        await prizePool.setCurrentTime('10')
+
         // Full period early = 10%
-        expect(await prizePool.calculateEarlyExitFee(ticket.address, toWei('10')))
-          .to.equal(toWei('1'))
+        expect(await call(prizePool, 'calculateEarlyExitFee', wallet._address, ticket.address, amount)).to.deep.equal([
+          toWei('1'),
+          toWei('0')
+        ])
+        // accrue credit
+        await prizePool.calculateEarlyExitFee(wallet._address, ticket.address, amount)
+
+        // move forward 5 seconds
+        await prizePool.setCurrentTime('15')
+
+        // credit should be included
+        expect(await call(prizePool, 'calculateEarlyExitFee', wallet._address, ticket.address, amount)).to.deep.equal([
+          toWei('0.5'),
+          toWei('0.5')
+        ])
+
+        // accrue credit
+        await prizePool.calculateEarlyExitFee(wallet._address, ticket.address, amount)
+        expect(await call(prizePool, 'balanceOfCredit', wallet._address, ticket.address)).to.equal(toWei('0.5'))
       })
     })
 
