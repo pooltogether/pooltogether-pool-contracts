@@ -3,7 +3,7 @@ pragma solidity 0.6.4;
 import "./CompoundPrizePool.sol";
 import "../../external/openzeppelin/ProxyFactory.sol";
 
-/// @title Compound Prize Pool Factory
+/// @title Compound Prize Pool Proxy Factory
 /// @notice Minimal proxy pattern for creating new Compound Prize Pools
 contract CompoundPrizePoolProxyFactory is ProxyFactory {
 
