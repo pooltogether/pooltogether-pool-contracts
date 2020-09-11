@@ -157,7 +157,7 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
 
   /// @notice Returns the number of seconds remaining until the prize can be awarded.
   /// @return The number of seconds remaining until the prize can be awarded.
-  function prizePeriodRemainingSeconds() public view returns (uint256) {
+  function prizePeriodRemainingSeconds() external view returns (uint256) {
     return _prizePeriodRemainingSeconds();
   }
 
@@ -356,13 +356,13 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
 
   /// @notice Returns the block number that the current RNG request has been locked to
   /// @return The block number that the RNG request is locked to
-  function getLastRngLockBlock() public view returns (uint32) {
+  function getLastRngLockBlock() external view returns (uint32) {
     return rngRequest.lockBlock;
   }
 
   /// @notice Returns the current RNG Request ID
   /// @return The current Request ID
-  function getLastRngRequestId() public view returns (uint32) {
+  function getLastRngRequestId() external view returns (uint32) {
     return rngRequest.id;
   }
 
