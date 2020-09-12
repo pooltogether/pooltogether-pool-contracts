@@ -419,14 +419,14 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Gets the current prize.
   /// @return The total amount of assets to be awarded for the current prize
-  function awardBalance() public view returns (uint256) {
+  function awardBalance() external view returns (uint256) {
     return _currentAwardBalance;
   }
 
   /// @notice Updates and returns the current prize.
   /// @dev Updates the internal current award balance and captures reserve fees
   /// @return The total amount of assets to be awarded for the current prize
-  function captureAwardBalance() public returns (uint256) {
+  function captureAwardBalance() external nonReentrant returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
     uint256 currentBalance = _balance();
     uint256 totalInterest = (currentBalance > tokenTotalSupply) ? currentBalance.sub(tokenTotalSupply) : 0;
@@ -930,7 +930,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Check if the Prize Pool has an active Prize Strategy
   /// @dev When the prize strategy is detached deposits are disabled, and only withdrawals are permitted
-  function isShutdown() public view returns (bool) {
+  function isShutdown() external view returns (bool) {
     return address(comptroller) != address(0);
   }
 
