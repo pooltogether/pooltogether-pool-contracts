@@ -112,7 +112,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   event LiquidityCapSet(uint256 liquidityCap);
 
   /// @dev Eent emitted when the Credit Rate has been set or changed
-  event CreditRateSet(
+  event CreditPlanSet(
     address controlledToken,
     uint128 creditLimitMantissa,
     uint128 creditRateMantissa
@@ -124,7 +124,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @dev Event emitted when the prize pool enters emergency shutdown mode
   event EmergencyShutdown();
 
-  struct CreditRate {
+  struct CreditPlan {
     uint128 creditLimitMantissa;
     uint128 creditRateMantissa;
   }
@@ -170,7 +170,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   mapping(address => uint256) internal _unlockTimestamps;
 
   // Mapping from token => TokenCredit
-  mapping(address => CreditRate) internal tokenCreditRates;
+  mapping(address => CreditPlan) internal tokenCreditPlans;
 
   // Mapping from token address => user address => CreditBalance
   mapping(address => mapping(address => CreditBalance)) internal tokenCreditBalances;
@@ -687,7 +687,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   function _calculateEarlyExitFeeNoCredit(address controlledToken, uint256 amount) internal view returns (uint256) {
     return _limitExitFee(
       amount,
-      FixedPoint.multiplyUintByMantissa(amount, tokenCreditRates[controlledToken].creditLimitMantissa)
+      FixedPoint.multiplyUintByMantissa(amount, tokenCreditPlans[controlledToken].creditLimitMantissa)
     );
   }
 
@@ -726,7 +726,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   {
     // interest = credit rate * principal * time
     // => time = interest / (credit rate * principal)
-    uint256 accruedPerSecond = FixedPoint.multiplyUintByMantissa(_principal, tokenCreditRates[_controlledToken].creditRateMantissa);
+    uint256 accruedPerSecond = FixedPoint.multiplyUintByMantissa(_principal, tokenCreditPlans[_controlledToken].creditRateMantissa);
     if (accruedPerSecond == 0) {
       return 0;
     }
@@ -768,7 +768,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   function _applyCreditLimit(address controlledToken, uint256 controlledTokenBalance, uint256 creditBalance) internal view returns (uint256) {
     uint256 creditLimit = FixedPoint.multiplyUintByMantissa(
       controlledTokenBalance,
-      tokenCreditRates[controlledToken].creditLimitMantissa
+      tokenCreditPlans[controlledToken].creditLimitMantissa
     );
     if (creditBalance > creditLimit) {
       creditBalance = creditLimit;
@@ -790,7 +790,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     }
 
     uint256 deltaTime = _currentTime().sub(userTimestamp);
-    uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(controlledTokenBalance, tokenCreditRates[controlledToken].creditRateMantissa);
+    uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(controlledTokenBalance, tokenCreditPlans[controlledToken].creditRateMantissa);
     return deltaTime.mul(creditPerSecond);
   }
 
@@ -804,7 +804,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Sets the rate at which credit accrues per second.  The credit rate is a fixed point 18 number (like Ether).
   /// @param _creditRateMantissa The credit rate to set
-  function setCreditRateOf(
+  function setCreditPlanOf(
     address controlledToken,
     uint128 _creditRateMantissa,
     uint128 _creditLimitMantissa
@@ -813,21 +813,30 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     onlyControlledToken(controlledToken)
     onlyOwner
   {
-    tokenCreditRates[controlledToken] = CreditRate({
+    tokenCreditPlans[controlledToken] = CreditPlan({
       creditLimitMantissa: _creditLimitMantissa,
       creditRateMantissa: _creditRateMantissa
     });
 
-    emit CreditRateSet(controlledToken, _creditLimitMantissa, _creditRateMantissa);
+    emit CreditPlanSet(controlledToken, _creditLimitMantissa, _creditRateMantissa);
   }
 
   /// @notice Returns the credit rate of a controlled token
   /// @param controlledToken The controlled token to retrieve the credit rates for
   /// @return creditLimitMantissa The credit limit fraction.  This number is used to calculate both the credit limit and early exit fee.
   /// @return creditRateMantissa The credit rate. This is the amount of tokens that accrue per second.
-  function creditRateOf(address controlledToken) external view returns (uint128 creditLimitMantissa, uint128 creditRateMantissa) {
-    creditLimitMantissa = tokenCreditRates[controlledToken].creditLimitMantissa;
-    creditRateMantissa = tokenCreditRates[controlledToken].creditRateMantissa;
+  function creditPlanOf(
+    address controlledToken
+  )
+    external
+    view
+    returns (
+      uint128 creditLimitMantissa,
+      uint128 creditRateMantissa
+    )
+  {
+    creditLimitMantissa = tokenCreditPlans[controlledToken].creditLimitMantissa;
+    creditRateMantissa = tokenCreditPlans[controlledToken].creditRateMantissa;
   }
 
   /// @notice Calculate the early exit for a user given a withdrawal amount.  The user's credit is taken into account.
