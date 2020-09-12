@@ -62,12 +62,12 @@ async function deployTestPool({
   debug('Deploying Sponsorship...')
 
   let sponsorship = await deployContract(wallet, ControlledToken, [], overrides)
-  await sponsorship.initialize("Sponsorship", "SPON", forwarder.address, compoundPrizePool.address)
+  await sponsorship.initialize("Sponsorship", "SPON", 18, forwarder.address, compoundPrizePool.address)
 
   debug('Deploying Ticket...')
 
   let ticket = await deployContract(wallet, Ticket, [], overrides)
-  await ticket.initialize("Ticket", "TICK", forwarder.address, compoundPrizePool.address)
+  await ticket.initialize("Ticket", "TICK", 18, forwarder.address, compoundPrizePool.address)
 
   debug('Initializing CompoundPrizePoolHarness...')
 

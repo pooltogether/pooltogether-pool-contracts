@@ -27,6 +27,7 @@ describe('ControlledToken', () => {
     await token.initialize(
       "Name",
       "Symbol",
+      18,
       FORWARDER,
       controller.address
     )

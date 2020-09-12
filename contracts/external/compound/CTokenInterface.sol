@@ -3,6 +3,7 @@ pragma solidity 0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
 interface CTokenInterface is IERC20 {
+    function decimals() external view returns (uint8);
     function totalSupply() external override view returns (uint256);
     function underlying() external view returns (address);
     function balanceOfUnderlying(address owner) external returns (uint256);
