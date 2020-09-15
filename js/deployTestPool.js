@@ -1,21 +1,24 @@
-const SingleRandomWinnerHarness = require('../build/SingleRandomWinnerHarness.json')
-const RNGServiceMock = require('../build/RNGServiceMock.json')
-const TrustedForwarder = require('../build/TrustedForwarder.json')
-const ComptrollerHarness = require('../build/ComptrollerHarness.json')
-const ControlledToken = require('../build/ControlledToken.json')
-const Ticket = require('../build/Ticket.json')
-const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
-const CTokenMock = require('../build/CTokenMock.json')
+const { deployments } = require("@nomiclabs/buidler");
+const buidler = require('@nomiclabs/buidler')
 const ERC20Mintable = require('../build/ERC20Mintable.json')
 
 const ethers = require('ethers')
-const { deploy1820 } = require('deploy-eip-1820')
+const { AddressZero } = ethers.constants;
 const { deployContract } = require('ethereum-waffle')
 
-const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
 
 const debug = require('debug')('ptv3:deployTestPool')
+
+async function getEvents(tx, builder) {
+  let receipt = await buidler.ethers.provider.getTransactionReceipt(tx.hash)
+  return receipt.logs.reduce((parsedEvents, log) => {
+    try {
+      parsedEvents.push(builder.interface.parseLog(log))
+    } catch (e) {}
+    return parsedEvents
+  }, [])
+}
 
 async function deployTestPool({
   wallet,
@@ -26,100 +29,117 @@ async function deployTestPool({
   creditLimit,
   creditRate,
   externalERC20Awards,
+  yVault,
   overrides = { gasLimit: 20000000 }
 }) {
-  let registry = await deploy1820(wallet)
-
+  await deployments.fixture()
+  
   debug('beforeEach deploy rng, forwarder etc...')
 
-  let forwarder = await deployContract(wallet, TrustedForwarder, [], overrides)
-  let token = await deployContract(wallet, ERC20Mintable, ['Test Token', 'TEST'], overrides)
-  let cToken = await deployContract(wallet, CTokenMock, [
+  /* = await deployContract(wallet, CTokenMock, [
     token.address, ethers.utils.parseEther('0.01')
-  ], overrides)
+  ], overrides)*/
 
   debug('Deploying Governor...')
-
+  
   let governanceToken = await deployContract(wallet, ERC20Mintable, ['Governance Token', 'GOV'], overrides)
 
-  let comptroller = await deployContract(wallet, ComptrollerHarness, [], overrides)
-  await comptroller.initialize(wallet._address)
+  let yVaultBuilderResult = await deployments.get("yVaultPrizePoolBuilder")
+  let compoundBuilderResult = await deployments.get("CompoundPrizePoolBuilder")
+  let comptrollerResult = await deployments.get("ComptrollerHarness")
+  let rngServiceMockResult = await deployments.get("RNGServiceMock")
+  let tokenResult = await deployments.get("Dai")
+  let cTokenResult = await deployments.get("cDai")
+  let yTokenResult = await deployments.get("yDai")
 
-  debug('Deploying Mock RNG service...')
+  const token = await buidler.ethers.getContractAt('ERC20Mintable', tokenResult.address, wallet)
+  const cToken = await buidler.ethers.getContractAt('CTokenMock', cTokenResult.address, wallet)
+  const yToken = await buidler.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
+  const comptroller = await buidler.ethers.getContractAt('ComptrollerHarness', comptrollerResult.address, wallet)
 
   let linkToken = await deployContract(wallet, ERC20Mintable, ['Link Token', 'LINK'], overrides)
-  let rngServiceMock = await deployContract(wallet, RNGServiceMock, [], overrides)
+  let rngServiceMock = await buidler.ethers.getContractAt('RNGServiceMock', rngServiceMockResult.address, wallet)
   await rngServiceMock.setRequestFee(linkToken.address, toWei('1'))
 
-  debug('Deploying SingleRandomWinner PrizeStrategy...')
-
-  let prizeStrategy = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
-
-  debug('Deploying CompoundPrizePoolHarness...')
-
-  let compoundPrizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
-
-  debug('Deploying Sponsorship...')
-
-  let sponsorship = await deployContract(wallet, ControlledToken, [], overrides)
-  await sponsorship.initialize("Sponsorship", "SPON", 18, forwarder.address, compoundPrizePool.address)
-
-  debug('Deploying Ticket...')
-
-  let ticket = await deployContract(wallet, Ticket, [], overrides)
-  await ticket.initialize("Ticket", "TICK", 18, forwarder.address, compoundPrizePool.address)
-
-  debug('Initializing CompoundPrizePoolHarness...')
-
-  await compoundPrizePool['initialize(address,address,address,address[],uint256,uint256,address)'](
-    forwarder.address,
-    prizeStrategy.address,
-    comptroller.address,
-    [ticket.address, sponsorship.address],
-    maxExitFeeMantissa || toWei('0.5'),
-    maxTimelockDuration || '10000',
-    cToken.address
-  )
-
-  debug('Initializing SingleRandomWinner PrizeStrategy...')
-
-  await prizeStrategy.initialize(
-    forwarder.address,
+  const singleRandomWinnerConfig = {
+    proxyAdmin: AddressZero,
+    rngService: rngServiceMock.address,
     prizePeriodStart,
     prizePeriodSeconds,
-    compoundPrizePool.address,
-    ticket.address,
-    sponsorship.address,
-    rngServiceMock.address,
+    ticketName: "Ticket",
+    ticketSymbol: "TICK",
+    sponsorshipName: "Sponsorship",
+    sponsorshipSymbol: "SPON",
+    ticketCreditLimitMantissa: creditLimit,
+    ticketCreditRateMantissa: creditRate,
     externalERC20Awards
-  )
+  }
 
-  await compoundPrizePool.setCreditPlanOf(ticket.address, creditRate || toWei('0.1').div(prizePeriodSeconds), creditLimit || toWei('0.1'))
+  let prizePool
+  if (yVault) {
+    debug(`Creating yVault prize pool config: ${yTokenResult.address}`)
+    const yToken = await buidler.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
+    debug(`yTokeen token: ${await yToken.token()} and token ${token.address}`)
+    const yVaultPrizePoolConfig = {
+      vault: yTokenResult.address,
+      reserveRateMantissa: toWei('0.05'),
+      maxExitFeeMantissa,
+      maxTimelockDuration
+    }
+    debug(`Loading yVaultPrizePool Builder ${yVaultBuilderResult.address}`)
+    const builder = await buidler.ethers.getContractAt('yVaultPrizePoolBuilder', yVaultBuilderResult.address, wallet)
+    debug(`creating single random winner: `, yVaultPrizePoolConfig, singleRandomWinnerConfig)
+    let tx = await builder.createSingleRandomWinner(yVaultPrizePoolConfig, singleRandomWinnerConfig, await token.decimals())
+    let events = await getEvents(tx, builder)
+    let event = events[0]
+    prizePool = await buidler.ethers.getContractAt('yVaultPrizePoolHarness', event.args.prizePool, wallet)
+  } else {
+    const compoundPrizePoolConfig = {
+      cToken: cTokenResult.address,
+      maxExitFeeMantissa,
+      maxTimelockDuration
+    }
+    const builder = await buidler.ethers.getContractAt('CompoundPrizePoolBuilder', compoundBuilderResult.address, wallet)
+    let tx = await builder.createSingleRandomWinner(compoundPrizePoolConfig, singleRandomWinnerConfig)
+    let events = await getEvents(tx, builder)
+    let event = events[0]
+    prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
+  }
+  
+
+  debug("created prizePool: ", prizePool.address)
+
+  let sponsorship = await buidler.ethers.getContractAt('ControlledToken', (await prizePool.tokens())[0], wallet)
+  let ticket = await buidler.ethers.getContractAt('Ticket', (await prizePool.tokens())[1], wallet)
+
+  debug(`sponsorship: ${sponsorship.address}, ticket: ${ticket.address}`)
+
+  await prizePool.setCreditPlanOf(ticket.address, creditRate || toWei('0.1').div(prizePeriodSeconds), creditLimit || toWei('0.1'))
+
+  const prizeStrategyAddress = await prizePool.prizeStrategy()
 
   debug("Addresses: \n", {
     rngService: rngServiceMock.address,
-    registry: registry.address,
-    forwarder: forwarder.address,
-    token: token.address,
-    cToken: cToken.address,
-    comptroller: comptroller.address,
-    prizeStrategy: prizeStrategy.address,
+    token: tokenResult.address,
+    cToken: cTokenResult.address,
+    comptroller: comptrollerResult.address,
     ticket: ticket.address,
-    compoundPrizePool: compoundPrizePool.address,
+    prizePool: prizePool.address,
     sponsorship: sponsorship.address,
-    prizeStrategy: prizeStrategy.address,
+    prizeStrategy: prizeStrategyAddress,
     governanceToken: governanceToken.address
   })
 
+  const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', prizeStrategyAddress, wallet)
+
   return {
     rngService: rngServiceMock,
-    registry,
-    forwarder,
     token,
     cToken,
+    yToken,
     comptroller,
     prizeStrategy,
-    compoundPrizePool,
+    prizePool,
     ticket,
     sponsorship,
     governanceToken

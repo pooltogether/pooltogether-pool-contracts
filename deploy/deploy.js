@@ -4,6 +4,7 @@ const { deploy1820 } = require('deploy-eip-1820')
 const ERC20Mintable = require('../build/ERC20Mintable.json')
 const Comptroller = require("../build/Comptroller.json")
 const CTokenMock = require('../build/CTokenMock.json')
+const yVaultMock = require('../build/yVaultMock.json')
 
 // const solcOutput = require('../cache/solc-output.json')
 
@@ -38,6 +39,8 @@ module.exports = async (buidler) => {
   } = await getNamedAccounts()
   const chainId = parseInt(await getChainId(), 10)
   const isLocal = [1, 3, 4, 42].indexOf(chainId) == -1
+  // 31337 is unit testing, 1337 is for coverage
+  const isTestEnvironment = chainId === 31337 || chainId === 1337
   let usingSignerAsAdmin = false
   const signer = await ethers.provider.getSigner(deployer)
 
@@ -117,6 +120,15 @@ module.exports = async (buidler) => {
       skipIfAlreadyDeployed: true
     })
 
+    await deploy("yDai", {
+      args: [
+        daiResult.address
+      ],
+      contract: yVaultMock,
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+
     // Display Contract Addresses
     debug("\n  Local Contract Deployments;\n")
     debug("  - TrustedForwarder: ", trustedForwarder)
@@ -131,34 +143,69 @@ module.exports = async (buidler) => {
   })
 
   let comptrollerAddress
-  const comptrollerDeployment = await getOrNull("Comptroller")
-  if (!comptrollerDeployment) {
-    debug("\n  Deploying new Comptroller Proxy...")
-    const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32))
-
-    // form initialize() data
-    const comptrollerImpl = new ethers.Contract(comptrollerImplementationResult.address, Comptroller.abi, signer)
-    const initTx = await comptrollerImpl.populateTransaction.initialize(adminAccount)
-
-    // calculate the address
-    comptrollerAddress = await proxyFactory.getDeploymentAddress(salt, signer._address)
-
-    // deploy the proxy
-    await proxyFactory.deploy(salt, comptrollerImplementationResult.address, proxyAdmin.address, initTx.data)
-
-    await save("Comptroller", {
-      ...comptrollerImplementationResult,
-      address: comptrollerAddress
+  if (isTestEnvironment) {
+    const comptrollerResult = await deploy("ComptrollerHarness", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
     })
+    const comptroller = await buidler.ethers.getContractAt(
+      "ComptrollerHarness",
+      comptrollerResult.address,
+      signer
+    )
+    await comptroller.initialize(signer._address)
+    comptrollerAddress = comptrollerResult.address
   } else {
-    comptrollerAddress = comptrollerDeployment.address
+    const comptrollerDeployment = await getOrNull("Comptroller")
+    if (!comptrollerDeployment) {
+      debug("\n  Deploying new Comptroller Proxy...")
+      const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32))
+  
+      // form initialize() data
+      const comptrollerImpl = new ethers.Contract(comptrollerImplementationResult.address, Comptroller.abi, signer)
+      const initTx = await comptrollerImpl.populateTransaction.initialize(adminAccount)
+  
+      // calculate the address
+      comptrollerAddress = await proxyFactory.getDeploymentAddress(salt, signer._address)
+  
+      // deploy the proxy
+      await proxyFactory.deploy(salt, comptrollerImplementationResult.address, proxyAdmin.address, initTx.data)
+  
+      await save("Comptroller", {
+        ...comptrollerImplementationResult,
+        address: comptrollerAddress
+      })
+    } else {
+      comptrollerAddress = comptrollerDeployment.address
+    }
   }
 
   debug("\n  Deploying CompoundPrizePoolProxyFactory...")
-  const compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolProxyFactory", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
+  let compoundPrizePoolProxyFactoryResult
+  if (isTestEnvironment) {
+    compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolHarnessProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  } else {
+    compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  }
+
+  let yVaultPrizePoolProxyFactoryResult
+  if (isTestEnvironment) {
+    yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolHarnessProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  } else {
+    yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  }
 
   debug("\n  Deploying ControlledTokenProxyFactory...")
   const controlledTokenProxyFactoryResult = await deploy("ControlledTokenProxyFactory", {
@@ -173,18 +220,41 @@ module.exports = async (buidler) => {
   })
 
   debug("\n  Deploying SingleRandomWinnerProxyFactory...")
-  const prizeStrategyProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
+  let singleRandomWinnerProxyFactoryResult
+  if (isTestEnvironment) {
+    singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerHarnessProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  } else {
+    singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  }
 
   debug("\n  Deploying CompoundPrizePoolBuilder...")
   const compoundPrizePoolBuilderResult = await deploy("CompoundPrizePoolBuilder", {
     args: [
       comptrollerAddress,
-      prizeStrategyProxyFactoryResult.address,
+      singleRandomWinnerProxyFactoryResult.address,
       trustedForwarder,
       compoundPrizePoolProxyFactoryResult.address,
+      controlledTokenProxyFactoryResult.address,
+      proxyFactoryResult.address,
+      ticketProxyFactoryResult.address
+    ],
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+
+  debug("\n  Deploying CompoundPrizePoolBuilder...")
+  const yVaultPrizePoolBuilderResult = await deploy("yVaultPrizePoolBuilder", {
+    args: [
+      comptrollerAddress,
+      singleRandomWinnerProxyFactoryResult.address,
+      trustedForwarder,
+      yVaultPrizePoolProxyFactoryResult.address,
       controlledTokenProxyFactoryResult.address,
       proxyFactoryResult.address,
       ticketProxyFactoryResult.address
@@ -201,8 +271,9 @@ module.exports = async (buidler) => {
   debug("  - Comptroller:                    ", comptrollerAddress)
   debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
   debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)
-  debug("  - SingleRandomWinnerProxyFactory: ", prizeStrategyProxyFactoryResult.address)
+  debug("  - SingleRandomWinnerProxyFactory: ", singleRandomWinnerProxyFactoryResult.address)
   debug("  - CompoundPrizePoolBuilder:       ", compoundPrizePoolBuilderResult.address)
+  debug("  - yVaultPrizePoolBuilder:         ", yVaultPrizePoolBuilderResult.address)
 
   debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 };

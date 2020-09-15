@@ -364,7 +364,6 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     _burnCredit(from, controlledToken, burnedCredit);
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
     _mintTimelock(from, amount, unlockTimestamp);
-
     emit TimelockedWithdrawal(_msgSender(), from, controlledToken, amount, unlockTimestamp);
 
     // return the block at which the funds will be available
@@ -442,6 +441,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     }
 
     _currentAwardBalance = _currentAwardBalance.add(unaccountedPrizeBalance);
+
     return _currentAwardBalance;
   }
 
@@ -856,8 +856,8 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     )
   {
     uint256 controlledTokenBalance = IERC20(controlledToken).balanceOf(from);
+    require(controlledTokenBalance >= amount, "PrizePool/insuff-funds");
     _accrueCredit(from, controlledToken, controlledTokenBalance, 0);
-
     /*
     The credit is used *last*.  Always charge the fees up-front.
 
@@ -870,7 +870,11 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
     // Determine available usable credit based on withdraw amount
     uint256 availableCredit;
+
+
     uint256 remainingExitFee = _calculateEarlyExitFeeNoCredit(controlledToken, controlledTokenBalance.sub(amount));
+
+
     if (tokenCreditBalances[controlledToken][from].balance >= remainingExitFee) {
       availableCredit = uint256(tokenCreditBalances[controlledToken][from].balance).sub(remainingExitFee);
     }
@@ -879,7 +883,6 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 totalExitFee = _calculateEarlyExitFeeNoCredit(controlledToken, amount);
     creditBurned = (availableCredit > totalExitFee) ? totalExitFee : availableCredit;
     earlyExitFee = totalExitFee.sub(creditBurned);
-
     return (earlyExitFee, creditBurned);
   }
 
