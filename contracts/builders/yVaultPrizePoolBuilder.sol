@@ -48,7 +48,7 @@ contract yVaultPrizePoolBuilder {
   );
 
   ComptrollerInterface public comptroller;
-  yVaultPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
+  yVaultPrizePoolProxyFactory public vaultPrizePoolProxyFactory;
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
   TicketProxyFactory public ticketProxyFactory;
   SingleRandomWinnerProxyFactory public singleRandomWinnerProxyFactory;
@@ -59,14 +59,14 @@ contract yVaultPrizePoolBuilder {
     ComptrollerInterface _comptroller,
     SingleRandomWinnerProxyFactory _singleRandomWinnerProxyFactory,
     address _trustedForwarder,
-    yVaultPrizePoolProxyFactory _compoundPrizePoolProxyFactory,
+    yVaultPrizePoolProxyFactory _vaultPrizePoolProxyFactory,
     ControlledTokenProxyFactory _controlledTokenProxyFactory,
     OpenZeppelinProxyFactoryInterface _proxyFactory,
     TicketProxyFactory _ticketProxyFactory
   ) public {
     require(address(_comptroller) != address(0), "yVaultPrizePoolBuilder/comptroller-not-zero");
     require(address(_singleRandomWinnerProxyFactory) != address(0), "yVaultPrizePoolBuilder/single-random-winner-factory-not-zero");
-    require(address(_compoundPrizePoolProxyFactory) != address(0), "yVaultPrizePoolBuilder/compound-prize-pool-builder-not-zero");
+    require(address(_vaultPrizePoolProxyFactory) != address(0), "yVaultPrizePoolBuilder/compound-prize-pool-builder-not-zero");
     require(address(_controlledTokenProxyFactory) != address(0), "yVaultPrizePoolBuilder/controlled-token-proxy-factory-not-zero");
     require(address(_proxyFactory) != address(0), "yVaultPrizePoolBuilder/proxy-factory-not-zero");
     require(address(_ticketProxyFactory) != address(0), "yVaultPrizePoolBuilder/ticket-proxy-factory-not-zero");
@@ -75,7 +75,7 @@ contract yVaultPrizePoolBuilder {
     comptroller = _comptroller;
     singleRandomWinnerProxyFactory = _singleRandomWinnerProxyFactory;
     trustedForwarder = _trustedForwarder;
-    compoundPrizePoolProxyFactory = _compoundPrizePoolProxyFactory;
+    vaultPrizePoolProxyFactory = _vaultPrizePoolProxyFactory;
     controlledTokenProxyFactory = _controlledTokenProxyFactory;
   }
 
@@ -154,7 +154,7 @@ contract yVaultPrizePoolBuilder {
     internal
     returns (yVaultPrizePool)
   {
-    yVaultPrizePool prizePool = compoundPrizePoolProxyFactory.create();
+    yVaultPrizePool prizePool = vaultPrizePoolProxyFactory.create();
 
     address[] memory tokens;
 

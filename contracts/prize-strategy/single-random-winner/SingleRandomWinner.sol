@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./SingleRandomWinnerStorage.sol";
@@ -26,6 +27,7 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
   using SafeMath for uint256;
   using SafeCast for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
+  using Address for address;
 
   uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
@@ -380,6 +382,7 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
   /// and they must be approved by the Prize-Pool
   /// @param _externalErc20 The address of an ERC20 token to be awarded
   function addExternalErc20Award(address _externalErc20) external onlyOwner {
+    // require(_externalErc20.isContract(), "SingleRandomWinner/external-erc20-not-contract");
     require(prizePool.canAwardExternal(_externalErc20), "SingleRandomWinner/cannot-award-external");
     externalErc20s.addAddress(_externalErc20);
     emit ExternalErc20AwardAdded(_externalErc20);
@@ -402,6 +405,7 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
   /// @param _externalErc721 The address of an ERC721 token to be awarded
   /// @param _tokenIds An array of token IDs of the ERC721 to be awarded
   function addExternalErc721Award(address _externalErc721, uint256[] calldata _tokenIds) external onlyOwner {
+    // require(_externalErc721.isContract(), "SingleRandomWinner/external-erc721-not-contract");
     require(prizePool.canAwardExternal(_externalErc721), "SingleRandomWinner/cannot-award-external");
     externalErc721s.addAddress(_externalErc721);
 

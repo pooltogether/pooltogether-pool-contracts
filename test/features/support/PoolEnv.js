@@ -26,7 +26,8 @@ function PoolEnv() {
     creditRate,
     maxExitFeeMantissa = toWei('0.5'),
     maxTimelockDuration = 1000,
-    externalERC20Awards = []
+    externalERC20Awards = [],
+    yVault = false
   }) {
     this.wallets = await buidler.ethers.getSigners()
 
@@ -35,15 +36,6 @@ function PoolEnv() {
       wallet2: this.wallets[1]._address,
       wallet3: this.wallets[2]._address
     })
-
-    const externalAwardAddresses = []
-    this.externalERC20Awards = {}
-    for (var i = 0; i < externalERC20Awards.length; i++) {
-      this.externalERC20Awards[externalERC20Awards[i]] = await deployContract(this.wallets[0], ERC20Mintable, [`External ERC20 Token ${i+1}`, `ETKN${i+1}`])
-      externalAwardAddresses.push(this.externalERC20Awards[externalERC20Awards[i]].address)
-    }
-
-    this.externalErc721Award = await deployContract(this.wallets[0], ERC721Mintable, [])
 
     debug(`Fetched ${this.wallets.length} wallets`)
     debug(`Creating pool with prize period ${prizePeriodSeconds}...`)
@@ -55,11 +47,23 @@ function PoolEnv() {
       maxTimelockDuration,
       creditLimit: toWei(creditLimit),
       creditRate: toWei(creditRate),
-      externalERC20Awards: externalAwardAddresses,
+      externalERC20Awards: [],
+      yVault,
       overrides: this.overrides,
     })
 
-    debug(`CompoundPrizePool created with address ${this.env.compoundPrizePool.address}`)
+    const externalAwardAddresses = []
+    this.externalERC20Awards = {}
+    for (var i = 0; i < externalERC20Awards.length; i++) {
+      this.externalERC20Awards[externalERC20Awards[i]] = await deployContract(this.wallets[0], ERC20Mintable, [`External ERC20 Token ${i+1}`, `ETKN${i+1}`])
+      const address = this.externalERC20Awards[externalERC20Awards[i]].address;
+      await this.env.prizeStrategy.addExternalErc20Award(address)
+      externalAwardAddresses.push(address)
+    }
+
+    this.externalErc721Award = await deployContract(this.wallets[0], ERC721Mintable, [])
+
+    debug(`PrizePool created with address ${this.env.prizePool.address}`)
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
 
     await this.setCurrentTime(prizePeriodStart)
@@ -80,7 +84,7 @@ function PoolEnv() {
     let wallet = await this.wallet(0)
     let prizePool = await this.prizePool(wallet)
 
-    await prizePool.setReserveFeeControlledToken(this.env.ticket.address, this.overrides)
+    await prizePool.setReserveFeeControlledToken(this.env.sponsorship.address, this.overrides)
     await this.env.comptroller.setReserveRateMantissa(toWei(rate), this.overrides)
   }
 
@@ -91,9 +95,9 @@ function PoolEnv() {
   }
 
   this.prizePool = async function (wallet) {
-    let compoundPrizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', this.env.compoundPrizePool.address, wallet)
-    this._prizePool = compoundPrizePool
-    return compoundPrizePool
+    let prizePool = this.env.prizePool.connect(wallet)
+    this._prizePool = prizePool
+    return prizePool
   }
 
   this.token = async function (wallet) {
@@ -126,7 +130,7 @@ function PoolEnv() {
   }
 
   this.accrueExternalAwardAmount = async function ({ externalAward, amount }) {
-    await this.externalERC20Awards[externalAward].mint(this.env.compoundPrizePool.address, toWei(amount))
+    await this.externalERC20Awards[externalAward].mint(this.env.prizePool.address, toWei(amount))
   }
 
   this.buyTickets = async function ({ user, tickets, referrer }) {
@@ -148,12 +152,12 @@ function PoolEnv() {
 
     await token.approve(prizePool.address, amount, this.overrides)
 
-    debug('Depositing...')
-
     let referrerAddress = AddressZero
     if (referrer) {
       referrerAddress = (await this.wallet(referrer))._address
     }
+
+    debug(`Depositing... (${wallet._address}, ${amount}, ${ticket.address}, ${referrerAddress})`)
 
     await prizePool.depositTo(wallet._address, amount, ticket.address, referrerAddress, this.overrides)
 
@@ -197,7 +201,7 @@ function PoolEnv() {
     let comptroller = await this.comptroller(wallet)
     await comptroller.updateAndClaimDrips(
       [{
-        source: this.env.compoundPrizePool.address,
+        source: this.env.prizePool.address,
         measure: this.env.ticket.address
       }],
       wallet._address,
@@ -208,7 +212,7 @@ function PoolEnv() {
   this.balanceDripGovernanceTokenAtRate = async function ({ dripRatePerSecond }) {
     await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
     await this.env.comptroller.activateBalanceDrip(
-      this.env.compoundPrizePool.address,
+      this.env.prizePool.address,
       this.env.ticket.address,
       this.env.governanceToken.address,
       dripRatePerSecond
@@ -219,7 +223,7 @@ function PoolEnv() {
     debug(`volumeDripGovernanceToken minting...`)
     await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
     debug(`volumeDripGovernanceToken: activating...: `,
-      this.env.compoundPrizePool.address,
+      this.env.prizePool.address,
       this.env.ticket.address,
       this.env.governanceToken.address,
       !!isReferral,
@@ -228,7 +232,7 @@ function PoolEnv() {
       endTime
     )
     await this.env.comptroller.activateVolumeDrip(
-      this.env.compoundPrizePool.address,
+      this.env.prizePool.address,
       this.env.ticket.address,
       this.env.governanceToken.address,
       !!isReferral,
@@ -243,6 +247,7 @@ function PoolEnv() {
     let wallet = await this.wallet(user)
     let ticket = await this.ticket(wallet)
     let amount = toWei(tickets)
+
     expect(await ticket.balanceOf(wallet._address)).to.equalish(amount, 300)
   }
 
@@ -270,9 +275,7 @@ function PoolEnv() {
   this.poolAccrues = async function ({ tickets }) {
     debug(`poolAccrues(${tickets.toString()})...`)
     await this.env.cToken.accrueCustom(toWei(tickets))
-
-    debug(`poolAccrues cToken totalSupply: ${await this.env.cToken.totalSupply()}`)
-    debug(`poolAccrues balanceOfUnderlying: ${await call(this.env.cToken, 'balanceOfUnderlying', this.env.compoundPrizePool.address)}`)
+    await this.env.token.mint(this.env.yToken.address, toWei(tickets))
   }
 
   this.expectUserToHaveCredit = async function ({ user, credit }) {
@@ -374,9 +377,7 @@ function PoolEnv() {
     let wallet = await this.wallet(user)
     let prizePool = await this.prizePool(wallet)
     let prizeStrategy = await this.prizeStrategy(wallet)
-
     await this.externalErc721Award.mint(prizePool.address, tokenId)
-
     await prizeStrategy.addExternalErc721Award(this.externalErc721Award.address, [tokenId])
   }
 

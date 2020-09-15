@@ -3,7 +3,7 @@ pragma solidity 0.6.4;
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
-import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@nomiclabs/buidler/console.sol";
 
 import "../../external/yearn/yVault.sol";
 import "../PrizePool.sol";
@@ -16,7 +16,7 @@ contract yVaultPrizePool is PrizePool {
   event yVaultPrizePoolInitialized(address indexed vault);
   event ReserveRateMantissaSet(uint256 reserveRateMantissa);
 
-  /// @notice Interface for the Yield-bearing cToken by Compound
+  /// @notice Interface for the yEarn yVault
   yVault public vault;
 
   /// Amount that is never exposed to the prize
@@ -51,7 +51,7 @@ contract yVaultPrizePool is PrizePool {
       _maxTimelockDuration
     );
     vault = _vault;
-    reserveRateMantissa = _reserveRateMantissa;
+    _setReserveRateMantissa(_reserveRateMantissa);
 
     emit yVaultPrizePoolInitialized(address(vault));
   }
@@ -59,12 +59,10 @@ contract yVaultPrizePool is PrizePool {
   /// @notice Estimates the accrued interest of a deposit of a given number of blocks
   /// @dev Provides an estimate for the amount of accrued interest that would
   /// be applied to the `principalAmount` over a given number of `blocks`
-  /// @param principalAmount The amount of asset tokens to provide an estimate on
-  /// @param blocks The number of blocks that the principal would accrue interest over
   /// @return The estimated interest that would accrue on the principal
   function estimateAccruedInterestOverBlocks(
-    uint256 principalAmount,
-    uint256 blocks
+    uint256,
+    uint256
   )
     public
     view
@@ -76,11 +74,16 @@ contract yVaultPrizePool is PrizePool {
 
   /// @dev Gets the current interest-rate the Compound cToken
   /// @return The current exchange-rate
-  function supplyRatePerBlock() internal view returns (uint256) {
+  function supplyRatePerBlock() internal pure returns (uint256) {
     return 0;
   }
 
   function setReserveRateMantissa(uint256 _reserveRateMantissa) external onlyOwner {
+    _setReserveRateMantissa(_reserveRateMantissa);
+  }
+
+  function _setReserveRateMantissa(uint256 _reserveRateMantissa) internal {
+    require(_reserveRateMantissa < 1 ether, "yVaultPrizePool/reserve-rate-lt-one");
     reserveRateMantissa = _reserveRateMantissa;
 
     emit ReserveRateMantissaSet(reserveRateMantissa);
@@ -98,9 +101,9 @@ contract yVaultPrizePool is PrizePool {
   /// to be held in escrow by the Yield Service
   function _supply(uint256) internal override {
     IERC20 assetToken = _token();
-    uint256 amount = assetToken.balanceOf(address(this));
-    assetToken.approve(address(vault), amount);
-    vault.deposit(amount);
+    uint256 total = assetToken.balanceOf(address(this));
+    assetToken.approve(address(vault), total);
+    vault.deposit(total);
   }
 
   /// @dev The external token cannot be yDai or Dai
@@ -117,15 +120,25 @@ contract yVaultPrizePool is PrizePool {
   function _redeem(uint256 amount) internal override returns (uint256) {
     IERC20 token = _token();
 
+    require(_balance() >= amount, "yVaultPrizePool/insuff-liquidity");
+
+    // yVault will try to over-withdraw so that amount is always available
+    // we want: 100 = X - X*feeRate
+    // 100 = X(1 - feeRate)
+    // 100 / (1 - feeRate) = X
     // calculate possible fee
-    uint256 reserve = FixedPoint.multiplyUintByMantissa(amount, reserveRateMantissa);
+    uint256 withdrawal;
+    if (reserveRateMantissa > 0) {
+      withdrawal = FixedPoint.divideUintByMantissa(amount, uint256(1e18).sub(reserveRateMantissa));
+    } else {
+      withdrawal = amount;
+    }
 
-    uint256 shares = _tokenToShares(amount.add(reserve));
-
+    uint256 shares = _tokenToShares(withdrawal);
     uint256 before = token.balanceOf(address(this));
+
     vault.withdraw(shares);
     uint256 diff = token.balanceOf(address(this)).sub(before);
-
     if (diff < amount) {
       // if we got back less, then the fee was greater than the reserve.
       // in this case we return what we got.
@@ -145,7 +158,11 @@ contract yVaultPrizePool is PrizePool {
   }
 
   function _sharesToToken(uint256 shares) internal view returns (uint256) {
-    return (vault.balance().mul(shares)).div(vault.totalSupply());
+    uint256 ts = vault.totalSupply();
+    if (ts == 0 || shares == 0) {
+      return 0;
+    }
+    return (vault.balance().mul(shares)).div(ts);
   }
 
   /// @dev Gets the underlying asset token used by the Yield Service
