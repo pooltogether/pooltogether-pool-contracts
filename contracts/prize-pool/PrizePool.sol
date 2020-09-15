@@ -4,7 +4,12 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
+<<<<<<< HEAD
 import "../external/pooltogether/FixedPoint.sol";
+=======
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
+import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+>>>>>>> c80ba59... Updated all token transfers to use safeTransfer versions
 
 import "../comptroller/ComptrollerInterface.sol";
 import "./YieldSource.sol";
@@ -19,6 +24,7 @@ import "../utils/RelayRecipient.sol";
 abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
   using SafeMath for uint256;
   using SafeCast for uint256;
+  using SafeERC20 for IERC20;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
 
   /// @dev Emitted when an instance is initialized
@@ -310,7 +316,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
     _mint(to, amount, controlledToken, referrer);
 
-    require(_token().transferFrom(operator, address(this), amount), "PrizePool/deposit-transfer-failed");
+    _token().safeTransferFrom(operator, address(this), amount);
     _supply(amount);
 
     emit Deposited(operator, to, controlledToken, amount, referrer);
@@ -346,7 +352,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 amountLessFee = amount.sub(exitFee);
     uint256 redeemed = _redeem(amountLessFee);
 
-    require(_token().transfer(from, redeemed), "PrizePool/instant-transfer-failed");
+    _token().safeTransfer(from, redeemed);
 
     emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, redeemed, exitFee);
 
@@ -525,7 +531,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
       return;
     }
 
-    require(IERC20(externalToken).transfer(to, amount), "PrizePool/award-ex-erc20-failed");
+    IERC20(externalToken).safeTransfer(to, amount);
 
     emit AwardedExternalERC20(to, externalToken, amount);
   }
@@ -642,7 +648,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
         delete _unlockTimestamps[users[i]];
         uint256 shareMantissa = FixedPoint.calculateMantissa(balances[i], totalWithdrawal);
         uint256 transferAmount = FixedPoint.multiplyUintByMantissa(redeemed, shareMantissa);
-        require(underlyingToken.transfer(users[i], transferAmount), "PrizePool/sweep-transfer-failed");
+        underlyingToken.safeTransfer(users[i], transferAmount);
         emit TimelockedWithdrawalSwept(operator, users[i], balances[i], transferAmount);
       }
     }
