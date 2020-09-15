@@ -70,9 +70,4 @@ contract PrizePoolHarness is PrizePool {
   function _redeem(uint256 redeemAmount) internal override returns (uint256) {
     return stubYieldSource.redeem(redeemAmount);
   }
-
-  function estimateAccruedInterestOverBlocks(uint256 principal, uint256 blocks) public override view returns (uint256) {
-    return stubYieldSource.estimateAccruedInterestOverBlocks(principal, blocks);
-  }
-
 }

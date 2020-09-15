@@ -602,7 +602,7 @@ describe('PrizePool', function() {
         await prizePool.setCurrentTime(11)
 
         // now execute timelock withdrawal
-        // const tx = 
+        // const tx =
 
         let tx = prizePool.sweepTimelockBalances([wallet._address, wallet2._address])
 
@@ -653,18 +653,6 @@ describe('PrizePool', function() {
 
         // credit should not be burned
         expect(await call(prizePool, 'balanceOfCredit', wallet._address, ticket.address)).to.equal(toWei('0.5'))
-      })
-    })
-
-    describe('estimateAccruedInterestOverBlocks()', () => {
-      it('should get the supply rate from the yield service to estimate interest per block', async function () {
-        const deposit = toWei('100')
-        const supplyRate = toWei('0.001')
-        const numBlocks = '10'
-
-        await yieldSourceStub.mock.estimateAccruedInterestOverBlocks.returns(toWei('1'))
-
-        expect(await prizePool.estimateAccruedInterestOverBlocks(deposit, numBlocks)).to.deep.equal(toWei('1'))
       })
     })
 
