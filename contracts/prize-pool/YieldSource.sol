@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 /// @notice Prize Pools subclasses need to implement this interface so that yield can be generated.
 abstract contract YieldSource {
   /// @notice Determines whether the passed token can be transferred out as an external award.
-  /// @dev Different yield sources will hold the deposits as another kind of token: such a Compound's cToken.  The 
+  /// @dev Different yield sources will hold the deposits as another kind of token: such a Compound's cToken.  The
   /// prize strategy should not be allowed to move those tokens.
   /// @param _externalToken The address of the token to check
   /// @return True if the token may be awarded, false otherwise
@@ -28,10 +28,4 @@ abstract contract YieldSource {
   /// @param redeemAmount The amount of yield-bearing tokens to be redeemed
   /// @return The actual amount of tokens that were redeemed.
   function _redeem(uint256 redeemAmount) internal virtual returns (uint256);
-
-  /// @notice Estimates the amount of accrued interest on the `principal` amount over a given number of `blocks`
-  /// @param principal The amount of asset tokens to provide an estimate on
-  /// @param blocks The number of blocks that the principal would accrue interest over
-  /// @return The estimated interest that would accrue on the principal
-  function estimateAccruedInterestOverBlocks(uint256 principal, uint256 blocks) public virtual view returns (uint256);
 }

@@ -12,6 +12,4 @@ interface YieldSourceStub {
   function supply(uint256 mintAmount) external;
 
   function redeem(uint256 redeemAmount) external returns (uint256);
-
-  function estimateAccruedInterestOverBlocks(uint256 principal, uint256 blocks) external view returns (uint256);
 }

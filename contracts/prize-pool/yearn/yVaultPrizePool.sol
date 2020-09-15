@@ -56,28 +56,6 @@ contract yVaultPrizePool is PrizePool {
     emit yVaultPrizePoolInitialized(address(vault));
   }
 
-  /// @notice Estimates the accrued interest of a deposit of a given number of blocks
-  /// @dev Provides an estimate for the amount of accrued interest that would
-  /// be applied to the `principalAmount` over a given number of `blocks`
-  /// @return The estimated interest that would accrue on the principal
-  function estimateAccruedInterestOverBlocks(
-    uint256,
-    uint256
-  )
-    public
-    view
-    override
-    returns (uint256)
-  {
-    return 0;
-  }
-
-  /// @dev Gets the current interest-rate the Compound cToken
-  /// @return The current exchange-rate
-  function supplyRatePerBlock() internal pure returns (uint256) {
-    return 0;
-  }
-
   function setReserveRateMantissa(uint256 _reserveRateMantissa) external onlyOwner {
     _setReserveRateMantissa(_reserveRateMantissa);
   }

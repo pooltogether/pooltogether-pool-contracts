@@ -115,38 +115,6 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
     return prizePool.awardBalance();
   }
 
-  /// @notice Estimates the prize size using the default ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA
-  /// @return The estimated final size of the prize
-  function estimatePrize() public view returns (uint256) {
-    return estimatePrizeWithBlockTime(ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA);
-  }
-
-  /// @notice Estimates the prize size given the passed number of seconds per block
-  /// @param secondsPerBlockMantissa The seconds per block to use for the calculation. Should be a fixed point 18 number like Ether.
-  /// @return The estimated final size of the prize.
-  function estimatePrizeWithBlockTime(uint256 secondsPerBlockMantissa) public view returns (uint256) {
-    return currentPrize().add(estimateRemainingPrizeWithBlockTime(secondsPerBlockMantissa));
-  }
-
-  /// @notice Estimates the size of the *remaining* prize to accrue.
-  /// This function uses the constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA to calculate the accrued interest.
-  /// @return The estimated remaining prize
-  function estimateRemainingPrize() public view returns (uint256) {
-    return estimateRemainingPrizeWithBlockTime(ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA);
-  }
-
-  /// @notice Estimates the size of the *remaining* prize to accrue.  Allows the user to pass the seconds per block value.
-  /// @param secondsPerBlockMantissa The seconds per block to use for the calculation.  Should be a fixed point 18 number like Ether.
-  /// @return The estimated remaining prize
-  function estimateRemainingPrizeWithBlockTime(uint256 secondsPerBlockMantissa) public view returns (uint256) {
-    uint256 remaining = prizePool.estimateAccruedInterestOverBlocks(
-      prizePool.accountedBalance(),
-      estimateRemainingBlocksToPrize(secondsPerBlockMantissa)
-    );
-    uint256 reserveFee = prizePool.calculateReserveFee(remaining);
-    return remaining.sub(reserveFee);
-  }
-
   /// @notice Estimates the remaining blocks until the prize given a number of seconds per block
   /// @param secondsPerBlockMantissa The number of seconds per block to use for the calculation.  Should be a fixed point 18 number like Ether.
   /// @return The estimated number of blocks remaining until the prize can be awarded.

@@ -123,13 +123,4 @@ describe('CompoundPrizePool', function() {
       expect(await prizePool.token()).to.equal(erc20token.address)
     })
   })
-
-  describe('estimateAccruedInterestOverBlocks()', () => {
-    it('should estimate the interest using the supply rate', async () => {
-      await cToken.mock.supplyRatePerBlock.returns(toWei('0.01'))
-
-      expect(await prizePool.estimateAccruedInterestOverBlocks(toWei('10'), 10)).to.equal(toWei('1'))
-    })
-  })
-
 });

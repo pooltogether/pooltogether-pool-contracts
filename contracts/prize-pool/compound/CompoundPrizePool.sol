@@ -50,26 +50,6 @@ contract CompoundPrizePool is PrizePool {
     emit CompoundPrizePoolInitialized(address(cToken));
   }
 
-  /// @notice Estimates the accrued interest of a deposit of a given number of blocks
-  /// @dev Provides an estimate for the amount of accrued interest that would
-  /// be applied to the `principalAmount` over a given number of `blocks`
-  /// @param principalAmount The amount of asset tokens to provide an estimate on
-  /// @param blocks The number of blocks that the principal would accrue interest over
-  /// @return The estimated interest that would accrue on the principal
-  function estimateAccruedInterestOverBlocks(
-    uint256 principalAmount,
-    uint256 blocks
-  )
-    public
-    view
-    override
-    returns (uint256)
-  {
-    // estimated = principalAmount * supply rate per block * blocks
-    uint256 multiplier = principalAmount.mul(blocks);
-    return FixedPoint.multiplyUintByMantissa(multiplier, supplyRatePerBlock());
-  }
-
   /// @dev Gets the current interest-rate the Compound cToken
   /// @return The current exchange-rate
   function supplyRatePerBlock() internal view returns (uint256) {

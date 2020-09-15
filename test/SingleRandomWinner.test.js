@@ -161,30 +161,6 @@ describe('SingleRandomWinner', function() {
     })
   })
 
-  describe('estimatePrize()', () => {
-    it('should calculate the estimated prize', async () => {
-      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
-      await prizePool.mock.awardBalance.returns('100')
-      await prizePool.mock.accountedBalance.returns('1000')
-      await prizePool.mock.calculateReserveFee.returns('0')
-      await prizePool.mock.estimateAccruedInterestOverBlocks
-        .returns('10')
-
-      expect(await call(prizeStrategy, 'estimatePrize')).to.equal('110')
-    })
-  })
-
-  describe('estimateRemainingPrize()', () => {
-    it('should calculate the estimated remaining prize to accrue', async () => {
-      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
-      await prizePool.mock.accountedBalance.returns('1000')
-      await prizePool.mock.calculateReserveFee.returns(Zero)
-      await prizePool.mock.estimateAccruedInterestOverBlocks.returns('10')
-
-      expect(await call(prizeStrategy, 'estimateRemainingPrize')).to.equal('10')
-    })
-  })
-
   describe('prizePeriodRemainingSeconds()', () => {
     it('should calculate the remaining seconds of the prize period', async () => {
       const startTime = await prizeStrategy.prizePeriodStartedAt()
@@ -238,20 +214,6 @@ describe('SingleRandomWinner', function() {
       await expect(prizeStrategy.setRngService(token.address))
         .to.be.revertedWith('SingleRandomWinner/rng-in-flight');
     });
-  })
-
-  describe('estimatePrizeWithBlockTime()', () => {
-    it('should calculate the estimated prize', async () => {
-      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt())
-      await prizePool.mock.awardBalance.returns('100')
-      await prizePool.mock.accountedBalance.returns('1000')
-      await prizePool.mock.calculateReserveFee.returns('0')
-      await prizePool.mock.estimateAccruedInterestOverBlocks
-        .withArgs('1000', toWei('10'))
-        .returns('10')
-
-      expect(await call(prizeStrategy, 'estimatePrizeWithBlockTime', 100)).to.equal('110')
-    })
   })
 
   describe("beforeTokenTransfer()", () => {
