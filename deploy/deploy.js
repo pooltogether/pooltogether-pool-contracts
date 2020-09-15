@@ -39,7 +39,8 @@ module.exports = async (buidler) => {
   } = await getNamedAccounts()
   const chainId = parseInt(await getChainId(), 10)
   const isLocal = [1, 3, 4, 42].indexOf(chainId) == -1
-  const isTestEnvironment = chainId === 31337
+  // 31337 is unit testing, 1337 is for coverage
+  const isTestEnvironment = chainId === 31337 || chainId === 1337
   let usingSignerAsAdmin = false
   const signer = await ethers.provider.getSigner(deployer)
 

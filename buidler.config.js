@@ -37,7 +37,8 @@ const config = {
   networks: {
     buidlerevm: {
       blockGasLimit: 200000000,
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
+      chainId: 31337
     },
     coverage: {
       url: 'http://127.0.0.1:8555',
