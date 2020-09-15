@@ -1,10 +1,11 @@
 pragma solidity 0.6.4;
 
-import "../external/yearn/yVault.sol";
+import "../external/yearn/yVaultInterface.sol";
 import "./ERC20Mintable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
-contract yVaultMock is yVault {
+contract yVaultMock is yVaultInterface, ERC20UpgradeSafe {
 
   ERC20UpgradeSafe private asset;
   uint256 public extraLossMantissa;

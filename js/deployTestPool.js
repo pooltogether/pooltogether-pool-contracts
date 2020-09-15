@@ -89,11 +89,9 @@ async function deployTestPool({
     debug(`Loading yVaultPrizePool Builder ${yVaultBuilderResult.address}`)
     const builder = await buidler.ethers.getContractAt('yVaultPrizePoolBuilder', yVaultBuilderResult.address, wallet)
     debug(`creating single random winner: `, yVaultPrizePoolConfig, singleRandomWinnerConfig)
-    let tx = await builder.createSingleRandomWinner(yVaultPrizePoolConfig, singleRandomWinnerConfig)
-    debug(`got here 3`)
+    let tx = await builder.createSingleRandomWinner(yVaultPrizePoolConfig, singleRandomWinnerConfig, await token.decimals())
     let events = await getEvents(tx, builder)
     let event = events[0]
-    debug(`got here 4`)
     prizePool = await buidler.ethers.getContractAt('yVaultPrizePoolHarness', event.args.prizePool, wallet)
   } else {
     const compoundPrizePoolConfig = {

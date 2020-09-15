@@ -1,6 +1,7 @@
 pragma solidity 0.6.4;
 pragma experimental ABIEncoderV2;
 
+import "./SingleRandomWinnerBuilder.sol";
 import "../comptroller/ComptrollerInterface.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
 import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
@@ -13,20 +14,6 @@ import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 contract CompoundPrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
-
-  struct SingleRandomWinnerConfig {
-    address proxyAdmin;
-    RNGInterface rngService;
-    uint256 prizePeriodStart;
-    uint256 prizePeriodSeconds;
-    string ticketName;
-    string ticketSymbol;
-    string sponsorshipName;
-    string sponsorshipSymbol;
-    uint256 ticketCreditLimitMantissa;
-    uint256 ticketCreditRateMantissa;
-    address[] externalERC20Awards;
-  }
 
   struct CompoundPrizePoolConfig {
     CTokenInterface cToken;
@@ -80,7 +67,7 @@ contract CompoundPrizePoolBuilder {
 
   function createSingleRandomWinner(
     CompoundPrizePoolConfig calldata prizePoolConfig,
-    SingleRandomWinnerConfig calldata prizeStrategyConfig
+    SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig
   ) external returns (SingleRandomWinner) {
 
     SingleRandomWinner prizeStrategy;

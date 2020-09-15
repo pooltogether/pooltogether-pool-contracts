@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@nomiclabs/buidler/console.sol";
 
-import "../../external/yearn/yVault.sol";
+import "../../external/yearn/yVaultInterface.sol";
 import "../PrizePool.sol";
 
 /// @title Prize Pool with Compound's cToken
@@ -17,7 +17,7 @@ contract yVaultPrizePool is PrizePool {
   event ReserveRateMantissaSet(uint256 reserveRateMantissa);
 
   /// @notice Interface for the yEarn yVault
-  yVault public vault;
+  yVaultInterface public vault;
 
   /// Amount that is never exposed to the prize
   uint256 public reserveRateMantissa;
@@ -28,7 +28,7 @@ contract yVaultPrizePool is PrizePool {
   /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
   /// @param _maxExitFeeMantissa The maximum exit fee size, relative to the withdrawal amount
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
-  /// @param _vault Address of the yEarn yVault
+  /// @param _vault Address of the yEarn yVaultInterface
   function initialize (
     address _trustedForwarder,
     PrizePoolTokenListenerInterface _prizeStrategy,
@@ -36,7 +36,7 @@ contract yVaultPrizePool is PrizePool {
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
-    yVault _vault,
+    yVaultInterface _vault,
     uint256 _reserveRateMantissa
   )
     public

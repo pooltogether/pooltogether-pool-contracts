@@ -114,7 +114,9 @@ describe('yVaultPrizePoolBuilder', () => {
   describe('createSingleRandomWinner()', () => {
     it('should allow a user to create yVault Prize Pools with Single Random Winner strategy', async () => {
 
-      let tx = await builder.createSingleRandomWinner(vaultPrizePoolConfig, singleRandomWinnerConfig)
+      let decimals = 18
+
+      let tx = await builder.createSingleRandomWinner(vaultPrizePoolConfig, singleRandomWinnerConfig, decimals)
       let events = await getEvents(tx)
       let prizePoolCreatedEvent = events.find(e => e.name == 'yVaultPrizePoolCreated')
       let singleRandomWinnerCreatedEvent = events.find(e => e.name == 'SingleRandomWinnerCreated')
@@ -141,10 +143,12 @@ describe('yVaultPrizePoolBuilder', () => {
       const ticket = await buidler.ethers.getContractAt('Ticket', ticketAddress, wallet)
       expect(await ticket.name()).to.equal(singleRandomWinnerConfig.ticketName)
       expect(await ticket.symbol()).to.equal(singleRandomWinnerConfig.ticketSymbol)
+      expect(await ticket.decimals()).to.equal(decimals)
 
       const sponsorship = await buidler.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
       expect(await sponsorship.name()).to.equal(singleRandomWinnerConfig.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(singleRandomWinnerConfig.sponsorshipSymbol)
+      expect(await sponsorship.decimals()).to.equal(decimals)
 
       expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorshipAddress)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(vaultPrizePoolConfig.maxExitFeeMantissa)
@@ -166,7 +170,7 @@ describe('yVaultPrizePoolBuilder', () => {
 
       singleRandomWinnerConfig.proxyAdmin = proxyAdmin.address
 
-      let tx = await builder.createSingleRandomWinner(vaultPrizePoolConfig, singleRandomWinnerConfig)
+      let tx = await builder.createSingleRandomWinner(vaultPrizePoolConfig, singleRandomWinnerConfig, 8)
       let events = await getEvents(tx)
       let event = events.find(e => e.name == 'yVaultPrizePoolCreated')
 

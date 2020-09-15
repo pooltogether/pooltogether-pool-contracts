@@ -2,11 +2,12 @@ pragma solidity 0.6.4;
 pragma experimental ABIEncoderV2;
 
 import "../comptroller/ComptrollerInterface.sol";
+import "./SingleRandomWinnerBuilder.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
 import "../prize-pool/yearn/yVaultPrizePoolProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
 import "../token/TicketProxyFactory.sol";
-import "../external/yearn/yVault.sol";
+import "../external/yearn/yVaultInterface.sol";
 import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 
 /* solium-disable security/no-block-members */
@@ -14,22 +15,8 @@ contract yVaultPrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
-  struct SingleRandomWinnerConfig {
-    address proxyAdmin;
-    RNGInterface rngService;
-    uint256 prizePeriodStart;
-    uint256 prizePeriodSeconds;
-    string ticketName;
-    string ticketSymbol;
-    string sponsorshipName;
-    string sponsorshipSymbol;
-    uint256 ticketCreditLimitMantissa;
-    uint256 ticketCreditRateMantissa;
-    address[] externalERC20Awards;
-  }
-
   struct yVaultPrizePoolConfig {
-    yVault vault;
+    yVaultInterface vault;
     uint256 reserveRateMantissa;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
@@ -81,7 +68,8 @@ contract yVaultPrizePoolBuilder {
 
   function createSingleRandomWinner(
     yVaultPrizePoolConfig calldata prizePoolConfig,
-    SingleRandomWinnerConfig calldata prizeStrategyConfig
+    SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig,
+    uint8 decimals
   ) external returns (SingleRandomWinner) {
 
     SingleRandomWinner prizeStrategy;
@@ -97,8 +85,6 @@ contract yVaultPrizePoolBuilder {
       prizePoolConfig,
       prizeStrategy
     );
-
-    uint8 decimals = prizePoolConfig.vault.decimals();
 
     prizePool.addControlledToken(address(
       _createTicket(
