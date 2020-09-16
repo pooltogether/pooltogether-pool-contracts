@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pragma solidity 0.6.12;
+pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 

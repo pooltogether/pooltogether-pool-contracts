@@ -1,4 +1,6 @@
-pragma solidity 0.6.12;
+// SPDX-License-Identifier: GPL-3.0-only
+
+pragma solidity >=0.6.0 <0.7.0;
 
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";

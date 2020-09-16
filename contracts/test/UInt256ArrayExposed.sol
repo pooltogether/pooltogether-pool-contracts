@@ -1,4 +1,4 @@
-pragma solidity 0.6.12;
+pragma solidity >=0.6.0 <0.7.0;
 
 import "../utils/UInt256Array.sol";
 

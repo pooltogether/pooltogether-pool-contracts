@@ -1,4 +1,6 @@
-pragma solidity ^0.6.12;
+// SPDX-License-Identifier: GPL-3.0-only
+
+pragma solidity >=0.6.0 <0.7.0;
 
 /// @notice An efficient implementation of a singly linked list of addresses
 /// @dev A mapping(address => address) tracks the 'next' pointer.  A special address called the SENTINEL is used to denote the beginning and end of the list.
@@ -9,10 +11,8 @@ library MappedSinglyLinkedList {
 
   /// @notice The data structure to use for the list.
   struct Mapping {
-    /// @notice How many elements are in the list
     uint256 count;
 
-    /// @notice The data structure used to map the "next" addresses.  The value of this mapping is the "next" address for the key.
     mapping(address => address) addressMap;
   }
 

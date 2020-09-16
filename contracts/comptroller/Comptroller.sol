@@ -1,4 +1,6 @@
-pragma solidity ^0.6.12;
+// SPDX-License-Identifier: GPL-3.0-only
+
+pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
@@ -672,12 +674,11 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   /// @notice Called by a "source" (i.e. Prize Pool) when tokens change hands or are burned
   /// @param from The user who is sending the tokens
   /// @param to The user who is receiving the tokens
-  /// @param amount The amount of tokens they are burning
   /// @param measure The measure token they are burning
   function beforeTokenTransfer(
     address from,
     address to,
-    uint256 amount,
+    uint256,
     address measure
   )
     external

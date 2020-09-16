@@ -1,4 +1,6 @@
-pragma solidity 0.6.12;
+// SPDX-License-Identifier: GPL-3.0-only
+
+pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -215,26 +217,20 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
 
   /// @notice Called by the PrizePool for transfers of controlled tokens
   /// @dev Note that this is only for *transfers*, not mints or burns
-  /// @param from The user whose tokens are being transferred
-  /// @param to The user who is receiving the tokens.
-  /// @param amount The amount of tokens being sent.
   /// @param controlledToken The type of collateral that is being sent
-  function beforeTokenTransfer(address from, address to, uint256 amount, address controlledToken) external override onlyPrizePool {
+  function beforeTokenTransfer(address, address, uint256, address controlledToken) external override onlyPrizePool {
     if (controlledToken == address(ticket)) {
       _requireNotLocked();
     }
   }
 
   /// @notice Called by the PrizePool when minting controlled tokens
-  /// @param to The user who is receiving the tokens.
-  /// @param amount The amount of tokens being minted.
   /// @param controlledToken The type of collateral that is being minted
-  /// @param referrer The address that referred the mint
   function beforeTokenMint(
-    address to,
-    uint256 amount,
+    address,
+    uint256,
     address controlledToken,
-    address referrer
+    address
   )
     external
     override
