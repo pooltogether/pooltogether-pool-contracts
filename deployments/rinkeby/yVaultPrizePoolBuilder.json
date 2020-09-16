@@ -1,0 +1,499 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract ComptrollerInterface",
+          "name": "_comptroller",
+          "type": "address"
+        },
+        {
+          "internalType": "contract SingleRandomWinnerProxyFactory",
+          "name": "_singleRandomWinnerProxyFactory",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_trustedForwarder",
+          "type": "address"
+        },
+        {
+          "internalType": "contract yVaultPrizePoolProxyFactory",
+          "name": "_vaultPrizePoolProxyFactory",
+          "type": "address"
+        },
+        {
+          "internalType": "contract ControlledTokenProxyFactory",
+          "name": "_controlledTokenProxyFactory",
+          "type": "address"
+        },
+        {
+          "internalType": "contract OpenZeppelinProxyFactoryInterface",
+          "name": "_proxyFactory",
+          "type": "address"
+        },
+        {
+          "internalType": "contract TicketProxyFactory",
+          "name": "_ticketProxyFactory",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "singleRandomWinner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "ticket",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sponsorship",
+          "type": "address"
+        }
+      ],
+      "name": "SingleRandomWinnerCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "creator",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "prizePool",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "prizeStrategy",
+          "type": "address"
+        }
+      ],
+      "name": "yVaultPrizePoolCreated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "comptroller",
+      "outputs": [
+        {
+          "internalType": "contract ComptrollerInterface",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "controlledTokenProxyFactory",
+      "outputs": [
+        {
+          "internalType": "contract ControlledTokenProxyFactory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract yVaultInterface",
+              "name": "vault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "reserveRateMantissa",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxExitFeeMantissa",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxTimelockDuration",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct yVaultPrizePoolBuilder.yVaultPrizePoolConfig",
+          "name": "prizePoolConfig",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "proxyAdmin",
+              "type": "address"
+            },
+            {
+              "internalType": "contract RNGInterface",
+              "name": "rngService",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "prizePeriodStart",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "prizePeriodSeconds",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "ticketName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "ticketSymbol",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "sponsorshipName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "sponsorshipSymbol",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "ticketCreditLimitMantissa",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "ticketCreditRateMantissa",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address[]",
+              "name": "externalERC20Awards",
+              "type": "address[]"
+            }
+          ],
+          "internalType": "struct SingleRandomWinnerBuilder.SingleRandomWinnerConfig",
+          "name": "prizeStrategyConfig",
+          "type": "tuple"
+        },
+        {
+          "internalType": "uint8",
+          "name": "decimals",
+          "type": "uint8"
+        }
+      ],
+      "name": "createSingleRandomWinner",
+      "outputs": [
+        {
+          "internalType": "contract SingleRandomWinner",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract yVaultInterface",
+              "name": "vault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "reserveRateMantissa",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxExitFeeMantissa",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxTimelockDuration",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct yVaultPrizePoolBuilder.yVaultPrizePoolConfig",
+          "name": "config",
+          "type": "tuple"
+        },
+        {
+          "internalType": "contract PrizePoolTokenListenerInterface",
+          "name": "prizeStrategy",
+          "type": "address"
+        }
+      ],
+      "name": "createyVaultPrizePool",
+      "outputs": [
+        {
+          "internalType": "contract yVaultPrizePool",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "proxyFactory",
+      "outputs": [
+        {
+          "internalType": "contract OpenZeppelinProxyFactoryInterface",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "singleRandomWinnerProxyFactory",
+      "outputs": [
+        {
+          "internalType": "contract SingleRandomWinnerProxyFactory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ticketProxyFactory",
+      "outputs": [
+        {
+          "internalType": "contract TicketProxyFactory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "trustedForwarder",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultPrizePoolProxyFactory",
+      "outputs": [
+        {
+          "internalType": "contract yVaultPrizePoolProxyFactory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "receipt": {
+    "to": null,
+    "from": "0x11BA3d40F7549485D5B821217E3f4474Ae90FeCd",
+    "contractAddress": "0x4037f548ba6fA9ca5AE2a29Fdd6E804b9b588164",
+    "transactionIndex": 8,
+    "gasUsed": "1202730",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xbcbcde688de54bacc2a884669df1028ab2d72c936fd5c52f2e74cb149cae3a18",
+    "transactionHash": "0xe1d4832e20ba8dbf9cd38c70d5cc2daf85f1061251d2fa5f2810a2e8bdaa52f7",
+    "logs": [],
+    "blockNumber": 7209521,
+    "cumulativeGasUsed": "2048022",
+    "status": 1,
+    "byzantium": true
+  },
+  "address": "0x4037f548ba6fA9ca5AE2a29Fdd6E804b9b588164",
+  "args": [
+    "0xb7C6d617F6BeE47e73D800Ab8B3a672F622029a8",
+    "0x33e26289f4b7fBE41bF7596dAd60e9a863E98DA2",
+    "0xd6cC1FEAB6E1DbDc3c0a6F2798c8089c72F78E64",
+    "0x426aA05c2EBE270ad02793747bc555E8F3f03e06",
+    "0x865621f27F2c0765623fAD4309758D24C95E8f4d",
+    "0x6B2FfB39Cc07C27390D5E0B7bf1e4BB4e7A4358c",
+    "0x34F2114b62214D2F95B8Fe88150E1dB24b7BcD9A"
+  ],
+  "solcInputHash": "0x46eff0da6e199900c2c22bb012b533dddeaf0e6bc7cf22bc2e35fa13f86c37b1",
+  "metadata": "{\"compiler\":{\"version\":\"0.6.12+commit.27d51765\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract ComptrollerInterface\",\"name\":\"_comptroller\",\"type\":\"address\"},{\"internalType\":\"contract SingleRandomWinnerProxyFactory\",\"name\":\"_singleRandomWinnerProxyFactory\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_trustedForwarder\",\"type\":\"address\"},{\"internalType\":\"contract yVaultPrizePoolProxyFactory\",\"name\":\"_vaultPrizePoolProxyFactory\",\"type\":\"address\"},{\"internalType\":\"contract ControlledTokenProxyFactory\",\"name\":\"_controlledTokenProxyFactory\",\"type\":\"address\"},{\"internalType\":\"contract OpenZeppelinProxyFactoryInterface\",\"name\":\"_proxyFactory\",\"type\":\"address\"},{\"internalType\":\"contract TicketProxyFactory\",\"name\":\"_ticketProxyFactory\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"singleRandomWinner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"ticket\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sponsorship\",\"type\":\"address\"}],\"name\":\"SingleRandomWinnerCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"prizePool\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"prizeStrategy\",\"type\":\"address\"}],\"name\":\"yVaultPrizePoolCreated\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"comptroller\",\"outputs\":[{\"internalType\":\"contract ComptrollerInterface\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"controlledTokenProxyFactory\",\"outputs\":[{\"internalType\":\"contract ControlledTokenProxyFactory\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract yVaultInterface\",\"name\":\"vault\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"reserveRateMantissa\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxExitFeeMantissa\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxTimelockDuration\",\"type\":\"uint256\"}],\"internalType\":\"struct yVaultPrizePoolBuilder.yVaultPrizePoolConfig\",\"name\":\"prizePoolConfig\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"proxyAdmin\",\"type\":\"address\"},{\"internalType\":\"contract RNGInterface\",\"name\":\"rngService\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"prizePeriodStart\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"prizePeriodSeconds\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"ticketName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"ticketSymbol\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"sponsorshipName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"sponsorshipSymbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"ticketCreditLimitMantissa\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"ticketCreditRateMantissa\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"externalERC20Awards\",\"type\":\"address[]\"}],\"internalType\":\"struct SingleRandomWinnerBuilder.SingleRandomWinnerConfig\",\"name\":\"prizeStrategyConfig\",\"type\":\"tuple\"},{\"internalType\":\"uint8\",\"name\":\"decimals\",\"type\":\"uint8\"}],\"name\":\"createSingleRandomWinner\",\"outputs\":[{\"internalType\":\"contract SingleRandomWinner\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"contract yVaultInterface\",\"name\":\"vault\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"reserveRateMantissa\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxExitFeeMantissa\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxTimelockDuration\",\"type\":\"uint256\"}],\"internalType\":\"struct yVaultPrizePoolBuilder.yVaultPrizePoolConfig\",\"name\":\"config\",\"type\":\"tuple\"},{\"internalType\":\"contract PrizePoolTokenListenerInterface\",\"name\":\"prizeStrategy\",\"type\":\"address\"}],\"name\":\"createyVaultPrizePool\",\"outputs\":[{\"internalType\":\"contract yVaultPrizePool\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proxyFactory\",\"outputs\":[{\"internalType\":\"contract OpenZeppelinProxyFactoryInterface\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"singleRandomWinnerProxyFactory\",\"outputs\":[{\"internalType\":\"contract SingleRandomWinnerProxyFactory\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ticketProxyFactory\",\"outputs\":[{\"internalType\":\"contract TicketProxyFactory\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"trustedForwarder\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultPrizePoolProxyFactory\",\"outputs\":[{\"internalType\":\"contract yVaultPrizePoolProxyFactory\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/builders/yVaultPrizePoolBuilder.sol\":\"yVaultPrizePoolBuilder\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@opengsn/gsn/contracts/0x/LibBytesV06.sol\":{\"keccak256\":\"0xeeb965925ff2059c4f58f7c4e43ca886c9f425fc0fc68e1f5a24b92673c3e194\",\"license\":\"APACHE-2.0\",\"urls\":[\"bzz-raw://74b48f45d28ec9dc81389b2ccda4b660eaaaac7267505d2d39d81ecf6a1513e4\",\"dweb:/ipfs/QmXaq4rJrTVNyEgwVwuuQkpNFwUKAwZWNsPj1oJZDLopaP\"]},\"@opengsn/gsn/contracts/0x/errors/LibBytesRichErrorsV06.sol\":{\"keccak256\":\"0x384bd27108e3a08dfea76f0bcf70a1bda1df1a7fdf3d4f81676613628c66337f\",\"license\":\"APACHE-2.0\",\"urls\":[\"bzz-raw://bf239aad66cace3b65bb0f7a3d682ed6030bd6203b59d9125f3a2f0c5f14b0d6\",\"dweb:/ipfs/Qmb4MoW7opcgdrPyTt3a6DupYQJ5kvum8LpwrZeNY8yHJh\"]},\"@opengsn/gsn/contracts/0x/errors/LibRichErrorsV06.sol\":{\"keccak256\":\"0xa104036252bc192f9e8babb46b8d639a58edbb7b6066cff513c3b10d9dbe176f\",\"license\":\"APACHE-2.0\",\"urls\":[\"bzz-raw://946efc110fb69e5fad0727168415745fb693799723f9ec98f3bac8a84cc4887a\",\"dweb:/ipfs/QmdFwVjtQ5jFwedaYBVdrFF6B464RXCrFzMWst1sTrBJVd\"]},\"@opengsn/gsn/contracts/BaseRelayRecipient.sol\":{\"keccak256\":\"0x2dc530e6c0a0fc0fca0f0e39a1daabcd0d0ce949938a2c95c0285c63e1d854fe\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6fc812d4bdb144f0f0a9fd885b00a752f764da7c19c5f6be95ff611ceba39847\",\"dweb:/ipfs/QmRMAmS1qAy3Nu7BA67QMjLkfLznGp2to6vLQCcMkcXqqV\"]},\"@opengsn/gsn/contracts/interfaces/IRelayRecipient.sol\":{\"keccak256\":\"0x33c4d090521cf10a993a07f2670ab3ff0652ef070f209e0ffff44858b863c989\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://82a3a3d60b27c67f5d2d4e5d60a6886d2db3486658267cde4079e782c7654876\",\"dweb:/ipfs/QmQnPhQiX7HuJ8ATptBUMta1fCnTjrE9kZ94U7kCRFhuBJ\"]},\"@openzeppelin/contracts-ethereum-package/contracts/GSN/Context.sol\":{\"keccak256\":\"0xe81686511d62f18b2d9c693c2c94c0a789c690de63aa90e15451ebf65c5bfd3e\",\"urls\":[\"bzz-raw://1332ee1d2b096456bf2e5795b5871d0fed47be6a31c9a2f2cef9206a299565ea\",\"dweb:/ipfs/Qmdu1847Y4UL3gTjbLUManMGfxYEoyGPSodM3Br89SKzwx\"]},\"@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol\":{\"keccak256\":\"0x9bfec92e36234ecc99b5d37230acb6cd1f99560233753162204104a4897e8721\",\"urls\":[\"bzz-raw://5cf7c208583d4d046d75bd99f5507412ab01cce9dd9f802ce9768a416d93ea2f\",\"dweb:/ipfs/QmcQS1BBMPpVEkXP3qzwSjxHNrqDek8YeR7xbVWDC9ApC7\"]},\"@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol\":{\"keccak256\":\"0x04a69a78363214b4e3055db8e620bed222349f0c81e9d1cbe769eb849b69b73f\",\"urls\":[\"bzz-raw://b3115459376196d6c2c3817439c169d9b052b27b70e8ee2e28963cda760736da\",\"dweb:/ipfs/QmXaNF5rmcDSAzBiFMQjf979qb9xNXqD9eZtgo4uM9VEis\"]},\"@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC165.sol\":{\"keccak256\":\"0x9175561c374ec1fc33045e5dfdde2057e63e00debf432875f9e1e3395d99c149\",\"urls\":[\"bzz-raw://b0167043c1938b56904deaa481a73041aa4a9e054c60db0b0dfbebfe7869c06a\",\"dweb:/ipfs/QmUoYjhymBr6WUpExKgRvKxXD5fcdpQEe1o9ResKZu6CC5\"]},\"@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol\":{\"keccak256\":\"0xf96602898a507855ea4a0b3a2576e787433a9bba9ca555fadf16ffc03d15a6fe\",\"urls\":[\"bzz-raw://c0c91309e54b8196c8d673287e075cb923be200e0afecbb25444196cde1253a7\",\"dweb:/ipfs/QmRtdoebQbz8Q19zwVC3q3CDWZE7mrMy7mmjG6oyks136C\"]},\"@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x04d34b3cd5677bea25f8dfceb6dec0eaa071d4d4b789a43f13fe0c415ba4c296\",\"urls\":[\"bzz-raw://e7e8b526a6839e5ba14f0d23a830387fec47f7043ce01d42c9f285b709a9d080\",\"dweb:/ipfs/QmXmhhFmX5gcAvVzNiDPAGA35iHMPNaYtQkACswRHBVTNw\"]},\"@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0x9c2d859bc9de93ced0875d226598e56067fe4d6b2dde0e1fd53ca60fa9603db0\",\"urls\":[\"bzz-raw://5df1baba4ea42a94d0e0aed4a87271369ef2cd54d86e89cab7ef1428ff387210\",\"dweb:/ipfs/QmV5ErriAFQWqEPAfWhJ6DxmujH6vBPB3F5Breaq9vUWGu\"]},\"@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x6cc1cb934a3ac2137a7dcaed018af9e235392236ceecfd3687259702b9c767ad\",\"urls\":[\"bzz-raw://0055fa88138cd1c3c6440370f8580f85857f8fe9dec41c99af9eafbeb8d9c3ce\",\"dweb:/ipfs/QmX1xDh8vwGLLCH8ti45eXjQ7Wcxv1FEGTR3jkFnd5Nv6F\"]},\"@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol\":{\"keccak256\":\"0xa27d8d0bf389702f2b124fff3d86238b17ec0abd47d1401e81dc48a1509dbb9a\",\"urls\":[\"bzz-raw://899c25b79e783c1e4ccdd06928e332e2b37f3ecaa487f49ef68ef9fde6b18f82\",\"dweb:/ipfs/QmV3rZDWabetVSmZ2iviS5tajKzvR3AEwsicKZao4ptTg2\"]},\"@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0x734b5bedb78074a59bca6aff9e5a1801c9c7e9c5314daf32e14857161fb36932\",\"urls\":[\"bzz-raw://4574e71185f6693eb5cdf7a5126fba97caf0ec0366b08290dd361af44b3414d3\",\"dweb:/ipfs/QmTPBh1R3EU973H7h6D1kQ1XBA1oX2QdSHZACyytWUYKsn\"]},\"@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol\":{\"keccak256\":\"0x5f7da58ee3d9faa9b8999a93d49c8ff978f1afc88ae9bcfc6f9cbb44da011c2b\",\"urls\":[\"bzz-raw://4f089d954b3ecaa26949412fe63e9a184b056562c6c13dd4a0529a5d9a2e685a\",\"dweb:/ipfs/QmVK5iCNAMcEJQxT59bsC5E53JQASDQPU6khHox3d5ZXCn\"]},\"@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol\":{\"keccak256\":\"0x75a600e5ed3443ecf3b7fb636064b404b358317fd6cd91e70e3ca5cf2370e882\",\"urls\":[\"bzz-raw://5916e664a17b3fdbdc311579705bad74f433769c340346c371db2ecfa8427d24\",\"dweb:/ipfs/QmYNLuiPo4iRPWFJriVgqPELRUrFBFLpp5YnMMmqQ8zhBh\"]},\"@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol\":{\"keccak256\":\"0x2605c02f94103e804421170c049db81c65a47dee0c8989550c58000fbdb8b011\",\"urls\":[\"bzz-raw://bc7733438ff5dfcf8eeb547f3d05e8b7d8183db1e8f8f96b8d5c97915fb614fe\",\"dweb:/ipfs/QmQViRoEaEWDuxpMer2tcDau8V31ah7rLQ5Hw4VHns1bGC\"]},\"@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol\":{\"keccak256\":\"0x8aed9a0daf1b170f7e24b82d6d6e10850c7b8d9360fa9786d59b000d3d238a36\",\"license\":\"GPL-3.0\",\"urls\":[\"bzz-raw://d9b86876481821e341e5e01c2db70e0ab4bf662dfafff6793ac95d438dfd2e23\",\"dweb:/ipfs/QmbjnVA6G1WB6UYYNS4U8vz99u8vezUyWhZqaV6soZteUA\"]},\"@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol\":{\"keccak256\":\"0x6e5169b0688be3af9410e1838547d3c3aa28ba6c851e8726d187447f480b147f\",\"urls\":[\"bzz-raw://3fecae072a52aa03ed9756302f6bb40fa3b87277ad9652de8ec60075585d7763\",\"dweb:/ipfs/QmPggsikPJWg9TPasggRD2dUZPThgC9DPYcYhU5hntgD3V\"]},\"contracts/Constants.sol\":{\"keccak256\":\"0xdce98cb249c7f718048522fee05705e522385d300b90d7f78e52567cf77342d5\",\"urls\":[\"bzz-raw://c8b6bd9db07f1a41e7d70c074659898dcbc72dcdab3a984cf9bd7925af24a791\",\"dweb:/ipfs/QmRAWNhBhfphXTKZUtdnfGmBXMdqSkp1sMCtmo8VuzKnff\"]},\"contracts/builders/SingleRandomWinnerBuilder.sol\":{\"keccak256\":\"0xbb06f9ac8454ec531cf9b1f7ee06f5338e547a100c209576690fef17052e10b7\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://e814b158c7ac0885a2f911c4e05dcfb7ce96bdd8838744d907084cb442a7b7d4\",\"dweb:/ipfs/QmayXWc2JHsQ8AEfCw2GuEdQYxzS95VWG6GFkkmwV74VeQ\"]},\"contracts/builders/yVaultPrizePoolBuilder.sol\":{\"keccak256\":\"0x158a6da440665bf1be0bdaffa1151eb548391a88eecaf1a465e39dc6401d6471\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://4baef97528170f4b92135a23a300cf334bb2247b25c3539a05d4b8dda197ae1e\",\"dweb:/ipfs/QmbBXxUVrGMpWQYLqkYtkAnFuYoJdGCyatU3soNvxvxj1h\"]},\"contracts/comptroller/ComptrollerInterface.sol\":{\"keccak256\":\"0xaf703e9f22a7d502a52ba51f4095be28652bee25dbb93a037f9c7aea2d9c4ceb\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://f0b4a42a82dee11368de49348857a7b9dd74117a88b22e84d677f1503f6529e6\",\"dweb:/ipfs/QmaYL4zMBoBdwg55bgQK5nUtarfTzcpR6szym8si6QoR3k\"]},\"contracts/external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol\":{\"keccak256\":\"0x748fa1fc89c4ed39f84d679531bbb86b9122b4f099a87fd31f052f10ded51845\",\"urls\":[\"bzz-raw://571a798740e015f5d6db390461510b2d9560c9cc5673844fe481105bc0390e60\",\"dweb:/ipfs/Qma8SAe8gwoADB5p4f8p61PC7JejmyLhS5DrTwBX7psgr4\"]},\"contracts/external/openzeppelin/ProxyFactory.sol\":{\"keccak256\":\"0x571028e27d301916b4d956f9f6442a57203a3a43bda705fa8db7e23010d4c136\",\"urls\":[\"bzz-raw://1c289bffb413dbcfe4729b971d7e5e41ce79970fa9d87564293b446181436684\",\"dweb:/ipfs/QmZX6aGUStfFxjDTAuUBuwBJvaxysk2o7AcMFAKfCfhG5E\"]},\"contracts/external/pooltogether/FixedPoint.sol\":{\"keccak256\":\"0xdfd01a477b683c40b1afcc39d8740662dd3d8ff589da81902cb816b30729c33f\",\"urls\":[\"bzz-raw://1cee0735991084b64e17b7e28420868141a595640df5b43e658bb69fc0968095\",\"dweb:/ipfs/QmQNHkTaYSqpWWZueu1pVgVLy3TRvJ8UZtz8XrKQ2G83bf\"]},\"contracts/external/yearn/yVaultInterface.sol\":{\"keccak256\":\"0xa1b48a4a9032bc0eb51f84a0e73982eddc3d9921d44b40e59dc1fe5380734af6\",\"urls\":[\"bzz-raw://66fa9346876ed6b2064f01f251581aebf553c811cd0369ee4ab018ca08232a71\",\"dweb:/ipfs/QmYje477Vsg5ZKzHGrBcgoYgh2jY4vGF5rnSSinGUgc2Wc\"]},\"contracts/prize-pool/PrizePool.sol\":{\"keccak256\":\"0xa71c347d3b2b509a6d5aac170d74c9ee9004c813b1153c84fb29b307140ef303\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://982a0f8969498f66491a8adce3351ccbed5432a7a4c1a0e73d459f7736506641\",\"dweb:/ipfs/QmPhc9gJRP8B8kdTK1A4H1GpVCoMeq1BsABnML32KGjPMi\"]},\"contracts/prize-pool/PrizePoolTokenListenerInterface.sol\":{\"keccak256\":\"0xcbcaab4f0ea0d97e973cc3f784e41ba28b6cae4bd04d08444a65316682c49f8d\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://6ddbf8895812316028e545fd211ee39b88aed1e3d75258c778a6cc87d5ef4faa\",\"dweb:/ipfs/QmWp9h4MqDqxpQJjhSvcQi6uqhgtWWCVJWqDN61Z18N14G\"]},\"contracts/prize-pool/YieldSource.sol\":{\"keccak256\":\"0x5700973a5d0ec0bf46073788bbd19eb47691f85f23ef17cf07e625491047baaf\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://306ca42238a8c53ab45931da1f78140d756c19f9bdc1a89cb7b952bf76d54cf4\",\"dweb:/ipfs/QmX1yn5QXFX1SBXTktwNMqUvVMP592UrKtqtbjBidnU2xN\"]},\"contracts/prize-pool/yearn/yVaultPrizePool.sol\":{\"keccak256\":\"0x6611dd38cc4a4d88b4ea9ad6be81f9ee332243a1110005623a34032a87d81c09\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://0700ef9e2f65b99bc8624db284f86745a5e4dfaecabcbb2b1462c2349cab18f8\",\"dweb:/ipfs/QmYvNzMz8Ez3gEZNDfRhsh8RtmRMZrNWnwpP2Vtu9JMazf\"]},\"contracts/prize-pool/yearn/yVaultPrizePoolProxyFactory.sol\":{\"keccak256\":\"0x56920c38de38a937228d55a86597c16dba31ac27eeb7d486e947ef7f2bf44b68\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://e08d4c30ea15958ea39f58d44dd28aca96d96242061d09147c76f82ba8dad054\",\"dweb:/ipfs/QmZFFZNNxbFcahFnXULFof65ATHShf3xS3hmMM2B1QX699\"]},\"contracts/prize-strategy/single-random-winner/SingleRandomWinner.sol\":{\"keccak256\":\"0x26810da81abbcd18b01ed9c771a54458c965e002c9cb683280d219d6046151bb\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://3e078381847f5855b491d116c4dd327b8ed0cf5ed04e641bcdbd0beb610ad262\",\"dweb:/ipfs/QmTAQVf4GWB88K9vL4xu1K5kSp8cJMFS2aEvU3WLmxjEWR\"]},\"contracts/prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol\":{\"keccak256\":\"0x50bd1770ec80ccfe98043c7aff7c796e1fb383f2621b165db241eb26b330380c\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://d258e4999f29b13d8a41fe00fd11e71cba7cdc5c032a3ce6f5b4c20f8549d018\",\"dweb:/ipfs/Qmep1Br4NYdgSjhGQ28xHCFvSCwdR7NLD8WZgnmxokytgq\"]},\"contracts/prize-strategy/single-random-winner/SingleRandomWinnerStorage.sol\":{\"keccak256\":\"0x734516dde974127f249ee56a6f2f4ecc1ff983f0c5952c9a023494292eef4dbd\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://49783c566fcd4f6b17cffbf3cbd643348255c699cbeea1f39ca684f04fb27525\",\"dweb:/ipfs/QmUmmKstpMjL2LacLVMpnzgB59VG8tQQwNn9Db7kneDZas\"]},\"contracts/token/ControlledToken.sol\":{\"keccak256\":\"0xa0e50a6453bcc60ef4b167e6dd5400e04915db4dba9fb941cd6e16c589bc29fb\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://20a7ab7585a2991ad52c77bb935f72b1efbcefe52298ab852f2de711d4dc191b\",\"dweb:/ipfs/QmRGgneQfJXec6FUsyKrUfQm9Uy4McqrbwhiEQs6ZgRQ97\"]},\"contracts/token/ControlledTokenProxyFactory.sol\":{\"keccak256\":\"0x763ca7d8668fd316f0b44eaeb033dc1569f9ad9c08540c27dc0dc07ae681babf\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://d919217ca1769e86e3c931efe0c15c329af87192dabb69746634e4152cb2aa9b\",\"dweb:/ipfs/QmQEU9RnCmuUB88HekQez2eyEpvxzQsyoVP5ZDzqzekDEX\"]},\"contracts/token/Ticket.sol\":{\"keccak256\":\"0x19b1aa35a0c1241438896b37e6de707f76a460a2260f8ba027d86e2d7a40b09c\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://8daabcd6ae568ed3691275e39d080bc6f1b4b5d81c5c6ed2bf8c9907562a2714\",\"dweb:/ipfs/QmTH5MDqaBnURqyRmUvSAQ5UKHiPh8RfQ5yWRpod88dPub\"]},\"contracts/token/TicketInterface.sol\":{\"keccak256\":\"0x5c7b462e8ee1bf3aaa6d481ddb6fc7b7b9d125242faffeed523ad3fe8c3131f3\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://ab6c41a0a7bf81c34dee2684661218d1d38f12b7e08f3628bdc719cdd087a382\",\"dweb:/ipfs/QmbMwjoq2CemMb4Wy5EoH2BfSgSdbnPfG4vJqwJwn4wU98\"]},\"contracts/token/TicketProxyFactory.sol\":{\"keccak256\":\"0xb0460a80006bc47ca688080ad20dd766b077813a2a7ee7f7346e4c90fa65bc8c\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://3d333ac08b462c3c72a28b45a66f99d1f0305c9865c1d1410a4000b43fa4eeb1\",\"dweb:/ipfs/QmfQ7fN31ZM83ecLqgCbKW9Sw1oS1vDLiSvEDRx8Cd8RhQ\"]},\"contracts/token/TokenControllerInterface.sol\":{\"keccak256\":\"0xe1e3a45eff7ad26916dd6809ca96f08819cc6c4b1e938e4bd9d53982056f5dba\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://ead9daa4508d94009dd8a29464163ac0537ed3aa472e3e5f87bf31b3f0663315\",\"dweb:/ipfs/QmdEkKJeRLHEVbMCbXR6b2AY6jyfoENubM6QwW3jotHAC5\"]},\"contracts/utils/MappedSinglyLinkedList.sol\":{\"keccak256\":\"0x68c999f33ad7420d9af727c3914c1e24a8d86e1760c45c4ff64713baaf274f52\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://7d0990c50b639e214f0fc0f4ed3fcaaa40c5b63102dc20d2e6e819ab1a38c54a\",\"dweb:/ipfs/QmQUGJdjFswPQ6cxqDUK1rWuTQ16kuLgrhsVyBosDtENfJ\"]},\"contracts/utils/RelayRecipient.sol\":{\"keccak256\":\"0x3055d6a6c6918fa466f51a249cbd2306c839f7ca5cceee0feb1bec96e6ee429a\",\"license\":\"GPL-3.0-only\",\"urls\":[\"bzz-raw://2f10ee7b97bfdeab751b3ede4a403a8673a9ac0ccdb45c6ee65cda4cd94e4607\",\"dweb:/ipfs/QmSQBAQGP2RpqSe98ELPqaJxZHAA2rDPjjUFCxKc3pQ16v\"]},\"sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol\":{\"keccak256\":\"0xa20ece2e1ddeaa6432549a7c38cd02594000b93a54b92399b89bae0dd76dbc7e\",\"urls\":[\"bzz-raw://8415d61efeb2092c56155c55bc5950b8a3030282e48778f54aeeb6a10018f9db\",\"dweb:/ipfs/QmZ9VaADrJ8gootknKNQfAJR3zgh2FXh3BxsCVKuBUnRie\"]}},\"version\":1}",
+  "bytecode": "0x60806040523480156200001157600080fd5b506040516200165b3803806200165b8339810160408190526200003491620001b3565b6001600160a01b038716620000665760405162461bcd60e51b81526004016200005d906200041e565b60405180910390fd5b6001600160a01b0386166200008f5760405162461bcd60e51b81526004016200005d90620002aa565b6001600160a01b038416620000b85760405162461bcd60e51b81526004016200005d9062000364565b6001600160a01b038316620000e15760405162461bcd60e51b81526004016200005d9062000307565b6001600160a01b0382166200010a5760405162461bcd60e51b81526004016200005d906200025d565b6001600160a01b038116620001335760405162461bcd60e51b81526004016200005d90620003c1565b600580546001600160a01b03199081166001600160a01b03948516179091556003805482169284169290921790915560008054821697831697909717909655600480548716958216959095179094556006805486169385169390931790925560018054851691841691909117905560028054909316911617905562000482565b600080600080600080600060e0888a031215620001ce578283fd5b8751620001db8162000469565b6020890151909750620001ee8162000469565b6040890151909650620002018162000469565b6060890151909550620002148162000469565b6080890151909450620002278162000469565b60a08901519093506200023a8162000469565b60c08901519092506200024d8162000469565b8091505092959891949750929550565b6020808252602d908201527f795661756c745072697a65506f6f6c4275696c6465722f70726f78792d66616360408201526c746f72792d6e6f742d7a65726f60981b606082015260800190565b6020808252603c908201527f795661756c745072697a65506f6f6c4275696c6465722f73696e676c652d726160408201527f6e646f6d2d77696e6e65722d666163746f72792d6e6f742d7a65726f00000000606082015260800190565b6020808252603e908201527f795661756c745072697a65506f6f6c4275696c6465722f636f6e74726f6c6c6560408201527f642d746f6b656e2d70726f78792d666163746f72792d6e6f742d7a65726f0000606082015260800190565b6020808252603b908201527f795661756c745072697a65506f6f6c4275696c6465722f636f6d706f756e642d60408201527f7072697a652d706f6f6c2d6275696c6465722d6e6f742d7a65726f0000000000606082015260800190565b60208082526034908201527f795661756c745072697a65506f6f6c4275696c6465722f7469636b65742d707260408201527f6f78792d666163746f72792d6e6f742d7a65726f000000000000000000000000606082015260800190565b6020808252602b908201527f795661756c745072697a65506f6f6c4275696c6465722f636f6d7074726f6c6c60408201526a65722d6e6f742d7a65726f60a81b606082015260800190565b6001600160a01b03811681146200047f57600080fd5b50565b6111c980620004926000396000f3fe608060405234801561001057600080fd5b50600436106100935760003560e01c80637513d5c1116100665780637513d5c1146100d95780637da0a877146100ec57806384c92869146100f4578063aa3b296c146100fc578063c10f1a751461010457610093565b806328ab0c8c146100985780635dc7a7bc146100b65780635fe3b567146100c95780636a81d8bd146100d1575b600080fd5b6100a061010c565b6040516100ad9190610e74565b60405180910390f35b6100a06100c4366004610d4e565b61011b565b6100a0610842565b6100a0610851565b6100a06100e7366004610d17565b610860565b6100a06108e6565b6100a06108f5565b6100a0610904565b6100a0610913565b6001546001600160a01b031681565b6000808061012c6020860186610c2d565b6001600160a01b03161461024657600554600480546040805163022ec09560e01b815290516001600160a01b0394851694636150864c9442949091169263022ec0959281830192602092829003018186803b15801561018a57600080fd5b505afa15801561019e573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101c29190610c50565b6101cf6020890189610c2d565b6040518463ffffffff1660e01b81526004016101ed9392919061108a565b602060405180830381600087803b15801561020757600080fd5b505af115801561021b573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061023f9190610c50565b90506102c5565b6004805460408051633bf206a360e21b815290516001600160a01b039092169263efc81a8c9282820192602092908290030181600087803b15801561028a57600080fd5b505af115801561029e573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102c29190610c50565b90505b60006102df6102d936889003880188610db9565b83610922565b90506001600160a01b03811663941d505d61037f8361030160808a018a611106565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152506103439250505060a08b018b611106565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152508c9250610a79915050565b6040518263ffffffff1660e01b815260040161039b9190610e74565b600060405180830381600087803b1580156103b557600080fd5b505af11580156103c9573d6000803e3d6000fd5b5050506001600160a01b038216905063941d505d61046c836103ee60c08a018a611106565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152506104309250505060e08b018b611106565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152508c9250610b7b915050565b6040518263ffffffff1660e01b81526004016104889190610e74565b600060405180830381600087803b1580156104a257600080fd5b505af11580156104b6573d6000803e3d6000fd5b505050506060816001600160a01b0316639d63848a6040518163ffffffff1660e01b815260040160006040518083038186803b1580156104f557600080fd5b505afa158015610509573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526105319190810190610c6c565b9050816001600160a01b031663a7b2cc318260018151811061054f57fe5b6020026020010151610565896101200135610bce565b6105738a6101000135610bce565b6040518463ffffffff1660e01b815260040161059193929190610f22565b600060405180830381600087803b1580156105ab57600080fd5b505af11580156105bf573d6000803e3d6000fd5b50505050816001600160a01b0316633e4bdf7b826000815181106105df57fe5b60200260200101516040518263ffffffff1660e01b81526004016106039190610e74565b600060405180830381600087803b15801561061d57600080fd5b505af1158015610631573d6000803e3d6000fd5b50505050826001600160a01b03166388e1489c600660009054906101000a90046001600160a01b031688604001358960600135868660018151811061067257fe5b60200260200101518760008151811061068757fe5b60200260200101518d60200160208101906106a29190610c2d565b8e8061014001906106b391906110b8565b6040518a63ffffffff1660e01b81526004016106d799989796959493929190610f55565b600060405180830381600087803b1580156106f157600080fd5b505af1158015610705573d6000803e3d6000fd5b505060405163f2fde38b60e01b81526001600160a01b038616925063f2fde38b9150610735903390600401610e74565b600060405180830381600087803b15801561074f57600080fd5b505af1158015610763573d6000803e3d6000fd5b505060405163f2fde38b60e01b81526001600160a01b038516925063f2fde38b9150610793903390600401610e74565b600060405180830381600087803b1580156107ad57600080fd5b505af11580156107c1573d6000803e3d6000fd5b50505050806000815181106107d257fe5b60200260200101516001600160a01b0316816001815181106107f057fe5b60200260200101516001600160a01b0316846001600160a01b03167f0ff3430811d84b8ceaad3d48db335030d651f13007e5699dbf0c63134cccb8a660405160405180910390a4509095945050505050565b6000546001600160a01b031681565b6002546001600160a01b031681565b60008061087b61087536869003860186610db9565b84610922565b60405163f2fde38b60e01b81529091506001600160a01b0382169063f2fde38b906108aa903390600401610e74565b600060405180830381600087803b1580156108c457600080fd5b505af11580156108d8573d6000803e3d6000fd5b509293505050505b92915050565b6006546001600160a01b031681565b6004546001600160a01b031681565b6003546001600160a01b031681565b6005546001600160a01b031681565b600080600160009054906101000a90046001600160a01b03166001600160a01b031663efc81a8c6040518163ffffffff1660e01b8152600401602060405180830381600087803b15801561097557600080fd5b505af1158015610989573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906109ad9190610c50565b6006546000546040808801516060898101518a5160208c01519451635b5add1560e11b815297985091966001600160a01b03808a169763b6b5ba2a97610a0597918316968e9691909316948b94909290600401610e88565b600060405180830381600087803b158015610a1f57600080fd5b505af1158015610a33573d6000803e3d6000fd5b50506040516001600160a01b0380881693508516915033907f2ab58319cdf2365d33486f067735d479b1ff535cf970c13ea090f264e2ec684b90600090a4509392505050565b600080600360009054906101000a90046001600160a01b03166001600160a01b031663efc81a8c6040518163ffffffff1660e01b8152600401602060405180830381600087803b158015610acc57600080fd5b505af1158015610ae0573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610b049190610c50565b60065460405163641078a360e11b81529192506001600160a01b038084169263c820f14692610b3f928a928a928a9216908d90600401610ff3565b600060405180830381600087803b158015610b5957600080fd5b505af1158015610b6d573d6000803e3d6000fd5b509298975050505050505050565b600080600260009054906101000a90046001600160a01b03166001600160a01b031663efc81a8c6040518163ffffffff1660e01b8152600401602060405180830381600087803b158015610acc57600080fd5b6000600160801b8210610bfc5760405162461bcd60e51b8152600401610bf390611043565b60405180910390fd5b5090565b80356108e08161117b565b80516108e08161117b565b600060808284031215610c27578081fd5b50919050565b600060208284031215610c3e578081fd5b8135610c498161117b565b9392505050565b600060208284031215610c61578081fd5b8151610c498161117b565b60006020808385031215610c7e578182fd5b825167ffffffffffffffff80821115610c95578384fd5b818501915085601f830112610ca8578384fd5b815181811115610cb6578485fd5b8381029150610cc684830161114b565b8181528481019084860184860187018a1015610ce0578788fd5b8795505b83861015610d0a57610cf68a82610c0b565b835260019590950194918601918601610ce4565b5098975050505050505050565b60008060a08385031215610d29578081fd5b610d338484610c16565b91506080830135610d438161117b565b809150509250929050565b600080600060c08486031215610d62578081fd5b610d6c8585610c16565b9250608084013567ffffffffffffffff811115610d87578182fd5b84016101608187031215610d99578182fd5b915060a084013560ff81168114610dae578182fd5b809150509250925092565b600060808284031215610dca578081fd5b610dd4608061114b565b8235610ddf8161117b565b808252506020830135602082015260408301356040820152606083013560608201528091505092915050565b6001600160a01b0316815260200190565b6001600160a01b03169052565b60008151808452815b81811015610e4e57602081850181015186830182015201610e32565b81811115610e5f5782602083870101525b50601f01601f19169290920160200192915050565b6001600160a01b0391909116815260200190565b600061010080830160018060a01b03808d1685526020818d1681870152818c1660408701528360608701528293508a519150610ec48284611172565b9350808b019250845b82811015610eee57610ee0858551610e0b565b945092810192600101610ecd565b50505050809150508560808301528460a0830152610f0f60c0830185610e1c565b8260e08301529998505050505050505050565b6001600160a01b039390931683526fffffffffffffffffffffffffffffffff918216602084015216604082015260600190565b600061010080830160018060a01b03808e16855260208d818701528c6040870152818c166060870152818b166080870152818a1660a087015281891660c08701528360e0870152829350610fa98784611172565b93508792508491505b86821015610fe057808301610fd085610fcb8387610c00565b610e0b565b9450925060019190910190610fb2565b50919d9c50505050505050505050505050565b600060a0825261100660a0830188610e29565b82810360208401526110188188610e29565b60ff96909616604084015250506001600160a01b039283166060820152911660809091015292915050565b60208082526027908201527f53616665436173743a2076616c756520646f65736e27742066697420696e20316040820152663238206269747360c81b606082015260800190565b9283526001600160a01b03918216602084015216604082015260806060820181905260009082015260a00190565b6000808335601e198436030181126110ce578283fd5b83018035915067ffffffffffffffff8211156110e8578283fd5b60209081019250810236038213156110ff57600080fd5b9250929050565b6000808335601e1984360301811261111c578182fd5b83018035915067ffffffffffffffff821115611136578283fd5b6020019150368190038213156110ff57600080fd5b60405181810167ffffffffffffffff8111828210171561116a57600080fd5b604052919050565b90815260200190565b6001600160a01b038116811461119057600080fd5b5056fea2646970667358221220dc8ae4ae76043e2fe8c30fe26371d42298ec68d472a78ea2f963a86c03c07eb464736f6c634300060c0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100935760003560e01c80637513d5c1116100665780637513d5c1146100d95780637da0a877146100ec57806384c92869146100f4578063aa3b296c146100fc578063c10f1a751461010457610093565b806328ab0c8c146100985780635dc7a7bc146100b65780635fe3b567146100c95780636a81d8bd146100d1575b600080fd5b6100a061010c565b6040516100ad9190610e74565b60405180910390f35b6100a06100c4366004610d4e565b61011b565b6100a0610842565b6100a0610851565b6100a06100e7366004610d17565b610860565b6100a06108e6565b6100a06108f5565b6100a0610904565b6100a0610913565b6001546001600160a01b031681565b6000808061012c6020860186610c2d565b6001600160a01b03161461024657600554600480546040805163022ec09560e01b815290516001600160a01b0394851694636150864c9442949091169263022ec0959281830192602092829003018186803b15801561018a57600080fd5b505afa15801561019e573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101c29190610c50565b6101cf6020890189610c2d565b6040518463ffffffff1660e01b81526004016101ed9392919061108a565b602060405180830381600087803b15801561020757600080fd5b505af115801561021b573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061023f9190610c50565b90506102c5565b6004805460408051633bf206a360e21b815290516001600160a01b039092169263efc81a8c9282820192602092908290030181600087803b15801561028a57600080fd5b505af115801561029e573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102c29190610c50565b90505b60006102df6102d936889003880188610db9565b83610922565b90506001600160a01b03811663941d505d61037f8361030160808a018a611106565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152506103439250505060a08b018b611106565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152508c9250610a79915050565b6040518263ffffffff1660e01b815260040161039b9190610e74565b600060405180830381600087803b1580156103b557600080fd5b505af11580156103c9573d6000803e3d6000fd5b5050506001600160a01b038216905063941d505d61046c836103ee60c08a018a611106565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152506104309250505060e08b018b611106565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152508c9250610b7b915050565b6040518263ffffffff1660e01b81526004016104889190610e74565b600060405180830381600087803b1580156104a257600080fd5b505af11580156104b6573d6000803e3d6000fd5b505050506060816001600160a01b0316639d63848a6040518163ffffffff1660e01b815260040160006040518083038186803b1580156104f557600080fd5b505afa158015610509573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526105319190810190610c6c565b9050816001600160a01b031663a7b2cc318260018151811061054f57fe5b6020026020010151610565896101200135610bce565b6105738a6101000135610bce565b6040518463ffffffff1660e01b815260040161059193929190610f22565b600060405180830381600087803b1580156105ab57600080fd5b505af11580156105bf573d6000803e3d6000fd5b50505050816001600160a01b0316633e4bdf7b826000815181106105df57fe5b60200260200101516040518263ffffffff1660e01b81526004016106039190610e74565b600060405180830381600087803b15801561061d57600080fd5b505af1158015610631573d6000803e3d6000fd5b50505050826001600160a01b03166388e1489c600660009054906101000a90046001600160a01b031688604001358960600135868660018151811061067257fe5b60200260200101518760008151811061068757fe5b60200260200101518d60200160208101906106a29190610c2d565b8e8061014001906106b391906110b8565b6040518a63ffffffff1660e01b81526004016106d799989796959493929190610f55565b600060405180830381600087803b1580156106f157600080fd5b505af1158015610705573d6000803e3d6000fd5b505060405163f2fde38b60e01b81526001600160a01b038616925063f2fde38b9150610735903390600401610e74565b600060405180830381600087803b15801561074f57600080fd5b505af1158015610763573d6000803e3d6000fd5b505060405163f2fde38b60e01b81526001600160a01b038516925063f2fde38b9150610793903390600401610e74565b600060405180830381600087803b1580156107ad57600080fd5b505af11580156107c1573d6000803e3d6000fd5b50505050806000815181106107d257fe5b60200260200101516001600160a01b0316816001815181106107f057fe5b60200260200101516001600160a01b0316846001600160a01b03167f0ff3430811d84b8ceaad3d48db335030d651f13007e5699dbf0c63134cccb8a660405160405180910390a4509095945050505050565b6000546001600160a01b031681565b6002546001600160a01b031681565b60008061087b61087536869003860186610db9565b84610922565b60405163f2fde38b60e01b81529091506001600160a01b0382169063f2fde38b906108aa903390600401610e74565b600060405180830381600087803b1580156108c457600080fd5b505af11580156108d8573d6000803e3d6000fd5b509293505050505b92915050565b6006546001600160a01b031681565b6004546001600160a01b031681565b6003546001600160a01b031681565b6005546001600160a01b031681565b600080600160009054906101000a90046001600160a01b03166001600160a01b031663efc81a8c6040518163ffffffff1660e01b8152600401602060405180830381600087803b15801561097557600080fd5b505af1158015610989573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906109ad9190610c50565b6006546000546040808801516060898101518a5160208c01519451635b5add1560e11b815297985091966001600160a01b03808a169763b6b5ba2a97610a0597918316968e9691909316948b94909290600401610e88565b600060405180830381600087803b158015610a1f57600080fd5b505af1158015610a33573d6000803e3d6000fd5b50506040516001600160a01b0380881693508516915033907f2ab58319cdf2365d33486f067735d479b1ff535cf970c13ea090f264e2ec684b90600090a4509392505050565b600080600360009054906101000a90046001600160a01b03166001600160a01b031663efc81a8c6040518163ffffffff1660e01b8152600401602060405180830381600087803b158015610acc57600080fd5b505af1158015610ae0573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610b049190610c50565b60065460405163641078a360e11b81529192506001600160a01b038084169263c820f14692610b3f928a928a928a9216908d90600401610ff3565b600060405180830381600087803b158015610b5957600080fd5b505af1158015610b6d573d6000803e3d6000fd5b509298975050505050505050565b600080600260009054906101000a90046001600160a01b03166001600160a01b031663efc81a8c6040518163ffffffff1660e01b8152600401602060405180830381600087803b158015610acc57600080fd5b6000600160801b8210610bfc5760405162461bcd60e51b8152600401610bf390611043565b60405180910390fd5b5090565b80356108e08161117b565b80516108e08161117b565b600060808284031215610c27578081fd5b50919050565b600060208284031215610c3e578081fd5b8135610c498161117b565b9392505050565b600060208284031215610c61578081fd5b8151610c498161117b565b60006020808385031215610c7e578182fd5b825167ffffffffffffffff80821115610c95578384fd5b818501915085601f830112610ca8578384fd5b815181811115610cb6578485fd5b8381029150610cc684830161114b565b8181528481019084860184860187018a1015610ce0578788fd5b8795505b83861015610d0a57610cf68a82610c0b565b835260019590950194918601918601610ce4565b5098975050505050505050565b60008060a08385031215610d29578081fd5b610d338484610c16565b91506080830135610d438161117b565b809150509250929050565b600080600060c08486031215610d62578081fd5b610d6c8585610c16565b9250608084013567ffffffffffffffff811115610d87578182fd5b84016101608187031215610d99578182fd5b915060a084013560ff81168114610dae578182fd5b809150509250925092565b600060808284031215610dca578081fd5b610dd4608061114b565b8235610ddf8161117b565b808252506020830135602082015260408301356040820152606083013560608201528091505092915050565b6001600160a01b0316815260200190565b6001600160a01b03169052565b60008151808452815b81811015610e4e57602081850181015186830182015201610e32565b81811115610e5f5782602083870101525b50601f01601f19169290920160200192915050565b6001600160a01b0391909116815260200190565b600061010080830160018060a01b03808d1685526020818d1681870152818c1660408701528360608701528293508a519150610ec48284611172565b9350808b019250845b82811015610eee57610ee0858551610e0b565b945092810192600101610ecd565b50505050809150508560808301528460a0830152610f0f60c0830185610e1c565b8260e08301529998505050505050505050565b6001600160a01b039390931683526fffffffffffffffffffffffffffffffff918216602084015216604082015260600190565b600061010080830160018060a01b03808e16855260208d818701528c6040870152818c166060870152818b166080870152818a1660a087015281891660c08701528360e0870152829350610fa98784611172565b93508792508491505b86821015610fe057808301610fd085610fcb8387610c00565b610e0b565b9450925060019190910190610fb2565b50919d9c50505050505050505050505050565b600060a0825261100660a0830188610e29565b82810360208401526110188188610e29565b60ff96909616604084015250506001600160a01b039283166060820152911660809091015292915050565b60208082526027908201527f53616665436173743a2076616c756520646f65736e27742066697420696e20316040820152663238206269747360c81b606082015260800190565b9283526001600160a01b03918216602084015216604082015260806060820181905260009082015260a00190565b6000808335601e198436030181126110ce578283fd5b83018035915067ffffffffffffffff8211156110e8578283fd5b60209081019250810236038213156110ff57600080fd5b9250929050565b6000808335601e1984360301811261111c578182fd5b83018035915067ffffffffffffffff821115611136578283fd5b6020019150368190038213156110ff57600080fd5b60405181810167ffffffffffffffff8111828210171561116a57600080fd5b604052919050565b90815260200190565b6001600160a01b038116811461119057600080fd5b5056fea2646970667358221220dc8ae4ae76043e2fe8c30fe26371d42298ec68d472a78ea2f963a86c03c07eb464736f6c634300060c0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 6115,
+        "contract": "contracts/builders/yVaultPrizePoolBuilder.sol:yVaultPrizePoolBuilder",
+        "label": "comptroller",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_contract(ComptrollerInterface)8030"
+      },
+      {
+        "astId": 6117,
+        "contract": "contracts/builders/yVaultPrizePoolBuilder.sol:yVaultPrizePoolBuilder",
+        "label": "vaultPrizePoolProxyFactory",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_contract(yVaultPrizePoolProxyFactory)13008"
+      },
+      {
+        "astId": 6119,
+        "contract": "contracts/builders/yVaultPrizePoolBuilder.sol:yVaultPrizePoolBuilder",
+        "label": "controlledTokenProxyFactory",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_contract(ControlledTokenProxyFactory)16741"
+      },
+      {
+        "astId": 6121,
+        "contract": "contracts/builders/yVaultPrizePoolBuilder.sol:yVaultPrizePoolBuilder",
+        "label": "ticketProxyFactory",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_contract(TicketProxyFactory)17010"
+      },
+      {
+        "astId": 6123,
+        "contract": "contracts/builders/yVaultPrizePoolBuilder.sol:yVaultPrizePoolBuilder",
+        "label": "singleRandomWinnerProxyFactory",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_contract(SingleRandomWinnerProxyFactory)14180"
+      },
+      {
+        "astId": 6125,
+        "contract": "contracts/builders/yVaultPrizePoolBuilder.sol:yVaultPrizePoolBuilder",
+        "label": "proxyFactory",
+        "offset": 0,
+        "slot": "5",
+        "type": "t_contract(OpenZeppelinProxyFactoryInterface)9572"
+      },
+      {
+        "astId": 6127,
+        "contract": "contracts/builders/yVaultPrizePoolBuilder.sol:yVaultPrizePoolBuilder",
+        "label": "trustedForwarder",
+        "offset": 0,
+        "slot": "6",
+        "type": "t_address"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_contract(ComptrollerInterface)8030": {
+        "encoding": "inplace",
+        "label": "contract ComptrollerInterface",
+        "numberOfBytes": "20"
+      },
+      "t_contract(ControlledTokenProxyFactory)16741": {
+        "encoding": "inplace",
+        "label": "contract ControlledTokenProxyFactory",
+        "numberOfBytes": "20"
+      },
+      "t_contract(OpenZeppelinProxyFactoryInterface)9572": {
+        "encoding": "inplace",
+        "label": "contract OpenZeppelinProxyFactoryInterface",
+        "numberOfBytes": "20"
+      },
+      "t_contract(SingleRandomWinnerProxyFactory)14180": {
+        "encoding": "inplace",
+        "label": "contract SingleRandomWinnerProxyFactory",
+        "numberOfBytes": "20"
+      },
+      "t_contract(TicketProxyFactory)17010": {
+        "encoding": "inplace",
+        "label": "contract TicketProxyFactory",
+        "numberOfBytes": "20"
+      },
+      "t_contract(yVaultPrizePoolProxyFactory)13008": {
+        "encoding": "inplace",
+        "label": "contract yVaultPrizePoolProxyFactory",
+        "numberOfBytes": "20"
+      }
+    }
+  },
+  "gasEstimates": {
+    "creation": {
+      "codeDepositCost": "910600",
+      "executionCost": "infinite",
+      "totalCost": "infinite"
+    },
+    "external": {
+      "comptroller()": "1115",
+      "controlledTokenProxyFactory()": "1137",
+      "createSingleRandomWinner((address,uint256,uint256,uint256),(address,address,uint256,uint256,string,string,string,string,uint256,uint256,address[]),uint8)": "infinite",
+      "createyVaultPrizePool((address,uint256,uint256,uint256),address)": "infinite",
+      "proxyFactory()": "1158",
+      "singleRandomWinnerProxyFactory()": "1114",
+      "ticketProxyFactory()": "1136",
+      "trustedForwarder()": "1092",
+      "vaultPrizePoolProxyFactory()": "1071"
+    },
+    "internal": {
+      "_createControlledToken(contract TokenControllerInterface,string memory,string memory,uint8)": "infinite",
+      "_createTicket(contract TokenControllerInterface,string memory,string memory,uint8)": "infinite",
+      "_createyVaultPrizePool(struct yVaultPrizePoolBuilder.yVaultPrizePoolConfig memory,contract PrizePoolTokenListenerInterface)": "infinite"
+    }
+  }
+}
