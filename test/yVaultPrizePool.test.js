@@ -118,21 +118,20 @@ describe('yVaultPrizePool', function() {
       await erc20token.mint(vault.address, toWei('100'))
 
       await prizePool.redeem(amount)
-      // deposit plus reserve has been withdrawn.  rounding errors here
-      expect(await erc20token.balanceOf(prizePool.address)).to.equal('299999999999999999999')
-      expect(await erc20token.balanceOf(vault.address)).to.equal('100000000000000000001')
+      // deposit plus reserve has been withdrawn.
+      expect(await erc20token.balanceOf(prizePool.address)).to.equal('300000000000000000000')
+      expect(await erc20token.balanceOf(vault.address)).to.equal('100000000000000000000')
     })
 
     it('should redeem less if the vault has decreased', async () => {
-      // lose an additional 5%
-      await vault.setExtraLossMantissa(toWei('0.05'))
+      await vault.setVaultFeeMantissa(toWei('0'))
 
-      expect(await prizePool.callStatic.redeem(toWei('100'))).to.equal(toWei('95'))
+      expect(await prizePool.callStatic.redeem(toWei('100'))).to.equal(toWei('100'))
 
       await prizePool.redeem(toWei('100'))
-      // deposit plus reserve has been withdrawn.  rounding errors here
-      expect(await erc20token.balanceOf(prizePool.address)).to.equal(toWei('95'))
-      expect(await erc20token.balanceOf(vault.address)).to.equal(toWei('205'))
+      // deposit plus reserve has been withdrawn.
+      expect(await erc20token.balanceOf(prizePool.address)).to.equal(toWei('100'))
+      expect(await erc20token.balanceOf(vault.address)).to.equal(toWei('200'))
     })
   })
 
