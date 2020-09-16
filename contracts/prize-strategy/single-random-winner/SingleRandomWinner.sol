@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -7,9 +7,9 @@ import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC182
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
-import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "./SingleRandomWinnerStorage.sol";
+import "../../external/pooltogether/FixedPoint.sol";
 import "../../token/TokenControllerInterface.sol";
 import "../../token/ControlledToken.sol";
 import "../../prize-pool/PrizePool.sol";

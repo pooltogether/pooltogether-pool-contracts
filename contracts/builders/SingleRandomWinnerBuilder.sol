@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";

@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 
@@ -17,7 +17,9 @@ contract RNGServiceMock is RNGInterface {
     requestFee = _requestFee;
   }
 
-  function getRequestFee() external override view returns (address _feeToken, uint256 _requestFee) {
+  /// @return feeToken
+  /// @return requestFee
+  function getRequestFee() external override view returns (address feeToken, uint256 requestFee) {
     return (feeToken, requestFee);
   }
 

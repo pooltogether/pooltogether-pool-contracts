@@ -1,8 +1,8 @@
-pragma solidity ^0.6.4;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
-import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "../external/pooltogether/FixedPoint.sol";
 
 /// @title Calculates a users share of a token faucet.
 /// @notice The tokens are dripped at a "drip rate per second".  This is the number of tokens that

@@ -120,6 +120,26 @@ describe('PrizePool', function() {
         await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, wallet2._address, toWei('1'), ticket.address).returns()
         await ticket.call(prizePool, 'beforeTokenTransfer', wallet._address, wallet2._address, toWei('1'))
       })
+
+      it('should accrue credit for the sender, but ensure the credit limit is respected', async () => {
+        await ticket.mock.balanceOf.withArgs(wallet._address).returns(toWei('100'))
+        await ticket.mock.balanceOf.withArgs(wallet2._address).returns(toWei('10'))
+
+        debug(`calculateEarlyExitFee...`)
+        await prizePool.setCurrentTime(0)
+        // trigger credit init
+        await prizePool.calculateEarlyExitFee(wallet._address, ticket.address, toWei('100'))
+
+        debug(`beforeTokenTransfer...`)
+        await prizePool.setCurrentTime(10)
+        await prizeStrategy.mock.beforeTokenTransfer.withArgs(wallet._address, wallet2._address, toWei('50'), ticket.address).returns()
+        await comptroller.mock.beforeTokenTransfer.withArgs(wallet._address, wallet2._address, toWei('50'), ticket.address).returns()
+        // now ensure credit is limited
+        await ticket.call(prizePool, 'beforeTokenTransfer', wallet._address, wallet2._address, toWei('50'))
+
+        debug(`balanceOfCredit...`)
+        expect(await call(prizePool, 'balanceOfCredit', wallet._address, ticket.address)).to.equal(toWei('5'))
+      })
     })
 
     describe('initialize()', () => {

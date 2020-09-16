@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 
 import "../prize-strategy/single-random-winner/SingleRandomWinner.sol";
 

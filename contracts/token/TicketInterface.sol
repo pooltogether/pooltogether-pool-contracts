@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 
 /// @title Interface that allows a user to draw an address using an index
 interface TicketInterface {
