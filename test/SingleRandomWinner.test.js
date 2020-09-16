@@ -216,6 +216,15 @@ describe('SingleRandomWinner', function() {
     });
   })
 
+  describe.only('startAward()', () => {
+    it('should allow the rng to be reset on timeout', async () => {
+      await rngFeeToken.mock.approve.withArgs(rng.address, toWei('1')).returns(true);
+      await rng.mock.requestRandomNumber.returns('11', '1');
+      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
+      await prizeStrategy.startAward();
+    })
+  })
+
   describe("beforeTokenTransfer()", () => {
     it('should allow other token transfers if awarding is happening', async () => {
       await rngFeeToken.mock.approve.withArgs(rng.address, toWei('1')).returns(true);
