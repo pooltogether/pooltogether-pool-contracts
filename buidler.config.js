@@ -24,7 +24,7 @@ const testnetUser3 = '0x50D6d6195b102f9b58A29a57E3D71822881033a5' // Account 5
 
 const config = {
   solc: {
-    version: "0.6.4",
+    version: "0.6.12",
     optimizer: {
       enabled: true,
       runs: 200

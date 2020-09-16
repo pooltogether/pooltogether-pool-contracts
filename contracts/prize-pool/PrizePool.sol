@@ -1,10 +1,10 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
-import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "../external/pooltogether/FixedPoint.sol";
 
 import "../comptroller/ComptrollerInterface.sol";
 import "./YieldSource.sol";
@@ -126,6 +126,23 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   event PrizeStrategySet(
     address indexed prizeStrategy
   );
+
+  /// @dev Emitted when credit is minted
+  event CreditMinted(
+    address indexed user,
+    address indexed token,
+    uint256 amount
+  );
+
+  /// @dev Emitted when credit is burned
+  event CreditBurned(
+    address indexed user,
+    address indexed token,
+    uint256 amount
+  );
+
+  /// @dev Eent emitted when the Prize Strategy has been set or changed
+  event PrizeStrategySet(address indexed prizeStrategy);
 
   /// @dev Event emitted when the prize pool enters emergency shutdown mode
   event EmergencyShutdown();
@@ -318,15 +335,17 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   {
     (uint256 exitFee, uint256 burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
     require(exitFee <= maximumExitFee, "PrizePool/exit-fee-exceeds-user-maximum");
-    
+
     // burn the credit
     _burnCredit(from, controlledToken, burnedCredit);
 
     // burn the tickets
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
+
     // redeem the tickets less the fee
     uint256 amountLessFee = amount.sub(exitFee);
     uint256 redeemed = _redeem(amountLessFee);
+
     require(_token().transfer(from, redeemed), "PrizePool/instant-transfer-failed");
 
     emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, redeemed, exitFee);
@@ -398,14 +417,18 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     }
   }
 
-  /// @notice Updates the Prize Strategy when tokens are transferred between holders.  Only transfers, not minting or burning.
-  /// @param from The address the tokens are being transferred from
-  /// @param to The address the tokens are being transferred to
+  /// @notice Updates the Prize Strategy when tokens are transferred between holders.
+  /// @param from The address the tokens are being transferred from (0 if minting)
+  /// @param to The address the tokens are being transferred to (0 if burning)
   /// @param amount The amount of tokens being trasferred
   function beforeTokenTransfer(address from, address to, uint256 amount) external override onlyControlledToken(msg.sender) {
     if (from != address(0)) {
-      // Here we want to limit the amount of credit a user has, so we calculate based on their *new* balance.
-      _accrueCredit(from, msg.sender, IERC20(msg.sender).balanceOf(from), 0);
+      uint256 fromBeforeBalance = IERC20(msg.sender).balanceOf(from);
+      // first accrue credit for their old balance
+      uint256 newCreditBalance = _calculateCreditBalance(from, msg.sender, fromBeforeBalance, 0);
+      // now limit their credit based on the new balance
+      newCreditBalance = _applyCreditLimit(msg.sender, fromBeforeBalance.sub(amount), newCreditBalance);
+      _updateCreditBalance(from, msg.sender, newCreditBalance);
     }
     if (to != address(0)) {
       _accrueCredit(to, msg.sender, IERC20(msg.sender).balanceOf(to), 0);
@@ -743,30 +766,53 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     return _interest.div(accruedPerSecond);
   }
 
-  /// @notice Burns a users credit
+  /// @notice Burns a users credit.
   /// @param user The user whose credit should be burned
   /// @param credit The amount of credit to burn
   function _burnCredit(address user, address controlledToken, uint256 credit) internal {
-    if (credit > 0) {
-      tokenCreditBalances[controlledToken][user].balance = uint256(tokenCreditBalances[controlledToken][user].balance).sub(credit).toUint128();
-    }
+    tokenCreditBalances[controlledToken][user].balance = uint256(tokenCreditBalances[controlledToken][user].balance).sub(credit).toUint128();
+
+    emit CreditBurned(user, controlledToken, credit);
   }
 
-  /// @notice Accrues ticket credit for a user assuming their current balance is the passed balance.
+  /// @notice Accrues ticket credit for a user assuming their current balance is the passed balance.  May burn credit if they exceed their limit.
   /// @param user The user for whom to accrue credit
   /// @param controlledToken The controlled token whose balance we are checking
   /// @param controlledTokenBalance The balance to use for the user
   /// @param extra Additional credit to be added
   function _accrueCredit(address user, address controlledToken, uint256 controlledTokenBalance, uint256 extra) internal {
-    uint256 credit = calculateAccruedCredit(user, controlledToken, controlledTokenBalance);
+    _updateCreditBalance(
+      user,
+      controlledToken,
+      _calculateCreditBalance(user, controlledToken, controlledTokenBalance, extra)
+    );
+  }
+
+  function _calculateCreditBalance(address user, address controlledToken, uint256 controlledTokenBalance, uint256 extra) internal view returns (uint256) {
+    uint256 newBalance;
     CreditBalance storage creditBalance = tokenCreditBalances[controlledToken][user];
-    uint128 newBalance = _applyCreditLimit(controlledToken, controlledTokenBalance, uint256(creditBalance.balance).add(credit).add(extra)).toUint128();
-    if (creditBalance.balance != newBalance || creditBalance.timestamp == 0) {
-      tokenCreditBalances[controlledToken][user] = CreditBalance({
-        balance: newBalance,
-        timestamp: _currentTime().toUint32(),
-        initialized: true
-      });
+    if (!creditBalance.initialized) {
+      newBalance = 0;
+    } else {
+      uint256 credit = calculateAccruedCredit(user, controlledToken, controlledTokenBalance);
+      newBalance = _applyCreditLimit(controlledToken, controlledTokenBalance, uint256(creditBalance.balance).add(credit).add(extra));
+    }
+    return newBalance;
+  }
+
+  function _updateCreditBalance(address user, address controlledToken, uint256 newBalance) internal {
+    uint256 oldBalance = tokenCreditBalances[controlledToken][user].balance;
+
+    tokenCreditBalances[controlledToken][user] = CreditBalance({
+      balance: newBalance.toUint128(),
+      timestamp: _currentTime().toUint32(),
+      initialized: true
+    });
+
+    if (oldBalance < newBalance) {
+      emit CreditMinted(user, controlledToken, newBalance.sub(oldBalance));
+    } else {
+      emit CreditBurned(user, controlledToken, oldBalance.sub(newBalance));
     }
   }
 

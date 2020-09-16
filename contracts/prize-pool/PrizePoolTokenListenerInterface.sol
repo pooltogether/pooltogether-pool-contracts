@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 
 /// @title An interface that allows a contract to listen to token mint, transfer and burn events.
 interface PrizePoolTokenListenerInterface {

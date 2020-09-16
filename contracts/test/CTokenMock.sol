@@ -16,10 +16,10 @@ You should have received a copy of the GNU General Public License
 along with PoolTogether.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
-import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "../external/pooltogether/FixedPoint.sol";
 
 import "./ERC20Mintable.sol";
 

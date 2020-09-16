@@ -1,10 +1,10 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
-import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
+import "../../external/pooltogether/FixedPoint.sol";
 import "../../external/compound/CTokenInterface.sol";
 import "../PrizePool.sol";
 
@@ -68,8 +68,7 @@ contract CompoundPrizePool is PrizePool {
   /// to be held in escrow by the Yield Service
   /// @param amount The amount of asset tokens to be supplied
   function _supply(uint256 amount) internal override {
-    IERC20 assetToken = _token();
-    assetToken.approve(address(cToken), amount);
+    _token().approve(address(cToken), amount);
     require(cToken.mint(amount) == 0, "CompoundPrizePool/mint-failed");
   }
 

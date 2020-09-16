@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -99,9 +99,9 @@ contract yVaultPrizePool is PrizePool {
     require(_balance() >= amount, "yVaultPrizePool/insuff-liquidity");
 
     // yVault will try to over-withdraw so that amount is always available
-    // we want: 100 = X - X*feeRate
-    // 100 = X(1 - feeRate)
-    // 100 / (1 - feeRate) = X
+    // we want: amount = X - X*feeRate
+    // amount = X(1 - feeRate)
+    // amount / (1 - feeRate) = X
     // calculate possible fee
     uint256 withdrawal;
     if (reserveRateMantissa > 0) {

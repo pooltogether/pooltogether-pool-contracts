@@ -89,7 +89,7 @@ describe('CompoundPrizePool', function() {
       let amount = toWei('500')
 
       await erc20token.mock.approve.withArgs(cToken.address, amount).returns(true)
-      await cToken.mock.mint.withArgs(amount).returns('1')
+      await cToken.mock.mint.returns('1')
       await expect(prizePool.supply(amount)).to.be.revertedWith('CompoundPrizePool/mint-failed')
     })
   })

@@ -348,10 +348,12 @@ function PoolEnv() {
   }
 
   this.withdrawInstantly = async function ({user, tickets}) {
+    debug(`withdrawInstantly: user ${user}, tickets: ${tickets}`)
     let wallet = await this.wallet(user)
     let ticket = await this.ticket(wallet)
     let prizePool = await this.prizePool(wallet)
     await prizePool.withdrawInstantlyFrom(wallet._address, toWei(tickets), ticket.address, toWei('1000'))
+    debug("done withdraw instantly")
   }
 
   this.withdrawWithTimelock = async function ({user, tickets}) {

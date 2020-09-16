@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.12;
 
 // solium-disable security/no-inline-assembly
 // solium-disable security/no-low-level-calls
