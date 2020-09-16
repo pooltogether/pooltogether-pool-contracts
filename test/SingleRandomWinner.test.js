@@ -216,12 +216,23 @@ describe('SingleRandomWinner', function() {
     });
   })
 
-  describe.only('startAward()', () => {
+  describe('startAward()', () => {
     it('should allow the rng to be reset on timeout', async () => {
       await rngFeeToken.mock.approve.withArgs(rng.address, toWei('1')).returns(true);
       await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
-      await prizeStrategy.startAward();
+
+      await prizeStrategy.startAward()
+
+      // set it beyond request timeout
+      await prizeStrategy.setCurrentTime((await prizeStrategy.prizePeriodEndAt()).add(await prizeStrategy.rngRequestTimeout()).add(1));
+
+      // should be timed out
+      expect(await prizeStrategy.isRngTimedOut()).to.be.true
+
+      await rng.mock.requestRandomNumber.returns('12', '10');
+
+      await prizeStrategy.startAward()
     })
   })
 

@@ -43,7 +43,7 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
     uint32 rngLockBlock
   );
 
-  event PrizePoolAwardCancelled();
+  event RngRequestFailed();
 
   event PrizePoolAwarded(
     address indexed operator,
@@ -271,7 +271,7 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
   function startAward() external requireCanStartAward {
     if (isRngTimedOut()) {
       delete rngRequest;
-      emit PrizePoolAwardCancelled();
+      emit RngRequestFailed();
     }
     (address feeToken, uint256 requestFee) = rng.getRequestFee();
     if (feeToken != address(0) && requestFee > 0) {
@@ -281,7 +281,7 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
     (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber();
     rngRequest.id = requestId;
     rngRequest.lockBlock = lockBlock;
-    rngRequest.requestedAt = _currentTime();
+    rngRequest.requestedAt = _currentTime().toUint32();
 
     emit PrizePoolAwardStarted(_msgSender(), address(prizePool), requestId, lockBlock);
   }
