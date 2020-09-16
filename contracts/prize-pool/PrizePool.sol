@@ -4,13 +4,9 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
-<<<<<<< HEAD
-import "../external/pooltogether/FixedPoint.sol";
-=======
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
-import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
->>>>>>> c80ba59... Updated all token transfers to use safeTransfer versions
 
+import "../external/pooltogether/FixedPoint.sol";
 import "../comptroller/ComptrollerInterface.sol";
 import "./YieldSource.sol";
 import "../token/ControlledToken.sol";
@@ -146,9 +142,6 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     address indexed token,
     uint256 amount
   );
-
-  /// @dev Eent emitted when the Prize Strategy has been set or changed
-  event PrizeStrategySet(address indexed prizeStrategy);
 
   /// @dev Event emitted when the prize pool enters emergency shutdown mode
   event EmergencyShutdown();
