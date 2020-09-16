@@ -234,7 +234,7 @@ describe('PrizePool', function() {
 
         await expect(prizePool.captureAwardBalance())
           .to.emit(prizePool, 'ReserveFeeCaptured')
-          .withArgs(reserveFee)
+          .withArgs(ticket.address, reserveFee)
 
         expect(await prizePool.awardBalance()).to.equal(toWei('99'))
       })

@@ -13,8 +13,8 @@ import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
 import "../utils/RelayRecipient.sol";
 
-/// @title Base Prize Pool for managing escrowed assets
-/// @notice Manages depositing and withdrawing assets from the Prize Pool
+/// @title Escrows assets and deposits them into a yield source.  Exposes interest to Prize Strategy.  Users deposit and withdraw from this contract to participate in Prize Pool.
+/// @notice Accounting is managed using Controlled Tokens, whose mint and burn functions can only be called by this contract.
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
 abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
   using SafeMath for uint256;
@@ -39,7 +39,9 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     address indexed token
   );
 
+  /// @dev Emitted when reserve is captured.
   event ReserveFeeCaptured(
+    address indexed token,
     uint256 amount
   );
 
@@ -91,7 +93,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 exitFee
   );
 
-  /// @dev Event emitted when assets are withdrawn into a timelock
+  /// @dev Event emitted upon a withdrawal with timelock
   event TimelockedWithdrawal(
     address indexed operator,
     address indexed from,
@@ -108,18 +110,22 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 redeemed
   );
 
-  /// @dev Eent emitted when the Liquidity Cap has been set or changed
-  event LiquidityCapSet(uint256 liquidityCap);
+  /// @dev Event emitted when the Liquidity Cap is set
+  event LiquidityCapSet(
+    uint256 liquidityCap
+  );
 
-  /// @dev Eent emitted when the Credit Rate has been set or changed
+  /// @dev Event emitted when the Credit plan is set
   event CreditPlanSet(
-    address controlledToken,
+    address token,
     uint128 creditLimitMantissa,
     uint128 creditRateMantissa
   );
 
-  /// @dev Eent emitted when the Prize Strategy has been set or changed
-  event PrizeStrategySet(address indexed prizeStrategy);
+  /// @dev Event emitted when the Prize Strategy is set
+  event PrizeStrategySet(
+    address indexed prizeStrategy
+  );
 
   /// @dev Event emitted when the prize pool enters emergency shutdown mode
   event EmergencyShutdown();
@@ -148,19 +154,19 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   PrizePoolTokenListenerInterface public prizeStrategy;
 
   /// @dev The maximum possible exit fee fraction as a fixed point 18 number.
-  /// For example, if the maxExitFeeMantissa is "0.1 ether", then the maximum exit fee for a withdrawal of 100 will be 10.
+  /// For example, if the maxExitFeeMantissa is "0.1 ether", then the maximum exit fee for a withdrawal of 100 Dai will be 10 Dai
   uint256 public maxExitFeeMantissa;
 
-  /// @dev The maximum possible timelock duration for a timelocked withdrawal.
+  /// @dev The maximum possible timelock duration for a timelocked withdrawal (in seconds).
   uint256 public maxTimelockDuration;
 
   /// @dev The total funds that are timelocked.
   uint256 public timelockTotalSupply;
 
-  /// @dev The total amount of funds that the prize pool can hold (default: 0; no cap)
+  /// @dev The total amount of funds that the prize pool can hold.
   uint256 public liquidityCap;
 
-  /// @dev the The total awardable balance for the current prize
+  /// @dev the The awardable balance
   uint256 internal _currentAwardBalance;
 
   /// @dev The timelocked balances for each user
@@ -169,18 +175,18 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @dev The unlock timestamps for each user
   mapping(address => uint256) internal _unlockTimestamps;
 
-  // Mapping from token => TokenCredit
+  /// @dev Stores the credit plan for each token.
   mapping(address => CreditPlan) internal tokenCreditPlans;
 
-  // Mapping from token address => user address => CreditBalance
+  /// @dev Stores each users balance of credit per token.
   mapping(address => mapping(address => CreditBalance)) internal tokenCreditBalances;
 
-  /// @notice Initializes the Prize Pool with required contract connections
+  /// @notice Initializes the Prize Pool
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
-  /// @param _prizeStrategy Address of the component-controller that manages the prize-strategy
-  /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
-  /// @param _maxExitFeeMantissa The maximum exit fee size, relative to the withdrawal amount
-  /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
+  /// @param _prizeStrategy Address of the prize strategy
+  /// @param _controlledTokens Array of ControlledTokens that are controlled by this Prize Pool.
+  /// @param _maxExitFeeMantissa The maximum exit fee size
+  /// @param _maxTimelockDuration The maximum length of time the withdraw timelock
   function initialize (
     address _trustedForwarder,
     PrizePoolTokenListenerInterface _prizeStrategy,
@@ -194,7 +200,6 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   {
     require(address(_comptroller) != address(0), "PrizePool/comptroller-not-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
-    comptroller = _comptroller;
     _setPrizeStrategy(address(_prizeStrategy));
     _tokens.initialize();
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
@@ -202,10 +207,12 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     }
     __Ownable_init();
     __ReentrancyGuard_init();
+    _setLiquidityCap(uint256(-1));
+
     trustedForwarder = _trustedForwarder;
+    comptroller = _comptroller;
     maxExitFeeMantissa = _maxExitFeeMantissa;
     maxTimelockDuration = _maxTimelockDuration;
-    liquidityCap = uint256(-1);
 
     emit Initialized(
       _trustedForwarder,
@@ -215,19 +222,19 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     );
   }
 
-  /// @dev Gets the underlying asset token used by the Yield Service
-  /// @return A reference to the interface of the underling asset token
+  /// @dev Returns the address of the underlying ERC20 asset
+  /// @return The address of the asset
   function token() external view returns (IERC20) {
     return _token();
   }
 
-  /// @dev Gets the balance of the underlying assets held by the Yield Service
-  /// @return The underlying balance of asset tokens
+  /// @dev Returns the total underlying balance of all assets. This includes both principal and interest.
+  /// @return The underlying balance of assets
   function balance() external returns (uint256) {
     return _balance();
   }
 
-  /// @dev Checks with the Prize Pool if a specific token type may be awarded as a prize enhancement
+  /// @dev Checks with the Prize Pool if a specific token type may be awarded as an external prize
   /// @param _externalToken The address of the token to check
   /// @return True if the token may be awarded, false otherwise
   function canAwardExternal(address _externalToken) external view returns (bool) {
@@ -296,8 +303,8 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param from The address to redeem tokens from.
   /// @param amount The amount of tokens to redeem for assets.
   /// @param controlledToken The address of the token to redeem (i.e. ticket or sponsorship)
-  /// @param maximumExitFee The maximum exit fee the caller is willing to pay.  This can be pre-calculated.
-  /// @return The amount of the fairness fee paid
+  /// @param maximumExitFee The maximum exit fee the caller is willing to pay.  This should be pre-calculated by the calculateExitFee() fxn.
+  /// @return The actual exit fee paid
   function withdrawInstantlyFrom(
     address from,
     uint256 amount,
@@ -329,7 +336,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Limits the exit fee to the maximum as hard-coded into the contract
   /// @param withdrawalAmount The amount that is attempting to be withdrawn
-  /// @param exitFee An exit fee to check
+  /// @param exitFee The exit fee to check against the limit
   /// @return The passed exit fee if it is less than the maximum, otherwise the maximum fee is returned.
   function _limitExitFee(uint256 withdrawalAmount, uint256 exitFee) internal view returns (uint256) {
     uint256 maxFee = FixedPoint.multiplyUintByMantissa(withdrawalAmount, maxExitFeeMantissa);
@@ -397,6 +404,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param amount The amount of tokens being trasferred
   function beforeTokenTransfer(address from, address to, uint256 amount) external override onlyControlledToken(msg.sender) {
     if (from != address(0)) {
+      // Here we want to limit the amount of credit a user has, so we calculate based on their *new* balance.
       _accrueCredit(from, msg.sender, IERC20(msg.sender).balanceOf(from), 0);
     }
     if (to != address(0)) {
@@ -416,14 +424,15 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     }
   }
 
-  /// @notice Gets the current prize.
+  /// @notice Returns the balance that is available to award.
+  /// @dev captureAwardBalance() should be called first
   /// @return The total amount of assets to be awarded for the current prize
   function awardBalance() external view returns (uint256) {
     return _currentAwardBalance;
   }
 
-  /// @notice Updates and returns the current prize.
-  /// @dev Updates the internal current award balance and captures reserve fees
+  /// @notice Captures any available interest as award balance.
+  /// @dev This function also captures the reserve fees.
   /// @return The total amount of assets to be awarded for the current prize
   function captureAwardBalance() external nonReentrant returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
@@ -436,7 +445,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
       if (reserveFee > 0) {
         unaccountedPrizeBalance = unaccountedPrizeBalance.sub(reserveFee);
         _mint(address(comptroller), reserveFee, reserveFeeControlledToken, address(0));
-        emit ReserveFeeCaptured(reserveFee);
+        emit ReserveFeeCaptured(reserveFeeControlledToken, reserveFee);
       }
     }
 
@@ -445,7 +454,8 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     return _currentAwardBalance;
   }
 
-  /// @notice Called by the Prize-Strategy to Award a Prize to a specific account
+  /// @notice Called by the prize strategy to award prizes.
+  /// @dev The amount awarded must be less than the awardBalance()
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of assets to be awarded
   /// @param controlledToken The address of the asset token being awarded
@@ -473,7 +483,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     emit Awarded(to, controlledToken, amount);
   }
 
-  /// @notice Called by the Prize-Strategy to Award Secondary (external) Prize amounts to a specific account
+  /// @notice Called by the Prize-Strategy to award external ERC20 prizes
   /// @dev Used to award any arbitrary tokens held by the Prize Pool
   /// @param to The address of the winner that receives the award
   /// @param amount The amount of external assets to be awarded
@@ -515,7 +525,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     ControlledToken(controlledToken).controllerMint(to, amount);
   }
 
-  /// @notice Called by the Prize-Strategy to Award Secondary (external) Prize NFTs to a specific account
+  /// @notice Called by the prize strategy to award external ERC721 prizes
   /// @dev Used to award any arbitrary NFTs held by the Prize Pool
   /// @param to The address of the winner that receives the award
   /// @param externalToken The address of the external NFT token being awarded
@@ -568,8 +578,8 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     return _sweepTimelockBalances(users);
   }
 
-  /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
-  /// @param users An array of account addresses to sweep balances for
+  /// @notice Sweep available timelocked balances to their owners.  The full balances will be swept to the owners.
+  /// @param users An array of owner addresses
   /// @return The total amount of assets swept from the Prize Pool
   function _sweepTimelockBalances(
     address[] memory users
@@ -803,22 +813,24 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   }
 
   /// @notice Sets the rate at which credit accrues per second.  The credit rate is a fixed point 18 number (like Ether).
-  /// @param _creditRateMantissa The credit rate to set
+  /// @param _controlledToken The controlled token for whom to set the credit plan
+  /// @param _creditRateMantissa The credit rate to set.  Is a fixed point 18 decimal (like Ether).
+  /// @param _creditLimitMantissa The credit limit to set.  Is a fixed point 18 decimal (like Ether).
   function setCreditPlanOf(
-    address controlledToken,
+    address _controlledToken,
     uint128 _creditRateMantissa,
     uint128 _creditLimitMantissa
   )
     external
-    onlyControlledToken(controlledToken)
+    onlyControlledToken(_controlledToken)
     onlyOwner
   {
-    tokenCreditPlans[controlledToken] = CreditPlan({
+    tokenCreditPlans[_controlledToken] = CreditPlan({
       creditLimitMantissa: _creditLimitMantissa,
       creditRateMantissa: _creditRateMantissa
     });
 
-    emit CreditPlanSet(controlledToken, _creditLimitMantissa, _creditRateMantissa);
+    emit CreditPlanSet(_controlledToken, _creditLimitMantissa, _creditRateMantissa);
   }
 
   /// @notice Returns the credit rate of a controlled token
@@ -844,6 +856,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param controlledToken The token they are withdrawing
   /// @param amount The amount of funds they are withdrawing
   /// @return earlyExitFee The additional exit fee that should be charged.
+  /// @return creditBurned The amount of credit that will be burned
   function _calculateEarlyExitFeeLessBurnedCredit(
     address from,
     address controlledToken,
@@ -869,12 +882,9 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     */
 
     // Determine available usable credit based on withdraw amount
-    uint256 availableCredit;
-
-
     uint256 remainingExitFee = _calculateEarlyExitFeeNoCredit(controlledToken, controlledTokenBalance.sub(amount));
 
-
+    uint256 availableCredit;
     if (tokenCreditBalances[controlledToken][from].balance >= remainingExitFee) {
       availableCredit = uint256(tokenCreditBalances[controlledToken][from].balance).sub(remainingExitFee);
     }
@@ -889,6 +899,10 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @notice Allows the Governor to set a cap on the amount of liquidity that he pool can hold
   /// @param _liquidityCap The new liquidity cap for the prize pool
   function setLiquidityCap(uint256 _liquidityCap) external onlyOwner {
+    _setLiquidityCap(_liquidityCap);
+  }
+
+  function _setLiquidityCap(uint256 _liquidityCap) internal {
     liquidityCap = _liquidityCap;
     emit LiquidityCapSet(_liquidityCap);
   }
@@ -923,7 +937,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     emit PrizeStrategySet(_prizeStrategy);
   }
 
-  /// @notice Emergency shutdown of the Prize Pool by detaching the Prize Strategy
+  /// @notice Emergency shutdown of the Prize Pool.  Prize Pool will detach from the global comptroller.
   /// @dev Called by the PrizeStrategy contract to issue an Emergency Shutdown of a corrupted Prize Strategy
   function emergencyShutdown() external onlyOwner {
     delete comptroller;
@@ -931,7 +945,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     emit EmergencyShutdown();
   }
 
-  /// @notice Check if the Prize Pool has an active Prize Strategy
+  /// @notice Returns whether the Prize Pool has been shutdown.
   /// @dev When the prize strategy is detached deposits are disabled, and only withdrawals are permitted
   function isShutdown() external view returns (bool) {
     return address(comptroller) != address(0);
@@ -949,7 +963,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     return block.timestamp;
   }
 
-  /// @notice The timestamp at which an account's timelocked balance will be made available
+  /// @notice The timestamp at which an account's timelocked balance will be made available to sweep
   /// @param user The address of an account with timelocked assets
   /// @return The timestamp at which the locked assets will be made available
   function timelockBalanceAvailableAt(address user) external view returns (uint256) {
@@ -963,14 +977,14 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     return _timelockBalances[user];
   }
 
-  /// @notice The currently accounted-for balance in relation to the rolling exchange-rate
-  /// @return The currently accounted-for balance
+  /// @notice The total of all controlled tokens and timelock.
+  /// @return The current total of all tokens and timelock.
   function accountedBalance() external view returns (uint256) {
     return _tokenTotalSupply();
   }
 
-  /// @dev The currently accounted-for balance in relation to the rolling exchange-rate
-  /// @return The currently accounted-for balance
+  /// @notice The total of all controlled tokens and timelock.
+  /// @return The current total of all tokens and timelock.
   function _tokenTotalSupply() internal view returns (uint256) {
     uint256 total = timelockTotalSupply;
     address currentToken = _tokens.start();
@@ -1019,6 +1033,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     _;
   }
 
+  /// @dev modifier that can only be called when the Prize Pool isn't shutdown
   modifier notShutdown() {
     require(address(comptroller) != address(0), "PrizePool/shutdown");
     _;

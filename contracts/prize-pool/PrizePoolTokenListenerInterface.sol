@@ -1,5 +1,6 @@
 pragma solidity 0.6.4;
 
+/// @title An interface that allows a contract to listen to token mint, transfer and burn events.
 interface PrizePoolTokenListenerInterface {
   /// @notice Called when tokens are minted.
   /// @param to The address of the receiver of the minted tokens.
