@@ -1,4 +1,4 @@
-pragma solidity 0.6.12;
+pragma solidity >=0.6.0 <0.7.0;
 
 import "../external/yearn/yVaultInterface.sol";
 import "./ERC20Mintable.sol";
