@@ -8,10 +8,11 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol
 contract yVaultMock is yVaultInterface, ERC20UpgradeSafe {
 
   ERC20UpgradeSafe private asset;
-  uint256 public extraLossMantissa;
+  uint256 public vaultFeeMantissa;
 
   constructor (ERC20Mintable _asset) public {
     asset = _asset;
+    vaultFeeMantissa = 0.05 ether;
   }
 
   function token() external override view returns (address) {
@@ -26,8 +27,8 @@ contract yVaultMock is yVaultInterface, ERC20UpgradeSafe {
     asset.transfer(msg.sender, _amount);
   }
 
-  function setExtraLossMantissa(uint256 _extraLossMantissa) external {
-    extraLossMantissa = _extraLossMantissa;
+  function setVaultFeeMantissa(uint256 _vaultFeeMantissa) external {
+    vaultFeeMantissa = _vaultFeeMantissa;
   }
 
   function deposit(uint _amount) external override {
@@ -46,10 +47,12 @@ contract yVaultMock is yVaultInterface, ERC20UpgradeSafe {
   }
 
   function withdraw(uint _shares) external override {
-    uint withdrawal = (balance().mul(_shares)).div(totalSupply());
-    uint256 fee = FixedPoint.multiplyUintByMantissa(withdrawal, 0.05 ether);
-    uint256 extraLoss = FixedPoint.multiplyUintByMantissa(withdrawal.sub(fee), extraLossMantissa);
-    asset.transfer(msg.sender, withdrawal.sub(fee).sub(extraLoss));
+    uint256 sharesFee = FixedPoint.multiplyUintByMantissa(_shares, vaultFeeMantissa);
+
+    uint256 withdrawal = (balance().mul(_shares.sub(sharesFee))).div(totalSupply());
+    asset.transfer(msg.sender, withdrawal);
+
+    _mint(address(this), sharesFee);
     _burn(msg.sender, _shares);
   }
 
