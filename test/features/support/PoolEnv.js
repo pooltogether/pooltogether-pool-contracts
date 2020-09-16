@@ -129,6 +129,21 @@ function PoolEnv() {
     return wallet
   }
 
+  this.debugBalances = async function () {
+    const yVaultAssetBalance = await this.env.token.balanceOf(this.env.yToken.address)
+    const prizePoolAssetBalance = await this.env.token.balanceOf(this._prizePool.address)
+    const prizePoolYTokenBalance = await this.env.yToken.balanceOf(this._prizePool.address)
+
+    debug(`yVault Asset Balance: ${yVaultAssetBalance}...`)
+    debug(`prizePool Asset Balance: ${prizePoolAssetBalance}...`)
+    debug(`prizePool YToken Balance: ${prizePoolYTokenBalance}...`)
+    debug('----------------------------')
+  }
+
+  this.setVaultFeeMantissa = async function ({ fee }) {
+    await this.env.yToken.setVaultFeeMantissa(toWei(fee));
+  }
+
   this.accrueExternalAwardAmount = async function ({ externalAward, amount }) {
     await this.externalERC20Awards[externalAward].mint(this.env.prizePool.address, toWei(amount))
   }
@@ -276,6 +291,11 @@ function PoolEnv() {
     debug(`poolAccrues(${tickets.toString()})...`)
     await this.env.cToken.accrueCustom(toWei(tickets))
     await this.env.token.mint(this.env.yToken.address, toWei(tickets))
+  }
+
+  this.expectPoolToHavePrize = async function ({ tickets }) {
+    let ticketInterest = await call(this._prizePool, 'captureAwardBalance')
+    await expect(ticketInterest).to.equalish(toWei(tickets), 300)
   }
 
   this.expectUserToHaveCredit = async function ({ user, credit }) {

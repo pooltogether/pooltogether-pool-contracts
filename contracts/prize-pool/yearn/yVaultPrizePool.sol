@@ -82,6 +82,13 @@ contract yVaultPrizePool is PrizePool {
     vault.deposit(total);
   }
 
+  /// @dev Allows a user to supply asset tokens in exchange for yield-bearing tokens
+  /// to be held in escrow by the Yield Service
+  function _supplySpecific(uint256 amount) internal {
+    _token().approve(address(vault), amount);
+    vault.deposit(amount);
+  }
+
   /// @dev The external token cannot be yDai or Dai
   /// @param _externalToken The address of the token to check
   /// @return True if the token may be awarded, false otherwise
@@ -110,19 +117,20 @@ contract yVaultPrizePool is PrizePool {
       withdrawal = amount;
     }
 
-    uint256 shares = _tokenToShares(withdrawal);
-    uint256 before = token.balanceOf(address(this));
+    uint256 sharesToWithdraw = _tokenToShares(withdrawal);
+    uint256 preBalance = token.balanceOf(address(this));
+    vault.withdraw(sharesToWithdraw);
+    uint256 postBalance = token.balanceOf(address(this));
 
-    vault.withdraw(shares);
-    uint256 diff = token.balanceOf(address(this)).sub(before);
-    if (diff < amount) {
-      // if we got back less, then the fee was greater than the reserve.
-      // in this case we return what we got.
-      return diff;
-    } else {
-      // otherwise the reserve covered the fee so just give back the amount.
-      return amount;
+    uint256 amountWithdrawn = postBalance.sub(preBalance);
+    uint256 amountRedeemable = (amountWithdrawn < amount) ? amountWithdrawn : amount;
+
+    // Redeposit any asset funds that were removed premptively for fees
+    if (postBalance > amountRedeemable) {
+      _supplySpecific(postBalance.sub(amountRedeemable));
     }
+
+    return amountRedeemable;
   }
 
   function _tokenToShares(uint256 tokens) internal view returns (uint256) {
