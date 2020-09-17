@@ -232,7 +232,8 @@ describe('SingleRandomWinner', function() {
 
       await rng.mock.requestRandomNumber.returns('12', '10');
 
-      await prizeStrategy.startAward()
+      await expect(prizeStrategy.startAward())
+        .to.emit(prizeStrategy, 'RngRequestFailed')
     })
   })
 
