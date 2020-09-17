@@ -45,6 +45,8 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
     uint32 rngLockBlock
   );
 
+  event RngRequestFailed();
+
   event PrizePoolAwarded(
     address indexed operator,
     uint256 randomNumber,
@@ -53,6 +55,10 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
 
   event RngServiceUpdated(
     address rngService
+  );
+
+  event RngRequestTimeoutSet(
+    uint32 rngRequestTimeout
   );
 
   event ExternalErc721AwardAdded(
@@ -107,6 +113,9 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
     prizePeriodStartedAt = _prizePeriodStart;
 
     externalErc721s.initialize();
+
+    // 1 hour timeout
+    _setRngRequestTimeout(3600);
 
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
@@ -256,6 +265,10 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
   /// @notice Starts the award process by starting random number request.  The prize period must have ended.
   /// @dev The RNG-Request-Fee is expected to be held within this contract before calling this function
   function startAward() external requireCanStartAward {
+    if (isRngTimedOut()) {
+      delete rngRequest;
+      emit RngRequestFailed();
+    }
     (address feeToken, uint256 requestFee) = rng.getRequestFee();
     if (feeToken != address(0) && requestFee > 0) {
       IERC20(feeToken).approve(address(rng), requestFee);
@@ -264,6 +277,7 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
     (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber();
     rngRequest.id = requestId;
     rngRequest.lockBlock = lockBlock;
+    rngRequest.requestedAt = _currentTime().toUint32();
 
     emit PrizePoolAwardStarted(_msgSender(), address(prizePool), requestId, lockBlock);
   }
@@ -341,6 +355,16 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
     emit RngServiceUpdated(address(rngService));
   }
 
+  function setRngRequestTimeout(uint32 _rngRequestTimeout) external onlyOwner {
+    _setRngRequestTimeout(_rngRequestTimeout);
+  }
+
+  function _setRngRequestTimeout(uint32 _rngRequestTimeout) internal {
+    require(_rngRequestTimeout > 60, "SingleRandomWinner/rng-timeout-gt-60-secs");
+    rngRequestTimeout = _rngRequestTimeout;
+    emit RngRequestTimeoutSet(rngRequestTimeout);
+  }
+
   /// @notice Adds an external ERC20 token type as an additional prize that can be awarded
   /// @dev Only the Prize-Strategy owner/creator can assign external tokens,
   /// and they must be approved by the Prize-Pool
@@ -397,6 +421,14 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
     require(rngRequest.lockBlock == 0 || _currentBlock() < rngRequest.lockBlock, "SingleRandomWinner/rng-in-flight");
   }
 
+  function isRngTimedOut() public view returns (bool) {
+    if (rngRequest.requestedAt == 0) {
+      return false;
+    } else {
+      return _currentTime() > uint256(rngRequestTimeout).add(rngRequest.requestedAt);
+    }
+  }
+
   modifier requireNotLocked() {
     _requireNotLocked();
     _;
@@ -404,7 +436,7 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
 
   modifier requireCanStartAward() {
     require(_isPrizePeriodOver(), "SingleRandomWinner/prize-period-not-over");
-    require(!isRngRequested(), "SingleRandomWinner/rng-already-requested");
+    require(!isRngRequested() || isRngTimedOut(), "SingleRandomWinner/rng-already-requested");
     _;
   }
 

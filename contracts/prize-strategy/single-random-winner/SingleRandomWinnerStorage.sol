@@ -17,6 +17,7 @@ contract SingleRandomWinnerStorage {
   struct RngRequest {
     uint32 id;
     uint32 lockBlock;
+    uint32 requestedAt;
   }
 
   // Contract Interfaces
@@ -27,6 +28,9 @@ contract SingleRandomWinnerStorage {
 
   // Current RNG Request
   RngRequest internal rngRequest;
+
+  // RNG Request Timeout
+  uint32 public rngRequestTimeout;
 
   // Prize period
   uint256 public prizePeriodSeconds;
