@@ -13,7 +13,7 @@
     "hint": "solhint \"contracts/**/*.sol\"",
     "test": "buidler test",
     "compile": "buidler --show-stack-traces --max-memory 8192 compile",
-    "start": "buidler node --port $LOCAL_BUIDLEREVM_PORT",
+    "start": "buidler node",
     "coverage": "rm -rf build cache test-results.xml && buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network local",
     "deploy": "buidler deploy --write true --network",

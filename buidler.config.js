@@ -46,7 +46,7 @@ const config = {
       allowUnlimitedContractSize: true
     },
     local: {
-      url: 'http://127.0.0.1:' + process.env.LOCAL_BUIDLEREVM_PORT || '8545',
+      url: 'http://127.0.0.1:8545',
       blockGasLimit: 200000000,
       allowUnlimitedContractSize: true
     }
