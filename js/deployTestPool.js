@@ -46,7 +46,7 @@ async function deployTestPool({
 
   let yVaultBuilderResult = await deployments.get("yVaultPrizePoolBuilder")
   let compoundBuilderResult = await deployments.get("CompoundPrizePoolBuilder")
-  let comptrollerResult = await deployments.get("ComptrollerHarness")
+  let comptrollerResult = await deployments.get("Comptroller")
   let rngServiceMockResult = await deployments.get("RNGServiceMock")
   let tokenResult = await deployments.get("Dai")
   let cTokenResult = await deployments.get("cDai")

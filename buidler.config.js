@@ -22,11 +22,15 @@ const testnetUser1 = '0x573bd3868b7672332c4D22076f55Cb0b597eb5Fd' // Account 3
 const testnetUser2 = '0x7Cfc5a12506d92F29D52EC7B8d1148f46e9296ED' // Account 4
 const testnetUser3 = '0x50D6d6195b102f9b58A29a57E3D71822881033a5' // Account 5
 
+const optimizerEnabled = !process.env.OPTIMIZER_DISABLED
+
+console.log(`Optimizer is enabled: ${optimizerEnabled}`)
+
 const config = {
   solc: {
     version: "0.6.12",
     optimizer: {
-      enabled: true,
+      enabled: optimizerEnabled,
       runs: 200
     },
     evmVersion: "istanbul"
@@ -45,10 +49,11 @@ const config = {
       blockGasLimit: 200000000,
       allowUnlimitedContractSize: true
     },
-    local: {
-      url: 'http://127.0.0.1:' + process.env.LOCAL_BUIDLEREVM_PORT || '8545',
+    localhost: {
+      url: 'http://127.0.0.1:8545',
       blockGasLimit: 200000000,
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
+      chainId: 31337
     }
   },
   gasReporter: {

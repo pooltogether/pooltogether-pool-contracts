@@ -36,10 +36,10 @@ describe('CompoundPrizePoolBuilder', () => {
       wallet
     )
 
-    comptroller = (await deployments.get("ComptrollerHarness"))
+    comptroller = (await deployments.get("Comptroller"))
     trustedForwarder = (await deployments.get("TrustedForwarder"))
-    prizeStrategyProxyFactory = (await deployments.get("SingleRandomWinnerHarnessProxyFactory"))
-    compoundPrizePoolProxyFactory = (await deployments.get("CompoundPrizePoolHarnessProxyFactory"))
+    prizeStrategyProxyFactory = (await deployments.get("SingleRandomWinnerProxyFactory"))
+    compoundPrizePoolProxyFactory = (await deployments.get("CompoundPrizePoolProxyFactory"))
     controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
     ticketProxyFactory = (await deployments.get("TicketProxyFactory"))
     proxyFactory = (await deployments.get("ProxyFactory"))
