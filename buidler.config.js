@@ -45,10 +45,11 @@ const config = {
       blockGasLimit: 200000000,
       allowUnlimitedContractSize: true
     },
-    local: {
+    localhost: {
       url: 'http://127.0.0.1:8545',
       blockGasLimit: 200000000,
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
+      chainId: 31337
     }
   },
   gasReporter: {

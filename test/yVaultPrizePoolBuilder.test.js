@@ -36,10 +36,10 @@ describe('yVaultPrizePoolBuilder', () => {
       wallet
     )
 
-    comptroller = (await deployments.get("ComptrollerHarness"))
+    comptroller = (await deployments.get("Comptroller"))
     trustedForwarder = (await deployments.get("TrustedForwarder"))
-    prizeStrategyProxyFactory = (await deployments.get("SingleRandomWinnerHarnessProxyFactory"))
-    vaultPrizePoolProxyFactory = (await deployments.get("yVaultPrizePoolHarnessProxyFactory"))
+    prizeStrategyProxyFactory = (await deployments.get("SingleRandomWinnerProxyFactory"))
+    vaultPrizePoolProxyFactory = (await deployments.get("yVaultPrizePoolProxyFactory"))
     controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
     ticketProxyFactory = (await deployments.get("TicketProxyFactory"))
     proxyFactory = (await deployments.get("ProxyFactory"))

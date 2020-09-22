@@ -3,16 +3,12 @@ const ProxyFactory = require('@openzeppelin/upgrades/build/contracts/ProxyFactor
 const { deploy1820 } = require('deploy-eip-1820')
 const ERC20Mintable = require('../build/ERC20Mintable.json')
 const Comptroller = require("../build/Comptroller.json")
+const ComptrollerHarness = require("../build/ComptrollerHarness.json")
+const CompoundPrizePoolHarnessProxyFactory = require("../build/CompoundPrizePoolHarnessProxyFactory.json")
+const yVaultPrizePoolHarnessProxyFactory = require("../build/yVaultPrizePoolHarnessProxyFactory.json")
+const SingleRandomWinnerHarnessProxyFactory = require('../build/SingleRandomWinnerHarnessProxyFactory.json')
 const CTokenMock = require('../build/CTokenMock.json')
 const yVaultMock = require('../build/yVaultMock.json')
-
-// const solcOutput = require('../cache/solc-output.json')
-
-// function findMetadata(contractName) {
-//   const contractNames = Object.keys(solcOutput.contracts)
-//   const contractPath = contractNames.find(name => name.search(contractName) > -1)
-//   return solcOutput.contracts[contractPath].metadata
-// }
 
 const debug = require('debug')('ptv3:deploy.js')
 
@@ -144,12 +140,13 @@ module.exports = async (buidler) => {
 
   let comptrollerAddress
   if (isTestEnvironment) {
-    const comptrollerResult = await deploy("ComptrollerHarness", {
+    const comptrollerResult = await deploy("Comptroller", {
+      contract: ComptrollerHarness,
       from: deployer,
       skipIfAlreadyDeployed: true
     })
     const comptroller = await buidler.ethers.getContractAt(
-      "ComptrollerHarness",
+      "Comptroller",
       comptrollerResult.address,
       signer
     )
@@ -183,7 +180,8 @@ module.exports = async (buidler) => {
   debug("\n  Deploying CompoundPrizePoolProxyFactory...")
   let compoundPrizePoolProxyFactoryResult
   if (isTestEnvironment) {
-    compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolHarnessProxyFactory", {
+    compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolProxyFactory", {
+      contract: CompoundPrizePoolHarnessProxyFactory,
       from: deployer,
       skipIfAlreadyDeployed: true
     })
@@ -196,7 +194,8 @@ module.exports = async (buidler) => {
 
   let yVaultPrizePoolProxyFactoryResult
   if (isTestEnvironment) {
-    yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolHarnessProxyFactory", {
+    yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolProxyFactory", {
+      contract: yVaultPrizePoolHarnessProxyFactory,
       from: deployer,
       skipIfAlreadyDeployed: true
     })
@@ -222,7 +221,8 @@ module.exports = async (buidler) => {
   debug("\n  Deploying SingleRandomWinnerProxyFactory...")
   let singleRandomWinnerProxyFactoryResult
   if (isTestEnvironment) {
-    singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerHarnessProxyFactory", {
+    singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
+      contract: SingleRandomWinnerHarnessProxyFactory,
       from: deployer,
       skipIfAlreadyDeployed: true
     })
