@@ -13,7 +13,7 @@ usePlugin("buidler-deploy");
 // This must occur after buidler-deploy!
 task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
   const input = await runSuper();
-  input.settings.metadata.useLiteralContent = false;
+  input.settings.metadata.useLiteralContent = !process.env.DO_NOT_USE_LITERAL_CONTENT;
   return input;
 })
 
@@ -23,8 +23,6 @@ const testnetUser2 = '0x7Cfc5a12506d92F29D52EC7B8d1148f46e9296ED' // Account 4
 const testnetUser3 = '0x50D6d6195b102f9b58A29a57E3D71822881033a5' // Account 5
 
 const optimizerEnabled = !process.env.OPTIMIZER_DISABLED
-
-console.log(`Optimizer is enabled: ${optimizerEnabled}`)
 
 const config = {
   solc: {
@@ -99,6 +97,11 @@ const config = {
       4: testnetUser3,
       42: testnetUser3,
     },
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: process.env.ETHERSCAN_API_KEY
   }
 };
 
