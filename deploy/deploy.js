@@ -1,5 +1,5 @@
-const ProxyAdmin = require('@openzeppelin/upgrades/build/contracts/ProxyAdmin.json')
-const ProxyFactory = require('@openzeppelin/upgrades/build/contracts/ProxyFactory.json')
+const ProxyAdmin = require('../.build-openzeppelin/ProxyAdmin.json')
+const ProxyFactory = require('../.build-openzeppelin/ProxyFactory.json')
 const { deploy1820 } = require('deploy-eip-1820')
 const Comptroller = require("../build/Comptroller.json")
 

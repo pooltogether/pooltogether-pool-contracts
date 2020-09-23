@@ -1,3 +1,9 @@
+const chalk = require('chalk')
+const util = require('util')
+const exec = util.promisify(require('child_process').exec)
+
+const networks = require('./buidler.networks')
+
 const {TASK_COMPILE_GET_COMPILER_INPUT} = require("@nomiclabs/buidler/builtin-tasks/task-names");
 
 const RNGBlockhashRopsten = require('@pooltogether/pooltogether-rng-contracts/deployments/ropsten/RNGBlockhash.json')
@@ -12,6 +18,14 @@ usePlugin("buidler-deploy");
 
 // This must occur after buidler-deploy!
 task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
+  console.log(chalk.dim(`Compiling OpenZeppelin contracts...`))
+  try {
+    await exec(`buidler --config buidler.config.openzeppelin.js compile`)
+    console.log(chalk.green(`Successfully compiled!`))
+  } catch (e) {
+    console.error(chalk.red(e))
+    process.exit(1)
+  }
   const input = await runSuper();
   input.settings.metadata.useLiteralContent = !process.env.DO_NOT_USE_LITERAL_CONTENT;
   return input;
@@ -36,24 +50,7 @@ const config = {
   paths: {
     artifacts: "./build"
   },
-  networks: {
-    buidlerevm: {
-      blockGasLimit: 200000000,
-      allowUnlimitedContractSize: true,
-      chainId: 31337
-    },
-    coverage: {
-      url: 'http://127.0.0.1:8555',
-      blockGasLimit: 200000000,
-      allowUnlimitedContractSize: true
-    },
-    localhost: {
-      url: 'http://127.0.0.1:8545',
-      blockGasLimit: 200000000,
-      allowUnlimitedContractSize: true,
-      chainId: 31337
-    }
-  },
+  networks,
   gasReporter: {
     currency: 'CHF',
     gasPrice: 21,
@@ -104,30 +101,5 @@ const config = {
     apiKey: process.env.ETHERSCAN_API_KEY
   }
 };
-
-if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
-  config.networks.kovan = {
-    url: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    accounts: {
-      mnemonic: process.env.HDWALLET_MNEMONIC
-    }
-  }
-
-  config.networks.ropsten = {
-    url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    accounts: {
-      mnemonic: process.env.HDWALLET_MNEMONIC
-    }
-  }
-
-  config.networks.rinkeby = {
-    url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    accounts: {
-      mnemonic: process.env.HDWALLET_MNEMONIC
-    }
-  }
-} else {
-  console.warn('No infura or hdwallet available for testnets')
-}
 
 module.exports = config
