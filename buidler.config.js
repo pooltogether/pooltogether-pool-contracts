@@ -27,7 +27,8 @@ task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
     process.exit(1)
   }
   const input = await runSuper();
-  input.settings.metadata.useLiteralContent = !process.env.DO_NOT_USE_LITERAL_CONTENT;
+  input.settings.metadata.useLiteralContent = process.env.USE_LITERAL_CONTENT != 'false';
+  console.log(`useLiteralContent: ${input.settings.metadata.useLiteralContent}`)
   return input;
 })
 
