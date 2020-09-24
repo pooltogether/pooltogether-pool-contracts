@@ -418,7 +418,8 @@ contract SingleRandomWinner is SingleRandomWinnerStorage,
   }
 
   function _requireNotLocked() internal view {
-    require(rngRequest.lockBlock == 0 || _currentBlock() < rngRequest.lockBlock, "SingleRandomWinner/rng-in-flight");
+    uint256 currentBlock = _currentBlock();
+    require(rngRequest.lockBlock == 0 || currentBlock < rngRequest.lockBlock, "SingleRandomWinner/rng-in-flight");
   }
 
   function isRngTimedOut() public view returns (bool) {

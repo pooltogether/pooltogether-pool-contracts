@@ -20,6 +20,20 @@ contract BalanceDripExposed {
     dripState.setDripRate(measureTotalSupply, dripRatePerSecond, currentTime);
   }
 
+  function poke(
+    address user,
+    uint256 userMeasureBalance
+  ) external returns (uint256) {
+    uint256 newTokens = dripState.poke(
+      user,
+      userMeasureBalance
+    );
+
+    emit Dripped(user, newTokens);
+
+    return newTokens;
+  }
+
   function drip(
     address user,
     uint256 userMeasureBalance,
@@ -65,5 +79,13 @@ contract BalanceDripExposed {
 
   function exchangeRateMantissa() external view returns (uint256) {
     return dripState.exchangeRateMantissa;
+  }
+
+  function totalDripped() external view returns (uint256) {
+    return dripState.totalDripped;
+  }
+
+  function resetTotalDripped() external {
+    dripState.resetTotalDripped();
   }
 }

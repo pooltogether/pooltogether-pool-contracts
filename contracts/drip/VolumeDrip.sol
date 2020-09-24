@@ -27,8 +27,10 @@ library VolumeDrip {
   struct State {
     mapping(address => Deposit) deposits;
     mapping(uint32 => Period) periods;
-    uint32 periodSeconds;
-    uint112 dripAmount;
+    uint32 nextPeriodSeconds;
+    uint112 nextDripAmount;
+    uint112 __gap;
+    uint112 totalDripped;
     uint32 periodCount;
   }
 
@@ -41,14 +43,15 @@ library VolumeDrip {
     internal
     minPeriod(_periodSeconds)
   {
+    self.nextPeriodSeconds = _periodSeconds;
+    self.nextDripAmount = dripAmount;
+    self.totalDripped = 0;
     self.periodCount = uint256(self.periodCount).add(1).toUint16();
     self.periods[self.periodCount] = Period({
       totalSupply: 0,
       dripAmount: dripAmount,
       endTime: endTime
     });
-    self.periodSeconds = _periodSeconds;
-    self.dripAmount = dripAmount;
   }
 
   function setNextPeriod(
@@ -59,8 +62,8 @@ library VolumeDrip {
     internal
     minPeriod(_periodSeconds)
   {
-    self.periodSeconds = _periodSeconds;
-    self.dripAmount = dripAmount;
+    self.nextPeriodSeconds = _periodSeconds;
+    self.nextDripAmount = dripAmount;
   }
 
   function poke(
@@ -116,12 +119,13 @@ library VolumeDrip {
 
   function _completePeriod(State storage self, uint256 currentTime) private onlyPeriodOver(self, currentTime) {
     uint256 lastEndTime = self.periods[self.periodCount].endTime;
-    uint256 numberOfPeriods = currentTime.sub(lastEndTime).div(self.periodSeconds).add(1);
-    uint256 endTime = lastEndTime.add(numberOfPeriods.mul(self.periodSeconds));
+    uint256 numberOfPeriods = currentTime.sub(lastEndTime).div(self.nextPeriodSeconds).add(1);
+    uint256 endTime = lastEndTime.add(numberOfPeriods.mul(self.nextPeriodSeconds));
+    self.totalDripped = uint256(self.totalDripped).add(self.periods[self.periodCount].dripAmount).toUint112();
     self.periodCount = uint256(self.periodCount).add(1).toUint16();
     self.periods[self.periodCount] = Period({
       totalSupply: 0,
-      dripAmount: self.dripAmount,
+      dripAmount: self.nextDripAmount,
       endTime: endTime.toUint32()
     });
   }
@@ -137,7 +141,7 @@ library VolumeDrip {
     uint256 accrued;
     if (depositPeriod < self.periodCount && self.periods[depositPeriod].totalSupply > 0) {
       uint256 fractionMantissa = FixedPoint.calculateMantissa(balance, self.periods[depositPeriod].totalSupply);
-      accrued = FixedPoint.multiplyUintByMantissa(self.dripAmount, fractionMantissa);
+      accrued = FixedPoint.multiplyUintByMantissa(self.nextDripAmount, fractionMantissa);
     }
     return accrued;
   }
