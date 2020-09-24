@@ -4,6 +4,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "./PrizePoolBuilder.sol";
 import "./SingleRandomWinnerBuilder.sol";
 import "../comptroller/ComptrollerInterface.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
@@ -15,7 +16,7 @@ import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 
 /// @title Builds new Compound Prize Pools
 /* solium-disable security/no-block-members */
-contract CompoundPrizePoolBuilder {
+contract CompoundPrizePoolBuilder is PrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
@@ -25,12 +26,6 @@ contract CompoundPrizePoolBuilder {
     uint256 maxTimelockDuration;
   }
 
-  event SingleRandomWinnerCreated (
-    address indexed singleRandomWinner,
-    address indexed ticket,
-    address indexed sponsorship
-  );
-
   event CompoundPrizePoolCreated (
     address indexed creator,
     address indexed prizePool,
@@ -39,109 +34,68 @@ contract CompoundPrizePoolBuilder {
 
   ComptrollerInterface public comptroller;
   CompoundPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
-  ControlledTokenProxyFactory public controlledTokenProxyFactory;
-  TicketProxyFactory public ticketProxyFactory;
-  SingleRandomWinnerProxyFactory public singleRandomWinnerProxyFactory;
-  OpenZeppelinProxyFactoryInterface public proxyFactory;
+  SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
   address public trustedForwarder;
 
   constructor (
     ComptrollerInterface _comptroller,
-    SingleRandomWinnerProxyFactory _singleRandomWinnerProxyFactory,
     address _trustedForwarder,
     CompoundPrizePoolProxyFactory _compoundPrizePoolProxyFactory,
-    ControlledTokenProxyFactory _controlledTokenProxyFactory,
-    OpenZeppelinProxyFactoryInterface _proxyFactory,
-    TicketProxyFactory _ticketProxyFactory
+    SingleRandomWinnerBuilder _singleRandomWinnerBuilder
   ) public {
     require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
-    require(address(_singleRandomWinnerProxyFactory) != address(0), "CompoundPrizePoolBuilder/single-random-winner-factory-not-zero");
+    require(address(_singleRandomWinnerBuilder) != address(0), "CompoundPrizePoolBuilder/single-random-winner-builder-not-zero");
     require(address(_compoundPrizePoolProxyFactory) != address(0), "CompoundPrizePoolBuilder/compound-prize-pool-builder-not-zero");
-    require(address(_controlledTokenProxyFactory) != address(0), "CompoundPrizePoolBuilder/controlled-token-proxy-factory-not-zero");
-    require(address(_proxyFactory) != address(0), "CompoundPrizePoolBuilder/proxy-factory-not-zero");
-    require(address(_ticketProxyFactory) != address(0), "CompoundPrizePoolBuilder/ticket-proxy-factory-not-zero");
-    proxyFactory = _proxyFactory;
-    ticketProxyFactory = _ticketProxyFactory;
     comptroller = _comptroller;
-    singleRandomWinnerProxyFactory = _singleRandomWinnerProxyFactory;
+    singleRandomWinnerBuilder = _singleRandomWinnerBuilder;
     trustedForwarder = _trustedForwarder;
     compoundPrizePoolProxyFactory = _compoundPrizePoolProxyFactory;
-    controlledTokenProxyFactory = _controlledTokenProxyFactory;
   }
 
   function createSingleRandomWinner(
     CompoundPrizePoolConfig calldata prizePoolConfig,
     SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig
-  ) external returns (SingleRandomWinner) {
+  ) external returns (CompoundPrizePool) {
+    CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
 
-    SingleRandomWinner prizeStrategy;
-    if (prizeStrategyConfig.proxyAdmin != address(0)) {
-      prizeStrategy = SingleRandomWinner(
-        proxyFactory.deploy(block.timestamp, address(singleRandomWinnerProxyFactory.instance()), prizeStrategyConfig.proxyAdmin, "")
-      );
-    } else {
-      prizeStrategy = singleRandomWinnerProxyFactory.create();
-    }
-
-    CompoundPrizePool prizePool = _createCompoundPrizePool(
-      prizePoolConfig,
-      prizeStrategy
-    );
-
-    uint8 decimals = prizePoolConfig.cToken.decimals();
-
-    prizePool.addControlledToken(address(
-      _createTicket(
-        prizePool,
-        prizeStrategyConfig.ticketName,
-        prizeStrategyConfig.ticketSymbol,
-        decimals
-      )
-    ));
-
-    prizePool.addControlledToken(address(
-      _createControlledToken(
-        prizePool,
-        prizeStrategyConfig.sponsorshipName,
-        prizeStrategyConfig.sponsorshipSymbol,
-        decimals
-      )
-    ));
-
-    address[] memory tokens = prizePool.tokens();
-
-    prizePool.setCreditPlanOf(
-      tokens[1],
-      prizeStrategyConfig.ticketCreditRateMantissa.toUint128(),
-      prizeStrategyConfig.ticketCreditLimitMantissa.toUint128()
-    );
-
-    prizePool.setReserveFeeControlledToken(tokens[0]);
-
-    prizeStrategy.initialize(
-      trustedForwarder,
-      prizeStrategyConfig.prizePeriodStart,
-      prizeStrategyConfig.prizePeriodSeconds,
+    SingleRandomWinner prizeStrategy = singleRandomWinnerBuilder.createSingleRandomWinner(
       prizePool,
-      tokens[1],
-      tokens[0],
-      prizeStrategyConfig.rngService,
-      prizeStrategyConfig.externalERC20Awards
+      prizeStrategyConfig,
+      prizePoolConfig.cToken.decimals(),
+      msg.sender
     );
 
-    prizeStrategy.transferOwnership(msg.sender);
+    address[] memory tokens;
+
+    prizePool.initialize(
+      trustedForwarder,
+      prizeStrategy,
+      comptroller,
+      tokens,
+      prizePoolConfig.maxExitFeeMantissa,
+      prizePoolConfig.maxTimelockDuration,
+      prizePoolConfig.cToken
+    );
+
+    _setupSingleRandomWinner(
+      prizePool,
+      prizeStrategy,
+      prizeStrategyConfig.ticketCreditRateMantissa,
+      prizeStrategyConfig.ticketCreditLimitMantissa
+    );
+
     prizePool.transferOwnership(msg.sender);
 
-    emit SingleRandomWinnerCreated(address(prizeStrategy), tokens[1], tokens[0]);
+    emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
-    return prizeStrategy;
+    return prizePool;
   }
 
-  function _createCompoundPrizePool(
-    CompoundPrizePoolConfig memory config,
+  function createCompoundPrizePool(
+    CompoundPrizePoolConfig calldata config,
     PrizePoolTokenListenerInterface prizeStrategy
   )
-    internal
+    external
     returns (CompoundPrizePool)
   {
     CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
@@ -158,42 +112,10 @@ contract CompoundPrizePoolBuilder {
       config.cToken
     );
 
+    prizePool.transferOwnership(msg.sender);
+
     emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
-  }
-
-  function createCompoundPrizePool(
-    CompoundPrizePoolConfig calldata config,
-    PrizePoolTokenListenerInterface prizeStrategy
-  )
-    external
-    returns (CompoundPrizePool)
-  {
-    CompoundPrizePool prizePool = _createCompoundPrizePool(config, prizeStrategy);
-    prizePool.transferOwnership(msg.sender);
-    return prizePool;
-  }
-
-  function _createControlledToken(
-    TokenControllerInterface controller,
-    string memory name,
-    string memory symbol,
-    uint8 decimals
-  ) internal returns (ControlledToken) {
-    ControlledToken token = controlledTokenProxyFactory.create();
-    token.initialize(string(name), string(symbol), decimals, trustedForwarder, controller);
-    return token;
-  }
-
-  function _createTicket(
-    TokenControllerInterface controller,
-    string memory name,
-    string memory symbol,
-    uint8 decimals
-  ) internal returns (Ticket) {
-    Ticket ticket = ticketProxyFactory.create();
-    ticket.initialize(string(name), string(symbol), decimals, trustedForwarder, controller);
-    return ticket;
   }
 }

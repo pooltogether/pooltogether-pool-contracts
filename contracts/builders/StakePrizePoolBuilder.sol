@@ -3,61 +3,54 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "./PrizePoolBuilder.sol";
 import "../comptroller/ComptrollerInterface.sol";
 import "./SingleRandomWinnerBuilder.sol";
-import "./PrizePoolBuilder.sol";
-import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
-import "../prize-pool/yearn/yVaultPrizePoolProxyFactory.sol";
-import "../token/ControlledTokenProxyFactory.sol";
-import "../token/TicketProxyFactory.sol";
-import "../external/yearn/yVaultInterface.sol";
-import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
+import "../prize-pool/stake/StakePrizePoolProxyFactory.sol";
 
 /* solium-disable security/no-block-members */
-contract yVaultPrizePoolBuilder is PrizePoolBuilder {
+contract StakePrizePoolBuilder is PrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
-  struct yVaultPrizePoolConfig {
-    yVaultInterface vault;
-    uint256 reserveRateMantissa;
+  struct StakePrizePoolConfig {
+    IERC20 token;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
   }
 
-  event yVaultPrizePoolCreated (
+  event StakePrizePoolCreated (
     address indexed creator,
     address indexed prizePool,
     address indexed prizeStrategy
   );
 
   ComptrollerInterface public comptroller;
-  yVaultPrizePoolProxyFactory public vaultPrizePoolProxyFactory;
+  StakePrizePoolProxyFactory public stakePrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
   address public trustedForwarder;
 
   constructor (
     ComptrollerInterface _comptroller,
     address _trustedForwarder,
-    yVaultPrizePoolProxyFactory _vaultPrizePoolProxyFactory,
+    StakePrizePoolProxyFactory _stakePrizePoolProxyFactory,
     SingleRandomWinnerBuilder _singleRandomWinnerBuilder
   ) public {
-    require(address(_comptroller) != address(0), "yVaultPrizePoolBuilder/comptroller-not-zero");
-    require(address(_singleRandomWinnerBuilder) != address(0), "yVaultPrizePoolBuilder/single-random-winner-builder-not-zero");
-    require(address(_vaultPrizePoolProxyFactory) != address(0), "yVaultPrizePoolBuilder/compound-prize-pool-builder-not-zero");
+    require(address(_comptroller) != address(0), "StakePrizePoolBuilder/comptroller-not-zero");
+    require(address(_singleRandomWinnerBuilder) != address(0), "StakePrizePoolBuilder/single-random-winner-builder-not-zero");
+    require(address(_stakePrizePoolProxyFactory) != address(0), "StakePrizePoolBuilder/stake-prize-pool-proxy-factory-not-zero");
     comptroller = _comptroller;
     singleRandomWinnerBuilder = _singleRandomWinnerBuilder;
     trustedForwarder = _trustedForwarder;
-    vaultPrizePoolProxyFactory = _vaultPrizePoolProxyFactory;
+    stakePrizePoolProxyFactory = _stakePrizePoolProxyFactory;
   }
 
   function createSingleRandomWinner(
-    yVaultPrizePoolConfig calldata prizePoolConfig,
+    StakePrizePoolConfig calldata prizePoolConfig,
     SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig,
     uint8 decimals
-  ) external returns (yVaultPrizePool) {
-
-    yVaultPrizePool prizePool = vaultPrizePoolProxyFactory.create();
+  ) external returns (StakePrizePool) {
+    StakePrizePool prizePool = stakePrizePoolProxyFactory.create();
 
     SingleRandomWinner prizeStrategy = singleRandomWinnerBuilder.createSingleRandomWinner(
       prizePool,
@@ -75,8 +68,7 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
       tokens,
       prizePoolConfig.maxExitFeeMantissa,
       prizePoolConfig.maxTimelockDuration,
-      prizePoolConfig.vault,
-      prizePoolConfig.reserveRateMantissa
+      prizePoolConfig.token
     );
 
     _setupSingleRandomWinner(
@@ -86,27 +78,21 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
       prizeStrategyConfig.ticketCreditLimitMantissa
     );
 
-    prizePool.setCreditPlanOf(
-      address(prizeStrategy.sponsorship()),
-      prizeStrategyConfig.ticketCreditRateMantissa.toUint128(),
-      prizeStrategyConfig.ticketCreditLimitMantissa.toUint128()
-    );
-
     prizePool.transferOwnership(msg.sender);
 
-    emit yVaultPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit StakePrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }
 
-  function createyVaultPrizePool(
-    yVaultPrizePoolConfig calldata config,
+  function createStakePrizePool(
+    StakePrizePoolConfig calldata config,
     PrizePoolTokenListenerInterface prizeStrategy
   )
     external
-    returns (yVaultPrizePool)
+    returns (StakePrizePool)
   {
-    yVaultPrizePool prizePool = vaultPrizePoolProxyFactory.create();
+    StakePrizePool prizePool = stakePrizePoolProxyFactory.create();
 
     address[] memory tokens;
 
@@ -117,13 +103,12 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
       tokens,
       config.maxExitFeeMantissa,
       config.maxTimelockDuration,
-      config.vault,
-      config.reserveRateMantissa
+      config.token
     );
 
     prizePool.transferOwnership(msg.sender);
 
-    emit yVaultPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit StakePrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }

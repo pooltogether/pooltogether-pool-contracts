@@ -211,6 +211,12 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
+  debug("\n  Deploying StakePrizePoolProxyFactory...")
+  const stakePrizePoolProxyFactoryResult = await deploy("StakePrizePoolProxyFactory", {
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+
   debug("\n  Deploying SingleRandomWinnerProxyFactory...")
   let singleRandomWinnerProxyFactoryResult
   if (isTestEnvironment) {
@@ -226,13 +232,12 @@ module.exports = async (buidler) => {
     })
   }
 
-  debug("\n  Deploying CompoundPrizePoolBuilder...")
-  const compoundPrizePoolBuilderResult = await deploy("CompoundPrizePoolBuilder", {
+  debug("\n  Deploying SingleRandomWinnerBuilder...")
+  const singleRandomWinnerBuilderResult = await deploy("SingleRandomWinnerBuilder", {
     args: [
       comptrollerAddress,
       singleRandomWinnerProxyFactoryResult.address,
       trustedForwarder,
-      compoundPrizePoolProxyFactoryResult.address,
       controlledTokenProxyFactoryResult.address,
       proxyFactoryResult.address,
       ticketProxyFactoryResult.address
@@ -242,15 +247,36 @@ module.exports = async (buidler) => {
   })
 
   debug("\n  Deploying CompoundPrizePoolBuilder...")
+  const compoundPrizePoolBuilderResult = await deploy("CompoundPrizePoolBuilder", {
+    args: [
+      comptrollerAddress,
+      trustedForwarder,
+      compoundPrizePoolProxyFactoryResult.address,
+      singleRandomWinnerBuilderResult.address
+    ],
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+
+  debug("\n  Deploying yVaultPrizePoolBuilder...")
   const yVaultPrizePoolBuilderResult = await deploy("yVaultPrizePoolBuilder", {
     args: [
       comptrollerAddress,
-      singleRandomWinnerProxyFactoryResult.address,
       trustedForwarder,
       yVaultPrizePoolProxyFactoryResult.address,
-      controlledTokenProxyFactoryResult.address,
-      proxyFactoryResult.address,
-      ticketProxyFactoryResult.address
+      singleRandomWinnerBuilderResult.address
+    ],
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+
+  debug("\n  Deploying StakePrizePoolBuilder...")
+  const stakePrizePoolBuilderResult = await deploy("StakePrizePoolBuilder", {
+    args: [
+      comptrollerAddress,
+      trustedForwarder,
+      stakePrizePoolProxyFactoryResult.address,
+      singleRandomWinnerBuilderResult.address
     ],
     from: deployer,
     skipIfAlreadyDeployed: true
@@ -265,8 +291,10 @@ module.exports = async (buidler) => {
   debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
   debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)
   debug("  - SingleRandomWinnerProxyFactory: ", singleRandomWinnerProxyFactoryResult.address)
+  debug("  - SingleRandomWinnerBuilder:      ", singleRandomWinnerBuilderResult.address)
   debug("  - CompoundPrizePoolBuilder:       ", compoundPrizePoolBuilderResult.address)
   debug("  - yVaultPrizePoolBuilder:         ", yVaultPrizePoolBuilderResult.address)
+  debug("  - StakePrizePoolBuilder:          ", stakePrizePoolBuilderResult.address)
 
   debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 };
