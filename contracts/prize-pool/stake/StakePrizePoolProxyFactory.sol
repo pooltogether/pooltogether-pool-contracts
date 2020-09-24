@@ -5,7 +5,7 @@ pragma solidity >=0.6.0 <0.7.0;
 import "./StakePrizePool.sol";
 import "../../external/openzeppelin/ProxyFactory.sol";
 
-/// @title yVault Prize Pool Proxy Factory
+/// @title Stake Prize Pool Proxy Factory
 /// @notice Minimal proxy pattern for creating new yVault Prize Pools
 contract StakePrizePoolProxyFactory is ProxyFactory {
 
@@ -17,8 +17,8 @@ contract StakePrizePoolProxyFactory is ProxyFactory {
     instance = new StakePrizePool();
   }
 
-  /// @notice Creates a new yVault Prize Pool as a proxy of the template instance
-  /// @return A reference to the new proxied yVault Prize Pool
+  /// @notice Creates a new Stake Prize Pool as a proxy of the template instance
+  /// @return A reference to the new proxied Stake Prize Pool
   function create() external returns (StakePrizePool) {
     return StakePrizePool(deployMinimal(address(instance), ""));
   }

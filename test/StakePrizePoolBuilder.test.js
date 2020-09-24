@@ -104,7 +104,7 @@ describe('StakePrizePoolBuilder', () => {
   })
 
   describe('createSingleRandomWinner()', () => {
-    it('should allow a user to create yVault Prize Pools with Single Random Winner strategy', async () => {
+    it('should allow a user to create Stake Prize Pools with Single Random Winner strategy', async () => {
 
       let decimals = 18
 

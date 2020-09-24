@@ -83,7 +83,7 @@ describe('SingleRandomWinnerBuilder', () => {
   }
 
   describe('createSingleRandomWinner()', () => {
-    it('should allow a user to create Compound Prize Pools with Single Random Winner strategy', async () => {
+    it('should allow a user to a Single Random Winner strategy', async () => {
 
       let tx = await builder.createSingleRandomWinner(
         prizePool.address,

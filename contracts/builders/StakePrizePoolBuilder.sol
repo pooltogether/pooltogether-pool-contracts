@@ -36,8 +36,8 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
     StakePrizePoolProxyFactory _stakePrizePoolProxyFactory,
     SingleRandomWinnerBuilder _singleRandomWinnerBuilder
   ) public {
-    require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
-    require(address(_singleRandomWinnerBuilder) != address(0), "CompoundPrizePoolBuilder/single-random-winner-builder-not-zero");
+    require(address(_comptroller) != address(0), "StakePrizePoolBuilder/comptroller-not-zero");
+    require(address(_singleRandomWinnerBuilder) != address(0), "StakePrizePoolBuilder/single-random-winner-builder-not-zero");
     require(address(_stakePrizePoolProxyFactory) != address(0), "StakePrizePoolBuilder/stake-prize-pool-proxy-factory-not-zero");
     comptroller = _comptroller;
     singleRandomWinnerBuilder = _singleRandomWinnerBuilder;

@@ -42,8 +42,8 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
     yVaultPrizePoolProxyFactory _vaultPrizePoolProxyFactory,
     SingleRandomWinnerBuilder _singleRandomWinnerBuilder
   ) public {
-    require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
-    require(address(_singleRandomWinnerBuilder) != address(0), "CompoundPrizePoolBuilder/single-random-winner-builder-not-zero");
+    require(address(_comptroller) != address(0), "yVaultPrizePoolBuilder/comptroller-not-zero");
+    require(address(_singleRandomWinnerBuilder) != address(0), "yVaultPrizePoolBuilder/single-random-winner-builder-not-zero");
     require(address(_vaultPrizePoolProxyFactory) != address(0), "yVaultPrizePoolBuilder/compound-prize-pool-builder-not-zero");
     comptroller = _comptroller;
     singleRandomWinnerBuilder = _singleRandomWinnerBuilder;
