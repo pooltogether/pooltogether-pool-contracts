@@ -4,10 +4,11 @@ const buidler = require('@nomiclabs/buidler')
 const { ethers } = require('ethers')
 const { AddressZero } = ethers.constants
 const { deployMockContract } = require('./helpers/deployMockContract')
-const InitializableAdminUpgradeabilityProxy = require('@openzeppelin/upgrades/build/contracts/InitializableAdminUpgradeabilityProxy.json')
 const PrizePoolTokenListenerInterface = require('../build/PrizePoolTokenListenerInterface.json')
 
 const toWei = ethers.utils.parseEther
+
+const debug = require('debug')('ptv3:CompoundPrizePoolBuilder.test')
 
 describe('CompoundPrizePoolBuilder', () => {
 
@@ -17,10 +18,8 @@ describe('CompoundPrizePoolBuilder', () => {
 
   let comptroller,
       trustedForwarder,
-      prizeStrategyProxyFactory,
-      proxyFactory,
+      singleRandomWinnerBuilder,
       compoundPrizePoolProxyFactory,
-      controlledTokenProxyFactory,
       rngServiceMock,
       cToken
 
@@ -38,11 +37,8 @@ describe('CompoundPrizePoolBuilder', () => {
 
     comptroller = (await deployments.get("Comptroller"))
     trustedForwarder = (await deployments.get("TrustedForwarder"))
-    prizeStrategyProxyFactory = (await deployments.get("SingleRandomWinnerProxyFactory"))
+    singleRandomWinnerBuilder = (await deployments.get("SingleRandomWinnerBuilder"))
     compoundPrizePoolProxyFactory = (await deployments.get("CompoundPrizePoolProxyFactory"))
-    controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
-    ticketProxyFactory = (await deployments.get("TicketProxyFactory"))
-    proxyFactory = (await deployments.get("ProxyFactory"))
     rngServiceMock = (await deployments.get("RNGServiceMock"))
     cToken = (await deployments.get("cDai"))
 
@@ -71,12 +67,9 @@ describe('CompoundPrizePoolBuilder', () => {
   describe('initialize()', () => {
     it('should setup all factories', async () => {
       expect(await builder.comptroller()).to.equal(comptroller.address)
-      expect(await builder.singleRandomWinnerProxyFactory()).to.equal(prizeStrategyProxyFactory.address)
+      expect(await builder.singleRandomWinnerBuilder()).to.equal(singleRandomWinnerBuilder.address)
       expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.compoundPrizePoolProxyFactory()).to.equal(compoundPrizePoolProxyFactory.address)
-      expect(await builder.controlledTokenProxyFactory()).to.equal(controlledTokenProxyFactory.address)
-      expect(await builder.proxyFactory()).to.equal(proxyFactory.address)
-      expect(await builder.ticketProxyFactory()).to.equal(ticketProxyFactory.address)
     })
   })
 
@@ -116,13 +109,16 @@ describe('CompoundPrizePoolBuilder', () => {
       let tx = await builder.createSingleRandomWinner(compoundPrizePoolConfig, singleRandomWinnerConfig)
       let events = await getEvents(tx)
       let prizePoolCreatedEvent = events.find(e => e.name == 'CompoundPrizePoolCreated')
-      let singleRandomWinnerCreatedEvent = events.find(e => e.name == 'SingleRandomWinnerCreated')
 
       const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', prizePoolCreatedEvent.args.prizeStrategy, wallet)
       const prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', prizePoolCreatedEvent.args.prizePool, wallet)
-      expect(singleRandomWinnerCreatedEvent.args.singleRandomWinner).to.equal(prizePoolCreatedEvent.args.prizeStrategy)
-      const ticketAddress = singleRandomWinnerCreatedEvent.args.ticket
-      const sponsorshipAddress = singleRandomWinnerCreatedEvent.args.sponsorship
+
+      debug('accesing ticket')
+
+      const ticketAddress = await prizeStrategy.ticket()
+      const sponsorshipAddress = await prizeStrategy.sponsorship()
+
+      debug('done')
 
       expect(await prizeStrategy.ticket()).to.equal(ticketAddress)
       expect(await prizeStrategy.sponsorship()).to.equal(sponsorshipAddress)
@@ -158,20 +154,6 @@ describe('CompoundPrizePoolBuilder', () => {
         ethers.BigNumber.from('0'),
         ethers.BigNumber.from('0')
       ])
-    })
-
-    it('should allow a user to create an upgradeable Single Random Winner strategy', async () => {
-      const proxyAdmin = await deployMockContract(wallet, (await deployments.get("ProxyAdmin")).abi)
-
-      singleRandomWinnerConfig.proxyAdmin = proxyAdmin.address
-
-      let tx = await builder.createSingleRandomWinner(compoundPrizePoolConfig, singleRandomWinnerConfig)
-      let events = await getEvents(tx)
-      let event = events.find(e => e.name == 'CompoundPrizePoolCreated')
-
-      const prizeStrategyProxy = new ethers.Contract(event.args.prizeStrategy, InitializableAdminUpgradeabilityProxy.abi, wallet)
-
-      expect(await proxyAdmin.staticcall(prizeStrategyProxy, 'admin')).to.equal(proxyAdmin.address)
     })
   })
 })

@@ -5,57 +5,51 @@ pragma experimental ABIEncoderV2;
 
 import "../comptroller/ComptrollerInterface.sol";
 import "./SingleRandomWinnerBuilder.sol";
-import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
-import "../prize-pool/yearn/yVaultPrizePoolProxyFactory.sol";
-import "../token/ControlledTokenProxyFactory.sol";
-import "../token/TicketProxyFactory.sol";
-import "../external/yearn/yVaultInterface.sol";
-import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
+import "../prize-pool/stake/StakePrizePoolProxyFactory.sol";
 
 /* solium-disable security/no-block-members */
-contract yVaultPrizePoolBuilder {
+contract StakePrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
-  struct yVaultPrizePoolConfig {
-    yVaultInterface vault;
-    uint256 reserveRateMantissa;
+  struct StakePrizePoolConfig {
+    IERC20 token;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
   }
 
-  event yVaultPrizePoolCreated (
+  event StakePrizePoolCreated (
     address indexed creator,
     address indexed prizePool,
     address indexed prizeStrategy
   );
 
   ComptrollerInterface public comptroller;
-  yVaultPrizePoolProxyFactory public vaultPrizePoolProxyFactory;
+  StakePrizePoolProxyFactory public stakePrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
   address public trustedForwarder;
 
   constructor (
     ComptrollerInterface _comptroller,
     address _trustedForwarder,
-    yVaultPrizePoolProxyFactory _vaultPrizePoolProxyFactory,
+    StakePrizePoolProxyFactory _stakePrizePoolProxyFactory,
     SingleRandomWinnerBuilder _singleRandomWinnerBuilder
   ) public {
     require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
     require(address(_singleRandomWinnerBuilder) != address(0), "CompoundPrizePoolBuilder/single-random-winner-builder-not-zero");
-    require(address(_vaultPrizePoolProxyFactory) != address(0), "yVaultPrizePoolBuilder/compound-prize-pool-builder-not-zero");
+    require(address(_stakePrizePoolProxyFactory) != address(0), "StakePrizePoolBuilder/stake-prize-pool-proxy-factory-not-zero");
     comptroller = _comptroller;
     singleRandomWinnerBuilder = _singleRandomWinnerBuilder;
     trustedForwarder = _trustedForwarder;
-    vaultPrizePoolProxyFactory = _vaultPrizePoolProxyFactory;
+    stakePrizePoolProxyFactory = _stakePrizePoolProxyFactory;
   }
 
   function createSingleRandomWinner(
-    yVaultPrizePoolConfig calldata prizePoolConfig,
+    StakePrizePoolConfig calldata prizePoolConfig,
     SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig,
     uint8 decimals
-  ) external returns (yVaultPrizePool) {
-    yVaultPrizePool prizePool = _createyVaultPrizePool(
+  ) external returns (StakePrizePool) {
+    StakePrizePool prizePool = _createStakePrizePool(
       prizePoolConfig,
       PrizePoolTokenListenerInterface(address(0x1)) // dummy strategy
     );
@@ -71,19 +65,19 @@ contract yVaultPrizePoolBuilder {
     prizePool.transferOwnership(msg.sender);
     prizeStrategy.transferOwnership(msg.sender);
 
-    emit yVaultPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit StakePrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }
 
-  function _createyVaultPrizePool(
-    yVaultPrizePoolConfig memory config,
+  function _createStakePrizePool(
+    StakePrizePoolConfig memory config,
     PrizePoolTokenListenerInterface prizeStrategy
   )
     internal
-    returns (yVaultPrizePool)
+    returns (StakePrizePool)
   {
-    yVaultPrizePool prizePool = vaultPrizePoolProxyFactory.create();
+    StakePrizePool prizePool = stakePrizePoolProxyFactory.create();
 
     address[] memory tokens;
 
@@ -94,24 +88,23 @@ contract yVaultPrizePoolBuilder {
       tokens,
       config.maxExitFeeMantissa,
       config.maxTimelockDuration,
-      config.vault,
-      config.reserveRateMantissa
+      config.token
     );
 
     return prizePool;
   }
 
-  function createyVaultPrizePool(
-    yVaultPrizePoolConfig calldata config,
+  function createStakePrizePool(
+    StakePrizePoolConfig calldata config,
     PrizePoolTokenListenerInterface prizeStrategy
   )
     external
-    returns (yVaultPrizePool)
+    returns (StakePrizePool)
   {
-    yVaultPrizePool prizePool = _createyVaultPrizePool(config, prizeStrategy);
+    StakePrizePool prizePool = _createStakePrizePool(config, prizeStrategy);
     prizePool.transferOwnership(msg.sender);
 
-    emit yVaultPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit StakePrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }

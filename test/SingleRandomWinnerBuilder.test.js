@@ -4,42 +4,51 @@ const buidler = require('@nomiclabs/buidler')
 const { ethers } = require('ethers')
 const { AddressZero } = ethers.constants
 const { deployMockContract } = require('./helpers/deployMockContract')
+const { deployContract } = require('ethereum-waffle')
 const InitializableAdminUpgradeabilityProxy = require('@openzeppelin/upgrades/build/contracts/InitializableAdminUpgradeabilityProxy.json')
-const PrizePoolTokenListenerInterface = require('../build/PrizePoolTokenListenerInterface.json')
+const StubPrizePool = require('../build/StubPrizePool.json')
 
 const toWei = ethers.utils.parseEther
 
-describe('yVaultPrizePoolBuilder', () => {
+const overrides = { gasLimit: 20000000 }
 
-  let wallet, env
+const debug = require('debug')('ptv3:SingleRandomWinnerBuilder.test')
+
+describe('SingleRandomWinnerBuilder', () => {
+
+  let wallet
 
   let builder
 
   let comptroller,
       trustedForwarder,
-      singleRandomWinnerBuilder,
-      vaultPrizePoolProxyFactory,
+      controlledTokenProxyFactory,
+      ticketProxyFactory,
+      proxyFactory,
       rngServiceMock,
-      vault
+      prizePool
 
-  let singleRandomWinnerConfig,
-      vaultPrizePoolConfig
+  let singleRandomWinnerConfig
 
   beforeEach(async () => {
     [wallet] = await buidler.ethers.getSigners()
     await deployments.fixture()
     builder = await buidler.ethers.getContractAt(
-      "yVaultPrizePoolBuilder",
-      (await deployments.get("yVaultPrizePoolBuilder")).address,
+      "SingleRandomWinnerBuilder",
+      (await deployments.get("SingleRandomWinnerBuilder")).address,
       wallet
     )
 
     comptroller = (await deployments.get("Comptroller"))
     trustedForwarder = (await deployments.get("TrustedForwarder"))
-    singleRandomWinnerBuilder = (await deployments.get("SingleRandomWinnerBuilder"))
-    vaultPrizePoolProxyFactory = (await deployments.get("yVaultPrizePoolProxyFactory"))
+    singleRandomWinnerProxyFactory = (await deployments.get("SingleRandomWinnerProxyFactory"))
+    controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
+    ticketProxyFactory = (await deployments.get("TicketProxyFactory"))
+    proxyFactory = (await deployments.get("ProxyFactory"))
     rngServiceMock = (await deployments.get("RNGServiceMock"))
-    vault = (await deployments.get("yDai"))
+
+    prizePool = await deployContract(wallet, StubPrizePool, [], overrides)
+    await prizePool.transferOwnership(builder.address)
 
     singleRandomWinnerConfig = {
       proxyAdmin: AddressZero,
@@ -54,22 +63,16 @@ describe('yVaultPrizePoolBuilder', () => {
       ticketCreditRateMantissa: toWei('0.001'),
       externalERC20Awards: []
     }
-
-    vaultPrizePoolConfig = {
-      vault: vault.address,
-      reserveRateMantissa: toWei('0.05'),
-      maxExitFeeMantissa: toWei('0.5'),
-      maxTimelockDuration: 1000
-    }
-
   })
 
   describe('initialize()', () => {
     it('should setup all factories', async () => {
       expect(await builder.comptroller()).to.equal(comptroller.address)
-      expect(await builder.singleRandomWinnerBuilder()).to.equal(singleRandomWinnerBuilder.address)
+      expect(await builder.singleRandomWinnerProxyFactory()).to.equal(singleRandomWinnerProxyFactory.address)
       expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
-      expect(await builder.vaultPrizePoolProxyFactory()).to.equal(vaultPrizePoolProxyFactory.address)
+      expect(await builder.controlledTokenProxyFactory()).to.equal(controlledTokenProxyFactory.address)
+      expect(await builder.ticketProxyFactory()).to.equal(ticketProxyFactory.address)
+      expect(await builder.proxyFactory()).to.equal(proxyFactory.address)
     })
   })
 
@@ -83,47 +86,23 @@ describe('yVaultPrizePoolBuilder', () => {
     }, [])
   }
 
-  describe('createyVaultPrizePool()', () => {
-    it('should allow a user to create a yVaultPrizePool', async () => {
-      const prizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi)
-
-      let tx = await builder.createyVaultPrizePool(vaultPrizePoolConfig, prizeStrategy.address)
-      let events = await getEvents(tx)
-      let event = events[0]
-
-      expect(event.name).to.equal('yVaultPrizePoolCreated')
-
-      const prizePool = await buidler.ethers.getContractAt('yVaultPrizePoolHarness', event.args.prizePool, wallet)
-
-      expect(await prizePool.vault()).to.equal(vaultPrizePoolConfig.vault)
-      expect(await prizePool.maxExitFeeMantissa()).to.equal(vaultPrizePoolConfig.maxExitFeeMantissa)
-      expect(await prizePool.maxTimelockDuration()).to.equal(vaultPrizePoolConfig.maxTimelockDuration)
-      expect(await prizePool.owner()).to.equal(wallet._address)
-      expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
-    })
-  })
-
   describe('createSingleRandomWinner()', () => {
-    it('should allow a user to create yVault Prize Pools with Single Random Winner strategy', async () => {
+    it('should allow a user to create Compound Prize Pools with Single Random Winner strategy', async () => {
 
-      let decimals = 18
-
-      let tx = await builder.createSingleRandomWinner(vaultPrizePoolConfig, singleRandomWinnerConfig, decimals)
+      let tx = await builder.createSingleRandomWinner(
+        prizePool.address,
+        singleRandomWinnerConfig,
+        8
+      )
       let events = await getEvents(tx)
-      let prizePoolCreatedEvent = events.find(e => e.name == 'yVaultPrizePoolCreated')
+      let singleRandomWinnerCreatedEvent = events.find(e => e.name == 'SingleRandomWinnerCreated')
 
-      const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', prizePoolCreatedEvent.args.prizeStrategy, wallet)
-      const prizePool = await buidler.ethers.getContractAt('yVaultPrizePoolHarness', prizePoolCreatedEvent.args.prizePool, wallet)
-      const ticketAddress = await prizeStrategy.ticket()
-      const sponsorshipAddress = await prizeStrategy.sponsorship()
+      const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', singleRandomWinnerCreatedEvent.args.singleRandomWinner, wallet)
+      const ticketAddress = singleRandomWinnerCreatedEvent.args.ticket
+      const sponsorshipAddress = singleRandomWinnerCreatedEvent.args.sponsorship
 
       expect(await prizeStrategy.ticket()).to.equal(ticketAddress)
       expect(await prizeStrategy.sponsorship()).to.equal(sponsorshipAddress)
-
-      expect(await prizePool.vault()).to.equal(vaultPrizePoolConfig.vault)
-      expect(await prizePool.maxExitFeeMantissa()).to.equal(vaultPrizePoolConfig.maxExitFeeMantissa)
-      expect(await prizePool.maxTimelockDuration()).to.equal(vaultPrizePoolConfig.maxTimelockDuration)
-      expect(await prizePool.owner()).to.equal(wallet._address)
 
       expect(await prizeStrategy.prizePeriodStartedAt()).to.equal(singleRandomWinnerConfig.prizePeriodStart)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(singleRandomWinnerConfig.prizePeriodSeconds)
@@ -133,16 +112,12 @@ describe('yVaultPrizePoolBuilder', () => {
       const ticket = await buidler.ethers.getContractAt('Ticket', ticketAddress, wallet)
       expect(await ticket.name()).to.equal(singleRandomWinnerConfig.ticketName)
       expect(await ticket.symbol()).to.equal(singleRandomWinnerConfig.ticketSymbol)
-      expect(await ticket.decimals()).to.equal(decimals)
 
       const sponsorship = await buidler.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
       expect(await sponsorship.name()).to.equal(singleRandomWinnerConfig.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(singleRandomWinnerConfig.sponsorshipSymbol)
-      expect(await sponsorship.decimals()).to.equal(decimals)
 
       expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorshipAddress)
-      expect(await prizePool.maxExitFeeMantissa()).to.equal(vaultPrizePoolConfig.maxExitFeeMantissa)
-      expect(await prizePool.maxTimelockDuration()).to.equal(vaultPrizePoolConfig.maxTimelockDuration)
 
       expect(await prizePool.creditPlanOf(ticket.address)).to.deep.equal([
         singleRandomWinnerConfig.ticketCreditLimitMantissa,
@@ -160,11 +135,16 @@ describe('yVaultPrizePoolBuilder', () => {
 
       singleRandomWinnerConfig.proxyAdmin = proxyAdmin.address
 
-      let tx = await builder.createSingleRandomWinner(vaultPrizePoolConfig, singleRandomWinnerConfig, 8)
-      let events = await getEvents(tx)
-      let event = events.find(e => e.name == 'yVaultPrizePoolCreated')
+      let tx = await builder.createSingleRandomWinner(
+        prizePool.address,
+        singleRandomWinnerConfig,
+        18
+      )
 
-      const prizeStrategyProxy = new ethers.Contract(event.args.prizeStrategy, InitializableAdminUpgradeabilityProxy.abi, wallet)
+      let events = await getEvents(tx)
+      let event = events.find(e => e.name == 'SingleRandomWinnerCreated')
+
+      const prizeStrategyProxy = new ethers.Contract(event.args.singleRandomWinner, InitializableAdminUpgradeabilityProxy.abi, wallet)
 
       expect(await proxyAdmin.staticcall(prizeStrategyProxy, 'admin')).to.equal(proxyAdmin.address)
     })
