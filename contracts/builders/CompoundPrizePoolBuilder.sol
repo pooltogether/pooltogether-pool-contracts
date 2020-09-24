@@ -4,6 +4,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "./PrizePoolBuilder.sol";
 import "./SingleRandomWinnerBuilder.sol";
 import "../comptroller/ComptrollerInterface.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
@@ -15,7 +16,7 @@ import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 
 /// @title Builds new Compound Prize Pools
 /* solium-disable security/no-block-members */
-contract CompoundPrizePoolBuilder {
+contract CompoundPrizePoolBuilder is PrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
@@ -55,33 +56,46 @@ contract CompoundPrizePoolBuilder {
     CompoundPrizePoolConfig calldata prizePoolConfig,
     SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig
   ) external returns (CompoundPrizePool) {
-
-    CompoundPrizePool prizePool = _createCompoundPrizePool(
-      prizePoolConfig,
-      PrizePoolTokenListenerInterface(address(0x1)) // dummy strategy
-    );
-
-    prizePool.transferOwnership(address(singleRandomWinnerBuilder));
+    CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
 
     SingleRandomWinner prizeStrategy = singleRandomWinnerBuilder.createSingleRandomWinner(
       prizePool,
       prizeStrategyConfig,
-      prizePoolConfig.cToken.decimals()
+      prizePoolConfig.cToken.decimals(),
+      msg.sender
+    );
+
+    address[] memory tokens;
+
+    prizePool.initialize(
+      trustedForwarder,
+      prizeStrategy,
+      comptroller,
+      tokens,
+      prizePoolConfig.maxExitFeeMantissa,
+      prizePoolConfig.maxTimelockDuration,
+      prizePoolConfig.cToken
+    );
+
+    _setupSingleRandomWinner(
+      prizePool,
+      prizeStrategy,
+      prizeStrategyConfig.ticketCreditRateMantissa,
+      prizeStrategyConfig.ticketCreditLimitMantissa
     );
 
     prizePool.transferOwnership(msg.sender);
-    prizeStrategy.transferOwnership(msg.sender);
 
     emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }
 
-  function _createCompoundPrizePool(
-    CompoundPrizePoolConfig memory config,
+  function createCompoundPrizePool(
+    CompoundPrizePoolConfig calldata config,
     PrizePoolTokenListenerInterface prizeStrategy
   )
-    internal
+    external
     returns (CompoundPrizePool)
   {
     CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
@@ -98,17 +112,6 @@ contract CompoundPrizePoolBuilder {
       config.cToken
     );
 
-    return prizePool;
-  }
-
-  function createCompoundPrizePool(
-    CompoundPrizePoolConfig calldata config,
-    PrizePoolTokenListenerInterface prizeStrategy
-  )
-    external
-    returns (CompoundPrizePool)
-  {
-    CompoundPrizePool prizePool = _createCompoundPrizePool(config, prizeStrategy);
     prizePool.transferOwnership(msg.sender);
 
     emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));

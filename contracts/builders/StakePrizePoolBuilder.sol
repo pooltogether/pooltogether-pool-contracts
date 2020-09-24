@@ -3,12 +3,13 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "./PrizePoolBuilder.sol";
 import "../comptroller/ComptrollerInterface.sol";
 import "./SingleRandomWinnerBuilder.sol";
 import "../prize-pool/stake/StakePrizePoolProxyFactory.sol";
 
 /* solium-disable security/no-block-members */
-contract StakePrizePoolBuilder {
+contract StakePrizePoolBuilder is PrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
@@ -49,32 +50,46 @@ contract StakePrizePoolBuilder {
     SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig,
     uint8 decimals
   ) external returns (StakePrizePool) {
-    StakePrizePool prizePool = _createStakePrizePool(
-      prizePoolConfig,
-      PrizePoolTokenListenerInterface(address(0x1)) // dummy strategy
-    );
-
-    prizePool.transferOwnership(address(singleRandomWinnerBuilder));
+    StakePrizePool prizePool = stakePrizePoolProxyFactory.create();
 
     SingleRandomWinner prizeStrategy = singleRandomWinnerBuilder.createSingleRandomWinner(
       prizePool,
       prizeStrategyConfig,
-      decimals
+      decimals,
+      msg.sender
+    );
+
+    address[] memory tokens;
+
+    prizePool.initialize(
+      trustedForwarder,
+      prizeStrategy,
+      comptroller,
+      tokens,
+      prizePoolConfig.maxExitFeeMantissa,
+      prizePoolConfig.maxTimelockDuration,
+      prizePoolConfig.token
+    );
+
+    _setupSingleRandomWinner(
+      prizePool,
+      prizeStrategy,
+      prizeStrategyConfig.ticketCreditRateMantissa,
+      prizeStrategyConfig.ticketCreditLimitMantissa
     );
 
     prizePool.transferOwnership(msg.sender);
-    prizeStrategy.transferOwnership(msg.sender);
 
     emit StakePrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }
 
-  function _createStakePrizePool(
-    StakePrizePoolConfig memory config,
+  function createStakePrizePool(
+    StakePrizePoolConfig calldata config,
     PrizePoolTokenListenerInterface prizeStrategy
   )
-    internal
+    external
     returns (StakePrizePool)
   {
     StakePrizePool prizePool = stakePrizePoolProxyFactory.create();
@@ -91,17 +106,6 @@ contract StakePrizePoolBuilder {
       config.token
     );
 
-    return prizePool;
-  }
-
-  function createStakePrizePool(
-    StakePrizePoolConfig calldata config,
-    PrizePoolTokenListenerInterface prizeStrategy
-  )
-    external
-    returns (StakePrizePool)
-  {
-    StakePrizePool prizePool = _createStakePrizePool(config, prizeStrategy);
     prizePool.transferOwnership(msg.sender);
 
     emit StakePrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));

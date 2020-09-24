@@ -4,13 +4,10 @@ const buidler = require('@nomiclabs/buidler')
 const { ethers } = require('ethers')
 const { AddressZero } = ethers.constants
 const { deployMockContract } = require('./helpers/deployMockContract')
-const { deployContract } = require('ethereum-waffle')
 const InitializableAdminUpgradeabilityProxy = require('@openzeppelin/upgrades/build/contracts/InitializableAdminUpgradeabilityProxy.json')
-const StubPrizePool = require('../build/StubPrizePool.json')
+const PrizePool = require('../build/PrizePool.json')
 
 const toWei = ethers.utils.parseEther
-
-const overrides = { gasLimit: 20000000 }
 
 const debug = require('debug')('ptv3:SingleRandomWinnerBuilder.test')
 
@@ -47,8 +44,7 @@ describe('SingleRandomWinnerBuilder', () => {
     proxyFactory = (await deployments.get("ProxyFactory"))
     rngServiceMock = (await deployments.get("RNGServiceMock"))
 
-    prizePool = await deployContract(wallet, StubPrizePool, [], overrides)
-    await prizePool.transferOwnership(builder.address)
+    prizePool = await deployMockContract(wallet, PrizePool.abi)
 
     singleRandomWinnerConfig = {
       proxyAdmin: AddressZero,
@@ -92,7 +88,8 @@ describe('SingleRandomWinnerBuilder', () => {
       let tx = await builder.createSingleRandomWinner(
         prizePool.address,
         singleRandomWinnerConfig,
-        8
+        8,
+        wallet._address
       )
       let events = await getEvents(tx)
       let singleRandomWinnerCreatedEvent = events.find(e => e.name == 'SingleRandomWinnerCreated')
@@ -116,18 +113,6 @@ describe('SingleRandomWinnerBuilder', () => {
       const sponsorship = await buidler.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
       expect(await sponsorship.name()).to.equal(singleRandomWinnerConfig.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(singleRandomWinnerConfig.sponsorshipSymbol)
-
-      expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorshipAddress)
-
-      expect(await prizePool.creditPlanOf(ticket.address)).to.deep.equal([
-        singleRandomWinnerConfig.ticketCreditLimitMantissa,
-        singleRandomWinnerConfig.ticketCreditRateMantissa
-      ])
-
-      expect(await prizePool.creditPlanOf(sponsorship.address)).to.deep.equal([
-        ethers.BigNumber.from('0'),
-        ethers.BigNumber.from('0')
-      ])
     })
 
     it('should allow a user to create an upgradeable Single Random Winner strategy', async () => {
@@ -138,7 +123,8 @@ describe('SingleRandomWinnerBuilder', () => {
       let tx = await builder.createSingleRandomWinner(
         prizePool.address,
         singleRandomWinnerConfig,
-        18
+        18,
+        wallet._address
       )
 
       let events = await getEvents(tx)

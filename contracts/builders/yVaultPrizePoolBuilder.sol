@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "../comptroller/ComptrollerInterface.sol";
 import "./SingleRandomWinnerBuilder.sol";
+import "./PrizePoolBuilder.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
 import "../prize-pool/yearn/yVaultPrizePoolProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
@@ -13,7 +14,7 @@ import "../external/yearn/yVaultInterface.sol";
 import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 
 /* solium-disable security/no-block-members */
-contract yVaultPrizePoolBuilder {
+contract yVaultPrizePoolBuilder is PrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
@@ -55,32 +56,54 @@ contract yVaultPrizePoolBuilder {
     SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig,
     uint8 decimals
   ) external returns (yVaultPrizePool) {
-    yVaultPrizePool prizePool = _createyVaultPrizePool(
-      prizePoolConfig,
-      PrizePoolTokenListenerInterface(address(0x1)) // dummy strategy
-    );
 
-    prizePool.transferOwnership(address(singleRandomWinnerBuilder));
+    yVaultPrizePool prizePool = vaultPrizePoolProxyFactory.create();
 
     SingleRandomWinner prizeStrategy = singleRandomWinnerBuilder.createSingleRandomWinner(
       prizePool,
       prizeStrategyConfig,
-      decimals
+      decimals,
+      msg.sender
+    );
+
+    address[] memory tokens;
+
+    prizePool.initialize(
+      trustedForwarder,
+      prizeStrategy,
+      comptroller,
+      tokens,
+      prizePoolConfig.maxExitFeeMantissa,
+      prizePoolConfig.maxTimelockDuration,
+      prizePoolConfig.vault,
+      prizePoolConfig.reserveRateMantissa
+    );
+
+    _setupSingleRandomWinner(
+      prizePool,
+      prizeStrategy,
+      prizeStrategyConfig.ticketCreditRateMantissa,
+      prizeStrategyConfig.ticketCreditLimitMantissa
+    );
+
+    prizePool.setCreditPlanOf(
+      address(prizeStrategy.sponsorship()),
+      prizeStrategyConfig.ticketCreditRateMantissa.toUint128(),
+      prizeStrategyConfig.ticketCreditLimitMantissa.toUint128()
     );
 
     prizePool.transferOwnership(msg.sender);
-    prizeStrategy.transferOwnership(msg.sender);
 
     emit yVaultPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }
 
-  function _createyVaultPrizePool(
-    yVaultPrizePoolConfig memory config,
+  function createyVaultPrizePool(
+    yVaultPrizePoolConfig calldata config,
     PrizePoolTokenListenerInterface prizeStrategy
   )
-    internal
+    external
     returns (yVaultPrizePool)
   {
     yVaultPrizePool prizePool = vaultPrizePoolProxyFactory.create();
@@ -98,17 +121,6 @@ contract yVaultPrizePoolBuilder {
       config.reserveRateMantissa
     );
 
-    return prizePool;
-  }
-
-  function createyVaultPrizePool(
-    yVaultPrizePoolConfig calldata config,
-    PrizePoolTokenListenerInterface prizeStrategy
-  )
-    external
-    returns (yVaultPrizePool)
-  {
-    yVaultPrizePool prizePool = _createyVaultPrizePool(config, prizeStrategy);
     prizePool.transferOwnership(msg.sender);
 
     emit yVaultPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));

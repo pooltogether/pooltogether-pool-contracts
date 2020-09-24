@@ -49,11 +49,11 @@ contract SingleRandomWinnerBuilder {
     OpenZeppelinProxyFactoryInterface _proxyFactory,
     TicketProxyFactory _ticketProxyFactory
   ) public {
-    require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
-    require(address(_singleRandomWinnerProxyFactory) != address(0), "CompoundPrizePoolBuilder/single-random-winner-factory-not-zero");
-    require(address(_controlledTokenProxyFactory) != address(0), "CompoundPrizePoolBuilder/controlled-token-proxy-factory-not-zero");
-    require(address(_proxyFactory) != address(0), "CompoundPrizePoolBuilder/proxy-factory-not-zero");
-    require(address(_ticketProxyFactory) != address(0), "CompoundPrizePoolBuilder/ticket-proxy-factory-not-zero");
+    require(address(_comptroller) != address(0), "SingleRandomWinnerBuilder/comptroller-not-zero");
+    require(address(_singleRandomWinnerProxyFactory) != address(0), "SingleRandomWinnerBuilder/single-random-winner-factory-not-zero");
+    require(address(_controlledTokenProxyFactory) != address(0), "SingleRandomWinnerBuilder/controlled-token-proxy-factory-not-zero");
+    require(address(_proxyFactory) != address(0), "SingleRandomWinnerBuilder/proxy-factory-not-zero");
+    require(address(_ticketProxyFactory) != address(0), "SingleRandomWinnerBuilder/ticket-proxy-factory-not-zero");
     proxyFactory = _proxyFactory;
     ticketProxyFactory = _ticketProxyFactory;
     comptroller = _comptroller;
@@ -65,7 +65,8 @@ contract SingleRandomWinnerBuilder {
   function createSingleRandomWinner(
     PrizePool prizePool,
     SingleRandomWinnerConfig calldata config,
-    uint8 decimals
+    uint8 decimals,
+    address owner
   ) external returns (SingleRandomWinner) {
 
     SingleRandomWinner prizeStrategy;
@@ -106,21 +107,7 @@ contract SingleRandomWinnerBuilder {
       config.externalERC20Awards
     );
 
-    prizePool.addControlledToken(ticket);
-    prizePool.addControlledToken(sponsorship);
-
-    prizePool.setCreditPlanOf(
-      ticket,
-      config.ticketCreditRateMantissa.toUint128(),
-      config.ticketCreditLimitMantissa.toUint128()
-    );
-
-    prizePool.setReserveFeeControlledToken(address(prizeStrategy.sponsorship()));
-
-    prizePool.setPrizeStrategy(address(prizeStrategy));
-
-    prizeStrategy.transferOwnership(msg.sender);
-    prizePool.transferOwnership(msg.sender);
+    prizeStrategy.transferOwnership(owner);
 
     emit SingleRandomWinnerCreated(address(prizeStrategy), ticket, sponsorship);
 

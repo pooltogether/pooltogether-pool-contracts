@@ -150,8 +150,8 @@ describe('yVaultPrizePoolBuilder', () => {
       ])
 
       expect(await prizePool.creditPlanOf(sponsorship.address)).to.deep.equal([
-        ethers.BigNumber.from('0'),
-        ethers.BigNumber.from('0')
+        singleRandomWinnerConfig.ticketCreditLimitMantissa,
+        singleRandomWinnerConfig.ticketCreditRateMantissa
       ])
     })
 
