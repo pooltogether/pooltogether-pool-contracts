@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: GPL-3.0-only
 
 pragma solidity >=0.6.0 <0.7.0;
@@ -12,6 +13,7 @@ import "../token/TicketProxyFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 
+/// @title Builds new Compound Prize Pools
 /* solium-disable security/no-block-members */
 contract CompoundPrizePoolBuilder {
   using SafeMath for uint256;

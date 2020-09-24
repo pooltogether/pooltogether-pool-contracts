@@ -1,8 +1,10 @@
 #Builder files
 cache
+.cache-openzeppelin
 artifacts
 .history
 build
+.build-openzeppelin
 node_modules
 dist
 coverage

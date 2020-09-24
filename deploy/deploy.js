@@ -1,14 +1,7 @@
-const ProxyAdmin = require('@openzeppelin/upgrades/build/contracts/ProxyAdmin.json')
-const ProxyFactory = require('@openzeppelin/upgrades/build/contracts/ProxyFactory.json')
+const ProxyAdmin = require('../.build-openzeppelin/ProxyAdmin.json')
+const ProxyFactory = require('../.build-openzeppelin/ProxyFactory.json')
 const { deploy1820 } = require('deploy-eip-1820')
-const ERC20Mintable = require('../build/ERC20Mintable.json')
 const Comptroller = require("../build/Comptroller.json")
-const ComptrollerHarness = require("../build/ComptrollerHarness.json")
-const CompoundPrizePoolHarnessProxyFactory = require("../build/CompoundPrizePoolHarnessProxyFactory.json")
-const yVaultPrizePoolHarnessProxyFactory = require("../build/yVaultPrizePoolHarnessProxyFactory.json")
-const SingleRandomWinnerHarnessProxyFactory = require('../build/SingleRandomWinnerHarnessProxyFactory.json')
-const CTokenMock = require('../build/CTokenMock.json')
-const yVaultMock = require('../build/yVaultMock.json')
 
 const debug = require('debug')('ptv3:deploy.js')
 
@@ -98,7 +91,7 @@ module.exports = async (buidler) => {
         'DAI Test Token',
         'DAI'
       ],
-      contract: ERC20Mintable,
+      contract: 'ERC20Mintable',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
@@ -111,7 +104,7 @@ module.exports = async (buidler) => {
         daiResult.address,
         supplyRate
       ],
-      contract: CTokenMock,
+      contract: 'CTokenMock',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
@@ -120,7 +113,7 @@ module.exports = async (buidler) => {
       args: [
         daiResult.address
       ],
-      contract: yVaultMock,
+      contract: 'yVaultMock',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
@@ -133,7 +126,7 @@ module.exports = async (buidler) => {
   }
 
   const comptrollerImplementationResult = await deploy("ComptrollerImplementation", {
-    contract: Comptroller,
+    contract: 'Comptroller',
     from: deployer,
     skipIfAlreadyDeployed: true
   })
@@ -141,7 +134,7 @@ module.exports = async (buidler) => {
   let comptrollerAddress
   if (isTestEnvironment) {
     const comptrollerResult = await deploy("Comptroller", {
-      contract: ComptrollerHarness,
+      contract: 'ComptrollerHarness',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
@@ -181,7 +174,7 @@ module.exports = async (buidler) => {
   let compoundPrizePoolProxyFactoryResult
   if (isTestEnvironment) {
     compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolProxyFactory", {
-      contract: CompoundPrizePoolHarnessProxyFactory,
+      contract: 'CompoundPrizePoolHarnessProxyFactory',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
@@ -195,7 +188,7 @@ module.exports = async (buidler) => {
   let yVaultPrizePoolProxyFactoryResult
   if (isTestEnvironment) {
     yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolProxyFactory", {
-      contract: yVaultPrizePoolHarnessProxyFactory,
+      contract: 'yVaultPrizePoolHarnessProxyFactory',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
@@ -222,7 +215,7 @@ module.exports = async (buidler) => {
   let singleRandomWinnerProxyFactoryResult
   if (isTestEnvironment) {
     singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
-      contract: SingleRandomWinnerHarnessProxyFactory,
+      contract: 'SingleRandomWinnerHarnessProxyFactory',
       from: deployer,
       skipIfAlreadyDeployed: true
     })

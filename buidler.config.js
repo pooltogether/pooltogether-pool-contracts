@@ -1,3 +1,9 @@
+const chalk = require('chalk')
+const util = require('util')
+const exec = util.promisify(require('child_process').exec)
+
+const networks = require('./buidler.networks')
+
 const {TASK_COMPILE_GET_COMPILER_INPUT} = require("@nomiclabs/buidler/builtin-tasks/task-names");
 
 const RNGBlockhashRopsten = require('@pooltogether/pooltogether-rng-contracts/deployments/ropsten/RNGBlockhash.json')
@@ -12,8 +18,17 @@ usePlugin("buidler-deploy");
 
 // This must occur after buidler-deploy!
 task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
+  console.log(chalk.dim(`Compiling OpenZeppelin contracts...`))
+  try {
+    await exec(`buidler --config buidler.config.openzeppelin.js compile`)
+    console.log(chalk.green(`Successfully compiled!`))
+  } catch (e) {
+    console.error(chalk.red(e))
+    process.exit(1)
+  }
   const input = await runSuper();
-  input.settings.metadata.useLiteralContent = false;
+  input.settings.metadata.useLiteralContent = process.env.USE_LITERAL_CONTENT != 'false';
+  console.log(`useLiteralContent: ${input.settings.metadata.useLiteralContent}`)
   return input;
 })
 
@@ -23,8 +38,6 @@ const testnetUser2 = '0x7Cfc5a12506d92F29D52EC7B8d1148f46e9296ED' // Account 4
 const testnetUser3 = '0x50D6d6195b102f9b58A29a57E3D71822881033a5' // Account 5
 
 const optimizerEnabled = !process.env.OPTIMIZER_DISABLED
-
-console.log(`Optimizer is enabled: ${optimizerEnabled}`)
 
 const config = {
   solc: {
@@ -38,24 +51,7 @@ const config = {
   paths: {
     artifacts: "./build"
   },
-  networks: {
-    buidlerevm: {
-      blockGasLimit: 200000000,
-      allowUnlimitedContractSize: true,
-      chainId: 31337
-    },
-    coverage: {
-      url: 'http://127.0.0.1:8555',
-      blockGasLimit: 200000000,
-      allowUnlimitedContractSize: true
-    },
-    localhost: {
-      url: 'http://127.0.0.1:8545',
-      blockGasLimit: 200000000,
-      allowUnlimitedContractSize: true,
-      chainId: 31337
-    }
-  },
+  networks,
   gasReporter: {
     currency: 'CHF',
     gasPrice: 21,
@@ -99,32 +95,12 @@ const config = {
       4: testnetUser3,
       42: testnetUser3,
     },
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: process.env.ETHERSCAN_API_KEY
   }
 };
-
-if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
-  config.networks.kovan = {
-    url: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    accounts: {
-      mnemonic: process.env.HDWALLET_MNEMONIC
-    }
-  }
-
-  config.networks.ropsten = {
-    url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    accounts: {
-      mnemonic: process.env.HDWALLET_MNEMONIC
-    }
-  }
-
-  config.networks.rinkeby = {
-    url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    accounts: {
-      mnemonic: process.env.HDWALLET_MNEMONIC
-    }
-  }
-} else {
-  console.warn('No infura or hdwallet available for testnets')
-}
 
 module.exports = config
