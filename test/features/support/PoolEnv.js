@@ -224,6 +224,10 @@ function PoolEnv() {
     )
   }
 
+  this.burnGovernanceTokensFromComptroller = async function({ amount }) {
+    await this.env.governanceToken.burn(this.env.comptroller.address, toWei(amount))
+  }
+
   this.balanceDripGovernanceTokenAtRate = async function ({ dripRatePerSecond }) {
     await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
     await this.env.comptroller.activateBalanceDrip(
