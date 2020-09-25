@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
+import "../utils/ExtendedSafeCast.sol";
 import "../external/pooltogether/FixedPoint.sol";
 
 /// @title Calculates a users share of a token faucet.
@@ -13,6 +14,7 @@ import "../external/pooltogether/FixedPoint.sol";
 library BalanceDrip {
   using SafeMath for uint256;
   using SafeCast for uint256;
+  using ExtendedSafeCast for uint256;
 
   struct UserState {
     uint128 lastExchangeRateMantissa;
@@ -20,7 +22,8 @@ library BalanceDrip {
 
   struct State {
     uint256 dripRatePerSecond;
-    uint128 exchangeRateMantissa;
+    uint112 exchangeRateMantissa;
+    uint112 totalDripped;
     uint32 timestamp;
     mapping(address => UserState) userStates;
   }
@@ -45,6 +48,22 @@ library BalanceDrip {
       user,
       userMeasureBalance
     );
+  }
+
+  function poke(
+    State storage self,
+    address user,
+    uint256 userMeasureBalance
+  ) internal returns (uint128) {
+    return _dripUser(
+      self,
+      user,
+      userMeasureBalance
+    );
+  }
+
+  function resetTotalDripped(State storage self) internal {
+    self.totalDripped = 0;
   }
 
   /// @notice Sets the drip rate per second for a balance drip. It will update the balance drip before setting the drip rate.
@@ -77,15 +96,17 @@ library BalanceDrip {
     uint256 lastTime = self.timestamp == 0 ? timestamp : self.timestamp;
     uint256 newSeconds = timestamp.sub(lastTime);
 
-    uint128 exchangeRateMantissa = self.exchangeRateMantissa == 0 ? FixedPoint.SCALE.toUint128() : self.exchangeRateMantissa;
+    uint112 exchangeRateMantissa = self.exchangeRateMantissa == 0 ? FixedPoint.SCALE.toUint112() : self.exchangeRateMantissa;
 
+    uint256 newTokens;
     if (newSeconds > 0 && self.dripRatePerSecond > 0) {
-      uint256 newTokens = newSeconds.mul(self.dripRatePerSecond);
+      newTokens = newSeconds.mul(self.dripRatePerSecond);
       uint256 indexDeltaMantissa = measureTotalSupply > 0 ? FixedPoint.calculateMantissa(newTokens, measureTotalSupply) : 0;
-      exchangeRateMantissa = uint256(exchangeRateMantissa).add(indexDeltaMantissa).toUint128();
+      exchangeRateMantissa = uint256(exchangeRateMantissa).add(indexDeltaMantissa).toUint112();
     }
 
     self.exchangeRateMantissa = exchangeRateMantissa;
+    self.totalDripped = uint256(self.totalDripped).add(newTokens).toUint112();
     self.timestamp = timestamp.toUint32();
   }
 
@@ -98,7 +119,7 @@ library BalanceDrip {
     uint256 lastExchangeRateMantissa = userState.lastExchangeRateMantissa;
     if (lastExchangeRateMantissa == 0) {
       // if the index is not intialized
-      lastExchangeRateMantissa = self.exchangeRateMantissa;
+      lastExchangeRateMantissa = FixedPoint.SCALE.toUint112();
     }
 
     uint256 deltaExchangeRateMantissa = uint256(self.exchangeRateMantissa).sub(lastExchangeRateMantissa);

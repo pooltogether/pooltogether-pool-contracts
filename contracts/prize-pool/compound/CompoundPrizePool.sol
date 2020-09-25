@@ -52,14 +52,6 @@ contract CompoundPrizePool is PrizePool {
     emit CompoundPrizePoolInitialized(address(cToken));
   }
 
-  /// @dev Gets the current interest-rate the Compound cToken
-  /// @return The current exchange-rate
-  function supplyRatePerBlock() internal view returns (uint256) {
-    (bool success, bytes memory data) = address(cToken).staticcall(abi.encodeWithSignature("supplyRatePerBlock()"));
-    require(success, "CompoundPrizePool/supplyRatePerBlock-failed");
-    return abi.decode(data, (uint256));
-  }
-
   /// @dev Gets the balance of the underlying assets held by the Yield Service
   /// @return The underlying balance of asset tokens
   function _balance() internal override returns (uint256) {
@@ -86,10 +78,10 @@ contract CompoundPrizePool is PrizePool {
   /// @param amount The amount of underlying tokens to be redeemed
   /// @return The actual amount of tokens transferred
   function _redeem(uint256 amount) internal override returns (uint256) {
-    IERC20 token = _token();
-    uint256 before = token.balanceOf(address(this));
+    IERC20 assetToken = _token();
+    uint256 before = assetToken.balanceOf(address(this));
     require(cToken.redeemUnderlying(amount) == 0, "CompoundPrizePool/redeem-failed");
-    uint256 diff = token.balanceOf(address(this)).sub(before);
+    uint256 diff = assetToken.balanceOf(address(this)).sub(before);
     return diff;
   }
 

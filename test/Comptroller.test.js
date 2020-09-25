@@ -323,6 +323,7 @@ describe('Comptroller', () => {
       await measure.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
       await measure.mock.totalSupply.returns(toWei('10'))
 
+      await dripToken.mock.balanceOf.withArgs(comptroller.address).returns(toWei('100'))
       await comptroller.beforeTokenMint(wallet._address, toWei('10'), measure.address, AddressZero)
       await comptroller.setCurrentTime(11)
       // should have accrued 10 blocks worth of the drip: 10 * 0.001 = 0.01
@@ -364,6 +365,7 @@ describe('Comptroller', () => {
       await measure.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
       await measure.mock.totalSupply.returns(toWei('10'))
 
+      await dripToken.mock.balanceOf.withArgs(comptroller.address).returns(toWei('100'))
       await comptroller.beforeTokenMint(wallet._address, toWei('10'), measure.address, AddressZero)
       await comptroller.setCurrentTime(11)
       await comptroller.beforeTokenTransfer(wallet._address, AddressZero, toWei('10'), measure.address)

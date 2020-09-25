@@ -70,7 +70,7 @@ contract VolumeDripManagerExposed {
     )
   {
     VolumeDrip.State storage drip = manager.getDrip(measure, dripToken);
-    dripAmount = drip.dripAmount;
-    periodSeconds = drip.periodSeconds;
+    dripAmount = drip.nextDripAmount;
+    periodSeconds = drip.nextPeriodSeconds;
   }
 }

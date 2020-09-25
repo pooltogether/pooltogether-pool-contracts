@@ -50,4 +50,23 @@ describe('Balance drip', () => {
     await env.expectUserToHaveGovernanceTokens({ user: 1, tokens: '0.1' })
     await env.expectUserToHaveGovernanceTokens({ user: 2, tokens: '0.1' })
   })
+
+  it('should deactivate the drip when all tokens have been distributed', async () => {
+    await env.createPool({ prizePeriodSeconds: 10, creditLimit: '0.1', creditRate: '0.01' })
+    await env.balanceDripGovernanceTokenAtRate({ dripRatePerSecond: toWei('0.1') })
+    // reduce drip-token balance to 10
+    await env.burnGovernanceTokensFromComptroller({ amount: '9990' })
+    // user 1 will get all of the available drip tokens
+    await env.setCurrentTime(10)
+    await env.buyTickets({ user: 1, tickets: '100' })
+    await env.setCurrentTime(110)
+    await env.claimGovernanceDripTokens({ user: 1 })
+    await env.expectUserToHaveGovernanceTokens({ user: 1, tokens: '10' })
+    // user 2 will not receive any drip tokens after deactivation
+    await env.setCurrentTime(120)
+    await env.buyTickets({ user: 2, tickets: '100' })
+    await env.setCurrentTime(150)
+    await env.claimGovernanceDripTokens({ user: 2 })
+    await env.expectUserToHaveGovernanceTokens({ user: 2, tokens: '0' })
+  })
 })

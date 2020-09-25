@@ -38,8 +38,8 @@ contract VolumeDripExposed {
       uint128 dripAmount
     )
   {
-    periodSeconds = state.periodSeconds;
-    dripAmount = state.dripAmount;
+    periodSeconds = state.nextPeriodSeconds;
+    dripAmount = state.nextDripAmount;
   }
 
   function getPeriod(uint32 period)

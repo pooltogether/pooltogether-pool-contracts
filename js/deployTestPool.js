@@ -33,7 +33,7 @@ async function deployTestPool({
   overrides = { gasLimit: 20000000 }
 }) {
   await deployments.fixture()
-  
+
   debug('beforeEach deploy rng, forwarder etc...')
 
   /* = await deployContract(wallet, CTokenMock, [
@@ -41,7 +41,7 @@ async function deployTestPool({
   ], overrides)*/
 
   debug('Deploying Governor...')
-  
+
   let governanceToken = await deployContract(wallet, ERC20Mintable, ['Governance Token', 'GOV'], overrides)
 
   let yVaultBuilderResult = await deployments.get("yVaultPrizePoolBuilder")
@@ -79,7 +79,7 @@ async function deployTestPool({
   if (yVault) {
     debug(`Creating yVault prize pool config: ${yTokenResult.address}`)
     const yToken = await buidler.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
-    debug(`yTokeen token: ${await yToken.token()} and token ${token.address}`)
+    debug(`yToken token: ${await yToken.token()} and token ${token.address}`)
     const yVaultPrizePoolConfig = {
       vault: yTokenResult.address,
       reserveRateMantissa: toWei('0.05'),
@@ -105,7 +105,7 @@ async function deployTestPool({
     let event = events[0]
     prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
   }
-  
+
 
   debug("created prizePool: ", prizePool.address)
 

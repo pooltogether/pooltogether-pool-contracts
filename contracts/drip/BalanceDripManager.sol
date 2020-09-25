@@ -38,6 +38,7 @@ library BalanceDripManager {
       self.activeBalanceDrips[measure].initialize();
     }
     self.activeBalanceDrips[measure].addAddress(dripToken);
+    self.balanceDrips[measure][dripToken].resetTotalDripped();
     self.balanceDrips[measure][dripToken].setDripRate(IERC20(measure).totalSupply(), dripRatePerSecond, currentTime);
   }
 
