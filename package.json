@@ -14,7 +14,7 @@
     "test": "OPTIMIZER_DISABLED=true buidler test",
     "compile": "buidler --show-stack-traces --max-memory 8192 compile",
     "start": "rm -rf deployments/localhost_31337; buidler node",
-    "coverage": "USE_LITERAL_CONTENT=false rm -rf build cache test-results.xml && buidler coverage --network coverage --temp build",
+    "coverage": "rm -rf build cache test-results.xml && USE_LITERAL_CONTENT=false buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network localhost",
     "deploy": "buidler deploy --write true --network",
     "deploy-drips": "buidler run ./js/deployDripTokens.js --network",
