@@ -25,12 +25,6 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
     uint256 maxTimelockDuration;
   }
 
-  event yVaultPrizePoolCreated (
-    address indexed creator,
-    address indexed prizePool,
-    address indexed prizeStrategy
-  );
-
   ComptrollerInterface public comptroller;
   yVaultPrizePoolProxyFactory public vaultPrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
@@ -94,7 +88,7 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit yVaultPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }
@@ -123,7 +117,7 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit yVaultPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }

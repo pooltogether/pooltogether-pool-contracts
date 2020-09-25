@@ -26,12 +26,6 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
     uint256 maxTimelockDuration;
   }
 
-  event CompoundPrizePoolCreated (
-    address indexed creator,
-    address indexed prizePool,
-    address indexed prizeStrategy
-  );
-
   ComptrollerInterface public comptroller;
   CompoundPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
@@ -54,14 +48,15 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
 
   function createSingleRandomWinner(
     CompoundPrizePoolConfig calldata prizePoolConfig,
-    SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig
+    SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig,
+    uint8 decimals
   ) external returns (CompoundPrizePool) {
     CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
 
     SingleRandomWinner prizeStrategy = singleRandomWinnerBuilder.createSingleRandomWinner(
       prizePool,
       prizeStrategyConfig,
-      prizePoolConfig.cToken.decimals(),
+      decimals,
       msg.sender
     );
 
@@ -86,7 +81,7 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }
@@ -114,7 +109,7 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit CompoundPrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }

@@ -19,12 +19,6 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
     uint256 maxTimelockDuration;
   }
 
-  event StakePrizePoolCreated (
-    address indexed creator,
-    address indexed prizePool,
-    address indexed prizeStrategy
-  );
-
   ComptrollerInterface public comptroller;
   StakePrizePoolProxyFactory public stakePrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
@@ -80,7 +74,7 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit StakePrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }
@@ -108,7 +102,7 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit StakePrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
 
     return prizePool;
   }

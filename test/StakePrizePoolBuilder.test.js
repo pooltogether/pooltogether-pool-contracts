@@ -91,7 +91,7 @@ describe('StakePrizePoolBuilder', () => {
       let events = await getEvents(tx)
       let event = events[0]
 
-      expect(event.name).to.equal('StakePrizePoolCreated')
+      expect(event.name).to.equal('PrizePoolCreated')
 
       const prizePool = await buidler.ethers.getContractAt('StakePrizePool', event.args.prizePool, wallet)
 
@@ -110,7 +110,7 @@ describe('StakePrizePoolBuilder', () => {
 
       let tx = await builder.createSingleRandomWinner(stakePrizePoolConfig, singleRandomWinnerConfig, decimals)
       let events = await getEvents(tx)
-      let prizePoolCreatedEvent = events.find(e => e.name == 'StakePrizePoolCreated')
+      let prizePoolCreatedEvent = events.find(e => e.name == 'PrizePoolCreated')
 
       const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', prizePoolCreatedEvent.args.prizeStrategy, wallet)
       const prizePool = await buidler.ethers.getContractAt('StakePrizePool', prizePoolCreatedEvent.args.prizePool, wallet)
@@ -162,7 +162,7 @@ describe('StakePrizePoolBuilder', () => {
 
       let tx = await builder.createSingleRandomWinner(stakePrizePoolConfig, singleRandomWinnerConfig, 8)
       let events = await getEvents(tx)
-      let event = events.find(e => e.name == 'StakePrizePoolCreated')
+      let event = events.find(e => e.name == 'PrizePoolCreated')
 
       const prizeStrategyProxy = new ethers.Contract(event.args.prizeStrategy, InitializableAdminUpgradeabilityProxy.abi, wallet)
 

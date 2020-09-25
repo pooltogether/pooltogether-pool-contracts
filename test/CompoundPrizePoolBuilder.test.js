@@ -91,7 +91,7 @@ describe('CompoundPrizePoolBuilder', () => {
       let events = await getEvents(tx)
       let event = events[0]
 
-      expect(event.name).to.equal('CompoundPrizePoolCreated')
+      expect(event.name).to.equal('PrizePoolCreated')
 
       const prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
 
@@ -106,19 +106,15 @@ describe('CompoundPrizePoolBuilder', () => {
   describe('createSingleRandomWinner()', () => {
     it('should allow a user to create Compound Prize Pools with Single Random Winner strategy', async () => {
 
-      let tx = await builder.createSingleRandomWinner(compoundPrizePoolConfig, singleRandomWinnerConfig)
+      let tx = await builder.createSingleRandomWinner(compoundPrizePoolConfig, singleRandomWinnerConfig, 9)
       let events = await getEvents(tx)
-      let prizePoolCreatedEvent = events.find(e => e.name == 'CompoundPrizePoolCreated')
+      let prizePoolCreatedEvent = events.find(e => e.name == 'PrizePoolCreated')
 
       const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', prizePoolCreatedEvent.args.prizeStrategy, wallet)
       const prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', prizePoolCreatedEvent.args.prizePool, wallet)
 
-      debug('accesing ticket')
-
       const ticketAddress = await prizeStrategy.ticket()
       const sponsorshipAddress = await prizeStrategy.sponsorship()
-
-      debug('done')
 
       expect(await prizeStrategy.ticket()).to.equal(ticketAddress)
       expect(await prizeStrategy.sponsorship()).to.equal(sponsorshipAddress)
@@ -136,10 +132,12 @@ describe('CompoundPrizePoolBuilder', () => {
       const ticket = await buidler.ethers.getContractAt('Ticket', ticketAddress, wallet)
       expect(await ticket.name()).to.equal(singleRandomWinnerConfig.ticketName)
       expect(await ticket.symbol()).to.equal(singleRandomWinnerConfig.ticketSymbol)
+      expect(await ticket.decimals()).to.equal(9)
 
       const sponsorship = await buidler.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
       expect(await sponsorship.name()).to.equal(singleRandomWinnerConfig.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(singleRandomWinnerConfig.sponsorshipSymbol)
+      expect(await sponsorship.decimals()).to.equal(9)
 
       expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorshipAddress)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(compoundPrizePoolConfig.maxExitFeeMantissa)
