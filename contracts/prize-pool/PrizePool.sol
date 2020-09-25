@@ -458,7 +458,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @notice Captures any available interest as award balance.
   /// @dev This function also captures the reserve fees.
   /// @return The total amount of assets to be awarded for the current prize
-  function captureAwardBalance() external nonReentrant returns (uint256) {
+  function captureAwardBalance() external nonReentrant onlyPrizeStrategy returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
     uint256 currentBalance = _balance();
     uint256 totalInterest = (currentBalance > tokenTotalSupply) ? currentBalance.sub(tokenTotalSupply) : 0;
