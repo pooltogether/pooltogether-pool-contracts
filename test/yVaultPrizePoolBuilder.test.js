@@ -140,7 +140,7 @@ describe('yVaultPrizePoolBuilder', () => {
       expect(await sponsorship.symbol()).to.equal(singleRandomWinnerConfig.sponsorshipSymbol)
       expect(await sponsorship.decimals()).to.equal(decimals)
 
-      expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorshipAddress)
+      expect(await prizePool.tokens()).to.deep.equal([ticket.address, sponsorship.address])
       expect(await prizePool.maxExitFeeMantissa()).to.equal(vaultPrizePoolConfig.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(vaultPrizePoolConfig.maxTimelockDuration)
 

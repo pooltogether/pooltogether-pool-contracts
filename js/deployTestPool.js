@@ -106,17 +106,13 @@ async function deployTestPool({
     prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
   }
 
+  const prizeStrategyAddress = await prizePool.prizeStrategy()
+  const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', prizeStrategyAddress, wallet)
 
-  debug("created prizePool: ", prizePool.address)
-
-  let sponsorship = await buidler.ethers.getContractAt('ControlledToken', (await prizePool.tokens())[0], wallet)
-  let ticket = await buidler.ethers.getContractAt('Ticket', (await prizePool.tokens())[1], wallet)
-
-  debug(`sponsorship: ${sponsorship.address}, ticket: ${ticket.address}`)
+  let sponsorship = await buidler.ethers.getContractAt('ControlledToken', (await prizeStrategy.sponsorship()), wallet)
+  let ticket = await buidler.ethers.getContractAt('Ticket', (await prizeStrategy.ticket()), wallet)
 
   await prizePool.setCreditPlanOf(ticket.address, creditRate || toWei('0.1').div(prizePeriodSeconds), creditLimit || toWei('0.1'))
-
-  const prizeStrategyAddress = await prizePool.prizeStrategy()
 
   debug("Addresses: \n", {
     rngService: rngServiceMock.address,
@@ -129,8 +125,6 @@ async function deployTestPool({
     prizeStrategy: prizeStrategyAddress,
     governanceToken: governanceToken.address
   })
-
-  const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', prizeStrategyAddress, wallet)
 
   return {
     rngService: rngServiceMock,

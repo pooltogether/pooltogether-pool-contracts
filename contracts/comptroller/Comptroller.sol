@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "../utils/UInt256Array.sol";
 import "./ComptrollerStorage.sol";
 import "./ComptrollerInterface.sol";
+import "../prize-pool/PrizePool.sol";
 
 /// @title The Comptroller disburses rewards to pool users and captures reserve fees from Prize Pools.
 /* solium-disable security/no-block-members */
@@ -25,6 +26,10 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   /// @notice Emitted when the reserve rate mantissa is changed
   event ReserveRateMantissaSet(
     uint256 reserveRateMantissa
+  );
+
+  event ReserveRecipientSet(
+    address indexed recipient
   );
 
   /// @notice Emitted when a balance drip is actived
@@ -62,7 +67,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   event DripTokenDripped(
     address indexed dripToken,
     address indexed user,
-    uint256 amount
+    uint256 amount,
+    uint256 actualAmount
   );
 
   /// @notice Emitted when a volue drip drips tokens
@@ -111,7 +117,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     address indexed dripToken,
     bool isReferral,
     uint32 period,
-    uint256 totalSupply
+    uint256 totalSupply,
+    uint256 drippedTokens
   );
 
   /// @notice Emitted when a volume drip is updated
@@ -158,6 +165,18 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     return _reserveRateMantissa;
   }
 
+  function reserveRecipient() external view override returns (address) {
+    return _reserveRecipient;
+  }
+
+  /// @notice Sets the reserve recipient.  Only callable by the owner.
+  /// @param __reserveRecipient The new reserve recipient.  May be zero.
+  function setReserveRecipient(address __reserveRecipient) external onlyOwner {
+    _reserveRecipient = __reserveRecipient;
+
+    emit ReserveRecipientSet(_reserveRecipient);
+  }
+
   /// @notice Sets the reserve rate mantissa.  Only callable by the owner.
   /// @param __reserveRateMantissa The new reserve rate.  Must be less than or equal to 1.
   function setReserveRateMantissa(uint256 __reserveRateMantissa) external onlyOwner {
@@ -167,13 +186,27 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     emit ReserveRateMantissaSet(_reserveRateMantissa);
   }
 
+  /// @notice Returns the token to use for the reserve for a given prize pool
+  /// This function will return the first controlled token that was added to the prize pool.
+  /// @param prizePool The prize pool in question
+  /// @return The first controlled token that was added to the prize pool
+  function reserveControlledToken(address prizePool) external view override returns (address) {
+    PrizePool pool = PrizePool(prizePool);
+    address[] memory tokens = pool.tokens();
+    address token;
+    if (tokens.length > 0) {
+      token = tokens[tokens.length - 1];
+    }
+    return token;
+  }
+
   /// @notice Activates a balance drip.  Only callable by the owner.
   /// @param source The balance drip "source"; i.e. a Prize Pool address.
   /// @param measure The ERC20 token whose balances determines user's share of the drip rate.
   /// @param dripToken The token that is dripped to users.
   /// @param dripRatePerSecond The amount of drip tokens that are awarded each second to the total supply of measure.
   function activateBalanceDrip(address source, address measure, address dripToken, uint256 dripRatePerSecond) external onlyOwner {
-    balanceDrips[source].activateDrip(measure, dripToken, dripRatePerSecond, _currentTime().toUint32());
+    balanceDrips[source].activateDrip(measure, dripToken, dripRatePerSecond);
 
     emit BalanceDripActivated(
       source,
@@ -200,7 +233,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   /// @param prevDripToken The previous drip token in the balance drip list.  If the dripToken is the first address,
   /// then the previous address is the SENTINEL address: 0x0000000000000000000000000000000000000001
   function _deactivateBalanceDrip(address source, address measure, address dripToken, address prevDripToken) internal {
-     balanceDrips[source].deactivateDrip(measure, dripToken, prevDripToken, _currentTime().toUint32());
+    balanceDrips[source].deactivateDrip(measure, dripToken, prevDripToken, _currentTime().toUint32(), _availableDripTokenBalance(dripToken));
 
     emit BalanceDripDeactivated(source, measure, dripToken);
   }
@@ -238,7 +271,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   /// @param dripToken The token that is dripped to the user
   /// @param dripRatePerSecond The new drip rate per second
   function setBalanceDripRate(address source, address measure, address dripToken, uint256 dripRatePerSecond) external onlyOwner {
-    balanceDrips[source].setDripRate(measure, dripToken, dripRatePerSecond, _currentTime().toUint32());
+    balanceDrips[source].setDripRate(measure, dripToken, dripRatePerSecond, _currentTime().toUint32(), _availableDripTokenBalance(dripToken));
 
     emit BalanceDripRateSet(
       source,
@@ -456,18 +489,18 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     );
   }
 
-
-
-
-
-
-
   /// @notice Returns a users claimable balance of drip tokens.  This is the combination of all balance and volume drips.
   /// @param dripToken The token that is being disbursed
   /// @param user The user whose balance should be checked.
   /// @return The claimable balance of the dripToken by the user.
   function balanceOfDrip(address dripToken, address user) external view returns (uint256) {
     return dripTokenBalances[dripToken][user];
+  }
+
+  function claimDrips(address user, address[] memory dripTokens) public {
+    for (uint i = 0; i < dripTokens.length; i++) {
+      claimDrip(user, dripTokens[i], dripTokenBalances[dripTokens[i]][user]);
+    }
   }
 
   /// @notice Claims a drip token on behalf of a user.  If the passed amount is less than or equal to the users drip balance, then
@@ -484,118 +517,178 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     emit DripTokenClaimed(sender, user, dripToken, amount);
   }
 
-  function pokeDrips(
+  function updateActiveBalanceDripsForPairs(
+    UpdatePair[] memory pairs
+  ) public {
+    uint256 currentTime = _currentTime();
+    uint256 i;
+    for (i = 0; i < pairs.length; i++) {
+      UpdatePair memory pair = pairs[i];
+      _updateActiveBalanceDrips(
+        balanceDrips[pair.source],
+        pair.source,
+        pair.measure,
+        IERC20(pair.measure).totalSupply(),
+        currentTime
+      );
+    }
+  }
+
+  function updateActiveVolumeDripsForPairs(
+    UpdatePair[] memory pairs
+  ) public {
+    uint256 i;
+    for (i = 0; i < pairs.length; i++) {
+      UpdatePair memory pair = pairs[i];
+      _updateActiveVolumeDrips(
+        volumeDrips[pair.source],
+        pair.source,
+        pair.measure,
+        false
+      );
+      _updateActiveVolumeDrips(
+        referralVolumeDrips[pair.source],
+        pair.source,
+        pair.measure,
+        true
+      );
+    }
+  }
+
+  function mintAndCaptureVolumeDripsForPairs(
+    UpdatePair[] memory pairs,
+    address user,
+    uint256 amount,
+    address[] memory dripTokens
+  ) public {
+    uint256 i;
+    for (i = 0; i < pairs.length; i++) {
+      UpdatePair memory pair = pairs[i];
+
+      _mintAndCaptureForVolumeDrips(pair.source, pair.measure, user, amount, dripTokens);
+      _mintAndCaptureReferralVolumeDrips(pair.source, pair.measure, user, amount, dripTokens);
+    }
+  }
+
+  function _mintAndCaptureForVolumeDrips(
+    address source,
+    address measure,
+    address user,
+    uint256 amount,
+    address[] memory dripTokens
+  ) internal {
+    uint i;
+    for (i = 0; i < dripTokens.length; i++) {
+      address dripToken = dripTokens[i];
+
+      VolumeDrip.State storage state = volumeDrips[source].volumeDrips[measure][dripToken];
+      _captureClaimForVolumeDrip(state, source, measure, dripToken, false, user, amount);
+    }
+  }
+
+  function _mintAndCaptureReferralVolumeDrips(
+    address source,
+    address measure,
+    address user,
+    uint256 amount,
+    address[] memory dripTokens
+  ) internal {
+    uint i;
+    for (i = 0; i < dripTokens.length; i++) {
+      address dripToken = dripTokens[i];
+
+      VolumeDrip.State storage referralState = referralVolumeDrips[source].volumeDrips[measure][dripToken];
+      _captureClaimForVolumeDrip(referralState, source, measure, dripToken, true, user, amount);
+    }
+  }
+
+  function _captureClaimForVolumeDrip(
+    VolumeDrip.State storage dripState,
+    address source,
+    address measure,
+    address dripToken,
+    bool isReferral,
+    address user,
+    uint256 amount
+  ) internal {
+    uint256 newUserTokens = dripState.mint(
+      user,
+      amount
+    );
+
+    if (newUserTokens > 0) {
+      _addDripBalance(dripToken, user, newUserTokens);
+      emit VolumeDripDripped(source, measure, dripToken, isReferral, user, newUserTokens);
+    }
+  }
+
+  /// @param pairs The (source, measure) pairs to update.  For each pair all of the balance drips, volume drips, and referral volume drips will be updated.
+  /// @param user The user whose drips and balances will be updated.
+  /// @param dripTokens The drip tokens to retrieve claim balances for.
+  function captureClaimsForBalanceDripsForPairs(
     UpdatePair[] memory pairs,
     address user,
     address[] memory dripTokens
   )
     public
   {
-    uint256 currentTime = _currentTime();
-
     uint256 i;
-    uint256 j;
     for (i = 0; i < pairs.length; i++) {
       UpdatePair memory pair = pairs[i];
+      uint256 measureBalance = IERC20(pair.measure).balanceOf(user);
+      _captureClaimsForBalanceDrips(pair.source, pair.measure, user, measureBalance, dripTokens);
+    }
+  }
 
-      for (j = 0; j < dripTokens.length; j++) {
-        address dripToken = dripTokens[j];
+  function _captureClaimsForBalanceDrips(
+    address source,
+    address measure,
+    address user,
+    uint256 userMeasureBalance,
+    address[] memory dripTokens
+  ) internal {
+    uint i;
+    for (i = 0; i < dripTokens.length; i++) {
+      address dripToken = dripTokens[i];
 
-        _updateBalanceDripToken(
-          balanceDrips[pair.source],
-          pair.source,
-          pair.measure,
-          dripToken,
-          user,
-          IERC20(pair.measure).balanceOf(user),
-          IERC20(pair.measure).totalSupply(),
-          currentTime
-        );
-
-        _updateVolumeDripToken(
-          volumeDrips[pair.source],
-          pair.source,
-          pair.measure,
-          dripToken,
-          user,
-          0,
-          currentTime,
-          false
-        );
-
-        _updateVolumeDripToken(
-          referralVolumeDrips[pair.source],
-          pair.source,
-          pair.measure,
-          dripToken,
-          user,
-          0,
-          currentTime,
-          true
-        );
+      BalanceDrip.State storage state = balanceDrips[source].balanceDrips[measure][dripToken];
+      if (state.exchangeRateMantissa > 0) {
+        _captureClaimForBalanceDrip(state, source, measure, dripToken, user, userMeasureBalance);
       }
     }
   }
 
-  /// @notice Updates all drips. Drip may need to be "poked" from time-to-time if there is little transaction activity.  This call will
-  /// poke all of the drips and update the claim balances for the given user.
-  /// @dev This function will be useful to check the *current* claim balances for a user.
-  /// Just need to run this as a constant function to see the latest balances.
-  /// in order to claim the values, this function needs to be run alongside a claimDrip function.
-  /// @param pairs The (source, measure) pairs to update.  For each pair all of the balance drips, volume drips, and referral volume drips will be updated.
-  /// @param user The user whose drips and balances will be updated.
-  /// @param dripTokens The drip tokens to retrieve claim balances for.
-  /// @return The claimable balance of each of the passed drip tokens for the user.  These are the post-update balances, and therefore the most accurate.
-  function updateDrips(
-    UpdatePair[] memory pairs,
+  function _captureClaimForBalanceDrip(
+    BalanceDrip.State storage dripState,
+    address source,
+    address measure,
+    address dripToken,
+    address user,
+    uint256 measureBalance
+  ) internal {
+    uint256 newUserTokens = dripState.captureNewTokensForUser(
+      user,
+      measureBalance
+    );
+
+    if (newUserTokens > 0) {
+      _addDripBalance(dripToken, user, newUserTokens);
+      emit BalanceDripDripped(source, measure, dripToken, user, newUserTokens);
+    }
+  }
+
+  function balanceOfClaims(
     address user,
     address[] memory dripTokens
-  )
-    public
-    returns (DripTokenBalance[] memory)
-  {
-    uint256 currentTime = _currentTime();
-
-    uint256 i;
-    for (i = 0; i < pairs.length; i++) {
-      UpdatePair memory pair = pairs[i];
-      _updateBalanceDrips(
-        balanceDrips[pair.source],
-        pair.source,
-        pair.measure,
-        user,
-        IERC20(pair.measure).balanceOf(user),
-        IERC20(pair.measure).totalSupply(),
-        currentTime
-      );
-
-      _depositVolumeDrip(
-        volumeDrips[pair.source],
-        pair.source,
-        pair.measure,
-        user,
-        0,
-        false
-      );
-
-      _depositVolumeDrip(
-        referralVolumeDrips[pair.source],
-        pair.source,
-        pair.measure,
-        user,
-        0,
-        true
-      );
-    }
-
+  ) public view returns (DripTokenBalance[] memory) {
     DripTokenBalance[] memory balances = new DripTokenBalance[](dripTokens.length);
+    uint256 i;
     for (i = 0; i < dripTokens.length; i++) {
       balances[i] = DripTokenBalance({
         dripToken: dripTokens[i],
         balance: dripTokenBalances[dripTokens[i]][user]
       });
     }
-
     return balances;
   }
 
@@ -608,45 +701,56 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     address user,
     address[] calldata dripTokens
   )
-    external
+    external returns (DripTokenBalance[] memory)
   {
-    DripTokenBalance[] memory _dripTokenBalances = updateDrips(pairs, user, dripTokens);
-    for (uint256 i = 0; i < _dripTokenBalances.length; i++) {
-      claimDrip(user, _dripTokenBalances[i].dripToken, _dripTokenBalances[i].balance);
-    }
+    updateActiveBalanceDripsForPairs(pairs);
+    captureClaimsForBalanceDripsForPairs(pairs, user, dripTokens);
+    updateActiveVolumeDripsForPairs(pairs);
+    mintAndCaptureVolumeDripsForPairs(pairs, user, 0, dripTokens);
+    DripTokenBalance[] memory balances = balanceOfClaims(user, dripTokens);
+    claimDrips(user, dripTokens);
+    return balances;
+  }
+
+  function _activeBalanceDripTokens(address source, address measure) internal view returns (address[] memory) {
+    return balanceDrips[source].activeBalanceDrips[measure].addressArray();
+  }
+
+  function _activeVolumeDripTokens(address source, address measure) internal view returns (address[] memory) {
+    return volumeDrips[source].activeVolumeDrips[measure].addressArray();
+  }
+
+  function _activeReferralVolumeDripTokens(address source, address measure) internal view returns (address[] memory) {
+    return referralVolumeDrips[source].activeVolumeDrips[measure].addressArray();
   }
 
   /// @notice Updates the balance drips
   /// @param source The Prize Pool of the balance drip
   /// @param manager The BalanceDripManager whose drips should be updated
   /// @param measure The measure token whose balance is changing
-  /// @param user The user whose balance is changing
-  /// @param measureBalance The users last balance of the measure tokens
   /// @param measureTotalSupply The last total supply of the measure tokens
   /// @param currentTime The current
-  function _updateBalanceDrips(
+  function _updateActiveBalanceDrips(
     BalanceDripManager.State storage manager,
     address source,
     address measure,
-    address user,
-    uint256 measureBalance,
     uint256 measureTotalSupply,
     uint256 currentTime
   ) internal {
     address prevDripToken = manager.activeBalanceDrips[measure].end();
     address currentDripToken = manager.activeBalanceDrips[measure].start();
     while (currentDripToken != address(0) && currentDripToken != manager.activeBalanceDrips[measure].end()) {
+      BalanceDrip.State storage dripState = manager.balanceDrips[measure][currentDripToken];
+      uint256 limit = _availableDripTokenBalance(currentDripToken);
 
-      bool isDripComplete = _updateBalanceDripToken(
-        manager,
-        source,
-        measure,
-        currentDripToken,
-        user,
-        measureBalance,
+      uint256 newTokens = dripState.drip(
         measureTotalSupply,
-        currentTime
+        currentTime,
+        limit
       );
+
+      // if we've hit the limit, then kill it.
+      bool isDripComplete = newTokens == limit;
 
       if (isDripComplete) {
         _deactivateBalanceDrip(source, measure, currentDripToken, prevDripToken);
@@ -662,14 +766,10 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   /// @param manager The VolumeDripManager containing the drips that need to be iterated through.
   /// @param isReferral Whether the passed manager contains referral volume drip
   /// @param measure The token that was deposited
-  /// @param user The user that deposited measure tokens
-  /// @param amount The amount that the user deposited.
-  function _depositVolumeDrip(
+  function _updateActiveVolumeDrips(
     VolumeDripManager.State storage manager,
     address source,
     address measure,
-    address user,
-    uint256 amount,
     bool isReferral
   )
     internal
@@ -678,17 +778,37 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 currentTime = _currentTime();
     address currentDripToken = manager.activeVolumeDrips[measure].start();
     while (currentDripToken != address(0) && currentDripToken != manager.activeVolumeDrips[measure].end()) {
+      VolumeDrip.State storage dripState = manager.volumeDrips[measure][currentDripToken];
+      uint256 limit = _availableDripTokenBalance(currentDripToken);
 
-      bool isDripComplete = _updateVolumeDripToken(
-        manager,
-        source,
-        measure,
-        currentDripToken,
-        user,
-        amount,
+      uint32 lastPeriod = dripState.periodCount;
+      uint256 newTokens = dripState.drip(
         currentTime,
-        isReferral
+        limit
       );
+      if (lastPeriod != dripState.periodCount) {
+        emit VolumeDripPeriodEnded(
+          source,
+          measure,
+          currentDripToken,
+          isReferral,
+          lastPeriod,
+          dripState.periods[lastPeriod].totalSupply,
+          newTokens
+        );
+        emit VolumeDripPeriodStarted(
+          source,
+          measure,
+          currentDripToken,
+          isReferral,
+          dripState.periodCount,
+          dripState.periods[dripState.periodCount].dripAmount,
+          dripState.periods[dripState.periodCount].endTime
+        );
+      }
+
+      // if we've hit the limit, then kill it.
+      bool isDripComplete = newTokens == limit;
 
       if (isDripComplete) {
         _deactivateVolumeDrip(source, measure, currentDripToken, isReferral, prevDripToken);
@@ -698,46 +818,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
       currentDripToken = manager.activeVolumeDrips[measure].next(currentDripToken);
     }
   }
-
-
-  function _updateBalanceDripToken(
-    BalanceDripManager.State storage manager,
-    address source,
-    address measure,
-    address dripToken,
-    address user,
-    uint256 measureBalance,
-    uint256 measureTotalSupply,
-    uint256 currentTime
-  ) internal returns (bool) {
-
-    BalanceDrip.State storage dripState = manager.balanceDrips[measure][dripToken];
-    bool isActive = manager.activeBalanceDrips[measure].contains(dripToken);
-
-    uint128 newTokens;
-    if (isActive) {
-      newTokens = dripState.drip(
-        user,
-        measureBalance,
-        measureTotalSupply,
-        currentTime
-      );
-    } else {
-      newTokens = dripState.poke(
-        user,
-        measureBalance
-      );
-    }
-
-    uint256 amountDripped;
-    if (newTokens > 0) {
-      amountDripped = _addDripBalance(dripToken, user, newTokens);
-      emit BalanceDripDripped(source, measure, dripToken, user, newTokens);
-    }
-
-    return (amountDripped != newTokens);
-  }
-
+/*
   function _updateVolumeDripToken(
     VolumeDripManager.State storage manager,
     address source,
@@ -790,21 +871,22 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
 
     return (amountDripped != newTokens);
   }
-
+*/
   function _addDripBalance(address dripToken, address user, uint256 amount) internal returns (uint256) {
+    uint256 amountAvailable = _availableDripTokenBalance(dripToken);
+    uint256 actualAmount = (amount > amountAvailable) ? amountAvailable : amount;
+
+    dripTokenTotalSupply[dripToken] = dripTokenTotalSupply[dripToken].add(actualAmount);
+    dripTokenBalances[dripToken][user] = dripTokenBalances[dripToken][user].add(actualAmount);
+
+    emit DripTokenDripped(dripToken, user, amount, actualAmount);
+    return actualAmount;
+  }
+
+  function _availableDripTokenBalance(address dripToken) internal view returns (uint256) {
     uint256 comptrollerBalance = IERC20(dripToken).balanceOf(address(this));
     uint256 totalClaimable = dripTokenTotalSupply[dripToken];
-
-    uint256 amountAvailable = (totalClaimable < comptrollerBalance) ? comptrollerBalance.sub(totalClaimable) : 0;
-    if (amount > amountAvailable) {
-      amount = amountAvailable;
-    }
-
-    dripTokenTotalSupply[dripToken] = dripTokenTotalSupply[dripToken].add(amount);
-    dripTokenBalances[dripToken][user] = dripTokenBalances[dripToken][user].add(amount);
-
-    emit DripTokenDripped(dripToken, user, amount);
-    return amount;
+    return (totalClaimable < comptrollerBalance) ? comptrollerBalance.sub(totalClaimable) : 0;
   }
 
   /// @notice Called by a "source" (i.e. Prize Pool) when a user mints new "measure" tokens.
@@ -825,34 +907,34 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     uint256 balance = IERC20(measure).balanceOf(to);
     uint256 totalSupply = IERC20(measure).totalSupply();
 
-    _updateBalanceDrips(
+    address[] memory balanceDripTokens = _activeBalanceDripTokens(source, measure);
+    _updateActiveBalanceDrips(
       balanceDrips[source],
       source,
       measure,
-      to,
-      balance,
       totalSupply,
       _currentTime()
     );
+    _captureClaimsForBalanceDrips(source, measure, to, balance, balanceDripTokens);
 
-    _depositVolumeDrip(
+    address[] memory volumeDripTokens = _activeVolumeDripTokens(source, measure);
+    _updateActiveVolumeDrips(
       volumeDrips[source],
       source,
       measure,
-      to,
-      amount,
       false
     );
+    _mintAndCaptureForVolumeDrips(source, measure, to, amount, volumeDripTokens);
 
     if (referrer != address(0)) {
-      _depositVolumeDrip(
+      address[] memory referralVolumeDripTokens = _activeReferralVolumeDripTokens(source, measure);
+      _updateActiveVolumeDrips(
         referralVolumeDrips[source],
         source,
         measure,
-        referrer,
-        amount,
         true
       );
+      _mintAndCaptureReferralVolumeDrips(source, measure, referrer, amount, referralVolumeDripTokens);
     }
   }
 
@@ -875,29 +957,23 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     }
     address source = _msgSender();
     uint256 totalSupply = IERC20(measure).totalSupply();
-
     uint256 fromBalance = IERC20(measure).balanceOf(from);
-    _updateBalanceDrips(
+
+    address[] memory balanceDripTokens = _activeBalanceDripTokens(source, measure);
+
+    _updateActiveBalanceDrips(
       balanceDrips[source],
       source,
       measure,
-      from,
-      fromBalance, // we want the original balance
       totalSupply,
       _currentTime()
     );
 
+    _captureClaimsForBalanceDrips(source, measure, from, fromBalance, balanceDripTokens);
+
     if (to != address(0)) {
       uint256 toBalance = IERC20(measure).balanceOf(to);
-      _updateBalanceDrips(
-        balanceDrips[source],
-        source,
-        measure,
-        to,
-        toBalance, // we want the original balance
-        totalSupply,
-        _currentTime()
-      );
+      _captureClaimsForBalanceDrips(source, measure, to, toBalance, balanceDripTokens);
     }
   }
 

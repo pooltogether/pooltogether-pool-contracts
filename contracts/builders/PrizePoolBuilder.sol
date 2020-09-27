@@ -16,15 +16,13 @@ contract PrizePoolBuilder {
   ) internal {
     address ticket = address(singleRandomWinner.ticket());
 
-    prizePool.addControlledToken(ticket);
     prizePool.addControlledToken(address(singleRandomWinner.sponsorship()));
+    prizePool.addControlledToken(ticket);
 
     prizePool.setCreditPlanOf(
       ticket,
       ticketCreditRateMantissa.toUint128(),
       ticketCreditLimitMantissa.toUint128()
     );
-
-    prizePool.setReserveFeeControlledToken(address(singleRandomWinner.sponsorship()));
   }
 }

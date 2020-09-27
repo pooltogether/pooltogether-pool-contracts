@@ -16,7 +16,8 @@ import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
 import "../utils/RelayRecipient.sol";
 
-/// @title Escrows assets and deposits them into a yield source.  Exposes interest to Prize Strategy.  Users deposit and withdraw from this contract to participate in Prize Pool.
+/// @title Escrows assets and deposits them into a yield source.  Exposes interest to Prize Strategy.
+/// Users deposit and withdraw from this contract to participate in Prize Pool.
 /// @notice Accounting is managed using Controlled Tokens, whose mint and burn functions can only be called by this contract.
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
 abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
@@ -35,11 +36,6 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @dev Event emitted when controlled token is added
   event ControlledTokenAdded(
-    address indexed token
-  );
-
-  /// @dev Set when the comptroller changes the type of reserve token
-  event ReserveFeeControlledTokenSet(
     address indexed token
   );
 
@@ -162,9 +158,6 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @dev Comptroller to which reserve fees are sent
   ComptrollerInterface public comptroller;
 
-  /// @dev Controlled token to serve as the reserve fee
-  address public reserveFeeControlledToken;
-
   /// @dev A linked list of all the controlled tokens
   MappedSinglyLinkedList.Mapping internal _tokens;
 
@@ -223,6 +216,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
       _addControlledToken(_controlledTokens[i]);
     }
+
     __Ownable_init();
     __ReentrancyGuard_init();
     _setLiquidityCap(uint256(-1));
@@ -257,14 +251,6 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @return True if the token may be awarded, false otherwise
   function canAwardExternal(address _externalToken) external view returns (bool) {
     return _canAwardExternal(_externalToken);
-  }
-
-  /// @dev Sets which controlled token will be minted as the reserve fee.  Only callable by the owner.
-  /// @param controlledToken The controlled token to mint.  This must be controlled by the PrizePool.
-  function setReserveFeeControlledToken(address controlledToken) external onlyControlledToken(controlledToken) onlyOwner {
-    reserveFeeControlledToken = controlledToken;
-
-    emit ReserveFeeControlledTokenSet(controlledToken);
   }
 
   /// @notice Deposits timelocked tokens for a user back into the Prize Pool as another asset.
@@ -467,9 +453,13 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     if (unaccountedPrizeBalance > 0) {
       uint256 reserveFee = calculateReserveFee(unaccountedPrizeBalance);
       if (reserveFee > 0) {
-        unaccountedPrizeBalance = unaccountedPrizeBalance.sub(reserveFee);
-        _mint(address(comptroller), reserveFee, reserveFeeControlledToken, address(0));
-        emit ReserveFeeCaptured(reserveFeeControlledToken, reserveFee);
+        address recipient = comptroller.reserveRecipient();
+        address reserveFeeControlledToken = comptroller.reserveControlledToken(address(this));
+        if (recipient != address(0) && _isControlled(reserveFeeControlledToken)) {
+          unaccountedPrizeBalance = unaccountedPrizeBalance.sub(reserveFee);
+          _mint(recipient, reserveFee, reserveFeeControlledToken, address(0));
+          emit ReserveFeeCaptured(reserveFeeControlledToken, reserveFee);
+        }
       }
     }
 
@@ -575,7 +565,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     emit AwardedExternalERC721(to, externalToken, tokenIds);
   }
 
-  /// @notice Calculates the reserve portion of the given amount of funds.  If there is no reserve address, the portion will be zero.
+  /// @notice Calculates the reserve portion of the given amount of funds.
   /// @param amount The prize amount
   /// @return The size of the reserve portion of the prize
   function calculateReserveFee(uint256 amount) public view returns (uint256) {
@@ -583,9 +573,6 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
       return 0;
     }
     uint256 reserveRateMantissa = comptroller.reserveRateMantissa();
-    if (reserveRateMantissa == 0 || reserveFeeControlledToken == address(0)) {
-      return 0;
-    }
     return FixedPoint.multiplyUintByMantissa(amount, reserveRateMantissa);
   }
 

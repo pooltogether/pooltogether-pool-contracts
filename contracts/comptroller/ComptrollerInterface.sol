@@ -6,4 +6,6 @@ import "../prize-pool/PrizePoolTokenListenerInterface.sol";
 
 interface ComptrollerInterface is PrizePoolTokenListenerInterface {
   function reserveRateMantissa() external view returns (uint256);
+  function reserveRecipient() external view returns (address);
+  function reserveControlledToken(address prizePool) external view returns (address);
 }

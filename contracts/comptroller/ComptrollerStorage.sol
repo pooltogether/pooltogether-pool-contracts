@@ -9,6 +9,7 @@ import "../drip/VolumeDripManager.sol";
 
 contract ComptrollerStorage is OwnableUpgradeSafe {
   uint256 internal _reserveRateMantissa;
+  address internal _reserveRecipient;
 
   mapping(address => VolumeDripManager.State) internal volumeDrips;
   mapping(address => VolumeDripManager.State) internal referralVolumeDrips;

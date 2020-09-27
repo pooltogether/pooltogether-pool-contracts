@@ -140,7 +140,6 @@ describe('StakePrizePoolBuilder', () => {
       expect(await sponsorship.symbol()).to.equal(singleRandomWinnerConfig.sponsorshipSymbol)
       expect(await sponsorship.decimals()).to.equal(decimals)
 
-      expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorshipAddress)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(stakePrizePoolConfig.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(stakePrizePoolConfig.maxTimelockDuration)
 
