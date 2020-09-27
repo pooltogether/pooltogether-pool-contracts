@@ -100,7 +100,7 @@ async function deployTestPool({
       maxTimelockDuration
     }
     const builder = await buidler.ethers.getContractAt('CompoundPrizePoolBuilder', compoundBuilderResult.address, wallet)
-    let tx = await builder.createSingleRandomWinner(compoundPrizePoolConfig, singleRandomWinnerConfig)
+    let tx = await builder.createSingleRandomWinner(compoundPrizePoolConfig, singleRandomWinnerConfig, await token.decimals())
     let events = await getEvents(tx, builder)
     let event = events[0]
     prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)

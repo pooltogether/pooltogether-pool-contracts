@@ -8,6 +8,12 @@ import "../prize-strategy/single-random-winner/SingleRandomWinner.sol";
 contract PrizePoolBuilder {
   using SafeCast for uint256;
 
+  event PrizePoolCreated (
+    address indexed creator,
+    address indexed prizePool,
+    address indexed prizeStrategy
+  );
+
   function _setupSingleRandomWinner(
     PrizePool prizePool,
     SingleRandomWinner singleRandomWinner,
