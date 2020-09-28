@@ -1,4 +1,12 @@
-# PoolTogether Prize Savings Protocol
+<p align="center">
+  <a href="https://github.com/pooltogether/pooltogether--brand-assets">
+    <img src="https://github.com/pooltogether/pooltogether--brand-assets/blob/977e03604c49c63314450b5d432fe57d34747c66/logo/pooltogether-logo--purple-gradient.png?raw=true" alt="PoolTogether Brand" style="max-width:100%;" width="200">
+  </a>
+</p>
+
+<br />
+
+### PoolTogether Prize Savings Protocol
 
 [![Coverage Status](https://coveralls.io/repos/github/pooltogether/pooltogether-pool-contracts/badge.svg?branch=version-3)](https://coveralls.io/github/pooltogether/pooltogether-pool-contracts?branch=version-3)
 
@@ -8,7 +16,7 @@ The [PoolTogether](https://www.pooltogether.com/) Prize Savings Protocol Ethereu
 
 For an overview of the concepts and API please see the [documentation](https://docs.pooltogether.com/)
 
-# Setup
+#### Setup
 
 This project is available as an NPM package:
 
@@ -18,9 +26,9 @@ $ yarn add @pooltogether/pooltogether-contracts@alpha
 
 Notice the `alpha` tag: this is important!  Otherwise you'll get the V2 code.
 
-# Usage
+#### Usage
 
-## Artifacts
+##### Artifacts
 
 There are deployment artifacts available in the `deployments/` directory.  This includes:
 
@@ -42,7 +50,7 @@ const {
  } = CompoundPrizePoolBuilder
 ```
 
-## ABIs
+##### ABIs
 
 Application Binary Interfaces for all PoolTogether contracts and related contracts are available in the `abis/` directory.
 
@@ -52,7 +60,7 @@ For example, to pull in the PrizePool ABI:
 const PrizePool = require('@pooltogether/pooltogether-contracts/abis/PrizePool.json')
 ```
 
-# Development
+#### Development
 
 First clone this repository and enter the directory.
 
@@ -70,7 +78,7 @@ $ yarn
 
 We make use of [Buidler](https://buidler.dev) and [buidler-deploy](https://github.com/wighawag/buidler-deploy)
 
-## Deploy Locally
+##### Deploy Locally
 
 Start a local node and deploy the top-level contracts:
 
@@ -80,7 +88,7 @@ $ yarn start
 
 NOTE: When you run this command it will reset the local blockchain.
 
-## Connect Locally
+##### Connect Locally
 
 Start up a [Buidler Console](https://buidler.dev/guides/buidler-console.html):
 
@@ -108,7 +116,7 @@ Let's mint some Dai for ourselves:
 > ethers.utils.formatEther(await dai.balanceOf(signers[0]._address))
 ```
 
-## Deploy to Live Networks
+##### Deploy to Live Networks
 
 Copy over .envrc.example to .envrc
 
