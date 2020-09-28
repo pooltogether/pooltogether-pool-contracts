@@ -76,7 +76,7 @@ async function generate() {
         const pool = networkPoolConfig[network][npi]
         appendNoNewline(`| `)
         appendNoNewline(`[${pool.name}](${baseUrl + '/contracts/prize-pool/PrizePool.sol'})`)
-        appendNoNewline(` ([open app](https://staging-v3.pooltogether.com)`)
+        appendNoNewline(` ([open app](https://staging-v3.pooltogether.com))`)
         append(` | [${pool.address}](https://${network}.etherscan.io/address/${pool.address}) | [ABI](/.gitbook/assets/prizepoolabi.json) |`)
       }
     }
