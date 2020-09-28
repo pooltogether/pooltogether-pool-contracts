@@ -117,11 +117,11 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     RNGInterface _rng,
     address[] memory _externalErc20s
   ) public initializer {
-    require(_prizePeriodSeconds > 0, "SingleRandomWinner/prize-period-greater-than-zero");
-    require(address(_prizePool) != address(0), "SingleRandomWinner/prize-pool-not-zero");
-    require(address(_ticket) != address(0), "SingleRandomWinner/ticket-not-zero");
-    require(address(_sponsorship) != address(0), "SingleRandomWinner/sponsorship-not-zero");
-    require(address(_rng) != address(0), "SingleRandomWinner/rng-not-zero");
+    require(_prizePeriodSeconds > 0, "PeriodicPrizeStrategy/prize-period-greater-than-zero");
+    require(address(_prizePool) != address(0), "PeriodicPrizeStrategy/prize-pool-not-zero");
+    require(address(_ticket) != address(0), "PeriodicPrizeStrategy/ticket-not-zero");
+    require(address(_sponsorship) != address(0), "PeriodicPrizeStrategy/sponsorship-not-zero");
+    require(address(_rng) != address(0), "PeriodicPrizeStrategy/rng-not-zero");
     prizePool = _prizePool;
     ticket = TicketInterface(_ticket);
     rng = _rng;
@@ -133,7 +133,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     for (uint256 i = 0; i < _externalErc20s.length; i++) {
-      require(prizePool.canAwardExternal(_externalErc20s[i]), "SingleRandomWinner/cannot-award-external");
+      require(prizePool.canAwardExternal(_externalErc20s[i]), "PeriodicPrizeStrategy/cannot-award-external");
     }
     externalErc20s.initialize();
     externalErc20s.addAddresses(_externalErc20s);
@@ -375,7 +375,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Sets the RNG service that the Prize Strategy is connected to
   /// @param rngService The address of the new RNG service interface
   function setRngService(RNGInterface rngService) external onlyOwner {
-    require(!isRngRequested(), "SingleRandomWinner/rng-in-flight");
+    require(!isRngRequested(), "PeriodicPrizeStrategy/rng-in-flight");
 
     rng = rngService;
     emit RngServiceUpdated(address(rngService));
@@ -386,7 +386,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   }
 
   function _setRngRequestTimeout(uint32 _rngRequestTimeout) internal {
-    require(_rngRequestTimeout > 60, "SingleRandomWinner/rng-timeout-gt-60-secs");
+    require(_rngRequestTimeout > 60, "PeriodicPrizeStrategy/rng-timeout-gt-60-secs");
     rngRequestTimeout = _rngRequestTimeout;
     emit RngRequestTimeoutSet(rngRequestTimeout);
   }
@@ -396,8 +396,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// and they must be approved by the Prize-Pool
   /// @param _externalErc20 The address of an ERC20 token to be awarded
   function addExternalErc20Award(address _externalErc20) external onlyOwner {
-    // require(_externalErc20.isContract(), "SingleRandomWinner/external-erc20-not-contract");
-    require(prizePool.canAwardExternal(_externalErc20), "SingleRandomWinner/cannot-award-external");
+    // require(_externalErc20.isContract(), "PeriodicPrizeStrategy/external-erc20-not-contract");
+    require(prizePool.canAwardExternal(_externalErc20), "PeriodicPrizeStrategy/cannot-award-external");
     externalErc20s.addAddress(_externalErc20);
     emit ExternalErc20AwardAdded(_externalErc20);
   }
@@ -419,13 +419,13 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @param _externalErc721 The address of an ERC721 token to be awarded
   /// @param _tokenIds An array of token IDs of the ERC721 to be awarded
   function addExternalErc721Award(address _externalErc721, uint256[] calldata _tokenIds) external onlyOwner {
-    // require(_externalErc721.isContract(), "SingleRandomWinner/external-erc721-not-contract");
-    require(prizePool.canAwardExternal(_externalErc721), "SingleRandomWinner/cannot-award-external");
+    // require(_externalErc721.isContract(), "PeriodicPrizeStrategy/external-erc721-not-contract");
+    require(prizePool.canAwardExternal(_externalErc721), "PeriodicPrizeStrategy/cannot-award-external");
     externalErc721s.addAddress(_externalErc721);
 
     for (uint256 i = 0; i < _tokenIds.length; i++) {
       uint256 tokenId = _tokenIds[i];
-      require(IERC721(_externalErc721).ownerOf(tokenId) == address(prizePool), "SingleRandomWinner/unavailable-token");
+      require(IERC721(_externalErc721).ownerOf(tokenId) == address(prizePool), "PeriodicPrizeStrategy/unavailable-token");
       externalErc721TokenIds[_externalErc721].push(tokenId);
     }
 
@@ -445,7 +445,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
   function _requireNotLocked() internal view {
     uint256 currentBlock = _currentBlock();
-    require(rngRequest.lockBlock == 0 || currentBlock < rngRequest.lockBlock, "SingleRandomWinner/rng-in-flight");
+    require(rngRequest.lockBlock == 0 || currentBlock < rngRequest.lockBlock, "PeriodicPrizeStrategy/rng-in-flight");
   }
 
   function isRngTimedOut() public view returns (bool) {
@@ -462,20 +462,20 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   }
 
   modifier requireCanStartAward() {
-    require(_isPrizePeriodOver(), "SingleRandomWinner/prize-period-not-over");
-    require(!isRngRequested() || isRngTimedOut(), "SingleRandomWinner/rng-already-requested");
+    require(_isPrizePeriodOver(), "PeriodicPrizeStrategy/prize-period-not-over");
+    require(!isRngRequested() || isRngTimedOut(), "PeriodicPrizeStrategy/rng-already-requested");
     _;
   }
 
   modifier requireCanCompleteAward() {
-    require(_isPrizePeriodOver(), "SingleRandomWinner/prize-period-not-over");
-    require(isRngRequested(), "SingleRandomWinner/rng-not-requested");
-    require(isRngCompleted(), "SingleRandomWinner/rng-not-complete");
+    require(_isPrizePeriodOver(), "PeriodicPrizeStrategy/prize-period-not-over");
+    require(isRngRequested(), "PeriodicPrizeStrategy/rng-not-requested");
+    require(isRngCompleted(), "PeriodicPrizeStrategy/rng-not-complete");
     _;
   }
 
   modifier onlyPrizePool() {
-    require(_msgSender() == address(prizePool), "SingleRandomWinner/only-prize-pool");
+    require(_msgSender() == address(prizePool), "PeriodicPrizeStrategy/only-prize-pool");
     _;
   }
 
