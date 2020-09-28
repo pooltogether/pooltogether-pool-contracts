@@ -30,15 +30,15 @@ const networkPoolConfig = {
   rinkeby: [
     {	
       address: contractAddresses['4'].DAI_POOL_CONTRACT_ADDRESS,
-      name: 'Compound cDAI Prize Pool'
+      name: 'cDAI Prize Pool'
     },
     {
       address: contractAddresses['4'].USDC_POOL_CONTRACT_ADDRESS,
-      name: 'Compound cUSDC Prize Pool'
+      name: 'cUSDC Prize Pool'
     },
     {
       address: contractAddresses['4'].USDT_POOL_CONTRACT_ADDRESS,
-      name: 'Compound cUSDT Prize Pool'
+      name: 'cUSDT Prize Pool'
     }
   ]
 }
@@ -52,6 +52,13 @@ async function generate() {
   const append = (str) => {
     fs.writeSync(out, str + "\n")
   }
+
+  const appendNoNewline = (str) => {
+    fs.writeSync(out, str)
+  }
+
+  append(`# 📡 Networks`)
+  append(``)
 
   for (let ni = 0; ni < networks.length; ni++) {
     const network = networks[ni]
@@ -67,7 +74,10 @@ async function generate() {
     if (networkPoolConfig[network] && networkPoolConfig[network].length) {
       for (let npi = 0; npi < networkPoolConfig[network].length; npi++) {
         const pool = networkPoolConfig[network][npi]
-        append(`| [${pool.name}](${baseUrl + '/contracts/prize-pool/PrizePool.sol'}) | [${pool.address}](https://${network}.etherscan.io/address/${pool.address}) | [ABI](/.gitbook/assets/prizepoolabi.json) |`)
+        appendNoNewline(`| `)
+        appendNoNewline(`[${pool.name}](${baseUrl + '/contracts/prize-pool/PrizePool.sol'})`)
+        appendNoNewline(` ([open app](https://staging-v3.pooltogether.com)`)
+        append(` | [${pool.address}](https://${network}.etherscan.io/address/${pool.address}) | [ABI](/.gitbook/assets/prizepoolabi.json) |`)
       }
     }
 
