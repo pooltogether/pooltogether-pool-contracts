@@ -47,10 +47,12 @@ async function run() {
   const network = await buidler.ethers.provider.getNetwork()
 
   info(`Verifying top-level contracts...`)
-  await exec(
+  const { stdout, stderr } = await exec(
     `buidler etherscan-verify --solc-input --api-key $ETHERSCAN_API_KEY --network ${network.name}`
   )
-  success(`Verified!`)
+  console.log(chalk.yellow(stdout))
+  console.log(chalk.red(stderr))
+  info(`Done top-level contracts`)
 
   info(`Verifying proxy factory instances...`)
 
