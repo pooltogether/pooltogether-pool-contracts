@@ -16,24 +16,28 @@ const ignoreContracts = [
   'CompoundPrizePoolProxyFactory',
   'ControlledTokenProxyFactory',
   'SingleRandomWinnerProxyFactory',
-  'TicketProxyFactory'
+  'TicketProxyFactory',
+  'yVaultPrizePoolProxyFactory',
+  'StakePrizePoolProxyFactory'
 ]
 
 const baseUrl = "https://github.com/pooltogether/pooltogether-pool-contracts/tree/version-3"
 const outputFile = `./Networks.md`
 
+const { contractAddresses } = require('@pooltogether/current-pool-data')
+
 const networkPoolConfig = {
   rinkeby: [
     {	
-      address: '0xe19d8b62Bbb53F3e5d2c62e361240a6d3Ad4084F',
+      address: contractAddresses['4'].DAI_POOL_CONTRACT_ADDRESS,
       name: 'Compound cDAI Prize Pool'
     },
     {
-      address: '0x5f4d901082229b7FBf2afd4d3Ac970De2eB2AB92',
+      address: contractAddresses['4'].USDC_POOL_CONTRACT_ADDRESS,
       name: 'Compound cUSDC Prize Pool'
     },
     {
-      address: '0x832B459C0Bc3FB10F2Aa62c70eDf5918085315c1',
+      address: contractAddresses['4'].USDT_POOL_CONTRACT_ADDRESS,
       name: 'Compound cUSDT Prize Pool'
     }
   ]
@@ -54,7 +58,7 @@ async function generate() {
 
     console.log(chalk.yellow(`Generating network ${network}...`))
   
-    append(`# ${capitalizeFirstLetter(network)}`)
+    append(`## ${capitalizeFirstLetter(network)}`)
     append('')
 
     append(`| Contract | Address | Artifact |`)
@@ -105,6 +109,8 @@ async function generate() {
   append('')
   
   fs.closeSync(out)  
+
+  console.log(chalk.green(`Output to ${outputFile}`))
 }
 
 generate()

@@ -34,6 +34,7 @@
     "@opengsn/gsn": "0.10.0",
     "@openzeppelin/cli": "2.8.2",
     "@openzeppelin/contracts-ethereum-package": "3.0.0",
+    "@pooltogether/current-pool-data": "^3.0.0-alpha.33",
     "@pooltogether/fixed-point": "pooltogether/fixed-point.git#0.1.0-upgradeable.1",
     "@pooltogether/governor-contracts": "0.1.1",
     "@pooltogether/oz-migrate": "0.2.5",
