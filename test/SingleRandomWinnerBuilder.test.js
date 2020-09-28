@@ -21,7 +21,6 @@ describe('SingleRandomWinnerBuilder', () => {
       trustedForwarder,
       controlledTokenProxyFactory,
       ticketProxyFactory,
-      proxyFactory,
       rngServiceMock,
       prizePool
 
@@ -41,13 +40,11 @@ describe('SingleRandomWinnerBuilder', () => {
     singleRandomWinnerProxyFactory = (await deployments.get("SingleRandomWinnerProxyFactory"))
     controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
     ticketProxyFactory = (await deployments.get("TicketProxyFactory"))
-    proxyFactory = (await deployments.get("ProxyFactory"))
     rngServiceMock = (await deployments.get("RNGServiceMock"))
 
     prizePool = await deployMockContract(wallet, PrizePool.abi)
 
     singleRandomWinnerConfig = {
-      proxyAdmin: AddressZero,
       rngService: rngServiceMock.address,
       prizePeriodStart: 20,
       prizePeriodSeconds: 10,
@@ -68,7 +65,6 @@ describe('SingleRandomWinnerBuilder', () => {
       expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.controlledTokenProxyFactory()).to.equal(controlledTokenProxyFactory.address)
       expect(await builder.ticketProxyFactory()).to.equal(ticketProxyFactory.address)
-      expect(await builder.proxyFactory()).to.equal(proxyFactory.address)
     })
   })
 
@@ -113,26 +109,6 @@ describe('SingleRandomWinnerBuilder', () => {
       const sponsorship = await buidler.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
       expect(await sponsorship.name()).to.equal(singleRandomWinnerConfig.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(singleRandomWinnerConfig.sponsorshipSymbol)
-    })
-
-    it('should allow a user to create an upgradeable Single Random Winner strategy', async () => {
-      const proxyAdmin = await deployMockContract(wallet, (await deployments.get("ProxyAdmin")).abi)
-
-      singleRandomWinnerConfig.proxyAdmin = proxyAdmin.address
-
-      let tx = await builder.createSingleRandomWinner(
-        prizePool.address,
-        singleRandomWinnerConfig,
-        18,
-        wallet._address
-      )
-
-      let events = await getEvents(tx)
-      let event = events.find(e => e.name == 'SingleRandomWinnerCreated')
-
-      const prizeStrategyProxy = new ethers.Contract(event.args.singleRandomWinner, InitializableAdminUpgradeabilityProxy.abi, wallet)
-
-      expect(await proxyAdmin.staticcall(prizeStrategyProxy, 'admin')).to.equal(proxyAdmin.address)
     })
   })
 })

@@ -154,19 +154,5 @@ describe('StakePrizePoolBuilder', () => {
         ethers.BigNumber.from('0')
       ])
     })
-
-    it('should allow a user to create an upgradeable Single Random Winner strategy', async () => {
-      const proxyAdmin = await deployMockContract(wallet, (await deployments.get("ProxyAdmin")).abi)
-
-      singleRandomWinnerConfig.proxyAdmin = proxyAdmin.address
-
-      let tx = await builder.createSingleRandomWinner(stakePrizePoolConfig, singleRandomWinnerConfig, 8)
-      let events = await getEvents(tx)
-      let event = events.find(e => e.name == 'PrizePoolCreated')
-
-      const prizeStrategyProxy = new ethers.Contract(event.args.prizeStrategy, InitializableAdminUpgradeabilityProxy.abi, wallet)
-
-      expect(await proxyAdmin.staticcall(prizeStrategyProxy, 'admin')).to.equal(proxyAdmin.address)
-    })
   })
 })

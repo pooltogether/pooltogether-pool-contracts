@@ -21,7 +21,6 @@ contract SingleRandomWinnerBuilder {
   );
 
   struct SingleRandomWinnerConfig {
-    address proxyAdmin;
     RNGInterface rngService;
     uint256 prizePeriodStart;
     uint256 prizePeriodSeconds;
@@ -38,7 +37,6 @@ contract SingleRandomWinnerBuilder {
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
   TicketProxyFactory public ticketProxyFactory;
   SingleRandomWinnerProxyFactory public singleRandomWinnerProxyFactory;
-  OpenZeppelinProxyFactoryInterface public proxyFactory;
   address public trustedForwarder;
 
   constructor (
@@ -46,15 +44,12 @@ contract SingleRandomWinnerBuilder {
     SingleRandomWinnerProxyFactory _singleRandomWinnerProxyFactory,
     address _trustedForwarder,
     ControlledTokenProxyFactory _controlledTokenProxyFactory,
-    OpenZeppelinProxyFactoryInterface _proxyFactory,
     TicketProxyFactory _ticketProxyFactory
   ) public {
     require(address(_comptroller) != address(0), "SingleRandomWinnerBuilder/comptroller-not-zero");
     require(address(_singleRandomWinnerProxyFactory) != address(0), "SingleRandomWinnerBuilder/single-random-winner-factory-not-zero");
     require(address(_controlledTokenProxyFactory) != address(0), "SingleRandomWinnerBuilder/controlled-token-proxy-factory-not-zero");
-    require(address(_proxyFactory) != address(0), "SingleRandomWinnerBuilder/proxy-factory-not-zero");
     require(address(_ticketProxyFactory) != address(0), "SingleRandomWinnerBuilder/ticket-proxy-factory-not-zero");
-    proxyFactory = _proxyFactory;
     ticketProxyFactory = _ticketProxyFactory;
     comptroller = _comptroller;
     singleRandomWinnerProxyFactory = _singleRandomWinnerProxyFactory;
@@ -68,15 +63,7 @@ contract SingleRandomWinnerBuilder {
     uint8 decimals,
     address owner
   ) external returns (SingleRandomWinner) {
-
-    SingleRandomWinner prizeStrategy;
-    if (config.proxyAdmin != address(0)) {
-      prizeStrategy = SingleRandomWinner(
-        proxyFactory.deploy(block.timestamp, address(singleRandomWinnerProxyFactory.instance()), config.proxyAdmin, "")
-      );
-    } else {
-      prizeStrategy = singleRandomWinnerProxyFactory.create();
-    }
+    SingleRandomWinner prizeStrategy = singleRandomWinnerProxyFactory.create();
 
     address ticket = address(
       _createTicket(
