@@ -6,7 +6,7 @@
 
 <br />
 
-### PoolTogether Prize Savings Protocol
+## PoolTogether Prize Savings Protocol
 
 [![Coverage Status](https://coveralls.io/repos/github/pooltogether/pooltogether-pool-contracts/badge.svg?branch=version-3)](https://coveralls.io/github/pooltogether/pooltogether-pool-contracts?branch=version-3)
 
@@ -28,7 +28,7 @@ Notice the `alpha` tag: this is important!  Otherwise you'll get the V2 code.
 
 #### Usage
 
-##### Artifacts
+###### Artifacts
 
 There are deployment artifacts available in the `deployments/` directory.  This includes:
 
@@ -50,7 +50,7 @@ const {
  } = CompoundPrizePoolBuilder
 ```
 
-##### ABIs
+###### ABIs
 
 Application Binary Interfaces for all PoolTogether contracts and related contracts are available in the `abis/` directory.
 
@@ -78,7 +78,7 @@ $ yarn
 
 We make use of [Buidler](https://buidler.dev) and [buidler-deploy](https://github.com/wighawag/buidler-deploy)
 
-##### Deploy Locally
+###### Deploy Locally
 
 Start a local node and deploy the top-level contracts:
 
@@ -88,7 +88,7 @@ $ yarn start
 
 NOTE: When you run this command it will reset the local blockchain.
 
-##### Connect Locally
+###### Connect Locally
 
 Start up a [Buidler Console](https://buidler.dev/guides/buidler-console.html):
 
@@ -116,7 +116,7 @@ Let's mint some Dai for ourselves:
 > ethers.utils.formatEther(await dai.balanceOf(signers[0]._address))
 ```
 
-##### Deploy to Live Networks
+###### Deploy to Live Networks
 
 Copy over .envrc.example to .envrc
 
