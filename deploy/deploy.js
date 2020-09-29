@@ -239,7 +239,6 @@ module.exports = async (buidler) => {
       singleRandomWinnerProxyFactoryResult.address,
       trustedForwarder,
       controlledTokenProxyFactoryResult.address,
-      proxyFactoryResult.address,
       ticketProxyFactoryResult.address
     ],
     from: deployer,
