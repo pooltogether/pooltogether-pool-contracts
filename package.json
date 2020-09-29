@@ -61,5 +61,11 @@
     "solidity-coverage": "0.7.4",
     "sortition-sum-tree-factory": "0.1.0",
     "truffle-extract": "pooltogether/truffle-extract"
-  }
+  },
+  "files": [
+    "LICENSE",
+    "abis/**",
+    "contracts/**",
+    "deployments/**"
+  ]
 }
