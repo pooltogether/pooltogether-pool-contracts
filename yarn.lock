@@ -1016,11 +1016,6 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.0.1.tgz#2f327f77d16b43f14674086b2b634bda38cb0838"
   integrity sha512-uSrD7hZ0ViuHGqHZbeHawZBi/uy7aBiNramXAt2dFFuSuoU4u9insS3V3zdVfOnYSPreUo636xSOuQIFN4//HA==
 
-"@openzeppelin/contracts@^3.0.1":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.2.0.tgz#3e6b3a7662d8ed64271ade96ef42655db983fd9d"
-  integrity sha512-bUOmkSoPkjnUyMiKo6RYnb0VHBk5D9KKDAgNLzF41aqAM3TeE0yGdFF5dVRcV60pZdJLlyFT/jjXIZCWyyEzAQ==
-
 "@openzeppelin/fuzzy-solidity-import-parser@^0.1.2":
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/fuzzy-solidity-import-parser/-/fuzzy-solidity-import-parser-0.1.2.tgz#3b9f524d6028ca73df60474a313e0295e5610c51"
@@ -1073,24 +1068,6 @@
   resolved "https://codeload.github.com/pooltogether/fixed-point/tar.gz/422e81ae8025680b870c7242ea9c01df72d72baf"
   dependencies:
     "@openzeppelin/contracts-ethereum-package" "^3.0.0"
-
-"@pooltogether/governor-contracts@0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@pooltogether/governor-contracts/-/governor-contracts-0.1.1.tgz#49b7243ad292de083eef3ff03c77cf1fcd682de5"
-  integrity sha512-5LPfZ0SHzC/H0cOk/bannXOGjGq3egZjPXE2Xw4bvNHTV0JmVrmFuqzcxaYUT6bJDPzfvbj0BKrVtJqm9PtG+Q==
-  dependencies:
-    "@openzeppelin/contracts" "^3.0.1"
-    "@pooltogether/oz-migrate" "^0.2.5"
-    debug "^4.1.1"
-    ethereum-waffle "^2.5.1"
-    ethers "^4.0.47"
-
-"@pooltogether/oz-migrate@0.2.5", "@pooltogether/oz-migrate@^0.2.5":
-  version "0.2.5"
-  resolved "https://registry.yarnpkg.com/@pooltogether/oz-migrate/-/oz-migrate-0.2.5.tgz#fc729cbfe9dcb65cfd7a324a9b85b5e4ad31f70c"
-  integrity sha512-j3LubUgnyLUAzJPO0GwipRbdJLTI7FTVvFK0OCUk+qgJ+lm1egXJ0FqigkKgg5ZyK+WSUq5fYKbWEvKos7RbNQ==
-  dependencies:
-    mkdirp "^0.5.0"
 
 "@pooltogether/pooltogether-rng-contracts@^1.0.0-alpha.7":
   version "1.0.0-alpha.7"
@@ -4887,7 +4864,7 @@ ethereum-protocol@^1.0.1:
   resolved "https://registry.yarnpkg.com/ethereum-protocol/-/ethereum-protocol-1.0.1.tgz#b7d68142f4105e0ae7b5e178cf42f8d4dc4b93cf"
   integrity sha512-3KLX1mHuEsBW0dKG+c6EOJS1NBNqdCICvZW9sInmZTt5aY0oxmHVggYRE0lJu1tcnMD1K+AKHdLi6U43Awm1Vg==
 
-ethereum-waffle@^2.3.2, ethereum-waffle@^2.5.1:
+ethereum-waffle@^2.3.2:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/ethereum-waffle/-/ethereum-waffle-2.5.1.tgz#537325bb5112fae35ee00a0e783343f8a6f6b917"
   integrity sha512-GPumiHpJHN9ONO7owo4mEZJDZzyDRawV3ukBdd+mPCxJkJbe69LTvza1nxcgwMjruXOd9GHaOnE/C2Sb+uGuMA==
@@ -4925,15 +4902,7 @@ ethereumjs-abi@0.6.7:
     bn.js "^4.11.8"
     ethereumjs-util "^6.0.0"
 
-ethereumjs-abi@^0.6.8:
-  version "0.6.8"
-  resolved "https://registry.yarnpkg.com/ethereumjs-abi/-/ethereumjs-abi-0.6.8.tgz#71bc152db099f70e62f108b7cdfca1b362c6fcae"
-  integrity sha512-Tx0r/iXI6r+lRsdvkFDlut0N08jWMnKRZ6Gkq+Nmw75lZe4e6o3EkSnkaBP5NF6+m5PTGAr9JP43N3LyeoglsA==
-  dependencies:
-    bn.js "^4.11.8"
-    ethereumjs-util "^6.0.0"
-
-"ethereumjs-abi@git+https://github.com/ethereumjs/ethereumjs-abi.git":
+ethereumjs-abi@^0.6.8, "ethereumjs-abi@git+https://github.com/ethereumjs/ethereumjs-abi.git":
   version "0.6.8"
   resolved "git+https://github.com/ethereumjs/ethereumjs-abi.git#1ce6a1d64235fabe2aaf827fd606def55693508f"
   dependencies:

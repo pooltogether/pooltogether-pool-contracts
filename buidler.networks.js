@@ -38,6 +38,13 @@ if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
   }
+
+  networks.mainnet = {
+    url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
+  }
 } else {
   console.warn('No infura or hdwallet available for testnets')
 }

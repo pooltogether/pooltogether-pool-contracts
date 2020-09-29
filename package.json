@@ -26,21 +26,21 @@
     "postpublish": "PACKAGE_VERSION=$(./scripts/package-version.sh) && git tag -ae v$PACKAGE_VERSION && git push --tags",
     "update-gitbook-networks": "./scripts/update-gitbook-networks.sh"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@opengsn/gsn": "0.10.0",
+    "@openzeppelin/contracts-ethereum-package": "3.0.0",
+    "@pooltogether/current-pool-data": "^3.0.0-alpha.33",
+    "@pooltogether/fixed-point": "pooltogether/fixed-point.git#0.1.0-upgradeable.1",
+    "@pooltogether/pooltogether-rng-contracts": "^1.0.0-alpha.7",
+    "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
+    "sortition-sum-tree-factory": "0.1.0"
+  },
   "devDependencies": {
     "@nomiclabs/buidler": "^1.4.3",
     "@nomiclabs/buidler-ethers": "^2.0.0",
     "@nomiclabs/buidler-etherscan": "^2.1.0",
     "@nomiclabs/buidler-waffle": "^2.0.0",
-    "@opengsn/gsn": "0.10.0",
     "@openzeppelin/cli": "2.8.2",
-    "@openzeppelin/contracts-ethereum-package": "3.0.0",
-    "@pooltogether/current-pool-data": "^3.0.0-alpha.33",
-    "@pooltogether/fixed-point": "pooltogether/fixed-point.git#0.1.0-upgradeable.1",
-    "@pooltogether/governor-contracts": "0.1.1",
-    "@pooltogether/oz-migrate": "0.2.5",
-    "@pooltogether/pooltogether-rng-contracts": "^1.0.0-alpha.7",
-    "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
     "@resolver-engine/core": "0.3.3",
     "@truffle/hdwallet-provider": "1.0.34",
     "buidler-deploy": "^0.5.18",
@@ -59,7 +59,6 @@
     "solc": "0.6.4",
     "solhint": "3.0.0",
     "solidity-coverage": "0.7.4",
-    "sortition-sum-tree-factory": "0.1.0",
     "truffle-extract": "pooltogether/truffle-extract"
   },
   "files": [
