@@ -13,7 +13,7 @@
     "hint": "solhint \"contracts/**/*.sol\"",
     "test": "OPTIMIZER_DISABLED=true buidler test",
     "compile": "buidler --show-stack-traces --max-memory 8192 compile",
-    "start": "rm -rf deployments/localhost_31337; buidler node",
+    "start": "rm -rf deployments/localhost_31337; DISABLE_HARNESS=true buidler node",
     "coverage": "rm -rf build cache test-results.xml && USE_LITERAL_CONTENT=false buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network localhost",
     "deploy": "buidler deploy --write true --network",
@@ -33,8 +33,8 @@
     "@pooltogether/fixed-point": "pooltogether/fixed-point.git#0.1.0-upgradeable.1",
     "@pooltogether/pooltogether-rng-contracts": "^1.0.0-alpha.7",
     "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
-    "sortition-sum-tree-factory": "0.1.0",
-    "deploy-eip-1820": "1.0.0"
+    "deploy-eip-1820": "1.0.0",
+    "sortition-sum-tree-factory": "0.1.0"
   },
   "devDependencies": {
     "@nomiclabs/buidler": "^1.4.3",

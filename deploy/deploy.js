@@ -20,6 +20,9 @@ const chainName = (chainId) => {
 module.exports = async (buidler) => {
   const { getNamedAccounts, deployments, getChainId, ethers } = buidler
   const { deploy, getOrNull, save } = deployments
+
+  const harnessDisabled = !!process.env.DISABLE_HARNESS
+
   let {
     deployer,
     rng,
@@ -172,7 +175,7 @@ module.exports = async (buidler) => {
 
   debug("\n  Deploying CompoundPrizePoolProxyFactory...")
   let compoundPrizePoolProxyFactoryResult
-  if (isTestEnvironment) {
+  if (isTestEnvironment && !harnessDisabled) {
     compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolProxyFactory", {
       contract: 'CompoundPrizePoolHarnessProxyFactory',
       from: deployer,
@@ -186,7 +189,7 @@ module.exports = async (buidler) => {
   }
 
   let yVaultPrizePoolProxyFactoryResult
-  if (isTestEnvironment) {
+  if (isTestEnvironment && !harnessDisabled) {
     yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolProxyFactory", {
       contract: 'yVaultPrizePoolHarnessProxyFactory',
       from: deployer,
@@ -219,7 +222,7 @@ module.exports = async (buidler) => {
 
   debug("\n  Deploying SingleRandomWinnerProxyFactory...")
   let singleRandomWinnerProxyFactoryResult
-  if (isTestEnvironment) {
+  if (isTestEnvironment && !harnessDisabled) {
     singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
       contract: 'SingleRandomWinnerHarnessProxyFactory',
       from: deployer,
