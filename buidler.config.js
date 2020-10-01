@@ -32,10 +32,10 @@ task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
   return input;
 })
 
-const testnetAdmin = '0x11BA3d40F7549485D5B821217E3f4474Ae90FeCd' // Account 1
-const testnetUser1 = '0x573bd3868b7672332c4D22076f55Cb0b597eb5Fd' // Account 3
-const testnetUser2 = '0x7Cfc5a12506d92F29D52EC7B8d1148f46e9296ED' // Account 4
-const testnetUser3 = '0x50D6d6195b102f9b58A29a57E3D71822881033a5' // Account 5
+const testnetAdmin = '0xE0F4217390221aF47855E094F6e112D43C8698fE' // Account 1
+const testnetUser1 = '0xeedDf4937E3A7aBe03E08963C3c20affbD770b51' // Account 3
+const testnetUser2 = '0xcE53382F96FdE0DB592574ed2571B3307dB859Ce' // Account 4
+const testnetUser3 = '0x381843c8b4a4a0Da3C0800708c84AA2d792D22b1' // Account 5
 
 const optimizerEnabled = !process.env.OPTIMIZER_DISABLED
 
