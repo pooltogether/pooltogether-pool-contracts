@@ -44,11 +44,6 @@ async function main() {
   const { deploy } = deployments
   const toWei = ethers.utils.parseEther
 
-  const methodOverrides = {
-    // gasLimit: 20e9,
-    gasPrice: 1e9
-  }
-
   const { deployer } = await getNamedAccounts()
   const signer = await ethers.provider.getSigner(deployer)
   console.log(`Using deployer address: ${deployer}\n`)
@@ -122,11 +117,11 @@ async function main() {
       console.log(`  - deployed address: ${balanceDripToken.address}`)
 
       console.log(`\n  Activating BalanceDrip with a Drip-Rate of ${balanceDripRatePerSecond} per second...`)
-      response = await comptroller.activateBalanceDrip(prizePoolAddress, measureTokenAddress, balanceDripToken.address, toWei(balanceDripRatePerSecond), methodOverrides)
+      response = await comptroller.activateBalanceDrip(prizePoolAddress, measureTokenAddress, balanceDripToken.address, toWei(balanceDripRatePerSecond))
 
       console.log(`\n  Minting BalanceDrip Tokens to Comptroller...`)
       balanceDripToken = new ethers.Contract(balanceDripToken.address, ERC20Mintable.abi, signer)
-      await balanceDripToken.mint(comptroller.address, toWei('1000000000'), methodOverrides) // 1 Billion
+      await balanceDripToken.mint(comptroller.address, toWei('1000000000')) // 1 Billion
     }
 
     /////////////////////////////////////
@@ -163,13 +158,12 @@ async function main() {
         isReferral,
         BigInt.asUintN(32, BigInt(periodSeconds)),
         toWei(volumeDripRatePerPeriod),
-        BigInt.asUintN(32, BigInt(periodEndTime)),
-        methodOverrides
+        BigInt.asUintN(32, BigInt(periodEndTime))
       )
 
       console.log(`\n  Minting VolumeDrip Tokens to Comptroller...`)
       volumeDripToken = new ethers.Contract(volumeDripToken.address, ERC20Mintable.abi, signer)
-      await volumeDripToken.mint(comptroller.address, toWei('1000000000'), methodOverrides) // 1 Billion
+      await volumeDripToken.mint(comptroller.address, toWei('1000000000')) // 1 Billion
     }
 
     //
@@ -202,13 +196,12 @@ async function main() {
         isReferral,
         BigInt.asUintN(32, BigInt(periodSeconds)),
         toWei(volumeDripRatePerPeriod),
-        BigInt.asUintN(32, BigInt(periodEndTime)),
-        methodOverrides
+        BigInt.asUintN(32, BigInt(periodEndTime))
       )
 
       console.log(`\n  Minting Referral VolumeDrip Tokens to Comptroller...`)
       refVolumeDripToken = new ethers.Contract(refVolumeDripToken.address, ERC20Mintable.abi, signer)
-      await refVolumeDripToken.mint(comptroller.address, toWei('1000000000'), methodOverrides) // 1 Billion
+      await refVolumeDripToken.mint(comptroller.address, toWei('1000000000')) // 1 Billion
     }
   }
 
