@@ -11,9 +11,9 @@ const DEPLOY = {
 }
 
 const PRIZE_POOLS = {
-  ropsten:  ['0x529346f4242A4b55c5e964a78FaAe13f89305F4B', '0x79658471d30ce4EeE599eC0d9CE1D2038f9C3986', '0x65b0FadC562546A473b6964E9E71496544b53963', '0x62ccB9b830b87aAF5874D12646Da86C8C048482D', '0x294982ca5f5a9D120d08fdaF8281D094a9735543', '0x395E776612C950DAfF7afE391E45379dF8659931'],
-  rinkeby:  ['0xcfE8B7281D2bEc8325cba02E0957FBfF4a6262f6', '0x546349619F5C229267B37996DE7146C466e7B9Cc', '0x9C877ECa3010B48e7C8A5Ff86160a9476B5d6866', '0x607d70Cd424D0522eF285F98522A3c53cB93B2a3', '0xb09D3C159066dA3c7609b08F1Bd4F4Fd046F160a', '0x3feea533B789aF732990381508AC8e4eF15098Ac'],
-  kovan:    ['0xf8FF07Bfa9B1Cb327f72528B07c9008D090CEa69', '0xa81Aa0d2BB8a0AEB35b0F7360eD74f343C2b6977', '0x23F8E6b73B3183caB4495e743882598DFD5Db607', '0x61560B4007a4F12EfC128a7Adc35dEd6E50aAcf6', '0x364eF3906Cc5FbFD2eD224d6DEe286b53142cc50', '0xA8785214354EdEd1089791243207688B2F792b61'],
+  ropsten:  [''],
+  rinkeby:  [''],
+  kovan:    [''],
 }
 
 const timestamp = (offsetSeconds) => ((new Date()).getTime() + offsetSeconds)
@@ -141,6 +141,7 @@ async function main() {
           "VDRIP"
         ],
         from: deployer,
+        gas: 1e9,
         skipIfAlreadyDeployed: true
       })
       console.log(`  - deployed address: ${volumeDripToken.address}`)
@@ -157,7 +158,7 @@ async function main() {
         isReferral,
         BigInt.asUintN(32, BigInt(periodSeconds)),
         toWei(volumeDripRatePerPeriod),
-        BigInt.asUintN(32, BigInt(periodEndTime)),
+        BigInt.asUintN(32, BigInt(periodEndTime))
       )
 
       console.log(`\n  Minting VolumeDrip Tokens to Comptroller...`)
@@ -178,6 +179,7 @@ async function main() {
           "RVDRIP"
         ],
         from: deployer,
+        gas: 1e9,
         skipIfAlreadyDeployed: true
       })
       console.log(`  - deployed address: ${refVolumeDripToken.address}`)
@@ -194,7 +196,7 @@ async function main() {
         isReferral,
         BigInt.asUintN(32, BigInt(periodSeconds)),
         toWei(volumeDripRatePerPeriod),
-        BigInt.asUintN(32, BigInt(periodEndTime)),
+        BigInt.asUintN(32, BigInt(periodEndTime))
       )
 
       console.log(`\n  Minting Referral VolumeDrip Tokens to Comptroller...`)
