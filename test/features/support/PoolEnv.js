@@ -32,9 +32,11 @@ function PoolEnv() {
     this.wallets = await buidler.ethers.getSigners()
 
     debug({
-      wallet1: this.wallets[0]._address,
-      wallet2: this.wallets[1]._address,
-      wallet3: this.wallets[2]._address
+      wallet0: this.wallets[0]._address,
+      wallet1: this.wallets[1]._address,
+      wallet2: this.wallets[2]._address,
+      wallet3: this.wallets[3]._address,
+      wallet4: this.wallets[4]._address
     })
 
     debug(`Fetched ${this.wallets.length} wallets`)
@@ -69,6 +71,24 @@ function PoolEnv() {
     await this.setCurrentTime(prizePeriodStart)
 
     debug(`Done create Pool`)
+  }
+
+  this.useMultipleWinnersPrizeStrategy = async function ({ winnerCount }) {
+    const multipleWinnersBuilder = await buidler.deployments.get('MultipleWinnersBuilder')
+    const mw = await buidler.ethers.getContractAt('MultipleWinnersBuilder', multipleWinnersBuilder.address, this.wallets[0])
+    const tx = await mw.createMultipleWinners(this.env.prizeStrategy.address, winnerCount)
+    const receipt = await buidler.ethers.provider.getTransactionReceipt(tx.hash)
+    const events = receipt.logs.map(log => { try { return mw.interface.parseLog(log) } catch (e) {} })
+    const event = events.find(event => event && event.name === 'CreatedMultipleWinners')
+    const newStrategyAddress = event.args.prizeStrategy
+
+    const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinners', newStrategyAddress, this.wallets[0])
+    expect(await prizeStrategy.numberOfWinners()).to.equal(winnerCount)
+    this.env.prizeStrategy = prizeStrategy;
+
+    await this.env.prizePool.setPrizeStrategy(newStrategyAddress)
+
+    debug(`Changed prize strategy to multiple winners`)
   }
 
   this.setCurrentTime = async function (time) {
@@ -342,8 +362,8 @@ function PoolEnv() {
   }
 
   this.completeAward = async function ({ token }) {
-    let randomNumber = ethers.utils.hexlify(ethers.utils.zeroPad(ethers.BigNumber.from('' + token), 32))
-    await this.env.rngService.setRandomNumber(randomNumber, this.overrides)
+    // let randomNumber = ethers.utils.hexlify(ethers.utils.zeroPad(ethers.BigNumber.from('' + token), 32))
+    await this.env.rngService.setRandomNumber(token, this.overrides)
 
     debug(`awardPrizeToToken Completing award...`)
     await this.env.prizeStrategy.completeAward(this.overrides)
@@ -369,6 +389,11 @@ function PoolEnv() {
     let ticket = await this.ticket(wallet)
     let toWallet = await this.wallet(to)
     await ticket.transfer(toWallet._address, toWei(tickets))
+  }
+
+  this.draw = async function ({ token }) {
+    let winner = await this.env.ticket.draw(token)
+    debug(`draw(${token}) = ${winner}`)
   }
 
   this.withdrawInstantly = async function ({user, tickets}) {
