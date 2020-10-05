@@ -227,6 +227,11 @@ describe('PrizePool', function() {
     })
 
     describe('captureAwardBalance()', () => {
+      it('should not be called by anyone else', async () => {
+        prizePool = await prizePool.connect(wallet2)
+        await expect(prizePool.captureAwardBalance()).to.be.revertedWith('PrizePool/only-prizeStrategy')
+      })
+
       it('should track the yield less the total token supply', async () => {
         await ticket.mock.totalSupply.returns(toWei('100'))
         await yieldSourceStub.mock.balance.returns(toWei('110'))
