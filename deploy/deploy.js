@@ -220,6 +220,30 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
+  let multipleWinnersProxyFactoryResult
+  debug("\n  Deploying MultipleWinnersProxyFactory...")
+  if (isTestEnvironment && !harnessDisabled) {
+    multipleWinnersProxyFactoryResult = await deploy("MultipleWinnersHarnessProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  } else {
+    multipleWinnersProxyFactoryResult = await deploy("MultipleWinnersProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  }
+  
+
+  debug("\n  Deploying MultipleWinnersBuilder...")
+  const multipleWinnersBuilderResult = await deploy("MultipleWinnersBuilder", {
+    args: [
+      multipleWinnersProxyFactoryResult.address
+    ],
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+
   debug("\n  Deploying SingleRandomWinnerProxyFactory...")
   let singleRandomWinnerProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
