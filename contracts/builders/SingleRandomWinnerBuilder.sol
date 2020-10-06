@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
+import "../token/TokenListenerInterface.sol";
 import "../prize-pool/PrizePool.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
@@ -33,14 +34,14 @@ contract SingleRandomWinnerBuilder {
     address[] externalERC20Awards;
   }
 
-  ComptrollerInterface public comptroller;
+  TokenListenerInterface public comptroller;
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
   TicketProxyFactory public ticketProxyFactory;
   SingleRandomWinnerProxyFactory public singleRandomWinnerProxyFactory;
   address public trustedForwarder;
 
   constructor (
-    ComptrollerInterface _comptroller,
+    TokenListenerInterface _comptroller,
     SingleRandomWinnerProxyFactory _singleRandomWinnerProxyFactory,
     address _trustedForwarder,
     ControlledTokenProxyFactory _controlledTokenProxyFactory,
@@ -93,6 +94,8 @@ contract SingleRandomWinnerBuilder {
       config.rngService,
       config.externalERC20Awards
     );
+
+    prizeStrategy.setTokenListener(comptroller);
 
     prizeStrategy.transferOwnership(owner);
 

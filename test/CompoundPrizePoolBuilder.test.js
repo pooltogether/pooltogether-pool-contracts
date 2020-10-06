@@ -4,7 +4,7 @@ const buidler = require('@nomiclabs/buidler')
 const { ethers } = require('ethers')
 const { AddressZero } = ethers.constants
 const { deployMockContract } = require('./helpers/deployMockContract')
-const PrizePoolTokenListenerInterface = require('../build/PrizePoolTokenListenerInterface.json')
+const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 
 const toWei = ethers.utils.parseEther
 
@@ -16,7 +16,7 @@ describe('CompoundPrizePoolBuilder', () => {
 
   let builder
 
-  let comptroller,
+  let reserve,
       trustedForwarder,
       singleRandomWinnerBuilder,
       compoundPrizePoolProxyFactory,
@@ -35,7 +35,7 @@ describe('CompoundPrizePoolBuilder', () => {
       wallet
     )
 
-    comptroller = (await deployments.get("Comptroller"))
+    reserve = (await deployments.get("Reserve"))
     trustedForwarder = (await deployments.get("TrustedForwarder"))
     singleRandomWinnerBuilder = (await deployments.get("SingleRandomWinnerBuilder"))
     compoundPrizePoolProxyFactory = (await deployments.get("CompoundPrizePoolProxyFactory"))
@@ -66,7 +66,7 @@ describe('CompoundPrizePoolBuilder', () => {
 
   describe('initialize()', () => {
     it('should setup all factories', async () => {
-      expect(await builder.comptroller()).to.equal(comptroller.address)
+      expect(await builder.reserve()).to.equal(reserve.address)
       expect(await builder.singleRandomWinnerBuilder()).to.equal(singleRandomWinnerBuilder.address)
       expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.compoundPrizePoolProxyFactory()).to.equal(compoundPrizePoolProxyFactory.address)
@@ -85,7 +85,7 @@ describe('CompoundPrizePoolBuilder', () => {
 
   describe('createCompoundPrizePool()', () => {
     it('should allow a user to create a CompoundPrizePool', async () => {
-      const prizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi)
+      const prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi)
 
       let tx = await builder.createCompoundPrizePool(compoundPrizePoolConfig, prizeStrategy.address)
       let events = await getEvents(tx)

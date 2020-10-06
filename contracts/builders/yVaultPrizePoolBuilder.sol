@@ -3,7 +3,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "../comptroller/ComptrollerInterface.sol";
+import "../reserve/ReserveInterface.sol";
 import "./SingleRandomWinnerBuilder.sol";
 import "./PrizePoolBuilder.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
@@ -25,21 +25,21 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
     uint256 maxTimelockDuration;
   }
 
-  ComptrollerInterface public comptroller;
+  ReserveInterface public reserve;
   yVaultPrizePoolProxyFactory public vaultPrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
   address public trustedForwarder;
 
   constructor (
-    ComptrollerInterface _comptroller,
+    ReserveInterface _reserve,
     address _trustedForwarder,
     yVaultPrizePoolProxyFactory _vaultPrizePoolProxyFactory,
     SingleRandomWinnerBuilder _singleRandomWinnerBuilder
   ) public {
-    require(address(_comptroller) != address(0), "yVaultPrizePoolBuilder/comptroller-not-zero");
+    require(address(_reserve) != address(0), "yVaultPrizePoolBuilder/reserve-not-zero");
     require(address(_singleRandomWinnerBuilder) != address(0), "yVaultPrizePoolBuilder/single-random-winner-builder-not-zero");
     require(address(_vaultPrizePoolProxyFactory) != address(0), "yVaultPrizePoolBuilder/compound-prize-pool-builder-not-zero");
-    comptroller = _comptroller;
+    reserve = _reserve;
     singleRandomWinnerBuilder = _singleRandomWinnerBuilder;
     trustedForwarder = _trustedForwarder;
     vaultPrizePoolProxyFactory = _vaultPrizePoolProxyFactory;
@@ -65,7 +65,7 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
     prizePool.initialize(
       trustedForwarder,
       prizeStrategy,
-      comptroller,
+      reserve,
       tokens,
       prizePoolConfig.maxExitFeeMantissa,
       prizePoolConfig.maxTimelockDuration,
@@ -95,7 +95,7 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
 
   function createyVaultPrizePool(
     yVaultPrizePoolConfig calldata config,
-    PrizePoolTokenListenerInterface prizeStrategy
+    TokenListenerInterface prizeStrategy
   )
     external
     returns (yVaultPrizePool)
@@ -107,7 +107,7 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
     prizePool.initialize(
       trustedForwarder,
       prizeStrategy,
-      comptroller,
+      reserve,
       tokens,
       config.maxExitFeeMantissa,
       config.maxTimelockDuration,

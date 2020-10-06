@@ -6,7 +6,7 @@ pragma experimental ABIEncoderV2;
 
 import "./PrizePoolBuilder.sol";
 import "./SingleRandomWinnerBuilder.sol";
-import "../comptroller/ComptrollerInterface.sol";
+import "../reserve/ReserveInterface.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
 import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
@@ -26,21 +26,21 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
     uint256 maxTimelockDuration;
   }
 
-  ComptrollerInterface public comptroller;
+  ReserveInterface public reserve;
   CompoundPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
   address public trustedForwarder;
 
   constructor (
-    ComptrollerInterface _comptroller,
+    ReserveInterface _reserve,
     address _trustedForwarder,
     CompoundPrizePoolProxyFactory _compoundPrizePoolProxyFactory,
     SingleRandomWinnerBuilder _singleRandomWinnerBuilder
   ) public {
-    require(address(_comptroller) != address(0), "CompoundPrizePoolBuilder/comptroller-not-zero");
+    require(address(_reserve) != address(0), "CompoundPrizePoolBuilder/reserve-not-zero");
     require(address(_singleRandomWinnerBuilder) != address(0), "CompoundPrizePoolBuilder/single-random-winner-builder-not-zero");
     require(address(_compoundPrizePoolProxyFactory) != address(0), "CompoundPrizePoolBuilder/compound-prize-pool-builder-not-zero");
-    comptroller = _comptroller;
+    reserve = _reserve;
     singleRandomWinnerBuilder = _singleRandomWinnerBuilder;
     trustedForwarder = _trustedForwarder;
     compoundPrizePoolProxyFactory = _compoundPrizePoolProxyFactory;
@@ -65,7 +65,7 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
     prizePool.initialize(
       trustedForwarder,
       prizeStrategy,
-      comptroller,
+      reserve,
       tokens,
       prizePoolConfig.maxExitFeeMantissa,
       prizePoolConfig.maxTimelockDuration,
@@ -88,7 +88,7 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
 
   function createCompoundPrizePool(
     CompoundPrizePoolConfig calldata config,
-    PrizePoolTokenListenerInterface prizeStrategy
+    TokenListenerInterface prizeStrategy
   )
     external
     returns (CompoundPrizePool)
@@ -100,7 +100,7 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
     prizePool.initialize(
       trustedForwarder,
       prizeStrategy,
-      comptroller,
+      reserve,
       tokens,
       config.maxExitFeeMantissa,
       config.maxTimelockDuration,

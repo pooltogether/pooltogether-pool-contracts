@@ -51,7 +51,9 @@ async function deployTestPool({
   let tokenResult = await deployments.get("Dai")
   let cTokenResult = await deployments.get("cDai")
   let yTokenResult = await deployments.get("yDai")
+  let reserveResult = await deployments.get('Reserve')
 
+  const reserve = await buidler.ethers.getContractAt('Reserve', reserveResult.address, wallet)
   const token = await buidler.ethers.getContractAt('ERC20Mintable', tokenResult.address, wallet)
   const cToken = await buidler.ethers.getContractAt('CTokenMock', cTokenResult.address, wallet)
   const yToken = await buidler.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
@@ -135,6 +137,7 @@ async function deployTestPool({
   return {
     rngService: rngServiceMock,
     token,
+    reserve,
     cToken,
     yToken,
     comptroller,

@@ -1,7 +1,4 @@
-const ProxyAdmin = require('../.build-openzeppelin/ProxyAdmin.json')
-const ProxyFactory = require('../.build-openzeppelin/ProxyFactory.json')
 const { deploy1820 } = require('deploy-eip-1820')
-const Comptroller = require("../build/Comptroller.json")
 
 const debug = require('debug')('ptv3:deploy.js')
 
@@ -19,7 +16,7 @@ const chainName = (chainId) => {
 
 module.exports = async (buidler) => {
   const { getNamedAccounts, deployments, getChainId, ethers } = buidler
-  const { deploy, getOrNull, save } = deployments
+  const { deploy } = deployments
 
   const harnessDisabled = !!process.env.DISABLE_HARNESS
 
@@ -27,13 +24,14 @@ module.exports = async (buidler) => {
     deployer,
     rng,
     trustedForwarder,
-    adminAccount
+    adminAccount,
+    comptroller,
+    reserve
   } = await getNamedAccounts()
   const chainId = parseInt(await getChainId(), 10)
   const isLocal = [1, 3, 4, 42].indexOf(chainId) == -1
   // 31337 is unit testing, 1337 is for coverage
   const isTestEnvironment = chainId === 31337 || chainId === 1337
-  let usingSignerAsAdmin = false
   const signer = await ethers.provider.getSigner(deployer)
 
   debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
@@ -46,32 +44,10 @@ module.exports = async (buidler) => {
   if (!adminAccount) {
     debug("  Using deployer as adminAccount;")
     adminAccount = signer._address
-    usingSignerAsAdmin = true
   }
   debug("\n  adminAccount:  ", adminAccount)
 
   await deploy1820(signer)
-
-  debug("\n  Deploying ProxyAdmin...")
-  const proxyAdminResult = await deploy("ProxyAdmin", {
-    contract: ProxyAdmin,
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  });
-
-  const proxyAdmin = new ethers.Contract(proxyAdminResult.address, ProxyAdmin.abi, signer)
-  if (await proxyAdmin.isOwner() && !usingSignerAsAdmin) {
-    debug(`Transferring ProxyAdmin ownership to ${adminAccount}...`)
-    await proxyAdmin.transferOwnership(adminAccount)
-  }
-
-  debug("\n  Deploying ProxyFactory...")
-  const proxyFactoryResult = await deploy("ProxyFactory", {
-    contract: ProxyFactory,
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  });
-  const proxyFactory = new ethers.Contract(proxyFactoryResult.address, ProxyFactory.abi, signer)
 
   if (isLocal) {
     debug("\n  Deploying TrustedForwarder...")
@@ -128,48 +104,43 @@ module.exports = async (buidler) => {
     debug("  - Dai:              ", daiResult.address)
   }
 
-  const comptrollerImplementationResult = await deploy("ComptrollerImplementation", {
-    contract: 'Comptroller',
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
-
-  let comptrollerAddress
-  if (isTestEnvironment) {
+  let comptrollerAddress = comptroller
+  // if not set by named config
+  if (!comptrollerAddress) {
+    const contract = isTestEnvironment ? 'ComptrollerHarness' : 'Comptroller'
     const comptrollerResult = await deploy("Comptroller", {
-      contract: 'ComptrollerHarness',
+      contract,
       from: deployer,
       skipIfAlreadyDeployed: true
     })
-    const comptroller = await buidler.ethers.getContractAt(
+    comptrollerAddress = comptrollerResult.address
+    const comptrollerContract = await buidler.ethers.getContractAt(
       "Comptroller",
       comptrollerResult.address,
       signer
     )
-    await comptroller.initialize(signer._address)
-    comptrollerAddress = comptrollerResult.address
-  } else {
-    const comptrollerDeployment = await getOrNull("Comptroller")
-    if (!comptrollerDeployment) {
-      debug("\n  Deploying new Comptroller Proxy...")
-      const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32))
-  
-      // form initialize() data
-      const comptrollerImpl = new ethers.Contract(comptrollerImplementationResult.address, Comptroller.abi, signer)
-      const initTx = await comptrollerImpl.populateTransaction.initialize(adminAccount)
-  
-      // calculate the address
-      comptrollerAddress = await proxyFactory.getDeploymentAddress(salt, signer._address)
-  
-      // deploy the proxy
-      await proxyFactory.deploy(salt, comptrollerImplementationResult.address, proxyAdmin.address, initTx.data)
-  
-      await save("Comptroller", {
-        ...comptrollerImplementationResult,
-        address: comptrollerAddress
-      })
-    } else {
-      comptrollerAddress = comptrollerDeployment.address
+    if (adminAccount !== deployer) {
+      await comptrollerContract.transferOwnership(adminAccount)
+    }
+  }
+
+  let reserveAddress = reserve
+  // if not set by named config
+  if (!reserveAddress) {
+    const contract = isTestEnvironment ? 'Reserve' : 'ReserveProxy'
+    const reserveResult = await deploy("Reserve", {
+      contract,
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+    reserveAddress = reserveResult.address
+    const reserveContract = await buidler.ethers.getContractAt(
+      "Reserve",
+      reserveResult.address,
+      signer
+    )
+    if (adminAccount !== deployer) {
+      await reserveContract.transferOwnership(adminAccount)
     }
   }
 
@@ -275,7 +246,7 @@ module.exports = async (buidler) => {
   debug("\n  Deploying CompoundPrizePoolBuilder...")
   const compoundPrizePoolBuilderResult = await deploy("CompoundPrizePoolBuilder", {
     args: [
-      comptrollerAddress,
+      reserveAddress,
       trustedForwarder,
       compoundPrizePoolProxyFactoryResult.address,
       singleRandomWinnerBuilderResult.address
@@ -287,7 +258,7 @@ module.exports = async (buidler) => {
   debug("\n  Deploying yVaultPrizePoolBuilder...")
   const yVaultPrizePoolBuilderResult = await deploy("yVaultPrizePoolBuilder", {
     args: [
-      comptrollerAddress,
+      reserveAddress,
       trustedForwarder,
       yVaultPrizePoolProxyFactoryResult.address,
       singleRandomWinnerBuilderResult.address
@@ -299,7 +270,7 @@ module.exports = async (buidler) => {
   debug("\n  Deploying StakePrizePoolBuilder...")
   const stakePrizePoolBuilderResult = await deploy("StakePrizePoolBuilder", {
     args: [
-      comptrollerAddress,
+      reserveAddress,
       trustedForwarder,
       stakePrizePoolProxyFactoryResult.address,
       singleRandomWinnerBuilderResult.address
@@ -310,9 +281,8 @@ module.exports = async (buidler) => {
 
   // Display Contract Addresses
   debug("\n  Contract Deployments Complete!\n")
-  debug("  - ProxyFactory:                   ", proxyFactoryResult.address)
   debug("  - TicketProxyFactory:             ", ticketProxyFactoryResult.address)
-  debug("  - ComptrollerImplementation:      ", comptrollerImplementationResult.address)
+  debug("  - Reserve:                        ", reserveAddress)
   debug("  - Comptroller:                    ", comptrollerAddress)
   debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
   debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)

@@ -7,11 +7,11 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 
 import "../utils/UInt256Array.sol";
 import "./ComptrollerStorage.sol";
-import "./ComptrollerInterface.sol";
+import "../token/TokenListenerInterface.sol";
 
-/// @title The Comptroller disburses rewards to pool users and captures reserve fees from Prize Pools.
+/// @title The Comptroller disburses rewards to pool users
 /* solium-disable security/no-block-members */
-contract Comptroller is ComptrollerStorage, ComptrollerInterface {
+contract Comptroller is ComptrollerStorage, TokenListenerInterface {
   using SafeMath for uint256;
   using SafeCast for uint256;
   using UInt256Array for uint256[];
@@ -21,11 +21,6 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   using BalanceDripManager for BalanceDripManager.State;
   using VolumeDripManager for VolumeDripManager.State;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
-
-  /// @notice Emitted when the reserve rate mantissa is changed
-  event ReserveRateMantissaSet(
-    uint256 reserveRateMantissa
-  );
 
   /// @notice Emitted when a balance drip is actived
   event BalanceDripActivated(
@@ -145,26 +140,8 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   }
 
   /// @notice Initializes a new Comptroller.
-  /// @param _owner The address to set as the owner of the contract
-  function initialize(address _owner) public initializer {
+  constructor () public {
     __Ownable_init();
-    transferOwnership(_owner);
-  }
-
-  /// @notice Returns the reserve rate mantissa.  This is a fixed point 18 number, like "Ether".
-  /// Pools will contribute this fraction of the interest they earn to the protocol.
-  /// @return The current reserve rate mantissa
-  function reserveRateMantissa() external view override returns (uint256) {
-    return _reserveRateMantissa;
-  }
-
-  /// @notice Sets the reserve rate mantissa.  Only callable by the owner.
-  /// @param __reserveRateMantissa The new reserve rate.  Must be less than or equal to 1.
-  function setReserveRateMantissa(uint256 __reserveRateMantissa) external onlyOwner {
-    require(__reserveRateMantissa <= 1 ether, "Comptroller/reserve-rate-lte-one");
-    _reserveRateMantissa = __reserveRateMantissa;
-
-    emit ReserveRateMantissaSet(_reserveRateMantissa);
   }
 
   /// @notice Activates a balance drip.  Only callable by the owner.
@@ -173,6 +150,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   /// @param dripToken The token that is dripped to users.
   /// @param dripRatePerSecond The amount of drip tokens that are awarded each second to the total supply of measure.
   function activateBalanceDrip(address source, address measure, address dripToken, uint256 dripRatePerSecond) external onlyOwner {
+
     balanceDrips[source].activateDrip(measure, dripToken, dripRatePerSecond, _currentTime().toUint32());
 
     emit BalanceDripActivated(
@@ -200,7 +178,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   /// @param prevDripToken The previous drip token in the balance drip list.  If the dripToken is the first address,
   /// then the previous address is the SENTINEL address: 0x0000000000000000000000000000000000000001
   function _deactivateBalanceDrip(address source, address measure, address dripToken, address prevDripToken) internal {
-     balanceDrips[source].deactivateDrip(measure, dripToken, prevDripToken, _currentTime().toUint32());
+    balanceDrips[source].deactivateDrip(measure, dripToken, prevDripToken, _currentTime().toUint32());
 
     emit BalanceDripDeactivated(source, measure, dripToken);
   }
@@ -637,6 +615,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     address currentDripToken = manager.activeBalanceDrips[measure].start();
     while (currentDripToken != address(0) && currentDripToken != manager.activeBalanceDrips[measure].end()) {
 
+
       bool isDripComplete = _updateBalanceDripToken(
         manager,
         source,
@@ -714,6 +693,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     BalanceDrip.State storage dripState = manager.balanceDrips[measure][dripToken];
     bool isActive = manager.activeBalanceDrips[measure].contains(dripToken);
 
+
     uint128 newTokens;
     if (isActive) {
       newTokens = dripState.drip(
@@ -728,6 +708,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
         measureBalance
       );
     }
+
 
     uint256 amountDripped;
     if (newTokens > 0) {
@@ -800,6 +781,7 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
       amount = amountAvailable;
     }
 
+
     dripTokenTotalSupply[dripToken] = dripTokenTotalSupply[dripToken].add(amount);
     dripTokenBalances[dripToken][user] = dripTokenBalances[dripToken][user].add(amount);
 
@@ -821,9 +803,12 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
     external
     override
   {
+    
+
     address source = _msgSender();
     uint256 balance = IERC20(measure).balanceOf(to);
     uint256 totalSupply = IERC20(measure).totalSupply();
+
 
     _updateBalanceDrips(
       balanceDrips[source],
@@ -863,18 +848,21 @@ contract Comptroller is ComptrollerStorage, ComptrollerInterface {
   function beforeTokenTransfer(
     address from,
     address to,
-    uint256,
+    uint256 amount,
     address measure
   )
     external
     override
   {
+    
+
     if (from == address(0)) {
       // ignore minting
       return;
     }
     address source = _msgSender();
     uint256 totalSupply = IERC20(measure).totalSupply();
+
 
     uint256 fromBalance = IERC20(measure).balanceOf(from);
     _updateBalanceDrips(

@@ -1,8 +1,7 @@
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
-const PrizePoolTokenListenerInterface = require('../build/PrizePoolTokenListenerInterface.json')
-const ComptrollerInterface = require('../build/ComptrollerInterface.json')
+const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CTokenInterface = require('../build/CTokenInterface.json')
 const IERC20 = require('../build/IERC20.json')
@@ -42,8 +41,8 @@ describe('CompoundPrizePool', function() {
     cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
     await cToken.mock.underlying.returns(erc20token.address)
 
-    prizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi, overrides)
-    comptroller = await deployMockContract(wallet, ComptrollerInterface.abi, overrides)
+    prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
+    comptroller = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
 
     debug('deploying CompoundPrizePoolHarness...')
     prizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)

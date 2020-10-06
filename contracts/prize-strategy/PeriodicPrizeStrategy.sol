@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 
+import "../token/TokenListenerInterface.sol";
 import "../external/pooltogether/FixedPoint.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
@@ -24,7 +25,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
                                            OwnableUpgradeSafe,
                                            RelayRecipient,
                                            ReentrancyGuardUpgradeSafe,
-                                           PrizePoolTokenListenerInterface {
+                                           TokenListenerInterface {
 
   using SafeMath for uint256;
   using SafeCast for uint256;
@@ -53,7 +54,11 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   );
 
   event RngServiceUpdated(
-    address rngService
+    address indexed rngService
+  );
+
+  event TokenListenerUpdated(
+    address indexed tokenListener
   );
 
   event RngRequestTimeoutSet(
@@ -82,6 +87,9 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     uint32 lockBlock;
     uint32 requestedAt;
   }
+
+  // Comptroller
+  TokenListenerInterface public tokenListener;
 
   // Contract Interfaces
   PrizePool public prizePool;
@@ -155,6 +163,12 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @return The current prize size
   function currentPrize() public view returns (uint256) {
     return prizePool.awardBalance();
+  }
+
+  function setTokenListener(TokenListenerInterface _tokenListener) external onlyOwner {
+    tokenListener = _tokenListener;
+
+    emit TokenListenerUpdated(address(tokenListener));
   }
 
   /// @notice Estimates the remaining blocks until the prize given a number of seconds per block
@@ -258,19 +272,22 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Called by the PrizePool for transfers of controlled tokens
   /// @dev Note that this is only for *transfers*, not mints or burns
   /// @param controlledToken The type of collateral that is being sent
-  function beforeTokenTransfer(address, address, uint256, address controlledToken) external override onlyPrizePool {
+  function beforeTokenTransfer(address from, address to, uint256 amount, address controlledToken) external override onlyPrizePool {
     if (controlledToken == address(ticket)) {
       _requireNotLocked();
+    }
+    if (address(tokenListener) != address(0)) {
+      tokenListener.beforeTokenTransfer(from, to, amount, controlledToken);
     }
   }
 
   /// @notice Called by the PrizePool when minting controlled tokens
   /// @param controlledToken The type of collateral that is being minted
   function beforeTokenMint(
-    address,
-    uint256,
+    address to,
+    uint256 amount,
     address controlledToken,
-    address
+    address referrer
   )
     external
     override
@@ -278,6 +295,9 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   {
     if (controlledToken == address(ticket)) {
       _requireNotLocked();
+    }
+    if (address(tokenListener) != address(0)) {
+      tokenListener.beforeTokenMint(to, amount, controlledToken, referrer);
     }
   }
 

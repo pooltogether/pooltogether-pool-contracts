@@ -5,7 +5,7 @@ const { ethers } = require('ethers')
 const { AddressZero } = ethers.constants
 const { deployMockContract } = require('./helpers/deployMockContract')
 const InitializableAdminUpgradeabilityProxy = require('@openzeppelin/upgrades/build/contracts/InitializableAdminUpgradeabilityProxy.json')
-const PrizePoolTokenListenerInterface = require('../build/PrizePoolTokenListenerInterface.json')
+const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 
 const toWei = ethers.utils.parseEther
 
@@ -15,7 +15,7 @@ describe('StakePrizePoolBuilder', () => {
 
   let builder
 
-  let comptroller,
+  let reserve,
       trustedForwarder,
       singleRandomWinnerBuilder,
       stakePrizePoolProxyFactory,
@@ -34,7 +34,7 @@ describe('StakePrizePoolBuilder', () => {
       wallet
     )
 
-    comptroller = (await deployments.get("Comptroller"))
+    reserve = (await deployments.get("Reserve"))
     trustedForwarder = (await deployments.get("TrustedForwarder"))
     singleRandomWinnerBuilder = (await deployments.get("SingleRandomWinnerBuilder"))
     stakePrizePoolProxyFactory = (await deployments.get("StakePrizePoolProxyFactory"))
@@ -66,7 +66,7 @@ describe('StakePrizePoolBuilder', () => {
 
   describe('initialize()', () => {
     it('should setup all factories', async () => {
-      expect(await builder.comptroller()).to.equal(comptroller.address)
+      expect(await builder.reserve()).to.equal(reserve.address)
       expect(await builder.singleRandomWinnerBuilder()).to.equal(singleRandomWinnerBuilder.address)
       expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.stakePrizePoolProxyFactory()).to.equal(stakePrizePoolProxyFactory.address)
@@ -85,7 +85,7 @@ describe('StakePrizePoolBuilder', () => {
 
   describe('createStakePrizePool()', () => {
     it('should allow a user to create a StakePrizePool', async () => {
-      const prizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi)
+      const prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi)
 
       let tx = await builder.createStakePrizePool(stakePrizePoolConfig, prizeStrategy.address)
       let events = await getEvents(tx)

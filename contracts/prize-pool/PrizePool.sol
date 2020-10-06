@@ -9,8 +9,9 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
 
 import "../external/pooltogether/FixedPoint.sol";
-import "../comptroller/ComptrollerInterface.sol";
+import "../reserve/ReserveInterface.sol";
 import "./YieldSource.sol";
+import "../token/TokenListenerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
@@ -28,7 +29,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @dev Emitted when an instance is initialized
   event Initialized(
     address trustedForwarder,
-    address comptroller,
+    address reserve,
     uint256 maxExitFeeMantissa,
     uint256 maxTimelockDuration
   );
@@ -38,13 +39,14 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     address indexed token
   );
 
-  /// @dev Set when the comptroller changes the type of reserve token
+  /// @dev Set when the reserve changes the type of reserve token
   event ReserveFeeControlledTokenSet(
     address indexed token
   );
 
   /// @dev Emitted when reserve is captured.
   event ReserveFeeCaptured(
+    address indexed to,
     address indexed token,
     uint256 amount
   );
@@ -166,8 +168,8 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     bool initialized;
   }
 
-  /// @dev Comptroller to which reserve fees are sent
-  ComptrollerInterface public comptroller;
+  /// @dev Reserve to which reserve fees are sent
+  ReserveInterface public reserve;
 
   /// @dev Controlled token to serve as the reserve fee
   address public reserveFeeControlledToken;
@@ -176,7 +178,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   MappedSinglyLinkedList.Mapping internal _tokens;
 
   /// @dev The Prize Strategy that this Prize Pool is bound to.
-  PrizePoolTokenListenerInterface public prizeStrategy;
+  TokenListenerInterface public prizeStrategy;
 
   /// @dev The maximum possible exit fee fraction as a fixed point 18 number.
   /// For example, if the maxExitFeeMantissa is "0.1 ether", then the maximum exit fee for a withdrawal of 100 Dai will be 10 Dai
@@ -214,8 +216,8 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock
   function initialize (
     address _trustedForwarder,
-    PrizePoolTokenListenerInterface _prizeStrategy,
-    ComptrollerInterface _comptroller,
+    TokenListenerInterface _prizeStrategy,
+    ReserveInterface _reserve,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration
@@ -223,7 +225,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     public
     initializer
   {
-    require(address(_comptroller) != address(0), "PrizePool/comptroller-not-zero");
+    require(address(_reserve) != address(0), "PrizePool/reserve-not-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
     _setPrizeStrategy(address(_prizeStrategy));
     _tokens.initialize();
@@ -235,13 +237,13 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     _setLiquidityCap(uint256(-1));
 
     trustedForwarder = _trustedForwarder;
-    comptroller = _comptroller;
+    reserve = _reserve;
     maxExitFeeMantissa = _maxExitFeeMantissa;
     maxTimelockDuration = _maxTimelockDuration;
 
     emit Initialized(
       _trustedForwarder,
-      address(_comptroller),
+      address(_reserve),
       maxExitFeeMantissa,
       maxTimelockDuration
     );
@@ -269,8 +271,11 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @dev Sets which controlled token will be minted as the reserve fee.  Only callable by the owner.
   /// @param controlledToken The controlled token to mint.  This must be controlled by the PrizePool.
   function setReserveFeeControlledToken(address controlledToken) external onlyControlledToken(controlledToken) onlyOwner {
-    reserveFeeControlledToken = controlledToken;
+    _setReserveFeeControlledToken(controlledToken);
+  }
 
+  function _setReserveFeeControlledToken(address controlledToken) internal {
+    reserveFeeControlledToken = controlledToken;
     emit ReserveFeeControlledTokenSet(controlledToken);
   }
 
@@ -429,29 +434,21 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param from The address the tokens are being transferred from (0 if minting)
   /// @param to The address the tokens are being transferred to (0 if burning)
   /// @param amount The amount of tokens being trasferred
-  function beforeTokenTransfer(address from, address to, uint256 amount) external override onlyControlledToken(_msgSender()) {
+  function beforeTokenTransfer(address from, address to, uint256 amount) external override onlyControlledToken(msg.sender) {
     if (from != address(0)) {
-      uint256 fromBeforeBalance = IERC20(_msgSender()).balanceOf(from);
+      uint256 fromBeforeBalance = IERC20(msg.sender).balanceOf(from);
       // first accrue credit for their old balance
-      uint256 newCreditBalance = _calculateCreditBalance(from, _msgSender(), fromBeforeBalance, 0);
+      uint256 newCreditBalance = _calculateCreditBalance(from, msg.sender, fromBeforeBalance, 0);
       // now limit their credit based on the new balance
-      newCreditBalance = _applyCreditLimit(_msgSender(), fromBeforeBalance.sub(amount), newCreditBalance);
-      _updateCreditBalance(from, _msgSender(), newCreditBalance);
+      newCreditBalance = _applyCreditLimit(msg.sender, fromBeforeBalance.sub(amount), newCreditBalance);
+      _updateCreditBalance(from, msg.sender, newCreditBalance);
     }
     if (to != address(0)) {
-      _accrueCredit(to, _msgSender(), IERC20(_msgSender()).balanceOf(to), 0);
+      _accrueCredit(to, msg.sender, IERC20(msg.sender).balanceOf(to), 0);
     }
     // if we aren't minting
-    if (from != address(0)) {
-      prizeStrategy.beforeTokenTransfer(from, to, amount, _msgSender());
-      if (address(comptroller) != address(0)) {
-        comptroller.beforeTokenTransfer(
-          from,
-          to,
-          amount,
-          _msgSender()
-        );
-      }
+    if (from != address(0) && address(prizeStrategy) != address(0)) {
+      prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
     }
   }
 
@@ -471,12 +468,13 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 totalInterest = (currentBalance > tokenTotalSupply) ? currentBalance.sub(tokenTotalSupply) : 0;
     uint256 unaccountedPrizeBalance = totalInterest.sub(_currentAwardBalance);
 
-    if (unaccountedPrizeBalance > 0) {
+    if (unaccountedPrizeBalance > 0 && address(reserve) != address(0)) {
       uint256 reserveFee = calculateReserveFee(unaccountedPrizeBalance);
-      if (reserveFee > 0) {
+      address reserveRecipient = reserve.reserveRecipient(address(this));
+      if (reserveFee > 0 && reserveRecipient != address(0)) {
         unaccountedPrizeBalance = unaccountedPrizeBalance.sub(reserveFee);
-        _mint(address(comptroller), reserveFee, reserveFeeControlledToken, address(0));
-        emit ReserveFeeCaptured(reserveFeeControlledToken, reserveFee);
+        _mint(reserveRecipient, reserveFee, reserveFeeControlledToken, address(0));
+        emit ReserveFeeCaptured(reserveRecipient, reserveFeeControlledToken, reserveFee);
       }
     }
 
@@ -575,14 +573,8 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param controlledToken The token that is going to be minted
   /// @param referrer The user who referred the minting
   function _mint(address to, uint256 amount, address controlledToken, address referrer) internal {
-    prizeStrategy.beforeTokenMint(to, amount, controlledToken, referrer);
-    if (address(comptroller) != address(0)) {
-      comptroller.beforeTokenMint(
-        to,
-        amount,
-        controlledToken,
-        referrer
-      );
+    if (address(prizeStrategy) != address(0)) {
+      prizeStrategy.beforeTokenMint(to, amount, controlledToken, referrer);
     }
     ControlledToken(controlledToken).controllerMint(to, amount);
   }
@@ -617,10 +609,10 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param amount The prize amount
   /// @return The size of the reserve portion of the prize
   function calculateReserveFee(uint256 amount) public view returns (uint256) {
-    if (address(comptroller) == address(0)) {
+    if (address(reserve) == address(0)) {
       return 0;
     }
-    uint256 reserveRateMantissa = comptroller.reserveRateMantissa();
+    uint256 reserveRateMantissa = reserve.reserveRateMantissa(address(this));
     if (reserveRateMantissa == 0 || reserveFeeControlledToken == address(0)) {
       return 0;
     }
@@ -1004,6 +996,10 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     require(ControlledToken(_controlledToken).controller() == this, "PrizePool/token-ctrlr-mismatch");
     _tokens.addAddress(_controlledToken);
 
+    if (reserveFeeControlledToken == address(0)) {
+      _setReserveFeeControlledToken(_controlledToken);
+    }
+
     emit ControlledTokenAdded(_controlledToken);
   }
 
@@ -1017,15 +1013,15 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param _prizeStrategy The new prize strategy
   function _setPrizeStrategy(address _prizeStrategy) internal {
     require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
-    prizeStrategy = PrizePoolTokenListenerInterface(_prizeStrategy);
+    prizeStrategy = TokenListenerInterface(_prizeStrategy);
 
     emit PrizeStrategySet(_prizeStrategy);
   }
 
-  /// @notice Emergency shutdown of the Prize Pool.  Prize Pool will detach from the global comptroller.
+  /// @notice Emergency shutdown of the Prize Pool.  Prize Pool will detach from the global reserve.
   /// @dev Called by the PrizeStrategy contract to issue an Emergency Shutdown of a corrupted Prize Strategy
   function emergencyShutdown() external onlyOwner {
-    delete comptroller;
+    delete reserve;
 
     emit EmergencyShutdown();
   }
@@ -1033,7 +1029,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @notice Returns whether the Prize Pool has been shutdown.
   /// @dev When the prize strategy is detached deposits are disabled, and only withdrawals are permitted
   function isShutdown() external view returns (bool) {
-    return address(comptroller) != address(0);
+    return address(reserve) != address(0);
   }
 
   /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
@@ -1140,7 +1136,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @dev modifier that can only be called when the Prize Pool isn't shutdown
   modifier notShutdown() {
-    require(address(comptroller) != address(0), "PrizePool/shutdown");
+    require(address(reserve) != address(0), "PrizePool/shutdown");
     _;
   }
 }

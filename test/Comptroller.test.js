@@ -41,28 +41,13 @@ describe('Comptroller', () => {
     dripToken = await deployMockContract(wallet, IERC20.abi)
     comptroller = await deployContract(wallet, ComptrollerHarness, [], overrides)
     comptroller2 = comptroller.connect(wallet2)
-    await comptroller.initialize(wallet._address)
 
     await measure.mock.totalSupply.returns('0')
   })
 
-  describe('initialize()', () => {
+  describe('constructor()', () => {
     it("should set the owner wallet", async () => {
       expect(await comptroller.owner()).to.equal(wallet._address)
-    })
-  })
-
-  describe('setReserveRateMantissa()', () => {
-    it('should allow the owner to set the reserve', async () => {
-      await expect(comptroller.setReserveRateMantissa(toWei('0.1')))
-        .to.emit(comptroller, 'ReserveRateMantissaSet')
-        .withArgs(toWei('0.1'))
-
-      expect(await comptroller.reserveRateMantissa()).to.equal(toWei('0.1'))
-    })
-
-    it('should not allow anyone else to configure the reserve rate', async () => {
-      await expect(comptroller2.setReserveRateMantissa(toWei('0.2'))).to.be.revertedWith("Ownable: caller is not the owner")
     })
   })
 

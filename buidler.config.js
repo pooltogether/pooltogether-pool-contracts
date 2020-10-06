@@ -18,14 +18,6 @@ usePlugin("buidler-deploy");
 
 // This must occur after buidler-deploy!
 task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
-  console.log(chalk.dim(`Compiling OpenZeppelin contracts...`))
-  try {
-    await exec(`buidler --config buidler.config.openzeppelin.js compile`)
-    console.log(chalk.green(`Successfully compiled!`))
-  } catch (e) {
-    console.error(chalk.red(e))
-    process.exit(1)
-  }
   const input = await runSuper();
   input.settings.metadata.useLiteralContent = process.env.USE_LITERAL_CONTENT != 'false';
   console.log(`useLiteralContent: ${input.settings.metadata.useLiteralContent}`)
@@ -73,7 +65,6 @@ const config = {
       3: RNGBlockhashRopsten.address
     },
     adminAccount: {
-      default: testnetAdmin,
       42: testnetAdmin,
       4: testnetAdmin,
       3: testnetAdmin
