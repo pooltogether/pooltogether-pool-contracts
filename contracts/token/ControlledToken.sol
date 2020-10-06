@@ -9,7 +9,7 @@ import "./TokenControllerInterface.sol";
 
 /// @title Controlled ERC20 Token
 /// @notice ERC20 Tokens with a controller for minting & burning
-contract ControlledToken is ERC20UpgradeSafe, RelayRecipient {
+contract ControlledToken is RelayRecipient, ERC20UpgradeSafe {
 
   /// @notice Interface to the contract responsible for controlling mint/burn
   TokenControllerInterface public controller;
@@ -92,5 +92,17 @@ contract ControlledToken is ERC20UpgradeSafe, RelayRecipient {
     returns (address payable)
   {
     return BaseRelayRecipient._msgSender();
+  }
+
+  /// @dev Provides information about the current execution context for GSN Meta-Txs.
+  /// @return The payable address of the message sender
+  function _msgData()
+    internal
+    override(BaseRelayRecipient, ContextUpgradeSafe)
+    virtual
+    view
+    returns (bytes memory)
+  {
+    return BaseRelayRecipient._msgData();
   }
 }

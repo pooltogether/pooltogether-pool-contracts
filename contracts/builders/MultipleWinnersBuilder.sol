@@ -27,7 +27,7 @@ contract MultipleWinnersBuilder {
     address[] memory externalErc20s;
 
     mw.initialize(
-      prizeStrategy.getTrustedForwarder(),
+      prizeStrategy.trustedForwarder(),
       prizeStrategy.prizePeriodStartedAt(),
       prizeStrategy.prizePeriodSeconds(),
       prizeStrategy.prizePool(),

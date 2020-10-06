@@ -429,27 +429,27 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param from The address the tokens are being transferred from (0 if minting)
   /// @param to The address the tokens are being transferred to (0 if burning)
   /// @param amount The amount of tokens being trasferred
-  function beforeTokenTransfer(address from, address to, uint256 amount) external override onlyControlledToken(msg.sender) {
+  function beforeTokenTransfer(address from, address to, uint256 amount) external override onlyControlledToken(_msgSender()) {
     if (from != address(0)) {
-      uint256 fromBeforeBalance = IERC20(msg.sender).balanceOf(from);
+      uint256 fromBeforeBalance = IERC20(_msgSender()).balanceOf(from);
       // first accrue credit for their old balance
-      uint256 newCreditBalance = _calculateCreditBalance(from, msg.sender, fromBeforeBalance, 0);
+      uint256 newCreditBalance = _calculateCreditBalance(from, _msgSender(), fromBeforeBalance, 0);
       // now limit their credit based on the new balance
-      newCreditBalance = _applyCreditLimit(msg.sender, fromBeforeBalance.sub(amount), newCreditBalance);
-      _updateCreditBalance(from, msg.sender, newCreditBalance);
+      newCreditBalance = _applyCreditLimit(_msgSender(), fromBeforeBalance.sub(amount), newCreditBalance);
+      _updateCreditBalance(from, _msgSender(), newCreditBalance);
     }
     if (to != address(0)) {
-      _accrueCredit(to, msg.sender, IERC20(msg.sender).balanceOf(to), 0);
+      _accrueCredit(to, _msgSender(), IERC20(_msgSender()).balanceOf(to), 0);
     }
     // if we aren't minting
     if (from != address(0)) {
-      prizeStrategy.beforeTokenTransfer(from, to, amount, msg.sender);
+      prizeStrategy.beforeTokenTransfer(from, to, amount, _msgSender());
       if (address(comptroller) != address(0)) {
         comptroller.beforeTokenTransfer(
           from,
           to,
           amount,
-          msg.sender
+          _msgSender()
         );
       }
     }
@@ -1095,8 +1095,28 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     return _tokens.contains(controlledToken);
   }
 
-  function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
+  /// @dev Provides information about the current execution context for GSN Meta-Txs.
+  /// @return The payable address of the message sender
+  function _msgSender()
+    internal
+    override(BaseRelayRecipient, ContextUpgradeSafe)
+    virtual
+    view
+    returns (address payable)
+  {
     return BaseRelayRecipient._msgSender();
+  }
+
+  /// @dev Provides information about the current execution context for GSN Meta-Txs.
+  /// @return The payable address of the message sender
+  function _msgData()
+    internal
+    override(BaseRelayRecipient, ContextUpgradeSafe)
+    virtual
+    view
+    returns (bytes memory)
+  {
+    return BaseRelayRecipient._msgData();
   }
 
   /// @dev Function modifier to ensure usage of tokens controlled by the Prize Pool
@@ -1108,7 +1128,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @dev Function modifier to ensure caller is the prize-strategy
   modifier onlyPrizeStrategy() {
-    require(msg.sender == address(prizeStrategy), "PrizePool/only-prizeStrategy");
+    require(_msgSender() == address(prizeStrategy), "PrizePool/only-prizeStrategy");
     _;
   }
 

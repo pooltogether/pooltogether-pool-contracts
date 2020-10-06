@@ -21,13 +21,13 @@ describe('RelayRecipient', function() {
 
   describe('versionRecipient()', () => {
     it('should return the string', async () => {
-      expect(await relay.versionRecipient()).to.equal("2.0.0-beta.1+pooltogether.relay.recipient")
+      expect(await relay.versionRecipient()).to.equal("2.0.0")
     })
   })
   
-  describe('getTrustedForwarder()', () => {
+  describe('trustedForwarder()', () => {
     it('should default to zero', async () => {
-      expect(await relay.getTrustedForwarder()).to.equal(AddressZero)
+      expect(await relay.trustedForwarder()).to.equal(AddressZero)
     })
   })
 
