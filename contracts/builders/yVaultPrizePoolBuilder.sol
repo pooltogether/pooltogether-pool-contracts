@@ -64,7 +64,6 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      prizeStrategy,
       reserve,
       tokens,
       prizePoolConfig.maxExitFeeMantissa,
@@ -88,14 +87,13 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool));
 
     return prizePool;
   }
 
   function createyVaultPrizePool(
-    yVaultPrizePoolConfig calldata config,
-    TokenListenerInterface prizeStrategy
+    yVaultPrizePoolConfig calldata config
   )
     external
     returns (yVaultPrizePool)
@@ -106,7 +104,6 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      prizeStrategy,
       reserve,
       tokens,
       config.maxExitFeeMantissa,
@@ -117,7 +114,7 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool));
 
     return prizePool;
   }

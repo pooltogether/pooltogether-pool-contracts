@@ -60,7 +60,6 @@ describe('PrizePool', function() {
     it('should fire the events', async () => {
       let tx = prizePool.initializeAll(
         FORWARDER,
-        prizeStrategy.address,
         reserve.address,
         [ticket.address],
         poolMaxExitFee,
@@ -78,16 +77,12 @@ describe('PrizePool', function() {
         )
 
       await expect(tx)
-        .to.emit(prizePool, 'PrizeStrategySet')
-        .withArgs(
-          prizeStrategy.address
-        )
-
-      await expect(tx)
         .to.emit(prizePool, 'ControlledTokenAdded')
         .withArgs(
           ticket.address
         )
+
+        await prizePool.setPrizeStrategy(prizeStrategy.address)
 
     })
   })
@@ -96,13 +91,13 @@ describe('PrizePool', function() {
     beforeEach(async () => {
       await prizePool.initializeAll(
         FORWARDER,
-        prizeStrategy.address,
         reserve.address,
         [ticket.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
+      await prizePool.setPrizeStrategy(prizeStrategy.address)
       await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
@@ -148,7 +143,6 @@ describe('PrizePool', function() {
       it('should reject invalid params', async () => {
         const _initArgs = [
           FORWARDER,
-          prizeStrategy.address,
           reserve.address,
           [ticket.address],
           poolMaxExitFee,
@@ -166,9 +160,6 @@ describe('PrizePool', function() {
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/forwarder-not-zero')
 
         initArgs = _initArgs.slice(); initArgs[1] = AddressZero
-        await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/prizeStrategy-not-zero')
-
-        initArgs = _initArgs.slice(); initArgs[2] = AddressZero
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/reserve-not-zero')
 
         initArgs = _initArgs.slice()
@@ -754,7 +745,6 @@ describe('PrizePool', function() {
 
       await multiTokenPrizePool.initializeAll(
         FORWARDER,
-        multiTokenPrizeStrategy.address,
         reserve.address,
         [ticket.address, sponsorship.address],
         poolMaxExitFee,
@@ -762,6 +752,7 @@ describe('PrizePool', function() {
         yieldSourceStub.address
       )
 
+      await multiTokenPrizePool.setPrizeStrategy(multiTokenPrizeStrategy.address)
       await multiTokenPrizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
@@ -780,13 +771,13 @@ describe('PrizePool', function() {
     beforeEach(async () => {
       await prizePool.initializeAll(
         FORWARDER,
-        wallet._address, // wallet is the prizeStrategy
         reserve.address,
         [ticket.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
+      await prizePool.setPrizeStrategy(wallet._address)
       await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
@@ -816,13 +807,13 @@ describe('PrizePool', function() {
     beforeEach(async () => {
       await prizePool.initializeAll(
         FORWARDER,
-        wallet._address, // wallet is the prizeStrategy
         reserve.address,
         [ticket.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
+      await prizePool.setPrizeStrategy(wallet._address)
       await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
@@ -852,13 +843,13 @@ describe('PrizePool', function() {
     beforeEach(async () => {
       await prizePool.initializeAll(
         FORWARDER,
-        wallet._address, // wallet is the prizeStrategy
         reserve.address,
         [ticket.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
+      await prizePool.setPrizeStrategy(wallet._address)
       await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
@@ -899,13 +890,14 @@ describe('PrizePool', function() {
       debug('initializing PrizePool...')
       await shutdownPrizePool.initializeAll(
         FORWARDER,
-        wallet._address,    // Prize Strategy
         reserve.address,
         [ticket2.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
+
+      await shutdownPrizePool.setPrizeStrategy(wallet._address)
 
       debug('detaching PrizeStrategy from PrizePool...')
       await shutdownPrizePool.emergencyShutdown();

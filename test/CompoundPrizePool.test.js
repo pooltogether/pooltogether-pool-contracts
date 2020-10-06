@@ -50,9 +50,8 @@ describe('CompoundPrizePool', function() {
     ticket = await deployMockContract(wallet, ControlledToken.abi, overrides)
     await ticket.mock.controller.returns(prizePool.address)
 
-    initializeTxPromise = prizePool['initialize(address,address,address,address[],uint256,uint256,address)'](
+    initializeTxPromise = prizePool['initialize(address,address,address[],uint256,uint256,address)'](
       FORWARDER,
-      prizeStrategy.address,
       comptroller.address,
       [ticket.address],
       poolMaxExitFee,
@@ -61,6 +60,8 @@ describe('CompoundPrizePool', function() {
     )
 
     await initializeTxPromise
+
+    await prizePool.setPrizeStrategy(prizeStrategy.address)
   })
 
   describe('initialize()', () => {

@@ -49,9 +49,8 @@ describe('yVaultPrizePool', function() {
     ticket = await deployMockContract(wallet, ControlledToken.abi, overrides)
     await ticket.mock.controller.returns(prizePool.address)
 
-    initializeTxPromise = prizePool['initialize(address,address,address,address[],uint256,uint256,address,uint256)'](
+    initializeTxPromise = prizePool['initialize(address,address,address[],uint256,uint256,address,uint256)'](
       FORWARDER,
-      prizeStrategy.address,
       comptroller.address,
       [ticket.address],
       poolMaxExitFee,
@@ -61,6 +60,8 @@ describe('yVaultPrizePool', function() {
     )
 
     await initializeTxPromise
+
+    await prizePool.setPrizeStrategy(prizeStrategy.address)
   })
 
   describe('initialize()', () => {

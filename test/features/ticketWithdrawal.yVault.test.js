@@ -1,6 +1,6 @@
 const { PoolEnv } = require('./support/PoolEnv')
 
-describe('Withdraw Feature', () => {
+describe('yVault Withdraw Feature', () => {
 
   let env
 

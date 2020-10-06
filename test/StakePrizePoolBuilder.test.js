@@ -85,9 +85,7 @@ describe('StakePrizePoolBuilder', () => {
 
   describe('createStakePrizePool()', () => {
     it('should allow a user to create a StakePrizePool', async () => {
-      const prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi)
-
-      let tx = await builder.createStakePrizePool(stakePrizePoolConfig, prizeStrategy.address)
+      let tx = await builder.createStakePrizePool(stakePrizePoolConfig)
       let events = await getEvents(tx)
       let event = events[0]
 
@@ -99,21 +97,20 @@ describe('StakePrizePoolBuilder', () => {
       expect(await prizePool.maxExitFeeMantissa()).to.equal(stakePrizePoolConfig.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(stakePrizePoolConfig.maxTimelockDuration)
       expect(await prizePool.owner()).to.equal(wallet._address)
-      expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
+      expect(await prizePool.prizeStrategy()).to.equal(AddressZero)
     })
   })
 
   describe('createSingleRandomWinner()', () => {
     it('should allow a user to create Stake Prize Pools with Single Random Winner strategy', async () => {
-
       let decimals = 18
 
       let tx = await builder.createSingleRandomWinner(stakePrizePoolConfig, singleRandomWinnerConfig, decimals)
       let events = await getEvents(tx)
       let prizePoolCreatedEvent = events.find(e => e.name == 'PrizePoolCreated')
 
-      const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', prizePoolCreatedEvent.args.prizeStrategy, wallet)
       const prizePool = await buidler.ethers.getContractAt('StakePrizePool', prizePoolCreatedEvent.args.prizePool, wallet)
+      const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', await prizePool.prizeStrategy(), wallet)
       const ticketAddress = await prizeStrategy.ticket()
       const sponsorshipAddress = await prizeStrategy.sponsorship()
 

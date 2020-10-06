@@ -87,7 +87,7 @@ describe('CompoundPrizePoolBuilder', () => {
     it('should allow a user to create a CompoundPrizePool', async () => {
       const prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi)
 
-      let tx = await builder.createCompoundPrizePool(compoundPrizePoolConfig, prizeStrategy.address)
+      let tx = await builder.createCompoundPrizePool(compoundPrizePoolConfig)
       let events = await getEvents(tx)
       let event = events[0]
 
@@ -99,7 +99,7 @@ describe('CompoundPrizePoolBuilder', () => {
       expect(await prizePool.maxExitFeeMantissa()).to.equal(compoundPrizePoolConfig.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(compoundPrizePoolConfig.maxTimelockDuration)
       expect(await prizePool.owner()).to.equal(wallet._address)
-      expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
+      expect(await prizePool.prizeStrategy()).to.equal(AddressZero)
     })
   })
 
@@ -110,8 +110,8 @@ describe('CompoundPrizePoolBuilder', () => {
       let events = await getEvents(tx)
       let prizePoolCreatedEvent = events.find(e => e.name == 'PrizePoolCreated')
 
-      const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', prizePoolCreatedEvent.args.prizeStrategy, wallet)
       const prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', prizePoolCreatedEvent.args.prizePool, wallet)
+      const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', await prizePool.prizeStrategy(), wallet)
 
       const ticketAddress = await prizeStrategy.ticket()
       const sponsorshipAddress = await prizeStrategy.sponsorship()

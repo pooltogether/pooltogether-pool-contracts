@@ -210,13 +210,11 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Initializes the Prize Pool
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
-  /// @param _prizeStrategy Address of the prize strategy
   /// @param _controlledTokens Array of ControlledTokens that are controlled by this Prize Pool.
   /// @param _maxExitFeeMantissa The maximum exit fee size
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock
   function initialize (
     address _trustedForwarder,
-    TokenListenerInterface _prizeStrategy,
     ReserveInterface _reserve,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
@@ -227,7 +225,6 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   {
     require(address(_reserve) != address(0), "PrizePool/reserve-not-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
-    _setPrizeStrategy(address(_prizeStrategy));
     _tokens.initialize();
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
       _addControlledToken(_controlledTokens[i]);
@@ -1005,17 +1002,17 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.
   /// @param _prizeStrategy The new prize strategy
-  function setPrizeStrategy(address _prizeStrategy) external onlyOwner {
+  function setPrizeStrategy(TokenListenerInterface _prizeStrategy) external onlyOwner {
     _setPrizeStrategy(_prizeStrategy);
   }
 
   /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.
   /// @param _prizeStrategy The new prize strategy
-  function _setPrizeStrategy(address _prizeStrategy) internal {
+  function _setPrizeStrategy(TokenListenerInterface _prizeStrategy) internal {
     require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
-    prizeStrategy = TokenListenerInterface(_prizeStrategy);
+    prizeStrategy = _prizeStrategy;
 
-    emit PrizeStrategySet(_prizeStrategy);
+    emit PrizeStrategySet(address(_prizeStrategy));
   }
 
   /// @notice Emergency shutdown of the Prize Pool.  Prize Pool will detach from the global reserve.
