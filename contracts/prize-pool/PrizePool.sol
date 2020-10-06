@@ -11,7 +11,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20
 import "../external/pooltogether/FixedPoint.sol";
 import "../reserve/ReserveInterface.sol";
 import "./YieldSource.sol";
-import "./PrizePoolTokenListenerInterface.sol";
+import "../token/TokenListenerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
@@ -178,7 +178,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   MappedSinglyLinkedList.Mapping internal _tokens;
 
   /// @dev The Prize Strategy that this Prize Pool is bound to.
-  PrizePoolTokenListenerInterface public prizeStrategy;
+  TokenListenerInterface public prizeStrategy;
 
   /// @dev The maximum possible exit fee fraction as a fixed point 18 number.
   /// For example, if the maxExitFeeMantissa is "0.1 ether", then the maximum exit fee for a withdrawal of 100 Dai will be 10 Dai
@@ -216,7 +216,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock
   function initialize (
     address _trustedForwarder,
-    PrizePoolTokenListenerInterface _prizeStrategy,
+    TokenListenerInterface _prizeStrategy,
     ReserveInterface _reserve,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
@@ -1013,7 +1013,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @param _prizeStrategy The new prize strategy
   function _setPrizeStrategy(address _prizeStrategy) internal {
     require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
-    prizeStrategy = PrizePoolTokenListenerInterface(_prizeStrategy);
+    prizeStrategy = TokenListenerInterface(_prizeStrategy);
 
     emit PrizeStrategySet(_prizeStrategy);
   }

@@ -31,7 +31,7 @@ contract yVaultPrizePool is PrizePool {
   /// @param _vault Address of the yEarn yVaultInterface
   function initialize (
     address _trustedForwarder,
-    PrizePoolTokenListenerInterface _prizeStrategy,
+    TokenListenerInterface _prizeStrategy,
     ReserveInterface _reserve,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,

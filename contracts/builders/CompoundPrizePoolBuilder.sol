@@ -88,7 +88,7 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
 
   function createCompoundPrizePool(
     CompoundPrizePoolConfig calldata config,
-    PrizePoolTokenListenerInterface prizeStrategy
+    TokenListenerInterface prizeStrategy
   )
     external
     returns (CompoundPrizePool)

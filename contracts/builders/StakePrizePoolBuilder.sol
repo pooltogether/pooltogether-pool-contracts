@@ -81,7 +81,7 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
 
   function createStakePrizePool(
     StakePrizePoolConfig calldata config,
-    PrizePoolTokenListenerInterface prizeStrategy
+    TokenListenerInterface prizeStrategy
   )
     external
     returns (StakePrizePool)

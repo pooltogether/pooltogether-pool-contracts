@@ -2,9 +2,9 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 
-import "../comptroller/ComptrollerInterface.sol";
+import "../token/TokenListenerInterface.sol";
 
-contract MockComptroller is ComptrollerInterface {
+contract MockComptroller is TokenListenerInterface {
   /// @notice Called when tokens are minted.
   /// @param to The address of the receiver of the minted tokens.
   /// @param amount The amount of tokens being minted

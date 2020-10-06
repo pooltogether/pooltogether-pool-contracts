@@ -1,8 +1,7 @@
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const yVaultPrizePoolHarness = require('../build/yVaultPrizePoolHarness.json')
-const PrizePoolTokenListenerInterface = require('../build/PrizePoolTokenListenerInterface.json')
-const ComptrollerInterface = require('../build/ComptrollerInterface.json')
+const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const yVaultMock = require('../build/yVaultMock.json')
 const ERC20Mintable = require('../build/ERC20Mintable.json')
@@ -41,8 +40,8 @@ describe('yVaultPrizePool', function() {
     debug('creating vault...')
     vault = await deployContract(wallet, yVaultMock, [erc20token.address], overrides)
 
-    prizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi, overrides)
-    comptroller = await deployMockContract(wallet, ComptrollerInterface.abi, overrides)
+    prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
+    comptroller = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
 
     debug('deploying yVaultPrizePoolHarness...')
     prizePool = await deployContract(wallet, yVaultPrizePoolHarness, [], overrides)

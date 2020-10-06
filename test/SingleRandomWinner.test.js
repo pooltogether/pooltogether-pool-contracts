@@ -2,7 +2,7 @@ const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
-const ComptrollerInterface = require('../build/ComptrollerInterface.json')
+const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 const SingleRandomWinnerHarness = require('../build/SingleRandomWinnerHarness.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
@@ -50,7 +50,7 @@ describe('SingleRandomWinner', function() {
     registry = await deploy1820(wallet)
 
     debug('deploying protocol comptroller...')
-    comptroller = await deployMockContract(wallet, ComptrollerInterface.abi, [], overrides)
+    comptroller = await deployMockContract(wallet, TokenListenerInterface.abi, [], overrides)
 
     debug('mocking tokens...')
     token = await deployMockContract(wallet, IERC20.abi, overrides)

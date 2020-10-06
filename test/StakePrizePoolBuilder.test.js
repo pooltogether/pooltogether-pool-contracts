@@ -5,7 +5,7 @@ const { ethers } = require('ethers')
 const { AddressZero } = ethers.constants
 const { deployMockContract } = require('./helpers/deployMockContract')
 const InitializableAdminUpgradeabilityProxy = require('@openzeppelin/upgrades/build/contracts/InitializableAdminUpgradeabilityProxy.json')
-const PrizePoolTokenListenerInterface = require('../build/PrizePoolTokenListenerInterface.json')
+const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 
 const toWei = ethers.utils.parseEther
 
@@ -85,7 +85,7 @@ describe('StakePrizePoolBuilder', () => {
 
   describe('createStakePrizePool()', () => {
     it('should allow a user to create a StakePrizePool', async () => {
-      const prizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi)
+      const prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi)
 
       let tx = await builder.createStakePrizePool(stakePrizePoolConfig, prizeStrategy.address)
       let events = await getEvents(tx)

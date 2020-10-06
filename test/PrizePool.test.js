@@ -2,7 +2,7 @@ const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const PrizePoolHarness = require('../build/PrizePoolHarness.json')
 const YieldSourceStub = require('../build/YieldSourceStub.json')
-const PrizePoolTokenListenerInterface = require('../build/PrizePoolTokenListenerInterface.json')
+const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 const ReserveInterface = require('../build/ReserveInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const IERC20 = require('../build/IERC20.json')
@@ -46,7 +46,7 @@ describe('PrizePool', function() {
     yieldSourceStub = await deployMockContract(wallet, YieldSourceStub.abi, overrides)
     await yieldSourceStub.mock.token.returns(erc20token.address)
 
-    prizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi, overrides)
+    prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
     reserve = await deployMockContract(wallet, ReserveInterface.abi, overrides)
 
     debug('deploying PrizePoolHarness...')
@@ -744,7 +744,7 @@ describe('PrizePool', function() {
     beforeEach(async () => {
 
       debug('deploying PrizePoolHarness...')
-      multiTokenPrizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi, overrides)
+      multiTokenPrizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
       multiTokenPrizePool = await deployContract(wallet, PrizePoolHarness, [], overrides)
 
       sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)

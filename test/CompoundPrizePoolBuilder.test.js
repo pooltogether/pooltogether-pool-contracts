@@ -4,7 +4,7 @@ const buidler = require('@nomiclabs/buidler')
 const { ethers } = require('ethers')
 const { AddressZero } = ethers.constants
 const { deployMockContract } = require('./helpers/deployMockContract')
-const PrizePoolTokenListenerInterface = require('../build/PrizePoolTokenListenerInterface.json')
+const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 
 const toWei = ethers.utils.parseEther
 
@@ -85,7 +85,7 @@ describe('CompoundPrizePoolBuilder', () => {
 
   describe('createCompoundPrizePool()', () => {
     it('should allow a user to create a CompoundPrizePool', async () => {
-      const prizeStrategy = await deployMockContract(wallet, PrizePoolTokenListenerInterface.abi)
+      const prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi)
 
       let tx = await builder.createCompoundPrizePool(compoundPrizePoolConfig, prizeStrategy.address)
       let events = await getEvents(tx)

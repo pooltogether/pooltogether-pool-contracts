@@ -11,7 +11,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 
-import "../comptroller/ComptrollerInterface.sol";
+import "../token/TokenListenerInterface.sol";
 import "../external/pooltogether/FixedPoint.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
@@ -25,7 +25,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
                                            OwnableUpgradeSafe,
                                            RelayRecipient,
                                            ReentrancyGuardUpgradeSafe,
-                                           PrizePoolTokenListenerInterface {
+                                           TokenListenerInterface {
 
   using SafeMath for uint256;
   using SafeCast for uint256;
@@ -57,8 +57,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     address indexed rngService
   );
 
-  event ComptrollerUpdated(
-    address indexed comptroller
+  event TokenListenerUpdated(
+    address indexed tokenListener
   );
 
   event RngRequestTimeoutSet(
@@ -89,7 +89,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   }
 
   // Comptroller
-  ComptrollerInterface public comptroller;
+  TokenListenerInterface public tokenListener;
 
   // Contract Interfaces
   PrizePool public prizePool;
@@ -165,10 +165,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     return prizePool.awardBalance();
   }
 
-  function setComptroller(ComptrollerInterface _comptroller) external onlyOwner {
-    comptroller = _comptroller;
+  function setTokenListener(TokenListenerInterface _tokenListener) external onlyOwner {
+    tokenListener = _tokenListener;
 
-    emit ComptrollerUpdated(address(comptroller));
+    emit TokenListenerUpdated(address(tokenListener));
   }
 
   /// @notice Estimates the remaining blocks until the prize given a number of seconds per block
@@ -276,8 +276,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     if (controlledToken == address(ticket)) {
       _requireNotLocked();
     }
-    if (address(comptroller) != address(0)) {
-      comptroller.beforeTokenTransfer(from, to, amount, controlledToken);
+    if (address(tokenListener) != address(0)) {
+      tokenListener.beforeTokenTransfer(from, to, amount, controlledToken);
     }
   }
 
@@ -296,8 +296,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     if (controlledToken == address(ticket)) {
       _requireNotLocked();
     }
-    if (address(comptroller) != address(0)) {
-      comptroller.beforeTokenMint(to, amount, controlledToken, referrer);
+    if (address(tokenListener) != address(0)) {
+      tokenListener.beforeTokenMint(to, amount, controlledToken, referrer);
     }
   }
 

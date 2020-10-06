@@ -95,7 +95,7 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
 
   function createyVaultPrizePool(
     yVaultPrizePoolConfig calldata config,
-    PrizePoolTokenListenerInterface prizeStrategy
+    TokenListenerInterface prizeStrategy
   )
     external
     returns (yVaultPrizePool)
