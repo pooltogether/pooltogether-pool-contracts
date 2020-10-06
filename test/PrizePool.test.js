@@ -227,11 +227,6 @@ describe('PrizePool', function() {
     })
 
     describe('captureAwardBalance()', () => {
-      it('should not be called by anyone else', async () => {
-        prizePool = await prizePool.connect(wallet2)
-        await expect(prizePool.captureAwardBalance()).to.be.revertedWith('PrizePool/only-prizeStrategy')
-      })
-
       it('should track the yield less the total token supply', async () => {
         await ticket.mock.totalSupply.returns(toWei('100'))
         await yieldSourceStub.mock.balance.returns(toWei('110'))
@@ -835,6 +830,42 @@ describe('PrizePool', function() {
       await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
       await expect(prizePool.awardExternalERC20(wallet._address, erc20token.address, toWei('10')))
         .to.emit(prizePool, 'AwardedExternalERC20')
+        .withArgs(wallet._address, erc20token.address, toWei('10'))
+    })
+  })
+
+  describe('transferExternalERC20()', () => {
+    beforeEach(async () => {
+      await prizePool.initializeAll(
+        FORWARDER,
+        wallet._address, // wallet is the prizeStrategy
+        comptroller.address,
+        [ticket.address],
+        poolMaxExitFee,
+        poolMaxTimelockDuration,
+        yieldSourceStub.address
+      )
+      await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
+    })
+
+    it('should exit early when amount = 0', async () => {
+      await yieldSourceStub.mock.canAwardExternal.withArgs(erc20token.address).returns(true)
+      await expect(prizePool.transferExternalERC20(wallet._address, erc20token.address, 0))
+        .to.not.emit(prizePool, 'TransferredExternalERC20')
+    })
+
+    it('should only allow the prizeStrategy to award external ERC20s', async () => {
+      await yieldSourceStub.mock.canAwardExternal.withArgs(erc20token.address).returns(true)
+      let prizePool2 = prizePool.connect(wallet2)
+      await expect(prizePool2.transferExternalERC20(wallet._address, FORWARDER, toWei('10')))
+        .to.be.revertedWith('PrizePool/only-prizeStrategy')
+    })
+
+    it('should allow arbitrary tokens to be transferred', async () => {
+      await yieldSourceStub.mock.canAwardExternal.withArgs(erc20token.address).returns(true)
+      await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+      await expect(prizePool.transferExternalERC20(wallet._address, erc20token.address, toWei('10')))
+        .to.emit(prizePool, 'TransferredExternalERC20')
         .withArgs(wallet._address, erc20token.address, toWei('10'))
     })
   })

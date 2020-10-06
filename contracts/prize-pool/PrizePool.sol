@@ -80,6 +80,13 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 amount
   );
 
+  /// @dev Event emitted when external ERC20s are transferred out
+  event TransferredExternalERC20(
+    address indexed to,
+    address indexed token,
+    uint256 amount
+  );
+
   /// @dev Event emitted when external ERC721s are awarded to a winner
   event AwardedExternalERC721(
     address indexed winner,
@@ -458,7 +465,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @notice Captures any available interest as award balance.
   /// @dev This function also captures the reserve fees.
   /// @return The total amount of assets to be awarded for the current prize
-  function captureAwardBalance() external nonReentrant onlyPrizeStrategy returns (uint256) {
+  function captureAwardBalance() external nonReentrant returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
     uint256 currentBalance = _balance();
     uint256 totalInterest = (currentBalance > tokenTotalSupply) ? currentBalance.sub(tokenTotalSupply) : 0;
@@ -507,6 +514,24 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     emit Awarded(to, controlledToken, amount);
   }
 
+  /// @notice Called by the Prize-Strategy to transfer out external ERC20 tokens
+  /// @dev Used to transfer out tokens held by the Prize Pool.  Could be liquidated, or anything.
+  /// @param to The address of the winner that receives the award
+  /// @param amount The amount of external assets to be awarded
+  /// @param externalToken The address of the external asset token being awarded
+  function transferExternalERC20(
+    address to,
+    address externalToken,
+    uint256 amount
+  )
+    external
+    onlyPrizeStrategy
+  {
+    if (_transferOut(to, externalToken, amount)) {
+      emit TransferredExternalERC20(to, externalToken, amount);
+    }
+  }
+
   /// @notice Called by the Prize-Strategy to award external ERC20 prizes
   /// @dev Used to award any arbitrary tokens held by the Prize Pool
   /// @param to The address of the winner that receives the award
@@ -520,15 +545,28 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     external
     onlyPrizeStrategy
   {
+    if (_transferOut(to, externalToken, amount)) {
+      emit AwardedExternalERC20(to, externalToken, amount);
+    }
+  }
+
+  function _transferOut(
+    address to,
+    address externalToken,
+    uint256 amount
+  )
+    internal
+    returns (bool)
+  {
     require(_canAwardExternal(externalToken), "PrizePool/invalid-external-token");
 
     if (amount == 0) {
-      return;
+      return false;
     }
 
     IERC20(externalToken).safeTransfer(to, amount);
 
-    emit AwardedExternalERC20(to, externalToken, amount);
+    return true;
   }
 
   /// @notice Called to mint controlled tokens.  Ensures that token listener callbacks are fired.
