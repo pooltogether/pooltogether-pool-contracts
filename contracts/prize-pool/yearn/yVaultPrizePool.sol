@@ -32,7 +32,7 @@ contract yVaultPrizePool is PrizePool {
   function initialize (
     address _trustedForwarder,
     PrizePoolTokenListenerInterface _prizeStrategy,
-    ComptrollerInterface _comptroller,
+    ReserveInterface _reserve,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
@@ -45,22 +45,22 @@ contract yVaultPrizePool is PrizePool {
     PrizePool.initialize(
       _trustedForwarder,
       _prizeStrategy,
-      _comptroller,
+      _reserve,
       _controlledTokens,
       _maxExitFeeMantissa,
       _maxTimelockDuration
     );
     vault = _vault;
-    _setReserveRateMantissa(_reserveRateMantissa);
+    _setRateMantissa(_reserveRateMantissa);
 
     emit yVaultPrizePoolInitialized(address(vault));
   }
 
-  function setReserveRateMantissa(uint256 _reserveRateMantissa) external onlyOwner {
-    _setReserveRateMantissa(_reserveRateMantissa);
+  function setRateMantissa(uint256 _reserveRateMantissa) external onlyOwner {
+    _setRateMantissa(_reserveRateMantissa);
   }
 
-  function _setReserveRateMantissa(uint256 _reserveRateMantissa) internal {
+  function _setRateMantissa(uint256 _reserveRateMantissa) internal {
     require(_reserveRateMantissa < 1 ether, "yVaultPrizePool/reserve-rate-lt-one");
     reserveRateMantissa = _reserveRateMantissa;
 

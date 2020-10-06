@@ -15,7 +15,7 @@ describe('StakePrizePoolBuilder', () => {
 
   let builder
 
-  let comptroller,
+  let reserve,
       trustedForwarder,
       singleRandomWinnerBuilder,
       stakePrizePoolProxyFactory,
@@ -34,7 +34,7 @@ describe('StakePrizePoolBuilder', () => {
       wallet
     )
 
-    comptroller = (await deployments.get("Comptroller"))
+    reserve = (await deployments.get("Reserve"))
     trustedForwarder = (await deployments.get("TrustedForwarder"))
     singleRandomWinnerBuilder = (await deployments.get("SingleRandomWinnerBuilder"))
     stakePrizePoolProxyFactory = (await deployments.get("StakePrizePoolProxyFactory"))
@@ -66,7 +66,7 @@ describe('StakePrizePoolBuilder', () => {
 
   describe('initialize()', () => {
     it('should setup all factories', async () => {
-      expect(await builder.comptroller()).to.equal(comptroller.address)
+      expect(await builder.reserve()).to.equal(reserve.address)
       expect(await builder.singleRandomWinnerBuilder()).to.equal(singleRandomWinnerBuilder.address)
       expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.stakePrizePoolProxyFactory()).to.equal(stakePrizePoolProxyFactory.address)

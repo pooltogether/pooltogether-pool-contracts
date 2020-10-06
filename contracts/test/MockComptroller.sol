@@ -5,12 +5,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777R
 import "../comptroller/ComptrollerInterface.sol";
 
 contract MockComptroller is ComptrollerInterface {
-  uint256 public override reserveRateMantissa;
-
-  function setReserveFeeMantissa(uint256 _reserveRateMantissa) public {
-    reserveRateMantissa = _reserveRateMantissa;
-  }
-
   /// @notice Called when tokens are minted.
   /// @param to The address of the receiver of the minted tokens.
   /// @param amount The amount of tokens being minted

@@ -52,9 +52,9 @@ describe('Comptroller', () => {
     })
   })
 
-  describe('setReserveRateMantissa()', () => {
+  describe('setRateMantissa()', () => {
     it('should allow the owner to set the reserve', async () => {
-      await expect(comptroller.setReserveRateMantissa(toWei('0.1')))
+      await expect(comptroller.setRateMantissa(toWei('0.1')))
         .to.emit(comptroller, 'ReserveRateMantissaSet')
         .withArgs(toWei('0.1'))
 
@@ -62,7 +62,7 @@ describe('Comptroller', () => {
     })
 
     it('should not allow anyone else to configure the reserve rate', async () => {
-      await expect(comptroller2.setReserveRateMantissa(toWei('0.2'))).to.be.revertedWith("Ownable: caller is not the owner")
+      await expect(comptroller2.setRateMantissa(toWei('0.2'))).to.be.revertedWith("Ownable: caller is not the owner")
     })
   })
 

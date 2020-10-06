@@ -105,7 +105,8 @@ function PoolEnv() {
     let prizePool = await this.prizePool(wallet)
 
     await prizePool.setReserveFeeControlledToken(this.env.sponsorship.address, this.overrides)
-    await this.env.comptroller.setReserveRateMantissa(toWei(rate), this.overrides)
+    await this.env.reserve.setRateMantissa(toWei(rate), this.overrides)
+    await this.env.reserve.setRecipient(wallet._address)
   }
 
   this.prizeStrategy = async function (wallet) {
@@ -236,7 +237,7 @@ function PoolEnv() {
     let comptroller = await this.comptroller(wallet)
     await comptroller.updateAndClaimDrips(
       [{
-        source: this.env.prizePool.address,
+        source: this.env.prizeStrategy.address,
         measure: this.env.ticket.address
       }],
       wallet._address,
@@ -251,7 +252,7 @@ function PoolEnv() {
   this.balanceDripGovernanceTokenAtRate = async function ({ dripRatePerSecond }) {
     await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
     await this.env.comptroller.activateBalanceDrip(
-      this.env.prizePool.address,
+      this.env.prizeStrategy.address,
       this.env.ticket.address,
       this.env.governanceToken.address,
       dripRatePerSecond
@@ -262,7 +263,7 @@ function PoolEnv() {
     debug(`volumeDripGovernanceToken minting...`)
     await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
     debug(`volumeDripGovernanceToken: activating...: `,
-      this.env.prizePool.address,
+      this.env.prizeStrategy.address,
       this.env.ticket.address,
       this.env.governanceToken.address,
       !!isReferral,
@@ -271,7 +272,7 @@ function PoolEnv() {
       endTime
     )
     await this.env.comptroller.activateVolumeDrip(
-      this.env.prizePool.address,
+      this.env.prizeStrategy.address,
       this.env.ticket.address,
       this.env.governanceToken.address,
       !!isReferral,
