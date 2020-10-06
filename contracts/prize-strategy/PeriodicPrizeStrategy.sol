@@ -456,6 +456,30 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     }
   }
 
+  /// @dev Provides information about the current execution context for GSN Meta-Txs.
+  /// @return The payable address of the message sender
+  function _msgSender()
+    internal
+    override(BaseRelayRecipient, ContextUpgradeSafe)
+    virtual
+    view
+    returns (address payable)
+  {
+    return BaseRelayRecipient._msgSender();
+  }
+
+  /// @dev Provides information about the current execution context for GSN Meta-Txs.
+  /// @return The payable address of the message sender
+  function _msgData()
+    internal
+    override(BaseRelayRecipient, ContextUpgradeSafe)
+    virtual
+    view
+    returns (bytes memory)
+  {
+    return BaseRelayRecipient._msgData();
+  }
+
   modifier requireNotLocked() {
     _requireNotLocked();
     _;
@@ -478,9 +502,4 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     require(_msgSender() == address(prizePool), "PeriodicPrizeStrategy/only-prize-pool");
     _;
   }
-
-  function _msgSender() internal override(BaseRelayRecipient, ContextUpgradeSafe) virtual view returns (address payable) {
-    return BaseRelayRecipient._msgSender();
-  }
-
 }
