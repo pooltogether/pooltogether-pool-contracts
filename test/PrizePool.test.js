@@ -817,7 +817,7 @@ describe('PrizePool', function() {
       await prizePool.initializeAll(
         FORWARDER,
         wallet._address, // wallet is the prizeStrategy
-        comptroller.address,
+        reserve.address,
         [ticket.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
