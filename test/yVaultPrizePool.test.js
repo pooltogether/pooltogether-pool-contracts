@@ -75,6 +75,17 @@ describe('yVaultPrizePool', function() {
     })
   })
 
+  describe('setReserveRateMantissa()', () => {
+    it('should allow the owner to set the reserve rate', async () => {
+      await prizePool.setReserveRateMantissa(toWei('0.1'))
+      expect(await prizePool.reserveRateMantissa()).to.equal(toWei('0.1'))
+    })
+
+    it('should not allow anyone but the owner to set the reserve rate mantissa', async () => {
+      await expect(prizePool.connect(wallet2).setReserveRateMantissa(toWei('0.1'))).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
   describe('_supply()', () => {
     it('should supply funds from the user', async () => {
       let amount = toWei('500')

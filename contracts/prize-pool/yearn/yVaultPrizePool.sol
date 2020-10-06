@@ -51,16 +51,16 @@ contract yVaultPrizePool is PrizePool {
       _maxTimelockDuration
     );
     vault = _vault;
-    _setRateMantissa(_reserveRateMantissa);
+    _setReserveRateMantissa(_reserveRateMantissa);
 
     emit yVaultPrizePoolInitialized(address(vault));
   }
 
-  function setRateMantissa(uint256 _reserveRateMantissa) external onlyOwner {
-    _setRateMantissa(_reserveRateMantissa);
+  function setReserveRateMantissa(uint256 _reserveRateMantissa) external onlyOwner {
+    _setReserveRateMantissa(_reserveRateMantissa);
   }
 
-  function _setRateMantissa(uint256 _reserveRateMantissa) internal {
+  function _setReserveRateMantissa(uint256 _reserveRateMantissa) internal {
     require(_reserveRateMantissa < 1 ether, "yVaultPrizePool/reserve-rate-lt-one");
     reserveRateMantissa = _reserveRateMantissa;
 
