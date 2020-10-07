@@ -459,7 +459,7 @@ contract Comptroller is ComptrollerStorage, TokenListenerInterface {
     dripTokenBalances[dripToken][user] = dripTokenBalances[dripToken][user].sub(amount);
     require(IERC20(dripToken).transfer(user, amount), "Comptroller/claim-transfer-failed");
 
-    emit DripTokenClaimed(sender, user, dripToken, amount);
+    emit DripTokenClaimed(sender, dripToken, user, amount);
   }
 
   function pokeDrips(
@@ -803,7 +803,7 @@ contract Comptroller is ComptrollerStorage, TokenListenerInterface {
     external
     override
   {
-    
+
 
     address source = _msgSender();
     uint256 balance = IERC20(measure).balanceOf(to);
@@ -854,7 +854,7 @@ contract Comptroller is ComptrollerStorage, TokenListenerInterface {
     external
     override
   {
-    
+
 
     if (from == address(0)) {
       // ignore minting
