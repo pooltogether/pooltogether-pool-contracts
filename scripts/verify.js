@@ -58,14 +58,11 @@ async function run() {
 
   await verifyProxyFactory('CompoundPrizePoolProxyFactory')
   await verifyProxyFactory('ControlledTokenProxyFactory')
-  await verifyProxyFactory('yVaultPrizePoolProxyFactory')
-  await verifyProxyFactory('TicketProxyFactory')
+  await verifyProxyFactory('MultipleWinnersProxyFactory')
   await verifyProxyFactory('SingleRandomWinnerProxyFactory')
   await verifyProxyFactory('StakePrizePoolProxyFactory')
-
-  await verifyContract('ComptrollerImplementation')
-  await verifyContract('ProxyAdmin', "--config buidler.config.openzeppelin.js")
-  await verifyContract('ProxyFactory', "--config buidler.config.openzeppelin.js")
+  await verifyProxyFactory('TicketProxyFactory')
+  await verifyProxyFactory('yVaultPrizePoolProxyFactory')
 
   success('Done!')
 }
