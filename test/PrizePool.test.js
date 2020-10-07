@@ -82,7 +82,9 @@ describe('PrizePool', function() {
           ticket.address
         )
 
-        await prizePool.setPrizeStrategy(prizeStrategy.address)
+      await expect(prizePool.setPrizeStrategy(prizeStrategy.address))
+        .to.emit(prizePool, 'PrizeStrategySet')
+        .withArgs(prizeStrategy.address)
 
     })
   })
