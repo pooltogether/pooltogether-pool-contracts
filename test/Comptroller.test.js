@@ -338,7 +338,7 @@ describe('Comptroller', () => {
 
       await expect(comptroller.claimDrip(wallet._address, dripToken.address, toWei('0.01')))
         .to.emit(comptroller, 'DripTokenClaimed')
-        .withArgs(wallet._address, wallet._address, dripToken.address, toWei('0.01'))
+        .withArgs(wallet._address, dripToken.address, wallet._address, toWei('0.01'))
     })
   })
 
@@ -366,7 +366,7 @@ describe('Comptroller', () => {
       await measure.mock.totalSupply.returns(toWei('0'))
       await expect(comptroller.claimDrip(wallet._address, dripToken.address, toWei('0.01')))
         .to.emit(comptroller, 'DripTokenClaimed')
-        .withArgs(wallet._address, wallet._address, dripToken.address, toWei('0.01'))
+        .withArgs(wallet._address, dripToken.address, wallet._address, toWei('0.01'))
     })
   })
 })
