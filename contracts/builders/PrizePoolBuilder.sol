@@ -10,8 +10,7 @@ contract PrizePoolBuilder {
 
   event PrizePoolCreated (
     address indexed creator,
-    address indexed prizePool,
-    address indexed prizeStrategy
+    address indexed prizePool
   );
 
   function _setupSingleRandomWinner(
@@ -21,6 +20,8 @@ contract PrizePoolBuilder {
     uint256 ticketCreditLimitMantissa
   ) internal {
     address ticket = address(singleRandomWinner.ticket());
+
+    prizePool.setPrizeStrategy(singleRandomWinner);
 
     prizePool.addControlledToken(ticket);
     prizePool.addControlledToken(address(singleRandomWinner.sponsorship()));

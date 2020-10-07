@@ -14,14 +14,12 @@ contract StakePrizePool is PrizePool {
 
   /// @notice Initializes the Prize Pool and Yield Service with the required contract connections
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
-  /// @param _prizeStrategy Address of the component-controller that manages the prize-strategy
   /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
   /// @param _maxExitFeeMantissa The maximum exit fee size, relative to the withdrawal amount
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
   /// @param _stakeToken Address of the stake token
   function initialize (
     address _trustedForwarder,
-    TokenListenerInterface _prizeStrategy,
     ReserveInterface _reserve,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
@@ -33,7 +31,6 @@ contract StakePrizePool is PrizePool {
   {
     PrizePool.initialize(
       _trustedForwarder,
-      _prizeStrategy,
       _reserve,
       _controlledTokens,
       _maxExitFeeMantissa,

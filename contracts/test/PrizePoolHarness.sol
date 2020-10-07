@@ -11,7 +11,6 @@ contract PrizePoolHarness is PrizePool {
 
   function initializeAll(
     address _trustedForwarder,
-    TokenListenerInterface _prizeStrategy,
     ReserveInterface _reserve,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
@@ -22,7 +21,6 @@ contract PrizePoolHarness is PrizePool {
   {
     PrizePool.initialize(
       _trustedForwarder,
-      _prizeStrategy,
       _reserve,
       _controlledTokens,
       _maxExitFeeMantissa,

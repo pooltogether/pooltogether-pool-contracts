@@ -57,7 +57,6 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      prizeStrategy,
       reserve,
       tokens,
       prizePoolConfig.maxExitFeeMantissa,
@@ -74,14 +73,13 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool));
 
     return prizePool;
   }
 
   function createStakePrizePool(
-    StakePrizePoolConfig calldata config,
-    TokenListenerInterface prizeStrategy
+    StakePrizePoolConfig calldata config
   )
     external
     returns (StakePrizePool)
@@ -92,7 +90,6 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      prizeStrategy,
       reserve,
       tokens,
       config.maxExitFeeMantissa,
@@ -102,7 +99,7 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool));
 
     return prizePool;
   }

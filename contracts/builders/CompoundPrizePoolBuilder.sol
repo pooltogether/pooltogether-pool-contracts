@@ -64,7 +64,6 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      prizeStrategy,
       reserve,
       tokens,
       prizePoolConfig.maxExitFeeMantissa,
@@ -81,14 +80,13 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool));
 
     return prizePool;
   }
 
   function createCompoundPrizePool(
-    CompoundPrizePoolConfig calldata config,
-    TokenListenerInterface prizeStrategy
+    CompoundPrizePoolConfig calldata config
   )
     external
     returns (CompoundPrizePool)
@@ -99,7 +97,6 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      prizeStrategy,
       reserve,
       tokens,
       config.maxExitFeeMantissa,
@@ -109,7 +106,7 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool));
 
     return prizePool;
   }

@@ -1,6 +1,6 @@
 const { PoolEnv } = require('./support/PoolEnv')
 
-describe('Withdraw Feature', () => {
+describe('Compound Withdraw Feature', () => {
 
   let env
 
