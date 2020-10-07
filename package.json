@@ -29,7 +29,6 @@
   "dependencies": {
     "@opengsn/gsn": "^2.0.1",
     "@openzeppelin/contracts-ethereum-package": "3.0.0",
-    "@pooltogether/current-pool-data": "^3.0.0-alpha.33",
     "@pooltogether/fixed-point": "pooltogether/fixed-point.git#0.1.0-upgradeable.1",
     "@pooltogether/pooltogether-rng-contracts": "^1.0.0-alpha.7",
     "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
@@ -51,7 +50,6 @@
     "debug": "4.1.1",
     "ethereum-waffle": "^3.0.2",
     "ethers": "^5.0.8",
-    "find": "^0.3.0",
     "minimist": "^1.2.5",
     "mocha-junit-reporter": "1.23.3",
     "shelljs": "0.8.3",
