@@ -266,9 +266,15 @@ describe('PrizePool', function() {
         await ticket.mock.controllerMint.withArgs(wallet._address, reserveFee).returns()
         await yieldSourceStub.mock.balance.returns(toWei('1100'))
 
-        await expect(prizePool.captureAwardBalance())
+        let tx = prizePool.captureAwardBalance()
+
+        await expect(tx)
           .to.emit(prizePool, 'ReserveFeeCaptured')
           .withArgs(wallet._address, ticket.address, reserveFee)
+
+        await expect(tx)
+          .to.emit(prizePool, 'AwardCaptured')
+          .withArgs(toWei('99'))
 
         expect(await prizePool.awardBalance()).to.equal(toWei('99'))
       })
