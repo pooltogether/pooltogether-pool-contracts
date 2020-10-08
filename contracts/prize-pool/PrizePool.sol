@@ -8,6 +8,8 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
 
+import "@nomiclabs/buidler/console.sol";
+
 import "../external/pooltogether/FixedPoint.sol";
 import "../reserve/ReserveInterface.sol";
 import "./YieldSource.sol";
@@ -48,6 +50,10 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   event ReserveFeeCaptured(
     address indexed to,
     address indexed token,
+    uint256 amount
+  );
+
+  event AwardCaptured(
     uint256 amount
   );
 
@@ -461,21 +467,26 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @return The total amount of assets to be awarded for the current prize
   function captureAwardBalance() external nonReentrant returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
+
+    // it's possible for the balance to be slightly less due to rounding errors in the underlying yield source
     uint256 currentBalance = _balance();
     uint256 totalInterest = (currentBalance > tokenTotalSupply) ? currentBalance.sub(tokenTotalSupply) : 0;
-    uint256 unaccountedPrizeBalance = totalInterest.sub(_currentAwardBalance);
+    uint256 unaccountedPrizeBalance = (totalInterest > _currentAwardBalance) ? totalInterest.sub(_currentAwardBalance) : 0;
 
-    if (unaccountedPrizeBalance > 0 && address(reserve) != address(0)) {
-      uint256 reserveFee = calculateReserveFee(unaccountedPrizeBalance);
-      address reserveRecipient = reserve.reserveRecipient(address(this));
-      if (reserveFee > 0 && reserveRecipient != address(0)) {
-        unaccountedPrizeBalance = unaccountedPrizeBalance.sub(reserveFee);
-        _mint(reserveRecipient, reserveFee, reserveFeeControlledToken, address(0));
-        emit ReserveFeeCaptured(reserveRecipient, reserveFeeControlledToken, reserveFee);
+    if (unaccountedPrizeBalance > 0) {
+      if (address(reserve) != address(0)) {
+        uint256 reserveFee = calculateReserveFee(unaccountedPrizeBalance);
+        address reserveRecipient = reserve.reserveRecipient(address(this));
+        if (reserveFee > 0 && reserveRecipient != address(0)) {
+          unaccountedPrizeBalance = unaccountedPrizeBalance.sub(reserveFee);
+          _mint(reserveRecipient, reserveFee, reserveFeeControlledToken, address(0));
+          emit ReserveFeeCaptured(reserveRecipient, reserveFeeControlledToken, reserveFee);
+        }
       }
-    }
+      _currentAwardBalance = _currentAwardBalance.add(unaccountedPrizeBalance);
 
-    _currentAwardBalance = _currentAwardBalance.add(unaccountedPrizeBalance);
+      emit AwardCaptured(unaccountedPrizeBalance);
+    }
 
     return _currentAwardBalance;
   }
