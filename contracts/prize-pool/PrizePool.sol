@@ -8,8 +8,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
 
-import "@nomiclabs/buidler/console.sol";
-
 import "../external/pooltogether/FixedPoint.sol";
 import "../reserve/ReserveInterface.sol";
 import "./YieldSource.sol";
