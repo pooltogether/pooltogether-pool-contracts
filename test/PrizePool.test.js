@@ -217,6 +217,31 @@ describe('PrizePool', function() {
     })
 
     describe('captureAwardBalance()', () => {
+      it('should handle when the balance is less than the collateral', async () => {
+        await ticket.mock.totalSupply.returns(toWei('100'))
+        await yieldSourceStub.mock.balance.returns(toWei('99.9999'))
+
+        await expect(prizePool.captureAwardBalance()).to.not.emit(prizePool, 'ReserveFeeCaptured');
+        expect(await prizePool.awardBalance()).to.equal(toWei('0'))
+      })
+
+      it('should handle the situ when the total accrued interest is less than the captured total', async () => {
+        await ticket.mock.totalSupply.returns(toWei('100'))
+        await yieldSourceStub.mock.balance.returns(toWei('110'))
+
+        await reserve.mock.reserveRateMantissa.returns('0')
+        await reserve.mock.reserveRecipient.returns(AddressZero)
+
+        // first capture the 10 tokens
+        await prizePool.captureAwardBalance()
+
+        await yieldSourceStub.mock.balance.returns(toWei('109.999'))
+        // now try to capture again
+        await expect(
+          prizePool.captureAwardBalance()
+        ).to.not.emit(prizePool, 'AwardCaptured')
+      })
+
       it('should track the yield less the total token supply', async () => {
         await ticket.mock.totalSupply.returns(toWei('100'))
         await yieldSourceStub.mock.balance.returns(toWei('110'))
@@ -241,9 +266,15 @@ describe('PrizePool', function() {
         await ticket.mock.controllerMint.withArgs(wallet._address, reserveFee).returns()
         await yieldSourceStub.mock.balance.returns(toWei('1100'))
 
-        await expect(prizePool.captureAwardBalance())
+        let tx = prizePool.captureAwardBalance()
+
+        await expect(tx)
           .to.emit(prizePool, 'ReserveFeeCaptured')
           .withArgs(wallet._address, ticket.address, reserveFee)
+
+        await expect(tx)
+          .to.emit(prizePool, 'AwardCaptured')
+          .withArgs(toWei('99'))
 
         expect(await prizePool.awardBalance()).to.equal(toWei('99'))
       })

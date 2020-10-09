@@ -462,59 +462,6 @@ contract Comptroller is ComptrollerStorage, TokenListenerInterface {
     emit DripTokenClaimed(sender, dripToken, user, amount);
   }
 
-  function pokeDrips(
-    UpdatePair[] memory pairs,
-    address user,
-    address[] memory dripTokens
-  )
-    public
-  {
-    uint256 currentTime = _currentTime();
-
-    uint256 i;
-    uint256 j;
-    for (i = 0; i < pairs.length; i++) {
-      UpdatePair memory pair = pairs[i];
-
-      for (j = 0; j < dripTokens.length; j++) {
-        address dripToken = dripTokens[j];
-
-        _updateBalanceDripToken(
-          balanceDrips[pair.source],
-          pair.source,
-          pair.measure,
-          dripToken,
-          user,
-          IERC20(pair.measure).balanceOf(user),
-          IERC20(pair.measure).totalSupply(),
-          currentTime
-        );
-
-        _updateVolumeDripToken(
-          volumeDrips[pair.source],
-          pair.source,
-          pair.measure,
-          dripToken,
-          user,
-          0,
-          currentTime,
-          false
-        );
-
-        _updateVolumeDripToken(
-          referralVolumeDrips[pair.source],
-          pair.source,
-          pair.measure,
-          dripToken,
-          user,
-          0,
-          currentTime,
-          true
-        );
-      }
-    }
-  }
-
   /// @notice Updates all drips. Drip may need to be "poked" from time-to-time if there is little transaction activity.  This call will
   /// poke all of the drips and update the claim balances for the given user.
   /// @dev This function will be useful to check the *current* claim balances for a user.

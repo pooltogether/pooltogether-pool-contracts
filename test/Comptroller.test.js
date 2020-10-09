@@ -343,6 +343,11 @@ describe('Comptroller', () => {
   })
 
   describe('beforeTokenTransfer()', () => {
+
+    it('should do nothing if minting', async () => {
+      await comptroller.beforeTokenTransfer(AddressZero, wallet._address, toWei('10'), measure.address)
+    })
+
     it('should update the balance drips', async () => {
       await comptroller.setCurrentTime(1)
       await comptroller.activateBalanceDrip(prizePoolAddress, measure.address, dripToken.address, toWei('0.001'))
