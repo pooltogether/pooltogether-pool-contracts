@@ -199,6 +199,29 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
+  debug("\n  Deploying TwoWinnersProxyFactory...")
+  let twoWinnersProxyFactoryResult;
+  if (isTestEnvironment && !harnessDisabled) {
+    twoWinnersProxyFactoryResult = await deploy("TwoWinnersHarnessProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  } else {
+    twoWinnersProxyFactoryResult = await deploy("TwoWinnersProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  }
+
+  debug("\n  Deploying TwoWinnersBuilder...")
+  const twoWinnersBuilderResult = await deploy("TwoWinnersBuilder", {
+    args: [
+      twoWinnersProxyFactoryResult.address
+    ],
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+
   let multipleWinnersProxyFactoryResult
   debug("\n  Deploying MultipleWinnersProxyFactory...")
   if (isTestEnvironment && !harnessDisabled) {
@@ -212,7 +235,7 @@ module.exports = async (buidler) => {
       skipIfAlreadyDeployed: true
     })
   }
-  
+
   debug("\n  Deploying ControlledTokenBuilder...")
   const controlledTokenBuilderResult = await deploy("ControlledTokenBuilder", {
     args: [
@@ -308,6 +331,10 @@ module.exports = async (buidler) => {
   debug("  - ControlledTokenBuilder:         ", controlledTokenBuilderResult.address)
   debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address)
   debug("  - SingleRandomWinnerBuilder:      ", singleRandomWinnerBuilderResult.address)
+  debug("  - MultipleWinnersProxyFactory:    ", multipleWinnersProxyFactoryResult.address);
+  debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address);
+  debug("  - TwoWinnersProxyFactory:         ", twoWinnersProxyFactoryResult.address);
+  debug("  - TwoWinnersBuilderResult:        ", twoWinnersBuilderResult.address);
   debug("  - CompoundPrizePoolBuilder:       ", compoundPrizePoolBuilderResult.address)
   debug("  - yVaultPrizePoolBuilder:         ", yVaultPrizePoolBuilderResult.address)
   debug("  - StakePrizePoolBuilder:          ", stakePrizePoolBuilderResult.address)
