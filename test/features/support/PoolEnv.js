@@ -216,6 +216,16 @@ function PoolEnv() {
     debug(`Bought tickets with timelocked tokens`)
   }
 
+  this.transferCompoundTokensToPrizePool = async function ({ user, tokens }) {
+    let wallet = await this.wallet(user)
+    let underlyingAmount = toWei(tokens)
+    await this.env.token.mint(wallet._address, underlyingAmount)
+    await this.env.token.connect(wallet).approve(this.env.cToken.address, underlyingAmount)
+    await this.env.cToken.connect(wallet).mint(underlyingAmount)
+    let cTokenBalance = await this.env.cToken.balanceOf(wallet._address)
+    await this.env.cToken.connect(wallet).transfer(this.env.prizePool.address, cTokenBalance);
+  }
+
   this.timelockBuySponsorship = async function ({ user, sponsorship }) {
     debug(`Buying sponsorship with timelocked tokens...`)
     let wallet = await this.wallet(user)
@@ -401,8 +411,14 @@ function PoolEnv() {
     debug(`withdrawInstantly: user ${user}, tickets: ${tickets}`)
     let wallet = await this.wallet(user)
     let ticket = await this.ticket(wallet)
+    let withdrawalAmount
+    if (!tickets) {
+      withdrawalAmount = await ticket.balanceOf(wallet._address)
+    } else {
+      withdrawalAmount = toWei(tickets)
+    }
     let prizePool = await this.prizePool(wallet)
-    await prizePool.withdrawInstantlyFrom(wallet._address, toWei(tickets), ticket.address, toWei('1000'))
+    await prizePool.withdrawInstantlyFrom(wallet._address, withdrawalAmount, ticket.address, toWei('1000'))
     debug("done withdraw instantly")
   }
 
