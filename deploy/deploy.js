@@ -14,6 +14,25 @@ const chainName = (chainId) => {
   }
 }
 
+/**
+ * Get Aave LendingPoolAddressesProviderAddress
+ * @param {Number} chainId
+ * @return {String} LendingPoolAddressesProviderAddress
+ */
+const getLendingPoolAddressesProviderAddress = chainId => {
+  switch (chainId) {
+    case 1:
+      return (lendingPoolAddressesProviderAddress = '0x24a42fD28C976A61Df5D00D0599C34c4f90748c8')
+    case 3:
+      return (lendingPoolAddressesProviderAddress = '0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728')
+    case 42:
+      return (lendingPoolAddressesProviderAddress = '0x506B0B2CF20FAA8f38a4E2B524EE43e1f4458Cc5')
+    case 31337:
+      // TODO: doesn't work yet but will once we can fork mainnet in local with buidler
+      return (lendingPoolAddressesProviderAddress = '0x24a42fD28C976A61Df5D00D0599C34c4f90748c8')
+  }
+}
+
 module.exports = async (buidler) => {
   const { getNamedAccounts, deployments, getChainId, ethers } = buidler
   const { deploy } = deployments
@@ -41,6 +60,8 @@ module.exports = async (buidler) => {
 
   const locus = isLocal ? 'local' : 'remote'
   debug(`  Deploying to Network: ${chainName(chainId)} (${locus})`)
+
+  const lendingPoolAddressesProviderAddress = getLendingPoolAddressesProviderAddress(chainId);
 
   if (!adminAccount) {
     debug("  Using deployer as adminAccount;")
@@ -151,6 +172,21 @@ module.exports = async (buidler) => {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
+
+  debug("\n  Deploying AavePrizePoolProxyFactory...")
+  let aavePrizePoolProxyFactoryResult
+  if (isTestEnvironment && !harnessDisabled) {
+    aavePrizePoolProxyFactoryResult = await deploy("AavePrizePoolProxyFactory", {
+      contract: 'AavePrizePoolHarnessProxyFactory',
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  } else {
+    aavePrizePoolProxyFactoryResult = await deploy("AavePrizePoolProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  }
 
   debug("\n  Deploying CompoundPrizePoolProxyFactory...")
   let compoundPrizePoolProxyFactoryResult
@@ -284,8 +320,21 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
+  debug("\n  Deploying AavePrizePoolBuilder...")
+  const aavePrizePoolBuilderResult = await deploy('AavePrizePoolBuilder', {
+    args: [
+      comptrollerAddress,
+      trustedForwarder,
+      aavePrizePoolProxyFactoryResult.address,
+      singleRandomWinnerBuilderResult.address,
+      lendingPoolAddressesProviderAddress
+    ],
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+
   debug("\n  Deploying CompoundPrizePoolBuilder...")
-  const compoundPrizePoolBuilderResult = await deploy("CompoundPrizePoolBuilder", {
+  const compoundPrizePoolBuilderResult = await deploy('CompoundPrizePoolBuilder', {
     args: [
       reserveAddress,
       trustedForwarder,
@@ -293,7 +342,7 @@ module.exports = async (buidler) => {
       singleRandomWinnerBuilderResult.address
     ],
     from: deployer,
-    skipIfAlreadyDeployed: true
+    skipIfAlreadyDeployed: true,
   })
 
   debug("\n  Deploying yVaultPrizePoolBuilder...")
@@ -331,10 +380,11 @@ module.exports = async (buidler) => {
   debug("  - ControlledTokenBuilder:         ", controlledTokenBuilderResult.address)
   debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address)
   debug("  - SingleRandomWinnerBuilder:      ", singleRandomWinnerBuilderResult.address)
-  debug("  - MultipleWinnersProxyFactory:    ", multipleWinnersProxyFactoryResult.address);
-  debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address);
-  debug("  - TwoWinnersProxyFactory:         ", twoWinnersProxyFactoryResult.address);
-  debug("  - TwoWinnersBuilderResult:        ", twoWinnersBuilderResult.address);
+  debug("  - MultipleWinnersProxyFactory:    ", multipleWinnersProxyFactoryResult.address)
+  debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address)
+  debug("  - TwoWinnersProxyFactory:         ", twoWinnersProxyFactoryResult.address)
+  debug("  - TwoWinnersBuilderResult:        ", twoWinnersBuilderResult.address)
+  debug("  - AavePrizePoolBuilder:           ", aavePrizePoolBuilderResult.address)
   debug("  - CompoundPrizePoolBuilder:       ", compoundPrizePoolBuilderResult.address)
   debug("  - yVaultPrizePoolBuilder:         ", yVaultPrizePoolBuilderResult.address)
   debug("  - StakePrizePoolBuilder:          ", stakePrizePoolBuilderResult.address)
