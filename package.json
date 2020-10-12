@@ -13,7 +13,7 @@
     "hint": "solhint \"contracts/**/*.sol\"",
     "test": "OPTIMIZER_DISABLED=true buidler test",
     "compile": "buidler --show-stack-traces --max-memory 8192 compile",
-    "start": "rm -rf deployments/localhost_31337; DISABLE_HARNESS=true buidler node",
+    "start": "rm -rf deployments/localhost_31337; DISABLE_HARNESS=true USE_BUIDLER_EVM_ACCOUNTS=$BUIDLER_EVM_ACCOUNTS buidler node",
     "coverage": "rm -rf build cache test-results.xml && USE_LITERAL_CONTENT=false buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network localhost",
     "deploy": "buidler deploy --write true --network",
@@ -24,7 +24,8 @@
     "clean": "rm -rf build .build-openzeppelin cache .cache-openzeppelin abis",
     "prepack": "rm -rf build cache && buidler compile && truffle-extract -b build -o abis",
     "postpublish": "PACKAGE_VERSION=$(./scripts/package-version.sh) && git tag -ae v$PACKAGE_VERSION && git push --tags",
-    "update-gitbook-networks": "./scripts/update-gitbook-networks.sh"
+    "update-gitbook-networks": "./scripts/update-gitbook-networks.sh",
+    "mint": "USE_BUIDLER_EVM_ACCOUNTS=$BUIDLER_EVM_ACCOUNTS buidler run --network localhost scripts/mint.js"
   },
   "dependencies": {
     "@opengsn/gsn": "^2.0.1",

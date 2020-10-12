@@ -1,3 +1,5 @@
+const ethers = require('ethers')
+
 const networks = {
   buidlerevm: {
     blockGasLimit: 200000000,
@@ -15,6 +17,13 @@ const networks = {
     allowUnlimitedContractSize: true,
     chainId: 31337
   }
+}
+
+if (process.env.USE_BUIDLER_EVM_ACCOUNTS) {
+  networks.buidlerevm.accounts = process.env.USE_BUIDLER_EVM_ACCOUNTS.split(/\s+/).map(privateKey => ({
+    privateKey,
+    balance: ethers.utils.parseEther('10000000').toHexString()
+  }))
 }
 
 if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
