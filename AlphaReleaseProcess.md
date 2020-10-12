@@ -55,10 +55,12 @@ This will entail:
 
 ## 9. Update the Gitbook Networks
 
-The update script is in [pooltogether-pool-contracts](https://github.com/pooltogether/pooltogether-pool-contracts)
+The [Generate Networks Doc](https://github.com/pooltogether/generate-networks-doc) project automatically updates the [Gitbook networks page](https://docs.pooltogether.com/networks).
 
-First update the dependency `@pooltogether/current-pool-data` then run:
+Update all of the dependencies in package.json to the newest packages:
 
-```bash
-$ yarn update-gitbook-networks
-```
+- `@pooltogether/current-pool-data`
+- `@pooltogether/pooltogether-contracts`
+- `@pooltogether/pooltogether-rng-contracts`
+
+And follow the generate docs instructions.
