@@ -16,11 +16,12 @@ import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
 import "../utils/RelayRecipient.sol";
+import "./PrizePoolInterface.sol";
 
 /// @title Escrows assets and deposits them into a yield source.  Exposes interest to Prize Strategy.  Users deposit and withdraw from this contract to participate in Prize Pool.
 /// @notice Accounting is managed using Controlled Tokens, whose mint and burn functions can only be called by this contract.
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
-abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
+abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSafe, RelayRecipient, ReentrancyGuardUpgradeSafe, TokenControllerInterface {
   using SafeMath for uint256;
   using SafeCast for uint256;
   using SafeERC20 for IERC20;
@@ -314,7 +315,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     address controlledToken,
     address referrer
   )
-    external
+    external override
     onlyControlledToken(controlledToken)
     canAddLiquidity(amount)
     notShutdown
@@ -342,7 +343,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     address controlledToken,
     uint256 maximumExitFee
   )
-    external
+    external override
     nonReentrant
     onlyControlledToken(controlledToken)
     returns (uint256)
@@ -393,7 +394,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 amount,
     address controlledToken
   )
-    external
+    external override
     nonReentrant
     onlyControlledToken(controlledToken)
     returns (uint256)
@@ -456,14 +457,14 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @notice Returns the balance that is available to award.
   /// @dev captureAwardBalance() should be called first
   /// @return The total amount of assets to be awarded for the current prize
-  function awardBalance() external view returns (uint256) {
+  function awardBalance() external override view returns (uint256) {
     return _currentAwardBalance;
   }
 
   /// @notice Captures any available interest as award balance.
   /// @dev This function also captures the reserve fees.
   /// @return The total amount of assets to be awarded for the current prize
-  function captureAwardBalance() external nonReentrant returns (uint256) {
+  function captureAwardBalance() external override nonReentrant returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
 
     // it's possible for the balance to be slightly less due to rounding errors in the underlying yield source
@@ -499,7 +500,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 amount,
     address controlledToken
   )
-    external
+    external override
     onlyPrizeStrategy
     onlyControlledToken(controlledToken)
   {
@@ -528,7 +529,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     address externalToken,
     uint256 amount
   )
-    external
+    external override
     onlyPrizeStrategy
   {
     if (_transferOut(to, externalToken, amount)) {
@@ -546,7 +547,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     address externalToken,
     uint256 amount
   )
-    external
+    external override
     onlyPrizeStrategy
   {
     if (_transferOut(to, externalToken, amount)) {
@@ -595,7 +596,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     address externalToken,
     uint256[] calldata tokenIds
   )
-    external
+    external override
     onlyPrizeStrategy
   {
     require(_canAwardExternal(externalToken), "PrizePool/invalid-external-token");
@@ -631,7 +632,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   function sweepTimelockBalances(
     address[] calldata users
   )
-    external
+    external override
     nonReentrant
     returns (uint256)
   {
@@ -697,7 +698,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     address controlledToken,
     uint256 amount
   )
-    external
+    external override
     returns (
       uint256 durationSeconds,
       uint256 burnedCredit
@@ -742,7 +743,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     address controlledToken,
     uint256 amount
   )
-    external
+    external override
     returns (
       uint256 exitFee,
       uint256 burnedCredit
@@ -770,7 +771,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 _principal,
     uint256 _interest
   )
-    external
+    external override
     view
     returns (uint256 durationSeconds)
   {
@@ -890,7 +891,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @notice Returns the credit balance for a given user.  Not that this includes both minted credit and pending credit.
   /// @param user The user whose credit balance should be returned
   /// @return The balance of the users credit
-  function balanceOfCredit(address user, address controlledToken) external onlyControlledToken(controlledToken) returns (uint256) {
+  function balanceOfCredit(address user, address controlledToken) external override onlyControlledToken(controlledToken) returns (uint256) {
     _accrueCredit(user, controlledToken, IERC20(controlledToken).balanceOf(user), 0);
     return tokenCreditBalances[controlledToken][user].balance;
   }
@@ -904,7 +905,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint128 _creditRateMantissa,
     uint128 _creditLimitMantissa
   )
-    external
+    external override
     onlyControlledToken(_controlledToken)
     onlyOwner
   {
@@ -923,7 +924,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   function creditPlanOf(
     address controlledToken
   )
-    external
+    external override
     view
     returns (
       uint128 creditLimitMantissa,
@@ -981,7 +982,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Allows the Governor to set a cap on the amount of liquidity that he pool can hold
   /// @param _liquidityCap The new liquidity cap for the prize pool
-  function setLiquidityCap(uint256 _liquidityCap) external onlyOwner {
+  function setLiquidityCap(uint256 _liquidityCap) external override onlyOwner {
     _setLiquidityCap(_liquidityCap);
   }
 
@@ -992,7 +993,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Allows the Governor to add Controlled Tokens to the Prize Pool
   /// @param _controlledToken The address of the Controlled Token to add
-  function addControlledToken(address _controlledToken) external onlyOwner {
+  function addControlledToken(address _controlledToken) external override onlyOwner {
     _addControlledToken(_controlledToken);
   }
 
@@ -1011,7 +1012,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.
   /// @param _prizeStrategy The new prize strategy
-  function setPrizeStrategy(TokenListenerInterface _prizeStrategy) external onlyOwner {
+  function setPrizeStrategy(TokenListenerInterface _prizeStrategy) external override onlyOwner {
     _setPrizeStrategy(_prizeStrategy);
   }
 
@@ -1026,7 +1027,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Emergency shutdown of the Prize Pool.  Prize Pool will detach from the global reserve.
   /// @dev Called by the PrizeStrategy contract to issue an Emergency Shutdown of a corrupted Prize Strategy
-  function emergencyShutdown() external onlyOwner {
+  function emergencyShutdown() external override onlyOwner {
     delete reserve;
 
     emit EmergencyShutdown();
@@ -1034,13 +1035,13 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
 
   /// @notice Returns whether the Prize Pool has been shutdown.
   /// @dev When the prize strategy is detached deposits are disabled, and only withdrawals are permitted
-  function isShutdown() external view returns (bool) {
+  function isShutdown() external override view returns (bool) {
     return address(reserve) != address(0);
   }
 
   /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
   /// @return An array of controlled token addresses
-  function tokens() external view returns (address[] memory) {
+  function tokens() external override view returns (address[] memory) {
     return _tokens.addressArray();
   }
 
@@ -1053,20 +1054,20 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
   /// @notice The timestamp at which an account's timelocked balance will be made available to sweep
   /// @param user The address of an account with timelocked assets
   /// @return The timestamp at which the locked assets will be made available
-  function timelockBalanceAvailableAt(address user) external view returns (uint256) {
+  function timelockBalanceAvailableAt(address user) external override view returns (uint256) {
     return _unlockTimestamps[user];
   }
 
   /// @notice The balance of timelocked assets for an account
   /// @param user The address of an account with timelocked assets
   /// @return The amount of assets that have been timelocked
-  function timelockBalanceOf(address user) external view returns (uint256) {
+  function timelockBalanceOf(address user) external override view returns (uint256) {
     return _timelockBalances[user];
   }
 
   /// @notice The total of all controlled tokens and timelock.
   /// @return The current total of all tokens and timelock.
-  function accountedBalance() external view returns (uint256) {
+  function accountedBalance() external override view returns (uint256) {
     return _tokenTotalSupply();
   }
 
