@@ -23,6 +23,7 @@ module.exports = async (buidler) => {
   let {
     deployer,
     rng,
+    dai,
     trustedForwarder,
     adminAccount,
     comptroller,
@@ -143,6 +144,13 @@ module.exports = async (buidler) => {
       await reserveContract.transferOwnership(adminAccount)
     }
   }
+
+  let permitAndDepositDaiResult
+  debug("\n  Deploying PermitAndDepositDai...")
+  permitAndDepositDaiResult = await deploy("PermitAndDepositDai", {
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
 
   debug("\n  Deploying CompoundPrizePoolProxyFactory...")
   let compoundPrizePoolProxyFactoryResult
@@ -303,6 +311,9 @@ module.exports = async (buidler) => {
   debug("  - CompoundPrizePoolBuilder:       ", compoundPrizePoolBuilderResult.address)
   debug("  - yVaultPrizePoolBuilder:         ", yVaultPrizePoolBuilderResult.address)
   debug("  - StakePrizePoolBuilder:          ", stakePrizePoolBuilderResult.address)
+  if (permitAndDepositDaiResult) {
+    debug("  - PermitAndDepositDai:            ", permitAndDepositDaiResult.address)
+  }
 
   debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 };
