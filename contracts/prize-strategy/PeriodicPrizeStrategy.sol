@@ -438,6 +438,18 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit ExternalErc20AwardRemoved(_externalErc20);
   }
 
+  /// @notice Gets the current list of External ERC721 tokens that will be awarded with the current prize
+  /// @return An array of External ERC721 token addresses
+  function getExternalErc721Awards() external view returns (address[] memory) {
+    return externalErc721s.addressArray();
+  }
+
+  /// @notice Gets the current list of External ERC721 tokens that will be awarded with the current prize
+  /// @return An array of External ERC721 token addresses
+  function getExternalErc721AwardTokenIds(address _externalErc721) external view returns (uint256[] memory) {
+    return externalErc721TokenIds[_externalErc721];
+  }
+
   /// @notice Adds an external ERC721 token as an additional prize that can be awarded
   /// @dev Only the Prize-Strategy owner/creator can assign external tokens,
   /// and they must be approved by the Prize-Pool

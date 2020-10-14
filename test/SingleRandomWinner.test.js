@@ -13,7 +13,7 @@ const Ticket = require('../build/Ticket.json')
 
 const { expect } = require('chai')
 const buidler = require('@nomiclabs/buidler')
-const { AddressZero, Zero } = require('ethers').constants
+const { AddressZero, Zero, One } = require('ethers').constants
 
 
 const now = () => (new Date()).getTime() / 1000 | 0
@@ -310,6 +310,19 @@ describe('SingleRandomWinner', function() {
     it('should not allow anyone else to remove external ERC20 tokens from the prize', async () => {
       await expect(prizeStrategy.connect(wallet2).removeExternalErc20Award(externalERC20Award.address, SENTINEL))
         .to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
+  describe('getExternalErc721Awards()', () => {
+    it('should allow anyone to retrieve the list of external ERC721 tokens attached to the prize', async () => {
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
+      await prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1])
+
+      expect(await prizeStrategy.connect(wallet2).getExternalErc721Awards())
+        .to.deep.equal([externalERC721Award.address])
+
+      expect(await prizeStrategy.connect(wallet2).getExternalErc721AwardTokenIds(externalERC721Award.address))
+        .to.deep.equal([One])
     })
   })
 
