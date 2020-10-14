@@ -68,6 +68,15 @@ describe('BalanceDripManagerExposed', function() {
     })
   })
 
+  describe('getActiveBalanceDrips()', () => {
+    it('should return a list of active balance drip tokens', async () => {
+      await dripExposed.activateDrip(measure.address, drip1.address, toWei('0.001'), '1')
+
+      expect(await dripExposed.getActiveBalanceDrips(measure.address))
+        .to.deep.equal([drip1.address])
+    })
+  })
+
   describe('setDripRate()', () => {
     it('should revert when setting drips that are not active', async () => {
       await expect(dripExposed.setDripRate(measure.address, invalidDrip, toWei('0.001'), '1'))

@@ -85,6 +85,15 @@ describe('Comptroller', () => {
     })
   })
 
+  describe('getActiveBalanceDripTokens()', () => {
+    it('should return a list of active balance drip tokens', async () => {
+      await comptroller.activateBalanceDrip(prizePoolAddress, measure.address, dripToken.address, toWei('0.001'))
+
+      expect(await comptroller.getActiveBalanceDripTokens(prizePoolAddress, measure.address))
+        .to.deep.equal([dripToken.address])
+    })
+  })
+
   describe('setBalanceDripRate()', () => {
     beforeEach(async () => {
       await comptroller.activateBalanceDrip(prizePoolAddress, measure.address, dripToken.address, toWei('0.001'))
