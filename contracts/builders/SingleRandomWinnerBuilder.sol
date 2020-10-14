@@ -34,25 +34,21 @@ contract SingleRandomWinnerBuilder {
     address[] externalERC20Awards;
   }
 
-  TokenListenerInterface public comptroller;
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
   TicketProxyFactory public ticketProxyFactory;
   SingleRandomWinnerProxyFactory public singleRandomWinnerProxyFactory;
   address public trustedForwarder;
 
   constructor (
-    TokenListenerInterface _comptroller,
     SingleRandomWinnerProxyFactory _singleRandomWinnerProxyFactory,
     address _trustedForwarder,
     ControlledTokenProxyFactory _controlledTokenProxyFactory,
     TicketProxyFactory _ticketProxyFactory
   ) public {
-    require(address(_comptroller) != address(0), "SingleRandomWinnerBuilder/comptroller-not-zero");
     require(address(_singleRandomWinnerProxyFactory) != address(0), "SingleRandomWinnerBuilder/single-random-winner-factory-not-zero");
     require(address(_controlledTokenProxyFactory) != address(0), "SingleRandomWinnerBuilder/controlled-token-proxy-factory-not-zero");
     require(address(_ticketProxyFactory) != address(0), "SingleRandomWinnerBuilder/ticket-proxy-factory-not-zero");
     ticketProxyFactory = _ticketProxyFactory;
-    comptroller = _comptroller;
     singleRandomWinnerProxyFactory = _singleRandomWinnerProxyFactory;
     trustedForwarder = _trustedForwarder;
     controlledTokenProxyFactory = _controlledTokenProxyFactory;
@@ -94,8 +90,6 @@ contract SingleRandomWinnerBuilder {
       config.rngService,
       config.externalERC20Awards
     );
-
-    prizeStrategy.setTokenListener(comptroller);
 
     prizeStrategy.transferOwnership(owner);
 
