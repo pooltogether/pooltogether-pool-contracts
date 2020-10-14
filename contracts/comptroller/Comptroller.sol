@@ -395,6 +395,19 @@ contract Comptroller is ComptrollerStorage, TokenListenerInterface {
     );
   }
 
+  /// @notice Gets a list of active volume drip tokens
+  /// @param source The volume drip "source"; i.e. a Prize Pool address.
+  /// @param measure The ERC20 token whose volume determines user's share of the drip rate.
+  /// @param isReferral Whether this volume drip is a referral
+  /// @return An array of active Volume Drip token addresses
+  function getActiveVolumeDripTokens(address source, address measure, bool isReferral) external view returns (address[] memory) {
+    if (isReferral) {
+      return referralVolumeDrips[source].getActiveVolumeDrips(measure);
+    } else {
+      return volumeDrips[source].getActiveVolumeDrips(measure);
+    }
+  }
+
   function isVolumeDripActive(
     address source,
     address measure,

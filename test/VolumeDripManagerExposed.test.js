@@ -75,6 +75,15 @@ describe('VolumeDripManagerExposed', function() {
     })
   })
 
+  describe('getActiveVolumeDrips()', () => {
+    it('should return a list of active volume drip tokens', async () => {
+      await manager.activate(measure.address, drip1.address, periodSeconds, dripAmount, 30)
+
+      expect(await manager.getActiveVolumeDrips(measure.address))
+        .to.deep.equal([drip1.address])
+    })
+  })
+
   describe('set()', () => {
     it('should allow active drips to be set', async () => {
       await manager.activate(measure.address, drip1.address, periodSeconds, dripAmount, 30)

@@ -242,6 +242,38 @@ describe('Comptroller', () => {
     })
   })
 
+  describe('getActiveVolumeDripTokens()', () => {
+    it('should return a list of active non-referral volume drip tokens', async () => {
+      await comptroller.activateVolumeDrip(
+        prizePoolAddress,
+        measure.address,
+        dripToken.address,
+        false,
+        10,
+        toWei('100'),
+        10
+      )
+
+      expect(await comptroller.getActiveVolumeDripTokens(prizePoolAddress, measure.address, false))
+        .to.deep.equal([dripToken.address])
+    })
+
+    it('should return a list of active referral volume drip tokens', async () => {
+      await comptroller.activateVolumeDrip(
+        prizePoolAddress,
+        measure.address,
+        dripToken.address,
+        true,
+        10,
+        toWei('100'),
+        10
+      )
+
+      expect(await comptroller.getActiveVolumeDripTokens(prizePoolAddress, measure.address, true))
+        .to.deep.equal([dripToken.address])
+    })
+  })
+
   describe('setVolumeDrip()', () => {
     it('should allow the owner to set the drip amount for a volume drip', async () => {
       await comptroller.activateVolumeDrip(

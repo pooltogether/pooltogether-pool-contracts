@@ -30,6 +30,10 @@ contract VolumeDripManagerExposed {
     manager.deactivate(measure, dripToken, prevDripToken);
   }
 
+  function getActiveVolumeDrips(address measure) external view returns(address[] memory) {
+    return manager.getActiveVolumeDrips(measure);
+  }
+
   function set(address measure, address dripToken, uint32 periodSeconds, uint112 dripAmount) external {
     manager.set(measure, dripToken, periodSeconds, dripAmount);
   }

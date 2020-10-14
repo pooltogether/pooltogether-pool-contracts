@@ -62,6 +62,14 @@ library VolumeDripManager {
     self.activeVolumeDrips[measure].removeAddress(prevDripToken, dripToken);
   }
 
+  /// @notice Gets a list of active balance drip tokens
+  /// @param self The BalanceDripManager state
+  /// @param measure The measure token
+  /// @return An array of Balance Drip token addresses
+  function getActiveVolumeDrips(State storage self, address measure) internal view returns (address[] memory) {
+    return self.activeVolumeDrips[measure].addressArray();
+  }
+
   /// @notice Sets the parameters for the next period of an active volume drip
   /// @param self The VolumeDripManager state
   /// @param measure The measure token
