@@ -411,6 +411,12 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit RngRequestTimeoutSet(rngRequestTimeout);
   }
 
+  /// @notice Gets the current list of External ERC20 tokens that will be awarded with the current prize
+  /// @return An array of External ERC20 token addresses
+  function getExternalErc20Awards() external view returns (address[] memory) {
+    return externalErc20s.addressArray();
+  }
+
   /// @notice Adds an external ERC20 token type as an additional prize that can be awarded
   /// @dev Only the Prize-Strategy owner/creator can assign external tokens,
   /// and they must be approved by the Prize-Pool

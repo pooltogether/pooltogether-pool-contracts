@@ -273,6 +273,13 @@ describe('SingleRandomWinner', function() {
     })
   })
 
+  describe('getExternalErc20Awards()', () => {
+    it('should allow anyone to retrieve the list of external ERC20 tokens attached to the prize', async () => {
+      expect(await prizeStrategy.connect(wallet2).getExternalErc20Awards())
+        .to.deep.equal([externalERC20Award.address])
+    })
+  })
+
   describe('addExternalErc20Award()', () => {
     it('should allow the owner to add external ERC20 tokens to the prize', async () => {
       const externalAward = await deployMockContract(wallet2, IERC20.abi, overrides)

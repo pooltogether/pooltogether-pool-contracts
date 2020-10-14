@@ -791,7 +791,8 @@ contract Comptroller is ComptrollerStorage, TokenListenerInterface {
   /// @notice Called by a "source" (i.e. Prize Pool) when tokens change hands or are burned
   /// @param from The user who is sending the tokens
   /// @param to The user who is receiving the tokens
-  /// @param measure The measure token they are burning
+  /// @param amount The amount of tokens being transferred
+  /// @param measure The measure token they are transferring
   function beforeTokenTransfer(
     address from,
     address to,
