@@ -1,3 +1,5 @@
+usePlugin('@nomiclabs/buidler-ethers')
+
 const ethers = require('ethers')
 
 const networks = {
@@ -26,36 +28,61 @@ if (process.env.USE_BUIDLER_EVM_ACCOUNTS) {
   }))
 }
 
-if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
+if (process.env.USE_BUIDLER_EVM_ACCOUNTS === true && mnemonic) {
+  const buidlerEvmAccounts = []
+
+  for (let i = 0; i < 10; i++) {
+    const wallet = ethers.Wallet.fromMnemonic(mnemonic, "m/44'/60'/0'/0/" + i)
+    const privateKey = wallet.privateKey
+
+    console.log('wallet address', wallet.address)
+    console.log('wallet privateKey', privateKey)
+
+    buidlerEvmAccounts.push({
+      privateKey,
+      balance: '1000000000000000000000'
+    })
+  }
+
+  networks.localhost = {
+    accounts: {
+      mnemonic
+    }
+  }
+
+  networks.buidlerevm = {
+    accounts: buidlerEvmAccounts
+  }
+} else if (process.env.INFURA_API_KEY && mnemonic) {
   networks.kovan = {
     url: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
     accounts: {
-      mnemonic: process.env.HDWALLET_MNEMONIC
+      mnemonic
     }
   }
 
   networks.ropsten = {
     url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
     accounts: {
-      mnemonic: process.env.HDWALLET_MNEMONIC
+      mnemonic
     }
   }
 
   networks.rinkeby = {
     url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
     accounts: {
-      mnemonic: process.env.HDWALLET_MNEMONIC
+      mnemonic
     }
   }
 
   networks.mainnet = {
     url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
     accounts: {
-      mnemonic: process.env.HDWALLET_MNEMONIC
+      mnemonic
     }
   }
 } else {
-  console.warn('No infura or hdwallet available for testnets')
+  console.warn('No infura or hdwallet provided in env')
 }
 
 module.exports = networks
