@@ -1,7 +1,3 @@
-const chalk = require('chalk')
-const util = require('util')
-const exec = util.promisify(require('child_process').exec)
-
 const networks = require('./buidler.networks')
 
 const {TASK_COMPILE_GET_COMPILER_INPUT} = require("@nomiclabs/buidler/builtin-tasks/task-names");
