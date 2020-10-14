@@ -15,6 +15,10 @@ contract BalanceDripManagerExposed {
     dripManager.deactivateDrip(measure, prevDripToken, dripToken, currentTime);
   }
 
+  function getActiveBalanceDrips(address measure) external view returns(address[] memory) {
+    return dripManager.getActiveBalanceDrips(measure);
+  }
+
   function isDripActive(address measure, address dripToken) external view returns (bool) {
     return dripManager.isDripActive(measure, dripToken);
   }

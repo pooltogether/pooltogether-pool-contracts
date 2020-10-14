@@ -183,6 +183,14 @@ contract Comptroller is ComptrollerStorage, TokenListenerInterface {
     emit BalanceDripDeactivated(source, measure, dripToken);
   }
 
+  /// @notice Gets a list of active balance drip tokens
+  /// @param source The balance drip "source"; i.e. a Prize Pool address.
+  /// @param measure The ERC20 token whose balances determines user's share of the drip rate.
+  /// @return An array of active Balance Drip token addresses
+  function getActiveBalanceDripTokens(address source, address measure) external view returns (address[] memory) {
+    return balanceDrips[source].getActiveBalanceDrips(measure);
+  }
+
   /// @notice Returns the state of a balance drip.
   /// @param source The balance drip "source"; i.e. Prize Pool
   /// @param measure The token that measure's a users share of the drip

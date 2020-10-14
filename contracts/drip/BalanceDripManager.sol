@@ -62,6 +62,14 @@ library BalanceDripManager {
     self.balanceDrips[measure][dripToken].setDripRate(IERC20(measure).totalSupply(), 0, currentTime);
   }
 
+  /// @notice Gets a list of active balance drip tokens
+  /// @param self The BalanceDripManager state
+  /// @param measure The measure token
+  /// @return An array of Balance Drip token addresses
+  function getActiveBalanceDrips(State storage self, address measure) internal view returns (address[] memory) {
+    return self.activeBalanceDrips[measure].addressArray();
+  }
+
   /// @notice Sets the drip rate for an active balance drip.
   /// @param self The BalanceDripManager state
   /// @param measure The measure token
