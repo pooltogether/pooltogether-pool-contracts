@@ -17,8 +17,7 @@ describe('SingleRandomWinnerBuilder', () => {
 
   let builder
 
-  let comptroller,
-      trustedForwarder,
+  let trustedForwarder,
       controlledTokenProxyFactory,
       ticketProxyFactory,
       rngServiceMock,
@@ -35,7 +34,6 @@ describe('SingleRandomWinnerBuilder', () => {
       wallet
     )
 
-    comptroller = (await deployments.get("Comptroller"))
     trustedForwarder = (await deployments.get("TrustedForwarder"))
     singleRandomWinnerProxyFactory = (await deployments.get("SingleRandomWinnerProxyFactory"))
     controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
@@ -60,7 +58,6 @@ describe('SingleRandomWinnerBuilder', () => {
 
   describe('initialize()', () => {
     it('should setup all factories', async () => {
-      expect(await builder.comptroller()).to.equal(comptroller.address)
       expect(await builder.singleRandomWinnerProxyFactory()).to.equal(singleRandomWinnerProxyFactory.address)
       expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.controlledTokenProxyFactory()).to.equal(controlledTokenProxyFactory.address)
