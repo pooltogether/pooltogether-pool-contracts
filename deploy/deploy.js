@@ -2,15 +2,22 @@ const { deploy1820 } = require('deploy-eip-1820')
 
 const debug = require('debug')('ptv3:deploy.js')
 
-const chainName = (chainId) => {
-  switch(chainId) {
-    case 1: return 'Mainnet';
-    case 3: return 'Ropsten';
-    case 4: return 'Rinkeby';
-    case 5: return 'Goerli';
-    case 42: return 'Kovan';
-    case 31337: return 'BuidlerEVM';
-    default: return 'Unknown';
+const chainName = chainId => {
+  switch (chainId) {
+    case 1:
+      return 'Mainnet'
+    case 3:
+      return 'Ropsten'
+    case 4:
+      return 'Rinkeby'
+    case 5:
+      return 'Goerli'
+    case 42:
+      return 'Kovan'
+    case 31337:
+      return 'BuidlerEVM'
+    default:
+      return 'Unknown'
   }
 }
 
@@ -22,18 +29,18 @@ const chainName = (chainId) => {
 const getLendingPoolAddressesProviderAddress = chainId => {
   switch (chainId) {
     case 1:
-      return (lendingPoolAddressesProviderAddress = '0x24a42fD28C976A61Df5D00D0599C34c4f90748c8')
+      return '0x24a42fD28C976A61Df5D00D0599C34c4f90748c8'
     case 3:
-      return (lendingPoolAddressesProviderAddress = '0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728')
+      return '0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728'
     case 42:
-      return (lendingPoolAddressesProviderAddress = '0x506B0B2CF20FAA8f38a4E2B524EE43e1f4458Cc5')
+      return '0x506B0B2CF20FAA8f38a4E2B524EE43e1f4458Cc5'
     case 31337:
       // TODO: doesn't work yet but will once we can fork mainnet in local with buidler
-      return (lendingPoolAddressesProviderAddress = '0x24a42fD28C976A61Df5D00D0599C34c4f90748c8')
+      return '0x24a42fD28C976A61Df5D00D0599C34c4f90748c8'
   }
 }
 
-module.exports = async (buidler) => {
+module.exports = async buidler => {
   const { getNamedAccounts, deployments, getChainId, ethers } = buidler
   const { deploy } = deployments
 
@@ -54,76 +61,68 @@ module.exports = async (buidler) => {
   const isTestEnvironment = chainId === 31337 || chainId === 1337
   const signer = await ethers.provider.getSigner(deployer)
 
-  debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-  debug("PoolTogether Pool Contracts - Deploy Script")
-  debug("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+  debug('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+  debug('PoolTogether Pool Contracts - Deploy Script')
+  debug('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
 
   const locus = isLocal ? 'local' : 'remote'
   debug(`  Deploying to Network: ${chainName(chainId)} (${locus})`)
 
-  const lendingPoolAddressesProviderAddress = getLendingPoolAddressesProviderAddress(chainId);
+  const lendingPoolAddressesProviderAddress = getLendingPoolAddressesProviderAddress(chainId)
 
   if (!adminAccount) {
-    debug("  Using deployer as adminAccount;")
+    debug('  Using deployer as adminAccount;')
     adminAccount = signer._address
   }
-  debug("\n  adminAccount:  ", adminAccount)
+  debug('\n  adminAccount:  ', adminAccount)
 
   await deploy1820(signer)
 
   if (isLocal) {
-    debug("\n  Deploying TrustedForwarder...")
-    const deployResult = await deploy("TrustedForwarder", {
+    debug('\n  Deploying TrustedForwarder...')
+    const deployResult = await deploy('TrustedForwarder', {
       from: deployer,
       skipIfAlreadyDeployed: true
-    });
+    })
     trustedForwarder = deployResult.address
 
-    debug("\n  Deploying RNGService...")
-    const rngServiceMockResult = await deploy("RNGServiceMock", {
+    debug('\n  Deploying RNGService...')
+    const rngServiceMockResult = await deploy('RNGServiceMock', {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
     rng = rngServiceMockResult.address
 
-    debug("\n  Deploying Dai...")
-    const daiResult = await deploy("Dai", {
-      args: [
-        'DAI Test Token',
-        'DAI'
-      ],
+    debug('\n  Deploying Dai...')
+    const daiResult = await deploy('Dai', {
+      args: ['DAI Test Token', 'DAI'],
       contract: 'ERC20Mintable',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
 
-    debug("\n  Deploying cDai...")
+    debug('\n  Deploying cDai...')
     // should be about 20% APR
     let supplyRate = '8888888888888'
-    await deploy("cDai", {
-      args: [
-        daiResult.address,
-        supplyRate
-      ],
+    await deploy('cDai', {
+      args: [daiResult.address, supplyRate],
       contract: 'CTokenMock',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
 
-    await deploy("yDai", {
-      args: [
-        daiResult.address
-      ],
+    await deploy('yDai', {
+      args: [daiResult.address],
       contract: 'yVaultMock',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
 
     // Display Contract Addresses
-    debug("\n  Local Contract Deployments;\n")
-    debug("  - TrustedForwarder: ", trustedForwarder)
-    debug("  - RNGService:       ", rng)
-    debug("  - Dai:              ", daiResult.address)
+    debug('\n  Local Contract Deployments;\n')
+    debug('  - TrustedForwarder: ', trustedForwarder)
+    debug('  - RNGService:       ', rng)
+    debug('  - Dai:              ', daiResult.address)
   }
 
   let comptrollerAddress = comptroller
@@ -176,28 +175,28 @@ module.exports = async (buidler) => {
   debug("\n  Deploying AavePrizePoolProxyFactory...")
   let aavePrizePoolProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
-    aavePrizePoolProxyFactoryResult = await deploy("AavePrizePoolProxyFactory", {
+    aavePrizePoolProxyFactoryResult = await deploy('AavePrizePoolProxyFactory', {
       contract: 'AavePrizePoolHarnessProxyFactory',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
   } else {
-    aavePrizePoolProxyFactoryResult = await deploy("AavePrizePoolProxyFactory", {
+    aavePrizePoolProxyFactoryResult = await deploy('AavePrizePoolProxyFactory', {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
   }
 
-  debug("\n  Deploying CompoundPrizePoolProxyFactory...")
+  debug('\n  Deploying CompoundPrizePoolProxyFactory...')
   let compoundPrizePoolProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
-    compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolProxyFactory", {
+    compoundPrizePoolProxyFactoryResult = await deploy('CompoundPrizePoolProxyFactory', {
       contract: 'CompoundPrizePoolHarnessProxyFactory',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
   } else {
-    compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolProxyFactory", {
+    compoundPrizePoolProxyFactoryResult = await deploy('CompoundPrizePoolProxyFactory', {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
@@ -205,68 +204,66 @@ module.exports = async (buidler) => {
 
   let yVaultPrizePoolProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
-    yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolProxyFactory", {
+    yVaultPrizePoolProxyFactoryResult = await deploy('yVaultPrizePoolProxyFactory', {
       contract: 'yVaultPrizePoolHarnessProxyFactory',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
   } else {
-    yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolProxyFactory", {
+    yVaultPrizePoolProxyFactoryResult = await deploy('yVaultPrizePoolProxyFactory', {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
   }
 
-  debug("\n  Deploying ControlledTokenProxyFactory...")
-  const controlledTokenProxyFactoryResult = await deploy("ControlledTokenProxyFactory", {
+  debug('\n  Deploying ControlledTokenProxyFactory...')
+  const controlledTokenProxyFactoryResult = await deploy('ControlledTokenProxyFactory', {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying TicketProxyFactory...")
-  const ticketProxyFactoryResult = await deploy("TicketProxyFactory", {
+  debug('\n  Deploying TicketProxyFactory...')
+  const ticketProxyFactoryResult = await deploy('TicketProxyFactory', {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying StakePrizePoolProxyFactory...")
-  const stakePrizePoolProxyFactoryResult = await deploy("StakePrizePoolProxyFactory", {
+  debug('\n  Deploying StakePrizePoolProxyFactory...')
+  const stakePrizePoolProxyFactoryResult = await deploy('StakePrizePoolProxyFactory', {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying TwoWinnersProxyFactory...")
-  let twoWinnersProxyFactoryResult;
+  debug('\n  Deploying TwoWinnersProxyFactory...')
+  let twoWinnersProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
-    twoWinnersProxyFactoryResult = await deploy("TwoWinnersHarnessProxyFactory", {
+    twoWinnersProxyFactoryResult = await deploy('TwoWinnersHarnessProxyFactory', {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
   } else {
-    twoWinnersProxyFactoryResult = await deploy("TwoWinnersProxyFactory", {
+    twoWinnersProxyFactoryResult = await deploy('TwoWinnersProxyFactory', {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
   }
 
-  debug("\n  Deploying TwoWinnersBuilder...")
-  const twoWinnersBuilderResult = await deploy("TwoWinnersBuilder", {
-    args: [
-      twoWinnersProxyFactoryResult.address
-    ],
+  debug('\n  Deploying TwoWinnersBuilder...')
+  const twoWinnersBuilderResult = await deploy('TwoWinnersBuilder', {
+    args: [twoWinnersProxyFactoryResult.address],
     from: deployer,
     skipIfAlreadyDeployed: true
   })
 
   let multipleWinnersProxyFactoryResult
-  debug("\n  Deploying MultipleWinnersProxyFactory...")
+  debug('\n  Deploying MultipleWinnersProxyFactory...')
   if (isTestEnvironment && !harnessDisabled) {
-    multipleWinnersProxyFactoryResult = await deploy("MultipleWinnersHarnessProxyFactory", {
+    multipleWinnersProxyFactoryResult = await deploy('MultipleWinnersHarnessProxyFactory', {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
   } else {
-    multipleWinnersProxyFactoryResult = await deploy("MultipleWinnersProxyFactory", {
+    multipleWinnersProxyFactoryResult = await deploy('MultipleWinnersProxyFactory', {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
@@ -292,23 +289,23 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying SingleRandomWinnerProxyFactory...")
+  debug('\n  Deploying SingleRandomWinnerProxyFactory...')
   let singleRandomWinnerProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
-    singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
+    singleRandomWinnerProxyFactoryResult = await deploy('SingleRandomWinnerProxyFactory', {
       contract: 'SingleRandomWinnerHarnessProxyFactory',
       from: deployer,
       skipIfAlreadyDeployed: true
     })
   } else {
-    singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
+    singleRandomWinnerProxyFactoryResult = await deploy('SingleRandomWinnerProxyFactory', {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
   }
 
-  debug("\n  Deploying SingleRandomWinnerBuilder...")
-  const singleRandomWinnerBuilderResult = await deploy("SingleRandomWinnerBuilder", {
+  debug('\n  Deploying SingleRandomWinnerBuilder...')
+  const singleRandomWinnerBuilderResult = await deploy('SingleRandomWinnerBuilder', {
     args: [
       comptrollerAddress,
       singleRandomWinnerProxyFactoryResult.address,
@@ -320,7 +317,7 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying AavePrizePoolBuilder...")
+  debug('\n  Deploying AavePrizePoolBuilder...')
   const aavePrizePoolBuilderResult = await deploy('AavePrizePoolBuilder', {
     args: [
       comptrollerAddress,
@@ -333,7 +330,7 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying CompoundPrizePoolBuilder...")
+  debug('\n  Deploying CompoundPrizePoolBuilder...')
   const compoundPrizePoolBuilderResult = await deploy('CompoundPrizePoolBuilder', {
     args: [
       reserveAddress,
@@ -342,11 +339,11 @@ module.exports = async (buidler) => {
       singleRandomWinnerBuilderResult.address
     ],
     from: deployer,
-    skipIfAlreadyDeployed: true,
+    skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying yVaultPrizePoolBuilder...")
-  const yVaultPrizePoolBuilderResult = await deploy("yVaultPrizePoolBuilder", {
+  debug('\n  Deploying yVaultPrizePoolBuilder...')
+  const yVaultPrizePoolBuilderResult = await deploy('yVaultPrizePoolBuilder', {
     args: [
       reserveAddress,
       trustedForwarder,
@@ -357,8 +354,8 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying StakePrizePoolBuilder...")
-  const stakePrizePoolBuilderResult = await deploy("StakePrizePoolBuilder", {
+  debug('\n  Deploying StakePrizePoolBuilder...')
+  const stakePrizePoolBuilderResult = await deploy('StakePrizePoolBuilder', {
     args: [
       reserveAddress,
       trustedForwarder,
