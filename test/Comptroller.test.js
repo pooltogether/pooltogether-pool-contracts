@@ -72,6 +72,8 @@ describe('Comptroller', () => {
     })
 
     it('should remove a balance drip', async () => {
+      await dripToken.mock.balanceOf.withArgs(comptroller.address).returns(toWei('100'))
+
       await expect(comptroller.deactivateBalanceDrip(prizePoolAddress, measure.address, dripToken.address, SENTINEL))
         .to.emit(comptroller, 'BalanceDripDeactivated')
         .withArgs(wallet._address, measure.address, dripToken.address)
@@ -100,6 +102,8 @@ describe('Comptroller', () => {
     })
 
     it('should allow the owner to update the drip rate', async () => {
+      await dripToken.mock.balanceOf.withArgs(comptroller.address).returns(toWei('100'))
+
       await expect(comptroller.setBalanceDripRate(wallet._address, measure.address, dripToken.address, toWei('0.1')))
         .to.emit(comptroller, 'BalanceDripRateSet')
         .withArgs(wallet._address, measure.address, dripToken.address, toWei('0.1'))
@@ -172,6 +176,64 @@ describe('Comptroller', () => {
       expect(period.endTime).to.equal(10)
     })
 
+    it('should allow the owner to add a referral volume drip', async () => {
+      let tx = comptroller.activateVolumeDrip(prizePoolAddress, measure.address, dripToken.address, true, 10, toWei('100'), 10)
+
+      await expect(tx)
+        .to.emit(comptroller, 'VolumeDripActivated')
+        .withArgs(
+          prizePoolAddress,
+          measure.address,
+          dripToken.address,
+          true,
+          10,
+          toWei('100')
+        )
+
+      await expect(tx)
+        .to.emit(comptroller, 'VolumeDripPeriodStarted')
+        .withArgs(
+          prizePoolAddress,
+          measure.address,
+          dripToken.address,
+          true,
+          1,
+          toWei('100'),
+          10
+        )
+
+      let drip = await comptroller.getVolumeDrip(
+        prizePoolAddress,
+        measure.address,
+        dripToken.address,
+        true
+      )
+
+      expect(drip.periodSeconds).to.equal(10)
+      expect(drip.dripAmount).to.equal(toWei('100'))
+
+      let period = await comptroller.getVolumeDripPeriod(
+        prizePoolAddress,
+        measure.address,
+        dripToken.address,
+        true,
+        1
+      )
+        
+      expect(
+        await comptroller.isVolumeDripActive(
+          prizePoolAddress,
+          measure.address,
+          dripToken.address,
+          true
+        )
+      ).to.be.true
+
+      expect(period.totalSupply).to.equal(0)
+      expect(period.dripAmount).to.equal(toWei('100'))
+      expect(period.endTime).to.equal(10)
+    })
+
     it('should not allow anyone else', async () => {
       await expect(
         comptroller2.activateVolumeDrip(
@@ -184,6 +246,25 @@ describe('Comptroller', () => {
           10
         )
       ).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+  })
+
+  describe('balanceOfDrip()', () => {
+    it('should return zero when nothing has accrued', async () => {
+      expect(await comptroller.balanceOfDrip(wallet._address, dripToken.address)).to.equal(toWei('0'))
+    })
+
+    it('should return the value when accrued', async () => {
+      await comptroller.setCurrentTime(1)
+      await comptroller.activateBalanceDrip(prizePoolAddress, measure.address, dripToken.address, toWei('0.001'))
+      await measure.mock.balanceOf.withArgs(wallet._address).returns(toWei('10'))
+      await measure.mock.totalSupply.returns(toWei('10'))
+      await dripToken.mock.balanceOf.withArgs(comptroller.address).returns(toWei('100'))
+      await comptroller.beforeTokenMint(wallet._address, toWei('10'), measure.address, AddressZero)
+      await comptroller.setCurrentTime(11)
+      // burn tickets (withdraw)
+      await comptroller.beforeTokenTransfer(wallet._address, AddressZero, toWei('10'), measure.address)
+      expect(await comptroller.balanceOfDrip(wallet._address, dripToken.address)).to.equal(toWei('0.01'))
     })
   })
 
@@ -374,8 +455,10 @@ describe('Comptroller', () => {
       await comptroller.updateDrips(
         [{ source: prizePoolAddress, measure: measure.address }],
         wallet._address,
-        []
+        [dripToken.address]
       )
+
+      expect(await comptroller.balanceOfDrip(wallet._address, dripToken.address)).to.equal(toWei('0.01'))
 
       await expect(comptroller.claimDrip(wallet._address, dripToken.address, toWei('0.01')))
         .to.emit(comptroller, 'DripTokenClaimed')
