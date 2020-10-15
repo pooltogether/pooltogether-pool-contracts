@@ -58,9 +58,6 @@ contract TwoWinners is PeriodicPrizeStrategy {
     uint256 prize = prizePool.captureAwardBalance();
     uint256 prizeShare = prize.div(numberOfWinners);
 
-    uint256 totalSupply = IERC20(address(ticket)).totalSupply();
-    uint256 ticketSplit = totalSupply.div(numberOfWinners);
-
     uint256 secondRngRandomNumber = _getRngRandomNumber();
     uint256 thirdRandomNumber = _getRngRandomNumber();
 
