@@ -21,16 +21,11 @@ const networks = {
   }
 }
 
-if (process.env.USE_BUIDLER_EVM_ACCOUNTS) {
-  networks.buidlerevm.accounts = process.env.USE_BUIDLER_EVM_ACCOUNTS.split(/\s+/).map(privateKey => ({
-    privateKey,
-    balance: ethers.utils.parseEther('10000000').toHexString()
-  }))
-}
+const mnemonic = process.env.HDWALLET_MNEMONIC;
 
-if (process.env.USE_BUIDLER_EVM_ACCOUNTS === true && mnemonic) {
+if (process.env.USE_BUIDLER_EVM_ACCOUNTS && mnemonic) {
   const buidlerEvmAccounts = []
-
+  console.log('in there')
   for (let i = 0; i < 10; i++) {
     const wallet = ethers.Wallet.fromMnemonic(mnemonic, "m/44'/60'/0'/0/" + i)
     const privateKey = wallet.privateKey

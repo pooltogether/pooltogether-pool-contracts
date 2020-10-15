@@ -129,14 +129,14 @@ module.exports = async buidler => {
   // if not set by named config
   if (!comptrollerAddress) {
     const contract = isTestEnvironment ? 'ComptrollerHarness' : 'Comptroller'
-    const comptrollerResult = await deploy("Comptroller", {
+    const comptrollerResult = await deploy('Comptroller', {
       contract,
       from: deployer,
       skipIfAlreadyDeployed: true
     })
     comptrollerAddress = comptrollerResult.address
     const comptrollerContract = await buidler.ethers.getContractAt(
-      "Comptroller",
+      'Comptroller',
       comptrollerResult.address,
       signer
     )
@@ -149,14 +149,14 @@ module.exports = async buidler => {
   // if not set by named config
   if (!reserveAddress) {
     const contract = isTestEnvironment ? 'Reserve' : 'ReserveProxy'
-    const reserveResult = await deploy("Reserve", {
+    const reserveResult = await deploy('Reserve', {
       contract,
       from: deployer,
       skipIfAlreadyDeployed: true
     })
     reserveAddress = reserveResult.address
     const reserveContract = await buidler.ethers.getContractAt(
-      "Reserve",
+      'Reserve',
       reserveResult.address,
       signer
     )
@@ -172,7 +172,7 @@ module.exports = async buidler => {
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying AavePrizePoolProxyFactory...")
+  debug('\n  Deploying AavePrizePoolProxyFactory...')
   let aavePrizePoolProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
     aavePrizePoolProxyFactoryResult = await deploy('AavePrizePoolProxyFactory', {
@@ -269,8 +269,8 @@ module.exports = async buidler => {
     })
   }
 
-  debug("\n  Deploying ControlledTokenBuilder...")
-  const controlledTokenBuilderResult = await deploy("ControlledTokenBuilder", {
+  debug('\n  Deploying ControlledTokenBuilder...')
+  const controlledTokenBuilderResult = await deploy('ControlledTokenBuilder', {
     args: [
       trustedForwarder,
       controlledTokenProxyFactoryResult.address,
@@ -280,11 +280,9 @@ module.exports = async buidler => {
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying MultipleWinnersBuilder...")
-  const multipleWinnersBuilderResult = await deploy("MultipleWinnersBuilder", {
-    args: [
-      multipleWinnersProxyFactoryResult.address
-    ],
+  debug('\n  Deploying MultipleWinnersBuilder...')
+  const multipleWinnersBuilderResult = await deploy('MultipleWinnersBuilder', {
+    args: [multipleWinnersProxyFactoryResult.address],
     from: deployer,
     skipIfAlreadyDeployed: true
   })
@@ -367,27 +365,28 @@ module.exports = async buidler => {
   })
 
   // Display Contract Addresses
-  debug("\n  Contract Deployments Complete!\n")
-  debug("  - TicketProxyFactory:             ", ticketProxyFactoryResult.address)
-  debug("  - Reserve:                        ", reserveAddress)
-  debug("  - Comptroller:                    ", comptrollerAddress)
-  debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
-  debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)
-  debug("  - SingleRandomWinnerProxyFactory: ", singleRandomWinnerProxyFactoryResult.address)
-  debug("  - ControlledTokenBuilder:         ", controlledTokenBuilderResult.address)
-  debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address)
-  debug("  - SingleRandomWinnerBuilder:      ", singleRandomWinnerBuilderResult.address)
-  debug("  - MultipleWinnersProxyFactory:    ", multipleWinnersProxyFactoryResult.address)
-  debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address)
-  debug("  - TwoWinnersProxyFactory:         ", twoWinnersProxyFactoryResult.address)
-  debug("  - TwoWinnersBuilderResult:        ", twoWinnersBuilderResult.address)
-  debug("  - AavePrizePoolBuilder:           ", aavePrizePoolBuilderResult.address)
-  debug("  - CompoundPrizePoolBuilder:       ", compoundPrizePoolBuilderResult.address)
-  debug("  - yVaultPrizePoolBuilder:         ", yVaultPrizePoolBuilderResult.address)
-  debug("  - StakePrizePoolBuilder:          ", stakePrizePoolBuilderResult.address)
+  debug('\n  Contract Deployments Complete!\n')
+  debug('  - TicketProxyFactory:             ', ticketProxyFactoryResult.address)
+  debug('  - Reserve:                        ', reserveAddress)
+  debug('  - Comptroller:                    ', comptrollerAddress)
+  debug('  - CompoundPrizePoolProxyFactory:  ', compoundPrizePoolProxyFactoryResult.address)
+  debug('  - ControlledTokenProxyFactory:    ', controlledTokenProxyFactoryResult.address)
+  debug('  - SingleRandomWinnerProxyFactory: ', singleRandomWinnerProxyFactoryResult.address)
+  debug('  - ControlledTokenBuilder:         ', controlledTokenBuilderResult.address)
+  debug('  - MultipleWinnersBuilder:         ', multipleWinnersBuilderResult.address)
+  debug('  - SingleRandomWinnerBuilder:      ', singleRandomWinnerBuilderResult.address)
+  debug('  - MultipleWinnersProxyFactory:    ', multipleWinnersProxyFactoryResult.address)
+  debug('  - MultipleWinnersBuilder:         ', multipleWinnersBuilderResult.address)
+  debug('  - TwoWinnersProxyFactory:         ', twoWinnersProxyFactoryResult.address)
+  debug('  - TwoWinnersBuilderResult:        ', twoWinnersBuilderResult.address)
+  debug('  - AavePrizePoolBuilder:           ', aavePrizePoolBuilderResult.address)
+  debug('  - CompoundPrizePoolBuilder:       ', compoundPrizePoolBuilderResult.address)
+  debug('  - yVaultPrizePoolBuilder:         ', yVaultPrizePoolBuilderResult.address)
+  debug('  - StakePrizePoolBuilder:          ', stakePrizePoolBuilderResult.address)
+
   if (permitAndDepositDaiResult) {
-    debug("  - PermitAndDepositDai:            ", permitAndDepositDaiResult.address)
+    debug('  - PermitAndDepositDai:            ', permitAndDepositDaiResult.address)
   }
 
-  debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
-};
+  debug('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
+}
