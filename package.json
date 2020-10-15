@@ -11,7 +11,7 @@
     "reinstall": "rm -rf node_modules/ && rm -f yarn.lock && yarn",
     "verify": "yarn hint && yarn test",
     "hint": "solhint \"contracts/**/*.sol\"",
-    "test": "buidler test",
+    "test": "OPTIMIZER_DISABLED=true buidler test",
     "compile": "buidler --show-stack-traces --max-memory 8192 compile",
     "start": "buidler node --port $LOCAL_BUIDLEREVM_PORT",
     "coverage": "rm -rf build cache test-results.xml && buidler coverage --network coverage --temp build",
