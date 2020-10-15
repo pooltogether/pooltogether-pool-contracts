@@ -27,7 +27,7 @@ contract TwoWinnersBuilder {
     address[] memory externalErc20s;
 
     tw.initialize(
-      prizeStrategy.getTrustedForwarder(),
+      prizeStrategy.trustedForwarder(),
       prizeStrategy.prizePeriodStartedAt(),
       prizeStrategy.prizePeriodSeconds(),
       prizeStrategy.prizePool(),

@@ -6,7 +6,6 @@ pragma experimental ABIEncoderV2;
 
 import "./PrizePoolBuilder.sol";
 import "./SingleRandomWinnerBuilder.sol";
-import "../comptroller/ComptrollerInterface.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
 import "../prize-pool/aave/AavePrizePoolProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
@@ -25,23 +24,23 @@ contract AavePrizePoolBuilder is PrizePoolBuilder {
     uint256 maxTimelockDuration;
   }
 
-  ComptrollerInterface public comptroller;
+  ReserveInterface public reserve;
   AavePrizePoolProxyFactory public aavePrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
   address public trustedForwarder;
   address public lendingPoolAddressesProviderAddress;
 
   constructor (
-    ComptrollerInterface _comptroller,
+    ReserveInterface _reserve,
     address _trustedForwarder,
     AavePrizePoolProxyFactory _aavePrizePoolProxyFactory,
     SingleRandomWinnerBuilder _singleRandomWinnerBuilder,
     address _lendingPoolAddressesProviderAddress
   ) public {
-    require(address(_comptroller) != address(0), "AavePrizePoolBuilder/comptroller-not-zero");
+    require(address(_reserve) != address(0), "AavePrizePoolBuilder/reserve-not-zero");
     require(address(_singleRandomWinnerBuilder) != address(0), "AavePrizePoolBuilder/single-random-winner-builder-not-zero");
     require(address(_aavePrizePoolProxyFactory) != address(0), "AavePrizePoolBuilder/aave-prize-pool-builder-not-zero");
-    comptroller = _comptroller;
+    reserve = _reserve;
     singleRandomWinnerBuilder = _singleRandomWinnerBuilder;
     trustedForwarder = _trustedForwarder;
     aavePrizePoolProxyFactory = _aavePrizePoolProxyFactory;
@@ -66,8 +65,7 @@ contract AavePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      prizeStrategy,
-      comptroller,
+      reserve,
       tokens,
       prizePoolConfig.maxExitFeeMantissa,
       prizePoolConfig.maxTimelockDuration,
@@ -84,14 +82,13 @@ contract AavePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool));
 
     return prizePool;
   }
 
   function createAavePrizePool(
-    AavePrizePoolConfig calldata config,
-    PrizePoolTokenListenerInterface prizeStrategy
+    AavePrizePoolConfig calldata config
   )
     external
     returns (AavePrizePool)
@@ -102,8 +99,7 @@ contract AavePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      prizeStrategy,
-      comptroller,
+      reserve,
       tokens,
       config.maxExitFeeMantissa,
       config.maxTimelockDuration,
@@ -113,7 +109,7 @@ contract AavePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.transferOwnership(msg.sender);
 
-    emit PrizePoolCreated(msg.sender, address(prizePool), address(prizeStrategy));
+    emit PrizePoolCreated(msg.sender, address(prizePool));
 
     return prizePool;
   }

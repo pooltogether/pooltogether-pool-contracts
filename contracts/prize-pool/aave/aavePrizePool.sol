@@ -36,15 +36,13 @@ contract AavePrizePool is PrizePool {
 
   /// @notice Initializes the Prize Pool and Yield Service with the required contract connections
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
-  /// @param _prizeStrategy Address of the component-controller that manages the prize-strategy
   /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
   /// @param _maxExitFeeMantissa The maximum exit fee size, relative to the withdrawal amount
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
   /// @param _aToken Address of the Aave aToken interface
   function initialize (
     address _trustedForwarder,
-    PrizePoolTokenListenerInterface _prizeStrategy,
-    ComptrollerInterface _comptroller,
+    ReserveInterface _reserve,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
@@ -56,8 +54,7 @@ contract AavePrizePool is PrizePool {
   {
     PrizePool.initialize(
       _trustedForwarder,
-      _prizeStrategy,
-      _comptroller,
+      _reserve,
       _controlledTokens,
       _maxExitFeeMantissa,
       _maxTimelockDuration
@@ -94,10 +91,10 @@ contract AavePrizePool is PrizePool {
   /// @param amount The amount of underlying tokens to be redeemed
   /// @return The actual amount of tokens transferred
   function _redeem(uint256 amount) internal override returns (uint256) {
-    IERC20 assetToken = _token();
-    uint256 before = assetToken.balanceOf(address(this));
-    require(_aToken().redeem(amount) == 0, "AavePrizePool/redeem-failed");
-    uint256 diff = assetToken.balanceOf(address(this)).sub(before);
+    uint256 before = _aToken().balanceOf(address(this));
+    require(_aToken().isTransferAllowed(address(this), amount), "AavePrizePool/redeem-failed");
+    _aToken().redeem(amount);
+    uint256 diff = _aToken().balanceOf(address(this)).sub(before);
     return diff;
   }
 
