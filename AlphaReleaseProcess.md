@@ -34,15 +34,23 @@ Update the package dependency and QA
 
 Create new prize pools using the builders.
 
-## 6. Update Reference Pool UI
+## 6. Publish New Prize Pool Addresses
+
+Update the `current-pool-data` repo with the new pool addresses and publish the package on npm.
+
+## 7. Token Listener relations
+
+Create a Comptroller and run setTokenListener on PT owned prizeStrategies.
+
+## 8. Update Reference Pool UI
 
 The reference pool UI needs to be QA'd.
 
-## 7. Update the Subgraph
+## 9. Update the Subgraph
 
 Ensure that the subgraph is updated.
 
-## 8. Update the Pool App
+## 10. Update the Pool App
 
 The Pool app should point to the new prize pools created in step 6
 
@@ -53,7 +61,7 @@ This will entail:
   1. Update the pool addresses
   2. publish the package
 
-## 9. Update the Gitbook Networks
+## 11. Update the Gitbook Networks
 
 The [Generate Networks Doc](https://github.com/pooltogether/generate-networks-doc) project automatically updates the [Gitbook networks page](https://docs.pooltogether.com/networks).
 
