@@ -462,7 +462,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     uint256 tokenTotalSupply = _tokenTotalSupply();
     uint256 currentBalance = _balance();
     uint256 totalInterest = (currentBalance > tokenTotalSupply) ? currentBalance.sub(tokenTotalSupply) : 0;
-    uint256 unaccountedPrizeBalance = totalInterest.sub(_currentAwardBalance);
+    uint256 unaccountedPrizeBalance = (totalInterest > _currentAwardBalance) ? totalInterest.sub(_currentAwardBalance) : 0;
 
     if (unaccountedPrizeBalance > 0) {
       uint256 reserveFee = calculateReserveFee(unaccountedPrizeBalance);
