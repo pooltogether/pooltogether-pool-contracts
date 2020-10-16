@@ -466,6 +466,19 @@ describe('Comptroller', () => {
     })
   })
 
+  describe('transferOut()', () => {
+    it('should not allow anyone else to transfer out', async () => {
+      await expect(comptroller.connect(wallet2).transferOut(dripToken.address, wallet._address, toWei('10'))).to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('should allow the owner to transfer tokens out', async () => {
+      await dripToken.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
+      await expect(comptroller.transferOut(dripToken.address, wallet._address, toWei('10')))
+        .to.emit(comptroller, 'TransferredOut')
+        .withArgs(dripToken.address, wallet._address, toWei('10'))
+    })
+  })
+
   describe('beforeTokenTransfer()', () => {
 
     it('should do nothing if minting', async () => {
