@@ -123,24 +123,26 @@ library VolumeDrip {
     uint256 maxNewTokens
   ) private onlyPeriodOver(self, currentTime) returns (uint256) {
     // calculate the actual drip amount
-    uint256 dripAmount;
+    uint112 dripAmount;
     // If no one deposited, then don't drip anything
     if (self.periods[self.periodCount].totalSupply > 0) {
       dripAmount = self.periods[self.periodCount].dripAmount;
     }
 
+    // if the drip amount is not valid, it has to be updated.
     if (dripAmount > maxNewTokens) {
-      dripAmount = maxNewTokens;
+      dripAmount = maxNewTokens.toUint112();
+      self.periods[self.periodCount].dripAmount = dripAmount;
     }
-
-    self.totalDripped = uint256(self.totalDripped).add(dripAmount).toUint112();
-    uint256 lastEndTime = self.periods[self.periodCount].endTime;
 
     // if we are completing the period far into the future, then we'll have skipped a lot of periods.
     // Here we set the end time so that it's the next period from *now*
+    uint256 lastEndTime = self.periods[self.periodCount].endTime;
     uint256 numberOfPeriods = currentTime.sub(lastEndTime).div(self.nextPeriodSeconds).add(1);
     uint256 endTime = lastEndTime.add(numberOfPeriods.mul(self.nextPeriodSeconds));
+    self.totalDripped = uint256(self.totalDripped).add(dripAmount).toUint112();
     self.periodCount = uint256(self.periodCount).add(1).toUint16();
+
     self.periods[self.periodCount] = Period({
       totalSupply: 0,
       dripAmount: self.nextDripAmount,
@@ -161,7 +163,7 @@ library VolumeDrip {
     uint256 accrued;
     if (depositPeriod < self.periodCount && self.periods[depositPeriod].totalSupply > 0) {
       uint256 fractionMantissa = FixedPoint.calculateMantissa(balance, self.periods[depositPeriod].totalSupply);
-      accrued = FixedPoint.multiplyUintByMantissa(self.nextDripAmount, fractionMantissa);
+      accrued = FixedPoint.multiplyUintByMantissa(self.periods[depositPeriod].dripAmount, fractionMantissa);
     }
     return accrued;
   }

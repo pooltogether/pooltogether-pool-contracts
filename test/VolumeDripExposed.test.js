@@ -120,6 +120,28 @@ describe('VolumeDripExposed', function() {
   })
 
   describe('mint()', () => {
+
+    it('should not be affected by changes to the next drip', async () => {
+      const newPeriodLength = 5
+      const newDripAmount = toWei('100')
+      await drip.setNextPeriod(newPeriodLength, newDripAmount)
+
+      // ensure user has minted within the period
+      await expect(drip.mint(wallet._address, toWei('10')))
+        .to.emit(drip, 'Minted')
+        .withArgs(0)
+
+      // finish the period
+      await expect(drip.drip(endTime, unlimitedTokens))
+        .to.emit(drip, 'MintedTotalSupply')
+        .withArgs(dripAmount)
+
+      // now try to mint for the user
+      await expect(drip.mint(wallet._address, toWei('10')))
+        .to.emit(drip, 'Minted')
+        .withArgs(dripAmount)
+    })
+
     it('should increment a users balance and set their current period', async () => {
       await expect(drip.mint(wallet._address, toWei('10')))
         .to.emit(drip, 'Minted')
