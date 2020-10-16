@@ -1,7 +1,6 @@
 const { deployContract } = require('ethereum-waffle')
 const BalanceDripExposed = require('../build/BalanceDripExposed.json')
 
-const { call } = require('./helpers/call')
 const { ethers } = require('ethers')
 const { expect } = require('chai')
 const buidler = require('@nomiclabs/buidler')
@@ -10,10 +9,10 @@ const toWei = ethers.utils.parseEther
 
 const debug = require('debug')('ptv3:BalanceDripExposed.test')
 
-let overrides = { gasLimit: 20000000 }
-
 describe('BalanceDripExposed', function() {
 
+  const overrides = { gasLimit: 20000000 }
+  const unlimitedTokens = toWei('10000')
   let dripExposed
 
   beforeEach(async () => {
@@ -21,243 +20,191 @@ describe('BalanceDripExposed', function() {
 
     dripExposed = await deployContract(wallet, BalanceDripExposed, [], overrides)
 
-    // current block is one
-    await dripExposed.setDripRate(toWei('0'), toWei('0.1'), 1)
+    await dripExposed.setDripRate(toWei('0.1'))
   })
 
   describe('drip()', () => {
 
+    it('should handle being initialized', async () => {
+      await expect(
+        dripExposed.drip(
+          toWei('0'), // total supply of tokens
+          1, // current timestamp
+          unlimitedTokens
+        )
+      )
+        .to.emit(dripExposed, 'DrippedTotalSupply')
+        .withArgs('0')
+    })
+
+    it('should drip tokens', async () => {
+      await expect(
+        dripExposed.drip(
+          toWei('0'),
+          1, // current timestamp
+          unlimitedTokens
+        )
+      )
+        .to.emit(dripExposed, 'DrippedTotalSupply')
+        .withArgs('0')
+
+      // 10 tokens minted
+        
+      await expect(
+        dripExposed.drip(
+          toWei('10'), // 10 tokens 
+          2, // current timestamp
+          unlimitedTokens
+        )
+      )
+        .to.emit(dripExposed, 'DrippedTotalSupply')
+        .withArgs(toWei('0.1'))
+    })
+
     it('should do nothing when run twice', async () => {
       await dripExposed.drip(
-        wallet._address,
-        toWei('0'), // user has 0 tokens
         toWei('0'), // total supply of tokens
-        1 // current timestamp
+        1, // current timestamp,
+        unlimitedTokens
       )
 
       await expect(
         dripExposed.dripTwice(
-          wallet._address,
-          toWei('100'), // user has 100 tokens
           toWei('100'), // total supply of tokens
-          2 // current timestamp
+          2, // current timestamp
+          unlimitedTokens
         )
       )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('0.1'))
+        .to.emit(dripExposed, 'DrippedTotalSupply')
+        .withArgs(toWei('0.1')) // drips same amount
     })
 
+    it('should limit the newly minted tokens', async () => {
+      await expect(
+        dripExposed.drip(
+          toWei('10'), // total supply of tokens
+          11, // current timestamp
+          unlimitedTokens
+        )
+      )
+        .to.emit(dripExposed, 'DrippedTotalSupply')
+        .withArgs('0')
+
+      await expect(
+        dripExposed.drip(
+          toWei('10'),
+          21,
+          toWei('0.1')
+        )
+      )
+        .to.emit(dripExposed, 'DrippedTotalSupply')
+        .withArgs(toWei('0.1'))
+    })
+
+    it('should not drip any tokens the first time it is called', async () => {
+      await expect(
+        dripExposed.drip(
+          toWei('100'), // total supply of tokens
+          1, // current timestamp,
+          unlimitedTokens
+        )
+      )
+        .to.emit(dripExposed, 'DrippedTotalSupply')
+        .withArgs('0')
+
+      expect(await dripExposed.totalDripped()).to.be.equal(toWei('0'))
+    })
+
+  })
+
+  describe('captureNewTokensForUser()', () => {
+
     it('should retroactively drip to a user', async () => {
-      await expect(dripExposed.drip(
-        wallet._address,
-        toWei('10'), // user has 0 tokens
+      await dripExposed.drip(
+        toWei('0'), // total supply of tokens
+        1, // current timestamp
+        unlimitedTokens
+      )
+
+      await dripExposed.drip(
         toWei('10'), // total supply of tokens
-        11 // current timestamp
-      ))
+        11, // current timestamp
+        unlimitedTokens
+      )
+
+      await expect(
+        dripExposed.captureNewTokensForUser(
+          wallet._address,
+          toWei('10') // user has always held 10 tokens
+        )
+      )
         .to.emit(dripExposed, 'Dripped')
         .withArgs(wallet._address, toWei('1'))
 
       expect(await dripExposed.totalDripped()).to.be.equal(toWei('1'))
     })
 
-    it('should not drip any tokens the first time it is called', async () => {
-      await expect(
-        dripExposed.drip(
-          wallet._address,
-          toWei('100'), // user has 100 tokens
-          toWei('100'), // total supply of tokens
-          1 // current timestamp
-        )
-      )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, '0')
-
-      expect(await dripExposed.totalDripped()).to.be.equal(toWei('0'))
-    })
-
-    it('should start to drip tokens as it moves along', async () => {
-      await dripExposed.drip(
-        wallet._address,
-        toWei('0'), // user has 100 tokens
-        toWei('0'), // total supply of tokens
-        1 // current timestamp
-      )
-
-      await expect(
-        dripExposed.drip(
-          wallet._address,
-          toWei('100'), // user has 100 tokens
-          toWei('100'), // total supply of tokens
-          2 // current timestamp
-        )
-      )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('0.1'))
-    })
-
-    it('should max out when the limit is reached', async () => {
-      await dripExposed.drip(
-        wallet._address,
-        toWei('0'), // user has 100 tokens
-        toWei('0'), // total supply of tokens
-        1 // current timestamp
-      )
-
-      await expect(
-        dripExposed.drip(
-          wallet._address,
-          toWei('100'), // user has 100 tokens
-          toWei('100'), // total supply of tokens
-          5 // current timestamp
-        )
-      )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('0.4'))
-    })
-
     it('should spread the drip across different users', async () => {
+      
+      // assume wallet 1 holds 10 tokens
+
+      // initialize drip
       await dripExposed.drip(
-        wallet._address,
-        toWei('0'), // user balance
-        toWei('0'), // total supply of tokens
-        1 // current timestamp
+        toWei('10'), // total supply of tokens
+        1, // current timestamp
+        unlimitedTokens
       )
 
-      await dripExposed.drip(
-        wallet2._address,
-        toWei('40'), // user has 100 tokens
-        toWei('100'), // total supply of tokens
-        1 // current timestamp
-      )
-
+      // wallet 2 buys 10 tokens.
+      // before the mint must drip
       await expect(
         dripExposed.drip(
-          wallet._address,
-          toWei('20'), // user balance
-          toWei('100'), // total supply of tokens
-          2 // current timestamp
+          toWei('10'), // total supply of tokens before the mint
+          11, // current timestamp
+          unlimitedTokens
         )
       )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('0.02'))
-
+        .to.emit(dripExposed, 'DrippedTotalSupply')
+        .withArgs(toWei('1'))
+      // before the mint we also capture the users balance
       await expect(
-        dripExposed.drip(
+        dripExposed.captureNewTokensForUser(
           wallet2._address,
-          toWei('40'), // user has 40 tokens
-          toWei('100'), // total supply of tokens
-          2 // current timestamp
-        )
-      )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet2._address, toWei('0.04'))
-    })
-
-    it('should not drip to a user who shows up halfway through', async () => {
-      await dripExposed.drip(
-        wallet._address,
-        toWei('0'), // user balance
-        toWei('0'), // total supply of tokens
-        1 // current timestamp
-      )
-
-      await expect(
-        dripExposed.drip(
-          wallet._address,
-          toWei('40'), // user balance
-          toWei('40'), // total supply of tokens
-          2 // current timestamp
-        )
-      )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('0.1'))
-
-      await expect(
-        dripExposed.drip(
-          wallet._address,
-          toWei('40'), // user balance
-          toWei('40'), // total supply of tokens
-          3 // current timestamp
-        )
-      )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('0.1'))
-
-      expect(await dripExposed.totalDripped()).to.be.equal(toWei('0.2'))
-
-      await expect(
-        dripExposed.drip(
-          wallet2._address,
-          toWei('0'), // user has 100 tokens
-          toWei('40'), // total supply of tokens
-          4 // current timestamp
+          toWei('0') // user has always held 10 tokens
         )
       )
         .to.emit(dripExposed, 'Dripped')
         .withArgs(wallet2._address, toWei('0'))
 
+      // Now let's drip right before we capture
       await expect(
         dripExposed.drip(
+          toWei('20'), // total supply of tokens
+          21, // current timestamp
+          unlimitedTokens
+        )
+      )
+        .to.emit(dripExposed, 'DrippedTotalSupply')
+        .withArgs(toWei('1'))
+      // wallet 1 had 100% for 10 seconds, then 50% for ten seconds
+      await expect(
+        dripExposed.captureNewTokensForUser(
+          wallet._address,
+          toWei('10')
+        )
+      )
+        .to.emit(dripExposed, 'Dripped')
+        .withArgs(wallet._address, toWei('1.5'))
+      // wallet 2 had 50% of the supply for 10 seconds
+      await expect(
+        dripExposed.captureNewTokensForUser(
           wallet2._address,
-          toWei('10'), // user has 100 tokens
-          toWei('50'), // total supply of tokens
-          5 // current timestamp
+          toWei('10')
         )
       )
         .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet2._address, toWei('0.02'))
+        .withArgs(wallet2._address, toWei('0.5'))
 
-      await expect(
-        dripExposed.drip(
-          wallet._address,
-          toWei('40'), // user balance
-          toWei('50'), // total supply of tokens
-          6 // current timestamp
-        )
-      )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('0.26')) // 2 seconds @ 0.08 per second
-
-      expect(await dripExposed.totalDripped()).to.be.equal(toWei('0.5'))
-    })
-  })
-
-  describe('setDripRate()', () => {
-
-    it('should allow the drip rate to be changed on the fly', async () => {
-
-      await expect(
-        dripExposed.drip(
-          wallet._address,
-          toWei('40'), // user balance
-          toWei('40'), // total supply of tokens
-          11 // current timestamp
-        )
-      )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('1'))
-
-      // double the drip rate 2 seconds after the previous update
-      await dripExposed.setDripRate(
-        toWei('40'),
-        toWei('0.2'),
-        21
-      )
-
-      expect(await dripExposed.totalDripped()).to.be.equal(toWei('2'))
-
-      await expect(
-        dripExposed.drip(
-          wallet._address,
-          toWei('40'), // user balance
-          toWei('40'), // total supply of tokens
-          22 // current timestamp
-        )
-      )
-        .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('1.2'))
-
-      expect(await dripExposed.totalDripped()).to.be.equal(toWei('2.2'))
     })
   })
 });

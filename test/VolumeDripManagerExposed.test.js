@@ -74,7 +74,7 @@ describe('VolumeDripManagerExposed', function() {
       expect(await manager.isActive(measure.address, drip1.address)).to.be.false
     })
   })
-
+ 
   describe('getActiveVolumeDrips()', () => {
     it('should return a list of active volume drip tokens', async () => {
       await manager.activate(measure.address, drip1.address, periodSeconds, dripAmount, 30)

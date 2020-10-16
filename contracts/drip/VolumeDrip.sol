@@ -4,8 +4,8 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
-import "../external/pooltogether/FixedPoint.sol";
 
+import "../external/pooltogether/FixedPoint.sol";
 import "../utils/ExtendedSafeCast.sol";
 
 library VolumeDrip {
@@ -66,32 +66,32 @@ library VolumeDrip {
     self.nextDripAmount = dripAmount;
   }
 
-  function poke(
+  function drip(
     State storage self,
-    uint256 currentTime
+    uint256 currentTime,
+    uint256 maxNewTokens
   )
     internal
-    returns (bool)
+    returns (uint256)
   {
     if (_isPeriodOver(self, currentTime)) {
-      _completePeriod(self, currentTime);
-      return true;
+      return _completePeriod(self, currentTime, maxNewTokens);
     }
-    return false;
+    return 0;
   }
 
   function mint(
     State storage self,
     address user,
-    uint256 amount,
-    uint256 currentTime
+    uint256 amount
   )
     internal
-    hasPeriod(self)
-    returns (uint256 accrued, bool isNewPeriod)
+    returns (uint256)
   {
-    isNewPeriod = poke(self, currentTime);
-    accrued = _lastBalanceAccruedAmount(self, self.deposits[user].period, self.deposits[user].balance);
+    if (self.periodCount == 0) {
+      return 0;
+    }
+    uint256 accrued = _lastBalanceAccruedAmount(self, self.deposits[user].period, self.deposits[user].balance);
     uint32 currentPeriod = self.periodCount;
     if (accrued > 0) {
       self.deposits[user] = Deposit({
@@ -106,7 +106,7 @@ library VolumeDrip {
     }
     self.periods[currentPeriod].totalSupply = uint256(self.periods[currentPeriod].totalSupply).add(amount).toUint112();
 
-    return (accrued, isNewPeriod);
+    return accrued;
   }
 
   function currentPeriod(State storage self) internal view returns (Period memory) {
@@ -117,17 +117,37 @@ library VolumeDrip {
     return currentTime >= self.periods[self.periodCount].endTime;
   }
 
-  function _completePeriod(State storage self, uint256 currentTime) private onlyPeriodOver(self, currentTime) {
+  function _completePeriod(
+    State storage self,
+    uint256 currentTime,
+    uint256 maxNewTokens
+  ) private onlyPeriodOver(self, currentTime) returns (uint256) {
+    // calculate the actual drip amount
+    uint256 dripAmount;
+    // If no one deposited, then don't drip anything
+    if (self.periods[self.periodCount].totalSupply > 0) {
+      dripAmount = self.periods[self.periodCount].dripAmount;
+    }
+
+    if (dripAmount > maxNewTokens) {
+      dripAmount = maxNewTokens;
+    }
+
+    self.totalDripped = uint256(self.totalDripped).add(dripAmount).toUint112();
     uint256 lastEndTime = self.periods[self.periodCount].endTime;
+
+    // if we are completing the period far into the future, then we'll have skipped a lot of periods.
+    // Here we set the end time so that it's the next period from *now*
     uint256 numberOfPeriods = currentTime.sub(lastEndTime).div(self.nextPeriodSeconds).add(1);
     uint256 endTime = lastEndTime.add(numberOfPeriods.mul(self.nextPeriodSeconds));
-    self.totalDripped = uint256(self.totalDripped).add(self.periods[self.periodCount].dripAmount).toUint112();
     self.periodCount = uint256(self.periodCount).add(1).toUint16();
     self.periods[self.periodCount] = Period({
       totalSupply: 0,
       dripAmount: self.nextDripAmount,
       endTime: endTime.toUint32()
     });
+
+    return dripAmount;
   }
 
   function _lastBalanceAccruedAmount(
@@ -158,11 +178,6 @@ library VolumeDrip {
 
   modifier minPeriod(uint256 _periodSeconds) {
     require(_periodSeconds > 0, "VolumeDrip/period-gt-zero");
-    _;
-  }
-
-  modifier hasPeriod(State storage self) {
-    require(self.periodCount > 0, "VolumeDrip/no-period");
     _;
   }
 }

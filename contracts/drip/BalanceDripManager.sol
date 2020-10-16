@@ -23,13 +23,11 @@ library BalanceDripManager {
   /// @param measure The measure token
   /// @param dripToken The drip token
   /// @param dripRatePerSecond The amount of the drip token to be dripped per second
-  /// @param currentTime The current time
   function activateDrip(
     State storage self,
     address measure,
     address dripToken,
-    uint256 dripRatePerSecond,
-    uint32 currentTime
+    uint256 dripRatePerSecond
   )
     internal
   {
@@ -39,7 +37,7 @@ library BalanceDripManager {
     }
     self.activeBalanceDrips[measure].addAddress(dripToken);
     self.balanceDrips[measure][dripToken].resetTotalDripped();
-    self.balanceDrips[measure][dripToken].setDripRate(IERC20(measure).totalSupply(), dripRatePerSecond, currentTime);
+    self.balanceDrips[measure][dripToken].dripRatePerSecond = dripRatePerSecond;
   }
 
   /// @notice Deactivates an active balance drip.  The balance drip is removed from the active balance drips list.
@@ -54,12 +52,14 @@ library BalanceDripManager {
     address measure,
     address dripToken,
     address prevDripToken,
-    uint32 currentTime
+    uint32 currentTime,
+    uint256 maxNewTokens
   )
     internal
   {
     self.activeBalanceDrips[measure].removeAddress(prevDripToken, dripToken);
-    self.balanceDrips[measure][dripToken].setDripRate(IERC20(measure).totalSupply(), 0, currentTime);
+    self.balanceDrips[measure][dripToken].drip(IERC20(measure).totalSupply(), currentTime, maxNewTokens);
+    self.balanceDrips[measure][dripToken].dripRatePerSecond = 0;
   }
 
   /// @notice Gets a list of active balance drip tokens
@@ -76,9 +76,17 @@ library BalanceDripManager {
   /// @param dripToken The drip token
   /// @param dripRatePerSecond The amount to drip of the token each second
   /// @param currentTime The current time.
-  function setDripRate(State storage self, address measure, address dripToken, uint256 dripRatePerSecond, uint32 currentTime) internal {
+  function setDripRate(
+    State storage self,
+    address measure,
+    address dripToken,
+    uint256 dripRatePerSecond,
+    uint32 currentTime,
+    uint256 maxNewTokens
+  ) internal {
     require(self.activeBalanceDrips[measure].contains(dripToken), "BalanceDripManager/drip-not-active");
-    self.balanceDrips[measure][dripToken].setDripRate(IERC20(measure).totalSupply(), dripRatePerSecond, currentTime);
+    self.balanceDrips[measure][dripToken].drip(IERC20(measure).totalSupply(), currentTime, maxNewTokens);
+    self.balanceDrips[measure][dripToken].dripRatePerSecond = dripRatePerSecond;
   }
 
   /// @notice Returns whether or not a drip is active for the given measure, dripToken pair
