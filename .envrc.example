@@ -1,4 +1,14 @@
+# Used to deploy to testnets
 export HDWALLET_MNEMONIC=''
+
+# Used to deploy to testnets
 export INFURA_API_KEY=''
+
+# Used for verifying contracts on Etherscan
 export ETHERSCAN_API_KEY=''
+
+# Used when starting local node to see accounts.  These are private keys.
 export BUIDLER_EVM_ACCOUNTS='0x1234 0x4321 0x999'
+
+# Required for forking
+export ALCHEMY_URL=''

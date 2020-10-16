@@ -20,8 +20,11 @@ describe('PermitAndDepositDai', () => {
   let permitAndDepositDai, dai, prizePool, chainId
 
   async function permitAndDepositTo({
-    prizePool, to, amount
+    prizePool, fromWallet, to, amount
   }) {
+    if (!fromWallet) {
+      fromWallet = wallet
+    }
     const expiry = (new Date().getTime())
     const nonce = 0
     const allowed = true
@@ -42,7 +45,7 @@ describe('PermitAndDepositDai', () => {
       }
     )
     let { v, r, s } = ethers.utils.splitSignature(permit.sig)
-    await permitAndDepositDai.permitAndDepositTo(
+    return permitAndDepositDai.connect(fromWallet).permitAndDepositTo(
       dai.address, wallet._address, nonce, expiry, allowed, v, r, s,
       prizePool, to, amount, AddressZero, AddressZero
     )
@@ -78,6 +81,21 @@ describe('PermitAndDepositDai', () => {
       expect(await dai.allowance(permitAndDepositDai.address, prizePool.address)).to.equal(toWei('100'))
       expect(await dai.balanceOf(permitAndDepositDai.address)).to.equal(toWei('100'))
       expect(await dai.balanceOf(wallet._address)).to.equal(toWei('900'))
+    })
+
+    it('should not allow anyone else to use the signature', async () => {
+      await dai.mint(wallet._address, toWei('1000'))
+      
+      await prizePool.mock.depositTo.withArgs(wallet2._address, toWei('100'), AddressZero, AddressZero).returns()
+      
+      await expect(
+        permitAndDepositTo({
+          prizePool: prizePool.address,
+          to: wallet2._address,
+          fromWallet: wallet2,
+          amount: toWei('100')
+        })
+      ).to.be.revertedWith('PermitAndDepositDai/only-signer')
     })
   })
 

@@ -63,6 +63,8 @@ interface PrizePoolInterface {
     address controlledToken
   ) external returns (uint256);
 
+  function withdrawReserve(address to) external returns (uint256);
+
   /// @notice Returns the balance that is available to award.
   /// @dev captureAwardBalance() should be called first
   /// @return The total amount of assets to be awarded for the current prize
@@ -218,13 +220,9 @@ interface PrizePoolInterface {
   /// @param _prizeStrategy The new prize strategy
   function setPrizeStrategy(TokenListenerInterface _prizeStrategy) external;
 
-  /// @notice Emergency shutdown of the Prize Pool.  Prize Pool will detach from the global reserve.
-  /// @dev Called by the PrizeStrategy contract to issue an Emergency Shutdown of a corrupted Prize Strategy
-  function emergencyShutdown() external;
-
-  /// @notice Returns whether the Prize Pool has been shutdown.
-  /// @dev When the prize strategy is detached deposits are disabled, and only withdrawals are permitted
-  function isShutdown() external view returns (bool);
+  /// @dev Returns the address of the underlying ERC20 asset
+  /// @return The address of the asset
+  function token() external view returns (IERC20);
 
   /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
   /// @return An array of controlled token addresses

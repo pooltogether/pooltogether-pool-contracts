@@ -1,6 +1,6 @@
 {
   "name": "@pooltogether/pooltogether-contracts",
-  "version": "3.0.0-alpha.41",
+  "version": "3.0.1",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
   "bin": {
@@ -13,7 +13,11 @@
     "hint": "solhint \"contracts/**/*.sol\"",
     "test": "OPTIMIZER_DISABLED=true buidler test",
     "compile": "buidler --show-stack-traces --max-memory 8192 compile",
-    "start": "rm -rf deployments/localhost_31337; DISABLE_HARNESS=true USE_BUIDLER_EVM_ACCOUNTS=$BUIDLER_EVM_ACCOUNTS buidler node",
+    "start": "echo 'Starting node for local testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true USE_BUIDLER_EVM_ACCOUNTS=$BUIDLER_EVM_ACCOUNTS buidler node",
+    "start-gas": "echo 'Starting node for gas testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true buidler node",
+    "start-fork": "ganache-cli -f $ALCHEMY_URL -m \"$HDWALLET_MNEMONIC\" --chainId 1 -u \"0x0000000000000000000000000000000000000000\" -u \"0x564286362092D8e7936f0549571a803B203aAceD\"",
+    "fork-whale": "buidler --network fork run ./scripts/fork-whale.js",
+    "console": "buidler console --network",
     "coverage": "rm -rf build cache test-results.xml && USE_LITERAL_CONTENT=false buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network localhost",
     "deploy": "buidler deploy --write true --network",
@@ -31,7 +35,7 @@
     "@opengsn/gsn": "^2.0.1",
     "@openzeppelin/contracts-ethereum-package": "3.0.0",
     "@pooltogether/fixed-point": "pooltogether/fixed-point.git#0.1.0-upgradeable.1",
-    "@pooltogether/pooltogether-rng-contracts": "^1.0.0-alpha.7",
+    "@pooltogether/pooltogether-rng-contracts": "^1.0.0",
     "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
     "deploy-eip-1820": "1.0.0",
     "sortition-sum-tree-factory": "0.1.0"
@@ -51,6 +55,7 @@
     "debug": "4.1.1",
     "ethereum-waffle": "^3.0.2",
     "ethers": "^5.0.8",
+    "ganache-cli": "^6.12.0",
     "minimist": "^1.2.5",
     "mocha-junit-reporter": "1.23.3",
     "shelljs": "0.8.3",

@@ -58,6 +58,10 @@ contract VolumeDripManagerExposed {
     endTime = state.endTime;
   }
 
+  function getActiveVolumeDrips(address measure) external view returns (address[] memory) {
+    return manager.getActiveVolumeDrips(measure);
+  }
+
   function getDrip(
     address measure,
     address dripToken

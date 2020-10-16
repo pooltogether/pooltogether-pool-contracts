@@ -39,16 +39,13 @@ if (process.env.USE_BUIDLER_EVM_ACCOUNTS && mnemonic) {
     })
   }
 
-  networks.localhost = {
-    accounts: {
-      mnemonic
-    }
+if (process.env.HDWALLET_MNEMONIC) {
+  networks.fork = {
+    url: 'http://127.0.0.1:8545'
   }
+}
 
-  networks.buidlerevm = {
-    accounts: buidlerEvmAccounts
-  }
-} else if (process.env.INFURA_API_KEY && mnemonic) {
+if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
   networks.kovan = {
     url: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
     accounts: {

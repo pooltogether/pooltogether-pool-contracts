@@ -134,6 +134,8 @@ async function deployTestPool({
 
   const prizeStrategy = await buidler.ethers.getContractAt('SingleRandomWinnerHarness', prizeStrategyAddress, wallet)
 
+  await prizeStrategy.setTokenListener(comptrollerResult.address)
+
   return {
     rngService: rngServiceMock,
     token,

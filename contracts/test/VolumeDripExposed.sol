@@ -6,7 +6,8 @@ contract VolumeDripExposed {
   using VolumeDrip for VolumeDrip.State;
 
   event DripTokensBurned(address user, uint256 amount);
-  event Minted(uint256 amount, bool isNewPeriod);
+  event Minted(uint256 amount);
+  event MintedTotalSupply(uint256 amount);
 
   VolumeDrip.State state;
 
@@ -18,16 +19,20 @@ contract VolumeDripExposed {
     state.setNextPeriod(periodSeconds, dripAmount);
   }
 
-  function poke(uint256 currentTime) external returns (bool) {
-    return state.poke(currentTime);
+  function drip(uint256 currentTime, uint256 maxNewTokens) external returns (uint256) {
+    uint256 newTokens = state.drip(currentTime, maxNewTokens);
+
+    emit MintedTotalSupply(newTokens);
+
+    return newTokens;
   }
 
-  function mint(address user, uint256 amount, uint256 currentTime) external returns (uint256 accrued, bool isNewPeriod) {
-    (accrued, isNewPeriod) = state.mint(user, amount, currentTime);
+  function mint(address user, uint256 amount) external returns (uint256) {
+    uint256 accrued = state.mint(user, amount);
 
-    emit Minted(accrued, isNewPeriod);
+    emit Minted(accrued);
 
-    return (accrued, isNewPeriod);
+    return accrued;
   }
 
   function getDrip()

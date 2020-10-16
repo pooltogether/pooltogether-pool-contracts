@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const Reserve = require('../build/Reserve.json')
+const PrizePoolInterface = require('../build/PrizePoolInterface.json')
 const buidler = require('@nomiclabs/buidler')
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
@@ -38,30 +39,18 @@ describe('Reserve', () => {
     })
   })
 
-  describe('setRecipient()', () => {
-    it('should set the recipient', async () => {
-      await expect(reserve.setRecipient(wallet._address))
-        .to.emit(reserve, 'ReserveRecipientSet')
-        .withArgs(wallet._address)
-
-      expect(await reserve.recipient()).to.equal(wallet._address)
-    })
-
-    it('should not be callable by anyone else', async () => {
-      await expect(reserve.connect(wallet2).setRecipient(wallet._address))
+  describe('withdrawReserve', () => {
+    it('should only be callable by the owner', async () => {
+      await expect(reserve.connect(wallet2).withdrawReserve(wallet._address, wallet._address))
         .to.be.revertedWith("Ownable: caller is not the owner")
     })
-  })
 
-  describe('reserveRecipient()', () => {
-    it('should return address 0 if no recipient is set', async () => {
-      expect(await reserve.reserveRecipient(AddressZero)).to.equal(AddressZero)
-    })
+    it('should be callable by the owner', async () => {
+      const prizePool = await deployMockContract(wallet, PrizePoolInterface.abi)
 
-    it('should return the recipient if set', async () => {
-      await reserve.setRecipient(wallet._address)
+      await prizePool.mock.withdrawReserve.withArgs(wallet._address).returns('10')
 
-      expect(await reserve.reserveRecipient(AddressZero)).to.equal(wallet._address)
+      await reserve.withdrawReserve(prizePool.address, wallet._address)
     })
   })
 

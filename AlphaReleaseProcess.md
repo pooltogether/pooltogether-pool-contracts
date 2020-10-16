@@ -2,9 +2,11 @@
 
 Once the smart contracts have been updated, follow the steps below.
 
+The networks Ropsten and Rinkeby are supported.
+
 ## 1. Deploy Top-level Contracts
 
-Run the command:
+For each network run the command:
 
 ```bash
 $ yarn deploy rinkeby
@@ -18,10 +20,16 @@ $ yarn etherscan-verify rinkeby
 
 ## 3. Publish pooltogether-contracts npm package
 
-First increment the alpha version
+Increment the version in `package.json` then publish the package:
 
 ```bash
-$ yarn publish --tag alpha
+$ yarn publish
+```
+
+If the package requires a tag then add a tag:
+
+```bash
+$ yarn publish --tag rc
 ```
 
 ## 4. Update Builder UI
@@ -34,15 +42,23 @@ Update the package dependency and QA
 
 Create new prize pools using the builders.
 
-## 6. Update Reference Pool UI
+## 6. Publish New Prize Pool Addresses
+
+Update the `current-pool-data` repo with the new pool addresses and publish the package on npm.
+
+## 7. Token Listener relations
+
+Update the prize strategies created in the previous step: set the Comptroller as the token listener
+
+## 8. Update Reference Pool UI
 
 The reference pool UI needs to be QA'd.
 
-## 7. Update the Subgraph
+## 9. Update the Subgraph
 
 Ensure that the subgraph is updated.
 
-## 8. Update the Pool App
+## 10. Update the Pool App
 
 The Pool app should point to the new prize pools created in step 6
 
@@ -53,12 +69,14 @@ This will entail:
   1. Update the pool addresses
   2. publish the package
 
-## 9. Update the Gitbook Networks
+## 11. Update the Gitbook Networks
 
-The update script is in [pooltogether-pool-contracts](https://github.com/pooltogether/pooltogether-pool-contracts)
+The [Generate Networks Doc](https://github.com/pooltogether/generate-networks-doc) project automatically updates the [Gitbook networks page](https://docs.pooltogether.com/networks).
 
-First update the dependency `@pooltogether/current-pool-data` then run:
+Update all of the dependencies in package.json to the newest packages:
 
-```bash
-$ yarn update-gitbook-networks
-```
+- `@pooltogether/current-pool-data`
+- `@pooltogether/pooltogether-contracts`
+- `@pooltogether/pooltogether-rng-contracts`
+
+And follow the generate docs instructions.

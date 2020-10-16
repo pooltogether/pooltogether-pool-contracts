@@ -11,7 +11,7 @@ contract PrizePoolHarness is PrizePool {
 
   function initializeAll(
     address _trustedForwarder,
-    ReserveInterface _reserve,
+    RegistryInterface _reserveRegistry,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
@@ -21,7 +21,7 @@ contract PrizePoolHarness is PrizePool {
   {
     PrizePool.initialize(
       _trustedForwarder,
-      _reserve,
+      _reserveRegistry,
       _controlledTokens,
       _maxExitFeeMantissa,
       _maxTimelockDuration

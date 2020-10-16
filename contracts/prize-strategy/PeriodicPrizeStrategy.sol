@@ -411,6 +411,12 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit RngRequestTimeoutSet(rngRequestTimeout);
   }
 
+  /// @notice Gets the current list of External ERC20 tokens that will be awarded with the current prize
+  /// @return An array of External ERC20 token addresses
+  function getExternalErc20Awards() external view returns (address[] memory) {
+    return externalErc20s.addressArray();
+  }
+
   /// @notice Adds an external ERC20 token type as an additional prize that can be awarded
   /// @dev Only the Prize-Strategy owner/creator can assign external tokens,
   /// and they must be approved by the Prize-Pool
@@ -430,6 +436,18 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   function removeExternalErc20Award(address _externalErc20, address _prevExternalErc20) external onlyOwner {
     externalErc20s.removeAddress(_prevExternalErc20, _externalErc20);
     emit ExternalErc20AwardRemoved(_externalErc20);
+  }
+
+  /// @notice Gets the current list of External ERC721 tokens that will be awarded with the current prize
+  /// @return An array of External ERC721 token addresses
+  function getExternalErc721Awards() external view returns (address[] memory) {
+    return externalErc721s.addressArray();
+  }
+
+  /// @notice Gets the current list of External ERC721 tokens that will be awarded with the current prize
+  /// @return An array of External ERC721 token addresses
+  function getExternalErc721AwardTokenIds(address _externalErc721) external view returns (uint256[] memory) {
+    return externalErc721TokenIds[_externalErc721];
   }
 
   /// @notice Adds an external ERC721 token as an additional prize that can be awarded
@@ -461,6 +479,22 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     externalErc721s.removeAddress(_prevExternalErc721, _externalErc721);
     delete externalErc721TokenIds[_externalErc721];
     emit ExternalErc721AwardRemoved(_externalErc721);
+  }
+
+  /// @notice Allows the owner to transfer out external ERC20 tokens
+  /// @dev Used to transfer out tokens held by the Prize Pool.  Could be liquidated, or anything.
+  /// @param to The address that receives the tokens
+  /// @param externalToken The address of the external asset token being transferred
+  /// @param amount The amount of external assets to be transferred
+  function transferExternalERC20(
+    address to,
+    address externalToken,
+    uint256 amount
+  )
+    external
+    onlyOwner
+  {
+    prizePool.transferExternalERC20(to, externalToken, amount);
   }
 
   function _requireNotLocked() internal view {

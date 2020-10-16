@@ -3,7 +3,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "../reserve/ReserveInterface.sol";
+import "../registry/RegistryInterface.sol";
 import "./SingleRandomWinnerBuilder.sol";
 import "./PrizePoolBuilder.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
@@ -25,21 +25,21 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
     uint256 maxTimelockDuration;
   }
 
-  ReserveInterface public reserve;
+  RegistryInterface public reserveRegistry;
   yVaultPrizePoolProxyFactory public vaultPrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
   address public trustedForwarder;
 
   constructor (
-    ReserveInterface _reserve,
+    RegistryInterface _reserveRegistry,
     address _trustedForwarder,
     yVaultPrizePoolProxyFactory _vaultPrizePoolProxyFactory,
     SingleRandomWinnerBuilder _singleRandomWinnerBuilder
   ) public {
-    require(address(_reserve) != address(0), "yVaultPrizePoolBuilder/reserve-not-zero");
+    require(address(_reserveRegistry) != address(0), "yVaultPrizePoolBuilder/reserveRegistry-not-zero");
     require(address(_singleRandomWinnerBuilder) != address(0), "yVaultPrizePoolBuilder/single-random-winner-builder-not-zero");
     require(address(_vaultPrizePoolProxyFactory) != address(0), "yVaultPrizePoolBuilder/compound-prize-pool-builder-not-zero");
-    reserve = _reserve;
+    reserveRegistry = _reserveRegistry;
     singleRandomWinnerBuilder = _singleRandomWinnerBuilder;
     trustedForwarder = _trustedForwarder;
     vaultPrizePoolProxyFactory = _vaultPrizePoolProxyFactory;
@@ -64,7 +64,7 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      reserve,
+      reserveRegistry,
       tokens,
       prizePoolConfig.maxExitFeeMantissa,
       prizePoolConfig.maxTimelockDuration,
@@ -104,7 +104,7 @@ contract yVaultPrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      reserve,
+      reserveRegistry,
       tokens,
       config.maxExitFeeMantissa,
       config.maxTimelockDuration,

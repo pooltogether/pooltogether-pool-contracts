@@ -13,7 +13,7 @@ const Ticket = require('../build/Ticket.json')
 
 const { expect } = require('chai')
 const buidler = require('@nomiclabs/buidler')
-const { AddressZero, Zero } = require('ethers').constants
+const { AddressZero, Zero, One } = require('ethers').constants
 
 
 const now = () => (new Date()).getTime() / 1000 | 0
@@ -273,6 +273,13 @@ describe('SingleRandomWinner', function() {
     })
   })
 
+  describe('getExternalErc20Awards()', () => {
+    it('should allow anyone to retrieve the list of external ERC20 tokens attached to the prize', async () => {
+      expect(await prizeStrategy.connect(wallet2).getExternalErc20Awards())
+        .to.deep.equal([externalERC20Award.address])
+    })
+  })
+
   describe('addExternalErc20Award()', () => {
     it('should allow the owner to add external ERC20 tokens to the prize', async () => {
       const externalAward = await deployMockContract(wallet2, IERC20.abi, overrides)
@@ -303,6 +310,19 @@ describe('SingleRandomWinner', function() {
     it('should not allow anyone else to remove external ERC20 tokens from the prize', async () => {
       await expect(prizeStrategy.connect(wallet2).removeExternalErc20Award(externalERC20Award.address, SENTINEL))
         .to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
+  describe('getExternalErc721Awards()', () => {
+    it('should allow anyone to retrieve the list of external ERC721 tokens attached to the prize', async () => {
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
+      await prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1])
+
+      expect(await prizeStrategy.connect(wallet2).getExternalErc721Awards())
+        .to.deep.equal([externalERC721Award.address])
+
+      expect(await prizeStrategy.connect(wallet2).getExternalErc721AwardTokenIds(externalERC721Award.address))
+        .to.deep.equal([One])
     })
   })
 
@@ -341,6 +361,18 @@ describe('SingleRandomWinner', function() {
     })
     it('should not allow anyone else to remove external ERC721 tokens from the prize', async () => {
       await expect(prizeStrategy.connect(wallet2).removeExternalErc721Award(externalERC721Award.address, SENTINEL))
+        .to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
+  describe('transferExternalERC20', () => {
+    it('should allow arbitrary tokens to be transferred by the owner', async () => {
+      await prizePool.mock.transferExternalERC20.withArgs(wallet._address, externalERC20Award.address, toWei('10')).returns()
+      await expect(prizeStrategy.transferExternalERC20(wallet._address, externalERC20Award.address, toWei('10')))
+      .to.not.be.revertedWith('Ownable: caller is not the owner')
+    })
+    it('should not allow arbitrary tokens to be transferred by anyone else', async () => {
+      await expect(prizeStrategy.connect(wallet2).transferExternalERC20(wallet._address, externalERC20Award.address, toWei('10')))
         .to.be.revertedWith('Ownable: caller is not the owner')
     })
   })

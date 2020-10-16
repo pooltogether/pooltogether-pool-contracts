@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
+
 import "../utils/ExtendedSafeCast.sol";
 import "../external/pooltogether/FixedPoint.sol";
 
@@ -28,34 +29,18 @@ library BalanceDrip {
     mapping(address => UserState) userStates;
   }
 
-  /// @notice Updates a users drip state and returns the number of new tokens they should receive.
+  /// @notice Captures new tokens for a user
+  /// @dev This must be called before changes to the user's balance (i.e. before mint, transfer or burns)
   /// @param self The balance drip state
-  /// @param user The user to update
-  /// @param userMeasureBalance The user's last balance (prior to any change)
-  /// @param measureTotalSupply The measure token's last total supply (prior to any change)
-  /// @param timestamp The current time
-  /// @return The number of tokens to drip to the user.
-  function drip(
-    State storage self,
-    address user,
-    uint256 userMeasureBalance,
-    uint256 measureTotalSupply,
-    uint256 timestamp
-  ) internal returns (uint128) {
-    _updateExchangeRate(self, measureTotalSupply, timestamp);
-    return _dripUser(
-      self,
-      user,
-      userMeasureBalance
-    );
-  }
-
-  function poke(
+  /// @param user The user to capture tokens for
+  /// @param userMeasureBalance The current balance of the user's measure tokens
+  /// @return The number of new tokens
+  function captureNewTokensForUser(
     State storage self,
     address user,
     uint256 userMeasureBalance
   ) internal returns (uint128) {
-    return _dripUser(
+    return _captureNewTokensForUser(
       self,
       user,
       userMeasureBalance
@@ -66,31 +51,22 @@ library BalanceDrip {
     self.totalDripped = 0;
   }
 
-  /// @notice Sets the drip rate per second for a balance drip. It will update the balance drip before setting the drip rate.
+  /// @notice Drips new tokens.
+  /// @dev Should be called immediately before a change to the measure token's total supply
   /// @param self The balance drip state
-  /// @param measureTotalSupply The current measure total supply
-  /// @param dripRatePerSecond the new drip rate per second
-  /// @param currentTime The current time
-  function setDripRate(
+  /// @param measureTotalSupply The measure token's last total supply (prior to any change)
+  /// @param timestamp The current time
+  /// @param maxNewTokens Maximum new tokens that can be dripped
+  /// @return The number of new tokens dripped.
+  function drip(
     State storage self,
     uint256 measureTotalSupply,
-    uint256 dripRatePerSecond,
-    uint32 currentTime
-  )
-    internal
-  {
-    _updateExchangeRate(self, measureTotalSupply, currentTime);
-    self.dripRatePerSecond = dripRatePerSecond;
-  }
-
-  function _updateExchangeRate(
-    State storage self,
-    uint256 measureTotalSupply,
-    uint256 timestamp
-  ) private {
+    uint256 timestamp,
+    uint256 maxNewTokens
+  ) internal returns (uint256) {
     // this should only run once per block.
     if (self.timestamp == uint32(timestamp)) {
-      return;
+      return 0;
     }
 
     uint256 lastTime = self.timestamp == 0 ? timestamp : self.timestamp;
@@ -101,6 +77,9 @@ library BalanceDrip {
     uint256 newTokens;
     if (newSeconds > 0 && self.dripRatePerSecond > 0) {
       newTokens = newSeconds.mul(self.dripRatePerSecond);
+      if (newTokens > maxNewTokens) {
+        newTokens = maxNewTokens;
+      }
       uint256 indexDeltaMantissa = measureTotalSupply > 0 ? FixedPoint.calculateMantissa(newTokens, measureTotalSupply) : 0;
       exchangeRateMantissa = uint256(exchangeRateMantissa).add(indexDeltaMantissa).toUint112();
     }
@@ -108,9 +87,11 @@ library BalanceDrip {
     self.exchangeRateMantissa = exchangeRateMantissa;
     self.totalDripped = uint256(self.totalDripped).add(newTokens).toUint112();
     self.timestamp = timestamp.toUint32();
+
+    return newTokens;
   }
 
-  function _dripUser(
+  function _captureNewTokensForUser(
     State storage self,
     address user,
     uint256 userMeasureBalance
