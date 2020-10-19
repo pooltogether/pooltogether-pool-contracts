@@ -88,6 +88,12 @@ contract Comptroller is ComptrollerStorage, TokenListenerInterface {
     uint256 dripAmount
   );
 
+  event TransferredOut(
+    address indexed token,
+    address indexed to,
+    uint256 amount
+  );
+
   /// @notice Emitted when a new volume drip period has started
   event VolumeDripPeriodStarted(
     address indexed source,
@@ -143,6 +149,12 @@ contract Comptroller is ComptrollerStorage, TokenListenerInterface {
   /// @notice Initializes a new Comptroller.
   constructor () public {
     __Ownable_init();
+  }
+
+  function transferOut(address token, address to, uint256 amount) external onlyOwner {
+    IERC20(token).transfer(to, amount);
+
+    emit TransferredOut(token, to, amount);
   }
 
   /// @notice Activates a balance drip.  Only callable by the owner.
