@@ -4,6 +4,7 @@ const PrizePoolHarness = require('../build/PrizePoolHarness.json')
 const YieldSourceStub = require('../build/YieldSourceStub.json')
 const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 const ReserveInterface = require('../build/ReserveInterface.json')
+const RegistryInterface = require('../build/RegistryInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const IERC20 = require('../build/IERC20.json')
 const IERC721 = require('../build/IERC721.json')
@@ -28,7 +29,7 @@ const NFT_TOKEN_ID = 1
 describe('PrizePool', function() {
   let wallet, wallet2
 
-  let prizePool, erc20token, erc721token, yieldSourceStub, prizeStrategy, reserve
+  let prizePool, erc20token, erc721token, yieldSourceStub, prizeStrategy, reserve, reserveRegistry
   let multiTokenPrizePool, multiTokenPrizeStrategy
 
   let poolMaxExitFee = toWei('0.5')
@@ -48,6 +49,8 @@ describe('PrizePool', function() {
 
     prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
     reserve = await deployMockContract(wallet, ReserveInterface.abi, overrides)
+    reserveRegistry = await deployMockContract(wallet, RegistryInterface.abi, overrides)
+    await reserveRegistry.mock.lookup.returns(reserve.address)
 
     debug('deploying PrizePoolHarness...')
     prizePool = await deployContract(wallet, PrizePoolHarness, [], overrides)
@@ -93,7 +96,7 @@ describe('PrizePool', function() {
     beforeEach(async () => {
       await prizePool.initializeAll(
         FORWARDER,
-        reserve.address,
+        reserveRegistry.address,
         [ticket.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
@@ -140,12 +143,13 @@ describe('PrizePool', function() {
     describe('initialize()', () => {
       it('should set all the vars', async () => {
         expect(await prizePool.token()).to.equal(erc20token.address)
+        expect(await prizePool.reserveRegistry()).to.equal(reserveRegistry.address)
       })
 
       it('should reject invalid params', async () => {
         const _initArgs = [
           FORWARDER,
-          reserve.address,
+          reserveRegistry.address,
           [ticket.address],
           poolMaxExitFee,
           poolMaxTimelockDuration,
@@ -162,7 +166,7 @@ describe('PrizePool', function() {
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/forwarder-not-zero')
 
         initArgs = _initArgs.slice(); initArgs[1] = AddressZero
-        await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/reserve-not-zero')
+        await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/reserveRegistry-not-zero')
 
         initArgs = _initArgs.slice()
         await ticket.mock.controller.returns(AddressZero)
@@ -230,7 +234,6 @@ describe('PrizePool', function() {
         await yieldSourceStub.mock.balance.returns(toWei('110'))
 
         await reserve.mock.reserveRateMantissa.returns('0')
-        await reserve.mock.reserveRecipient.returns(AddressZero)
 
         // first capture the 10 tokens
         await prizePool.captureAwardBalance()
@@ -246,7 +249,6 @@ describe('PrizePool', function() {
         await ticket.mock.totalSupply.returns(toWei('100'))
         await yieldSourceStub.mock.balance.returns(toWei('110'))
         await reserve.mock.reserveRateMantissa.returns('0')
-        await reserve.mock.reserveRecipient.returns(AddressZero)
 
         await expect(prizePool.captureAwardBalance()).to.not.emit(prizePool, 'ReserveFeeCaptured');
         expect(await prizePool.awardBalance()).to.equal(toWei('10'))
@@ -256,36 +258,26 @@ describe('PrizePool', function() {
         const reserveFee = toWei('1')
 
         await reserve.mock.reserveRateMantissa.returns(toWei('0.01'))
-        await reserve.mock.reserveRecipient.returns(wallet._address)
-        await prizePool.setReserveFeeControlledToken(ticket.address)
-
-        await prizeStrategy.mock.beforeTokenTransfer.withArgs(AddressZero, reserve.address, reserveFee, wallet._address).returns()
-        await prizeStrategy.mock.beforeTokenMint.withArgs(wallet._address, reserveFee, ticket.address, AddressZero).returns()
 
         await ticket.mock.totalSupply.returns(toWei('1000'))
-        await ticket.mock.controllerMint.withArgs(wallet._address, reserveFee).returns()
         await yieldSourceStub.mock.balance.returns(toWei('1100'))
 
         let tx = prizePool.captureAwardBalance()
 
         await expect(tx)
           .to.emit(prizePool, 'ReserveFeeCaptured')
-          .withArgs(wallet._address, ticket.address, reserveFee)
+          .withArgs(reserveFee)
 
         await expect(tx)
           .to.emit(prizePool, 'AwardCaptured')
           .withArgs(toWei('99'))
 
         expect(await prizePool.awardBalance()).to.equal(toWei('99'))
+        expect(await prizePool.reserveTotalSupply()).to.equal(reserveFee)
       })
     })
 
     describe('calculateReserveFee()', () => {
-      it('should return zero when no reserve is set', async () => {
-        await prizePool.emergencyShutdown()
-        expect(await prizePool.calculateReserveFee(toWei('1'))).to.equal(toWei('0'))
-      })
-
       it('should return zero when no reserve fee is set', async () => {
         await reserve.mock.reserveRateMantissa.returns(toWei('0'))
         expect(await prizePool.calculateReserveFee(toWei('1'))).to.equal(toWei('0'))
@@ -293,8 +285,27 @@ describe('PrizePool', function() {
 
       it('should calculate an accurate reserve fee on a given amount', async () => {
         await reserve.mock.reserveRateMantissa.returns(toWei('0.5'))
-        await prizePool.setReserveFeeControlledToken(ticket.address)
         expect(await prizePool.calculateReserveFee(toWei('1'))).to.equal(toWei('0.5'))
+      })
+    })
+
+    describe('withdrawReserve()', () => {
+      it('should allow the reserve to be withdrawn', async () => {
+        await reserve.mock.reserveRateMantissa.returns(toWei('0.01'))
+
+        await ticket.mock.totalSupply.returns(toWei('1000'))
+        await yieldSourceStub.mock.balance.returns(toWei('1100'))
+
+        await erc20token.mock.transfer.withArgs(wallet._address, toWei('0.8')).returns(true)
+
+        // capture the reserve of 1 token
+        await prizePool.captureAwardBalance()
+        
+        await yieldSourceStub.mock.redeem.withArgs(toWei('1')).returns(toWei('0.8'))
+
+        await reserve.call(prizePool, 'withdrawReserve', wallet._address)
+
+        expect(await prizePool.reserveTotalSupply()).to.equal('0')
       })
     })
 
@@ -731,19 +742,6 @@ describe('PrizePool', function() {
       })
     })
 
-    describe('emergencyShutdown()', () => {
-      it('should allow owner to detach', async () => {
-        await expect(prizePool.emergencyShutdown())
-          .to.emit(prizePool, 'EmergencyShutdown')
-        expect(await prizePool.reserve()).to.equal(AddressZero)
-      })
-
-      it('should not allow anyone else to call', async () => {
-        prizePool2 = prizePool.connect(wallet2)
-        await expect(prizePool2.emergencyShutdown()).to.be.revertedWith('Ownable: caller is not the owner')
-      })
-    })
-
     describe('setLiquidityCap', () => {
       it('should allow the owner to set the liquidity cap', async () => {
         const liquidityCap = toWei('1000')
@@ -778,7 +776,7 @@ describe('PrizePool', function() {
 
       await multiTokenPrizePool.initializeAll(
         FORWARDER,
-        reserve.address,
+        reserveRegistry.address,
         [ticket.address, sponsorship.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
@@ -796,6 +794,22 @@ describe('PrizePool', function() {
         await multiTokenPrizePool.setTimelockBalance(toWei('789'))
 
         expect(await multiTokenPrizePool.accountedBalance()).to.equal(toWei('1368'))
+      })
+
+      it('should include the reserve', async () => {
+        await ticket.mock.totalSupply.returns(toWei('50'))
+        await sponsorship.mock.totalSupply.returns(toWei('50'))
+        await yieldSourceStub.mock.balance.returns(toWei('110'))
+        await reserve.mock.reserveRateMantissa.returns(toWei('0.1'))
+
+        // first capture the 10 tokens as 9 prize and 1 reserve
+        await multiTokenPrizePool.captureAwardBalance()
+
+        await yieldSourceStub.mock.balance.returns(toWei('110'))
+        // now try to capture again
+        expect(
+          await multiTokenPrizePool.accountedBalance()
+        ).to.equal(toWei('101'))
       })
     })
   })
@@ -905,97 +919,6 @@ describe('PrizePool', function() {
       await expect(prizePool.awardExternalERC721(wallet._address, erc721token.address, [NFT_TOKEN_ID]))
         .to.emit(prizePool, 'AwardedExternalERC721')
         .withArgs(wallet._address, erc721token.address, [NFT_TOKEN_ID])
-    })
-  })
-
-  describe('that has been emergency shutdown', () => {
-    let shutdownPrizePool
-    let ticket2
-
-    beforeEach(async () => {
-      debug('deploying PrizePoolHarness...')
-      shutdownPrizePool = await deployContract(wallet, PrizePoolHarness, [], overrides)
-
-      debug('deploying ControlledToken...')
-      ticket2 = await deployMockContract(wallet, ControlledToken.abi, overrides)
-      await ticket2.mock.controller.returns(shutdownPrizePool.address)
-
-      debug('initializing PrizePool...')
-      await shutdownPrizePool.initializeAll(
-        FORWARDER,
-        reserve.address,
-        [ticket2.address],
-        poolMaxExitFee,
-        poolMaxTimelockDuration,
-        yieldSourceStub.address
-      )
-
-      await shutdownPrizePool.setPrizeStrategy(wallet._address)
-
-      debug('detaching PrizeStrategy from PrizePool...')
-      await shutdownPrizePool.emergencyShutdown();
-    })
-
-    describe('depositTo()', () => {
-      it('should NOT mint tokens to the user', async () => {
-        await ticket2.mock.totalSupply.returns('10')
-        await expect(shutdownPrizePool.depositTo(wallet2._address, toWei('1'), ticket2.address, AddressZero))
-          .to.be.revertedWith('PrizePool/shutdown')
-      })
-    })
-
-    describe('timelockDepositTo()', () => {
-      it('should NOT mint tokens to the user', async () => {
-        await ticket2.mock.totalSupply.returns('10')
-        await expect(shutdownPrizePool.timelockDepositTo(wallet2._address, toWei('1'), ticket2.address, []))
-          .to.be.revertedWith('PrizePool/shutdown')
-      })
-    })
-
-    describe('withdrawInstantlyFrom()', () => {
-      it('should allow a user to withdraw instantly', async () => {
-        let amount = toWei('11')
-
-        // updateAwardBalance
-        await yieldSourceStub.mock.balance.returns('0')
-        await ticket2.mock.totalSupply.returns(amount)
-        await ticket2.mock.balanceOf.withArgs(wallet._address).returns(amount)
-
-        await ticket2.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
-        await yieldSourceStub.mock.redeem.withArgs(amount).returns(amount)
-        await erc20token.mock.transfer.withArgs(wallet._address, amount).returns(true)
-
-        await expect(shutdownPrizePool.withdrawInstantlyFrom(wallet._address, amount, ticket2.address, toWei('1')))
-          .to.emit(shutdownPrizePool, 'InstantWithdrawal')
-          .withArgs(wallet._address, wallet._address, ticket2.address, amount, amount, toWei('0'))
-      })
-    })
-
-    describe('withdrawWithTimelockFrom()', () => {
-      it('should allow a user to withdraw with a timelock', async () => {
-        let amount = toWei('10')
-
-        // updateAwardBalance
-        await yieldSourceStub.mock.balance.returns('0')
-        await ticket2.mock.totalSupply.returns(amount)
-        await ticket2.mock.balanceOf.withArgs(wallet._address).returns(amount)
-
-        // force current time
-        await shutdownPrizePool.setCurrentTime('1')
-
-        // expect a ticket burn
-        await ticket2.mock.controllerBurnFrom.withArgs(wallet._address, wallet._address, amount).returns()
-        await yieldSourceStub.mock.redeem.withArgs(amount).returns(amount)
-
-        // expect reserve signal
-        // full-amount should be tansferred
-        await erc20token.mock.transfer.withArgs(wallet._address, amount).returns(true)
-        await shutdownPrizePool.withdrawWithTimelockFrom(wallet._address, amount, ticket2.address)
-
-        expect(await shutdownPrizePool.timelockBalanceOf(wallet._address)).to.equal(toWei('0'))
-        expect(await shutdownPrizePool.timelockBalanceAvailableAt(wallet._address)).to.equal('0')
-        expect(await shutdownPrizePool.timelockTotalSupply()).to.equal(toWei('0'))
-      })
     })
   })
 });

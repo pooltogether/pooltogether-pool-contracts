@@ -31,7 +31,5 @@ contract PrizePoolBuilder {
       ticketCreditRateMantissa.toUint128(),
       ticketCreditLimitMantissa.toUint128()
     );
-
-    prizePool.setReserveFeeControlledToken(address(singleRandomWinner.sponsorship()));
   }
 }

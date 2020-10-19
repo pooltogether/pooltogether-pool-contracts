@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
 
 import "../external/pooltogether/FixedPoint.sol";
+import "../registry/RegistryInterface.sol";
 import "../reserve/ReserveInterface.sol";
 import "./YieldSource.sol";
 import "../token/TokenListenerInterface.sol";
@@ -30,7 +31,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   /// @dev Emitted when an instance is initialized
   event Initialized(
     address trustedForwarder,
-    address reserve,
+    address reserveRegistry,
     uint256 maxExitFeeMantissa,
     uint256 maxTimelockDuration
   );
@@ -40,15 +41,8 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     address indexed token
   );
 
-  /// @dev Set when the reserve changes the type of reserve token
-  event ReserveFeeControlledTokenSet(
-    address indexed token
-  );
-
   /// @dev Emitted when reserve is captured.
   event ReserveFeeCaptured(
-    address indexed to,
-    address indexed token,
     uint256 amount
   );
 
@@ -120,6 +114,11 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     uint256 unlockTimestamp
   );
 
+  event ReserveWithdrawal(
+    address indexed to,
+    uint256 amount
+  );
+
   /// @dev Event emitted when timelocked funds are swept back to a user
   event TimelockedWithdrawalSwept(
     address indexed operator,
@@ -159,9 +158,6 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     uint256 amount
   );
 
-  /// @dev Event emitted when the prize pool enters emergency shutdown mode
-  event EmergencyShutdown();
-
   struct CreditPlan {
     uint128 creditLimitMantissa;
     uint128 creditRateMantissa;
@@ -174,10 +170,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   }
 
   /// @dev Reserve to which reserve fees are sent
-  ReserveInterface public reserve;
-
-  /// @dev Controlled token to serve as the reserve fee
-  address public reserveFeeControlledToken;
+  RegistryInterface public reserveRegistry;
 
   /// @dev A linked list of all the controlled tokens
   MappedSinglyLinkedList.Mapping internal _tokens;
@@ -194,6 +187,9 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
 
   /// @dev The total funds that are timelocked.
   uint256 public timelockTotalSupply;
+
+  /// @dev The total funds that have been allocated to the reserve
+  uint256 public reserveTotalSupply;
 
   /// @dev The total amount of funds that the prize pool can hold.
   uint256 public liquidityCap;
@@ -220,7 +216,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock
   function initialize (
     address _trustedForwarder,
-    ReserveInterface _reserve,
+    RegistryInterface _reserveRegistry,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration
@@ -228,7 +224,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     public
     initializer
   {
-    require(address(_reserve) != address(0), "PrizePool/reserve-not-zero");
+    require(address(_reserveRegistry) != address(0), "PrizePool/reserveRegistry-not-zero");
     require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
     _tokens.initialize();
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
@@ -239,13 +235,13 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     _setLiquidityCap(uint256(-1));
 
     trustedForwarder = _trustedForwarder;
-    reserve = _reserve;
+    reserveRegistry = _reserveRegistry;
     maxExitFeeMantissa = _maxExitFeeMantissa;
     maxTimelockDuration = _maxTimelockDuration;
 
     emit Initialized(
       _trustedForwarder,
-      address(_reserve),
+      address(_reserveRegistry),
       maxExitFeeMantissa,
       maxTimelockDuration
     );
@@ -253,7 +249,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
 
   /// @dev Returns the address of the underlying ERC20 asset
   /// @return The address of the asset
-  function token() external view returns (IERC20) {
+  function token() external override view returns (IERC20) {
     return _token();
   }
 
@@ -270,17 +266,6 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     return _canAwardExternal(_externalToken);
   }
 
-  /// @dev Sets which controlled token will be minted as the reserve fee.  Only callable by the owner.
-  /// @param controlledToken The controlled token to mint.  This must be controlled by the PrizePool.
-  function setReserveFeeControlledToken(address controlledToken) external onlyControlledToken(controlledToken) onlyOwner {
-    _setReserveFeeControlledToken(controlledToken);
-  }
-
-  function _setReserveFeeControlledToken(address controlledToken) internal {
-    reserveFeeControlledToken = controlledToken;
-    emit ReserveFeeControlledTokenSet(controlledToken);
-  }
-
   /// @notice Deposits timelocked tokens for a user back into the Prize Pool as another asset.
   /// @param to The address receiving the tokens
   /// @param amount The amount of timelocked assets to re-deposit
@@ -293,7 +278,6 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     external
     onlyControlledToken(controlledToken)
     canAddLiquidity(amount)
-    notShutdown
     nonReentrant
   {
     address operator = _msgSender();
@@ -318,7 +302,6 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     external override
     onlyControlledToken(controlledToken)
     canAddLiquidity(amount)
-    notShutdown
     nonReentrant
   {
     address operator = _msgSender();
@@ -473,14 +456,11 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     uint256 unaccountedPrizeBalance = (totalInterest > _currentAwardBalance) ? totalInterest.sub(_currentAwardBalance) : 0;
 
     if (unaccountedPrizeBalance > 0) {
-      if (address(reserve) != address(0)) {
-        uint256 reserveFee = calculateReserveFee(unaccountedPrizeBalance);
-        address reserveRecipient = reserve.reserveRecipient(address(this));
-        if (reserveFee > 0 && reserveRecipient != address(0)) {
-          unaccountedPrizeBalance = unaccountedPrizeBalance.sub(reserveFee);
-          _mint(reserveRecipient, reserveFee, reserveFeeControlledToken, address(0));
-          emit ReserveFeeCaptured(reserveRecipient, reserveFeeControlledToken, reserveFee);
-        }
+      uint256 reserveFee = calculateReserveFee(unaccountedPrizeBalance);
+      if (reserveFee > 0) {
+        reserveTotalSupply = reserveTotalSupply.add(reserveFee);
+        unaccountedPrizeBalance = unaccountedPrizeBalance.sub(reserveFee);
+        emit ReserveFeeCaptured(reserveFee);
       }
       _currentAwardBalance = _currentAwardBalance.add(unaccountedPrizeBalance);
 
@@ -488,6 +468,19 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     }
 
     return _currentAwardBalance;
+  }
+
+  function withdrawReserve(address to) external override onlyReserve returns (uint256) {
+
+    uint256 amount = reserveTotalSupply;
+    reserveTotalSupply = 0;
+    uint256 redeemed = _redeem(amount);
+
+    _token().safeTransfer(address(to), redeemed);
+
+    emit ReserveWithdrawal(to, amount);
+
+    return redeemed;
   }
 
   /// @notice Called by the prize strategy to award prizes.
@@ -616,11 +609,12 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   /// @param amount The prize amount
   /// @return The size of the reserve portion of the prize
   function calculateReserveFee(uint256 amount) public view returns (uint256) {
+    ReserveInterface reserve = ReserveInterface(reserveRegistry.lookup());
     if (address(reserve) == address(0)) {
       return 0;
     }
     uint256 reserveRateMantissa = reserve.reserveRateMantissa(address(this));
-    if (reserveRateMantissa == 0 || reserveFeeControlledToken == address(0)) {
+    if (reserveRateMantissa == 0) {
       return 0;
     }
     return FixedPoint.multiplyUintByMantissa(amount, reserveRateMantissa);
@@ -1003,10 +997,6 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     require(ControlledToken(_controlledToken).controller() == this, "PrizePool/token-ctrlr-mismatch");
     _tokens.addAddress(_controlledToken);
 
-    if (reserveFeeControlledToken == address(0)) {
-      _setReserveFeeControlledToken(_controlledToken);
-    }
-
     emit ControlledTokenAdded(_controlledToken);
   }
 
@@ -1023,20 +1013,6 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     prizeStrategy = _prizeStrategy;
 
     emit PrizeStrategySet(address(_prizeStrategy));
-  }
-
-  /// @notice Emergency shutdown of the Prize Pool.  Prize Pool will detach from the global reserve.
-  /// @dev Called by the PrizeStrategy contract to issue an Emergency Shutdown of a corrupted Prize Strategy
-  function emergencyShutdown() external override onlyOwner {
-    delete reserve;
-
-    emit EmergencyShutdown();
-  }
-
-  /// @notice Returns whether the Prize Pool has been shutdown.
-  /// @dev When the prize strategy is detached deposits are disabled, and only withdrawals are permitted
-  function isShutdown() external override view returns (bool) {
-    return address(reserve) != address(0);
   }
 
   /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
@@ -1074,7 +1050,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   /// @notice The total of all controlled tokens and timelock.
   /// @return The current total of all tokens and timelock.
   function _tokenTotalSupply() internal view returns (uint256) {
-    uint256 total = timelockTotalSupply;
+    uint256 total = timelockTotalSupply.add(reserveTotalSupply);
     address currentToken = _tokens.start();
     while (currentToken != address(0) && currentToken != _tokens.end()) {
       total = total.add(IERC20(currentToken).totalSupply());
@@ -1141,9 +1117,9 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     _;
   }
 
-  /// @dev modifier that can only be called when the Prize Pool isn't shutdown
-  modifier notShutdown() {
-    require(address(reserve) != address(0), "PrizePool/shutdown");
+  modifier onlyReserve() {
+    ReserveInterface reserve = ReserveInterface(reserveRegistry.lookup());
+    require(address(reserve) == msg.sender, "PrizePool/only-reserve");
     _;
   }
 }

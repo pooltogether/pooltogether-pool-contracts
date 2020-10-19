@@ -127,22 +127,34 @@ module.exports = async (buidler) => {
 
   let reserveAddress = reserve
   // if not set by named config
-  if (!reserveAddress) {
-    const contract = isTestEnvironment ? 'Reserve' : 'ReserveProxy'
-    const reserveResult = await deploy("Reserve", {
-      contract,
-      from: deployer,
-      skipIfAlreadyDeployed: true
-    })
-    reserveAddress = reserveResult.address
-    const reserveContract = await buidler.ethers.getContractAt(
-      "Reserve",
-      reserveResult.address,
-      signer
-    )
-    if (adminAccount !== deployer) {
-      await reserveContract.transferOwnership(adminAccount)
-    }
+  const reserveResult = await deploy("Reserve", {
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+  const reserveContract = await buidler.ethers.getContractAt(
+    "Reserve",
+    reserveResult.address,
+    signer
+  )
+  if (adminAccount !== deployer) {
+    await reserveContract.transferOwnership(adminAccount)
+  }
+
+  const reserveRegistryResult = await deploy("ReserveRegistry", {
+    contract: 'Registry',
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+  const reserveRegistryContract = await buidler.ethers.getContractAt(
+    "Registry",
+    reserveRegistryResult.address,
+    signer
+  )
+  if (await reserveRegistryContract.lookup() != reserveResult.address) {
+    await reserveRegistryContract.register(reserveResult.address)
+  }
+  if (adminAccount !== deployer) {
+    await reserveRegistryContract.transferOwnership(adminAccount)
   }
 
   let permitAndDepositDaiResult
@@ -263,7 +275,7 @@ module.exports = async (buidler) => {
   debug("\n  Deploying CompoundPrizePoolBuilder...")
   const compoundPrizePoolBuilderResult = await deploy("CompoundPrizePoolBuilder", {
     args: [
-      reserveAddress,
+      reserveRegistryResult.address,
       trustedForwarder,
       compoundPrizePoolProxyFactoryResult.address,
       singleRandomWinnerBuilderResult.address
@@ -275,7 +287,7 @@ module.exports = async (buidler) => {
   debug("\n  Deploying yVaultPrizePoolBuilder...")
   const yVaultPrizePoolBuilderResult = await deploy("yVaultPrizePoolBuilder", {
     args: [
-      reserveAddress,
+      reserveRegistryResult.address,
       trustedForwarder,
       yVaultPrizePoolProxyFactoryResult.address,
       singleRandomWinnerBuilderResult.address
@@ -287,7 +299,7 @@ module.exports = async (buidler) => {
   debug("\n  Deploying StakePrizePoolBuilder...")
   const stakePrizePoolBuilderResult = await deploy("StakePrizePoolBuilder", {
     args: [
-      reserveAddress,
+      reserveRegistryResult.address,
       trustedForwarder,
       stakePrizePoolProxyFactoryResult.address,
       singleRandomWinnerBuilderResult.address
