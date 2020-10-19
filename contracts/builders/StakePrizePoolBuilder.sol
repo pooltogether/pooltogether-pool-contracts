@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "./PrizePoolBuilder.sol";
-import "../reserve/ReserveInterface.sol";
+import "../registry/RegistryInterface.sol";
 import "./SingleRandomWinnerBuilder.sol";
 import "../prize-pool/stake/StakePrizePoolProxyFactory.sol";
 
@@ -19,21 +19,21 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
     uint256 maxTimelockDuration;
   }
 
-  ReserveInterface public reserve;
+  RegistryInterface public reserveRegistry;
   StakePrizePoolProxyFactory public stakePrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
   address public trustedForwarder;
 
   constructor (
-    ReserveInterface _reserve,
+    RegistryInterface _reserveRegistry,
     address _trustedForwarder,
     StakePrizePoolProxyFactory _stakePrizePoolProxyFactory,
     SingleRandomWinnerBuilder _singleRandomWinnerBuilder
   ) public {
-    require(address(_reserve) != address(0), "StakePrizePoolBuilder/reserve-not-zero");
+    require(address(_reserveRegistry) != address(0), "StakePrizePoolBuilder/reserveRegistry-not-zero");
     require(address(_singleRandomWinnerBuilder) != address(0), "StakePrizePoolBuilder/single-random-winner-builder-not-zero");
     require(address(_stakePrizePoolProxyFactory) != address(0), "StakePrizePoolBuilder/stake-prize-pool-proxy-factory-not-zero");
-    reserve = _reserve;
+    reserveRegistry = _reserveRegistry;
     singleRandomWinnerBuilder = _singleRandomWinnerBuilder;
     trustedForwarder = _trustedForwarder;
     stakePrizePoolProxyFactory = _stakePrizePoolProxyFactory;
@@ -57,7 +57,7 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      reserve,
+      reserveRegistry,
       tokens,
       prizePoolConfig.maxExitFeeMantissa,
       prizePoolConfig.maxTimelockDuration,
@@ -90,7 +90,7 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      reserve,
+      reserveRegistry,
       tokens,
       config.maxExitFeeMantissa,
       config.maxTimelockDuration,

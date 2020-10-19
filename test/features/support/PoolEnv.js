@@ -101,12 +101,7 @@ function PoolEnv() {
   }
 
   this.setReserveRate = async function ({rate}) {
-    let wallet = await this.wallet(0)
-    let prizePool = await this.prizePool(wallet)
-
-    await prizePool.setReserveFeeControlledToken(this.env.sponsorship.address, this.overrides)
     await this.env.reserve.setRateMantissa(toWei(rate), this.overrides)
-    await this.env.reserve.setRecipient(wallet._address)
   }
 
   this.prizeStrategy = async function (wallet) {

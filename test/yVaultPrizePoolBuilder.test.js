@@ -14,7 +14,7 @@ describe('yVaultPrizePoolBuilder', () => {
 
   let builder
 
-  let reserve,
+  let reserveRegistry,
       trustedForwarder,
       singleRandomWinnerBuilder,
       vaultPrizePoolProxyFactory,
@@ -33,7 +33,7 @@ describe('yVaultPrizePoolBuilder', () => {
       wallet
     )
 
-    reserve = (await deployments.get("Reserve"))
+    reserveRegistry = (await deployments.get("ReserveRegistry"))
     trustedForwarder = (await deployments.get("TrustedForwarder"))
     singleRandomWinnerBuilder = (await deployments.get("SingleRandomWinnerBuilder"))
     vaultPrizePoolProxyFactory = (await deployments.get("yVaultPrizePoolProxyFactory"))
@@ -65,7 +65,7 @@ describe('yVaultPrizePoolBuilder', () => {
 
   describe('initialize()', () => {
     it('should setup all factories', async () => {
-      expect(await builder.reserve()).to.equal(reserve.address)
+      expect(await builder.reserveRegistry()).to.equal(reserveRegistry.address)
       expect(await builder.singleRandomWinnerBuilder()).to.equal(singleRandomWinnerBuilder.address)
       expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.vaultPrizePoolProxyFactory()).to.equal(vaultPrizePoolProxyFactory.address)
@@ -139,7 +139,6 @@ describe('yVaultPrizePoolBuilder', () => {
       expect(await sponsorship.symbol()).to.equal(singleRandomWinnerConfig.sponsorshipSymbol)
       expect(await sponsorship.decimals()).to.equal(decimals)
 
-      expect(await prizePool.reserveFeeControlledToken()).to.equal(sponsorshipAddress)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(vaultPrizePoolConfig.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(vaultPrizePoolConfig.maxTimelockDuration)
 

@@ -20,7 +20,7 @@ contract StakePrizePool is PrizePool {
   /// @param _stakeToken Address of the stake token
   function initialize (
     address _trustedForwarder,
-    ReserveInterface _reserve,
+    RegistryInterface _reserveRegistry,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
@@ -31,7 +31,7 @@ contract StakePrizePool is PrizePool {
   {
     PrizePool.initialize(
       _trustedForwarder,
-      _reserve,
+      _reserveRegistry,
       _controlledTokens,
       _maxExitFeeMantissa,
       _maxTimelockDuration
