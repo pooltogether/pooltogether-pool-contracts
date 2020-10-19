@@ -16,6 +16,8 @@ const chainName = chainId => {
       return 'Kovan'
     case 31337:
       return 'BuidlerEVM'
+    case 1337:
+      return 'Mainnet Fork'
     default:
       return 'Unknown'
   }
@@ -35,7 +37,8 @@ const getLendingPoolAddressesProviderAddress = chainId => {
     case 42:
       return '0x506B0B2CF20FAA8f38a4E2B524EE43e1f4458Cc5'
     case 31337:
-      // TODO: doesn't work yet but will once we can fork mainnet in local with buidler
+      return '0x24a42fD28C976A61Df5D00D0599C34c4f90748c8'
+    case 1337:
       return '0x24a42fD28C976A61Df5D00D0599C34c4f90748c8'
   }
 }

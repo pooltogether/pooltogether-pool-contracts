@@ -20,7 +20,7 @@ task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
   return input;
 })
 
-const testnetAdmin = '0xE0F4217390221aF47855E094F6e112D43C8698fE' // Account 1
+const testnetAdmin = '0x3A791e828fDd420fbE16416efDF509E4b9088Dd4' // Account 1
 const testnetUser1 = '0xeedDf4937E3A7aBe03E08963C3c20affbD770b51' // Account 3
 const testnetUser2 = '0xcE53382F96FdE0DB592574ed2571B3307dB859Ce' // Account 4
 const testnetUser3 = '0x381843c8b4a4a0Da3C0800708c84AA2d792D22b1' // Account 5
