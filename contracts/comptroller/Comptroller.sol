@@ -456,12 +456,6 @@ contract Comptroller is ComptrollerStorage, TokenListenerInterface {
     );
   }
 
-
-
-
-
-
-
   /// @notice Returns a users claimable balance of drip tokens.  This is the combination of all balance and volume drips.
   /// @param dripToken The token that is being disbursed
   /// @param user The user whose balance should be checked.
