@@ -2,6 +2,11 @@ const buidler = require("@nomiclabs/buidler");
 
 const VALID_CHAIN_IDS = [3, 4, 5, 42]
 
+const PRIZE_STRATEGIES = {
+  rinkeby: ['0xB61014475292971649063069C26F3fcF9FA0B787', '0x1b92BC2F339ef25161711e4EafC31999C005aF21', '0x1607ce8aDe05C324043D7f5362A6d856cd4Ae589', '0xc1987913c715fE0B980edFc16188265c309eb3cc', '0x573d29392BF376530f358616Bfa2f4e11252968f', '0x44D37Ce4881480BF675819c207eB92B871A2985B'],
+  ropsten: ['0x7ce2BE586768958B7C4dfdEC9aA870b65fea0971', '0x55c06f1Ed5c73E70e07f99dB1dE2FfF697c2d5a1', '0x906f199B89B5e3D5d615e2aaB323a77E8CfAD778', '0x3C397ccEE1fb876c7Eb77F28482caE4340f45828', '0x02eb1D850677453932C6fe2ed1f90cDEeD6590c9', '0x7c0C2D3269df02363FF2015B5E1e35164fBfDA20'],
+}
+
 const BALANCE_DRIPS = {
   rinkeby: [
     {
@@ -34,6 +39,22 @@ const getChainName = (chainId) => {
     case 42: return 'kovan';
     case 31337: return 'buidlerEVM';
     default: return 'unknown';
+  }
+}
+
+const attachPrizePoolTokenListeners = async ({chainName, prizeStrategyAbi, comptroller, testnetBuilder}) => {
+  let prizeStrategy
+  let tokenListener
+  const testnetSigner = await buidler.ethers.provider.getSigner(testnetBuilder)
+
+  const prizeStrategies = PRIZE_STRATEGIES[chainName]
+  for (i = 0; i < prizeStrategies.length; i++) {
+    prizeStrategy = new ethers.Contract(prizeStrategies[i], prizeStrategyAbi, testnetSigner)
+
+    console.log(`\n  Updating TokenListener for PrizeStrategy ${i+1} (${prizeStrategies[i]})...`)
+    await prizeStrategy.setTokenListener(comptroller.address)
+    tokenListener = await prizeStrategy.tokenListener()
+    console.log(`  -- TokenListener set to: ${tokenListener}`)
   }
 }
 
@@ -120,7 +141,7 @@ async function main() {
   console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
   const { getNamedAccounts, getChainId, ethers } = buidler
-  const { testnetUser1, testnetUser2, testnetUser3 } = await getNamedAccounts()
+  const { testnetBuilder, testnetUser1, testnetUser2, testnetUser3 } = await getNamedAccounts()
   const testnetUsers = [testnetUser1, testnetUser2, testnetUser3]
 
   const chainId = parseInt(await getChainId(), 10)
@@ -130,21 +151,33 @@ async function main() {
   }
   console.log(`Using network: ${chainName}\n`)
 
+  // Get PrizeStrategy ABI
+  const prizeStrategyAbi = require(`../abis/PeriodicPrizeStrategy.json`)
+
   // Get Deployed Comptroller
   const comptrollerDeployData = require(`../deployments/${chainName}/Comptroller.json`)
-
   console.log(`\n  Loading Comptroller from address: "${comptrollerDeployData.address}"...`)
   const comptroller = new ethers.Contract(comptrollerDeployData.address, comptrollerDeployData.abi)
 
   //
+  // Token Listeners (Comptroller)
+  //
+  await attachPrizePoolTokenListeners({
+    chainName,
+    prizeStrategyAbi,
+    comptroller,
+    testnetBuilder
+  })
+
+  //
   // Balance Drips
   //
-  await runBalanceDripTransactions({chainName, comptroller, testnetUsers})
+  // await runBalanceDripTransactions({chainName, comptroller, testnetUsers})
 
   //
   // Volume Drips
   //
-  await runVolumeDripTransactions({chainName, comptroller, testnetUsers})
+  // await runVolumeDripTransactions({chainName, comptroller, testnetUsers})
 
 
   /////////////////////////////////////

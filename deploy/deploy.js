@@ -287,7 +287,8 @@ module.exports = async (buidler) => {
   // Display Contract Addresses
   debug("\n  Contract Deployments Complete!\n")
   debug("  - TicketProxyFactory:             ", ticketProxyFactoryResult.address)
-  debug("  - Reserve:                        ", reserveAddress)
+  debug("  - ReserveRegistry:                ", reserveRegistryResult.address)
+  debug("  - Reserve:                        ", reserveResult.address)
   debug("  - Comptroller:                    ", comptrollerAddress)
   debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
   debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)

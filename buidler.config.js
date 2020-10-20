@@ -21,6 +21,7 @@ task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
 })
 
 const testnetAdmin = '0xE0F4217390221aF47855E094F6e112D43C8698fE' // Account 1
+const testnetBuilder = '0x38E842CfC75951D08e9e13Bf6a8deF90c639C136' // Account 2
 const testnetUser1 = '0xeedDf4937E3A7aBe03E08963C3c20affbD770b51' // Account 3
 const testnetUser2 = '0xcE53382F96FdE0DB592574ed2571B3307dB859Ce' // Account 4
 const testnetUser3 = '0x381843c8b4a4a0Da3C0800708c84AA2d792D22b1' // Account 5
@@ -64,6 +65,9 @@ const config = {
       42: testnetAdmin,
       4: testnetAdmin,
       3: testnetAdmin
+    },
+    testnetBuilder: {
+      default: testnetBuilder,
     },
     testnetUser1: {
       default: testnetUser1,
