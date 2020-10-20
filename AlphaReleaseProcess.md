@@ -2,9 +2,11 @@
 
 Once the smart contracts have been updated, follow the steps below.
 
+The networks Ropsten and Rinkeby are supported.
+
 ## 1. Deploy Top-level Contracts
 
-Run the command:
+For each network run the command:
 
 ```bash
 $ yarn deploy rinkeby
@@ -18,10 +20,16 @@ $ yarn etherscan-verify rinkeby
 
 ## 3. Publish pooltogether-contracts npm package
 
-First increment the alpha version
+Increment the version in `package.json` then publish the package:
 
 ```bash
-$ yarn publish --tag alpha
+$ yarn publish
+```
+
+If the package requires a tag then add a tag:
+
+```bash
+$ yarn publish --tag rc
 ```
 
 ## 4. Update Builder UI
@@ -40,7 +48,7 @@ Update the `current-pool-data` repo with the new pool addresses and publish the 
 
 ## 7. Token Listener relations
 
-Create a Comptroller and run setTokenListener on PT owned prizeStrategies.
+Update the prize strategies created in the previous step: set the Comptroller as the token listener
 
 ## 8. Update Reference Pool UI
 
