@@ -23,7 +23,6 @@ module.exports = async (buidler) => {
   let {
     deployer,
     rng,
-    dai,
     trustedForwarder,
     adminAccount,
     comptroller,
@@ -211,35 +210,12 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
-  let multipleWinnersProxyFactoryResult
-  debug("\n  Deploying MultipleWinnersProxyFactory...")
-  if (isTestEnvironment && !harnessDisabled) {
-    multipleWinnersProxyFactoryResult = await deploy("MultipleWinnersHarnessProxyFactory", {
-      from: deployer,
-      skipIfAlreadyDeployed: true
-    })
-  } else {
-    multipleWinnersProxyFactoryResult = await deploy("MultipleWinnersProxyFactory", {
-      from: deployer,
-      skipIfAlreadyDeployed: true
-    })
-  }
-
   debug("\n  Deploying ControlledTokenBuilder...")
   const controlledTokenBuilderResult = await deploy("ControlledTokenBuilder", {
     args: [
       trustedForwarder,
       controlledTokenProxyFactoryResult.address,
       ticketProxyFactoryResult.address
-    ],
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
-
-  debug("\n  Deploying MultipleWinnersBuilder...")
-  const multipleWinnersBuilderResult = await deploy("MultipleWinnersBuilder", {
-    args: [
-      multipleWinnersProxyFactoryResult.address
     ],
     from: deployer,
     skipIfAlreadyDeployed: true
@@ -317,7 +293,6 @@ module.exports = async (buidler) => {
   debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)
   debug("  - SingleRandomWinnerProxyFactory: ", singleRandomWinnerProxyFactoryResult.address)
   debug("  - ControlledTokenBuilder:         ", controlledTokenBuilderResult.address)
-  debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address)
   debug("  - SingleRandomWinnerBuilder:      ", singleRandomWinnerBuilderResult.address)
   debug("  - CompoundPrizePoolBuilder:       ", compoundPrizePoolBuilderResult.address)
   debug("  - yVaultPrizePoolBuilder:         ", yVaultPrizePoolBuilderResult.address)
