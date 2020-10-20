@@ -73,24 +73,6 @@ function PoolEnv() {
     debug(`Done create Pool`)
   }
 
-  this.useMultipleWinnersPrizeStrategy = async function ({ winnerCount }) {
-    const multipleWinnersBuilder = await buidler.deployments.get('MultipleWinnersBuilder')
-    const mw = await buidler.ethers.getContractAt('MultipleWinnersBuilder', multipleWinnersBuilder.address, this.wallets[0])
-    const tx = await mw.createMultipleWinners(this.env.prizeStrategy.address, winnerCount)
-    const receipt = await buidler.ethers.provider.getTransactionReceipt(tx.hash)
-    const events = receipt.logs.map(log => { try { return mw.interface.parseLog(log) } catch (e) {} })
-    const event = events.find(event => event && event.name === 'CreatedMultipleWinners')
-    const newStrategyAddress = event.args.prizeStrategy
-
-    const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinners', newStrategyAddress, this.wallets[0])
-    expect(await prizeStrategy.numberOfWinners()).to.equal(winnerCount)
-    this.env.prizeStrategy = prizeStrategy;
-
-    await this.env.prizePool.setPrizeStrategy(newStrategyAddress)
-
-    debug(`Changed prize strategy to multiple winners`)
-  }
-
   this.setCurrentTime = async function (time) {
     let wallet = await this.wallet(0)
     let prizeStrategy = await this.prizeStrategy(wallet)
