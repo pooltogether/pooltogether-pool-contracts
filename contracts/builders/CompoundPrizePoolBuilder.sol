@@ -12,11 +12,13 @@ import "../token/TicketProxyFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 
+/// @title Creates new Compound Prize Pools with a Single Random Winner prize strategy.
 /* solium-disable security/no-block-members */
 contract CompoundPrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
+  /// @notice The configuration used to initialize the Compound Prize Pool
   struct CompoundPrizePoolConfig {
     CTokenInterface cToken;
     uint256 maxExitFeeMantissa;
@@ -35,14 +37,22 @@ contract CompoundPrizePoolBuilder {
     address indexed prizeStrategy
   );
 
+  /// @title The Comptroller to bind to the Compund Prize Pool
   ComptrollerInterface public comptroller;
+  /// @title The proxy factory used to create new Compound Prize Pool instances
   CompoundPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
+  /// @title The controlled token proxy factory used to create new Controlled Tokens
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
+  /// @title The ticket proxy factory used to create new Tickets
   TicketProxyFactory public ticketProxyFactory;
+  /// @title The Single Random Winner proxy factory that creates new Single Random Winner prize strategy instances
   SingleRandomWinnerProxyFactory public singleRandomWinnerProxyFactory;
+  /// @title The Open Zeppelin proxy factory to create new upgradeable proxies.
   OpenZeppelinProxyFactoryInterface public proxyFactory;
+  /// @title The OpenGSN forwarder
   address public trustedForwarder;
 
+  /// @notice Constructs the builder.
   constructor (
     ComptrollerInterface _comptroller,
     SingleRandomWinnerProxyFactory _singleRandomWinnerProxyFactory,
@@ -67,6 +77,10 @@ contract CompoundPrizePoolBuilder {
     controlledTokenProxyFactory = _controlledTokenProxyFactory;
   }
 
+  /// @notice Creates a new Compound Prize Pool bound to a new Single Random Winner prize strategy.
+  /// @param prizePoolConfig The config used to initialize the Compound Prize Pool
+  /// @param prizeStrategyConfig The config used to initialize the Single Random Winner
+  /// @return The Single Random Winner address.
   function createSingleRandomWinner(
     CompoundPrizePoolConfig calldata prizePoolConfig,
     SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig
@@ -161,6 +175,10 @@ contract CompoundPrizePoolBuilder {
     return prizePool;
   }
 
+  /// @notice Creates a new Compound Prize Pool with a preconfigured prize strategy.
+  /// @param config The config to use to initialize the Compound Prize Pool
+  /// @param prizeStrategy The prize strategy to attach to the prize pool.
+  /// @return The Compound Prize Pool
   function createCompoundPrizePool(
     CompoundPrizePoolConfig calldata config,
     PrizePoolTokenListenerInterface prizeStrategy
@@ -173,6 +191,11 @@ contract CompoundPrizePoolBuilder {
     return prizePool;
   }
 
+  /// @notice Creates a new Controlled Token
+  /// @param name The name for the token
+  /// @param symbol The symbol of the token
+  /// @param decimals The number of decimals to use
+  /// @return The new Controlled Token
   function _createControlledToken(
     TokenControllerInterface controller,
     string memory name,
@@ -184,6 +207,11 @@ contract CompoundPrizePoolBuilder {
     return token;
   }
 
+  /// @notice Creates a new Ticket token
+  /// @param name The name for the token
+  /// @param symbol The symbol of the token
+  /// @param decimals The number of decimals to use
+  /// @return The new Ticket
   function _createTicket(
     TokenControllerInterface controller,
     string memory name,
