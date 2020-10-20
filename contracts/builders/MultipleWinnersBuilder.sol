@@ -38,6 +38,8 @@ contract MultipleWinnersBuilder {
       numberOfWinners
     );
 
+    mw.transferOwnership(msg.sender);
+
     emit CreatedMultipleWinners(address(prizeStrategy), address(mw), numberOfWinners);
 
     return mw;
