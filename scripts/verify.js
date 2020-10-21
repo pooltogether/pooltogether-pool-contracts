@@ -17,7 +17,7 @@ const getContract = async (name) => {
 const verifyAddress = async (address, name, options = "") => {
   const network = await buidler.ethers.provider.getNetwork()
   try {
-    await exec(`buidler ${options} verify --network ${network.name} ${address}`)
+    await exec(`buidler ${options} verify --network ${network.name === 'homestead' ? 'mainnet' : network.name} ${address}`)
   } catch (e) {
     if (/Contract source code already verified/.test(e.message)) {
       info(`${name} already verified`)
@@ -48,7 +48,7 @@ async function run() {
 
   info(`Verifying top-level contracts...`)
   const { stdout, stderr } = await exec(
-    `buidler etherscan-verify --solc-input --api-key $ETHERSCAN_API_KEY --network ${network.name}`
+    `buidler etherscan-verify --solc-input --api-key $ETHERSCAN_API_KEY --network ${network.name === 'homestead' ? 'mainnet' : network.name}`
   )
   console.log(chalk.yellow(stdout))
   console.log(chalk.red(stderr))
