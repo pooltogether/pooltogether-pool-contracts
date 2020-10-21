@@ -310,7 +310,7 @@ module.exports = async buidler => {
   debug('\n  Deploying AavePrizePoolBuilder...')
   const aavePrizePoolBuilderResult = await deploy('AavePrizePoolBuilder', {
     args: [
-      comptrollerAddress,
+      reserveRegistryResult.address,
       trustedForwarder,
       aavePrizePoolProxyFactoryResult.address,
       singleRandomWinnerBuilderResult.address,

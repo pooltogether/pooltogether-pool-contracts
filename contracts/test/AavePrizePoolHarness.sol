@@ -28,10 +28,6 @@ contract AavePrizePoolHarness is AavePrizePool {
     return _redeem(redeemAmount);
   }
 
-  function aToken() external view returns (ATokenInterface) {
-    return _aToken();
-  }
-
   function tokenAddress() external view returns (address) {
     return _tokenAddress();
   }

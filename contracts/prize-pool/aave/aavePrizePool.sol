@@ -19,11 +19,8 @@ contract AavePrizePool is PrizePool {
 
   event AavePrizePoolInitialized(address indexed aToken, address indexed lendingPool);
 
-  /// @notice Interface for Aave aToken
-  ATokenInterface public aTokenInterface;
-
-  /// @notice Aave aToken address
-  address public aTokenAddress;
+  /// @notice Aave aToken interface
+  ATokenInterface public aToken;
 
   /// @notice Aave lendingPoolAddressesProviderAddress
   address public lendingPoolAddressesProviderAddress;
@@ -36,11 +33,11 @@ contract AavePrizePool is PrizePool {
   /// @param _aToken Address of the Aave aToken interface
   function initialize (
     address _trustedForwarder,
-    ReserveInterface _reserve,
+    RegistryInterface _reserveRegistry,
     address[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
-    address _aToken,
+    ATokenInterface _aToken,
     address _lendingPoolAddressesProviderAddress
   )
     public
@@ -48,21 +45,21 @@ contract AavePrizePool is PrizePool {
   {
     PrizePool.initialize(
       _trustedForwarder,
-      _reserve,
+      _reserveRegistry,
       _controlledTokens,
       _maxExitFeeMantissa,
       _maxTimelockDuration
     );
-    aTokenAddress = _aToken;
+    aToken = _aToken;
     lendingPoolAddressesProviderAddress = _lendingPoolAddressesProviderAddress;
 
-    emit AavePrizePoolInitialized(address(aTokenAddress), address(lendingPoolAddressesProviderAddress));
+    emit AavePrizePoolInitialized(address(aToken), address(lendingPoolAddressesProviderAddress));
   }
 
-  /// @dev Gets the balance of the underlying assets held by the Yield Service
+  /// @dev Returns the total balance (in asset tokens).  This includes the deposits and interest.
   /// @return The underlying balance of asset tokens
   function _balance() internal override returns (uint256) {
-    return _aToken().principalBalanceOf(address(this));
+    return aToken.balanceOf(address(this));
   }
 
   /// @dev Allows a user to supply asset tokens in exchange for yield-bearing tokens
@@ -77,7 +74,7 @@ contract AavePrizePool is PrizePool {
   /// @param _externalToken The address of the token to check
   /// @return True if the token may be awarded, false otherwise
   function _canAwardExternal(address _externalToken) internal override view returns (bool) {
-    return _externalToken != address(aTokenAddress);
+    return _externalToken != address(aToken);
   }
 
   /// @dev Allows a user to redeem yield-bearing tokens in exchange for the underlying
@@ -85,14 +82,8 @@ contract AavePrizePool is PrizePool {
   /// @param amount The amount of underlying tokens to be redeemed
   /// @return The actual amount of tokens transferred
   function _redeem(uint256 amount) internal override returns (uint256) {
-    _aToken().redeem(amount);
+    aToken.redeem(amount);
     return amount;
-  }
-
-  /// @dev Gets the aToken used by the Yield Service
-  /// @return A reference to the interface of the asset token
-  function _aToken() internal view returns (ATokenInterface) {
-    return ATokenInterface(aTokenAddress);
   }
 
   /// @dev Gets the underlying asset token used by the Yield Service
@@ -104,13 +95,13 @@ contract AavePrizePool is PrizePool {
   /// @dev Gets the underlying asset token address
   /// @return Underlying asset token address
   function _tokenAddress() internal view returns (address) {
-    return _aToken().underlyingAssetAddress();
+    return aToken.underlyingAssetAddress();
   }
 
   /// @dev Retrieve LendingPoolAddressesProvider address
   /// @return A reference to LendingPoolAddressesProvider interface
   function _provider() internal view returns (LendingPoolAddressesProviderInterface) {
-    return LendingPoolAddressesProviderInterface(lendingPoolAddressesProviderAddress);
+    return LendingPoolAddressesProviderInterface(address(lendingPoolAddressesProviderAddress));
   }
 
   /// @dev Retrieve LendingPool address

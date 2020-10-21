@@ -6,10 +6,12 @@ pragma experimental ABIEncoderV2;
 
 import "./PrizePoolBuilder.sol";
 import "./SingleRandomWinnerBuilder.sol";
+import "../registry/RegistryInterface.sol";
 import "../prize-strategy/single-random-winner/SingleRandomWinnerProxyFactory.sol";
 import "../prize-pool/aave/AavePrizePoolProxyFactory.sol";
 import "../token/ControlledTokenProxyFactory.sol";
 import "../token/TicketProxyFactory.sol";
+import "../external/aave/ATokenInterface.sol";
 import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 
 /// @title Builds new Aave Prize Pools
@@ -19,28 +21,28 @@ contract AavePrizePoolBuilder is PrizePoolBuilder {
   using SafeCast for uint256;
 
   struct AavePrizePoolConfig {
-    address aToken;
+    ATokenInterface aToken;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
   }
 
-  ReserveInterface public reserve;
+  RegistryInterface public reserveRegistry;
   AavePrizePoolProxyFactory public aavePrizePoolProxyFactory;
   SingleRandomWinnerBuilder public singleRandomWinnerBuilder;
   address public trustedForwarder;
   address public lendingPoolAddressesProviderAddress;
 
   constructor (
-    ReserveInterface _reserve,
+    RegistryInterface _reserveRegistry,
     address _trustedForwarder,
     AavePrizePoolProxyFactory _aavePrizePoolProxyFactory,
     SingleRandomWinnerBuilder _singleRandomWinnerBuilder,
     address _lendingPoolAddressesProviderAddress
   ) public {
-    require(address(_reserve) != address(0), "AavePrizePoolBuilder/reserve-not-zero");
+    require(address(_reserveRegistry) != address(0), "AavePrizePoolBuilder/reserveRegistry-not-zero");
     require(address(_singleRandomWinnerBuilder) != address(0), "AavePrizePoolBuilder/single-random-winner-builder-not-zero");
     require(address(_aavePrizePoolProxyFactory) != address(0), "AavePrizePoolBuilder/aave-prize-pool-builder-not-zero");
-    reserve = _reserve;
+    reserveRegistry = _reserveRegistry;
     singleRandomWinnerBuilder = _singleRandomWinnerBuilder;
     trustedForwarder = _trustedForwarder;
     aavePrizePoolProxyFactory = _aavePrizePoolProxyFactory;
@@ -65,7 +67,7 @@ contract AavePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      reserve,
+      reserveRegistry,
       tokens,
       prizePoolConfig.maxExitFeeMantissa,
       prizePoolConfig.maxTimelockDuration,
@@ -99,7 +101,7 @@ contract AavePrizePoolBuilder is PrizePoolBuilder {
 
     prizePool.initialize(
       trustedForwarder,
-      reserve,
+      reserveRegistry,
       tokens,
       config.maxExitFeeMantissa,
       config.maxTimelockDuration,
