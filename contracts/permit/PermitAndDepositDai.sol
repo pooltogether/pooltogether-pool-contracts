@@ -8,7 +8,7 @@ import "../external/maker/DaiInterface.sol";
 import "../prize-pool/PrizePoolInterface.sol";
 
 /// @title Allows users to approve and deposit dai into a prize pool in a single transaction.
-contract PermitAndDepositDai {
+contract PermitAndDepositDai is OwnableUpgradeSafe {
   using SafeERC20 for DaiInterface;
 
   /// @notice Permits this contract to spend on a users behalf, and deposits into the prize pool.
@@ -31,6 +31,7 @@ contract PermitAndDepositDai {
     address dai, address holder, uint256 nonce, uint256 expiry, bool allowed, uint8 v, bytes32 r, bytes32 s,
     address prizePool, address to, uint256 amount, address controlledToken, address referrer
   ) external {
+    require(msg.sender == holder, "PermitAndDepositDai/only-signer");
     DaiInterface(dai).permit(holder, address(this), nonce, expiry, allowed, v, r, s);
     _depositTo(dai, holder, prizePool, to, amount, controlledToken, referrer);
   }
