@@ -1,26 +1,31 @@
 {
   "manifestVersion": "2.2",
   "contracts": {
-    "PoolSaiToken": "RecipientWhitelistPoolToken",
-    "PoolDaiToken": "RecipientWhitelistPoolToken",
-    "PoolUsdcToken": "RecipientWhitelistPoolTokenDecimals",
-    "PoolSai": "MCDAwarePool",
-    "PoolDai": "MCDAwarePool",
-    "PoolUsdc": "MCDAwarePool"
+    "RNGServiceMock": "RNGServiceMock",
+    "CompoundPrizePoolBuilder": "CompoundPrizePoolBuilder",
+    "SingleRandomWinnerProxyFactory": "SingleRandomWinnerProxyFactory",
+    "CompoundPrizePoolProxyFactory": "CompoundPrizePoolProxyFactory",
+    "ControlledTokenProxyFactory": "ControlledTokenProxyFactory",
+    "CounterfactualActionFactory": "CounterfactualActionFactory"
   },
   "dependencies": {},
-  "name": "pooltogether",
-  "version": "0.2",
+  "name": "PoolTogether3",
+  "version": "0.3.0",
   "compiler": {
+    "typechain": {
+      "enabled": false
+    },
     "manager": "openzeppelin",
+    "solcVersion": "0.6.12",
+    "artifactsDir": "build/contracts",
+    "contractsDir": "contracts",
     "compilerSettings": {
       "optimizer": {
         "enabled": true,
         "runs": "200"
       },
-      "evmVersion": "constantinople"
-    },
-    "solcVersion": "0.5.12"
+      "evmVersion": "istanbul"
+    }
   },
   "telemetryOptIn": false
 }

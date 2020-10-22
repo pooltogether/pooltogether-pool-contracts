@@ -1,8 +1,0 @@
-.circleci
-coverage
-fork
-migrations
-node_modules
-scripts
-/test
-utils
