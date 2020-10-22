@@ -1,6 +1,6 @@
 {
   "name": "@pooltogether/pooltogether-contracts",
-  "version": "3.0.0-rc.1b",
+  "version": "3.0.0",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
   "bin": {
@@ -35,7 +35,7 @@
     "@opengsn/gsn": "^2.0.1",
     "@openzeppelin/contracts-ethereum-package": "3.0.0",
     "@pooltogether/fixed-point": "pooltogether/fixed-point.git#0.1.0-upgradeable.1",
-    "@pooltogether/pooltogether-rng-contracts": "^1.0.0-alpha.7",
+    "@pooltogether/pooltogether-rng-contracts": "^1.0.0",
     "@pooltogether/uniform-random-number": "pooltogether/uniform-random-number#solidity-0.6",
     "deploy-eip-1820": "1.0.0",
     "sortition-sum-tree-factory": "0.1.0"
