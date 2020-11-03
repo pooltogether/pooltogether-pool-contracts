@@ -67,7 +67,7 @@ contract AavePrizePool is PrizePool {
   /// @param amount The amount of asset tokens to be supplied
   function _supply(uint256 amount) internal override {
     _token().approve(_provider().getLendingPoolCore(), amount);
-    _lendingPool().deposit(address(_tokenAddress()), amount, 0);
+    _lendingPool().deposit(address(_tokenAddress()), amount, 138);
   }
 
   /// @dev The external token cannot be aToken
