@@ -459,7 +459,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   function addExternalErc721Award(address _externalErc721, uint256[] calldata _tokenIds) external onlyOwner {
     // require(_externalErc721.isContract(), "PeriodicPrizeStrategy/external-erc721-not-contract");
     require(prizePool.canAwardExternal(_externalErc721), "PeriodicPrizeStrategy/cannot-award-external");
-    externalErc721s.addAddress(_externalErc721);
+    
+    if (!externalErc721s.contains(_externalErc721)) {
+      externalErc721s.addAddress(_externalErc721);
+    }
 
     for (uint256 i = 0; i < _tokenIds.length; i++) {
       uint256 tokenId = _tokenIds[i];

@@ -334,6 +334,17 @@ describe('SingleRandomWinner', function() {
         .withArgs(externalERC721Award.address, [1])
     })
 
+    it('should allow adding multiple erc721s to the prize', async () => {
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
+      await externalERC721Award.mock.ownerOf.withArgs(2).returns(prizePool.address)
+      await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
+        .to.emit(prizeStrategy, 'ExternalErc721AwardAdded')
+        .withArgs(externalERC721Award.address, [1])
+      await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [2]))
+        .to.emit(prizeStrategy, 'ExternalErc721AwardAdded')
+        .withArgs(externalERC721Award.address, [2])
+    })
+
     it('should disallow unapproved external ERC721 prize tokens', async () => {
       await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
       await expect(prizeStrategy.addExternalErc721Award(invalidExternalToken, [1]))
