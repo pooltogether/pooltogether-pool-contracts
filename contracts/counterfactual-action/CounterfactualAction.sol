@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 
 contract CounterfactualAction {
   function depositTo(address payable user, PrizePool prizePool, address output, address referrer) external {
-    IERC20 token = prizePool.token();
+    IERC20 token = IERC20(prizePool.token());
     uint256 amount = token.balanceOf(address(this));
     token.approve(address(prizePool), amount);
     prizePool.depositTo(user, amount, output, referrer);
@@ -15,7 +15,7 @@ contract CounterfactualAction {
   }
 
   function cancel(address payable user, PrizePool prizePool) external {
-    IERC20 token = prizePool.token();
+    IERC20 token = IERC20(prizePool.token());
     token.transfer(user, token.balanceOf(address(this)));
     selfdestruct(user);
   }

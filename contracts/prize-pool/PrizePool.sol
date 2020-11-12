@@ -249,8 +249,8 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
 
   /// @dev Returns the address of the underlying ERC20 asset
   /// @return The address of the asset
-  function token() external override view returns (IERC20) {
-    return _token();
+  function token() external override view returns (address) {
+    return address(_token());
   }
 
   /// @dev Returns the total underlying balance of all assets. This includes both principal and interest.
@@ -1002,8 +1002,8 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
 
   /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.
   /// @param _prizeStrategy The new prize strategy
-  function setPrizeStrategy(TokenListenerInterface _prizeStrategy) external override onlyOwner {
-    _setPrizeStrategy(_prizeStrategy);
+  function setPrizeStrategy(address _prizeStrategy) external override onlyOwner {
+    _setPrizeStrategy(TokenListenerInterface(_prizeStrategy));
   }
 
   /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.
