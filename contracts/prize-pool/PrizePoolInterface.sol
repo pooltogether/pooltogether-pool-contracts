@@ -2,21 +2,6 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
-
-import "../external/pooltogether/FixedPoint.sol";
-import "../reserve/ReserveInterface.sol";
-import "./YieldSource.sol";
-import "../token/TokenListenerInterface.sol";
-import "../token/ControlledToken.sol";
-import "../token/TokenControllerInterface.sol";
-import "../utils/MappedSinglyLinkedList.sol";
-import "../utils/RelayRecipient.sol";
-
 /// @title Escrows assets and deposits them into a yield source.  Exposes interest to Prize Strategy.  Users deposit and withdraw from this contract to participate in Prize Pool.
 /// @notice Accounting is managed using Controlled Tokens, whose mint and burn functions can only be called by this contract.
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
@@ -217,12 +202,12 @@ interface PrizePoolInterface {
   function addControlledToken(address _controlledToken) external;
 
   /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.
-  /// @param _prizeStrategy The new prize strategy
-  function setPrizeStrategy(TokenListenerInterface _prizeStrategy) external;
+  /// @param _prizeStrategy The new prize strategy.  Must implement TokenListenerInterface
+  function setPrizeStrategy(address _prizeStrategy) external;
 
   /// @dev Returns the address of the underlying ERC20 asset
   /// @return The address of the asset
-  function token() external view returns (IERC20);
+  function token() external view returns (address);
 
   /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
   /// @return An array of controlled token addresses

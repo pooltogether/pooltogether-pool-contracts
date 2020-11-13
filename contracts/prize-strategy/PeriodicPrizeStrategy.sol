@@ -422,10 +422,19 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// and they must be approved by the Prize-Pool
   /// @param _externalErc20 The address of an ERC20 token to be awarded
   function addExternalErc20Award(address _externalErc20) external onlyOwner {
-    // require(_externalErc20.isContract(), "PeriodicPrizeStrategy/external-erc20-not-contract");
+    _addExternalErc20Award(_externalErc20);
+  }
+
+  function _addExternalErc20Award(address _externalErc20) internal {
     require(prizePool.canAwardExternal(_externalErc20), "PeriodicPrizeStrategy/cannot-award-external");
     externalErc20s.addAddress(_externalErc20);
     emit ExternalErc20AwardAdded(_externalErc20);
+  }
+
+  function addExternalErc20Awards(address[] calldata _externalErc20s) external onlyOwner {
+    for (uint256 i = 0; i < _externalErc20s.length; i++) {
+      _addExternalErc20Award(_externalErc20s[i]);
+    }
   }
 
   /// @notice Removes an external ERC20 token type as an additional prize that can be awarded
@@ -459,7 +468,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   function addExternalErc721Award(address _externalErc721, uint256[] calldata _tokenIds) external onlyOwner {
     // require(_externalErc721.isContract(), "PeriodicPrizeStrategy/external-erc721-not-contract");
     require(prizePool.canAwardExternal(_externalErc721), "PeriodicPrizeStrategy/cannot-award-external");
-    externalErc721s.addAddress(_externalErc721);
+    
+    if (!externalErc721s.contains(_externalErc721)) {
+      externalErc721s.addAddress(_externalErc721);
+    }
 
     for (uint256 i = 0; i < _tokenIds.length; i++) {
       uint256 tokenId = _tokenIds[i];

@@ -3,6 +3,7 @@
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
 import "../external/maker/DaiInterface.sol";
 import "../prize-pool/PrizePoolInterface.sol";

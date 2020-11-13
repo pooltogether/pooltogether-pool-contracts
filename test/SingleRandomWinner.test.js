@@ -326,12 +326,40 @@ describe('SingleRandomWinner', function() {
     })
   })
 
+  describe('addExternalErc20Awards()', () => {
+    it('should allow the owner to add external ERC20 tokens to the prize', async () => {
+      const externalAward = await deployMockContract(wallet2, IERC20.abi, overrides)
+      const externalAward2 = await deployMockContract(wallet2, IERC20.abi, overrides)
+      await prizePool.mock.canAwardExternal.withArgs(externalAward.address).returns(true)
+      await prizePool.mock.canAwardExternal.withArgs(externalAward2.address).returns(true)
+      await expect(prizeStrategy.addExternalErc20Awards([externalAward.address, externalAward2.address]))
+        .to.emit(prizeStrategy, 'ExternalErc20AwardAdded')
+        .withArgs(externalAward.address)
+    })
+
+    it('should not allow anyone else to add', async () => {
+      await expect(prizeStrategy.connect(wallet2).addExternalErc20Awards([externalERC20Award.address]))
+        .to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
   describe('addExternalErc721Award()', () => {
     it('should allow the owner to add external ERC721 tokens to the prize', async () => {
       await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
       await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
         .to.emit(prizeStrategy, 'ExternalErc721AwardAdded')
         .withArgs(externalERC721Award.address, [1])
+    })
+
+    it('should allow adding multiple erc721s to the prize', async () => {
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
+      await externalERC721Award.mock.ownerOf.withArgs(2).returns(prizePool.address)
+      await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
+        .to.emit(prizeStrategy, 'ExternalErc721AwardAdded')
+        .withArgs(externalERC721Award.address, [1])
+      await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [2]))
+        .to.emit(prizeStrategy, 'ExternalErc721AwardAdded')
+        .withArgs(externalERC721Award.address, [2])
     })
 
     it('should disallow unapproved external ERC721 prize tokens', async () => {

@@ -21,7 +21,7 @@ contract PrizePoolBuilder {
   ) internal {
     address ticket = address(singleRandomWinner.ticket());
 
-    prizePool.setPrizeStrategy(singleRandomWinner);
+    prizePool.setPrizeStrategy(address(singleRandomWinner));
 
     prizePool.addControlledToken(ticket);
     prizePool.addControlledToken(address(singleRandomWinner.sponsorship()));
