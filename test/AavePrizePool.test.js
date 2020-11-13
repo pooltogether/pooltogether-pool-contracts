@@ -6,7 +6,6 @@ const ControlledToken = require('../build/ControlledToken.json')
 const ATokenInterface = require('../build/ATokenInterface.json')
 const LendingPoolAddressesProviderInterface = require('../build/LendingPoolAddressesProviderInterface.json')
 const LendingPoolInterface = require('../build/LendingPoolInterface.json')
-const LendingPoolMock = require('../build/LendingPoolMock.json')
 const IERC20 = require('../build/IERC20.json')
 const IERC721 = require('../build/IERC721.json')
 
@@ -32,7 +31,6 @@ describe('AavePrizePool', function() {
     prizeStrategy,
     comptroller,
     lendingPoolAddressesProvider,
-    lendingPoolAddress,
     lendingPool
 
   let poolMaxExitFee = toWei('0.5')
@@ -50,29 +48,19 @@ describe('AavePrizePool', function() {
     erc20token = await deployMockContract(wallet, IERC20.abi, overrides)
     erc721token = await deployMockContract(wallet, IERC721.abi, overrides)
     aToken = await deployMockContract(wallet, ATokenInterface.abi, overrides)
+
     lendingPoolAddressesProvider = await deployMockContract(
       wallet,
       LendingPoolAddressesProviderInterface.abi,
       overrides
     )
 
-    await lendingPoolAddressesProvider.mock.getLendingPool
-      .withArgs()
-      .returns('0x580D4Fdc4BF8f9b5ae2fb9225D584fED4AD5375c')
+    lendingPool = await deployMockContract(wallet, LendingPoolInterface.abi, overrides)
+
+    await lendingPoolAddressesProvider.mock.getLendingPool.returns(lendingPool.address)
 
     await lendingPoolAddressesProvider.mock.getLendingPoolCore
-      .withArgs()
       .returns('0x506B0B2CF20FAA8f38a4E2B524EE43e1f4458Cc5')
-
-    lendingPool = await deployMockContract(
-      wallet,
-      LendingPoolInterface.abi,
-      overrides
-    )
-
-    lendingPoolAddress = await lendingPoolAddressesProvider.getLendingPool()
-
-    // lendingPool = await deployContract(wallet, LendingPoolMock, [lendingPoolAddress], overrides)
 
     await aToken.mock.underlyingAssetAddress.returns(erc20token.address)
 
@@ -108,7 +96,7 @@ describe('AavePrizePool', function() {
         .to.emit(prizePool, 'AavePrizePoolInitialized')
         .withArgs(aToken.address, lendingPoolAddressesProvider.address)
 
-      expect(await prizePool.aTokenAddress()).to.equal(aToken.address)
+      expect(await prizePool.aToken()).to.equal(aToken.address)
       expect(await prizePool.lendingPoolAddressesProviderAddress()).to.equal(
         lendingPoolAddressesProvider.address
       )
@@ -116,50 +104,44 @@ describe('AavePrizePool', function() {
   })
 
   describe('_supply()', () => {
-    it('should supply assets to aave', async () => {
-      let amount = toWei('500')
+    let amount
+    let lendingPoolCoreAddress
+    let tokenAddress
 
-      const lendingPoolCoreAddress = await lendingPoolAddressesProvider.getLendingPoolCore()
-
-
-      // const lendingPool = LendingPoolInterface.new(lendingPoolAddress)
+    beforeEach(async () => {
+      amount = toWei('500')
+      lendingPoolCoreAddress = await lendingPoolAddressesProvider.getLendingPoolCore()
+      tokenAddress = await prizePool.tokenAddress()
 
       await erc20token.mock.approve.withArgs(lendingPoolCoreAddress, amount).returns(true)
-      await lendingPool.mock.deposit.withArgs(lendingPoolAddress, amount, 0).returns()
-      await aToken.mock.balanceOf.withArgs(prizePool.address).returns(amount)
+      await lendingPool.mock.deposit.withArgs(erc20token.address, amount, 138).returns()
+      await prizePool.supply(amount)
+    })
+
+    it('should supply assets to Aave', async () => {
+      await erc20token.mock.approve.withArgs(lendingPoolCoreAddress, amount).returns(true)
+      await lendingPool.mock.deposit.withArgs(tokenAddress, amount, 138).returns()
 
       await prizePool.supply(amount)
-
-      expect(await prizePool.callStatic.balance()).to.equal(amount)
     })
 
     it('should revert on error', async () => {
-      let amount = toWei('500')
+      await erc20token.mock.approve.withArgs(lendingPoolCoreAddress, amount).returns(true)
+      await lendingPool.mock.deposit.withArgs(tokenAddress, amount, 138).reverts()
 
-      await erc20token.mock.approve.withArgs(aToken.address, amount).returns(true)
-      await lendingPool.mock.deposit.withArgs(aToken.address, amount, 0).returns(false)
-
-      expect(prizePool.supply(amount)).to.be.reverted()
+      expect(prizePool.supply(amount)).to.be.revertedWith('')
     })
   })
 
   describe('_redeem()', () => {
-    let amount
-
-    beforeEach(async () => {
-      amount = toWei('300')
-      await erc20token.mock.approve.withArgs(aToken.address, amount).returns(true)
-      await lendingPool.mock.deposit.withArgs(erc20token.address, amount, 0).returns(amount)
-      await prizePool.supply(amount)
-    })
-
     it('should redeem assets from Aave', async () => {
-      await erc20token.mock.balanceOf.withArgs(prizePool.address).returns(amount)
-      await aToken.mock.isTransferAllowed.withArgs(prizePool.address, amount).returns(true);
-      await aToken.mock.redeem.withArgs(prizePool.address, toWei('100')).returns(true)
-      await erc20token.mock.balanceOf.withArgs(prizePool.address).returns(toWei('200'))
+      let amount = toWei('300')
+      let redeemAmount = toWei('100')
 
-      await prizePool.redeem(amount)
+      await erc20token.mock.balanceOf.withArgs(prizePool.address).returns(amount)
+      await aToken.mock.redeem.withArgs(redeemAmount).returns()
+
+      await prizePool.redeem(redeemAmount)
     })
   })
 
@@ -171,8 +153,10 @@ describe('AavePrizePool', function() {
 
   describe('balance()', () => {
     it('should return the underlying balance', async () => {
-      await aToken.mock.balanceOf.withArgs(prizePool.address).returns(toWei('32'))
-      expect(await prizePool.callStatic.balance()).to.equal(toWei('32'))
+      const balance = toWei('32');
+
+      await aToken.mock.balanceOf.withArgs(prizePool.address).returns(balance)
+      expect(await prizePool.callStatic.balance()).to.equal(balance)
     })
   })
 

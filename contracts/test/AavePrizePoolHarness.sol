@@ -1,7 +1,6 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 import "../prize-pool/aave/AavePrizePool.sol";
-import "../external/aave/LendingPoolInterface.sol";
 
 /* solium-disable security/no-block-members */
 contract AavePrizePoolHarness is AavePrizePool {
@@ -37,6 +36,6 @@ contract AavePrizePoolHarness is AavePrizePool {
   }
 
   function lendingPool() external view returns (LendingPoolInterface) {
-    return LendingPoolInterface(_provider().getLendingPool());
+    return _lendingPool();
   }
 }

@@ -103,6 +103,14 @@ module.exports = async buidler => {
       skipIfAlreadyDeployed: true
     })
 
+    debug('\n  Deploying aDai...')
+    await deploy('aDai', {
+      args: [daiResult.address],
+      contract: 'ATokenMock',
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+
     debug('\n  Deploying cDai...')
     // should be about 20% APR
     let supplyRate = '8888888888888'
@@ -113,6 +121,7 @@ module.exports = async buidler => {
       skipIfAlreadyDeployed: true
     })
 
+    debug('\n  Deploying yDai...')
     await deploy('yDai', {
       args: [daiResult.address],
       contract: 'yVaultMock',
@@ -248,27 +257,6 @@ module.exports = async buidler => {
     skipIfAlreadyDeployed: true
   })
 
-  debug('\n  Deploying TwoWinnersProxyFactory...')
-  let twoWinnersProxyFactoryResult
-  if (isTestEnvironment && !harnessDisabled) {
-    twoWinnersProxyFactoryResult = await deploy('TwoWinnersHarnessProxyFactory', {
-      from: deployer,
-      skipIfAlreadyDeployed: true
-    })
-  } else {
-    twoWinnersProxyFactoryResult = await deploy('TwoWinnersProxyFactory', {
-      from: deployer,
-      skipIfAlreadyDeployed: true
-    })
-  }
-
-  debug('\n  Deploying TwoWinnersBuilder...')
-  const twoWinnersBuilderResult = await deploy('TwoWinnersBuilder', {
-    args: [twoWinnersProxyFactoryResult.address],
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
-
   debug("\n  Deploying ControlledTokenBuilder...")
   const controlledTokenBuilderResult = await deploy("ControlledTokenBuilder", {
     args: [
@@ -364,10 +352,8 @@ module.exports = async buidler => {
   debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
   debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)
   debug("  - SingleRandomWinnerProxyFactory: ", singleRandomWinnerProxyFactoryResult.address)
-  debug('  - TwoWinnersProxyFactory:         ', twoWinnersProxyFactoryResult.address)
   debug("  - ControlledTokenBuilder:         ", controlledTokenBuilderResult.address)
   debug("  - SingleRandomWinnerBuilder:      ", singleRandomWinnerBuilderResult.address)
-  debug('  - TwoWinnersBuilderResult:        ', twoWinnersBuilderResult.address)
   debug('  - AavePrizePoolBuilder:           ', aavePrizePoolBuilderResult.address)
   debug("  - CompoundPrizePoolBuilder:       ", compoundPrizePoolBuilderResult.address)
   debug("  - yVaultPrizePoolBuilder:         ", yVaultPrizePoolBuilderResult.address)

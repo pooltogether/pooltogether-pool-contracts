@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "./aavePrizePool.sol";
+import "./AavePrizePool.sol";
 import "../../external/openzeppelin/ProxyFactory.sol";
 
 /// @title aave Prize Pool Proxy Factory

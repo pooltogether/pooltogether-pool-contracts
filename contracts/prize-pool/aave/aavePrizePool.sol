@@ -17,7 +17,7 @@ import "../PrizePool.sol";
 contract AavePrizePool is PrizePool {
   using SafeMath for uint256;
 
-  event AavePrizePoolInitialized(address indexed aToken, address indexed lendingPool);
+  event AavePrizePoolInitialized(address indexed aToken, address indexed lendingPoolAddressesProviderAddress);
 
   /// @notice Aave aToken interface
   ATokenInterface public aToken;
@@ -67,7 +67,7 @@ contract AavePrizePool is PrizePool {
   /// @param amount The amount of asset tokens to be supplied
   function _supply(uint256 amount) internal override {
     _token().approve(_provider().getLendingPoolCore(), amount);
-    _lendingPool().deposit(address(_tokenAddress()), amount, 138);
+    _lendingPool().deposit(address(_tokenAddress()), amount, uint16(138));
   }
 
   /// @dev The external token cannot be aToken

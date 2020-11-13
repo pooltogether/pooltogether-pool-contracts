@@ -25,19 +25,17 @@ const mnemonic = process.env.HDWALLET_MNEMONIC;
 
 if (process.env.USE_BUIDLER_EVM_ACCOUNTS && mnemonic) {
   const buidlerEvmAccounts = []
-  console.log('in there')
+
   for (let i = 0; i < 10; i++) {
     const wallet = ethers.Wallet.fromMnemonic(mnemonic, "m/44'/60'/0'/0/" + i)
     const privateKey = wallet.privateKey
-
-    console.log('wallet address', wallet.address)
-    console.log('wallet privateKey', privateKey)
 
     buidlerEvmAccounts.push({
       privateKey,
       balance: '1000000000000000000000'
     })
   }
+}
 
 if (process.env.HDWALLET_MNEMONIC) {
   networks.fork = {
