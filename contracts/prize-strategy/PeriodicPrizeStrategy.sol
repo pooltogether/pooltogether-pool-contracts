@@ -19,6 +19,7 @@ import "../token/TicketInterface.sol";
 import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
 import "../utils/RelayRecipient.sol";
+import "./PeriodicPrizeStrategyListener.sol";
 
 /* solium-disable security/no-block-members */
 abstract contract PeriodicPrizeStrategy is Initializable,
@@ -63,6 +64,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
   event RngRequestTimeoutSet(
     uint32 rngRequestTimeout
+  );
+
+  event PeriodicPrizeStrategyListenerSet(
+    address indexed periodicPrizeStrategyListener
   );
 
   event ExternalErc721AwardAdded(
@@ -114,6 +119,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   // External NFT token IDs to be awarded
   //   NFT Address => TokenIds
   mapping (address => uint256[]) internal externalErc721TokenIds;
+
+  PeriodicPrizeStrategyListener public periodicPrizeStrategyListener;
 
   function initialize (
     address _trustedForwarder,
@@ -339,12 +346,21 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     delete rngRequest;
 
     _distribute(randomNumber);
+    if (address(periodicPrizeStrategyListener) != address(0)) {
+      periodicPrizeStrategyListener.afterDistributeAwards(randomNumber, prizePeriodStartedAt);
+    }
 
     // to avoid clock drift, we should calculate the start time based on the previous period start time.
     prizePeriodStartedAt = _calculateNextPrizePeriodStartTime(_currentTime());
 
     emit PrizePoolAwarded(_msgSender(), randomNumber);
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
+  }
+
+  function setPeriodicPrizeStrategyListener(address _periodicPrizeStrategyListener) external onlyOwner {
+    periodicPrizeStrategyListener = PeriodicPrizeStrategyListener(_periodicPrizeStrategyListener);
+
+    emit PeriodicPrizeStrategyListenerSet(_periodicPrizeStrategyListener);
   }
 
   function _calculateNextPrizePeriodStartTime(uint256 currentTime) internal view returns (uint256) {
@@ -421,7 +437,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @dev Only the Prize-Strategy owner/creator can assign external tokens,
   /// and they must be approved by the Prize-Pool
   /// @param _externalErc20 The address of an ERC20 token to be awarded
-  function addExternalErc20Award(address _externalErc20) external onlyOwner {
+  function addExternalErc20Award(address _externalErc20) external onlyOwnerOrListener {
     _addExternalErc20Award(_externalErc20);
   }
 
@@ -431,7 +447,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit ExternalErc20AwardAdded(_externalErc20);
   }
 
-  function addExternalErc20Awards(address[] calldata _externalErc20s) external onlyOwner {
+  function addExternalErc20Awards(address[] calldata _externalErc20s) external onlyOwnerOrListener {
     for (uint256 i = 0; i < _externalErc20s.length; i++) {
       _addExternalErc20Award(_externalErc20s[i]);
     }
@@ -465,7 +481,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// NOTE: The NFT must already be owned by the Prize-Pool
   /// @param _externalErc721 The address of an ERC721 token to be awarded
   /// @param _tokenIds An array of token IDs of the ERC721 to be awarded
-  function addExternalErc721Award(address _externalErc721, uint256[] calldata _tokenIds) external onlyOwner {
+  function addExternalErc721Award(address _externalErc721, uint256[] calldata _tokenIds) external onlyOwnerOrListener {
     // require(_externalErc721.isContract(), "PeriodicPrizeStrategy/external-erc721-not-contract");
     require(prizePool.canAwardExternal(_externalErc721), "PeriodicPrizeStrategy/cannot-award-external");
     
@@ -544,6 +560,11 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     returns (bytes memory)
   {
     return BaseRelayRecipient._msgData();
+  }
+
+  modifier onlyOwnerOrListener() {
+    require(_msgSender() == owner() || _msgSender() == address(periodicPrizeStrategyListener), "PeriodicPrizeStrategy/only-owner-or-listener");
+    _;
   }
 
   modifier requireNotLocked() {

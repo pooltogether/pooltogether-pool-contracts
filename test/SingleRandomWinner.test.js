@@ -3,6 +3,7 @@ const { deployMockContract } = require('./helpers/deployMockContract')
 const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
 const TokenListenerInterface = require('../build/TokenListenerInterface.json')
+const PeriodicPrizeStrategyListener = require('../build/PeriodicPrizeStrategyListener.json')
 const SingleRandomWinnerHarness = require('../build/SingleRandomWinnerHarness.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
@@ -41,6 +42,8 @@ describe('SingleRandomWinner', function() {
   let creditLimitMantissa = 0.1
   let creditRateMantissa = creditLimitMantissa / prizePeriodSeconds
 
+  let periodicPrizeStrategyListener
+
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
 
@@ -61,6 +64,7 @@ describe('SingleRandomWinner', function() {
     rngFeeToken = await deployMockContract(wallet, IERC20.abi, overrides)
     externalERC20Award = await deployMockContract(wallet, IERC20.abi, overrides)
     externalERC721Award = await deployMockContract(wallet, IERC721.abi, overrides)
+    periodicPrizeStrategyListener = await deployMockContract(wallet, PeriodicPrizeStrategyListener.abi, overrides)
 
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
@@ -339,7 +343,7 @@ describe('SingleRandomWinner', function() {
 
     it('should not allow anyone else to add', async () => {
       await expect(prizeStrategy.connect(wallet2).addExternalErc20Awards([externalERC20Award.address]))
-        .to.be.revertedWith('Ownable: caller is not the owner')
+        .to.be.revertedWith('PeriodicPrizeStrategy/only-owner-or-listener')
     })
   })
 
@@ -372,6 +376,11 @@ describe('SingleRandomWinner', function() {
       await externalERC721Award.mock.ownerOf.withArgs(1).returns(wallet._address)
       await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
         .to.be.revertedWith('PeriodicPrizeStrategy/unavailable-token')
+    })
+
+    it('should disallow anyone but the owner or listener', async () => {
+      await expect(prizeStrategy.connect(wallet2).addExternalErc721Award(externalERC721Award.address, [1]))
+        .to.be.revertedWith('PeriodicPrizeStrategy/only-owner-or-listener')
     })
   })
 
@@ -470,18 +479,28 @@ describe('SingleRandomWinner', function() {
     })
   })
 
+  describe('setPeriodicPrizeStrategyListener()', () => {
+    it('should allow the owner to change the listener', async () => {
+      await expect(prizeStrategy.setPeriodicPrizeStrategyListener(periodicPrizeStrategyListener.address))
+        .to.emit(prizeStrategy, 'PeriodicPrizeStrategyListenerSet')
+        .withArgs(periodicPrizeStrategyListener.address)
+    })
+
+    it('should now allow anyone else to set it', async () => {
+      await expect(prizeStrategy.connect(wallet2).setPeriodicPrizeStrategyListener(periodicPrizeStrategyListener.address))
+        .to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
   describe('completeAward()', () => {
     it('should award the winner', async () => {
       debug('Setting time')
 
-      await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodStartedAt());
+      await prizeStrategy.setPeriodicPrizeStrategyListener(periodicPrizeStrategyListener.address)
+      await periodicPrizeStrategyListener.mock.afterDistributeAwards.withArgs('48849787646992769944319009300540211125598274780817112954146168253338351566848', await prizeStrategy.prizePeriodStartedAt()).returns()
 
       // no external award
       await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns('0')
-
-      await ticket.mock.balanceOf.returns(toWei('10'))
-      await ticket.mock.totalSupply.returns(toWei('10'))
-      await comptroller.mock.beforeTokenMint.returns()
 
       // ensure prize period is over
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
@@ -498,15 +517,14 @@ describe('SingleRandomWinner', function() {
       // rng is done
       await rng.mock.isRequestComplete.returns(true)
       await rng.mock.randomNumber.returns('0x6c00000000000000000000000000000000000000000000000000000000000000')
+      
       // draw winner
       await ticket.mock.totalSupply.returns(toWei('10'))
 
       // 1 dai to give
       await prizePool.mock.captureAwardBalance.returns(toWei('1'))
-
       // no reserve
       await prizePool.mock.calculateReserveFee.returns('0')
-
       await prizePool.mock.award.withArgs(wallet._address, toWei('1'), ticket.address).returns()
 
       debug('Completing award...')
@@ -515,9 +533,6 @@ describe('SingleRandomWinner', function() {
 
       // complete the award
       await prizeStrategy.completeAward()
-
-      // ensure new balance is correct
-      await ticket.mock.balanceOf.returns(toWei('11'))
 
       expect(await prizeStrategy.prizePeriodStartedAt()).to.equal(startedAt.add(prizePeriodSeconds))
     })
