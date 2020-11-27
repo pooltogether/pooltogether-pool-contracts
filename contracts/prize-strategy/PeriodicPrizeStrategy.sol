@@ -129,8 +129,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     PrizePool _prizePool,
     address _ticket,
     address _sponsorship,
-    RNGInterface _rng,
-    address[] memory _externalErc20s
+    RNGInterface _rng
   ) public initializer {
     require(_prizePeriodSeconds > 0, "PeriodicPrizeStrategy/prize-period-greater-than-zero");
     require(address(_prizePool) != address(0), "PeriodicPrizeStrategy/prize-pool-not-zero");
@@ -147,11 +146,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     __ReentrancyGuard_init();
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
-    for (uint256 i = 0; i < _externalErc20s.length; i++) {
-      require(prizePool.canAwardExternal(_externalErc20s[i]), "PeriodicPrizeStrategy/cannot-award-external");
-    }
     externalErc20s.initialize();
-    externalErc20s.addAddresses(_externalErc20s);
 
     prizePeriodSeconds = _prizePeriodSeconds;
     prizePeriodStartedAt = _prizePeriodStart;

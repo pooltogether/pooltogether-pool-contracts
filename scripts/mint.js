@@ -7,14 +7,14 @@ async function run () {
 
   const {
     CompoundPrizePoolBuilder,
-    SingleRandomWinnerBuilder,
+    MultipleWinnersBuilder,
     RNGServiceMock,
     Dai,
     cDai
   } = await loadContracts()
 
   console.log(`CompoundPrizePoolBuilder: ${CompoundPrizePoolBuilder.address}`)
-  console.log(`SingleRandomWinnerBuilder: ${SingleRandomWinnerBuilder.address}`)
+  console.log(`MultipleWinnersBuilder: ${MultipleWinnersBuilder.address}`)
   console.log(`RNGServiceMock: ${RNGServiceMock.address}`)
 
   for (let i = 0; i < signers.length; i++) {

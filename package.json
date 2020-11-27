@@ -25,7 +25,7 @@
     "testnet-txs": "buidler run ./js/runTestnetTransactions.js --network",
     "etherscan-verify": "buidler run ./scripts/verify.js --network",
     "deploy-ctoken-local": "./scripts/deployCTokenMock.js -n localhost -a $LOCAL_ADMIN_ADDRESS",
-    "clean": "rm -rf build .build-openzeppelin cache .cache-openzeppelin abis",
+    "clean": "rm -rf artifacts build .build-openzeppelin cache coverage coverage.json test-results.xml .cache-openzeppelin abis",
     "prepack": "rm -rf build cache && buidler compile && truffle-extract -b build -o abis",
     "postpublish": "PACKAGE_VERSION=$(./scripts/package-version.sh) && git tag -ae v$PACKAGE_VERSION && git push --tags",
     "update-gitbook-networks": "./scripts/update-gitbook-networks.sh",

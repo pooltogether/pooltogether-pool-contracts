@@ -6,7 +6,7 @@ const { AddressZero } = ethers.constants
 const { deployMockContract } = require('./helpers/deployMockContract')
 const TokenControllerInterface = require('../build/TokenControllerInterface.json')
 
-const debug = require('debug')('ptv3:SingleRandomWinnerBuilder.test')
+const debug = require('debug')('ptv3:ControlledTokenBuilder.test')
 
 describe('ControlledTokenBuilder', () => {
 

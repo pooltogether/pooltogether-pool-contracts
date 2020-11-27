@@ -18,7 +18,6 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     address _ticket,
     address _sponsorship,
     RNGInterface _rng,
-    address[] memory _externalErc20s,
     uint256 _numberOfWinners
   ) public initializer {
     PeriodicPrizeStrategy.initialize(
@@ -28,8 +27,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
       _prizePool,
       _ticket,
       _sponsorship,
-      _rng,
-      _externalErc20s
+      _rng
     );
     require(_numberOfWinners > 0, "MultipleWinners/num-gt-zero");
     __numberOfWinners = _numberOfWinners;

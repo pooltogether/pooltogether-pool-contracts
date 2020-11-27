@@ -3,28 +3,95 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "./ControlledTokenBuilder.sol";
 import "../prize-strategy/multiple-winners/MultipleWinnersProxyFactory.sol";
 
 /* solium-disable security/no-block-members */
 contract MultipleWinnersBuilder {
 
-  event CreatedMultipleWinners(address indexed oldPrizeStrategy, address indexed prizeStrategy, uint256 winnerCount);
+  event MultipleWinnersCreated(address indexed prizeStrategy);
+
+  struct MultipleWinnersConfig {
+    RNGInterface rngService;
+    uint256 prizePeriodStart;
+    uint256 prizePeriodSeconds;
+    string ticketName;
+    string ticketSymbol;
+    string sponsorshipName;
+    string sponsorshipSymbol;
+    uint256 ticketCreditLimitMantissa;
+    uint256 ticketCreditRateMantissa;
+    bool useGSN;
+    uint256 numberOfWinners;
+  }
 
   MultipleWinnersProxyFactory public multipleWinnersProxyFactory;
+  ControlledTokenBuilder public controlledTokenBuilder;
+  address public trustedForwarder;
 
   constructor (
-    MultipleWinnersProxyFactory _multipleWinnersProxyFactory
+    MultipleWinnersProxyFactory _multipleWinnersProxyFactory,
+    ControlledTokenBuilder _controlledTokenBuilder,
+    address _trustedForwarder
   ) public {
     require(address(_multipleWinnersProxyFactory) != address(0), "MultipleWinnersBuilder/multipleWinnersProxyFactory-not-zero");
+    require(address(_controlledTokenBuilder) != address(0), "MultipleWinnersBuilder/token-builder-not-zero");
     multipleWinnersProxyFactory = _multipleWinnersProxyFactory;
+    trustedForwarder = _trustedForwarder;
+    controlledTokenBuilder = _controlledTokenBuilder;
   }
 
   function createMultipleWinners(
-    PeriodicPrizeStrategy prizeStrategy, uint256 numberOfWinners
+    PrizePool prizePool,
+    MultipleWinnersConfig memory prizeStrategyConfig,
+    uint8 decimals,
+    address owner
   ) external returns (MultipleWinners) {
     MultipleWinners mw = multipleWinnersProxyFactory.create();
 
-    address[] memory externalErc20s;
+    address ticket = address(
+      _createTicket(
+        prizeStrategyConfig.ticketName,
+        prizeStrategyConfig.ticketSymbol,
+        decimals,
+        prizePool,
+        prizeStrategyConfig.useGSN
+      )
+    );
+
+    address sponsorship = address(
+      _createSponsorship(
+        prizeStrategyConfig.sponsorshipName,
+        prizeStrategyConfig.sponsorshipSymbol,
+        decimals,
+        prizePool,
+        prizeStrategyConfig.useGSN
+      )
+    );
+
+    mw.initializeMultipleWinners(
+      prizeStrategyConfig.useGSN ? trustedForwarder : address(0),
+      prizeStrategyConfig.prizePeriodStart,
+      prizeStrategyConfig.prizePeriodSeconds,
+      prizePool,
+      ticket,
+      sponsorship,
+      prizeStrategyConfig.rngService,
+      prizeStrategyConfig.numberOfWinners
+    );
+
+    mw.transferOwnership(owner);
+
+    emit MultipleWinnersCreated(address(mw));
+
+    return mw;
+  }
+
+  function createMultipleWinnersFromExistingPrizeStrategy(
+    PeriodicPrizeStrategy prizeStrategy,
+    uint256 numberOfWinners
+  ) external returns (MultipleWinners) {
+    MultipleWinners mw = multipleWinnersProxyFactory.create();
 
     mw.initializeMultipleWinners(
       prizeStrategy.trustedForwarder(),
@@ -34,14 +101,49 @@ contract MultipleWinnersBuilder {
       address(prizeStrategy.ticket()),
       address(prizeStrategy.sponsorship()),
       prizeStrategy.rng(),
-      externalErc20s,
       numberOfWinners
     );
 
     mw.transferOwnership(msg.sender);
 
-    emit CreatedMultipleWinners(address(prizeStrategy), address(mw), numberOfWinners);
+    emit MultipleWinnersCreated(address(prizeStrategy));
 
     return mw;
+  }
+
+  function _createTicket(
+    string memory name,
+    string memory token,
+    uint8 decimals,
+    PrizePool prizePool,
+    bool useGSN
+  ) internal returns (address) {
+    return address(
+      controlledTokenBuilder.createTicket(ControlledTokenBuilder.ControlledTokenConfig(
+        name,
+        token,
+        decimals,
+        prizePool,
+        useGSN
+      ))
+    );
+  }
+
+  function _createSponsorship(
+    string memory name,
+    string memory token,
+    uint8 decimals,
+    PrizePool prizePool,
+    bool useGSN
+  ) internal returns (address) {
+    return address(
+      controlledTokenBuilder.createControlledToken(ControlledTokenBuilder.ControlledTokenConfig(
+        name,
+        token,
+        decimals,
+        prizePool,
+        useGSN
+      ))
+    );
   }
 }
