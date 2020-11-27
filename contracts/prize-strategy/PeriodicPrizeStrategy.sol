@@ -323,10 +323,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Starts the award process by starting random number request.  The prize period must have ended.
   /// @dev The RNG-Request-Fee is expected to be held within this contract before calling this function
   function startAward() external requireCanStartAward {
-    if (isRngTimedOut()) {
-      delete rngRequest;
-      emit RngRequestFailed();
-    }
+    resetRNG();
     (address feeToken, uint256 requestFee) = rng.getRequestFee();
     if (feeToken != address(0) && requestFee > 0) {
       IERC20(feeToken).approve(address(rng), requestFee);
@@ -338,6 +335,13 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     rngRequest.requestedAt = _currentTime().toUint32();
 
     emit PrizePoolAwardStarted(_msgSender(), address(prizePool), requestId, lockBlock);
+  }
+
+  function resetRNG() public {
+    if (isRngTimedOut()) {
+      delete rngRequest;
+      emit RngRequestFailed();
+    }
   }
 
   /// @notice Completes the award process and awards the winners.  The random number must have been requested and is now available.
