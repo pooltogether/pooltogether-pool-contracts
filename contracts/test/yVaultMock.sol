@@ -15,8 +15,8 @@ contract yVaultMock is yVaultInterface, ERC20UpgradeSafe {
     vaultFeeMantissa = 0.05 ether;
   }
 
-  function token() external override view returns (address) {
-    return address(asset);
+  function token() external override view returns (IERC20) {
+    return asset;
   }
 
   function balance() public override view returns (uint) {

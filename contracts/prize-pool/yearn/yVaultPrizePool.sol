@@ -92,7 +92,7 @@ contract yVaultPrizePool is PrizePool {
   /// @param _externalToken The address of the token to check
   /// @return True if the token may be awarded, false otherwise
   function _canAwardExternal(address _externalToken) internal override view returns (bool) {
-    return _externalToken != address(vault) && _externalToken != vault.token();
+    return _externalToken != address(vault) && _externalToken != address(vault.token());
   }
 
   /// @dev Allows a user to redeem yield-bearing tokens in exchange for the underlying
