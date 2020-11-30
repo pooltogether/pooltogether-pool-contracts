@@ -58,7 +58,7 @@ async function run() {
 
   await verifyProxyFactory('CompoundPrizePoolProxyFactory')
   await verifyProxyFactory('ControlledTokenProxyFactory')
-  await verifyProxyFactory('SingleRandomWinnerProxyFactory')
+  await verifyProxyFactory('MultipleWinnersProxyFactory')
   await verifyProxyFactory('StakePrizePoolProxyFactory')
   await verifyProxyFactory('TicketProxyFactory')
   await verifyProxyFactory('yVaultPrizePoolProxyFactory')

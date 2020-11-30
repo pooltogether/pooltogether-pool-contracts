@@ -2,7 +2,7 @@ const buidler = require("@nomiclabs/buidler");
 
 const ERC20Mintable = require('../build/ERC20Mintable.json')
 const CompoundPrizePool = require('../build/CompoundPrizePool.json')
-const SingleRandomWinner = require('../build/SingleRandomWinner.json')
+const MultipleWinners = require('../build/MultipleWinners.json')
 
 const DEPLOY = {
   BALANCE_DRIPS: true,
@@ -92,7 +92,7 @@ async function main() {
     prizeStrategyAddress = (await prizePool.functions.prizeStrategy())[0]
 
     console.log(`\n  Loading PrizeStrategy from address: "${prizeStrategyAddress}"...`)
-    prizeStrategy = new ethers.Contract(prizeStrategyAddress, SingleRandomWinner.abi, signer)
+    prizeStrategy = new ethers.Contract(prizeStrategyAddress, MultipleWinners.abi, signer)
 
     console.log(`\n  Getting Measure-Token (Ticket) from PrizeStrategy...`)
     measureTokenAddress = (await prizeStrategy.functions.ticket())[0]

@@ -21,6 +21,7 @@ contract ControlledTokenBuilder {
     string symbol;
     uint8 decimals;
     TokenControllerInterface controller;
+    bool useGSN;
   }
 
   constructor (
@@ -44,7 +45,7 @@ contract ControlledTokenBuilder {
       config.name,
       config.symbol,
       config.decimals,
-      trustedForwarder,
+      config.useGSN ? trustedForwarder : address(0),
       config.controller
     );
 
@@ -62,7 +63,7 @@ contract ControlledTokenBuilder {
       config.name,
       config.symbol,
       config.decimals,
-      trustedForwarder,
+      config.useGSN ? trustedForwarder : address(0),
       config.controller
     );
 

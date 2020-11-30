@@ -23,7 +23,7 @@ const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
 let overrides = { gasLimit: 20000000 }
 
-describe('SingleRandomWinner', function() {
+describe('MultipleWinners', function() {
   let wallet, wallet2
 
   let externalERC20Award, externalERC721Award
@@ -79,7 +79,6 @@ describe('SingleRandomWinner', function() {
       ticket.address,
       sponsorship.address,
       rng.address,
-      [externalERC20Award.address],
       4
     )
 
@@ -117,11 +116,8 @@ describe('SingleRandomWinner', function() {
   })
 
   describe('distribute()', () => {
-    it('should distribute the winnings', async () => {
-      await prizePool.mock.captureAwardBalance.returns(toWei('100'))
-
-
-
+    xit('should distribute the winnings', async () => {
+      // await prizePool.mock.captureAwardBalance.returns(toWei('100'))
     })
   })
 })

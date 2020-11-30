@@ -162,9 +162,6 @@ describe('PrizePool', function() {
 
         debug('testing initialization of secondary prizeStrategy...')
 
-        initArgs = _initArgs.slice(); initArgs[0] = AddressZero
-        await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/forwarder-not-zero')
-
         initArgs = _initArgs.slice(); initArgs[1] = AddressZero
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/reserveRegistry-not-zero')
 

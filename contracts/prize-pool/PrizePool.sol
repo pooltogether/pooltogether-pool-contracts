@@ -225,7 +225,6 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     initializer
   {
     require(address(_reserveRegistry) != address(0), "PrizePool/reserveRegistry-not-zero");
-    require(_trustedForwarder != address(0), "PrizePool/forwarder-not-zero");
     _tokens.initialize();
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
       _addControlledToken(_controlledTokens[i]);

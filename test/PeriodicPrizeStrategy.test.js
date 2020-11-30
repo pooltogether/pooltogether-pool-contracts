@@ -4,7 +4,8 @@ const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
 const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 const PeriodicPrizeStrategyListener = require('../build/PeriodicPrizeStrategyListener.json')
-const SingleRandomWinnerHarness = require('../build/SingleRandomWinnerHarness.json')
+const PeriodicPrizeStrategyHarness = require('../build/PeriodicPrizeStrategyHarness.json')
+const PeriodicPrizeStrategyDistributorInterface = require('../build/PeriodicPrizeStrategyDistributorInterface.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
 const IERC20 = require('../build/IERC20.json')
@@ -27,7 +28,7 @@ const invalidExternalToken = '0x0000000000000000000000000000000000000002'
 
 let overrides = { gasLimit: 20000000 }
 
-describe('SingleRandomWinner', function() {
+describe('PeriodicPrizeStrategy', function() {
   let wallet, wallet2
 
   let externalERC20Award, externalERC721Award
@@ -39,10 +40,7 @@ describe('SingleRandomWinner', function() {
   let prizePeriodStart = now()
   let prizePeriodSeconds = 1000
 
-  let creditLimitMantissa = 0.1
-  let creditRateMantissa = creditLimitMantissa / prizePeriodSeconds
-
-  let periodicPrizeStrategyListener
+  let periodicPrizeStrategyListener, distributor
 
   beforeEach(async () => {
     [wallet, wallet2] = await buidler.ethers.getSigners()
@@ -64,12 +62,14 @@ describe('SingleRandomWinner', function() {
     rngFeeToken = await deployMockContract(wallet, IERC20.abi, overrides)
     externalERC20Award = await deployMockContract(wallet, IERC20.abi, overrides)
     externalERC721Award = await deployMockContract(wallet, IERC721.abi, overrides)
+    distributor = await deployMockContract(wallet, PeriodicPrizeStrategyDistributorInterface.abi, overrides)
     periodicPrizeStrategyListener = await deployMockContract(wallet, PeriodicPrizeStrategyListener.abi, overrides)
 
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
     debug('deploying prizeStrategy...')
-    prizeStrategy = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
+    prizeStrategy = await deployContract(wallet, PeriodicPrizeStrategyHarness, [], overrides)
+    await prizeStrategy.setDistributor(distributor.address)
 
     await prizePool.mock.canAwardExternal.withArgs(externalERC20Award.address).returns(true)
     await prizePool.mock.canAwardExternal.withArgs(externalERC721Award.address).returns(true)
@@ -85,9 +85,10 @@ describe('SingleRandomWinner', function() {
       prizePool.address,
       ticket.address,
       sponsorship.address,
-      rng.address,
-      [externalERC20Award.address]
+      rng.address
     )
+
+    await prizeStrategy.addExternalErc20Award(externalERC20Award.address)
 
     debug('initialized!')
   })
@@ -110,13 +111,12 @@ describe('SingleRandomWinner', function() {
         prizePool.address,
         ticket.address,
         sponsorship.address,
-        rng.address,
-        [SENTINEL]
+        rng.address
       ]
       let initArgs
 
       debug('deploying secondary prizeStrategy...')
-      const prizeStrategy2 = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
+      const prizeStrategy2 = await deployContract(wallet, PeriodicPrizeStrategyHarness, [], overrides)
 
       debug('testing initialization of secondary prizeStrategy...')
 
@@ -131,30 +131,6 @@ describe('SingleRandomWinner', function() {
       initArgs = _initArgs.slice(); initArgs[6] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PeriodicPrizeStrategy/rng-not-zero')
 
-      initArgs = _initArgs.slice()
-      await prizePool.mock.canAwardExternal.withArgs(SENTINEL).returns(false)
-      await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PeriodicPrizeStrategy/cannot-award-external')
-    })
-
-    it('should disallow unapproved external prize tokens', async () => {
-      const initArgs = [
-        FORWARDER,
-        prizePeriodStart,
-        prizePeriodSeconds,
-        prizePool.address,
-        ticket.address,
-        sponsorship.address,
-        rng.address,
-        [SENTINEL]
-      ]
-
-      debug('deploying secondary prizeStrategy...')
-      const prizeStrategy2 = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
-
-      debug('initializing secondary prizeStrategy...')
-      await prizePool.mock.canAwardExternal.withArgs(SENTINEL).returns(false)
-      await expect(prizeStrategy2.initialize(...initArgs))
-        .to.be.revertedWith('PeriodicPrizeStrategy/cannot-award-external')
     })
   })
 
@@ -496,6 +472,8 @@ describe('SingleRandomWinner', function() {
     it('should award the winner', async () => {
       debug('Setting time')
 
+      await distributor.mock.distribute.withArgs('48849787646992769944319009300540211125598274780817112954146168253338351566848').returns()
+
       await prizeStrategy.setPeriodicPrizeStrategyListener(periodicPrizeStrategyListener.address)
       await periodicPrizeStrategyListener.mock.afterDistributeAwards.withArgs('48849787646992769944319009300540211125598274780817112954146168253338351566848', await prizeStrategy.prizePeriodStartedAt()).returns()
 
@@ -562,7 +540,7 @@ describe('SingleRandomWinner', function() {
       prizePeriodStart = 10000
 
       debug('deploying secondary prizeStrategy...')
-      prizeStrategy2 = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
+      prizeStrategy2 = await deployContract(wallet, PeriodicPrizeStrategyHarness, [], overrides)
 
       debug('initializing secondary prizeStrategy...')
       await prizeStrategy2.initialize(
@@ -572,8 +550,7 @@ describe('SingleRandomWinner', function() {
         prizePool.address,
         ticket.address,
         sponsorship.address,
-        rng.address,
-        [externalERC20Award.address]
+        rng.address
       )
 
       debug('initialized!')
