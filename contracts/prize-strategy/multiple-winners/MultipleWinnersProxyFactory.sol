@@ -8,6 +8,8 @@ import "../../external/openzeppelin/ProxyFactory.sol";
 /// @title Creates a minimal proxy to the MultipleWinners prize strategy.  Very cheap to deploy.
 contract MultipleWinnersProxyFactory is ProxyFactory {
 
+  event MultipleWinnersCreated(address indexed winners);
+
   MultipleWinners public instance;
 
   constructor () public {
@@ -15,7 +17,9 @@ contract MultipleWinnersProxyFactory is ProxyFactory {
   }
 
   function create() external returns (MultipleWinners) {
-    return MultipleWinners(deployMinimal(address(instance), ""));
+    address result = MultipleWinners(deployMinimal(address(instance), ""));
+    emit MultipleWinnersCreated(result);
+    return MultipleWinners(result);
   }
 
 }
