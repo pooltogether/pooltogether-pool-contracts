@@ -227,6 +227,26 @@ describe('PrizePool', function() {
     })
 
     describe('captureAwardBalance()', () => {
+      it('should handle when the balance is less than the collateral', async () => {
+        await ticket.mock.totalSupply.returns(toWei('100'))
+        await yieldSourceStub.mock.balance.returns(toWei('99.9999'))
+
+        await expect(prizePool.captureAwardBalance()).to.not.emit(prizePool, 'ReserveFeeCaptured');
+        expect(await prizePool.awardBalance()).to.equal(toWei('0'))
+      })
+
+      it('should handle the situ when the total accrued interest is less than the captured total', async () => {
+        await ticket.mock.totalSupply.returns(toWei('100'))
+        await yieldSourceStub.mock.balance.returns(toWei('110'))
+
+        await comptroller.mock.reserveRateMantissa.returns('0')
+
+        // first capture the 10 tokens
+        await prizePool.captureAwardBalance()
+
+        await yieldSourceStub.mock.balance.returns(toWei('109.999'))
+      })
+
       it('should track the yield less the total token supply', async () => {
         await ticket.mock.totalSupply.returns(toWei('100'))
         await yieldSourceStub.mock.balance.returns(toWei('110'))
