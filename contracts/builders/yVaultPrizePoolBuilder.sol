@@ -12,11 +12,13 @@ import "../token/TicketProxyFactory.sol";
 import "../external/yearn/yVaultInterface.sol";
 import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 
+/// @title Creates new yVault Prize Pools with a Single Random Winner prize strategy.
 /* solium-disable security/no-block-members */
 contract yVaultPrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
+  /// @notice The configuration used to initialize the yVault Prize Pool
   struct yVaultPrizePoolConfig {
     yVaultInterface vault;
     uint256 reserveRateMantissa;
@@ -36,12 +38,19 @@ contract yVaultPrizePoolBuilder {
     address indexed prizeStrategy
   );
 
+  /// @title The Comptroller to bind to the Compund Prize Pool
   ComptrollerInterface public comptroller;
+  /// @title The proxy factory used to create new yVault Prize Pool instances
   yVaultPrizePoolProxyFactory public vaultPrizePoolProxyFactory;
+  /// @title The controlled token proxy factory used to create new Controlled Tokens
   ControlledTokenProxyFactory public controlledTokenProxyFactory;
+  /// @title The ticket proxy factory used to create new Tickets
   TicketProxyFactory public ticketProxyFactory;
+  /// @title The Single Random Winner proxy factory that creates new Single Random Winner prize strategy instances
   SingleRandomWinnerProxyFactory public singleRandomWinnerProxyFactory;
+  /// @title The Open Zeppelin proxy factory to create new upgradeable proxies.
   OpenZeppelinProxyFactoryInterface public proxyFactory;
+  /// @title The OpenGSN forwarder
   address public trustedForwarder;
 
   constructor (
@@ -68,6 +77,10 @@ contract yVaultPrizePoolBuilder {
     controlledTokenProxyFactory = _controlledTokenProxyFactory;
   }
 
+  /// @notice Creates a new yVault Prize Pool bound to a new Single Random Winner prize strategy.
+  /// @param prizePoolConfig The config used to initialize the yVault Prize Pool
+  /// @param prizeStrategyConfig The config used to initialize the Single Random Winner
+  /// @return The Single Random Winner address.
   function createSingleRandomWinner(
     yVaultPrizePoolConfig calldata prizePoolConfig,
     SingleRandomWinnerBuilder.SingleRandomWinnerConfig calldata prizeStrategyConfig,
@@ -135,6 +148,10 @@ contract yVaultPrizePoolBuilder {
     return prizeStrategy;
   }
 
+  /// @notice Creates a new yVault Prize Pool with a preconfigured prize strategy.
+  /// @param config The config to use to initialize the yVault Prize Pool
+  /// @param prizeStrategy The prize strategy to attach to the prize pool.
+  /// @return The yVault Prize Pool
   function _createyVaultPrizePool(
     yVaultPrizePoolConfig memory config,
     PrizePoolTokenListenerInterface prizeStrategy
@@ -162,6 +179,10 @@ contract yVaultPrizePoolBuilder {
     return prizePool;
   }
 
+  /// @notice Creates a new yVault Prize Pool with a preconfigured prize strategy.
+  /// @param config The config to use to initialize the yVault Prize Pool
+  /// @param prizeStrategy The prize strategy to attach to the prize pool.
+  /// @return The yVault Prize Pool
   function createyVaultPrizePool(
     yVaultPrizePoolConfig calldata config,
     PrizePoolTokenListenerInterface prizeStrategy
@@ -174,6 +195,11 @@ contract yVaultPrizePoolBuilder {
     return prizePool;
   }
 
+  /// @notice Creates a new Controlled Token
+  /// @param name The name for the token
+  /// @param symbol The symbol of the token
+  /// @param decimals The number of decimals to use
+  /// @return The new Controlled Token
   function _createControlledToken(
     TokenControllerInterface controller,
     string memory name,
@@ -185,6 +211,11 @@ contract yVaultPrizePoolBuilder {
     return token;
   }
 
+  /// @notice Creates a new Ticket token
+  /// @param name The name for the token
+  /// @param symbol The symbol of the token
+  /// @param decimals The number of decimals to use
+  /// @return The new Ticket
   function _createTicket(
     TokenControllerInterface controller,
     string memory name,
