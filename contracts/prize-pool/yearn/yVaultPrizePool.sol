@@ -124,7 +124,7 @@ contract yVaultPrizePool is PrizePool {
     uint256 amountWithdrawn = postBalance.sub(preBalance);
     uint256 amountRedeemable = (amountWithdrawn < amount) ? amountWithdrawn : amount;
 
-    // Redeposit any asset funds that were removed premptively for fees
+    // Redeposit any asset funds that were removed preemptively for fees
     if (postBalance > amountRedeemable) {
       _supplySpecific(postBalance.sub(amountRedeemable));
     }

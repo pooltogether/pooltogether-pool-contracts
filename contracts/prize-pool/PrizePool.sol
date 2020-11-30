@@ -825,7 +825,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     if (!creditBalance.initialized) {
       newBalance = 0;
     } else {
-      uint256 credit = calculateAccruedCredit(user, controlledToken, controlledTokenBalance);
+      uint256 credit = _calculateAccruedCredit(user, controlledToken, controlledTokenBalance);
       newBalance = _applyCreditLimit(controlledToken, controlledTokenBalance, uint256(creditBalance.balance).add(credit).add(extra));
     }
     return newBalance;
@@ -869,7 +869,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   /// @param controlledToken The controlled token that the user holds
   /// @param controlledTokenBalance The user's current balance of the controlled tokens.
   /// @return The credit that has accrued since the last credit update.
-  function calculateAccruedCredit(address user, address controlledToken, uint256 controlledTokenBalance) internal view returns (uint256) {
+  function _calculateAccruedCredit(address user, address controlledToken, uint256 controlledTokenBalance) internal view returns (uint256) {
     uint256 userTimestamp = _tokenCreditBalances[controlledToken][user].timestamp;
 
     if (!_tokenCreditBalances[controlledToken][user].initialized) {
