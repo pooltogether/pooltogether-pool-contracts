@@ -70,6 +70,6 @@ contract StakePrizePool is PrizePool {
   /// @param redeemAmount The amount of yield-bearing tokens to be redeemed
   /// @return The actual amount of tokens that were redeemed.
   function _redeem(uint256 redeemAmount) internal override returns (uint256) {
-    // no-op because nothing needs to be done
+    return redeemAmount;
   }
 }
