@@ -943,7 +943,7 @@ abstract contract PrizePool is YieldSource, OwnableUpgradeSafe, RelayRecipient, 
     return (earlyExitFee, creditBurned);
   }
 
-  /// @notice Allows the Governor to set a cap on the amount of liquidity that he pool can hold
+  /// @notice Allows the Governor to set a cap on the amount of liquidity that the pool can hold
   /// @param _liquidityCap The new liquidity cap for the prize pool
   function setLiquidityCap(uint256 _liquidityCap) external onlyOwner {
     _setLiquidityCap(_liquidityCap);
