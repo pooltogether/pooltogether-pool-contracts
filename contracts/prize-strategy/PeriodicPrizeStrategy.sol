@@ -123,8 +123,17 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   //   NFT Address => TokenIds
   mapping (address => uint256[]) internal externalErc721TokenIds;
 
+  /// @notice A listener that receives callbacks before certain events
   PeriodicPrizeStrategyListenerInterface public periodicPrizeStrategyListener;
 
+  /// @notice Initializes a new strategy
+  /// @param _trustedForwarder the GSN v2 trusted forwarder to use
+  /// @param _prizePeriodStart The starting timestamp of the prize period.
+  /// @param _prizePeriodSeconds The duration of the prize period in seconds
+  /// @param _prizePool The prize pool to award
+  /// @param _ticket The ticket to use to draw winners
+  /// @param _sponsorship The sponsorship token
+  /// @param _rng The RNG service to use
   function initialize (
     address _trustedForwarder,
     uint256 _prizePeriodStart,
@@ -169,6 +178,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     return prizePool.awardBalance();
   }
 
+  /// @notice Allows the owner to set the token listener
+  /// @param _tokenListener A contract that implements the token listener interface.
   function setTokenListener(TokenListenerInterface _tokenListener) external onlyOwner {
     tokenListener = _tokenListener;
 
@@ -333,6 +344,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit PrizePoolAwardStarted(_msgSender(), address(prizePool), requestId, lockBlock);
   }
 
+  /// @notice Can be called by anyone to unlock the tickets if the RNG has timed out.
   function cancelAward() public {
     require(isRngTimedOut(), "PeriodicPrizeStrategy/rng-not-timedout");
     uint32 requestId = rngRequest.id;
@@ -358,6 +370,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
+  /// @notice Allows the owner to set a listener for prize strategy callbacks.
+  /// @param _periodicPrizeStrategyListener The address of the listener contract
   function setPeriodicPrizeStrategyListener(address _periodicPrizeStrategyListener) external onlyOwner {
     require(_periodicPrizeStrategyListener.isContract(), "PeriodicPrizeStrategy/listener-not-contract");
 
@@ -371,6 +385,9 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     return prizePeriodStartedAt.add(elapsedPeriods.mul(prizePeriodSeconds));
   }
 
+  /// @notice Calculates when the next prize period will start
+  /// @param currentTime The timestamp to use as the current time
+  /// @return The timestamp at which the next prize period would start
   function calculateNextPrizePeriodStartTime(uint256 currentTime) external view returns (uint256) {
     return _calculateNextPrizePeriodStartTime(currentTime);
   }
