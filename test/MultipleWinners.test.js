@@ -148,7 +148,7 @@ describe('MultipleWinners', function() {
 
       await ticket.mock.totalSupply.returns(1000)
 
-      await ticket.mock.draw.withArgs(randomNumber + 500).returns(wallet2._address)
+      await ticket.mock.draw.withArgs(ethers.utils.solidityKeccak256(['uint256'], [randomNumber])).returns(wallet2._address)
 
       await prizePool.mock.award.withArgs(wallet3._address, toWei('4'), ticket.address).returns()
       await prizePool.mock.award.withArgs(wallet2._address, toWei('4'), ticket.address).returns()
