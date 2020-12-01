@@ -68,6 +68,11 @@ contract Ticket is ControlledToken, TicketInterface {
   function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
     super._beforeTokenTransfer(from, to, amount);
 
+    // optimize: ignore transfers to self
+    if (from == to) {
+      return;
+    }
+
     if (from != address(0)) {
       uint256 fromBalance = balanceOf(from).sub(amount);
       sortitionSumTrees.set(TREE_KEY, fromBalance, bytes32(uint256(from)));

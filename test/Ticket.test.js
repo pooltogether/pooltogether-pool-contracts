@@ -42,6 +42,14 @@ describe('Ticket', function() {
       expect(await ticket.chanceOf(wallet3._address)).to.equal(toWei('20'))
     })
 
+    it('should do nothing when transferring to self', async () => {
+      await controller.call(ticket, 'controllerMint', wallet._address, toWei('100'))
+      
+      await ticket.transfer(wallet._address, toWei('20'))
+
+      expect(await ticket.chanceOf(wallet._address)).to.equal(toWei('100'))
+    })
+
     it('should be correct after burning', async () => {
       await controller.call(ticket, 'controllerMint', wallet._address, toWei('100'))
       await controller.call(ticket, 'controllerBurn', wallet._address, toWei('33'))
