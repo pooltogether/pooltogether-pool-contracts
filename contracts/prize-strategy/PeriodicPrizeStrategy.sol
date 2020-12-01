@@ -510,12 +510,20 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     }
 
     for (uint256 i = 0; i < _tokenIds.length; i++) {
-      uint256 tokenId = _tokenIds[i];
-      require(IERC721(_externalErc721).ownerOf(tokenId) == address(prizePool), "PeriodicPrizeStrategy/unavailable-token");
-      externalErc721TokenIds[_externalErc721].push(tokenId);
+      _addExternalErc721Award(_externalErc721, _tokenIds[i]);
     }
 
     emit ExternalErc721AwardAdded(_externalErc721, _tokenIds);
+  }
+
+  function _addExternalErc721Award(address _externalErc721, uint256 _tokenId) internal {
+    require(IERC721(_externalErc721).ownerOf(_tokenId) == address(prizePool), "PeriodicPrizeStrategy/unavailable-token");
+    for (uint256 i = 0; i < externalErc721TokenIds[_externalErc721].length; i++) {
+      if (externalErc721TokenIds[_externalErc721][i] == _tokenId) {
+        revert("PeriodicPrizeStrategy/erc721-duplicate");
+      }
+    }
+    externalErc721TokenIds[_externalErc721].push(_tokenId);
   }
 
   /// @notice Removes an external ERC721 token as an additional prize that can be awarded

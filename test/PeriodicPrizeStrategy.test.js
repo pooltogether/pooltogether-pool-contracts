@@ -361,6 +361,12 @@ describe('PeriodicPrizeStrategy', function() {
       await expect(prizeStrategy.connect(wallet2).addExternalErc721Award(externalERC721Award.address, [1]))
         .to.be.revertedWith('PeriodicPrizeStrategy/only-owner-or-listener')
     })
+
+    it('should not allow someone to add a token twice', async () => {
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
+      await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1, 1]))
+        .to.be.revertedWith('PeriodicPrizeStrategy/erc721-duplicate')
+    })
   })
 
   describe('removeExternalErc721Award()', () => {
