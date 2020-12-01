@@ -45,7 +45,12 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     uint32 rngLockBlock
   );
 
-  event RngRequestFailed();
+  event PrizePoolAwardCancelled(
+    address indexed operator,
+    address indexed prizePool,
+    uint32 indexed rngRequestId,
+    uint32 rngLockBlock
+  );
 
   event PrizePoolAwarded(
     address indexed operator,
@@ -150,8 +155,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
     externalErc721s.initialize();
 
-    // 1 hour timeout
-    _setRngRequestTimeout(3600);
+    // 30 min timeout
+    _setRngRequestTimeout(1800);
 
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
@@ -315,7 +320,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Starts the award process by starting random number request.  The prize period must have ended.
   /// @dev The RNG-Request-Fee is expected to be held within this contract before calling this function
   function startAward() external requireCanStartAward {
-    resetRNG();
     (address feeToken, uint256 requestFee) = rng.getRequestFee();
     if (feeToken != address(0) && requestFee > 0) {
       IERC20(feeToken).approve(address(rng), requestFee);
@@ -329,11 +333,12 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit PrizePoolAwardStarted(_msgSender(), address(prizePool), requestId, lockBlock);
   }
 
-  function resetRNG() public {
-    if (isRngTimedOut()) {
-      delete rngRequest;
-      emit RngRequestFailed();
-    }
+  function cancelAward() public {
+    require(isRngTimedOut(), "PeriodicPrizeStrategy/rng-not-timedout");
+    uint32 requestId = rngRequest.id;
+    uint32 lockBlock = rngRequest.lockBlock;
+    delete rngRequest;
+    emit PrizePoolAwardCancelled(msg.sender, address(prizePool), requestId, lockBlock);
   }
 
   /// @notice Completes the award process and awards the winners.  The random number must have been requested and is now available.

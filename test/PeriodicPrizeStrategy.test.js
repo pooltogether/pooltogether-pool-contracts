@@ -196,8 +196,12 @@ describe('PeriodicPrizeStrategy', function() {
     });
   })
 
-  describe('startAward()', () => {
-    it('should allow the rng to be reset on timeout', async () => {
+  describe('cancelAward()', () => {
+    it('should not allow anyone to cancel if the rng has not timed out', async () => {
+      await expect(prizeStrategy.cancelAward()).to.be.revertedWith("PeriodicPrizeStrategy/rng-not-timedout")
+    })
+
+    it('should allow anyone to reset the rng if it times out', async () => {
       await rngFeeToken.mock.approve.withArgs(rng.address, toWei('1')).returns(true);
       await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
@@ -210,10 +214,9 @@ describe('PeriodicPrizeStrategy', function() {
       // should be timed out
       expect(await prizeStrategy.isRngTimedOut()).to.be.true
 
-      await rng.mock.requestRandomNumber.returns('12', '10');
-
-      await expect(prizeStrategy.startAward())
-        .to.emit(prizeStrategy, 'RngRequestFailed')
+      await expect(prizeStrategy.cancelAward())
+        .to.emit(prizeStrategy, 'PrizePoolAwardCancelled')
+        .withArgs(wallet._address, prizePool.address, 11, 1)
     })
   })
 
