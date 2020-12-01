@@ -49,24 +49,20 @@ contract MultipleWinnersBuilder {
   ) external returns (MultipleWinners) {
     MultipleWinners mw = multipleWinnersProxyFactory.create();
 
-    address ticket = address(
-      _createTicket(
-        prizeStrategyConfig.ticketName,
-        prizeStrategyConfig.ticketSymbol,
-        decimals,
-        prizePool,
-        prizeStrategyConfig.useGSN
-      )
+    Ticket ticket = _createTicket(
+      prizeStrategyConfig.ticketName,
+      prizeStrategyConfig.ticketSymbol,
+      decimals,
+      prizePool,
+      prizeStrategyConfig.useGSN
     );
 
-    address sponsorship = address(
-      _createSponsorship(
-        prizeStrategyConfig.sponsorshipName,
-        prizeStrategyConfig.sponsorshipSymbol,
-        decimals,
-        prizePool,
-        prizeStrategyConfig.useGSN
-      )
+    IERC20 sponsorship = _createSponsorship(
+      prizeStrategyConfig.sponsorshipName,
+      prizeStrategyConfig.sponsorshipSymbol,
+      decimals,
+      prizePool,
+      prizeStrategyConfig.useGSN
     );
 
     mw.initializeMultipleWinners(
@@ -98,8 +94,8 @@ contract MultipleWinnersBuilder {
       prizeStrategy.prizePeriodStartedAt(),
       prizeStrategy.prizePeriodSeconds(),
       prizeStrategy.prizePool(),
-      address(prizeStrategy.ticket()),
-      address(prizeStrategy.sponsorship()),
+      prizeStrategy.ticket(),
+      prizeStrategy.sponsorship(),
       prizeStrategy.rng(),
       numberOfWinners
     );
@@ -117,15 +113,15 @@ contract MultipleWinnersBuilder {
     uint8 decimals,
     PrizePool prizePool,
     bool useGSN
-  ) internal returns (address) {
-    return address(
-      controlledTokenBuilder.createTicket(ControlledTokenBuilder.ControlledTokenConfig(
+  ) internal returns (Ticket) {
+    return controlledTokenBuilder.createTicket(
+      ControlledTokenBuilder.ControlledTokenConfig(
         name,
         token,
         decimals,
         prizePool,
         useGSN
-      ))
+      )
     );
   }
 
@@ -135,15 +131,15 @@ contract MultipleWinnersBuilder {
     uint8 decimals,
     PrizePool prizePool,
     bool useGSN
-  ) internal returns (address) {
-    return address(
-      controlledTokenBuilder.createControlledToken(ControlledTokenBuilder.ControlledTokenConfig(
+  ) internal returns (IERC20) {
+    return controlledTokenBuilder.createControlledToken(
+      ControlledTokenBuilder.ControlledTokenConfig(
         name,
         token,
         decimals,
         prizePool,
         useGSN
-      ))
+      )
     );
   }
 }
