@@ -7,7 +7,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 
@@ -25,7 +24,6 @@ import "./PeriodicPrizeStrategyListener.sol";
 abstract contract PeriodicPrizeStrategy is Initializable,
                                            OwnableUpgradeSafe,
                                            RelayRecipient,
-                                           ReentrancyGuardUpgradeSafe,
                                            TokenListenerInterface {
 
   using SafeMath for uint256;
@@ -143,7 +141,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     trustedForwarder = _trustedForwarder;
 
     __Ownable_init();
-    __ReentrancyGuard_init();
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     externalErc20s.initialize();
