@@ -3,6 +3,6 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 /* solium-disable security/no-block-members */
-interface PeriodicPrizeStrategyListener {
+interface PeriodicPrizeStrategyListenerInterface {
   function afterDistributeAwards(uint256 randomNumber, uint256 prizePeriodStartedAt) external;
 }
