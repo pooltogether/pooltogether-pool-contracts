@@ -354,6 +354,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   }
 
   function setPeriodicPrizeStrategyListener(address _periodicPrizeStrategyListener) external onlyOwner {
+    require(_periodicPrizeStrategyListener.isContract(), "PeriodicPrizeStrategy/listener-not-contract");
+
     periodicPrizeStrategyListener = PeriodicPrizeStrategyListener(_periodicPrizeStrategyListener);
 
     emit PeriodicPrizeStrategyListenerSet(_periodicPrizeStrategyListener);

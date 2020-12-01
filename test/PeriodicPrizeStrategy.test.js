@@ -466,6 +466,11 @@ describe('PeriodicPrizeStrategy', function() {
       await expect(prizeStrategy.connect(wallet2).setPeriodicPrizeStrategyListener(periodicPrizeStrategyListener.address))
         .to.be.revertedWith('Ownable: caller is not the owner')
     })
+
+    it('should now allow setting an EOA as a listener', async () => {
+      await expect(prizeStrategy.setPeriodicPrizeStrategyListener(wallet2._address))
+        .to.be.revertedWith("PeriodicPrizeStrategy/listener-not-contract");
+    })
   })
 
   describe('completeAward()', () => {
