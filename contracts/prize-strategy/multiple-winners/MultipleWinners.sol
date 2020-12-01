@@ -61,13 +61,12 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     address[] memory winners = new address[](__numberOfWinners);
     winners[0] = mainWinner;
 
-    uint256 totalSupply = IERC20(address(ticket)).totalSupply();
-    uint256 ticketSplit = totalSupply.div(__numberOfWinners);
-    uint256 nextRandom = randomNumber.add(ticketSplit);
+    uint256 nextRandom;
+
     // the other winners receive their prizeShares
     for (uint256 winnerCount = 1; winnerCount < __numberOfWinners; winnerCount++) {
+      nextRandom = uint256(keccak256(abi.encodePacked(nextRandom)));
       winners[winnerCount] = ticket.draw(nextRandom);
-      nextRandom = nextRandom.add(ticketSplit);
     }
 
     // yield prize is split up
