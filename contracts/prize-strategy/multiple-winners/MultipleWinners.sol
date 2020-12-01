@@ -10,6 +10,8 @@ contract MultipleWinners is PeriodicPrizeStrategy {
 
   event NumberOfWinnersSet(uint256 numberOfWinners);
 
+  event NoWinners();
+
   function initializeMultipleWinners (
     address _trustedForwarder,
     uint256 _prizePeriodStart,
@@ -48,6 +50,12 @@ contract MultipleWinners is PeriodicPrizeStrategy {
 
     // main winner gets all external tokens
     address mainWinner = ticket.draw(randomNumber);
+
+    if (mainWinner == address(0)) {
+      emit NoWinners();
+      return;
+    }
+
     _awardAllExternalTokens(mainWinner);
 
     address[] memory winners = new address[](__numberOfWinners);

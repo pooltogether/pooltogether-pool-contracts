@@ -17,4 +17,8 @@ contract MultipleWinnersHarness is MultipleWinners {
     return currentTime;
   }
 
+  function distribute(uint256 randomNumber) external {
+    _distribute(randomNumber);
+  }
+
 }
