@@ -35,7 +35,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     __numberOfWinners = _numberOfWinners;
   }
 
-  function setNumberOfWinners(uint256 count) external onlyOwner {
+  function setNumberOfWinners(uint256 count) external onlyOwner requireAwardNotInProgress {
     require(count > 0, "MultipleWinners/winners-gte-one");
 
     __numberOfWinners = count;
