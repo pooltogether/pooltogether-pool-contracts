@@ -221,6 +221,17 @@ describe('PeriodicPrizeStrategy', function() {
   })
 
   describe("beforeTokenTransfer()", () => {
+    it('should not allow users to transfer tokens to themselves', async () => {
+      await expect(prizePool.call(
+        prizeStrategy,
+        'beforeTokenTransfer(address,address,uint256,address)',
+        wallet._address,
+        wallet._address,
+        toWei('10'),
+        wallet._address
+      )).to.be.revertedWith("PeriodicPrizeStrategy/transfer-to-self")
+    })
+
     it('should allow other token transfers if awarding is happening', async () => {
       await rngFeeToken.mock.approve.withArgs(rng.address, toWei('1')).returns(true);
       await rng.mock.requestRandomNumber.returns('11', '1');
@@ -231,7 +242,7 @@ describe('PeriodicPrizeStrategy', function() {
         prizeStrategy,
         'beforeTokenTransfer(address,address,uint256,address)',
         wallet._address,
-        wallet._address,
+        wallet2._address,
         toWei('10'),
         wallet._address
       )
@@ -248,7 +259,7 @@ describe('PeriodicPrizeStrategy', function() {
           prizeStrategy,
           'beforeTokenTransfer(address,address,uint256,address)',
           wallet._address,
-          wallet._address,
+          wallet2._address,
           toWei('10'),
           ticket.address
         ))

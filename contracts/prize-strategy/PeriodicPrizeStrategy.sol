@@ -288,9 +288,12 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @dev Note that this is only for *transfers*, not mints or burns
   /// @param controlledToken The type of collateral that is being sent
   function beforeTokenTransfer(address from, address to, uint256 amount, address controlledToken) external override onlyPrizePool {
+    require(from != to, "PeriodicPrizeStrategy/transfer-to-self");
+
     if (controlledToken == address(ticket)) {
       _requireAwardNotInProgress();
     }
+
     if (address(tokenListener) != address(0)) {
       tokenListener.beforeTokenTransfer(from, to, amount, controlledToken);
     }
