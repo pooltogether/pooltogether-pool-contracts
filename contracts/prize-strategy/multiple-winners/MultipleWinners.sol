@@ -17,8 +17,8 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     uint256 _prizePeriodStart,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
-    address _ticket,
-    address _sponsorship,
+    TicketInterface _ticket,
+    IERC20 _sponsorship,
     RNGInterface _rng,
     uint256 _numberOfWinners
   ) public initializer {

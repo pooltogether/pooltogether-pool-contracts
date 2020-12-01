@@ -139,8 +139,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     uint256 _prizePeriodStart,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
-    address _ticket,
-    address _sponsorship,
+    TicketInterface _ticket,
+    IERC20 _sponsorship,
     RNGInterface _rng
   ) public initializer {
     require(_prizePeriodSeconds > 0, "PeriodicPrizeStrategy/prize-period-greater-than-zero");
@@ -149,9 +149,9 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     require(address(_sponsorship) != address(0), "PeriodicPrizeStrategy/sponsorship-not-zero");
     require(address(_rng) != address(0), "PeriodicPrizeStrategy/rng-not-zero");
     prizePool = _prizePool;
-    ticket = TicketInterface(_ticket);
+    ticket = _ticket;
     rng = _rng;
-    sponsorship = IERC20(_sponsorship);
+    sponsorship = _sponsorship;
     trustedForwarder = _trustedForwarder;
 
     __Ownable_init();
