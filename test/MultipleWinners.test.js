@@ -39,7 +39,7 @@ describe('MultipleWinners', function() {
   let creditRateMantissa = creditLimitMantissa / prizePeriodSeconds
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3] = await buidler.ethers.getSigners()
 
     debug(`using wallet ${wallet._address}`)
 
@@ -116,8 +116,42 @@ describe('MultipleWinners', function() {
   })
 
   describe('distribute()', () => {
-    xit('should distribute the winnings', async () => {
-      // await prizePool.mock.captureAwardBalance.returns(toWei('100'))
+    it('should ignore awarding prizes if there are no winners to select', async () => {
+      await prizePool.mock.captureAwardBalance.returns(toWei('10'))
+      await ticket.mock.draw.withArgs(10).returns(ethers.constants.AddressZero)
+      await expect(prizeStrategy.distribute(10))
+        .to.emit(prizeStrategy, 'NoWinners')
+    })
+
+    it('should award a single winner', async () => {
+      await prizeStrategy.setNumberOfWinners(1)
+
+      let randomNumber = 10
+      await prizePool.mock.captureAwardBalance.returns(toWei('8'))
+      await ticket.mock.draw.withArgs(randomNumber).returns(wallet3._address)
+
+      await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns(0)
+
+      await ticket.mock.totalSupply.returns(1000)
+
+      await prizePool.mock.award.withArgs(wallet3._address, toWei('8'), ticket.address).returns()
+    })
+
+    it('should award more than one winner', async () => {
+      await prizeStrategy.setNumberOfWinners(2)
+
+      let randomNumber = 10
+      await prizePool.mock.captureAwardBalance.returns(toWei('8'))
+      await ticket.mock.draw.withArgs(randomNumber).returns(wallet3._address)
+
+      await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns(0)
+
+      await ticket.mock.totalSupply.returns(1000)
+
+      await ticket.mock.draw.withArgs(randomNumber + 500).returns(wallet2._address)
+
+      await prizePool.mock.award.withArgs(wallet3._address, toWei('4'), ticket.address).returns()
+      await prizePool.mock.award.withArgs(wallet2._address, toWei('4'), ticket.address).returns()
     })
   })
 })
