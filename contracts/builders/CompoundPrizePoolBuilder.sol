@@ -9,12 +9,13 @@ import "../registry/RegistryInterface.sol";
 import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
 import "../external/compound/CTokenInterface.sol";
 
-/// @title Builds new Compound Prize Pools
+/// @title Creates new Compound Prize Pools
 /* solium-disable security/no-block-members */
 contract CompoundPrizePoolBuilder is PrizePoolBuilder {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
+  /// @notice The configuration used to initialize the Compound Prize Pool
   struct CompoundPrizePoolConfig {
     CTokenInterface cToken;
     uint256 maxExitFeeMantissa;
@@ -38,6 +39,9 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
     compoundPrizePoolProxyFactory = _compoundPrizePoolProxyFactory;
   }
 
+  /// @notice Creates a new Compound Prize Pool with a preconfigured prize strategy.
+  /// @param config The config to use to initialize the Compound Prize Pool
+  /// @return The Compound Prize Pool
   function createCompoundPrizePool(
     CompoundPrizePoolConfig calldata config
   )

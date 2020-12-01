@@ -204,10 +204,10 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   mapping(address => uint256) internal _unlockTimestamps;
 
   /// @dev Stores the credit plan for each token.
-  mapping(address => CreditPlan) internal tokenCreditPlans;
+  mapping(address => CreditPlan) internal _tokenCreditPlans;
 
   /// @dev Stores each users balance of credit per token.
-  mapping(address => mapping(address => CreditBalance)) internal tokenCreditBalances;
+  mapping(address => mapping(address => CreditBalance)) internal _tokenCreditBalances;
 
   /// @notice Initializes the Prize Pool
   /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
@@ -751,7 +751,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   function _calculateEarlyExitFeeNoCredit(address controlledToken, uint256 amount) internal view returns (uint256) {
     return _limitExitFee(
       amount,
-      FixedPoint.multiplyUintByMantissa(amount, tokenCreditPlans[controlledToken].creditLimitMantissa)
+      FixedPoint.multiplyUintByMantissa(amount, _tokenCreditPlans[controlledToken].creditLimitMantissa)
     );
   }
 
@@ -790,7 +790,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   {
     // interest = credit rate * principal * time
     // => time = interest / (credit rate * principal)
-    uint256 accruedPerSecond = FixedPoint.multiplyUintByMantissa(_principal, tokenCreditPlans[_controlledToken].creditRateMantissa);
+    uint256 accruedPerSecond = FixedPoint.multiplyUintByMantissa(_principal, _tokenCreditPlans[_controlledToken].creditRateMantissa);
     if (accruedPerSecond == 0) {
       return 0;
     }
@@ -801,7 +801,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   /// @param user The user whose credit should be burned
   /// @param credit The amount of credit to burn
   function _burnCredit(address user, address controlledToken, uint256 credit) internal {
-    tokenCreditBalances[controlledToken][user].balance = uint256(tokenCreditBalances[controlledToken][user].balance).sub(credit).toUint128();
+    _tokenCreditBalances[controlledToken][user].balance = uint256(_tokenCreditBalances[controlledToken][user].balance).sub(credit).toUint128();
 
     emit CreditBurned(user, controlledToken, credit);
   }
@@ -821,20 +821,20 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
 
   function _calculateCreditBalance(address user, address controlledToken, uint256 controlledTokenBalance, uint256 extra) internal view returns (uint256) {
     uint256 newBalance;
-    CreditBalance storage creditBalance = tokenCreditBalances[controlledToken][user];
+    CreditBalance storage creditBalance = _tokenCreditBalances[controlledToken][user];
     if (!creditBalance.initialized) {
       newBalance = 0;
     } else {
-      uint256 credit = calculateAccruedCredit(user, controlledToken, controlledTokenBalance);
+      uint256 credit = _calculateAccruedCredit(user, controlledToken, controlledTokenBalance);
       newBalance = _applyCreditLimit(controlledToken, controlledTokenBalance, uint256(creditBalance.balance).add(credit).add(extra));
     }
     return newBalance;
   }
 
   function _updateCreditBalance(address user, address controlledToken, uint256 newBalance) internal {
-    uint256 oldBalance = tokenCreditBalances[controlledToken][user].balance;
+    uint256 oldBalance = _tokenCreditBalances[controlledToken][user].balance;
 
-    tokenCreditBalances[controlledToken][user] = CreditBalance({
+    _tokenCreditBalances[controlledToken][user] = CreditBalance({
       balance: newBalance.toUint128(),
       timestamp: _currentTime().toUint32(),
       initialized: true
@@ -855,7 +855,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   function _applyCreditLimit(address controlledToken, uint256 controlledTokenBalance, uint256 creditBalance) internal view returns (uint256) {
     uint256 creditLimit = FixedPoint.multiplyUintByMantissa(
       controlledTokenBalance,
-      tokenCreditPlans[controlledToken].creditLimitMantissa
+      _tokenCreditPlans[controlledToken].creditLimitMantissa
     );
     if (creditBalance > creditLimit) {
       creditBalance = creditLimit;
@@ -869,15 +869,15 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   /// @param controlledToken The controlled token that the user holds
   /// @param controlledTokenBalance The user's current balance of the controlled tokens.
   /// @return The credit that has accrued since the last credit update.
-  function calculateAccruedCredit(address user, address controlledToken, uint256 controlledTokenBalance) internal view returns (uint256) {
-    uint256 userTimestamp = tokenCreditBalances[controlledToken][user].timestamp;
+  function _calculateAccruedCredit(address user, address controlledToken, uint256 controlledTokenBalance) internal view returns (uint256) {
+    uint256 userTimestamp = _tokenCreditBalances[controlledToken][user].timestamp;
 
-    if (!tokenCreditBalances[controlledToken][user].initialized) {
+    if (!_tokenCreditBalances[controlledToken][user].initialized) {
       return 0;
     }
 
     uint256 deltaTime = _currentTime().sub(userTimestamp);
-    uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(controlledTokenBalance, tokenCreditPlans[controlledToken].creditRateMantissa);
+    uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(controlledTokenBalance, _tokenCreditPlans[controlledToken].creditRateMantissa);
     return deltaTime.mul(creditPerSecond);
   }
 
@@ -886,7 +886,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   /// @return The balance of the users credit
   function balanceOfCredit(address user, address controlledToken) external override onlyControlledToken(controlledToken) returns (uint256) {
     _accrueCredit(user, controlledToken, IERC20(controlledToken).balanceOf(user), 0);
-    return tokenCreditBalances[controlledToken][user].balance;
+    return _tokenCreditBalances[controlledToken][user].balance;
   }
 
   /// @notice Sets the rate at which credit accrues per second.  The credit rate is a fixed point 18 number (like Ether).
@@ -902,7 +902,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     onlyControlledToken(_controlledToken)
     onlyOwner
   {
-    tokenCreditPlans[_controlledToken] = CreditPlan({
+    _tokenCreditPlans[_controlledToken] = CreditPlan({
       creditLimitMantissa: _creditLimitMantissa,
       creditRateMantissa: _creditRateMantissa
     });
@@ -924,8 +924,8 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
       uint128 creditRateMantissa
     )
   {
-    creditLimitMantissa = tokenCreditPlans[controlledToken].creditLimitMantissa;
-    creditRateMantissa = tokenCreditPlans[controlledToken].creditRateMantissa;
+    creditLimitMantissa = _tokenCreditPlans[controlledToken].creditLimitMantissa;
+    creditRateMantissa = _tokenCreditPlans[controlledToken].creditRateMantissa;
   }
 
   /// @notice Calculate the early exit for a user given a withdrawal amount.  The user's credit is taken into account.
@@ -962,8 +962,8 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
     uint256 remainingExitFee = _calculateEarlyExitFeeNoCredit(controlledToken, controlledTokenBalance.sub(amount));
 
     uint256 availableCredit;
-    if (tokenCreditBalances[controlledToken][from].balance >= remainingExitFee) {
-      availableCredit = uint256(tokenCreditBalances[controlledToken][from].balance).sub(remainingExitFee);
+    if (_tokenCreditBalances[controlledToken][from].balance >= remainingExitFee) {
+      availableCredit = uint256(_tokenCreditBalances[controlledToken][from].balance).sub(remainingExitFee);
     }
 
     // Determine amount of credit to burn and amount of fees required
