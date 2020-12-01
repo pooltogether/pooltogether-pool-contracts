@@ -113,6 +113,10 @@ describe('MultipleWinners', function() {
     it('should not allow anyone else to call', async () => {
       await expect(prizeStrategy.connect(wallet2).setNumberOfWinners(10)).to.be.revertedWith('Ownable: caller is not the owner')
     })
+
+    it('should require at least one winner', async () => {
+      await expect(prizeStrategy.setNumberOfWinners(0)).to.be.revertedWith("MultipleWinners/winners-gte-one")
+    })
   })
 
   describe('distribute()', () => {
