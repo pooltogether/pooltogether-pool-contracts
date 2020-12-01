@@ -594,12 +594,11 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
   modifier requireCanStartAward() {
     require(_isPrizePeriodOver(), "PeriodicPrizeStrategy/prize-period-not-over");
-    require(!isRngRequested() || isRngTimedOut(), "PeriodicPrizeStrategy/rng-already-requested");
+    require(!isRngRequested(), "PeriodicPrizeStrategy/rng-already-requested");
     _;
   }
 
   modifier requireCanCompleteAward() {
-    require(_isPrizePeriodOver(), "PeriodicPrizeStrategy/prize-period-not-over");
     require(isRngRequested(), "PeriodicPrizeStrategy/rng-not-requested");
     require(isRngCompleted(), "PeriodicPrizeStrategy/rng-not-complete");
     _;
