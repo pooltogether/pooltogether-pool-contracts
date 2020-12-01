@@ -18,7 +18,7 @@ import "../token/TicketInterface.sol";
 import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
 import "../utils/RelayRecipient.sol";
-import "./PeriodicPrizeStrategyListener.sol";
+import "./PeriodicPrizeStrategyListenerInterface.sol";
 
 /* solium-disable security/no-block-members */
 abstract contract PeriodicPrizeStrategy is Initializable,
@@ -118,7 +118,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   //   NFT Address => TokenIds
   mapping (address => uint256[]) internal externalErc721TokenIds;
 
-  PeriodicPrizeStrategyListener public periodicPrizeStrategyListener;
+  PeriodicPrizeStrategyListenerInterface public periodicPrizeStrategyListener;
 
   function initialize (
     address _trustedForwarder,
@@ -356,7 +356,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   function setPeriodicPrizeStrategyListener(address _periodicPrizeStrategyListener) external onlyOwner {
     require(_periodicPrizeStrategyListener.isContract(), "PeriodicPrizeStrategy/listener-not-contract");
 
-    periodicPrizeStrategyListener = PeriodicPrizeStrategyListener(_periodicPrizeStrategyListener);
+    periodicPrizeStrategyListener = PeriodicPrizeStrategyListenerInterface(_periodicPrizeStrategyListener);
 
     emit PeriodicPrizeStrategyListenerSet(_periodicPrizeStrategyListener);
   }

@@ -3,7 +3,7 @@ const { deployMockContract } = require('./helpers/deployMockContract')
 const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
 const TokenListenerInterface = require('../build/TokenListenerInterface.json')
-const PeriodicPrizeStrategyListener = require('../build/PeriodicPrizeStrategyListener.json')
+const PeriodicPrizeStrategyListenerInterface = require('../build/PeriodicPrizeStrategyListenerInterface.json')
 const PeriodicPrizeStrategyHarness = require('../build/PeriodicPrizeStrategyHarness.json')
 const PeriodicPrizeStrategyDistributorInterface = require('../build/PeriodicPrizeStrategyDistributorInterface.json')
 const PrizePool = require('../build/PrizePool.json')
@@ -63,7 +63,7 @@ describe('PeriodicPrizeStrategy', function() {
     externalERC20Award = await deployMockContract(wallet, IERC20.abi, overrides)
     externalERC721Award = await deployMockContract(wallet, IERC721.abi, overrides)
     distributor = await deployMockContract(wallet, PeriodicPrizeStrategyDistributorInterface.abi, overrides)
-    periodicPrizeStrategyListener = await deployMockContract(wallet, PeriodicPrizeStrategyListener.abi, overrides)
+    periodicPrizeStrategyListener = await deployMockContract(wallet, PeriodicPrizeStrategyListenerInterface.abi, overrides)
 
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
