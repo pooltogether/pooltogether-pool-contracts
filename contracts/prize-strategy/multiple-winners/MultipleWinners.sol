@@ -22,6 +22,8 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     RNGInterface _rng,
     uint256 _numberOfWinners
   ) public initializer {
+    IERC20[] memory _externalErc20Awards;
+
     PeriodicPrizeStrategy.initialize(
       _trustedForwarder,
       _prizePeriodStart,
@@ -29,21 +31,22 @@ contract MultipleWinners is PeriodicPrizeStrategy {
       _prizePool,
       _ticket,
       _sponsorship,
-      _rng
+      _rng,
+      _externalErc20Awards
     );
 
     _setNumberOfWinners(_numberOfWinners);
   }
 
   function setNumberOfWinners(uint256 count) external onlyOwner requireAwardNotInProgress {
+    _setNumberOfWinners(count);
+  }
+
+  function _setNumberOfWinners(uint256 count) internal {
     require(count > 0, "MultipleWinners/winners-gte-one");
 
     __numberOfWinners = count;
     emit NumberOfWinnersSet(count);
-  }
-
-  function setNumberOfWinners(uint256 count) external onlyOwner {
-    _setNumberOfWinners(count);
   }
 
   function numberOfWinners() external view returns (uint256) {
@@ -56,6 +59,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     // main winner gets all external tokens
     address mainWinner = ticket.draw(randomNumber);
 
+    // If drawing yields no winner, then there is no one to pick
     if (mainWinner == address(0)) {
       emit NoWinners();
       return;
@@ -66,7 +70,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     address[] memory winners = new address[](__numberOfWinners);
     winners[0] = mainWinner;
 
-    uint256 nextRandom;
+    uint256 nextRandom = randomNumber;
 
     // the other winners receive their prizeShares
     for (uint256 winnerCount = 1; winnerCount < __numberOfWinners; winnerCount++) {

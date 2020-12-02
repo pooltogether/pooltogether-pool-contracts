@@ -3,7 +3,7 @@ const { deployMockContract } = require('./helpers/deployMockContract')
 const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
 const TokenListenerInterface = require('../build/TokenListenerInterface.json')
-const MultipleWinnersHarness = require('../build/MultipleWinnersHarness.json')
+const SingleRandomWinnerHarness = require('../build/SingleRandomWinnerHarness.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
 const IERC20 = require('../build/IERC20.json')
@@ -13,7 +13,6 @@ const Ticket = require('../build/Ticket.json')
 
 const { expect } = require('chai')
 const buidler = require('@nomiclabs/buidler')
-const { AddressZero, Zero, One } = require('ethers').constants
 
 const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
@@ -23,7 +22,7 @@ const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
 let overrides = { gasLimit: 20000000 }
 
-describe('MultipleWinners', function() {
+describe('SingleRandomWinner', function() {
   let wallet, wallet2
 
   let externalERC20Award, externalERC721Award
@@ -62,7 +61,7 @@ describe('MultipleWinners', function() {
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
     debug('deploying prizeStrategy...')
-    prizeStrategy = await deployContract(wallet, MultipleWinnersHarness, [], overrides)
+    prizeStrategy = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
 
     await prizePool.mock.canAwardExternal.withArgs(externalERC20Award.address).returns(true)
     await prizePool.mock.canAwardExternal.withArgs(externalERC721Award.address).returns(true)
@@ -71,7 +70,7 @@ describe('MultipleWinners', function() {
     await ticket.mock.draw.returns(wallet._address)
 
     debug('initializing prizeStrategy...')
-    await prizeStrategy.initializeMultipleWinners(
+    await prizeStrategy.initialize(
       FORWARDER,
       prizePeriodStart,
       prizePeriodSeconds,
@@ -79,61 +78,10 @@ describe('MultipleWinners', function() {
       ticket.address,
       sponsorship.address,
       rng.address,
-      4
+      []
     )
 
     debug('initialized!')
-  })
-
-  describe('initializeMultipleWinners()', () => {
-
-    it('should emit event when initialized', async()=>{
-      debug('deploying another prizeStrategy...')
-      let prizeStrategy2 = await deployContract(wallet, MultipleWinnersHarness, [], overrides)
-      initalizeResult2 = prizeStrategy2.initializeMultipleWinners(FORWARDER,
-        prizePeriodStart,
-        prizePeriodSeconds,
-        prizePool.address,
-        ticket.address,
-        sponsorship.address,
-        rng.address,
-        4)
-
-      await expect(initalizeResult2).to.emit(prizeStrategy2, 'NumberOfWinnersSet').withArgs(4)
-    })
-
-
-    it('should set the params', async () => {
-      expect(await prizeStrategy.isTrustedForwarder(FORWARDER)).to.equal(true)
-      expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
-      expect(await prizeStrategy.prizePeriodSeconds()).to.equal(prizePeriodSeconds)
-      expect(await prizeStrategy.ticket()).to.equal(ticket.address)
-      expect(await prizeStrategy.sponsorship()).to.equal(sponsorship.address)
-      expect(await prizeStrategy.rng()).to.equal(rng.address)
-      expect(await prizeStrategy.numberOfWinners()).to.equal(4)
-    })
-  })
-
-  describe('numberOfWinners()', () => {
-    it('should return the number of winners', async () => {
-      expect(await prizeStrategy.numberOfWinners()).to.equal(4)
-    })
-  })
-
-  describe('setNumberOfWinners()', () => {
-    it('should set the number of winners', async () => {
-      await expect(prizeStrategy.setNumberOfWinners(10))
-        .to.emit(prizeStrategy, 'NumberOfWinnersSet')
-        .withArgs(10)
-    })
-
-    it('should not allow anyone else to call', async () => {
-      await expect(prizeStrategy.connect(wallet2).setNumberOfWinners(10)).to.be.revertedWith('Ownable: caller is not the owner')
-    })
-
-    it('should require at least one winner', async () => {
-      await expect(prizeStrategy.setNumberOfWinners(0)).to.be.revertedWith("MultipleWinners/winners-gte-one")
-    })
   })
 
   describe('distribute()', () => {
@@ -141,12 +89,10 @@ describe('MultipleWinners', function() {
       await prizePool.mock.captureAwardBalance.returns(toWei('10'))
       await ticket.mock.draw.withArgs(10).returns(ethers.constants.AddressZero)
       await expect(prizeStrategy.distribute(10))
-        .to.emit(prizeStrategy, 'NoWinners')
+        .to.emit(prizeStrategy, 'NoWinner')
     })
 
     it('should award a single winner', async () => {
-      await prizeStrategy.setNumberOfWinners(1)
-
       let randomNumber = 10
       await prizePool.mock.captureAwardBalance.returns(toWei('8'))
       await ticket.mock.draw.withArgs(randomNumber).returns(wallet3._address)
@@ -156,28 +102,6 @@ describe('MultipleWinners', function() {
       await ticket.mock.totalSupply.returns(1000)
 
       await prizePool.mock.award.withArgs(wallet3._address, toWei('8'), ticket.address).returns()
-
-      await prizeStrategy.distribute(randomNumber)
-    })
-
-    it('should award more than one winner', async () => {
-      await prizeStrategy.setNumberOfWinners(2)
-
-      let randomNumber = 10
-      await prizePool.mock.captureAwardBalance.returns(toWei('8'))
-
-      await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns(0)
-
-      await ticket.mock.totalSupply.returns(1000)
-
-      const randomNumberHash = ethers.utils.solidityKeccak256(['uint256'], [randomNumber])
-      debug(randomNumberHash)
-
-      await ticket.mock.draw.withArgs(randomNumber).returns(wallet3._address)
-      await ticket.mock.draw.withArgs(randomNumberHash).returns(wallet2._address)
-
-      await prizePool.mock.award.withArgs(wallet3._address, toWei('4'), ticket.address).returns()
-      await prizePool.mock.award.withArgs(wallet2._address, toWei('4'), ticket.address).returns()
 
       await prizeStrategy.distribute(randomNumber)
     })

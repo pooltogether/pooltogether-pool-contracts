@@ -46,7 +46,7 @@ contract VaultPrizePoolBuilder is PrizePoolBuilder {
   {
     yVaultPrizePool prizePool = vaultPrizePoolProxyFactory.create();
 
-    address[] memory tokens;
+    ControlledTokenInterface[] memory tokens;
 
     prizePool.initialize(
       config.useGSN ? trustedForwarder : address(0),

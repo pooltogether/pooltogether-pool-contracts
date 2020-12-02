@@ -86,10 +86,10 @@ contract PoolWithMultipleWinnersBuilder {
 
     address ticket = address(periodicPrizeStrategy.ticket());
 
-    prizePool.setPrizeStrategy(address(periodicPrizeStrategy));
+    prizePool.setPrizeStrategy(periodicPrizeStrategy);
 
-    prizePool.addControlledToken(ticket);
-    prizePool.addControlledToken(address(periodicPrizeStrategy.sponsorship()));
+    prizePool.addControlledToken(Ticket(ticket));
+    prizePool.addControlledToken(ControlledTokenInterface(address(periodicPrizeStrategy.sponsorship())));
 
     prizePool.setCreditPlanOf(
       ticket,

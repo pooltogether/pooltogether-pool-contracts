@@ -50,7 +50,7 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
   {
     CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
 
-    address[] memory tokens;
+    ControlledTokenInterface[] memory tokens;
 
     prizePool.initialize(
       config.useGSN ? trustedForwarder : address(0),
