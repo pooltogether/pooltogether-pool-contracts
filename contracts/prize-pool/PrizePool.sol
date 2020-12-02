@@ -423,11 +423,15 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
       uint256 fromBeforeBalance = IERC20(msg.sender).balanceOf(from);
       // first accrue credit for their old balance
       uint256 newCreditBalance = _calculateCreditBalance(from, msg.sender, fromBeforeBalance, 0);
-      // now limit their credit based on the new balance
-      newCreditBalance = _applyCreditLimit(msg.sender, fromBeforeBalance.sub(amount), newCreditBalance);
+
+      if (from != to) {
+        // if they are sending funds to someone else, we need to limit their accrued credit to their new balance
+        newCreditBalance = _applyCreditLimit(msg.sender, fromBeforeBalance.sub(amount), newCreditBalance);
+      }
+
       _updateCreditBalance(from, msg.sender, newCreditBalance);
     }
-    if (to != address(0)) {
+    if (to != address(0) && to != from) {
       _accrueCredit(to, msg.sender, IERC20(msg.sender).balanceOf(to), 0);
     }
     // if we aren't minting
