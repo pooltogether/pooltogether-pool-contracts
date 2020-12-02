@@ -90,6 +90,16 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     address indexed externalErc20Award
   );
 
+  event Initialized(    
+    address _trustedForwarder,
+    uint256 _prizePeriodStart,
+    uint256 _prizePeriodSeconds,
+    PrizePool indexed _prizePool,
+    TicketInterface _ticket,
+    IERC20 _sponsorship,
+    RNGInterface _rng
+  );
+
   struct RngRequest {
     uint32 id;
     uint32 lockBlock;
@@ -167,6 +177,15 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     // 30 min timeout
     _setRngRequestTimeout(1800);
 
+    emit Initialized(
+      _trustedForwarder,
+      _prizePeriodStart,
+      _prizePeriodSeconds,
+      _prizePool,
+      _ticket,
+      _sponsorship,
+      _rng
+    );
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
