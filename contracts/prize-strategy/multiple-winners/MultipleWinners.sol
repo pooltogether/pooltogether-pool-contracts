@@ -31,16 +31,19 @@ contract MultipleWinners is PeriodicPrizeStrategy {
       _sponsorship,
       _rng
     );
-    require(_numberOfWinners > 0, "MultipleWinners/num-gt-zero");
-    __numberOfWinners = _numberOfWinners;
+
+    _setNumberOfWinners(_numberOfWinners);
   }
 
   function setNumberOfWinners(uint256 count) external onlyOwner requireAwardNotInProgress {
     require(count > 0, "MultipleWinners/winners-gte-one");
 
     __numberOfWinners = count;
-
     emit NumberOfWinnersSet(count);
+  }
+
+  function setNumberOfWinners(uint256 count) external onlyOwner {
+    _setNumberOfWinners(count);
   }
 
   function numberOfWinners() external view returns (uint256) {

@@ -86,6 +86,23 @@ describe('MultipleWinners', function() {
   })
 
   describe('initializeMultipleWinners()', () => {
+
+    it('should emit event when initialized', async()=>{
+      debug('deploying another prizeStrategy...')
+      let prizeStrategy2 = await deployContract(wallet, MultipleWinnersHarness, [], overrides)
+      initalizeResult2 = prizeStrategy2.initializeMultipleWinners(FORWARDER,
+        prizePeriodStart,
+        prizePeriodSeconds,
+        prizePool.address,
+        ticket.address,
+        sponsorship.address,
+        rng.address,
+        4)
+
+      await expect(initalizeResult2).to.emit(prizeStrategy2, 'NumberOfWinnersSet').withArgs(4)
+    })
+
+
     it('should set the params', async () => {
       expect(await prizeStrategy.isTrustedForwarder(FORWARDER)).to.equal(true)
       expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)

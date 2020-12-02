@@ -28,6 +28,8 @@ const invalidExternalToken = '0x0000000000000000000000000000000000000002'
 
 let overrides = { gasLimit: 20000000 }
 
+let initalizeResult;
+
 describe('PeriodicPrizeStrategy', function() {
   let wallet, wallet2
 
@@ -94,6 +96,29 @@ describe('PeriodicPrizeStrategy', function() {
   })
 
   describe('initialize()', () => {
+    it('should emit an Initialized event', async () => {
+      debug('deploying another prizeStrategy...')
+      let prizeStrategy2 = await deployContract(wallet, PeriodicPrizeStrategyHarness, [], overrides)
+      await prizeStrategy2.setDistributor(distributor.address)
+      initalizeResult2 = prizeStrategy2.initialize(FORWARDER,
+        prizePeriodStart,
+        prizePeriodSeconds,
+        prizePool.address,
+        ticket.address,
+        sponsorship.address,
+        rng.address)
+
+      await expect(initalizeResult2).to.emit(prizeStrategy2, 'Initialized').withArgs(
+        FORWARDER,
+        prizePeriodStart,
+        prizePeriodSeconds,
+        prizePool.address,
+        ticket.address,
+        sponsorship.address,
+        rng.address
+      )
+    })
+
     it('should set the params', async () => {
       expect(await prizeStrategy.isTrustedForwarder(FORWARDER)).to.equal(true)
       expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
@@ -101,6 +126,7 @@ describe('PeriodicPrizeStrategy', function() {
       expect(await prizeStrategy.ticket()).to.equal(ticket.address)
       expect(await prizeStrategy.sponsorship()).to.equal(sponsorship.address)
       expect(await prizeStrategy.rng()).to.equal(rng.address)
+
     })
 
     it('should reject invalid params', async () => {
