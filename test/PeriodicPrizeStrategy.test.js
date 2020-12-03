@@ -87,7 +87,8 @@ describe('PeriodicPrizeStrategy', function() {
       prizePool.address,
       ticket.address,
       sponsorship.address,
-      rng.address
+      rng.address,
+      []
     )
 
     await prizeStrategy.addExternalErc20Award(externalERC20Award.address)
@@ -100,13 +101,16 @@ describe('PeriodicPrizeStrategy', function() {
       debug('deploying another prizeStrategy...')
       let prizeStrategy2 = await deployContract(wallet, PeriodicPrizeStrategyHarness, [], overrides)
       await prizeStrategy2.setDistributor(distributor.address)
-      initalizeResult2 = prizeStrategy2.initialize(FORWARDER,
+      initalizeResult2 = prizeStrategy2.initialize(
+        FORWARDER,
         prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
         ticket.address,
         sponsorship.address,
-        rng.address)
+        rng.address,
+        []
+      )
 
       await expect(initalizeResult2).to.emit(prizeStrategy2, 'Initialized').withArgs(
         FORWARDER,
