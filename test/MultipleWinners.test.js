@@ -142,7 +142,7 @@ describe('MultipleWinners', function() {
     })
   })
 
-  describe.only('distribute()', () => {
+  describe('distribute()', () => {
     it('should ignore awarding prizes if there are no winners to select', async () => {
       await prizePool.mock.captureAwardBalance.returns(toWei('10'))
       await ticket.mock.draw.withArgs(10).returns(ethers.constants.AddressZero)
