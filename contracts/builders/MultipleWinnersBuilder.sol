@@ -23,6 +23,7 @@ contract MultipleWinnersBuilder {
     uint256 ticketCreditRateMantissa;
     bool useGSN;
     uint256 numberOfWinners;
+    bool splitExternalErc20Awards;
   }
 
   MultipleWinnersProxyFactory public multipleWinnersProxyFactory;
@@ -75,6 +76,10 @@ contract MultipleWinnersBuilder {
       prizeStrategyConfig.rngService,
       prizeStrategyConfig.numberOfWinners
     );
+
+    if (prizeStrategyConfig.splitExternalErc20Awards) {
+      mw.setSplitExternalErc20Awards(true);
+    }
 
     mw.transferOwnership(owner);
 
