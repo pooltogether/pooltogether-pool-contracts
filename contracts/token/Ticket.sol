@@ -5,8 +5,6 @@ pragma solidity >=0.6.0 <0.7.0;
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 
-import "@nomiclabs/buidler/console.sol";
-
 import "./ControlledToken.sol";
 import "./TicketInterface.sol";
 

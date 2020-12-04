@@ -221,6 +221,7 @@ describe('MultipleWinners', function() {
       describe('when external erc20 awards are distributed', () => {
 
         beforeEach(async () => {
+          await externalERC20Award.mock.totalSupply.returns(0)
           await prizeStrategy.addExternalErc20Award(externalERC20Award.address)
         })
 

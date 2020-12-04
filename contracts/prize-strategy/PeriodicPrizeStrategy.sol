@@ -25,6 +25,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
                                            OwnableUpgradeSafe,
                                            RelayRecipient,
                                            TokenListenerInterface {
+  bytes4 private constant _INTERFACE_ID_ERC721 = 0x80ac58cd;
 
   using SafeMath for uint256;
   using SafeCast for uint256;
@@ -495,7 +496,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   }
 
   function _addExternalErc20Award(IERC20 _externalErc20) internal {
+    require(address(_externalErc20).isContract(), "PeriodicPrizeStrategy/erc20-null");
     require(prizePool.canAwardExternal(address(_externalErc20)), "PeriodicPrizeStrategy/cannot-award-external");
+    (bool succeeded, bytes memory returnValue) = address(_externalErc20).call(abi.encodeWithSignature("totalSupply()"));
+    require(succeeded, "PeriodicPrizeStrategy/erc20-invalid");
     externalErc20s.addAddress(address(_externalErc20));
     emit ExternalErc20AwardAdded(_externalErc20);
   }
@@ -535,8 +539,11 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @param _externalErc721 The address of an ERC721 token to be awarded
   /// @param _tokenIds An array of token IDs of the ERC721 to be awarded
   function addExternalErc721Award(IERC721 _externalErc721, uint256[] calldata _tokenIds) external onlyOwnerOrListener requireAwardNotInProgress {
-    // require(_externalErc721.isContract(), "PeriodicPrizeStrategy/external-erc721-not-contract");
     require(prizePool.canAwardExternal(address(_externalErc721)), "PeriodicPrizeStrategy/cannot-award-external");
+
+    (bool succeeded, bytes memory returnValue) = address(_externalErc721).call(abi.encodeWithSignature("supportsInterface(bytes4)", _INTERFACE_ID_ERC721));
+    (bool supportsInterface) = abi.decode(returnValue, (bool));
+    require(succeeded && supportsInterface, "PeriodicPrizeStrategy/erc721-invalid");
     
     if (!externalErc721s.contains(address(_externalErc721))) {
       externalErc721s.addAddress(address(_externalErc721));
