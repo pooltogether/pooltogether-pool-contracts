@@ -3,6 +3,7 @@ const { deployMockContract } = require('./helpers/deployMockContract')
 const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
 const TokenListenerInterface = require('../build/TokenListenerInterface.json')
+const TokenControllerInterface = require('../build/TokenControllerInterface.json')
 const MultipleWinnersHarness = require('../build/MultipleWinnersHarness.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
@@ -24,7 +25,7 @@ const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 let overrides = { gasLimit: 20000000 }
 
 describe('MultipleWinners', function() {
-  let wallet, wallet2
+  let wallet, wallet2, wallet3, wallet4
 
   let externalERC20Award, externalERC721Award
 
@@ -39,9 +40,14 @@ describe('MultipleWinners', function() {
   let creditRateMantissa = creditLimitMantissa / prizePeriodSeconds
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
 
-    debug(`using wallet ${wallet._address}`)
+    debug({
+      wallet: wallet._address,
+      wallet2: wallet2._address,
+      wallet3: wallet3._address,
+      wallet4: wallet4._address
+    })
 
     debug('deploying registry...')
     registry = await deploy1820(wallet)
@@ -156,23 +162,100 @@ describe('MultipleWinners', function() {
       await ticket.mock.totalSupply.returns(1000)
 
       await prizePool.mock.award.withArgs(wallet3._address, toWei('8'), ticket.address).returns()
+
+      await prizeStrategy.distribute(randomNumber)
     })
 
-    it('should award more than one winner', async () => {
-      await prizeStrategy.setNumberOfWinners(2)
+    describe('with a real ticket contract', async () => {
 
-      let randomNumber = 10
-      await prizePool.mock.captureAwardBalance.returns(toWei('8'))
-      await ticket.mock.draw.withArgs(randomNumber).returns(wallet3._address)
+      let controller, ticket
 
-      await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns(0)
+      beforeEach(async () => {
+        controller = await deployMockContract(wallet, TokenControllerInterface.abi, overrides)
+        await controller.mock.beforeTokenTransfer.returns()
+        ticket = await deployContract(wallet, Ticket, [], overrides)
+        await ticket.initialize("NAME", "SYMBOL", 8, ethers.constants.AddressZero, controller.address)
 
-      await ticket.mock.totalSupply.returns(1000)
+        await controller.call(ticket, 'controllerMint', wallet._address, toWei('100'))
+        await controller.call(ticket, 'controllerMint', wallet2._address, toWei('100'))
 
-      await ticket.mock.draw.withArgs(ethers.utils.solidityKeccak256(['uint256'], [randomNumber])).returns(wallet2._address)
+        prizeStrategy = await deployContract(wallet, MultipleWinnersHarness, [], overrides)
+        debug('initializing prizeStrategy 2...')
+        await prizeStrategy.initializeMultipleWinners(
+          FORWARDER,
+          prizePeriodStart,
+          prizePeriodSeconds,
+          prizePool.address,
+          ticket.address,
+          sponsorship.address,
+          rng.address,
+          4
+        )
+        
+      })
 
-      await prizePool.mock.award.withArgs(wallet3._address, toWei('4'), ticket.address).returns()
-      await prizePool.mock.award.withArgs(wallet2._address, toWei('4'), ticket.address).returns()
+      it('should do nothing if there is no prize', async () => {
+        await prizePool.mock.captureAwardBalance.returns(toWei('0'))
+
+        await prizeStrategy.setNumberOfWinners(2)
+        await prizeStrategy.distribute(92) // this hashes out to the same winner twice
+      })
+
+      it('may distribute to the same winner twice', async () => {
+        await prizePool.mock.captureAwardBalance.returns(toWei('8'))
+        await prizePool.mock.award.withArgs(wallet._address, toWei('4'), ticket.address).returns()
+
+        await prizeStrategy.setNumberOfWinners(2)
+        await prizeStrategy.distribute(92) // this hashes out to the same winner twice
+      })
+
+      it('should distribute to more than one winner', async () => {
+        await prizePool.mock.captureAwardBalance.returns(toWei('9'))
+        await prizePool.mock.award.withArgs(wallet._address, toWei('3'), ticket.address).returns()
+        await prizePool.mock.award.withArgs(wallet2._address, toWei('3'), ticket.address).returns()
+
+        await prizeStrategy.setNumberOfWinners(3)
+        await prizeStrategy.distribute(90)
+      })
+
+      describe('when external erc20 awards are distributed', () => {
+
+        beforeEach(async () => {
+          await prizeStrategy.addExternalErc20Award(externalERC20Award.address)
+        })
+
+        it('should distribute all of the erc20 awards to the main winner', async () => {
+          await prizePool.mock.captureAwardBalance.returns(toWei('0'))
+          await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns(toWei('8'))
+
+          await prizePool.mock.awardExternalERC20.withArgs(wallet._address, externalERC20Award.address, toWei('8')).returns();
+
+          await prizeStrategy.setNumberOfWinners(2)
+          await prizeStrategy.distribute(92) // this hashes out to the same winner twice
+        })
+
+        it('should evenly distribute ERC20 awards if split is on', async () => {
+          await prizePool.mock.captureAwardBalance.returns(toWei('0'))
+          await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns(toWei('9'))
+
+          await prizePool.mock.awardExternalERC20.withArgs(wallet._address, externalERC20Award.address, toWei('3')).returns();
+          await prizePool.mock.awardExternalERC20.withArgs(wallet2._address, externalERC20Award.address, toWei('3')).returns();
+
+          await prizeStrategy.setSplitExternalErc20Awards(true)
+          await prizeStrategy.setNumberOfWinners(3)
+          await prizeStrategy.distribute(90) // this hashes out to the same winner twice
+        })
+
+        it('should do nothing if split is on and balance is zero', async () => {
+          await prizePool.mock.captureAwardBalance.returns(toWei('0'))
+          await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns(toWei('0'))
+
+          await prizeStrategy.setSplitExternalErc20Awards(true)
+          await prizeStrategy.setNumberOfWinners(3)
+          await prizeStrategy.distribute(90) // this hashes out to the same winner twice
+        })
+
+      })
     })
   })
 })

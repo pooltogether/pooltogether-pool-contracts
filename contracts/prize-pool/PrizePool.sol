@@ -38,7 +38,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
 
   /// @dev Event emitted when controlled token is added
   event ControlledTokenAdded(
-    address indexed token
+    ControlledTokenInterface indexed token
   );
 
   /// @dev Emitted when reserve is captured.
@@ -217,7 +217,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   function initialize (
     address _trustedForwarder,
     RegistryInterface _reserveRegistry,
-    address[] memory _controlledTokens,
+    ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration
   )
@@ -990,23 +990,23 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
 
   /// @notice Allows the Governor to add Controlled Tokens to the Prize Pool
   /// @param _controlledToken The address of the Controlled Token to add
-  function addControlledToken(address _controlledToken) external override onlyOwner {
+  function addControlledToken(ControlledTokenInterface _controlledToken) external override onlyOwner {
     _addControlledToken(_controlledToken);
   }
 
   /// @notice Adds a new controlled token
   /// @param _controlledToken The controlled token to add.  Cannot be a duplicate.
-  function _addControlledToken(address _controlledToken) internal {
-    require(ControlledToken(_controlledToken).controller() == this, "PrizePool/token-ctrlr-mismatch");
-    _tokens.addAddress(_controlledToken);
+  function _addControlledToken(ControlledTokenInterface _controlledToken) internal {
+    require(_controlledToken.controller() == this, "PrizePool/token-ctrlr-mismatch");
+    _tokens.addAddress(address(_controlledToken));
 
     emit ControlledTokenAdded(_controlledToken);
   }
 
   /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.
   /// @param _prizeStrategy The new prize strategy
-  function setPrizeStrategy(address _prizeStrategy) external override onlyOwner {
-    _setPrizeStrategy(TokenListenerInterface(_prizeStrategy));
+  function setPrizeStrategy(TokenListenerInterface _prizeStrategy) external override onlyOwner {
+    _setPrizeStrategy(_prizeStrategy);
   }
 
   /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.

@@ -44,7 +44,7 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
   {
     StakePrizePool prizePool = stakePrizePoolProxyFactory.create();
 
-    address[] memory tokens;
+    ControlledTokenInterface[] memory tokens;
 
     prizePool.initialize(
       config.useGSN ? trustedForwarder : address(0),

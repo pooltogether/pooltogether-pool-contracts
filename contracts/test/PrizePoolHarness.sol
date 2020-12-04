@@ -12,7 +12,7 @@ contract PrizePoolHarness is PrizePool {
   function initializeAll(
     address _trustedForwarder,
     RegistryInterface _reserveRegistry,
-    address[] memory _controlledTokens,
+    ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
     YieldSourceStub _stubYieldSource

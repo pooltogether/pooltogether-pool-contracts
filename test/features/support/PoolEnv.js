@@ -1,4 +1,5 @@
 // features/support/world.js
+const chalk = require('chalk')
 const buidler = require("@nomiclabs/buidler")
 const ethers = require('ethers')
 const ERC20Mintable = require('../../../build/ERC20Mintable.json')
@@ -376,6 +377,31 @@ function PoolEnv() {
     await this.startAward()
     await this.completeAward({ token })
   }
+
+  // this.selectWinners = async function ({ token }) {
+
+  //   for (let userIndex = 1; userIndex < 3; userIndex++) {
+  //     let wallet = await this.wallet(userIndex)
+  //     let chance = await this.env.ticket.chanceOf(wallet._address)
+  //     console.log(chalk.green(`User ${userIndex} (${wallet._address}) chances: ${ethers.utils.formatEther(chance)}`))
+  //   }
+
+
+  //   for (let i = 0; i < 600; i += 10) {
+  //     let token = parseInt(i)
+  //     let token2 = parseInt(Math.random() * 200)
+
+  //     let firstWinner = await this.env.ticket.draw(token)
+  //     let secondRandom = ethers.BigNumber.from(ethers.utils.solidityKeccak256(['uint256'], [token.toString()]))
+  //     let secondWinner = await this.env.ticket.draw(secondRandom)
+
+  //     if (firstWinner != secondWinner) {
+  //       console.log(chalk.green(`token ${token} had ${firstWinner} and ${secondWinner}`))
+  //     } else {
+  //       console.log(chalk.dim(`No luck with ${token} and ${secondRandom}`))
+  //     }
+  //   }
+  // }
 
   this.transferTickets = async function ({ user, tickets, to }) {
     let wallet = await this.wallet(user)

@@ -31,7 +31,7 @@ contract yVaultPrizePool is PrizePool {
   function initialize (
     address _trustedForwarder,
     RegistryInterface _reserveRegistry,
-    address[] memory _controlledTokens,
+    ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
     yVaultInterface _vault,

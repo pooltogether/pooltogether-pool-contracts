@@ -18,7 +18,7 @@
     "start-fork": "ganache-cli -f $ALCHEMY_URL -m \"$HDWALLET_MNEMONIC\" --chainId 1 -u \"0x0000000000000000000000000000000000000000\" -u \"0x564286362092D8e7936f0549571a803B203aAceD\" -u \"0x9C6EFFf83578a1049E91106F071A24Ba5313B9e9\"",
     "fork-whale": "buidler --network fork run ./scripts/fork-whale.js",
     "console": "buidler console --network",
-    "coverage": "rm -rf build cache test-results.xml && USE_LITERAL_CONTENT=false buidler coverage --network coverage --temp build",
+    "coverage": "yarn clean && USE_LITERAL_CONTENT=false node --max-old-space-size=4096 ./node_modules/.bin/buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network localhost",
     "deploy": "buidler deploy --write true --network",
     "deploy-drips": "buidler run ./js/deployDripTokens.js --network",
@@ -61,7 +61,7 @@
     "shelljs": "0.8.3",
     "solc": "0.6.4",
     "solhint": "3.0.0",
-    "solidity-coverage": "0.7.4",
+    "solidity-coverage": "0.7.12",
     "truffle-extract": "pooltogether/truffle-extract"
   },
   "files": [
