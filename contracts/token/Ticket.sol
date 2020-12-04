@@ -5,6 +5,8 @@ pragma solidity >=0.6.0 <0.7.0;
 import "sortition-sum-tree-factory/contracts/SortitionSumTreeFactory.sol";
 import "@pooltogether/uniform-random-number/contracts/UniformRandomNumber.sol";
 
+import "@nomiclabs/buidler/console.sol";
+
 import "./ControlledToken.sol";
 import "./TicketInterface.sol";
 
@@ -47,7 +49,7 @@ contract Ticket is ControlledToken, TicketInterface {
   /// @notice Selects a user using a random number.  The random number will be uniformly bounded to the ticket totalSupply.
   /// @param randomNumber The random number to use to select a user.
   /// @return The winner
-  function draw(uint256 randomNumber) public view override returns (address) {
+  function draw(uint256 randomNumber) external view override returns (address) {
     uint256 bound = totalSupply();
     address selected;
     if (bound == 0) {

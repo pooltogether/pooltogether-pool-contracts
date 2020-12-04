@@ -121,7 +121,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   // Current RNG Request
   RngRequest internal rngRequest;
 
-  // RNG Request Timeout
+  /// @notice RNG Request Timeout.  In fact, this is really a "complete award" timeout.
+  /// If the rng completes the award can still be cancelled.
   uint32 public rngRequestTimeout;
 
   // Prize period
@@ -208,6 +209,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Allows the owner to set the token listener
   /// @param _tokenListener A contract that implements the token listener interface.
   function setTokenListener(TokenListenerInterface _tokenListener) external onlyOwner requireAwardNotInProgress {
+    require(address(0) == address(_tokenListener) || address(_tokenListener).isContract(), "PeriodicPrizeStrategy/token-listener-not-contract");
     tokenListener = _tokenListener;
 
     emit TokenListenerUpdated(tokenListener);
@@ -404,7 +406,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Allows the owner to set a listener for prize strategy callbacks.
   /// @param _periodicPrizeStrategyListener The address of the listener contract
   function setPeriodicPrizeStrategyListener(PeriodicPrizeStrategyListenerInterface _periodicPrizeStrategyListener) external onlyOwner requireAwardNotInProgress {
-    require(address(_periodicPrizeStrategyListener).isContract(), "PeriodicPrizeStrategy/listener-not-contract");
+    require(address(0) == address(_periodicPrizeStrategyListener) || address(_periodicPrizeStrategyListener).isContract(), "PeriodicPrizeStrategy/listener-not-contract");
 
     periodicPrizeStrategyListener = _periodicPrizeStrategyListener;
 

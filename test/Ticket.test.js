@@ -2,6 +2,7 @@ const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const TokenControllerInterface = require('../build/TokenControllerInterface.json')
 const Ticket = require('../build/Ticket.json')
+const chalk = require('chalk')
 
 const { expect } = require('chai')
 const buidler = require('@nomiclabs/buidler')

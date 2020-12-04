@@ -23,7 +23,7 @@ describe('Multiple Winners Feature', () => {
     await env.buyTickets({ user: 1, tickets: 100 })
     await env.buyTickets({ user: 2, tickets: 100 })
     await env.poolAccrues({ tickets: 100 })
-    await env.awardPrizeToToken({ token: 2 }) // just happens to keccak hash to the other player
+    await env.awardPrizeToToken({ token: 90 }) // just happens to award both players
     await env.expectUserToHaveTickets({ user: 1, tickets: 150 })
     await env.expectUserToHaveTickets({ user: 2, tickets: 150 })
   })

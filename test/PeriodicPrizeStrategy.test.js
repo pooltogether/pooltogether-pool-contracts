@@ -119,7 +119,8 @@ describe('PeriodicPrizeStrategy', function() {
         prizePool.address,
         ticket.address,
         sponsorship.address,
-        rng.address
+        rng.address,
+        []
       )
     })
 
@@ -141,7 +142,8 @@ describe('PeriodicPrizeStrategy', function() {
         prizePool.address,
         ticket.address,
         sponsorship.address,
-        rng.address
+        rng.address,
+        []
       ]
       let initArgs
 
@@ -512,14 +514,44 @@ describe('PeriodicPrizeStrategy', function() {
         .withArgs(periodicPrizeStrategyListener.address)
     })
 
-    it('should now allow anyone else to set it', async () => {
+    it('should not allow anyone else to set it', async () => {
       await expect(prizeStrategy.connect(wallet2).setPeriodicPrizeStrategyListener(periodicPrizeStrategyListener.address))
         .to.be.revertedWith('Ownable: caller is not the owner')
     })
 
-    it('should now allow setting an EOA as a listener', async () => {
+    it('should not allow setting an EOA as a listener', async () => {
       await expect(prizeStrategy.setPeriodicPrizeStrategyListener(wallet2._address))
         .to.be.revertedWith("PeriodicPrizeStrategy/listener-not-contract");
+    })
+
+    it('should allow setting the listener to null', async () => {
+      await expect(prizeStrategy.setPeriodicPrizeStrategyListener(ethers.constants.AddressZero))
+        .to.emit(prizeStrategy, 'PeriodicPrizeStrategyListenerSet')
+        .withArgs(ethers.constants.AddressZero)
+    })
+  })
+
+  describe('setTokenListener()', () => {
+    it('should allow the owner to change the listener', async () => {
+      await expect(prizeStrategy.setTokenListener(periodicPrizeStrategyListener.address))
+        .to.emit(prizeStrategy, 'TokenListenerUpdated')
+        .withArgs(periodicPrizeStrategyListener.address)
+    })
+
+    it('should not allow anyone else to change the listener', async () => {
+      await expect(prizeStrategy.connect(wallet2).setTokenListener(periodicPrizeStrategyListener.address))
+        .to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('should not allow setting an EOA as a listener', async () => {
+      await expect(prizeStrategy.setTokenListener(wallet2._address))
+        .to.be.revertedWith("PeriodicPrizeStrategy/token-listener-not-contract");
+    })
+
+    it('should allow setting the listener to null', async () => {
+      await expect(prizeStrategy.setTokenListener(ethers.constants.AddressZero))
+        .to.emit(prizeStrategy, 'TokenListenerUpdated')
+        .withArgs(ethers.constants.AddressZero)
     })
   })
 
@@ -605,7 +637,8 @@ describe('PeriodicPrizeStrategy', function() {
         prizePool.address,
         ticket.address,
         sponsorship.address,
-        rng.address
+        rng.address,
+        []
       )
 
       debug('initialized!')
