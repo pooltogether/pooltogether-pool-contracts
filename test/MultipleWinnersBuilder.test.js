@@ -49,7 +49,8 @@ describe('MultipleWinnersBuilder', () => {
       sponsorshipSymbol: "SPON",
       ticketCreditLimitMantissa: toWei('0.1'),
       ticketCreditRateMantissa: toWei('0.001'),
-      numberOfWinners: 1
+      numberOfWinners: 1,
+      splitExternalErc20Awards: true
     }
   })
 
@@ -89,6 +90,7 @@ describe('MultipleWinnersBuilder', () => {
       expect(await prizeStrategy.owner()).to.equal(wallet._address)
       expect(await prizeStrategy.rng()).to.equal(multipleWinnersConfig.rngService)
       expect(await prizeStrategy.numberOfWinners()).to.equal(multipleWinnersConfig.numberOfWinners)
+      expect(await prizeStrategy.splitExternalErc20Awards()).to.equal(multipleWinnersConfig.splitExternalErc20Awards)
 
       const ticket = await buidler.ethers.getContractAt('Ticket', ticketAddress, wallet)
       expect(await ticket.name()).to.equal(multipleWinnersConfig.ticketName)
