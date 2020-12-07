@@ -68,6 +68,7 @@ describe('PeriodicPrizeStrategy', function() {
     periodicPrizeStrategyListener = await deployMockContract(wallet, PeriodicPrizeStrategyListenerInterface.abi, overrides)
     
     await externalERC721Award.mock.supportsInterface.returns(true)
+    await externalERC721Award.mock.supportsInterface.withArgs('0xffffffff').returns(false)
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
     debug('deploying prizeStrategy...')
