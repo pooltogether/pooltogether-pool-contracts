@@ -21,10 +21,8 @@ For an overview of the concepts and API please see the [documentation](https://d
 This project is available as an NPM package:
 
 ```bash
-$ yarn add @pooltogether/pooltogether-contracts@alpha
+$ yarn add @pooltogether/pooltogether-contracts
 ```
-
-Notice the `alpha` tag: this is important!  Otherwise you'll get the V2 code.
 
 #### Usage
 

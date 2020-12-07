@@ -226,6 +226,12 @@ module.exports = async (buidler) => {
     })
   }
 
+  debug("\n  Deploying SingleRandomWinnerProxyFactory...")
+  const singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+
   debug("\n  Deploying ControlledTokenBuilder...")
   const controlledTokenBuilderResult = await deploy("ControlledTokenBuilder", {
     args: [
@@ -299,6 +305,7 @@ module.exports = async (buidler) => {
   debug("  - Reserve:                        ", reserveAddress)
   debug("  - Comptroller:                    ", comptrollerAddress)
   debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
+  debug("  - SingleRandomWinnerProxyFactory  ", singleRandomWinnerProxyFactoryResult.address)
   debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)
   debug("  - ControlledTokenBuilder:         ", controlledTokenBuilderResult.address)
   debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address)
