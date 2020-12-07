@@ -19,6 +19,7 @@ import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
 import "../utils/RelayRecipient.sol";
 import "./PeriodicPrizeStrategyListenerInterface.sol";
+import "./PeriodicPrizeStrategyListenerLibrary.sol";
 
 /* solium-disable security/no-block-members */
 abstract contract PeriodicPrizeStrategy is Initializable,
@@ -210,8 +211,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Allows the owner to set the token listener
   /// @param _tokenListener A contract that implements the token listener interface.
   function setTokenListener(TokenListenerInterface _tokenListener) external onlyOwner requireAwardNotInProgress {
-    require(address(0) == address(_tokenListener) || address(_tokenListener).isContract(), "PeriodicPrizeStrategy/token-listener-not-contract");
-    require(address(0) == address(_tokenListener) || address(_tokenListener).supportsInterface(TokenListenerLibrary.ERC165_INTERFACE_ID_TOKEN_LISTENER), "PrizePool/token-listener-invalid");
+    require(address(0) == address(_tokenListener) || address(_tokenListener).supportsInterface(TokenListenerLibrary.ERC165_INTERFACE_ID_TOKEN_LISTENER), "PeriodicPrizeStrategy/token-listener-invalid");
 
     tokenListener = _tokenListener;
 
@@ -396,7 +396,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
     _distribute(randomNumber);
     if (address(periodicPrizeStrategyListener) != address(0)) {
-      periodicPrizeStrategyListener.afterDistributeAwards(randomNumber, prizePeriodStartedAt);
+      periodicPrizeStrategyListener.afterPrizePoolAwarded(randomNumber, prizePeriodStartedAt);
     }
 
     // to avoid clock drift, we should calculate the start time based on the previous period start time.
@@ -409,7 +409,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Allows the owner to set a listener for prize strategy callbacks.
   /// @param _periodicPrizeStrategyListener The address of the listener contract
   function setPeriodicPrizeStrategyListener(PeriodicPrizeStrategyListenerInterface _periodicPrizeStrategyListener) external onlyOwner requireAwardNotInProgress {
-    require(address(0) == address(_periodicPrizeStrategyListener) || address(_periodicPrizeStrategyListener).isContract(), "PeriodicPrizeStrategy/listener-not-contract");
+    require(
+      address(0) == address(_periodicPrizeStrategyListener) || address(_periodicPrizeStrategyListener).supportsInterface(PeriodicPrizeStrategyListenerLibrary.ERC165_INTERFACE_ID_PERIODIC_PRIZE_STRATEGY_LISTENER),
+      "PeriodicPrizeStrategy/prizeStrategyListener-invalid"
+    );
 
     periodicPrizeStrategyListener = _periodicPrizeStrategyListener;
 

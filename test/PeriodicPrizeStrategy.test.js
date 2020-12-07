@@ -72,6 +72,10 @@ describe('PeriodicPrizeStrategy', function() {
     
     await externalERC721Award.mock.supportsInterface.returns(true)
     await externalERC721Award.mock.supportsInterface.withArgs('0xffffffff').returns(false)
+
+    await periodicPrizeStrategyListener.mock.supportsInterface.returns(true)
+    await periodicPrizeStrategyListener.mock.supportsInterface.withArgs('0xffffffff').returns(false)
+
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
     debug('deploying prizeStrategy...')
@@ -549,7 +553,7 @@ describe('PeriodicPrizeStrategy', function() {
 
     it('should not allow setting an EOA as a listener', async () => {
       await expect(prizeStrategy.setPeriodicPrizeStrategyListener(wallet2._address))
-        .to.be.revertedWith("PeriodicPrizeStrategy/listener-not-contract");
+        .to.be.revertedWith("PeriodicPrizeStrategy/prizeStrategyListener-invalid");
     })
 
     it('should allow setting the listener to null', async () => {
@@ -573,7 +577,7 @@ describe('PeriodicPrizeStrategy', function() {
 
     it('should not allow setting an EOA as a listener', async () => {
       await expect(prizeStrategy.setTokenListener(wallet2._address))
-        .to.be.revertedWith("PeriodicPrizeStrategy/token-listener-not-contract");
+        .to.be.revertedWith("PeriodicPrizeStrategy/token-listener-invalid");
     })
 
     it('should allow setting the listener to null', async () => {
@@ -590,7 +594,7 @@ describe('PeriodicPrizeStrategy', function() {
       await distributor.mock.distribute.withArgs('48849787646992769944319009300540211125598274780817112954146168253338351566848').returns()
 
       await prizeStrategy.setPeriodicPrizeStrategyListener(periodicPrizeStrategyListener.address)
-      await periodicPrizeStrategyListener.mock.afterDistributeAwards.withArgs('48849787646992769944319009300540211125598274780817112954146168253338351566848', await prizeStrategy.prizePeriodStartedAt()).returns()
+      await periodicPrizeStrategyListener.mock.afterPrizePoolAwarded.withArgs('48849787646992769944319009300540211125598274780817112954146168253338351566848', await prizeStrategy.prizePeriodStartedAt()).returns()
 
       // no external award
       await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns('0')
