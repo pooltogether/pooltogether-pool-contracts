@@ -7,11 +7,11 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 
 import "../utils/UInt256Array.sol";
 import "./ComptrollerStorage.sol";
-import "../token/TokenListenerInterface.sol";
+import "../token/TokenListener.sol";
 
 /// @title The Comptroller disburses rewards to pool users
 /* solium-disable security/no-block-members */
-contract Comptroller is ComptrollerStorage, TokenListenerInterface {
+contract Comptroller is ComptrollerStorage, TokenListener {
   using SafeMath for uint256;
   using SafeCast for uint256;
   using UInt256Array for uint256[];

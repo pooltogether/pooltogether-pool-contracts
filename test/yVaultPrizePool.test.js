@@ -41,6 +41,11 @@ describe('yVaultPrizePool', function() {
     vault = await deployContract(wallet, yVaultMock, [erc20token.address], overrides)
 
     prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
+
+    await prizeStrategy.mock.supportsInterface.returns(true)
+    await prizeStrategy.mock.supportsInterface.withArgs('0xffffffff').returns(false)
+
+
     comptroller = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
 
     debug('deploying yVaultPrizePoolHarness...')

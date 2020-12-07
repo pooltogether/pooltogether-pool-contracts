@@ -35,7 +35,7 @@ describe('PeriodicPrizeStrategy', function() {
 
   let externalERC20Award, externalERC721Award
 
-  let registry, comptroller, prizePool, prizeStrategy, token
+  let registry, tokenListener, prizePool, prizeStrategy, token
 
   let ticket, sponsorship, rng, rngFeeToken
 
@@ -52,8 +52,11 @@ describe('PeriodicPrizeStrategy', function() {
     debug('deploying registry...')
     registry = await deploy1820(wallet)
 
-    debug('deploying protocol comptroller...')
-    comptroller = await deployMockContract(wallet, TokenListenerInterface.abi, [], overrides)
+    debug('deploying protocol tokenListener...')
+    tokenListener = await deployMockContract(wallet, TokenListenerInterface.abi, [], overrides)
+
+    await tokenListener.mock.supportsInterface.returns(true)
+    await tokenListener.mock.supportsInterface.withArgs('0xffffffff').returns(false)
 
     debug('mocking tokens...')
     token = await deployMockContract(wallet, IERC20.abi, overrides)
@@ -69,6 +72,10 @@ describe('PeriodicPrizeStrategy', function() {
     
     await externalERC721Award.mock.supportsInterface.returns(true)
     await externalERC721Award.mock.supportsInterface.withArgs('0xffffffff').returns(false)
+
+    await periodicPrizeStrategyListener.mock.supportsInterface.returns(true)
+    await periodicPrizeStrategyListener.mock.supportsInterface.withArgs('0xffffffff').returns(false)
+
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
     debug('deploying prizeStrategy...')
@@ -546,7 +553,7 @@ describe('PeriodicPrizeStrategy', function() {
 
     it('should not allow setting an EOA as a listener', async () => {
       await expect(prizeStrategy.setPeriodicPrizeStrategyListener(wallet2._address))
-        .to.be.revertedWith("PeriodicPrizeStrategy/listener-not-contract");
+        .to.be.revertedWith("PeriodicPrizeStrategy/prizeStrategyListener-invalid");
     })
 
     it('should allow setting the listener to null', async () => {
@@ -558,19 +565,19 @@ describe('PeriodicPrizeStrategy', function() {
 
   describe('setTokenListener()', () => {
     it('should allow the owner to change the listener', async () => {
-      await expect(prizeStrategy.setTokenListener(periodicPrizeStrategyListener.address))
+      await expect(prizeStrategy.setTokenListener(tokenListener.address))
         .to.emit(prizeStrategy, 'TokenListenerUpdated')
-        .withArgs(periodicPrizeStrategyListener.address)
+        .withArgs(tokenListener.address)
     })
 
     it('should not allow anyone else to change the listener', async () => {
-      await expect(prizeStrategy.connect(wallet2).setTokenListener(periodicPrizeStrategyListener.address))
+      await expect(prizeStrategy.connect(wallet2).setTokenListener(tokenListener.address))
         .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it('should not allow setting an EOA as a listener', async () => {
       await expect(prizeStrategy.setTokenListener(wallet2._address))
-        .to.be.revertedWith("PeriodicPrizeStrategy/token-listener-not-contract");
+        .to.be.revertedWith("PeriodicPrizeStrategy/token-listener-invalid");
     })
 
     it('should allow setting the listener to null', async () => {
@@ -587,7 +594,7 @@ describe('PeriodicPrizeStrategy', function() {
       await distributor.mock.distribute.withArgs('48849787646992769944319009300540211125598274780817112954146168253338351566848').returns()
 
       await prizeStrategy.setPeriodicPrizeStrategyListener(periodicPrizeStrategyListener.address)
-      await periodicPrizeStrategyListener.mock.afterDistributeAwards.withArgs('48849787646992769944319009300540211125598274780817112954146168253338351566848', await prizeStrategy.prizePeriodStartedAt()).returns()
+      await periodicPrizeStrategyListener.mock.afterPrizePoolAwarded.withArgs('48849787646992769944319009300540211125598274780817112954146168253338351566848', await prizeStrategy.prizePeriodStartedAt()).returns()
 
       // no external award
       await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns('0')

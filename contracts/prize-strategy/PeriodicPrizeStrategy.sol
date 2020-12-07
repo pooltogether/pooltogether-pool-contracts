@@ -5,13 +5,12 @@ pragma solidity >=0.6.0 <0.7.0;
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 
-import "../token/TokenListenerInterface.sol";
+import "../token/TokenListener.sol";
 import "../external/pooltogether/FixedPoint.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
@@ -20,13 +19,13 @@ import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
 import "../utils/RelayRecipient.sol";
 import "./PeriodicPrizeStrategyListenerInterface.sol";
+import "./PeriodicPrizeStrategyListenerLibrary.sol";
 
 /* solium-disable security/no-block-members */
 abstract contract PeriodicPrizeStrategy is Initializable,
                                            OwnableUpgradeSafe,
                                            RelayRecipient,
-                                           TokenListenerInterface {
-  bytes4 private constant _INTERFACE_ID_ERC721 = 0x80ac58cd;
+                                           TokenListener {
 
   using SafeMath for uint256;
   using SafeCast for uint256;
@@ -212,7 +211,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Allows the owner to set the token listener
   /// @param _tokenListener A contract that implements the token listener interface.
   function setTokenListener(TokenListenerInterface _tokenListener) external onlyOwner requireAwardNotInProgress {
-    require(address(0) == address(_tokenListener) || address(_tokenListener).isContract(), "PeriodicPrizeStrategy/token-listener-not-contract");
+    require(address(0) == address(_tokenListener) || address(_tokenListener).supportsInterface(TokenListenerLibrary.ERC165_INTERFACE_ID_TOKEN_LISTENER), "PeriodicPrizeStrategy/token-listener-invalid");
+
     tokenListener = _tokenListener;
 
     emit TokenListenerUpdated(tokenListener);
@@ -396,7 +396,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
     _distribute(randomNumber);
     if (address(periodicPrizeStrategyListener) != address(0)) {
-      periodicPrizeStrategyListener.afterDistributeAwards(randomNumber, prizePeriodStartedAt);
+      periodicPrizeStrategyListener.afterPrizePoolAwarded(randomNumber, prizePeriodStartedAt);
     }
 
     // to avoid clock drift, we should calculate the start time based on the previous period start time.
@@ -409,7 +409,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Allows the owner to set a listener for prize strategy callbacks.
   /// @param _periodicPrizeStrategyListener The address of the listener contract
   function setPeriodicPrizeStrategyListener(PeriodicPrizeStrategyListenerInterface _periodicPrizeStrategyListener) external onlyOwner requireAwardNotInProgress {
-    require(address(0) == address(_periodicPrizeStrategyListener) || address(_periodicPrizeStrategyListener).isContract(), "PeriodicPrizeStrategy/listener-not-contract");
+    require(
+      address(0) == address(_periodicPrizeStrategyListener) || address(_periodicPrizeStrategyListener).supportsInterface(PeriodicPrizeStrategyListenerLibrary.ERC165_INTERFACE_ID_PERIODIC_PRIZE_STRATEGY_LISTENER),
+      "PeriodicPrizeStrategy/prizeStrategyListener-invalid"
+    );
 
     periodicPrizeStrategyListener = _periodicPrizeStrategyListener;
 
@@ -542,7 +545,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @param _tokenIds An array of token IDs of the ERC721 to be awarded
   function addExternalErc721Award(IERC721 _externalErc721, uint256[] calldata _tokenIds) external onlyOwnerOrListener requireAwardNotInProgress {
     require(prizePool.canAwardExternal(address(_externalErc721)), "PeriodicPrizeStrategy/cannot-award-external");
-    require(address(_externalErc721).supportsInterface(_INTERFACE_ID_ERC721), "PeriodicPrizeStrategy/erc721-invalid");
+    require(address(_externalErc721).supportsInterface(Constants.ERC165_INTERFACE_ID_ERC721), "PeriodicPrizeStrategy/erc721-invalid");
     
     if (!externalErc721s.contains(address(_externalErc721))) {
       externalErc721s.addAddress(address(_externalErc721));

@@ -48,6 +48,10 @@ describe('PrizePool', function() {
     await yieldSourceStub.mock.token.returns(erc20token.address)
 
     prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
+
+    await prizeStrategy.mock.supportsInterface.returns(true)
+    await prizeStrategy.mock.supportsInterface.withArgs('0xffffffff').returns(false)
+
     reserve = await deployMockContract(wallet, ReserveInterface.abi, overrides)
     reserveRegistry = await deployMockContract(wallet, RegistryInterface.abi, overrides)
     await reserveRegistry.mock.lookup.returns(reserve.address)
@@ -771,10 +775,10 @@ describe('PrizePool', function() {
 
     describe('setPrizeStrategy()', () => {
       it('should allow the owner to swap the prize strategy', async () => {
-        await expect(prizePool.setPrizeStrategy(wallet2._address))
+        await expect(prizePool.setPrizeStrategy(prizeStrategy.address))
           .to.emit(prizePool, 'PrizeStrategySet')
-          .withArgs(wallet2._address)
-        expect(await prizePool.prizeStrategy()).to.equal(wallet2._address)
+          .withArgs(prizeStrategy.address)
+        expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
       })
 
       it('should not allow anyone else to change the prize strategy', async () => {
@@ -807,6 +811,9 @@ describe('PrizePool', function() {
 
       debug('deploying PrizePoolHarness...')
       multiTokenPrizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
+      await multiTokenPrizeStrategy.mock.supportsInterface.returns(true)
+      await multiTokenPrizeStrategy.mock.supportsInterface.withArgs('0xffffffff').returns(false)
+
       multiTokenPrizePool = await deployContract(wallet, PrizePoolHarness, [], overrides)
 
       sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)
@@ -858,19 +865,19 @@ describe('PrizePool', function() {
     beforeEach(async () => {
       await prizePool.initializeAll(
         FORWARDER,
-        reserve.address,
+        prizeStrategy.address,
         [ticket.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
-      await prizePool.setPrizeStrategy(wallet._address)
+      await prizePool.setPrizeStrategy(prizeStrategy.address)
       await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
     it('should exit early when amount = 0', async () => {
       await yieldSourceStub.mock.canAwardExternal.withArgs(erc20token.address).returns(true)
-      await expect(prizePool.awardExternalERC20(wallet._address, erc20token.address, 0))
+      await expect(prizeStrategy.call(prizePool, 'awardExternalERC20', wallet._address, erc20token.address, 0))
         .to.not.emit(prizePool, 'AwardedExternalERC20')
     })
 
@@ -884,7 +891,7 @@ describe('PrizePool', function() {
     it('should allow arbitrary tokens to be transferred', async () => {
       await yieldSourceStub.mock.canAwardExternal.withArgs(erc20token.address).returns(true)
       await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-      await expect(prizePool.awardExternalERC20(wallet._address, erc20token.address, toWei('10')))
+      await expect(prizeStrategy.call(prizePool, 'awardExternalERC20', wallet._address, erc20token.address, toWei('10')))
         .to.emit(prizePool, 'AwardedExternalERC20')
         .withArgs(wallet._address, erc20token.address, toWei('10'))
     })
@@ -894,19 +901,19 @@ describe('PrizePool', function() {
     beforeEach(async () => {
       await prizePool.initializeAll(
         FORWARDER,
-        reserve.address,
+        prizeStrategy.address,
         [ticket.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
-      await prizePool.setPrizeStrategy(wallet._address)
+      await prizePool.setPrizeStrategy(prizeStrategy.address)
       await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
     it('should exit early when amount = 0', async () => {
       await yieldSourceStub.mock.canAwardExternal.withArgs(erc20token.address).returns(true)
-      await expect(prizePool.transferExternalERC20(wallet._address, erc20token.address, 0))
+      await expect(prizeStrategy.call(prizePool, 'transferExternalERC20', wallet._address, erc20token.address, 0))
         .to.not.emit(prizePool, 'TransferredExternalERC20')
     })
 
@@ -920,7 +927,7 @@ describe('PrizePool', function() {
     it('should allow arbitrary tokens to be transferred', async () => {
       await yieldSourceStub.mock.canAwardExternal.withArgs(erc20token.address).returns(true)
       await erc20token.mock.transfer.withArgs(wallet._address, toWei('10')).returns(true)
-      await expect(prizePool.transferExternalERC20(wallet._address, erc20token.address, toWei('10')))
+      await expect(prizeStrategy.call(prizePool, 'transferExternalERC20', wallet._address, erc20token.address, toWei('10')))
         .to.emit(prizePool, 'TransferredExternalERC20')
         .withArgs(wallet._address, erc20token.address, toWei('10'))
     })
@@ -930,19 +937,19 @@ describe('PrizePool', function() {
     beforeEach(async () => {
       await prizePool.initializeAll(
         FORWARDER,
-        reserve.address,
+        prizeStrategy.address,
         [ticket.address],
         poolMaxExitFee,
         poolMaxTimelockDuration,
         yieldSourceStub.address
       )
-      await prizePool.setPrizeStrategy(wallet._address)
+      await prizePool.setPrizeStrategy(prizeStrategy.address)
       await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
     })
 
     it('should exit early when tokenIds list is empty', async () => {
       await yieldSourceStub.mock.canAwardExternal.withArgs(erc721token.address).returns(true)
-      await expect(prizePool.awardExternalERC721(wallet._address, erc721token.address, []))
+      await expect(prizeStrategy.call(prizePool, 'awardExternalERC721', wallet._address, erc721token.address, []))
         .to.not.emit(prizePool, 'AwardedExternalERC721')
     })
 
@@ -956,7 +963,7 @@ describe('PrizePool', function() {
     it('should allow arbitrary tokens to be transferred', async () => {
       await yieldSourceStub.mock.canAwardExternal.withArgs(erc721token.address).returns(true)
       await erc721token.mock.transferFrom.withArgs(prizePool.address, wallet._address, NFT_TOKEN_ID).returns()
-      await expect(prizePool.awardExternalERC721(wallet._address, erc721token.address, [NFT_TOKEN_ID]))
+      await expect(prizeStrategy.call(prizePool, 'awardExternalERC721', wallet._address, erc721token.address, [NFT_TOKEN_ID]))
         .to.emit(prizePool, 'AwardedExternalERC721')
         .withArgs(wallet._address, erc721token.address, [NFT_TOKEN_ID])
     })

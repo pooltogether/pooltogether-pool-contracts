@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
 
 import "../external/pooltogether/FixedPoint.sol";
@@ -13,6 +14,7 @@ import "../registry/RegistryInterface.sol";
 import "../reserve/ReserveInterface.sol";
 import "./YieldSource.sol";
 import "../token/TokenListenerInterface.sol";
+import "../token/TokenListenerLibrary.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
@@ -27,6 +29,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   using SafeCast for uint256;
   using SafeERC20 for IERC20;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
+  using ERC165Checker for address;
 
   /// @dev Emitted when an instance is initialized
   event Initialized(
@@ -1013,6 +1016,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeSa
   /// @param _prizeStrategy The new prize strategy
   function _setPrizeStrategy(TokenListenerInterface _prizeStrategy) internal {
     require(address(_prizeStrategy) != address(0), "PrizePool/prizeStrategy-not-zero");
+    require(address(_prizeStrategy).supportsInterface(TokenListenerLibrary.ERC165_INTERFACE_ID_TOKEN_LISTENER), "PrizePool/prizeStrategy-invalid");
     prizeStrategy = _prizeStrategy;
 
     emit PrizeStrategySet(address(_prizeStrategy));
