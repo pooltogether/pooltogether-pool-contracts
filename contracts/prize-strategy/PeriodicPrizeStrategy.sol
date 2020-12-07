@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
@@ -25,11 +26,13 @@ abstract contract PeriodicPrizeStrategy is Initializable,
                                            OwnableUpgradeSafe,
                                            RelayRecipient,
                                            TokenListenerInterface {
+  bytes4 private constant _INTERFACE_ID_ERC721 = 0x80ac58cd;
 
   using SafeMath for uint256;
   using SafeCast for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
   using Address for address;
+  using ERC165Checker for address;
 
   uint256 internal constant ETHEREUM_BLOCK_TIME_ESTIMATE_MANTISSA = 13.4 ether;
 
@@ -495,7 +498,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   }
 
   function _addExternalErc20Award(IERC20 _externalErc20) internal {
+    require(address(_externalErc20).isContract(), "PeriodicPrizeStrategy/erc20-null");
     require(prizePool.canAwardExternal(address(_externalErc20)), "PeriodicPrizeStrategy/cannot-award-external");
+    (bool succeeded, bytes memory returnValue) = address(_externalErc20).staticcall(abi.encodeWithSignature("totalSupply()"));
+    require(succeeded, "PeriodicPrizeStrategy/erc20-invalid");
     externalErc20s.addAddress(address(_externalErc20));
     emit ExternalErc20AwardAdded(_externalErc20);
   }
@@ -535,8 +541,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @param _externalErc721 The address of an ERC721 token to be awarded
   /// @param _tokenIds An array of token IDs of the ERC721 to be awarded
   function addExternalErc721Award(IERC721 _externalErc721, uint256[] calldata _tokenIds) external onlyOwnerOrListener requireAwardNotInProgress {
-    // require(_externalErc721.isContract(), "PeriodicPrizeStrategy/external-erc721-not-contract");
     require(prizePool.canAwardExternal(address(_externalErc721)), "PeriodicPrizeStrategy/cannot-award-external");
+    require(address(_externalErc721).supportsInterface(_INTERFACE_ID_ERC721), "PeriodicPrizeStrategy/erc721-invalid");
     
     if (!externalErc721s.contains(address(_externalErc721))) {
       externalErc721s.addAddress(address(_externalErc721));

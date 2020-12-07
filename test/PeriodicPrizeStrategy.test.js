@@ -66,7 +66,9 @@ describe('PeriodicPrizeStrategy', function() {
     externalERC721Award = await deployMockContract(wallet, IERC721.abi, overrides)
     distributor = await deployMockContract(wallet, PeriodicPrizeStrategyDistributorInterface.abi, overrides)
     periodicPrizeStrategyListener = await deployMockContract(wallet, PeriodicPrizeStrategyListenerInterface.abi, overrides)
-
+    
+    await externalERC721Award.mock.supportsInterface.returns(true)
+    await externalERC721Award.mock.supportsInterface.withArgs('0xffffffff').returns(false)
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
     debug('deploying prizeStrategy...')
@@ -91,6 +93,7 @@ describe('PeriodicPrizeStrategy', function() {
       []
     )
 
+    await externalERC20Award.mock.totalSupply.returns(0)
     await prizeStrategy.addExternalErc20Award(externalERC20Award.address)
 
     debug('initialized!')
@@ -309,6 +312,7 @@ describe('PeriodicPrizeStrategy', function() {
   describe('addExternalErc20Award()', () => {
     it('should allow the owner to add external ERC20 tokens to the prize', async () => {
       const externalAward = await deployMockContract(wallet2, IERC20.abi, overrides)
+      await externalAward.mock.totalSupply.returns(0)
       await prizePool.mock.canAwardExternal.withArgs(externalAward.address).returns(true)
 
       await expect(prizeStrategy.addExternalErc20Award(externalAward.address))
@@ -317,9 +321,22 @@ describe('PeriodicPrizeStrategy', function() {
     })
 
     it('should disallow unapproved external ERC20 prize tokens', async () => {
-      await prizePool.mock.canAwardExternal.withArgs(invalidExternalToken).returns(false)
-      await expect(prizeStrategy.addExternalErc20Award(invalidExternalToken))
+      const invalidExternalErc20 = await deployMockContract(wallet2, IERC20.abi, overrides)
+      await invalidExternalErc20.mock.totalSupply.returns(0)
+      await prizePool.mock.canAwardExternal.withArgs(invalidExternalErc20.address).returns(false)
+      await expect(prizeStrategy.addExternalErc20Award(invalidExternalErc20.address))
         .to.be.revertedWith('PeriodicPrizeStrategy/cannot-award-external')
+    })
+
+    it('should disallow added EOA accounts', async () => {
+      await expect(prizeStrategy.addExternalErc20Award(invalidExternalToken))
+        .to.be.revertedWith('PeriodicPrizeStrategy/erc20-null')
+    })
+
+    it('should disallow contracts that are not erc20s', async () => {
+      await prizePool.mock.canAwardExternal.withArgs(prizeStrategy.address).returns(true)
+      await expect(prizeStrategy.addExternalErc20Award(prizeStrategy.address))
+        .to.be.revertedWith('PeriodicPrizeStrategy/erc20-invalid')
     })
   })
 
@@ -356,6 +373,8 @@ describe('PeriodicPrizeStrategy', function() {
     it('should allow the owner to add external ERC20 tokens to the prize', async () => {
       const externalAward = await deployMockContract(wallet2, IERC20.abi, overrides)
       const externalAward2 = await deployMockContract(wallet2, IERC20.abi, overrides)
+      await externalAward.mock.totalSupply.returns(0)
+      await externalAward2.mock.totalSupply.returns(0)
       await prizePool.mock.canAwardExternal.withArgs(externalAward.address).returns(true)
       await prizePool.mock.canAwardExternal.withArgs(externalAward2.address).returns(true)
       await expect(prizeStrategy.addExternalErc20Awards([externalAward.address, externalAward2.address]))
@@ -409,6 +428,12 @@ describe('PeriodicPrizeStrategy', function() {
       await externalERC721Award.mock.ownerOf.withArgs(1).returns(prizePool.address)
       await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1, 1]))
         .to.be.revertedWith('PeriodicPrizeStrategy/erc721-duplicate')
+    })
+
+    it('should not allow someone to add a non-ERC721 contract', async () => {
+      await prizePool.mock.canAwardExternal.withArgs(prizePool.address).returns(true)
+      await expect(prizeStrategy.addExternalErc721Award(prizePool.address, [1]))
+        .to.be.revertedWith('PeriodicPrizeStrategy/erc721-invalid')
     })
   })
 
