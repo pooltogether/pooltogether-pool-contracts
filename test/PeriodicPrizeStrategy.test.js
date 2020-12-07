@@ -35,7 +35,7 @@ describe('PeriodicPrizeStrategy', function() {
 
   let externalERC20Award, externalERC721Award
 
-  let registry, comptroller, prizePool, prizeStrategy, token
+  let registry, tokenListener, prizePool, prizeStrategy, token
 
   let ticket, sponsorship, rng, rngFeeToken
 
@@ -52,8 +52,11 @@ describe('PeriodicPrizeStrategy', function() {
     debug('deploying registry...')
     registry = await deploy1820(wallet)
 
-    debug('deploying protocol comptroller...')
-    comptroller = await deployMockContract(wallet, TokenListenerInterface.abi, [], overrides)
+    debug('deploying protocol tokenListener...')
+    tokenListener = await deployMockContract(wallet, TokenListenerInterface.abi, [], overrides)
+
+    await tokenListener.mock.supportsInterface.returns(true)
+    await tokenListener.mock.supportsInterface.withArgs('0xffffffff').returns(false)
 
     debug('mocking tokens...')
     token = await deployMockContract(wallet, IERC20.abi, overrides)
@@ -558,13 +561,13 @@ describe('PeriodicPrizeStrategy', function() {
 
   describe('setTokenListener()', () => {
     it('should allow the owner to change the listener', async () => {
-      await expect(prizeStrategy.setTokenListener(periodicPrizeStrategyListener.address))
+      await expect(prizeStrategy.setTokenListener(tokenListener.address))
         .to.emit(prizeStrategy, 'TokenListenerUpdated')
-        .withArgs(periodicPrizeStrategyListener.address)
+        .withArgs(tokenListener.address)
     })
 
     it('should not allow anyone else to change the listener', async () => {
-      await expect(prizeStrategy.connect(wallet2).setTokenListener(periodicPrizeStrategyListener.address))
+      await expect(prizeStrategy.connect(wallet2).setTokenListener(tokenListener.address))
         .to.be.revertedWith("Ownable: caller is not the owner")
     })
 

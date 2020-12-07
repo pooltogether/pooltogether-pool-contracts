@@ -16,4 +16,7 @@ library Constants {
   // keccak256(abi.encodePacked("ERC1820_ACCEPT_MAGIC"));
   bytes32 public constant ACCEPT_MAGIC =
   0xa2ef4600d742022d532d4747cb3547474667d6f13804902513b2ec01c848f4b4;
+
+  bytes4 public constant ERC165_INTERFACE_ID_ERC165 = 0x01ffc9a7;
+  bytes4 public constant ERC165_INTERFACE_ID_ERC721 = 0x80ac58cd;
 }

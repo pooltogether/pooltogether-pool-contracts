@@ -5,6 +5,8 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
 
+import "@nomiclabs/buidler/console.sol";
+
 import "./CompoundPrizePoolBuilder.sol";
 import "./VaultPrizePoolBuilder.sol";
 import "./StakePrizePoolBuilder.sol";
