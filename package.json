@@ -1,6 +1,6 @@
 {
   "name": "@pooltogether/pooltogether-contracts",
-  "version": "3.1.0-beta.3",
+  "version": "3.1.0-beta.4",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
   "bin": {
@@ -32,7 +32,7 @@
     "mint": "USE_BUIDLER_EVM_ACCOUNTS=$BUIDLER_EVM_ACCOUNTS buidler run --network localhost scripts/mint.js"
   },
   "dependencies": {
-    "@opengsn/gsn": "^2.0.1",
+    "@opengsn/gsn": "2.0.1",
     "@openzeppelin/contracts-upgradeable": "^3.3.0",
     "@pooltogether/fixed-point": "^1.0.0-beta.1",
     "@pooltogether/pooltogether-rng-contracts": "^1.0.0",
