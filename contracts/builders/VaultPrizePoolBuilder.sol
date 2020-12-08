@@ -11,8 +11,8 @@ import "../external/openzeppelin/OpenZeppelinProxyFactoryInterface.sol";
 
 /* solium-disable security/no-block-members */
 contract VaultPrizePoolBuilder is PrizePoolBuilder {
-  using SafeMath for uint256;
-  using SafeCast for uint256;
+  using SafeMathUpgradeable for uint256;
+  using SafeCastUpgradeable for uint256;
 
   struct VaultPrizePoolConfig {
     yVaultInterface vault;

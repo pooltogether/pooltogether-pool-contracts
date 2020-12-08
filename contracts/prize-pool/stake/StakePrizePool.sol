@@ -2,13 +2,13 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "../PrizePool.sol";
 
 contract StakePrizePool is PrizePool {
 
-  IERC20 private stakeToken;
+  IERC20Upgradeable private stakeToken;
 
   event StakePrizePoolInitialized(address indexed stakeToken);
 
@@ -24,7 +24,7 @@ contract StakePrizePool is PrizePool {
     ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
-    IERC20 _stakeToken
+    IERC20Upgradeable _stakeToken
   )
     public
     initializer
@@ -56,7 +56,7 @@ contract StakePrizePool is PrizePool {
     return stakeToken.balanceOf(address(this));
   }
 
-  function _token() internal override view returns (IERC20) {
+  function _token() internal override view returns (IERC20Upgradeable) {
     return stakeToken;
   }
 

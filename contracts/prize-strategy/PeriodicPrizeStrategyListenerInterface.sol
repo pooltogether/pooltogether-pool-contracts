@@ -2,9 +2,9 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC165.sol";
+import "@openzeppelin/contracts-upgradeable/introspection/IERC165Upgradeable.sol";
 
 /* solium-disable security/no-block-members */
-interface PeriodicPrizeStrategyListenerInterface is IERC165 {
+interface PeriodicPrizeStrategyListenerInterface is IERC165Upgradeable {
   function afterPrizePoolAwarded(uint256 randomNumber, uint256 prizePeriodStartedAt) external;
 }

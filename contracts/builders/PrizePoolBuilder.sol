@@ -6,7 +6,7 @@ import "../prize-pool/PrizePool.sol";
 import "../prize-strategy/PeriodicPrizeStrategy.sol";
 
 contract PrizePoolBuilder {
-  using SafeCast for uint256;
+  using SafeCastUpgradeable for uint256;
 
   event PrizePoolCreated (
     address indexed creator,

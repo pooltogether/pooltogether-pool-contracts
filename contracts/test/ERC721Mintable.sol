@@ -1,11 +1,11 @@
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
 /**
  * @dev Extension of {ERC721} for Minting/Burning
  */
-contract ERC721Mintable is ERC721UpgradeSafe {
+contract ERC721Mintable is ERC721Upgradeable {
 
     constructor () public {
         __ERC721_init("ERC 721", "NFT");

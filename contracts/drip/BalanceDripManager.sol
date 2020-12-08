@@ -2,14 +2,14 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "../utils/MappedSinglyLinkedList.sol";
 import "./BalanceDrip.sol";
 
 /// @title Manages the lifecycle of a set of Balance Drips.
 library BalanceDripManager {
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
   using BalanceDrip for BalanceDrip.State;
 
@@ -58,7 +58,7 @@ library BalanceDripManager {
     internal
   {
     self.activeBalanceDrips[measure].removeAddress(prevDripToken, dripToken);
-    self.balanceDrips[measure][dripToken].drip(IERC20(measure).totalSupply(), currentTime, maxNewTokens);
+    self.balanceDrips[measure][dripToken].drip(IERC20Upgradeable(measure).totalSupply(), currentTime, maxNewTokens);
     self.balanceDrips[measure][dripToken].dripRatePerSecond = 0;
   }
 
@@ -85,7 +85,7 @@ library BalanceDripManager {
     uint256 maxNewTokens
   ) internal {
     require(self.activeBalanceDrips[measure].contains(dripToken), "BalanceDripManager/drip-not-active");
-    self.balanceDrips[measure][dripToken].drip(IERC20(measure).totalSupply(), currentTime, maxNewTokens);
+    self.balanceDrips[measure][dripToken].drip(IERC20Upgradeable(measure).totalSupply(), currentTime, maxNewTokens);
     self.balanceDrips[measure][dripToken].dripRatePerSecond = dripRatePerSecond;
   }
 

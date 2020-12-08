@@ -10,11 +10,11 @@ import "../prize-pool/stake/StakePrizePoolProxyFactory.sol";
 
 /* solium-disable security/no-block-members */
 contract StakePrizePoolBuilder is PrizePoolBuilder {
-  using SafeMath for uint256;
-  using SafeCast for uint256;
+  using SafeMathUpgradeable for uint256;
+  using SafeCastUpgradeable for uint256;
 
   struct StakePrizePoolConfig {
-    IERC20 token;
+    IERC20Upgradeable token;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
     bool useGSN;

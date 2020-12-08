@@ -2,13 +2,13 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "./TokenControllerInterface.sol";
 
 /// @title Controlled ERC20 Token
 /// @notice ERC20 Tokens with a controller for minting & burning
-interface ControlledTokenInterface is IERC20 {
+interface ControlledTokenInterface is IERC20Upgradeable {
 
   /// @notice Interface to the contract responsible for controlling mint/burn
   function controller() external view returns (TokenControllerInterface);

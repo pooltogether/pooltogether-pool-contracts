@@ -2,19 +2,19 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 
 import "../utils/ExtendedSafeCast.sol";
-import "../external/pooltogether/FixedPoint.sol";
+import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 /// @title Calculates a users share of a token faucet.
 /// @notice The tokens are dripped at a "drip rate per second".  This is the number of tokens that
 /// are dripped each second to the entire supply of a "measure" token.  A user's share of ownership
 /// of the measure token corresponds to the share of the drip tokens per second.
 library BalanceDrip {
-  using SafeMath for uint256;
-  using SafeCast for uint256;
+  using SafeMathUpgradeable for uint256;
+  using SafeCastUpgradeable for uint256;
   using ExtendedSafeCast for uint256;
 
   struct UserState {

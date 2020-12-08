@@ -3,7 +3,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 
 import "../utils/UInt256Array.sol";
 import "./ComptrollerStorage.sol";
@@ -12,8 +12,8 @@ import "../token/TokenListener.sol";
 /// @title The Comptroller disburses rewards to pool users
 /* solium-disable security/no-block-members */
 contract Comptroller is ComptrollerStorage, TokenListener {
-  using SafeMath for uint256;
-  using SafeCast for uint256;
+  using SafeMathUpgradeable for uint256;
+  using SafeCastUpgradeable for uint256;
   using UInt256Array for uint256[];
   using ExtendedSafeCast for uint256;
   using BalanceDrip for BalanceDrip.State;
@@ -152,7 +152,7 @@ contract Comptroller is ComptrollerStorage, TokenListener {
   }
 
   function transferOut(address token, address to, uint256 amount) external onlyOwner {
-    IERC20(token).transfer(to, amount);
+    IERC20Upgradeable(token).transfer(to, amount);
 
     emit TransferredOut(token, to, amount);
   }
@@ -485,7 +485,7 @@ contract Comptroller is ComptrollerStorage, TokenListener {
     address sender = _msgSender();
     dripTokenTotalSupply[dripToken] = dripTokenTotalSupply[dripToken].sub(amount);
     dripTokenBalances[dripToken][user] = dripTokenBalances[dripToken][user].sub(amount);
-    require(IERC20(dripToken).transfer(user, amount), "Comptroller/claim-transfer-failed");
+    require(IERC20Upgradeable(dripToken).transfer(user, amount), "Comptroller/claim-transfer-failed");
 
     emit DripTokenClaimed(sender, dripToken, user, amount);
   }
@@ -507,7 +507,7 @@ contract Comptroller is ComptrollerStorage, TokenListener {
         balanceDrips[pair.source],
         pair.source,
         pair.measure,
-        IERC20(pair.measure).totalSupply(),
+        IERC20Upgradeable(pair.measure).totalSupply(),
         currentTime
       );
     }
@@ -614,7 +614,7 @@ contract Comptroller is ComptrollerStorage, TokenListener {
     uint256 i;
     for (i = 0; i < pairs.length; i++) {
       UpdatePair memory pair = pairs[i];
-      uint256 measureBalance = IERC20(pair.measure).balanceOf(user);
+      uint256 measureBalance = IERC20Upgradeable(pair.measure).balanceOf(user);
       _captureClaimsForBalanceDrips(pair.source, pair.measure, user, measureBalance, dripTokens);
     }
   }
@@ -836,7 +836,7 @@ contract Comptroller is ComptrollerStorage, TokenListener {
   }
 
   function _availableDripTokenBalance(address dripToken) internal view returns (uint256) {
-    uint256 comptrollerBalance = IERC20(dripToken).balanceOf(address(this));
+    uint256 comptrollerBalance = IERC20Upgradeable(dripToken).balanceOf(address(this));
     uint256 totalClaimable = dripTokenTotalSupply[dripToken];
     return (totalClaimable < comptrollerBalance) ? comptrollerBalance.sub(totalClaimable) : 0;
   }
@@ -856,8 +856,8 @@ contract Comptroller is ComptrollerStorage, TokenListener {
     override
   {
     address source = _msgSender();
-    uint256 balance = IERC20(measure).balanceOf(to);
-    uint256 totalSupply = IERC20(measure).totalSupply();
+    uint256 balance = IERC20Upgradeable(measure).balanceOf(to);
+    uint256 totalSupply = IERC20Upgradeable(measure).totalSupply();
 
     address[] memory balanceDripTokens = _activeBalanceDripTokens(source, measure);
     _updateActiveBalanceDrips(
@@ -908,8 +908,8 @@ contract Comptroller is ComptrollerStorage, TokenListener {
       return;
     }
     address source = _msgSender();
-    uint256 totalSupply = IERC20(measure).totalSupply();
-    uint256 fromBalance = IERC20(measure).balanceOf(from);
+    uint256 totalSupply = IERC20Upgradeable(measure).totalSupply();
+    uint256 fromBalance = IERC20Upgradeable(measure).balanceOf(from);
 
     address[] memory balanceDripTokens = _activeBalanceDripTokens(source, measure);
 
@@ -924,7 +924,7 @@ contract Comptroller is ComptrollerStorage, TokenListener {
     _captureClaimsForBalanceDrips(source, measure, from, fromBalance, balanceDripTokens);
 
     if (to != address(0)) {
-      uint256 toBalance = IERC20(measure).balanceOf(to);
+      uint256 toBalance = IERC20Upgradeable(measure).balanceOf(to);
       _captureClaimsForBalanceDrips(source, measure, to, toBalance, balanceDripTokens);
     }
   }

@@ -2,14 +2,14 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "../utils/MappedSinglyLinkedList.sol";
 import "./VolumeDrip.sol";
 
 /// @title Manages the active set of Volume Drips.
 library VolumeDripManager {
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
   using VolumeDrip for VolumeDrip.State;
 

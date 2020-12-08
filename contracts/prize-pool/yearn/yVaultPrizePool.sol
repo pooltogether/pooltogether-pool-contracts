@@ -2,16 +2,16 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "../../external/yearn/yVaultInterface.sol";
 import "../PrizePool.sol";
 
 /// @title Prize Pool for yEarn's yVaults
 contract yVaultPrizePool is PrizePool {
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
 
   event yVaultPrizePoolInitialized(address indexed vault);
   event ReserveRateMantissaSet(uint256 reserveRateMantissa);
@@ -75,7 +75,7 @@ contract yVaultPrizePool is PrizePool {
   /// @dev Allows a user to supply asset tokens in exchange for yield-bearing tokens
   /// to be held in escrow by the Yield Service
   function _supply(uint256) internal override {
-    IERC20 assetToken = _token();
+    IERC20Upgradeable assetToken = _token();
     uint256 total = assetToken.balanceOf(address(this));
     assetToken.approve(address(vault), total);
     vault.deposit(total);
@@ -100,7 +100,7 @@ contract yVaultPrizePool is PrizePool {
   /// @param amount The amount of underlying tokens to be redeemed
   /// @return The actual amount of tokens transferred
   function _redeem(uint256 amount) internal override returns (uint256) {
-    IERC20 token = _token();
+    IERC20Upgradeable token = _token();
 
     require(_balance() >= amount, "yVaultPrizePool/insuff-liquidity");
 
@@ -150,7 +150,7 @@ contract yVaultPrizePool is PrizePool {
 
   /// @dev Gets the underlying asset token used by the Yield Service
   /// @return A reference to the interface of the underling asset token
-  function _token() internal override view returns (IERC20) {
-    return IERC20(vault.token());
+  function _token() internal override view returns (IERC20Upgradeable) {
+    return IERC20Upgradeable(vault.token());
   }
 }

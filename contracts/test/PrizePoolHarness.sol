@@ -53,7 +53,7 @@ contract PrizePoolHarness is PrizePool {
     return stubYieldSource.canAwardExternal(_externalToken);
   }
 
-  function _token() internal override view returns (IERC20) {
+  function _token() internal override view returns (IERC20Upgradeable) {
     return stubYieldSource.token();
   }
 

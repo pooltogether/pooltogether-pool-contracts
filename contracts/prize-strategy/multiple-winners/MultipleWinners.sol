@@ -22,11 +22,11 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
     TicketInterface _ticket,
-    IERC20 _sponsorship,
+    IERC20Upgradeable _sponsorship,
     RNGInterface _rng,
     uint256 _numberOfWinners
   ) public initializer {
-    IERC20[] memory _externalErc20Awards;
+    IERC20Upgradeable[] memory _externalErc20Awards;
 
     PeriodicPrizeStrategy.initialize(
       _trustedForwarder,
@@ -101,7 +101,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     if (splitExternalErc20Awards) {
       address currentToken = externalErc20s.start();
       while (currentToken != address(0) && currentToken != externalErc20s.end()) {
-        uint256 balance = IERC20(currentToken).balanceOf(address(prizePool));
+        uint256 balance = IERC20Upgradeable(currentToken).balanceOf(address(prizePool));
         uint256 split = balance.div(__numberOfWinners);
         if (split > 0) {
           for (uint256 i = 0; i < winners.length; i++) {

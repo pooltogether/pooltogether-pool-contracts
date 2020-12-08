@@ -58,7 +58,7 @@ contract MultipleWinnersBuilder {
       prizeStrategyConfig.useGSN
     );
 
-    IERC20 sponsorship = _createSponsorship(
+    ControlledToken sponsorship = _createSponsorship(
       prizeStrategyConfig.sponsorshipName,
       prizeStrategyConfig.sponsorshipSymbol,
       decimals,
@@ -136,7 +136,7 @@ contract MultipleWinnersBuilder {
     uint8 decimals,
     PrizePool prizePool,
     bool useGSN
-  ) internal returns (IERC20) {
+  ) internal returns (ControlledToken) {
     return controlledTokenBuilder.createControlledToken(
       ControlledTokenBuilder.ControlledTokenConfig(
         name,

@@ -12,8 +12,8 @@ import "../external/compound/CTokenInterface.sol";
 /// @title Creates new Compound Prize Pools
 /* solium-disable security/no-block-members */
 contract CompoundPrizePoolBuilder is PrizePoolBuilder {
-  using SafeMath for uint256;
-  using SafeCast for uint256;
+  using SafeMathUpgradeable for uint256;
+  using SafeCastUpgradeable for uint256;
 
   /// @notice The configuration used to initialize the Compound Prize Pool
   struct CompoundPrizePoolConfig {

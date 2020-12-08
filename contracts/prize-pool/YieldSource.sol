@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /// @title Defines the functions used to interact with a yield source.  The Prize Pool inherits this contract.
 /// @notice Prize Pools subclasses need to implement this interface so that yield can be generated.
@@ -16,7 +16,7 @@ abstract contract YieldSource {
 
   /// @notice Returns the ERC20 asset token used for deposits.
   /// @return The ERC20 asset token
-  function _token() internal virtual view returns (IERC20);
+  function _token() internal virtual view returns (IERC20Upgradeable);
 
   /// @notice Returns the total balance (in asset tokens).  This includes the deposits and interest.
   /// @return The underlying balance of asset tokens

@@ -2,12 +2,12 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "../drip/BalanceDripManager.sol";
 import "../drip/VolumeDripManager.sol";
 
-contract ComptrollerStorage is OwnableUpgradeSafe {
+contract ComptrollerStorage is OwnableUpgradeable {
   mapping(address => VolumeDripManager.State) internal volumeDrips;
   mapping(address => VolumeDripManager.State) internal referralVolumeDrips;
   mapping(address => BalanceDripManager.State) internal balanceDrips;

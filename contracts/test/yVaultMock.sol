@@ -2,12 +2,12 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "../external/yearn/yVaultInterface.sol";
 import "./ERC20Mintable.sol";
-import "../external/pooltogether/FixedPoint.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
+import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
-contract yVaultMock is yVaultInterface, ERC20UpgradeSafe {
+contract yVaultMock is yVaultInterface, ERC20Upgradeable {
 
-  ERC20UpgradeSafe private asset;
+  ERC20Upgradeable private asset;
   uint256 public vaultFeeMantissa;
 
   constructor (ERC20Mintable _asset) public {
@@ -15,7 +15,7 @@ contract yVaultMock is yVaultInterface, ERC20UpgradeSafe {
     vaultFeeMantissa = 0.05 ether;
   }
 
-  function token() external override view returns (IERC20) {
+  function token() external override view returns (IERC20Upgradeable) {
     return asset;
   }
 

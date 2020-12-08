@@ -1,9 +1,9 @@
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
+import "@openzeppelin/contracts-upgradeable/introspection/IERC1820RegistryUpgradeable.sol";
 
 library Constants {
-  IERC1820Registry public constant REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
+  IERC1820RegistryUpgradeable public constant REGISTRY = IERC1820RegistryUpgradeable(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
 
   // keccak256("ERC777TokensSender")
   bytes32 public constant TOKENS_SENDER_INTERFACE_HASH =

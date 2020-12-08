@@ -3,7 +3,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 
 import "@nomiclabs/buidler/console.sol";
 
@@ -13,7 +13,7 @@ import "./StakePrizePoolBuilder.sol";
 import "./MultipleWinnersBuilder.sol";
 
 contract PoolWithMultipleWinnersBuilder {
-  using SafeCast for uint256;
+  using SafeCastUpgradeable for uint256;
 
   event CompoundPrizePoolWithMultipleWinnersCreated(address indexed prizePool, address indexed prizeStrategy);
   event StakePrizePoolWithMultipleWinnersCreated(address indexed prizePool, address indexed prizeStrategy);

@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 import "../utils/RelayRecipient.sol";
 import "./TokenControllerInterface.sol";
@@ -10,7 +10,7 @@ import "./ControlledTokenInterface.sol";
 
 /// @title Controlled ERC20 Token
 /// @notice ERC20 Tokens with a controller for minting & burning
-contract ControlledToken is RelayRecipient, ERC20UpgradeSafe, ControlledTokenInterface {
+contract ControlledToken is RelayRecipient, ERC20Upgradeable, ControlledTokenInterface {
 
   /// @notice Interface to the contract responsible for controlling mint/burn
   TokenControllerInterface public override controller;
@@ -87,7 +87,7 @@ contract ControlledToken is RelayRecipient, ERC20UpgradeSafe, ControlledTokenInt
   /// @return The payable address of the message sender
   function _msgSender()
     internal
-    override(BaseRelayRecipient, ContextUpgradeSafe)
+    override(BaseRelayRecipient, ContextUpgradeable)
     virtual
     view
     returns (address payable)
@@ -99,7 +99,7 @@ contract ControlledToken is RelayRecipient, ERC20UpgradeSafe, ControlledTokenInt
   /// @return The payable address of the message sender
   function _msgData()
     internal
-    override(BaseRelayRecipient, ContextUpgradeSafe)
+    override(BaseRelayRecipient, ContextUpgradeable)
     virtual
     view
     returns (bytes memory)

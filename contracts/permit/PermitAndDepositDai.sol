@@ -2,15 +2,15 @@
 
 pragma solidity ^0.6.12;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "../external/maker/DaiInterface.sol";
 import "../prize-pool/PrizePoolInterface.sol";
 
 /// @title Allows users to approve and deposit dai into a prize pool in a single transaction.
-contract PermitAndDepositDai is OwnableUpgradeSafe {
-  using SafeERC20 for DaiInterface;
+contract PermitAndDepositDai is OwnableUpgradeable {
+  using SafeERC20Upgradeable for DaiInterface;
 
   /// @notice Permits this contract to spend on a users behalf, and deposits into the prize pool.
   /// @dev The Dai permit params match the Dai#permit function, but it expects the `spender` to be

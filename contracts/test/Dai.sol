@@ -2,14 +2,14 @@
 
 pragma solidity ^0.6.12;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "../external/maker/DaiInterface.sol";
 
 contract Dai is DaiInterface {
-  using SafeMath for uint256;
-  using Address for address;
+  using SafeMathUpgradeable for uint256;
+  using AddressUpgradeable for address;
 
   mapping (address => uint256) private _balances;
 

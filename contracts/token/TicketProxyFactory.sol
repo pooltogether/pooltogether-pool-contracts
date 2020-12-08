@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 import "./Ticket.sol";
 import "../external/openzeppelin/ProxyFactory.sol";
