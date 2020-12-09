@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const ComptrollerHarness = require('../build/ComptrollerHarness.json')
-const IERC20 = require('../build/IERC20.json')
+const IERC20 = require('../build/IERC20Upgradeable.json')
 const buidler = require('@nomiclabs/buidler')
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')

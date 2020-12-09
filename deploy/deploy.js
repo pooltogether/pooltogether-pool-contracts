@@ -23,8 +23,6 @@ module.exports = async (buidler) => {
   let {
     deployer,
     rng,
-    dai,
-    trustedForwarder,
     adminAccount,
     comptroller,
     reserve
@@ -51,13 +49,6 @@ module.exports = async (buidler) => {
   await deploy1820(signer)
 
   if (isLocal) {
-    debug("\n  Deploying TrustedForwarder...")
-    const deployResult = await deploy("TrustedForwarder", {
-      from: deployer,
-      skipIfAlreadyDeployed: true
-    });
-    trustedForwarder = deployResult.address
-
     debug("\n  Deploying RNGService...")
     const rngServiceMockResult = await deploy("RNGServiceMock", {
       from: deployer,
@@ -100,7 +91,6 @@ module.exports = async (buidler) => {
 
     // Display Contract Addresses
     debug("\n  Local Contract Deployments;\n")
-    debug("  - TrustedForwarder: ", trustedForwarder)
     debug("  - RNGService:       ", rng)
     debug("  - Dai:              ", daiResult.address)
   }
@@ -235,7 +225,6 @@ module.exports = async (buidler) => {
   debug("\n  Deploying ControlledTokenBuilder...")
   const controlledTokenBuilderResult = await deploy("ControlledTokenBuilder", {
     args: [
-      trustedForwarder,
       controlledTokenProxyFactoryResult.address,
       ticketProxyFactoryResult.address
     ],
@@ -248,7 +237,6 @@ module.exports = async (buidler) => {
     args: [
       multipleWinnersProxyFactoryResult.address,
       controlledTokenBuilderResult.address,
-      trustedForwarder
     ],
     from: deployer,
     skipIfAlreadyDeployed: true
@@ -258,7 +246,6 @@ module.exports = async (buidler) => {
   const compoundPrizePoolBuilderResult = await deploy("CompoundPrizePoolBuilder", {
     args: [
       reserveRegistryResult.address,
-      trustedForwarder,
       compoundPrizePoolProxyFactoryResult.address
     ],
     from: deployer,
@@ -269,7 +256,6 @@ module.exports = async (buidler) => {
   const vaultPrizePoolBuilderResult = await deploy("VaultPrizePoolBuilder", {
     args: [
       reserveRegistryResult.address,
-      trustedForwarder,
       yVaultPrizePoolProxyFactoryResult.address
     ],
     from: deployer,
@@ -280,7 +266,6 @@ module.exports = async (buidler) => {
   const stakePrizePoolBuilderResult = await deploy("StakePrizePoolBuilder", {
     args: [
       reserveRegistryResult.address,
-      trustedForwarder,
       stakePrizePoolProxyFactoryResult.address
     ],
     from: deployer,

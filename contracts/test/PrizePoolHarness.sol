@@ -10,7 +10,6 @@ contract PrizePoolHarness is PrizePool {
   YieldSourceStub stubYieldSource;
 
   function initializeAll(
-    address _trustedForwarder,
     RegistryInterface _reserveRegistry,
     ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
@@ -20,7 +19,6 @@ contract PrizePoolHarness is PrizePool {
     public
   {
     PrizePool.initialize(
-      _trustedForwarder,
       _reserveRegistry,
       _controlledTokens,
       _maxExitFeeMantissa,

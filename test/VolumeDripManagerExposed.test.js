@@ -1,7 +1,7 @@
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 const VolumeDripManagerExposed = require('../build/VolumeDripManagerExposed.json')
 const ERC20Mintable = require('../build/ERC20Mintable.json')
-const IERC20 = require('../build/IERC20.json')
+const IERC20 = require('../build/IERC20Upgradeable.json')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')

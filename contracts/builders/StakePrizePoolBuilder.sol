@@ -17,22 +17,18 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
     IERC20Upgradeable token;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
-    bool useGSN;
   }
 
   RegistryInterface public reserveRegistry;
   StakePrizePoolProxyFactory public stakePrizePoolProxyFactory;
-  address public trustedForwarder;
 
   constructor (
     RegistryInterface _reserveRegistry,
-    address _trustedForwarder,
     StakePrizePoolProxyFactory _stakePrizePoolProxyFactory
   ) public {
     require(address(_reserveRegistry) != address(0), "StakePrizePoolBuilder/reserveRegistry-not-zero");
     require(address(_stakePrizePoolProxyFactory) != address(0), "StakePrizePoolBuilder/stake-prize-pool-proxy-factory-not-zero");
     reserveRegistry = _reserveRegistry;
-    trustedForwarder = _trustedForwarder;
     stakePrizePoolProxyFactory = _stakePrizePoolProxyFactory;
   }
 
@@ -47,7 +43,6 @@ contract StakePrizePoolBuilder is PrizePoolBuilder {
     ControlledTokenInterface[] memory tokens;
 
     prizePool.initialize(
-      config.useGSN ? trustedForwarder : address(0),
       reserveRegistry,
       tokens,
       config.maxExitFeeMantissa,

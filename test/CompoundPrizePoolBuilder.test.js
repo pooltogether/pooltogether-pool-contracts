@@ -18,7 +18,6 @@ describe('CompoundPrizePoolBuilder', () => {
   let builder
 
   let reserveRegistry,
-      trustedForwarder,
       compoundPrizePoolProxyFactory,
       cToken
 
@@ -34,7 +33,6 @@ describe('CompoundPrizePoolBuilder', () => {
     )
 
     reserveRegistry = (await deployments.get("ReserveRegistry"))
-    trustedForwarder = (await deployments.get("TrustedForwarder"))
     compoundPrizePoolProxyFactory = (await deployments.get("CompoundPrizePoolProxyFactory"))
     cToken = (await deployments.get("cDai"))
 
@@ -49,7 +47,6 @@ describe('CompoundPrizePoolBuilder', () => {
   describe('initialize()', () => {
     it('should setup all factories', async () => {
       expect(await builder.reserveRegistry()).to.equal(reserveRegistry.address)
-      expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.compoundPrizePoolProxyFactory()).to.equal(compoundPrizePoolProxyFactory.address)
     })
   })

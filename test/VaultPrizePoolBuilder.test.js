@@ -15,7 +15,6 @@ describe('VaultPrizePoolBuilder', () => {
   let builder
 
   let reserveRegistry,
-      trustedForwarder,
       vaultPrizePoolProxyFactory,
       vault
 
@@ -31,7 +30,6 @@ describe('VaultPrizePoolBuilder', () => {
     )
 
     reserveRegistry = (await deployments.get("ReserveRegistry"))
-    trustedForwarder = (await deployments.get("TrustedForwarder"))
     vaultPrizePoolProxyFactory = (await deployments.get("yVaultPrizePoolProxyFactory"))
     vault = (await deployments.get("yDai"))
 
@@ -47,7 +45,6 @@ describe('VaultPrizePoolBuilder', () => {
   describe('initialize()', () => {
     it('should setup all factories', async () => {
       expect(await builder.reserveRegistry()).to.equal(reserveRegistry.address)
-      expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.vaultPrizePoolProxyFactory()).to.equal(vaultPrizePoolProxyFactory.address)
     })
   })

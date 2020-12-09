@@ -32,7 +32,6 @@
     "mint": "USE_BUIDLER_EVM_ACCOUNTS=$BUIDLER_EVM_ACCOUNTS buidler run --network localhost scripts/mint.js"
   },
   "dependencies": {
-    "@opengsn/gsn": "2.0.1",
     "@openzeppelin/contracts-upgradeable": "3.3.0",
     "@pooltogether/fixed-point": "1.0.0-beta.2",
     "@pooltogether/pooltogether-rng-contracts": "1.0.0",

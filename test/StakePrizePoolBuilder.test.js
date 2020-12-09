@@ -14,9 +14,7 @@ describe('StakePrizePoolBuilder', () => {
   let builder
 
   let reserveRegistry,
-      trustedForwarder,
       stakePrizePoolProxyFactory,
-      rngServiceMock,
       token
 
   let stakePrizePoolConfig
@@ -31,7 +29,6 @@ describe('StakePrizePoolBuilder', () => {
     )
 
     reserveRegistry = (await deployments.get("ReserveRegistry"))
-    trustedForwarder = (await deployments.get("TrustedForwarder"))
     stakePrizePoolProxyFactory = (await deployments.get("StakePrizePoolProxyFactory"))
     token = (await deployments.get("Dai"))
 
@@ -46,7 +43,6 @@ describe('StakePrizePoolBuilder', () => {
   describe('initialize()', () => {
     it('should setup all factories', async () => {
       expect(await builder.reserveRegistry()).to.equal(reserveRegistry.address)
-      expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.stakePrizePoolProxyFactory()).to.equal(stakePrizePoolProxyFactory.address)
     })
   })

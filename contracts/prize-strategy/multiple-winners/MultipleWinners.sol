@@ -17,7 +17,6 @@ contract MultipleWinners is PeriodicPrizeStrategy {
   event NoWinners();
 
   function initializeMultipleWinners (
-    address _trustedForwarder,
     uint256 _prizePeriodStart,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
@@ -29,7 +28,6 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     IERC20Upgradeable[] memory _externalErc20Awards;
 
     PeriodicPrizeStrategy.initialize(
-      _trustedForwarder,
       _prizePeriodStart,
       _prizePeriodSeconds,
       _prizePool,

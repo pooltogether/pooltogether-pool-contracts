@@ -20,22 +20,18 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
     CTokenInterface cToken;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
-    bool useGSN;
   }
 
   RegistryInterface public reserveRegistry;
   CompoundPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
-  address public trustedForwarder;
 
   constructor (
     RegistryInterface _reserveRegistry,
-    address _trustedForwarder,
     CompoundPrizePoolProxyFactory _compoundPrizePoolProxyFactory
   ) public {
     require(address(_reserveRegistry) != address(0), "CompoundPrizePoolBuilder/reserveRegistry-not-zero");
     require(address(_compoundPrizePoolProxyFactory) != address(0), "CompoundPrizePoolBuilder/compound-prize-pool-builder-not-zero");
     reserveRegistry = _reserveRegistry;
-    trustedForwarder = _trustedForwarder;
     compoundPrizePoolProxyFactory = _compoundPrizePoolProxyFactory;
   }
 
@@ -53,7 +49,6 @@ contract CompoundPrizePoolBuilder is PrizePoolBuilder {
     ControlledTokenInterface[] memory tokens;
 
     prizePool.initialize(
-      config.useGSN ? trustedForwarder : address(0),
       reserveRegistry,
       tokens,
       config.maxExitFeeMantissa,

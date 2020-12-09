@@ -17,14 +17,12 @@ import "../token/ControlledToken.sol";
 import "../token/TicketInterface.sol";
 import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
-import "../utils/RelayRecipient.sol";
 import "./PeriodicPrizeStrategyListenerInterface.sol";
 import "./PeriodicPrizeStrategyListenerLibrary.sol";
 
 /* solium-disable security/no-block-members */
 abstract contract PeriodicPrizeStrategy is Initializable,
                                            OwnableUpgradeable,
-                                           RelayRecipient,
                                            TokenListener {
 
   using SafeMathUpgradeable for uint256;
@@ -95,7 +93,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   );
 
   event Initialized(
-    address trustedForwarder,
     uint256 prizePeriodStart,
     uint256 prizePeriodSeconds,
     PrizePool indexed prizePool,
@@ -143,7 +140,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   PeriodicPrizeStrategyListenerInterface public periodicPrizeStrategyListener;
 
   /// @notice Initializes a new strategy
-  /// @param _trustedForwarder the GSN v2 trusted forwarder to use
   /// @param _prizePeriodStart The starting timestamp of the prize period.
   /// @param _prizePeriodSeconds The duration of the prize period in seconds
   /// @param _prizePool The prize pool to award
@@ -151,7 +147,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @param _sponsorship The sponsorship token
   /// @param _rng The RNG service to use
   function initialize (
-    address _trustedForwarder,
     uint256 _prizePeriodStart,
     uint256 _prizePeriodSeconds,
     PrizePool _prizePool,
@@ -169,7 +164,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     ticket = _ticket;
     rng = _rng;
     sponsorship = _sponsorship;
-    trustedForwarder = _trustedForwarder;
 
     __Ownable_init();
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
@@ -188,7 +182,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     _setRngRequestTimeout(1800);
 
     emit Initialized(
-      _trustedForwarder,
       _prizePeriodStart,
       _prizePeriodSeconds,
       _prizePool,
@@ -614,30 +607,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     } else {
       return _currentTime() > uint256(rngRequestTimeout).add(rngRequest.requestedAt);
     }
-  }
-
-  /// @dev Provides information about the current execution context for GSN Meta-Txs.
-  /// @return The payable address of the message sender
-  function _msgSender()
-    internal
-    override(BaseRelayRecipient, ContextUpgradeable)
-    virtual
-    view
-    returns (address payable)
-  {
-    return BaseRelayRecipient._msgSender();
-  }
-
-  /// @dev Provides information about the current execution context for GSN Meta-Txs.
-  /// @return The payable address of the message sender
-  function _msgData()
-    internal
-    override(BaseRelayRecipient, ContextUpgradeable)
-    virtual
-    view
-    returns (bytes memory)
-  {
-    return BaseRelayRecipient._msgData();
   }
 
   modifier onlyOwnerOrListener() {

@@ -4,13 +4,12 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
-import "../utils/RelayRecipient.sol";
 import "./TokenControllerInterface.sol";
 import "./ControlledTokenInterface.sol";
 
 /// @title Controlled ERC20 Token
 /// @notice ERC20 Tokens with a controller for minting & burning
-contract ControlledToken is RelayRecipient, ERC20Upgradeable, ControlledTokenInterface {
+contract ControlledToken is ERC20Upgradeable, ControlledTokenInterface {
 
   /// @notice Interface to the contract responsible for controlling mint/burn
   TokenControllerInterface public override controller;
@@ -19,20 +18,17 @@ contract ControlledToken is RelayRecipient, ERC20Upgradeable, ControlledTokenInt
   /// @param _name The name of the Token
   /// @param _symbol The symbol for the Token
   /// @param _decimals The number of decimals for the Token
-  /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
   /// @param _controller Address of the Controller contract for minting & burning
   function initialize(
     string memory _name,
     string memory _symbol,
     uint8 _decimals,
-    address _trustedForwarder,
     TokenControllerInterface _controller
   )
     public
     virtual
     initializer
   {
-    trustedForwarder = _trustedForwarder;
     __ERC20_init(_name, _symbol);
     controller = _controller;
     _setupDecimals(_decimals);
@@ -81,29 +77,5 @@ contract ControlledToken is RelayRecipient, ERC20Upgradeable, ControlledTokenInt
   /// @param amount Amount of tokens being transferred
   function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
     controller.beforeTokenTransfer(from, to, amount);
-  }
-
-  /// @dev Provides information about the current execution context for GSN Meta-Txs.
-  /// @return The payable address of the message sender
-  function _msgSender()
-    internal
-    override(BaseRelayRecipient, ContextUpgradeable)
-    virtual
-    view
-    returns (address payable)
-  {
-    return BaseRelayRecipient._msgSender();
-  }
-
-  /// @dev Provides information about the current execution context for GSN Meta-Txs.
-  /// @return The payable address of the message sender
-  function _msgData()
-    internal
-    override(BaseRelayRecipient, ContextUpgradeable)
-    virtual
-    view
-    returns (bytes memory)
-  {
-    return BaseRelayRecipient._msgData();
   }
 }

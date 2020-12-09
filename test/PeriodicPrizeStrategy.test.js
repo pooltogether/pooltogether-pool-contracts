@@ -8,8 +8,8 @@ const PeriodicPrizeStrategyHarness = require('../build/PeriodicPrizeStrategyHarn
 const PeriodicPrizeStrategyDistributorInterface = require('../build/PeriodicPrizeStrategyDistributorInterface.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
-const IERC20 = require('../build/IERC20.json')
-const IERC721 = require('../build/IERC721.json')
+const IERC20 = require('../build/IERC20Upgradeable.json')
+const IERC721 = require('../build/IERC721Upgradeable.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const Ticket = require('../build/Ticket.json')
 
@@ -22,7 +22,6 @@ const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
-const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 const SENTINEL = '0x0000000000000000000000000000000000000001'
 const invalidExternalToken = '0x0000000000000000000000000000000000000002'
 
@@ -90,7 +89,6 @@ describe('PeriodicPrizeStrategy', function() {
 
     debug('initializing prizeStrategy...')
     await prizeStrategy.initialize(
-      FORWARDER,
       prizePeriodStart,
       prizePeriodSeconds,
       prizePool.address,
@@ -112,7 +110,6 @@ describe('PeriodicPrizeStrategy', function() {
       let prizeStrategy2 = await deployContract(wallet, PeriodicPrizeStrategyHarness, [], overrides)
       await prizeStrategy2.setDistributor(distributor.address)
       initalizeResult2 = prizeStrategy2.initialize(
-        FORWARDER,
         prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
@@ -123,7 +120,6 @@ describe('PeriodicPrizeStrategy', function() {
       )
 
       await expect(initalizeResult2).to.emit(prizeStrategy2, 'Initialized').withArgs(
-        FORWARDER,
         prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
@@ -135,7 +131,6 @@ describe('PeriodicPrizeStrategy', function() {
     })
 
     it('should set the params', async () => {
-      expect(await prizeStrategy.isTrustedForwarder(FORWARDER)).to.equal(true)
       expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(prizePeriodSeconds)
       expect(await prizeStrategy.ticket()).to.equal(ticket.address)
@@ -146,7 +141,6 @@ describe('PeriodicPrizeStrategy', function() {
 
     it('should reject invalid params', async () => {
       const _initArgs = [
-        FORWARDER,
         prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
@@ -162,15 +156,15 @@ describe('PeriodicPrizeStrategy', function() {
 
       debug('testing initialization of secondary prizeStrategy...')
 
-      initArgs = _initArgs.slice(); initArgs[2] = 0
+      initArgs = _initArgs.slice(); initArgs[1] = 0
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PeriodicPrizeStrategy/prize-period-greater-than-zero')
-      initArgs = _initArgs.slice(); initArgs[3] = AddressZero
+      initArgs = _initArgs.slice(); initArgs[2] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PeriodicPrizeStrategy/prize-pool-not-zero')
-      initArgs = _initArgs.slice(); initArgs[4] = AddressZero
+      initArgs = _initArgs.slice(); initArgs[3] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PeriodicPrizeStrategy/ticket-not-zero')
-      initArgs = _initArgs.slice(); initArgs[5] = AddressZero
+      initArgs = _initArgs.slice(); initArgs[4] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PeriodicPrizeStrategy/sponsorship-not-zero')
-      initArgs = _initArgs.slice(); initArgs[6] = AddressZero
+      initArgs = _initArgs.slice(); initArgs[5] = AddressZero
       await expect(prizeStrategy2.initialize(...initArgs)).to.be.revertedWith('PeriodicPrizeStrategy/rng-not-zero')
 
     })
@@ -663,7 +657,6 @@ describe('PeriodicPrizeStrategy', function() {
 
       debug('initializing secondary prizeStrategy...')
       await prizeStrategy2.initialize(
-        FORWARDER,
         prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,

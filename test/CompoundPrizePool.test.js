@@ -5,8 +5,8 @@ const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 const RegistryInterface = require('../build/RegistryInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const CTokenInterface = require('../build/CTokenInterface.json')
-const IERC20 = require('../build/IERC20.json')
-const IERC721 = require('../build/IERC721.json')
+const IERC20 = require('../build/IERC20Upgradeable.json')
+const IERC721 = require('../build/IERC721Upgradeable.json')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
@@ -17,8 +17,6 @@ const toWei = ethers.utils.parseEther
 const debug = require('debug')('ptv3:PrizePool.test')
 
 let overrides = { gasLimit: 20000000 }
-
-const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
 describe('CompoundPrizePool', function() {
   let wallet, wallet2
@@ -55,8 +53,7 @@ describe('CompoundPrizePool', function() {
     ticket = await deployMockContract(wallet, ControlledToken.abi, overrides)
     await ticket.mock.controller.returns(prizePool.address)
 
-    initializeTxPromise = prizePool['initialize(address,address,address[],uint256,uint256,address)'](
-      FORWARDER,
+    initializeTxPromise = prizePool['initialize(address,address[],uint256,uint256,address)'](
       registry.address,
       [ticket.address],
       poolMaxExitFee,

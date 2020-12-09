@@ -21,24 +21,20 @@ contract MultipleWinnersBuilder {
     string sponsorshipSymbol;
     uint256 ticketCreditLimitMantissa;
     uint256 ticketCreditRateMantissa;
-    bool useGSN;
     uint256 numberOfWinners;
     bool splitExternalErc20Awards;
   }
 
   MultipleWinnersProxyFactory public multipleWinnersProxyFactory;
   ControlledTokenBuilder public controlledTokenBuilder;
-  address public trustedForwarder;
 
   constructor (
     MultipleWinnersProxyFactory _multipleWinnersProxyFactory,
-    ControlledTokenBuilder _controlledTokenBuilder,
-    address _trustedForwarder
+    ControlledTokenBuilder _controlledTokenBuilder
   ) public {
     require(address(_multipleWinnersProxyFactory) != address(0), "MultipleWinnersBuilder/multipleWinnersProxyFactory-not-zero");
     require(address(_controlledTokenBuilder) != address(0), "MultipleWinnersBuilder/token-builder-not-zero");
     multipleWinnersProxyFactory = _multipleWinnersProxyFactory;
-    trustedForwarder = _trustedForwarder;
     controlledTokenBuilder = _controlledTokenBuilder;
   }
 
@@ -54,20 +50,17 @@ contract MultipleWinnersBuilder {
       prizeStrategyConfig.ticketName,
       prizeStrategyConfig.ticketSymbol,
       decimals,
-      prizePool,
-      prizeStrategyConfig.useGSN
+      prizePool
     );
 
     ControlledToken sponsorship = _createSponsorship(
       prizeStrategyConfig.sponsorshipName,
       prizeStrategyConfig.sponsorshipSymbol,
       decimals,
-      prizePool,
-      prizeStrategyConfig.useGSN
+      prizePool
     );
 
     mw.initializeMultipleWinners(
-      prizeStrategyConfig.useGSN ? trustedForwarder : address(0),
       prizeStrategyConfig.prizePeriodStart,
       prizeStrategyConfig.prizePeriodSeconds,
       prizePool,
@@ -95,7 +88,6 @@ contract MultipleWinnersBuilder {
     MultipleWinners mw = multipleWinnersProxyFactory.create();
 
     mw.initializeMultipleWinners(
-      prizeStrategy.trustedForwarder(),
       prizeStrategy.prizePeriodStartedAt(),
       prizeStrategy.prizePeriodSeconds(),
       prizeStrategy.prizePool(),
@@ -116,16 +108,14 @@ contract MultipleWinnersBuilder {
     string memory name,
     string memory token,
     uint8 decimals,
-    PrizePool prizePool,
-    bool useGSN
+    PrizePool prizePool
   ) internal returns (Ticket) {
     return controlledTokenBuilder.createTicket(
       ControlledTokenBuilder.ControlledTokenConfig(
         name,
         token,
         decimals,
-        prizePool,
-        useGSN
+        prizePool
       )
     );
   }
@@ -134,16 +124,14 @@ contract MultipleWinnersBuilder {
     string memory name,
     string memory token,
     uint8 decimals,
-    PrizePool prizePool,
-    bool useGSN
+    PrizePool prizePool
   ) internal returns (ControlledToken) {
     return controlledTokenBuilder.createControlledToken(
       ControlledTokenBuilder.ControlledTokenConfig(
         name,
         token,
         decimals,
-        prizePool,
-        useGSN
+        prizePool
       )
     );
   }
