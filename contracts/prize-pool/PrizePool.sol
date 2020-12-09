@@ -18,13 +18,12 @@ import "../token/TokenListenerLibrary.sol";
 import "../token/ControlledToken.sol";
 import "../token/TokenControllerInterface.sol";
 import "../utils/MappedSinglyLinkedList.sol";
-import "../utils/RelayRecipient.sol";
 import "./PrizePoolInterface.sol";
 
 /// @title Escrows assets and deposits them into a yield source.  Exposes interest to Prize Strategy.  Users deposit and withdraw from this contract to participate in Prize Pool.
 /// @notice Accounting is managed using Controlled Tokens, whose mint and burn functions can only be called by this contract.
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
-abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeable, RelayRecipient, ReentrancyGuardUpgradeable, TokenControllerInterface {
+abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenControllerInterface {
   using SafeMathUpgradeable for uint256;
   using SafeCastUpgradeable for uint256;
   using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -33,7 +32,6 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
 
   /// @dev Emitted when an instance is initialized
   event Initialized(
-    address trustedForwarder,
     address reserveRegistry,
     uint256 maxExitFeeMantissa,
     uint256 maxTimelockDuration
@@ -213,12 +211,10 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
   mapping(address => mapping(address => CreditBalance)) internal _tokenCreditBalances;
 
   /// @notice Initializes the Prize Pool
-  /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
   /// @param _controlledTokens Array of ControlledTokens that are controlled by this Prize Pool.
   /// @param _maxExitFeeMantissa The maximum exit fee size
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock
   function initialize (
-    address _trustedForwarder,
     RegistryInterface _reserveRegistry,
     ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
@@ -236,13 +232,11 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
     __ReentrancyGuard_init();
     _setLiquidityCap(uint256(-1));
 
-    trustedForwarder = _trustedForwarder;
     reserveRegistry = _reserveRegistry;
     maxExitFeeMantissa = _maxExitFeeMantissa;
     maxTimelockDuration = _maxTimelockDuration;
 
     emit Initialized(
-      _trustedForwarder,
       address(_reserveRegistry),
       maxExitFeeMantissa,
       maxTimelockDuration
@@ -1079,30 +1073,6 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
   /// @return True if the token is a controlled token, false otherwise
   function _isControlled(address controlledToken) internal view returns (bool) {
     return _tokens.contains(controlledToken);
-  }
-
-  /// @dev Provides information about the current execution context for GSN Meta-Txs.
-  /// @return The payable address of the message sender
-  function _msgSender()
-    internal
-    override(BaseRelayRecipient, ContextUpgradeable)
-    virtual
-    view
-    returns (address payable)
-  {
-    return BaseRelayRecipient._msgSender();
-  }
-
-  /// @dev Provides information about the current execution context for GSN Meta-Txs.
-  /// @return The payable address of the message sender
-  function _msgData()
-    internal
-    override(BaseRelayRecipient, ContextUpgradeable)
-    virtual
-    view
-    returns (bytes memory)
-  {
-    return BaseRelayRecipient._msgData();
   }
 
   /// @dev Function modifier to ensure usage of tokens controlled by the Prize Pool

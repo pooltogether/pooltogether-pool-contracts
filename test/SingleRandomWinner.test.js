@@ -6,8 +6,8 @@ const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 const SingleRandomWinnerHarness = require('../build/SingleRandomWinnerHarness.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
-const IERC20 = require('../build/IERC20.json')
-const IERC721 = require('../build/IERC721.json')
+const IERC20 = require('../build/IERC20Upgradeable.json')
+const IERC721 = require('../build/IERC721Upgradeable.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const Ticket = require('../build/Ticket.json')
 
@@ -17,8 +17,6 @@ const buidler = require('@nomiclabs/buidler')
 const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
-
-const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
 let overrides = { gasLimit: 20000000 }
 
@@ -35,7 +33,6 @@ describe('SingleRandomWinner', function() {
   let prizePeriodSeconds = 1000
 
   let creditLimitMantissa = 0.1
-  let creditRateMantissa = creditLimitMantissa / prizePeriodSeconds
 
   beforeEach(async () => {
     [wallet, wallet2, wallet3] = await buidler.ethers.getSigners()
@@ -71,7 +68,6 @@ describe('SingleRandomWinner', function() {
 
     debug('initializing prizeStrategy...')
     await prizeStrategy.initialize(
-      FORWARDER,
       prizePeriodStart,
       prizePeriodSeconds,
       prizePool.address,

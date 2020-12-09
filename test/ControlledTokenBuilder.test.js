@@ -27,7 +27,6 @@ describe('ControlledTokenBuilder', () => {
       wallet
     )
 
-    trustedForwarder = (await deployments.get("TrustedForwarder"))
     controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
     ticketProxyFactory = (await deployments.get("TicketProxyFactory"))
 
@@ -43,7 +42,6 @@ describe('ControlledTokenBuilder', () => {
 
   describe('initialize()', () => {
     it('should setup all factories', async () => {
-      expect(await controlledTokenBuilder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await controlledTokenBuilder.controlledTokenProxyFactory()).to.equal(controlledTokenProxyFactory.address)
       expect(await controlledTokenBuilder.ticketProxyFactory()).to.equal(ticketProxyFactory.address)
     })

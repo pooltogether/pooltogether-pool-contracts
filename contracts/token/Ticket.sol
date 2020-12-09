@@ -21,13 +21,11 @@ contract Ticket is ControlledToken, TicketInterface {
   /// @param _name The name of the Token
   /// @param _symbol The symbol for the Token
   /// @param _decimals The number of decimals for the Token
-  /// @param _trustedForwarder Address of the Forwarding Contract for GSN Meta-Txs
   /// @param _controller Address of the Controller contract for minting & burning
   function initialize(
     string memory _name,
     string memory _symbol,
     uint8 _decimals,
-    address _trustedForwarder,
     TokenControllerInterface _controller
   )
     public
@@ -35,7 +33,7 @@ contract Ticket is ControlledToken, TicketInterface {
     override
     initializer
   {
-    super.initialize(_name, _symbol, _decimals, _trustedForwarder, _controller);
+    super.initialize(_name, _symbol, _decimals, _controller);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
   }
 

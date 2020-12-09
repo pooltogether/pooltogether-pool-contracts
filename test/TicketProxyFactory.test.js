@@ -35,7 +35,6 @@ describe('TicketProxyFactory', () => {
         "NAME",
         "SYMBOL",
         18,
-        wallet._address, // forwarder
         controller.address, // controller
       )
 

@@ -19,22 +19,18 @@ contract VaultPrizePoolBuilder is PrizePoolBuilder {
     uint256 reserveRateMantissa;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
-    bool useGSN;
   }
 
   RegistryInterface public reserveRegistry;
   yVaultPrizePoolProxyFactory public vaultPrizePoolProxyFactory;
-  address public trustedForwarder;
 
   constructor (
     RegistryInterface _reserveRegistry,
-    address _trustedForwarder,
     yVaultPrizePoolProxyFactory _vaultPrizePoolProxyFactory
   ) public {
     require(address(_reserveRegistry) != address(0), "VaultPrizePoolBuilder/reserveRegistry-not-zero");
     require(address(_vaultPrizePoolProxyFactory) != address(0), "VaultPrizePoolBuilder/compound-prize-pool-builder-not-zero");
     reserveRegistry = _reserveRegistry;
-    trustedForwarder = _trustedForwarder;
     vaultPrizePoolProxyFactory = _vaultPrizePoolProxyFactory;
   }
 
@@ -49,7 +45,6 @@ contract VaultPrizePoolBuilder is PrizePoolBuilder {
     ControlledTokenInterface[] memory tokens;
 
     prizePool.initialize(
-      config.useGSN ? trustedForwarder : address(0),
       reserveRegistry,
       tokens,
       config.maxExitFeeMantissa,

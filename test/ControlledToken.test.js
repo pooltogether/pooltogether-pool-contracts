@@ -7,8 +7,6 @@ const { deployMockContract } = require('./helpers/deployMockContract')
 
 const toWei = ethers.utils.parseEther
 
-const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
-
 describe('ControlledToken', () => {
 
   let wallet, wallet2
@@ -28,7 +26,6 @@ describe('ControlledToken', () => {
       "Name",
       "Symbol",
       18,
-      FORWARDER,
       controller.address
     )
   })

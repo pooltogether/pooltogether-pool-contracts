@@ -16,8 +16,7 @@ describe('MultipleWinnersBuilder', () => {
 
   let builder
 
-  let trustedForwarder,
-      controlledTokenBuilder,
+  let controlledTokenBuilder,
       rngServiceMock,
       prizePool
 
@@ -32,7 +31,6 @@ describe('MultipleWinnersBuilder', () => {
       wallet
     )
 
-    trustedForwarder = (await deployments.get("TrustedForwarder"))
     multipleWinnersProxyFactory = (await deployments.get("MultipleWinnersProxyFactory"))
     controlledTokenBuilder = (await deployments.get("ControlledTokenBuilder"))
     rngServiceMock = (await deployments.get("RNGServiceMock"))
@@ -57,7 +55,6 @@ describe('MultipleWinnersBuilder', () => {
   describe('initialize()', () => {
     it('should setup all factories', async () => {
       expect(await builder.multipleWinnersProxyFactory()).to.equal(multipleWinnersProxyFactory.address)
-      expect(await builder.trustedForwarder()).to.equal(trustedForwarder.address)
       expect(await builder.controlledTokenBuilder()).to.equal(controlledTokenBuilder.address)
     })
   })

@@ -6,8 +6,8 @@ const TokenListenerInterface = require('../build/TokenListenerInterface.json')
 const ReserveInterface = require('../build/ReserveInterface.json')
 const RegistryInterface = require('../build/RegistryInterface.json')
 const ControlledToken = require('../build/ControlledToken.json')
-const IERC20 = require('../build/IERC20.json')
-const IERC721 = require('../build/IERC721.json')
+const IERC20 = require('../build/IERC20Upgradeable.json')
+const IERC721 = require('../build/IERC721Upgradeable.json')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
@@ -21,8 +21,6 @@ const fromWei = ethers.utils.formatEther
 const debug = require('debug')('ptv3:PrizePool.test')
 
 let overrides = { gasLimit: 20000000 }
-
-const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
 const NFT_TOKEN_ID = 1
 
@@ -66,7 +64,6 @@ describe('PrizePool', function() {
   describe('initialize()', () => {
     it('should fire the events', async () => {
       let tx = prizePool.initializeAll(
-        FORWARDER,
         reserve.address,
         [ticket.address],
         poolMaxExitFee,
@@ -77,7 +74,6 @@ describe('PrizePool', function() {
       await expect(tx)
         .to.emit(prizePool, 'Initialized')
         .withArgs(
-          FORWARDER,
           reserve.address,
           poolMaxExitFee,
           poolMaxTimelockDuration
@@ -99,7 +95,6 @@ describe('PrizePool', function() {
   describe('with a mocked prize pool', () => {
     beforeEach(async () => {
       await prizePool.initializeAll(
-        FORWARDER,
         reserveRegistry.address,
         [ticket.address],
         poolMaxExitFee,
@@ -195,7 +190,6 @@ describe('PrizePool', function() {
 
       it('should reject invalid params', async () => {
         const _initArgs = [
-          FORWARDER,
           reserveRegistry.address,
           [ticket.address],
           poolMaxExitFee,
@@ -209,7 +203,7 @@ describe('PrizePool', function() {
 
         debug('testing initialization of secondary prizeStrategy...')
 
-        initArgs = _initArgs.slice(); initArgs[1] = AddressZero
+        initArgs = _initArgs.slice(); initArgs[0] = AddressZero
         await expect(prizePool2.initializeAll(...initArgs)).to.be.revertedWith('PrizePool/reserveRegistry-not-zero')
 
         initArgs = _initArgs.slice()
@@ -822,7 +816,6 @@ describe('PrizePool', function() {
       await sponsorship.mock.controller.returns(multiTokenPrizePool.address)
 
       await multiTokenPrizePool.initializeAll(
-        FORWARDER,
         reserveRegistry.address,
         [ticket.address, sponsorship.address],
         poolMaxExitFee,
@@ -864,7 +857,6 @@ describe('PrizePool', function() {
   describe('awardExternalERC20()', () => {
     beforeEach(async () => {
       await prizePool.initializeAll(
-        FORWARDER,
         prizeStrategy.address,
         [ticket.address],
         poolMaxExitFee,
@@ -884,7 +876,7 @@ describe('PrizePool', function() {
     it('should only allow the prizeStrategy to award external ERC20s', async () => {
       await yieldSourceStub.mock.canAwardExternal.withArgs(erc20token.address).returns(true)
       let prizePool2 = prizePool.connect(wallet2)
-      await expect(prizePool2.awardExternalERC20(wallet._address, FORWARDER, toWei('10')))
+      await expect(prizePool2.awardExternalERC20(wallet._address, wallet2._address, toWei('10')))
         .to.be.revertedWith('PrizePool/only-prizeStrategy')
     })
 
@@ -900,7 +892,6 @@ describe('PrizePool', function() {
   describe('transferExternalERC20()', () => {
     beforeEach(async () => {
       await prizePool.initializeAll(
-        FORWARDER,
         prizeStrategy.address,
         [ticket.address],
         poolMaxExitFee,
@@ -920,7 +911,7 @@ describe('PrizePool', function() {
     it('should only allow the prizeStrategy to award external ERC20s', async () => {
       await yieldSourceStub.mock.canAwardExternal.withArgs(erc20token.address).returns(true)
       let prizePool2 = prizePool.connect(wallet2)
-      await expect(prizePool2.transferExternalERC20(wallet._address, FORWARDER, toWei('10')))
+      await expect(prizePool2.transferExternalERC20(wallet._address, wallet2._address, toWei('10')))
         .to.be.revertedWith('PrizePool/only-prizeStrategy')
     })
 
@@ -936,7 +927,6 @@ describe('PrizePool', function() {
   describe('awardExternalERC721()', () => {
     beforeEach(async () => {
       await prizePool.initializeAll(
-        FORWARDER,
         prizeStrategy.address,
         [ticket.address],
         poolMaxExitFee,

@@ -53,7 +53,6 @@ describe('PoolWithMultipleWinnersBuilder', () => {
       sponsorshipSymbol: "SPON",
       ticketCreditLimitMantissa: toWei('0.1'),
       ticketCreditRateMantissa: toWei('0.001'),
-      useGSN: true,
       numberOfWinners: 3
     }
   })
@@ -74,8 +73,7 @@ describe('PoolWithMultipleWinnersBuilder', () => {
       compoundPrizePoolConfig = {
         cToken: cToken.address,
         maxExitFeeMantissa: toWei('0.5'),
-        maxTimelockDuration: 1000,
-        useGSN: true
+        maxTimelockDuration: 1000
       }
     })
 
@@ -118,8 +116,7 @@ describe('PoolWithMultipleWinnersBuilder', () => {
       stakePrizePoolConfig = {
         token: cToken.address,
         maxExitFeeMantissa: toWei('0.5'),
-        maxTimelockDuration: 1000,
-        useGSN: true
+        maxTimelockDuration: 1000
       }
     })
 
@@ -158,8 +155,7 @@ describe('PoolWithMultipleWinnersBuilder', () => {
         vault: vault.address,
         reserveRateMantissa: toWei('0.05'),
         maxExitFeeMantissa: toWei('0.5'),
-        maxTimelockDuration: 1000,
-        useGSN: true
+        maxTimelockDuration: 1000
       }
     })
 

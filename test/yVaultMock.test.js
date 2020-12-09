@@ -12,8 +12,6 @@ const debug = require('debug')('ptv3:yVaultMock.test')
 
 let overrides = { gasLimit: 20000000 }
 
-const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
-
 describe('yVaultMock', function() {
   let wallet, wallet2
 

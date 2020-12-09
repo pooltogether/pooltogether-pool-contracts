@@ -7,8 +7,8 @@ const TokenControllerInterface = require('../build/TokenControllerInterface.json
 const MultipleWinnersHarness = require('../build/MultipleWinnersHarness.json')
 const PrizePool = require('../build/PrizePool.json')
 const RNGInterface = require('../build/RNGInterface.json')
-const IERC20 = require('../build/IERC20.json')
-const IERC721 = require('../build/IERC721.json')
+const IERC20 = require('../build/IERC20Upgradeable.json')
+const IERC721 = require('../build/IERC721Upgradeable.json')
 const ControlledToken = require('../build/ControlledToken.json')
 const Ticket = require('../build/Ticket.json')
 
@@ -19,8 +19,6 @@ const { AddressZero, Zero, One } = require('ethers').constants
 const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
-
-const FORWARDER = '0x5f48a3371df0F8077EC741Cc2eB31c84a4Ce332a'
 
 let overrides = { gasLimit: 20000000 }
 
@@ -35,9 +33,6 @@ describe('MultipleWinners', function() {
 
   let prizePeriodStart = now()
   let prizePeriodSeconds = 1000
-
-  let creditLimitMantissa = 0.1
-  let creditRateMantissa = creditLimitMantissa / prizePeriodSeconds
 
   beforeEach(async () => {
     [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
@@ -78,7 +73,6 @@ describe('MultipleWinners', function() {
 
     debug('initializing prizeStrategy...')
     await prizeStrategy.initializeMultipleWinners(
-      FORWARDER,
       prizePeriodStart,
       prizePeriodSeconds,
       prizePool.address,
@@ -96,7 +90,7 @@ describe('MultipleWinners', function() {
     it('should emit event when initialized', async()=>{
       debug('deploying another prizeStrategy...')
       let prizeStrategy2 = await deployContract(wallet, MultipleWinnersHarness, [], overrides)
-      initalizeResult2 = prizeStrategy2.initializeMultipleWinners(FORWARDER,
+      initalizeResult2 = prizeStrategy2.initializeMultipleWinners(
         prizePeriodStart,
         prizePeriodSeconds,
         prizePool.address,
@@ -110,7 +104,6 @@ describe('MultipleWinners', function() {
 
 
     it('should set the params', async () => {
-      expect(await prizeStrategy.isTrustedForwarder(FORWARDER)).to.equal(true)
       expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(prizePeriodSeconds)
       expect(await prizeStrategy.ticket()).to.equal(ticket.address)
@@ -174,7 +167,7 @@ describe('MultipleWinners', function() {
         controller = await deployMockContract(wallet, TokenControllerInterface.abi, overrides)
         await controller.mock.beforeTokenTransfer.returns()
         ticket = await deployContract(wallet, Ticket, [], overrides)
-        await ticket.initialize("NAME", "SYMBOL", 8, ethers.constants.AddressZero, controller.address)
+        await ticket.initialize("NAME", "SYMBOL", 8, controller.address)
 
         await controller.call(ticket, 'controllerMint', wallet._address, toWei('100'))
         await controller.call(ticket, 'controllerMint', wallet2._address, toWei('100'))
@@ -182,7 +175,6 @@ describe('MultipleWinners', function() {
         prizeStrategy = await deployContract(wallet, MultipleWinnersHarness, [], overrides)
         debug('initializing prizeStrategy 2...')
         await prizeStrategy.initializeMultipleWinners(
-          FORWARDER,
           prizePeriodStart,
           prizePeriodSeconds,
           prizePool.address,

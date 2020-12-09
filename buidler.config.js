@@ -49,12 +49,6 @@ const config = {
     deployer: {
       default: 0
     },
-    trustedForwarder: {
-      42: '0x0842Ad6B8cb64364761C7c170D0002CC56b1c498',
-      4: '0x956868751Cc565507B3B58E53a6f9f41B56bed74',
-      3: '0x25CEd1955423BA34332Ec1B60154967750a0297D',
-      1: '0xa530F85085C6FE2f866E7FdB716849714a89f4CD'
-    },
     rng: {
       42: RNGBlockhashKovan.address,
       4: RNGBlockhashRinkeby.address,
