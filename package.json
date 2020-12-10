@@ -17,6 +17,7 @@
     "start-gas": "echo 'Starting node for gas testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true buidler node",
     "start-fork": "ganache-cli -f $ALCHEMY_URL -m \"$HDWALLET_MNEMONIC\" --chainId 1 -u \"0x0000000000000000000000000000000000000000\" -u \"0x564286362092D8e7936f0549571a803B203aAceD\" -u \"0x9C6EFFf83578a1049E91106F071A24Ba5313B9e9\"",
     "fork-whale": "buidler --network fork run ./scripts/fork-whale.js",
+    "fork-run": "buidler --network fork run ",
     "console": "buidler console --network",
     "coverage": "yarn clean && USE_LITERAL_CONTENT=false node --max-old-space-size=4096 ./node_modules/.bin/buidler coverage --network coverage --temp build",
     "gas": "REPORT_GAS=true buidler test --network localhost",
