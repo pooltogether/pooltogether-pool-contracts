@@ -4,6 +4,7 @@ const buidler = require('@nomiclabs/buidler')
 const { ethers } = require('ethers')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const PrizePool = require('../build/PrizePool.json')
+const PeriodicPrizeStrategy = require('../build/PeriodicPrizeStrategy.json')
 const { getEvents } = require('./helpers/getEvents')
 
 const toWei = ethers.utils.parseEther
@@ -23,7 +24,7 @@ describe('MultipleWinnersBuilder', () => {
   let multipleWinnersConfig
 
   beforeEach(async () => {
-    [wallet] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3] = await buidler.ethers.getSigners()
     await deployments.fixture()
     builder = await buidler.ethers.getContractAt(
       "MultipleWinnersBuilder",
@@ -97,5 +98,44 @@ describe('MultipleWinnersBuilder', () => {
       expect(await sponsorship.name()).to.equal(multipleWinnersConfig.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(multipleWinnersConfig.sponsorshipSymbol)
     })
+  })
+
+  describe('createMultipleWinnersFromExistingPrizeStrategy()', () => {
+
+    let existingPrizeStrategy
+
+    beforeEach(async () => {
+      existingPrizeStrategy = await deployMockContract(wallet, PeriodicPrizeStrategy.abi)
+      await existingPrizeStrategy.mock.prizePeriodStartedAt.returns(1111)
+      await existingPrizeStrategy.mock.prizePeriodSeconds.returns(222)
+      await existingPrizeStrategy.mock.prizePool.returns(prizePool.address)
+      await existingPrizeStrategy.mock.ticket.returns(wallet._address)
+      await existingPrizeStrategy.mock.sponsorship.returns(wallet2._address)
+      await existingPrizeStrategy.mock.rng.returns(rngServiceMock.address)
+    })
+
+    it('should allow the user to create a mw strat from another strat', async () => {
+      debug('creating...')
+      let tx = await builder.createMultipleWinnersFromExistingPrizeStrategy(
+        existingPrizeStrategy.address,
+        3
+      )
+      let events = await getEvents(builder, tx)
+      let multipleWinnersCreatedEvent = events.find(e => e.name == 'MultipleWinnersCreated')
+
+      debug(`Getting contract at ${multipleWinnersCreatedEvent.args.prizeStrategy}...`)
+
+      const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinnersHarness', multipleWinnersCreatedEvent.args.prizeStrategy, wallet)
+
+      expect(await prizeStrategy.prizePeriodStartedAt()).to.equal(1111)
+      expect(await prizeStrategy.prizePeriodSeconds()).to.equal(222)
+      expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
+      expect(await prizeStrategy.owner()).to.equal(wallet._address)
+      expect(await prizeStrategy.rng()).to.equal(rngServiceMock.address)
+      expect(await prizeStrategy.splitExternalErc20Awards()).to.equal(false)
+
+      expect(await prizeStrategy.numberOfWinners()).to.equal(3)
+    })
+
   })
 })

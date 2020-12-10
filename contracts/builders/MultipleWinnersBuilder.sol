@@ -99,7 +99,7 @@ contract MultipleWinnersBuilder {
 
     mw.transferOwnership(msg.sender);
 
-    emit MultipleWinnersCreated(address(prizeStrategy));
+    emit MultipleWinnersCreated(address(mw));
 
     return mw;
   }
