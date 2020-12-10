@@ -288,7 +288,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
       uint256 balance = IERC721Upgradeable(currentToken).balanceOf(address(prizePool));
       if (balance > 0) {
         prizePool.awardExternalERC721(winner, currentToken, externalErc721TokenIds[IERC721Upgradeable(currentToken)]);
-        delete externalErc721TokenIds[IERC721Upgradeable(currentToken)];
+        _removeExternalErc721AwardTokens(IERC721Upgradeable(currentToken));
       }
       currentToken = externalErc721s.next(currentToken);
     }
@@ -575,6 +575,14 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     requireAwardNotInProgress
   {
     externalErc721s.removeAddress(address(_prevExternalErc721), address(_externalErc721));
+    _removeExternalErc721AwardTokens(_externalErc721);
+  }
+
+  function _removeExternalErc721AwardTokens(
+    IERC721Upgradeable _externalErc721
+  )
+    internal
+  {
     delete externalErc721TokenIds[_externalErc721];
     emit ExternalErc721AwardRemoved(_externalErc721);
   }
