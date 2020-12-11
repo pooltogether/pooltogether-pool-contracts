@@ -210,6 +210,12 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
+  debug("\n  Deploying UnsafeTokenListenerDelegatorProxyFactory...")
+  const unsafeTokenListenerDelegatorProxyFactory = await deploy("UnsafeTokenListenerDelegatorProxyFactory", {
+    from: deployer,
+    skipIfAlreadyDeployed: true
+  })
+
   let multipleWinnersProxyFactoryResult
   debug("\n  Deploying MultipleWinnersProxyFactory...")
   if (isTestEnvironment && !harnessDisabled) {
