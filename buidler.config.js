@@ -49,6 +49,12 @@ const config = {
     deployer: {
       default: 0
     },
+    comptroller: {
+      1: '0x4027dE966127af5F015Ea1cfd6293a3583892668'
+    },
+    reserveRegistry: {
+      1: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295'
+    },
     rng: {
       42: RNGBlockhashKovan.address,
       4: RNGBlockhashRinkeby.address,
