@@ -32,10 +32,11 @@ async function run() {
 
   const createTx = await mwBuilder.createMultipleWinnersFromExistingPrizeStrategy("0xc7c406A867B324b9189b9a7503683eFC9BdCe5BA", 3)
   const receipt = await provider.getTransactionReceipt(createTx.hash)
-
   const events = receipt.logs.reduce((array, log) => { try { array.push(mwBuilder.interface.parseLog(log)) } catch (e) { } return array }, [])
 
   const mw = await ethers.getContractAt('MultipleWinners', events[0].args.prizeStrategy, signers[0])
+  dim(`Transferring ownership to ${gnosisSafe._address}`)
+  await mw.transferOwnership(gnosisSafe._address)
 
   green(`Created MultipleWinners contract at ${mw.address}`)
 

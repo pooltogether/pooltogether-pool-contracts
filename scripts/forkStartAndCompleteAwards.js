@@ -11,51 +11,57 @@ function yellow() {
 }
 
 async function run() {
-  const { deployments, ethers } = buidler
+  const { ethers } = buidler
   const { provider } = ethers
 
-  const signers = await ethers.getSigners()
-
-  const gnosisSafe = await provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
+  const gnosisSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
   const prizePool = await ethers.getContractAt('CompoundPrizePool', '0xEBfb47A7ad0FD6e57323C8A42B2E5A6a4F68fc1a', gnosisSafe)
 
-  const prizeStrategy = await ethers.getContractAt('PeriodicPrizeStrategy', await prizePool.prizeStrategy(), signers[0])
+  const prizeStrategy = await ethers.getContractAt('PeriodicPrizeStrategy', await prizePool.prizeStrategy(), gnosisSafe)
 
-  dim(`Swapping RNG with blockhash on ${prizeStrategy.address}...`)
-  await prizeStrategy.setRngService('0xb1D89477d1b505C261bab6e73f08fA834544CD21')
+  if(await prizeStrategy.rng() != '0xb1D89477d1b505C261bab6e73f08fA834544CD21') {
+    dim(`Swapping RNG with blockhash on ${prizeStrategy.address}...`)
+    await prizeStrategy.setRngService('0xb1D89477d1b505C261bab6e73f08fA834544CD21')
+  }
 
   const remainingTime = await prizeStrategy.prizePeriodRemainingSeconds()
-
   dim(`Increasing time by ${remainingTime} seconds...`)
   await increaseTime(remainingTime.toNumber())
 
-  dim(`Starting award...`)
-  await prizeStrategy.startAward()
-  await increaseTime(1)
-  dim(`Completing award....`)
-  const completeAwardTx = await prizeStrategy.completeAward()
-  const completeAwardReceipt = await provider.getTransactionReceipt(completeAwardTx.hash)
-  const completeAwardEvents = completeAwardReceipt.logs.reduce((array, log) => { try { array.push(prizePool.interface.parseLog(log)) } catch (e) {} return array }, [])
-  const awardedEvents = completeAwardEvents.filter(event => event.name === 'Awarded')
-  const awardedExternalERC721Events = completeAwardEvents.filter(event => event.name === 'AwardedExternalERC721')
-  const awardedExternalERC20Events = completeAwardEvents.filter(event => event.name === 'AwardedExternalERC20')
+  // if we cannot complete, let's startt it
+  if (await prizeStrategy.canStartAward()) {
+    dim(`Starting award...`)
+    await prizeStrategy.startAward()
+    await increaseTime(1)
+    await increaseTime(1)
+  }
 
-  const winners = new Set()
-
-  awardedEvents.forEach(event => {
-    console.log(`Awarded ${ethers.utils.formatEther(event.args.amount)} of token ${event.args.token} to ${event.args.winner}`)
-    winners.add(event.args.winner)
-  })
-
-  awardedExternalERC20Events.forEach(event => {
-    console.log(`Awarded ${ethers.utils.formatEther(event.args.amount)} of token ${event.args.token} to ${event.args.winner}`)
-    winners.add(event.args.winner)
-  })
-
-  awardedExternalERC721Events.forEach(event => {
-    console.log(`Awarded external erc721 ${event.args.token} token ids ${event.args.tokenIds.join(', ')} to ${event.args.winner}`)
-    winners.add(event.args.winner)
-  })
+  if (await prizeStrategy.canCompleteAward()) {
+    dim(`Completing award....`)
+    const completeAwardTx = await prizeStrategy.completeAward()
+    const completeAwardReceipt = await provider.getTransactionReceipt(completeAwardTx.hash)
+    const completeAwardEvents = completeAwardReceipt.logs.reduce((array, log) => { try { array.push(prizePool.interface.parseLog(log)) } catch (e) {} return array }, [])
+    const awardedEvents = completeAwardEvents.filter(event => event.name === 'Awarded')
+    const awardedExternalERC721Events = completeAwardEvents.filter(event => event.name === 'AwardedExternalERC721')
+    const awardedExternalERC20Events = completeAwardEvents.filter(event => event.name === 'AwardedExternalERC20')
+  
+    const winners = new Set()
+  
+    awardedEvents.forEach(event => {
+      console.log(`Awarded ${ethers.utils.formatEther(event.args.amount)} of token ${event.args.token} to ${event.args.winner}`)
+      winners.add(event.args.winner)
+    })
+  
+    awardedExternalERC20Events.forEach(event => {
+      console.log(`Awarded ${ethers.utils.formatEther(event.args.amount)} of token ${event.args.token} to ${event.args.winner}`)
+      winners.add(event.args.winner)
+    })
+  
+    awardedExternalERC721Events.forEach(event => {
+      console.log(`Awarded external erc721 ${event.args.token} token ids ${event.args.tokenIds.join(', ')} to ${event.args.winner}`)
+      winners.add(event.args.winner)
+    })
+  }
 }
 
 run()
