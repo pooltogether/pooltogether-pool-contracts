@@ -28,7 +28,8 @@ function PoolEnv() {
     maxExitFeeMantissa = toWei('0.5'),
     maxTimelockDuration = 1000,
     externalERC20Awards = [],
-    yVault = false
+    yVault = false,
+    stakePool = false
   }) {
     this.wallets = await buidler.ethers.getSigners()
 
@@ -52,6 +53,7 @@ function PoolEnv() {
       creditRate: toWei(creditRate),
       externalERC20Awards: [],
       yVault,
+      stakePool,
       overrides: this.overrides,
     })
 
@@ -69,7 +71,10 @@ function PoolEnv() {
     debug(`PrizePool created with address ${this.env.prizePool.address}`)
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
 
-    await this.setCurrentTime(prizePeriodStart)
+    if(!stakePool){
+      await this.setCurrentTime(prizePeriodStart) // why does this not work for StakePool??
+    }
+    
 
     debug(`Done create Pool`)
   }
@@ -83,7 +88,9 @@ function PoolEnv() {
     let wallet = await this.wallet(0)
     let prizeStrategy = await this.prizeStrategy(wallet)
     let prizePool = await this.prizePool(wallet)
+    debug("setCurrentTime on prizeStrategy with time ", time)
     await prizeStrategy.setCurrentTime(time, this.overrides)
+    debug("setCurrentTime on prizePool with time ", time)
     await prizePool.setCurrentTime(time, this.overrides)
     await this.env.comptroller.setCurrentTime(time, this.overrides)
   }
