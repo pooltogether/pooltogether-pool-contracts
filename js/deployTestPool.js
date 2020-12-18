@@ -92,11 +92,11 @@ async function deployTestPool({
   }
   else if(stakePool){
     debug('deploying stake pool')
-    const stakePoolConfig = {token: tokenResult.address, maxExitFeeMantissa: "10000000000000000", maxTimelockDuration: "1000000" } // as per dm from brendans, but UNI in token
+    const stakePoolConfig = {token: tokenResult.address, maxExitFeeMantissa, maxTimelockDuration}
     let tx = await poolBuilder.createStakeMultipleWinners(stakePoolConfig, multipleWinnersConfig, await token.decimals())
     let events = await getEvents(poolBuilder, tx)
     let event = events[0]
-    prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
+    prizePool = await buidler.ethers.getContractAt('StakePrizePoolHarness', event.args.prizePool, wallet)
   } 
   else {
     const compoundPrizePoolConfig = {
