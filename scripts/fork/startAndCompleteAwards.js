@@ -37,7 +37,7 @@ async function run() {
   }
 
   if (await prizeStrategy.canCompleteAward()) {
-    dim(`Completing award....`)
+    dim(`Completing award (will probably fail the first time on a fresh fork)....`)
     const completeAwardTx = await prizeStrategy.completeAward()
     const completeAwardReceipt = await provider.getTransactionReceipt(completeAwardTx.hash)
     const completeAwardEvents = completeAwardReceipt.logs.reduce((array, log) => { try { array.push(prizePool.interface.parseLog(log)) } catch (e) {} return array }, [])
