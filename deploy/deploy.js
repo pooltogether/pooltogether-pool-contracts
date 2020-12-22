@@ -205,10 +205,20 @@ module.exports = async (buidler) => {
   })
 
   debug("\n  Deploying StakePrizePoolProxyFactory...")
-  const stakePrizePoolProxyFactoryResult = await deploy("StakePrizePoolProxyFactory", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
+  let stakePrizePoolProxyFactoryResult
+  if (isTestEnvironment && !harnessDisabled) {
+    stakePrizePoolProxyFactoryResult = await deploy("StakePrizePoolProxyFactory", {
+      contract: 'StakePrizePoolHarnessProxyFactory',
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  }
+  else{
+    stakePrizePoolProxyFactoryResult = await deploy("StakePrizePoolProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  }
 
   debug("\n  Deploying UnsafeTokenListenerDelegatorProxyFactory...")
   const unsafeTokenListenerDelegatorProxyFactory = await deploy("UnsafeTokenListenerDelegatorProxyFactory", {

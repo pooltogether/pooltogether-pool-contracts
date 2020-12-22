@@ -21,6 +21,7 @@ async function deployTestPool({
   creditRate,
   externalERC20Awards,
   yVault,
+  stakePool,
   overrides = { gasLimit: 20000000 }
 }) {
   await deployments.fixture()
@@ -32,6 +33,10 @@ async function deployTestPool({
   ], overrides)*/
 
   debug('Deploying Governor...')
+
+  if(stakePool){
+    debug('Deploying test stake pool')
+  }
 
   let governanceToken = await deployContract(wallet, ERC20Mintable, ['Governance Token', 'GOV'], overrides)
 
@@ -84,7 +89,16 @@ async function deployTestPool({
     let events = await getEvents(poolBuilder, tx)
     let event = events[0]
     prizePool = await buidler.ethers.getContractAt('yVaultPrizePoolHarness', event.args.prizePool, wallet)
-  } else {
+  }
+  else if(stakePool){
+    debug('deploying stake pool')
+    const stakePoolConfig = {token: tokenResult.address, maxExitFeeMantissa, maxTimelockDuration}
+    let tx = await poolBuilder.createStakeMultipleWinners(stakePoolConfig, multipleWinnersConfig, await token.decimals())
+    let events = await getEvents(poolBuilder, tx)
+    let event = events[0]
+    prizePool = await buidler.ethers.getContractAt('StakePrizePoolHarness', event.args.prizePool, wallet)
+  } 
+  else {
     const compoundPrizePoolConfig = {
       cToken: cTokenResult.address,
       maxExitFeeMantissa,

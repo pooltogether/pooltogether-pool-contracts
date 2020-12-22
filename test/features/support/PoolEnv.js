@@ -28,7 +28,8 @@ function PoolEnv() {
     maxExitFeeMantissa = toWei('0.5'),
     maxTimelockDuration = 1000,
     externalERC20Awards = [],
-    yVault = false
+    yVault = false,
+    stakePool = false
   }) {
     this.wallets = await buidler.ethers.getSigners()
 
@@ -52,6 +53,7 @@ function PoolEnv() {
       creditRate: toWei(creditRate),
       externalERC20Awards: [],
       yVault,
+      stakePool,
       overrides: this.overrides,
     })
 
@@ -69,7 +71,9 @@ function PoolEnv() {
     debug(`PrizePool created with address ${this.env.prizePool.address}`)
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
 
+    
     await this.setCurrentTime(prizePeriodStart)
+    
 
     debug(`Done create Pool`)
   }

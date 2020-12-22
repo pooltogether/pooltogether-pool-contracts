@@ -5,8 +5,6 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 
-import "@nomiclabs/buidler/console.sol";
-
 import "./CompoundPrizePoolBuilder.sol";
 import "./VaultPrizePoolBuilder.sol";
 import "./StakePrizePoolBuilder.sol";
