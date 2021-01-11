@@ -4,26 +4,24 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "@nomiclabs/buidler/console.sol";
 
 import "../utils/ExtendedSafeCast.sol";
 import "../token/TokenListener.sol";
 
-/// @title Calculates a users share of a token faucet.
+/// @title Disburses a token at a fixed rate per second to holders of another token.
 /// @notice The tokens are dripped at a "drip rate per second".  This is the number of tokens that
-/// are dripped each second to the entire supply of a "measure" token.  A user's share of ownership
-/// of the measure token corresponds to the share of the drip tokens per second.
+/// are dripped each second.  A user's share of the dripped tokens is based on how many 'measure' tokens they hold.
 /* solium-disable security/no-block-members */
-contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
+contract ComptrollerV2 is Initializable, TokenListener {
   using SafeMathUpgradeable for uint256;
   using SafeCastUpgradeable for uint256;
   using ExtendedSafeCast for uint256;
 
   event Initialized(
-    address indexed prizeStrategy,
     IERC20Upgradeable indexed asset,
     IERC20Upgradeable indexed measure,
     uint256 dripRatePerSecond
@@ -43,37 +41,52 @@ contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
     uint128 balance;
   }
 
-  address public prizeStrategy;
+  /// @notice The token that is being disbursed
   IERC20Upgradeable public asset;
+
+  /// @notice The token that is user to measure a user's portion of disbursed tokens
   IERC20Upgradeable public measure;
+
+  /// @notice The total number of tokens that are disbursed each second
   uint256 public dripRatePerSecond;
+
+  /// @notice The cumulative exchange rate of measure token supply : dripped tokens
   uint112 public exchangeRateMantissa;
+
+  /// @notice The total amount of tokens that have been dripped but not claimed
   uint112 public totalUnclaimed;
+
+  /// @notice The timestamp at which the tokens were last dripped
   uint32 public lastDripTimestamp;
+
+  /// @notice The data structure that tracks when a user last received tokens
   mapping(address => UserState) public userStates;
 
-  constructor (
-    address _prizeStrategy,
+  /// @notice Initializes a new Comptroller V2
+  /// @param _asset The asset to disburse to users
+  /// @param _measure The token to use to measure a users portion
+  /// @param _dripRatePerSecond The amount of the asset to drip each second
+  function initialize (
     IERC20Upgradeable _asset,
     IERC20Upgradeable _measure,
     uint256 _dripRatePerSecond
-  ) public {
+  ) public initializer {
     require(_dripRatePerSecond > 0, "ComptrollerV2/dripRate-gt-zero");
-    __Ownable_init();
-    prizeStrategy = _prizeStrategy;
     asset = _asset;
     measure = _measure;
     dripRatePerSecond = _dripRatePerSecond;
     lastDripTimestamp = _currentTime();
 
     emit Initialized(
-      prizeStrategy,
       asset,
       measure,
       dripRatePerSecond
     );
   }
 
+  /// @notice Transfers all unclaimed tokens to the user
+  /// @param user The user to claim tokens for
+  /// @return The amount of tokens that were claimed.
   function claim(address user) external returns (uint256) {
     _captureNewTokensForUser(user);
     uint256 balance = userStates[user].balance;
@@ -87,7 +100,7 @@ contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
   }
 
   /// @notice Drips new tokens.
-  /// @dev Should be called immediately before any measure token transfers
+  /// @dev Should be called immediately before any measure token mints/transfers/burns
   /// @return The number of new tokens dripped.
   function drip() public returns (uint256) {
     uint256 currentTimestamp = _currentTime();
@@ -100,13 +113,9 @@ contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
     uint256 assetTotalSupply = asset.balanceOf(address(this));
     uint256 availableTotalSupply = assetTotalSupply.sub(totalUnclaimed);
     uint256 newSeconds = currentTimestamp.sub(lastDripTimestamp);
-    uint112 nextExchangeRateMantissa;
+    uint256 nextExchangeRateMantissa = exchangeRateMantissa;
     uint256 newTokens;
     uint256 measureTotalSupply = measure.totalSupply();
-
-    // console.log("assetTotalSupply: ", assetTotalSupply);
-    // console.log("availableTotalSupply: ", availableTotalSupply);
-    // console.log("newSeconds: ", newSeconds);
 
     if (measureTotalSupply > 0 && availableTotalSupply > 0 && newSeconds > 0) {
       newTokens = newSeconds.mul(dripRatePerSecond);
@@ -114,19 +123,16 @@ contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
         newTokens = availableTotalSupply;
       }
       uint256 indexDeltaMantissa = measureTotalSupply > 0 ? FixedPoint.calculateMantissa(newTokens, measureTotalSupply) : 0;
-      nextExchangeRateMantissa = uint256(exchangeRateMantissa).add(indexDeltaMantissa).toUint112();
+      nextExchangeRateMantissa = nextExchangeRateMantissa.add(indexDeltaMantissa);
 
       emit Dripped(
         newTokens
       );
     }
 
-    exchangeRateMantissa = nextExchangeRateMantissa;
+    exchangeRateMantissa = nextExchangeRateMantissa.toUint112();
     totalUnclaimed = uint256(totalUnclaimed).add(newTokens).toUint112();
     lastDripTimestamp = currentTimestamp.toUint32();
-
-    // console.log("exchangeRateMantissa: ", exchangeRateMantissa);
-    // console.log("totalUnclaimed: ", totalUnclaimed);
 
     return newTokens;
   }
@@ -143,8 +149,6 @@ contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
     uint256 deltaExchangeRateMantissa = uint256(exchangeRateMantissa).sub(userState.lastExchangeRateMantissa);
     uint128 newTokens = FixedPoint.multiplyUintByMantissa(userMeasureBalance, deltaExchangeRateMantissa).toUint128();
 
-    // console.log("_captureNewTokensForUser newTokens: ", uint256(newTokens));
-
     userStates[user] = UserState({
       lastExchangeRateMantissa: exchangeRateMantissa,
       balance: uint256(userState.balance).add(newTokens).toUint128()
@@ -153,7 +157,7 @@ contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
     return newTokens;
   }
 
-  /// @notice Called by a "source" (i.e. Prize Pool) when a user mints new "measure" tokens.
+  /// @notice Should be called before a user mints new "measure" tokens.
   /// @param to The user who is minting the tokens
   /// @param amount The amount of tokens they are minting
   /// @param token The token they are minting
@@ -173,7 +177,7 @@ contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
     }
   }
 
-  /// @notice Called by a "source" (i.e. Prize Pool) when tokens change hands or are burned
+  /// @notice Should be called before "measure" tokens are transferred or burned
   /// @param from The user who is sending the tokens
   /// @param to The user who is receiving the tokens
   /// @param token The token token they are burning
