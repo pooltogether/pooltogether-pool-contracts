@@ -6,7 +6,7 @@ import "./ComptrollerV2.sol";
 import "../external/openzeppelin/ProxyFactory.sol";
 
 /// @title Stake Prize Pool Proxy Factory
-/// @notice Minimal proxy pattern for creating new yVault Prize Pools
+/// @notice Minimal proxy pattern for creating new ComptrollerV2 contracts
 contract ComptrollerV2ProxyFactory is ProxyFactory {
 
   /// @notice Contract template for deploying proxied Comptrollers
