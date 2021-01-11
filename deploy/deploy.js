@@ -226,7 +226,7 @@ module.exports = async (buidler) => {
   }
 
   debug("\n  Deploying UnsafeTokenListenerDelegatorProxyFactory...")
-  const unsafeTokenListenerDelegatorProxyFactory = await deploy("UnsafeTokenListenerDelegatorProxyFactory", {
+  const unsafeTokenListenerDelegatorProxyFactoryResult = await deploy("UnsafeTokenListenerDelegatorProxyFactory", {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
@@ -320,6 +320,7 @@ module.exports = async (buidler) => {
   debug("  - Reserve Registry:               ", reserveRegistry)
   debug("  - Comptroller:                    ", comptrollerAddress)
   debug("  - ComptrollerV2ProxyFactory:      ", comptrollerV2ProxyFactoryResult.address)
+  debug("  - UnsafeTokenListenerDelegatorProxyFactory ", unsafeTokenListenerDelegatorProxyFactoryResult.address)
   debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
   debug("  - SingleRandomWinnerProxyFactory  ", singleRandomWinnerProxyFactoryResult.address)
   debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)
