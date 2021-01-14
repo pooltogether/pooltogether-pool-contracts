@@ -15,9 +15,8 @@ describe('PoolWithMultipleWinnersBuilder', () => {
 
   let builder
 
-  let compoundPrizePoolBuilder,
-      vaultPrizePoolBuilder,
-      stakePrizePoolBuilder,
+  let compoundPrizePoolProxyFactory,
+      stakePrizePoolProxyFactory,
       multipleWinnersBuilder
 
   let multipleWinnersConfig
@@ -37,9 +36,8 @@ describe('PoolWithMultipleWinnersBuilder', () => {
     vault = (await deployments.get("yDai"))
     cToken = (await deployments.get("cDai"))
     rngServiceMock = (await deployments.get("RNGServiceMock"))
-    compoundPrizePoolBuilder = (await deployments.get("CompoundPrizePoolBuilder"))
-    vaultPrizePoolBuilder = (await deployments.get("VaultPrizePoolBuilder"))
-    stakePrizePoolBuilder = (await deployments.get("StakePrizePoolBuilder"))
+    compoundPrizePoolProxyFactory = (await deployments.get("CompoundPrizePoolProxyFactory"))
+    stakePrizePoolProxyFactory = (await deployments.get("StakePrizePoolProxyFactory"))
     multipleWinnersBuilder = (await deployments.get("MultipleWinnersBuilder"))
 
     multipleWinnersConfig = {
@@ -59,9 +57,9 @@ describe('PoolWithMultipleWinnersBuilder', () => {
 
   describe('constructor()', () => {
     it('should setup all factories', async () => {
-      expect(await builder.compoundPrizePoolBuilder()).to.equal(compoundPrizePoolBuilder.address)
-      expect(await builder.stakePrizePoolBuilder()).to.equal(stakePrizePoolBuilder.address)
-      expect(await builder.vaultPrizePoolBuilder()).to.equal(vaultPrizePoolBuilder.address)
+      expect(await builder.reserveRegistry()).not.to.equal(ethers.constants.AddressZero)
+      expect(await builder.compoundPrizePoolProxyFactory()).to.equal(compoundPrizePoolProxyFactory.address)
+      expect(await builder.stakePrizePoolProxyFactory()).to.equal(stakePrizePoolProxyFactory.address)
       expect(await builder.multipleWinnersBuilder()).to.equal(multipleWinnersBuilder.address)
     })
   })
@@ -106,6 +104,11 @@ describe('PoolWithMultipleWinnersBuilder', () => {
         multipleWinnersConfig.ticketCreditLimitMantissa,
         multipleWinnersConfig.ticketCreditRateMantissa
       ])
+
+      expect(await prizePool.cToken()).to.equal(compoundPrizePoolConfig.cToken)
+      expect(await prizePool.maxExitFeeMantissa()).to.equal(compoundPrizePoolConfig.maxExitFeeMantissa)
+      expect(await prizePool.maxTimelockDuration()).to.equal(compoundPrizePoolConfig.maxTimelockDuration)
+      expect(await prizePool.owner()).to.equal(wallet._address)
     })
   })
 
@@ -144,45 +147,10 @@ describe('PoolWithMultipleWinnersBuilder', () => {
       expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
       expect(await prizePool.owner()).to.equal(wallet._address)
       expect(await prizeStrategy.owner()).to.equal(wallet._address)
-    })
-  })
 
-  describe('createVaultMultipleWinners()', () => {
-    let vaultPrizePoolConfig
-
-    beforeEach(async () => {
-      vaultPrizePoolConfig = {
-        vault: vault.address,
-        reserveRateMantissa: toWei('0.05'),
-        maxExitFeeMantissa: toWei('0.5'),
-        maxTimelockDuration: 1000
-      }
-    })
-
-    it('should create a new prize pool and strategy', async () => {
-      debug('Creating pool & strategy...')
-      let decimals = 9
-
-      let tx = await builder.createVaultMultipleWinners(
-        vaultPrizePoolConfig,
-        multipleWinnersConfig,
-        decimals
-      )
-
-      debug('Getting events...')
-
-      let events = await getEvents(builder, tx)
-      let prizePoolCreatedEvent = events.find(e => e.name == 'VaultPrizePoolWithMultipleWinnersCreated')
-
-      debug(`Creating prize pool using address: ${prizePoolCreatedEvent.args.prizePool}...`)
-
-      const prizePool = await buidler.ethers.getContractAt('yVaultPrizePool', prizePoolCreatedEvent.args.prizePool, wallet)
-      const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinners', prizePoolCreatedEvent.args.prizeStrategy, wallet)
-
-      expect(await prizePool.token()).to.equal(dai.address)
-      expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
-      expect(await prizePool.owner()).to.equal(wallet._address)
-      expect(await prizeStrategy.owner()).to.equal(wallet._address)
+      expect(await prizePool.token()).to.equal(stakePrizePoolConfig.token)
+      expect(await prizePool.maxExitFeeMantissa()).to.equal(stakePrizePoolConfig.maxExitFeeMantissa)
+      expect(await prizePool.maxTimelockDuration()).to.equal(stakePrizePoolConfig.maxTimelockDuration)
     })
   })
 })

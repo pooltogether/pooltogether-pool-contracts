@@ -985,12 +985,6 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
     emit LiquidityCapSet(_liquidityCap);
   }
 
-  /// @notice Allows the Governor to add Controlled Tokens to the Prize Pool
-  /// @param _controlledToken The address of the Controlled Token to add
-  function addControlledToken(ControlledTokenInterface _controlledToken) external override onlyOwner {
-    _addControlledToken(_controlledToken);
-  }
-
   /// @notice Adds a new controlled token
   /// @param _controlledToken The controlled token to add.  Cannot be a duplicate.
   function _addControlledToken(ControlledTokenInterface _controlledToken) internal {

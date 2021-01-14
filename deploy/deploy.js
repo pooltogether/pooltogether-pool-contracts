@@ -272,42 +272,12 @@ module.exports = async (buidler) => {
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying CompoundPrizePoolBuilder...")
-  const compoundPrizePoolBuilderResult = await deploy("CompoundPrizePoolBuilder", {
-    args: [
-      reserveRegistry,
-      compoundPrizePoolProxyFactoryResult.address
-    ],
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
-
-  debug("\n  Deploying VaultPrizePoolBuilder...")
-  const vaultPrizePoolBuilderResult = await deploy("VaultPrizePoolBuilder", {
-    args: [
-      reserveRegistry,
-      yVaultPrizePoolProxyFactoryResult.address
-    ],
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
-
-  debug("\n  Deploying StakePrizePoolBuilder...")
-  const stakePrizePoolBuilderResult = await deploy("StakePrizePoolBuilder", {
-    args: [
-      reserveRegistry,
-      stakePrizePoolProxyFactoryResult.address
-    ],
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
-
   debug("\n  Deploying PoolWithMultipleWinnersBuilder...")
   const poolWithMultipleWinnersBuilderResult = await deploy("PoolWithMultipleWinnersBuilder", {
     args: [
-      compoundPrizePoolBuilderResult.address,
-      vaultPrizePoolBuilderResult.address,
-      stakePrizePoolBuilderResult.address,
+      reserveRegistry,
+      compoundPrizePoolProxyFactoryResult.address,
+      stakePrizePoolProxyFactoryResult.address,
       multipleWinnersBuilderResult.address
     ],
     from: deployer,
@@ -322,13 +292,11 @@ module.exports = async (buidler) => {
   debug("  - ComptrollerV2ProxyFactory:      ", comptrollerV2ProxyFactoryResult.address)
   debug("  - UnsafeTokenListenerDelegatorProxyFactory ", unsafeTokenListenerDelegatorProxyFactoryResult.address)
   debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
+  debug("  - StakePrizePoolProxyFactory:     ", stakePrizePoolProxyFactoryResult.address)
   debug("  - SingleRandomWinnerProxyFactory  ", singleRandomWinnerProxyFactoryResult.address)
   debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)
   debug("  - ControlledTokenBuilder:         ", controlledTokenBuilderResult.address)
   debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address)
-  debug("  - CompoundPrizePoolBuilder:       ", compoundPrizePoolBuilderResult.address)
-  debug("  - VaultPrizePoolBuilder:          ", vaultPrizePoolBuilderResult.address)
-  debug("  - StakePrizePoolBuilder:          ", stakePrizePoolBuilderResult.address)
   debug("  - PoolWithMultipleWinnersBuilder: ", poolWithMultipleWinnersBuilderResult.address)
   if (permitAndDepositDaiResult) {
     debug("  - PermitAndDepositDai:            ", permitAndDepositDaiResult.address)
