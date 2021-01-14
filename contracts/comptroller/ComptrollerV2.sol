@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "../utils/ExtendedSafeCast.sol";
 import "../token/TokenListener.sol";
@@ -15,7 +16,7 @@ import "../token/TokenListener.sol";
 /// @notice The tokens are dripped at a "drip rate per second".  This is the number of tokens that
 /// are dripped each second.  A user's share of the dripped tokens is based on how many 'measure' tokens they hold.
 /* solium-disable security/no-block-members */
-contract ComptrollerV2 is Initializable, TokenListener {
+contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
   using SafeMathUpgradeable for uint256;
   using SafeCastUpgradeable for uint256;
   using ExtendedSafeCast for uint256;
@@ -33,6 +34,10 @@ contract ComptrollerV2 is Initializable, TokenListener {
   event Claimed(
     address indexed user,
     uint256 newTokens
+  );
+
+  event DripRateChanged(
+    uint256 dripRatePerSecond
   );
 
   struct UserState {
@@ -70,11 +75,11 @@ contract ComptrollerV2 is Initializable, TokenListener {
     IERC20Upgradeable _measure,
     uint256 _dripRatePerSecond
   ) public initializer {
-    require(_dripRatePerSecond > 0, "ComptrollerV2/dripRate-gt-zero");
+    __Ownable_init();
+    lastDripTimestamp = _currentTime();
     asset = _asset;
     measure = _measure;
-    dripRatePerSecond = _dripRatePerSecond;
-    lastDripTimestamp = _currentTime();
+    setDripRatePerSecond(_dripRatePerSecond);
 
     emit Initialized(
       asset,
@@ -134,6 +139,17 @@ contract ComptrollerV2 is Initializable, TokenListener {
     lastDripTimestamp = currentTimestamp.toUint32();
 
     return newTokens;
+  }
+
+  function setDripRatePerSecond(uint256 _dripRatePerSecond) public onlyOwner {
+    require(_dripRatePerSecond > 0, "ComptrollerV2/dripRate-gt-zero");
+
+    // ensure we're all caught up
+    drip();
+
+    dripRatePerSecond = _dripRatePerSecond;
+
+    emit DripRateChanged(dripRatePerSecond);
   }
 
   /// @notice Captures new tokens for a user
