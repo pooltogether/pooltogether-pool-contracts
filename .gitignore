@@ -19,3 +19,5 @@ test-results.xml
 abis
 junit
 .ganache-fork
+cache
+deployments

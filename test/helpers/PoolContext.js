@@ -23,12 +23,17 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   const Blocklock = artifacts.require('Blocklock.sol')
   const PoolToken = artifacts.require('RecipientWhitelistPoolTokenDecimals.sol')
 
-  this.init = async () => {
+  this.init = async ({ poolArtifact } = {}) => {
     this.registry = await setupERC1820({ web3, artifacts, account: owner })
     this.sumTree = await SortitionSumTreeFactory.new()
     await DrawManager.link("SortitionSumTreeFactory", this.sumTree.address)
     this.drawManager = await DrawManager.new()
-    await MCDAwarePool.link('DrawManager', this.drawManager.address)
+    if (poolArtifact) {
+      this.poolArtifact = poolArtifact
+    } else {
+      this.poolArtifact = MCDAwarePool
+    }
+    await this.poolArtifact.link('DrawManager', this.drawManager.address)
     this.fixidity = await FixidityLib.new({ from: admin })
     this.blocklock = await Blocklock.new()
     this.token = await this.newToken()
@@ -82,11 +87,11 @@ module.exports = function PoolContext({ web3, artifacts, accounts }) {
   }
 
   this.newPool = async () => {
-    await MCDAwarePool.link("DrawManager", this.drawManager.address)
-    await MCDAwarePool.link("FixidityLib", this.fixidity.address)
-    await MCDAwarePool.link('Blocklock', this.blocklock.address)
+    await this.poolArtifact.link("DrawManager", this.drawManager.address)
+    await this.poolArtifact.link("FixidityLib", this.fixidity.address)
+    await this.poolArtifact.link('Blocklock', this.blocklock.address)
     
-    return await MCDAwarePool.new()
+    return await this.poolArtifact.new()
   }
 
   this.createPoolNoOpenDraw = async (feeFraction = new BN('0'), cooldownDuration = 1) => {
