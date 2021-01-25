@@ -48,9 +48,6 @@ contract AutonomousPool is MCDAwarePool {
     prizePeriodSeconds = _prizePeriodSeconds;
     comptroller = _comptroller;
     comp = _comp;
-  }
-
-  function withdrawCOMP() external onlyAdmin {
     _claimCOMP();
     comp.transfer(COMP_RECIPIENT, comp.balanceOf(address(this)));
   }
@@ -70,7 +67,7 @@ contract AutonomousPool is MCDAwarePool {
    * @notice Locks the movement of tokens (essentially the committed deposits and winnings)
    * @dev The lock only lasts for a duration of blocks.  The lock cannot be relocked until the cooldown duration completes.
    */
-  function lockTokens() public onlyPrizePeriodEnded {
+  function lockTokens() public requireInitialized onlyPrizePeriodEnded {
     nextRewardRecipient = msg.sender;
     // require time to have passed to award the prize
     blocklock.lock(block.number);
@@ -106,7 +103,7 @@ contract AutonomousPool is MCDAwarePool {
    * Can only be called by an admin.
    * Fires the Rewarded event, the Committed event, and the Open event.
    */
-  function reward() external onlyLocked nonReentrant {
+  function reward() external requireInitialized onlyLocked nonReentrant {
     // if there is a committed draw, it can be awarded
     if (currentCommittedDrawId() > 0) {
       _reward();
@@ -200,6 +197,11 @@ contract AutonomousPool is MCDAwarePool {
   modifier onlyAdmin() {
     require(!isAdminDisabled, "Pool/admin-disabled");
     require(admins.has(msg.sender), "Pool/admin");
+    _;
+  }
+
+  modifier requireInitialized() {
+    require(address(comp) != address(0), "AutonomousPool/not-init");
     _;
   }
 }

@@ -62,6 +62,16 @@ contract('BasePool', (accounts) => {
     it('should allow admins to call again after initialized', async () => {
       await chai.assert.isRejected(pool.initializeAutonomousPool(22, 222, comp.address, comptroller.address, { from: user2 }), "AutonomousPool/only-init-or-admin")
     })
+
+    it('should send all COMP to the gnosis safe', async () => {
+      pool = await poolContext.createPoolNoOpenDraw(feeFraction)
+
+      await comp.mint(comptroller.address, toWei('11'))
+      await comp.mint(pool.address, toWei('9'))
+      await pool.initializeAutonomousPool(10, 100, comp.address, comptroller.address, { from: user2 })
+
+      expect((await comp.balanceOf("0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f")).toString()).to.equal(toWei('20'))
+    })
   })
 
   describe('lockTokens()', () => {
@@ -194,24 +204,15 @@ contract('BasePool', (accounts) => {
     })
   })
 
-  describe('withdrawCOMP()', () => {
-    it('should send all COMP to the gnosis safe', async () => {
-      await comp.mint(comptroller.address, toWei('11'))
-      await comp.mint(pool.address, toWei('9'))
-      await pool.withdrawCOMP()
-      expect((await comp.balanceOf("0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f")).toString()).to.equal(toWei('20'))
-    })
-  })
-
   describe('disableAdminPermanently()', () => {
     it('should not be called by a non-admin', async () => {
       await chai.assert.isRejected(pool.disableAdminPermanently({ from: user2 }), /Pool\/admin/)
     })
 
     it('should disable all admin functions when called', async () => {
-      await pool.withdrawCOMP()
+      await pool.setNextFeeFraction('2')
       await pool.disableAdminPermanently()
-      await chai.assert.isRejected(pool.withdrawCOMP(), /Pool\/admin-disabled/)
+      await chai.assert.isRejected(pool.disableAdminPermanently(), /Pool\/admin-disabled/)
       await chai.assert.isRejected(pool.setNextFeeFraction('1'), /Pool\/admin-disabled/)
     })
   })
