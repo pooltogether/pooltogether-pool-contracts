@@ -16,7 +16,7 @@ async function burn(context) {
     provider
   } = context
 
-  const users = await fetchUsers()
+  const users = await fetchUsers('sai')
 
   const user1 = users[0].address
 

@@ -16,7 +16,7 @@ async function transfer(context) {
     provider
   } = context
 
-  const users = await fetchUsers()
+  const users = await fetchUsers('sai')
 
   const user1 = users[0].address
   const user2 = users[1].address

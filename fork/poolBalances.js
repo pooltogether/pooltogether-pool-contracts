@@ -1,14 +1,14 @@
 const { fetchUsers } = require('./fetchUsers')
 const chalk = require('chalk')
 
-async function poolBalances (context, type, count = '10') {
+async function poolBalances (context, type) {
   console.log(chalk.yellow(`Checking ${type} balances...`))
   const {
     contracts,
     ethers
   } = context
 
-  const users = await fetchUsers(parseInt(count, 10))
+  const users = await fetchUsers(type)
 
   let pool
 

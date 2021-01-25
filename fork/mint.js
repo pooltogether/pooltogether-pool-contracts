@@ -31,7 +31,7 @@ async function mint(context, type) {
   await exec(provider, token.transfer(LITTLE_SAI_GUY, ethers.utils.parseEther('100')))
   console.log(chalk.dim(`Transferred 100 ${type} to LITTLE_SAI_GUY`))
 
-  const users = await fetchUsers(5)
+  const users = await fetchUsers(type)
   for (let i = 0; i < users.length; i++) {
     const user = users[i].address
     await exec(provider, token.transfer(user, ethers.utils.parseEther('100')))

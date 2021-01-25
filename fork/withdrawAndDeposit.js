@@ -9,7 +9,7 @@ const overrides = {
   gasLimit: ethers.utils.bigNumberify("2000000")
 }
 
-async function withdrawAndDeposit (context, type, count = '5') {
+async function withdrawAndDeposit (context, type) {
   console.log(chalk.yellow(`Starting withdraw and deposit for ${type} pool...`))
 
   const {
@@ -29,11 +29,11 @@ async function withdrawAndDeposit (context, type, count = '5') {
       pool = contracts.PoolSai
   }
 
-  const users = await fetchUsers(parseInt(count, 10))
+  const users = await fetchUsers(type)
 
   // Now ensure we can withdraw the top 5
   for (let i = 0; i < users.length; i++) {
-    let address = users[i].address
+    let address = users[i]
     let signer = provider.getSigner(address)
     let signingPool = pool.connect(signer)
 

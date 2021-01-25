@@ -40,7 +40,8 @@ contract('BasePool', (accounts) => {
     moneyMarket = contracts.moneyMarket
 
     pool = await poolContext.createPoolNoOpenDraw(feeFraction)
-    await pool.initializeAutonomousPool(10, 100, comp.address, comptroller.address, { from: owner })
+    // non-admin can initialize
+    await pool.initializeAutonomousPool(10, 100, comp.address, comptroller.address, { from: user2 })
   })
 
   describe('initializeAutonomousPool', () => {
@@ -50,6 +51,16 @@ contract('BasePool', (accounts) => {
       expect((await pool.prizePeriodSeconds()).toString()).to.equal('100')
       expect((await pool.comptroller())).to.equal(comptroller.address)
       expect((await pool.comp())).to.equal(comp.address)
+    })
+
+    it('should allow admins to call again after initialized', async () => {
+      await pool.initializeAutonomousPool(22, 222, comp.address, comptroller.address, { from: owner })
+      expect((await pool.lastAwardTimestamp()).toString()).to.equal('22')
+      expect((await pool.prizePeriodSeconds()).toString()).to.equal('222')
+    })
+
+    it('should allow admins to call again after initialized', async () => {
+      await chai.assert.isRejected(pool.initializeAutonomousPool(22, 222, comp.address, comptroller.address, { from: user2 }), "AutonomousPool/only-init-or-admin")
     })
   })
 
@@ -87,7 +98,7 @@ contract('BasePool', (accounts) => {
 
       await pool.lockTokens()      
       await pool.methods['reward()']()
-
+      
       expect((await pool.nextAwardAt()).toString()).to.equal('210')
       expect((await pool.currentOpenDrawId()).toString()).to.equal('1')
       expect((await pool.currentCommittedDrawId()).toString()).to.equal('0')
@@ -117,9 +128,13 @@ contract('BasePool', (accounts) => {
       await pool.methods['reward()']()
 
       await pool.setCurrentTime('310')
-      
+
       await pool.lockTokens({ from: user2 })
-      await pool.methods['reward()']()
+      let tx = await pool.methods['reward()']()
+      let rewarded = tx.logs.find(log => log.event === 'Rewarded')
+
+      let block = await web3.eth.getBlock(rewarded.blockNumber - 1)
+      expect(rewarded.args.entropy).to.equal(block.hash)
 
       expect((await pool.nextAwardAt()).toString()).to.equal('410')
       expect((await pool.currentOpenDrawId()).toString()).to.equal('3')
@@ -137,6 +152,48 @@ contract('BasePool', (accounts) => {
     })
   })
 
+  describe('claimCOMP()', () => {
+    it('should return the COMP award', async () => {
+      await comp.mint(comptroller.address, toWei('11'))
+      expect((await pool.claimCOMP.call()).toString()).to.equal(toWei('11'))
+    })
+  })
+
+  describe('calculateFeeReward()', () => {
+    it('should calculate the fee that will be paid to the awarder', async () => {
+      await moneyMarket.rewardCustom(pool.address, toWei('10'))
+      expect((await pool.calculateFeeReward.call()).toString()).to.equal(toWei('0'))
+
+      await pool.setNextFeeFraction(toWei('0.1'))
+
+      // open first draw
+      await pool.setCurrentTime('110')
+      await pool.lockTokens()
+      await pool.reward()
+
+      // open second draw && commit first
+      await pool.setCurrentTime('210')
+      await pool.lockTokens()
+      await pool.reward()
+
+      await moneyMarket.rewardCustom(pool.address, toWei('20'))
+      expect((await pool.calculateFeeReward.call()).toString()).to.equal(toWei('3')) // 10 % of 30
+
+      // reward first draw
+      await pool.setCurrentTime('310')
+      await pool.lockTokens()
+      await pool.reward()
+
+      expect((await pool.calculateFeeReward.call()).toString()).to.equal(toWei('2.7')) // 10% of 27
+    })
+  })
+
+  describe('setNextFeeBeneficiary()', () => {
+    it('should not be supported', async () => {
+      await chai.assert.isRejected(pool.setNextFeeBeneficiary(owner), "AutonomousPool/not-supported")
+    })
+  })
+
   describe('withdrawCOMP()', () => {
     it('should send all COMP to the gnosis safe', async () => {
       await comp.mint(comptroller.address, toWei('11'))
@@ -146,14 +203,14 @@ contract('BasePool', (accounts) => {
     })
   })
 
-  describe('disableAdmin()', () => {
+  describe('disableAdminPermanently()', () => {
     it('should not be called by a non-admin', async () => {
-      await chai.assert.isRejected(pool.disableAdmin({ from: user2 }), /Pool\/admin/)
+      await chai.assert.isRejected(pool.disableAdminPermanently({ from: user2 }), /Pool\/admin/)
     })
 
     it('should disable all admin functions when called', async () => {
       await pool.withdrawCOMP()
-      await pool.disableAdmin()
+      await pool.disableAdminPermanently()
       await chai.assert.isRejected(pool.withdrawCOMP(), /Pool\/admin-disabled/)
       await chai.assert.isRejected(pool.setNextFeeFraction('1'), /Pool\/admin-disabled/)
     })

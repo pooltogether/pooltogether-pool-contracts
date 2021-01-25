@@ -32,13 +32,19 @@ contract AutonomousPool is MCDAwarePool {
   IERC20 public comp;
   bool public isAdminDisabled;
 
+  event AwardedCOMP(
+    address indexed recipient,
+    uint256 amount
+  );
+
   function initializeAutonomousPool(
     uint256 _lastAwardTimestamp,
     uint256 _prizePeriodSeconds,
     IERC20 _comp,
     IComptroller _comptroller
-  ) external onlyAdmin {
-    lastAwardTimestamp = _lastAwardTimestamp;
+  ) external {
+    require(address(comp) == address(0) || isAdmin(msg.sender), "AutonomousPool/only-init-or-admin");
+    lastAwardTimestamp = _lastAwardTimestamp == 0 ? block.timestamp : _lastAwardTimestamp;
     prizePeriodSeconds = _prizePeriodSeconds;
     comptroller = _comptroller;
     comp = _comp;
@@ -49,7 +55,7 @@ contract AutonomousPool is MCDAwarePool {
     comp.transfer(COMP_RECIPIENT, comp.balanceOf(address(this)));
   }
 
-  function disableAdmin() external onlyAdmin {
+  function disableAdminPermanently() external onlyAdmin {
     isAdminDisabled = true;
   }
 
@@ -68,6 +74,31 @@ contract AutonomousPool is MCDAwarePool {
     nextRewardRecipient = msg.sender;
     // require time to have passed to award the prize
     blocklock.lock(block.number);
+  }
+
+  function claimCOMP() public returns (uint256) {
+    _claimCOMP();
+    return comp.balanceOf(address(this));
+  }
+
+  function calculateFeeReward() public returns (uint256) {
+    uint256 drawId = currentCommittedDrawId();
+
+    Draw storage draw = draws[drawId];
+
+    // Calculate the gross winnings
+    uint256 underlyingBalance = balance();
+
+    uint256 grossWinnings;
+
+    // It's possible when the APR is zero that the underlying balance will be slightly lower than the accountedBalance
+    // due to rounding errors in the Compound contract.
+    if (underlyingBalance > accountedBalance) {
+      grossWinnings = capWinnings(underlyingBalance.sub(accountedBalance));
+    }
+
+    // Calculate the beneficiary fee
+    return calculateFee(draw.feeFraction, grossWinnings);
   }
 
   /**
@@ -95,12 +126,12 @@ contract AutonomousPool is MCDAwarePool {
   }
 
   function _rewardCOMP() internal {
-    uint256 balanceBefore = comp.balanceOf(address(this));
-    _claimCOMP();
-    uint256 compReward = comp.balanceOf(address(this)).sub(balanceBefore);
+    uint256 compReward = claimCOMP();
     if (compReward > 0) {
       comp.transfer(nextRewardRecipient, compReward);
+      emit AwardedCOMP(nextRewardRecipient, compReward);
     }
+
     nextRewardRecipient = address(0);
   }
 
@@ -118,7 +149,8 @@ contract AutonomousPool is MCDAwarePool {
     // require that the committed draw has not been rewarded
     uint256 drawId = currentCommittedDrawId();
     Draw storage draw = draws[drawId];
-    bytes32 entropy = blockhash(uint256(-1));
+    bytes32 entropy = blockhash(block.number - 1);
+    draw.feeBeneficiary = nextRewardRecipient;
     _reward(drawId, draw, entropy);
   }
 
@@ -129,7 +161,7 @@ contract AutonomousPool is MCDAwarePool {
     drawState.openNextDraw();
     draws[drawState.openDrawIndex] = Draw(
       nextFeeFraction,
-      nextFeeBeneficiary,
+      address(0),
       block.number,
       bytes32(0),
       bytes32(0),
@@ -139,7 +171,7 @@ contract AutonomousPool is MCDAwarePool {
     );
     emit Opened(
       drawState.openDrawIndex,
-      nextFeeBeneficiary,
+      address(0),
       bytes32(0),
       nextFeeFraction
     );
@@ -151,6 +183,10 @@ contract AutonomousPool is MCDAwarePool {
 
   function currentTime() internal view returns (uint256) {
     return block.timestamp;
+  }
+
+  function setNextFeeBeneficiary(address) public {
+    revert("AutonomousPool/not-supported");
   }
 
   modifier onlyPrizePeriodEnded() {

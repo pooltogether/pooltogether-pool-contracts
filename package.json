@@ -12,6 +12,7 @@
   },
   "scripts": {
     "test": "truffle test --migrations_directory ./migrations/empty",
+    "clean": "rm -rf cache build artifacts",
     "coverage": "COVERAGE=true truffle run coverage --migrations_directory ./migrations/empty",
     "compile": "truffle compile",
     "compile-and-merge": "yarn compile && zos-truffle-merge -n 1 zos.mainnet.json && zos-truffle-merge -n 4 zos.rinkeby.json",
@@ -28,9 +29,8 @@
     "push": "openzeppelin push",
     "update-all": "openzeppelin update --all --from $ADMIN_ADDRESS",
     "push-and-update": "yarn push && yarn update-all && zos-truffle-merge -n 1234 zos.dev-1234.json",
-    "fork-and-upgrade": "./scripts/fork-and-upgrade.sh",
+    "fork-setup": "./scripts/fork-setup.sh",
     "fork": "./fork/cli.js",
-    "fork-and-upgrade-and-test": "./scripts/fork-and-upgrade-and-test.sh",
     "console": "oz-console --network $LOCALHOST_URL -c .openzeppelin/dev-999.json",
     "console-rinkeby": "oz-console --network rinkeby",
     "console-mainnet": "oz-console --network mainnet -m \"$HDWALLET_MNEMONIC\"",
