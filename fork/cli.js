@@ -12,6 +12,7 @@ const { upgrade } = require('./upgrade')
 const { upgradeToAutonomousPools } = require('./upgradeToAutonomousPools')
 const { pushContracts } = require('./pushContracts')
 const { withdrawAndDeposit } = require('./withdrawAndDeposit')
+const { withdraw } = require('./withdraw')
 const { rewardAndOpen } = require('./rewardAndOpen')
 const { rewardAuto } = require('./rewardAuto')
 const { openNextDraw } = require('./openNextDraw')
@@ -237,19 +238,26 @@ program
   })
 
 program
-  .command('withdraw-deposit [type] [count]')
+  .command('withdraw-deposit [type]')
   .description('tests withdrawals and deposits for top *count* users')
-  .action(async (type, count) => {
+  .action(async (type) => {
     ranAction = true
     if (!type) {
       type = 'sai'
     }
-    if (!count) {
-      count = 5
-    }
-    await withdrawAndDeposit(await callContext(), type, count)
+    await withdrawAndDeposit(await callContext(), type)
   })
 
+program
+  .command('withdraw [type]')
+  .description('tests withdrawals and deposits for top *count* users')
+  .action(async (type) => {
+    ranAction = true
+    if (!type) {
+      type = 'sai'
+    }
+    await withdraw(await callContext(), type)
+  })
 
 program
   .command('winners [type] [count]')

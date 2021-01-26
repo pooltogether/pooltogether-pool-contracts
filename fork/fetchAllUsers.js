@@ -13,8 +13,8 @@ const {
 function fetchAllUsers() {
 
   const daiUsers = fetchUsers('dai')
-  const saiUsers = [] // fetchUsers('sai')
-  const usdcUsers = [] // fetchUsers('usdc')
+  const saiUsers = fetchUsers('sai')
+  const usdcUsers = fetchUsers('usdc')
 
   const users = daiUsers.concat(saiUsers).concat(usdcUsers).concat([
     POOL_ADMIN,
