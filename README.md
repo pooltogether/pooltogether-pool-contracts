@@ -37,15 +37,15 @@ There are deployment artifacts available in the `deployments/` directory.  This 
 
 Prize Pools and Prize Strategies are not included, as they are created using the Builders.
 
-For example, to pull in the CompoundPrizePoolBuilder artifact:
+For example, to pull in the PoolWithMultipleWinnersBuilder artifact:
 
 ```javascript
-const CompoundPrizePoolBuilder = require('@pooltogether/pooltogether-contracts/deployments/rinkeby/CompoundPrizePoolBuilder.json')
+const PoolWithMultipleWinnersBuilder = require('@pooltogether/pooltogether-contracts/deployments/rinkeby/PoolWithMultipleWinnersBuilder.json')
 const {
   abi, 
   address, 
   receipt
- } = CompoundPrizePoolBuilder
+ } = PoolWithMultipleWinnersBuilder
 ```
 
 ###### ABIs

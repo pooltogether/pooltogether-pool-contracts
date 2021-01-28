@@ -200,10 +200,6 @@ interface PrizePoolInterface {
   /// @param _liquidityCap The new liquidity cap for the prize pool
   function setLiquidityCap(uint256 _liquidityCap) external;
 
-  /// @notice Allows the Governor to add Controlled Tokens to the Prize Pool
-  /// @param _controlledToken The address of the Controlled Token to add
-  function addControlledToken(ControlledTokenInterface _controlledToken) external;
-
   /// @notice Sets the prize strategy of the prize pool.  Only callable by the owner.
   /// @param _prizeStrategy The new prize strategy.  Must implement TokenListenerInterface
   function setPrizeStrategy(TokenListenerInterface _prizeStrategy) external;

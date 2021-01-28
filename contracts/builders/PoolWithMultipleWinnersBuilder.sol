@@ -5,9 +5,9 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 
-import "./CompoundPrizePoolBuilder.sol";
-import "./VaultPrizePoolBuilder.sol";
-import "./StakePrizePoolBuilder.sol";
+import "../registry/RegistryInterface.sol";
+import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
+import "../prize-pool/stake/StakePrizePoolProxyFactory.sol";
 import "./MultipleWinnersBuilder.sol";
 
 contract PoolWithMultipleWinnersBuilder {
@@ -15,90 +15,106 @@ contract PoolWithMultipleWinnersBuilder {
 
   event CompoundPrizePoolWithMultipleWinnersCreated(address indexed prizePool, address indexed prizeStrategy);
   event StakePrizePoolWithMultipleWinnersCreated(address indexed prizePool, address indexed prizeStrategy);
-  event VaultPrizePoolWithMultipleWinnersCreated(address indexed prizePool, address indexed prizeStrategy);
 
-  CompoundPrizePoolBuilder public compoundPrizePoolBuilder;
-  VaultPrizePoolBuilder public vaultPrizePoolBuilder;
-  StakePrizePoolBuilder public stakePrizePoolBuilder;
+  /// @notice The configuration used to initialize the Compound Prize Pool
+  struct CompoundPrizePoolConfig {
+    CTokenInterface cToken;
+    uint256 maxExitFeeMantissa;
+    uint256 maxTimelockDuration;
+  }
+
+  struct StakePrizePoolConfig {
+    IERC20Upgradeable token;
+    uint256 maxExitFeeMantissa;
+    uint256 maxTimelockDuration;
+  }
+
+  RegistryInterface public reserveRegistry;
+  CompoundPrizePoolProxyFactory public compoundPrizePoolProxyFactory;
+  StakePrizePoolProxyFactory public stakePrizePoolProxyFactory;
   MultipleWinnersBuilder public multipleWinnersBuilder;
 
   constructor (
-    CompoundPrizePoolBuilder _compoundPrizePoolBuilder,
-    VaultPrizePoolBuilder _vaultPrizePoolBuilder,
-    StakePrizePoolBuilder _stakePrizePoolBuilder,
+    RegistryInterface _reserveRegistry,
+    CompoundPrizePoolProxyFactory _compoundPrizePoolProxyFactory,
+    StakePrizePoolProxyFactory _stakePrizePoolProxyFactory,
     MultipleWinnersBuilder _multipleWinnersBuilder
   ) public {
-    require(address(_compoundPrizePoolBuilder) != address(0), "GlobalBuilder/compoundPrizePoolBuilder-not-zero");
-    require(address(_vaultPrizePoolBuilder) != address(0), "GlobalBuilder/vaultPrizePoolBuilder-not-zero");
-    require(address(_stakePrizePoolBuilder) != address(0), "GlobalBuilder/stakePrizePoolBuilder-not-zero");
+    require(address(_reserveRegistry) != address(0), "GlobalBuilder/reserveRegistry-not-zero");
+    require(address(_compoundPrizePoolProxyFactory) != address(0), "GlobalBuilder/compoundPrizePoolProxyFactory-not-zero");
+    require(address(_stakePrizePoolProxyFactory) != address(0), "GlobalBuilder/stakePrizePoolProxyFactory-not-zero");
     require(address(_multipleWinnersBuilder) != address(0), "GlobalBuilder/multipleWinnersBuilder-not-zero");
-    compoundPrizePoolBuilder = _compoundPrizePoolBuilder;
-    vaultPrizePoolBuilder = _vaultPrizePoolBuilder;
-    stakePrizePoolBuilder = _stakePrizePoolBuilder;
+    reserveRegistry = _reserveRegistry;
+    compoundPrizePoolProxyFactory = _compoundPrizePoolProxyFactory;
+    stakePrizePoolProxyFactory = _stakePrizePoolProxyFactory;
     multipleWinnersBuilder = _multipleWinnersBuilder;
   }
 
   function createCompoundMultipleWinners(
-    CompoundPrizePoolBuilder.CompoundPrizePoolConfig memory prizePoolConfig,
+    CompoundPrizePoolConfig memory prizePoolConfig,
     MultipleWinnersBuilder.MultipleWinnersConfig memory prizeStrategyConfig,
     uint8 decimals
   ) external returns (CompoundPrizePool) {
-    CompoundPrizePool prizePool = compoundPrizePoolBuilder.createCompoundPrizePool(prizePoolConfig);
-    MultipleWinners prizeStrategy = _createMultipleWinnersAndTransferPrizePool(prizePool, prizeStrategyConfig, decimals);
-    emit CompoundPrizePoolWithMultipleWinnersCreated(address(prizePool), address(prizeStrategy));
-    return prizePool;
-  }
-
-  function createStakeMultipleWinners(
-    StakePrizePoolBuilder.StakePrizePoolConfig memory prizePoolConfig,
-    MultipleWinnersBuilder.MultipleWinnersConfig memory prizeStrategyConfig,
-    uint8 decimals
-  ) external returns (StakePrizePool) {
-    StakePrizePool prizePool = stakePrizePoolBuilder.createStakePrizePool(prizePoolConfig);
-    MultipleWinners prizeStrategy = _createMultipleWinnersAndTransferPrizePool(prizePool, prizeStrategyConfig, decimals);
-    emit StakePrizePoolWithMultipleWinnersCreated(address(prizePool), address(prizeStrategy));
-    return prizePool;
-  }
-
-  function createVaultMultipleWinners(
-    VaultPrizePoolBuilder.VaultPrizePoolConfig memory prizePoolConfig,
-    MultipleWinnersBuilder.MultipleWinnersConfig memory prizeStrategyConfig,
-    uint8 decimals
-  ) external returns (yVaultPrizePool) {
-    yVaultPrizePool prizePool = vaultPrizePoolBuilder.createVaultPrizePool(prizePoolConfig);
-    MultipleWinners prizeStrategy = _createMultipleWinnersAndTransferPrizePool(prizePool, prizeStrategyConfig, decimals);
-    emit VaultPrizePoolWithMultipleWinnersCreated(address(prizePool), address(prizeStrategy));
-    return prizePool;
-  }
-
-  function _createMultipleWinnersAndTransferPrizePool(
-    PrizePool prizePool,
-    MultipleWinnersBuilder.MultipleWinnersConfig memory prizeStrategyConfig,
-    uint8 decimals
-  ) internal returns (MultipleWinners) {
-
-    MultipleWinners periodicPrizeStrategy = multipleWinnersBuilder.createMultipleWinners(
+    CompoundPrizePool prizePool = compoundPrizePoolProxyFactory.create();
+    MultipleWinners prizeStrategy = multipleWinnersBuilder.createMultipleWinners(
       prizePool,
       prizeStrategyConfig,
       decimals,
       msg.sender
     );
-
-    address ticket = address(periodicPrizeStrategy.ticket());
-
-    prizePool.setPrizeStrategy(periodicPrizeStrategy);
-
-    prizePool.addControlledToken(Ticket(ticket));
-    prizePool.addControlledToken(ControlledTokenInterface(address(periodicPrizeStrategy.sponsorship())));
-
+    prizePool.initialize(
+      reserveRegistry,
+      _tokens(prizeStrategy),
+      prizePoolConfig.maxExitFeeMantissa,
+      prizePoolConfig.maxTimelockDuration,
+      CTokenInterface(prizePoolConfig.cToken)
+    );
+    prizePool.setPrizeStrategy(prizeStrategy);
     prizePool.setCreditPlanOf(
-      ticket,
+      address(prizeStrategy.ticket()),
       prizeStrategyConfig.ticketCreditRateMantissa.toUint128(),
       prizeStrategyConfig.ticketCreditLimitMantissa.toUint128()
     );
-
     prizePool.transferOwnership(msg.sender);
-
-    return periodicPrizeStrategy;
+    emit CompoundPrizePoolWithMultipleWinnersCreated(address(prizePool), address(prizeStrategy));
+    return prizePool;
   }
+
+  function createStakeMultipleWinners(
+    StakePrizePoolConfig memory prizePoolConfig,
+    MultipleWinnersBuilder.MultipleWinnersConfig memory prizeStrategyConfig,
+    uint8 decimals
+  ) external returns (StakePrizePool) {
+    StakePrizePool prizePool = stakePrizePoolProxyFactory.create();
+    MultipleWinners prizeStrategy = multipleWinnersBuilder.createMultipleWinners(
+      prizePool,
+      prizeStrategyConfig,
+      decimals,
+      msg.sender
+    );
+    prizePool.initialize(
+      reserveRegistry,
+      _tokens(prizeStrategy),
+      prizePoolConfig.maxExitFeeMantissa,
+      prizePoolConfig.maxTimelockDuration,
+      prizePoolConfig.token
+    );
+    prizePool.setPrizeStrategy(prizeStrategy);
+    prizePool.setCreditPlanOf(
+      address(prizeStrategy.ticket()),
+      prizeStrategyConfig.ticketCreditRateMantissa.toUint128(),
+      prizeStrategyConfig.ticketCreditLimitMantissa.toUint128()
+    );
+    prizePool.transferOwnership(msg.sender);
+    emit StakePrizePoolWithMultipleWinnersCreated(address(prizePool), address(prizeStrategy));
+    return prizePool;
+  }
+
+  function _tokens(MultipleWinners _multipleWinners) internal returns (ControlledTokenInterface[] memory) {
+    ControlledTokenInterface[] memory tokens = new ControlledTokenInterface[](2);
+    tokens[0] = ControlledTokenInterface(address(_multipleWinners.ticket()));
+    tokens[1] = ControlledTokenInterface(address(_multipleWinners.sponsorship()));
+    return tokens;
+  }
+
 }
