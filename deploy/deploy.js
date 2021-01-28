@@ -118,7 +118,7 @@ module.exports = async (buidler) => {
     debug(`  Using existing comptroller ${comptrollerAddress}`)
   }
 
-  const comptrollerV2ProxyFactoryResult = await deploy("ComptrollerV2ProxyFactory", {
+  const comptrollerV2ProxyFactoryResult = await deploy("TokenFaucetProxyFactory", {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
@@ -289,7 +289,7 @@ module.exports = async (buidler) => {
   debug("  - TicketProxyFactory:             ", ticketProxyFactoryResult.address)
   debug("  - Reserve Registry:               ", reserveRegistry)
   debug("  - Comptroller:                    ", comptrollerAddress)
-  debug("  - ComptrollerV2ProxyFactory:      ", comptrollerV2ProxyFactoryResult.address)
+  debug("  - TokenFaucetProxyFactory:      ", comptrollerV2ProxyFactoryResult.address)
   debug("  - UnsafeTokenListenerDelegatorProxyFactory ", unsafeTokenListenerDelegatorProxyFactoryResult.address)
   debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
   debug("  - StakePrizePoolProxyFactory:     ", stakePrizePoolProxyFactoryResult.address)

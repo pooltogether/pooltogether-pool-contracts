@@ -1,4 +1,5 @@
 #Builder files
+crytic-export
 cache
 .cache-openzeppelin
 artifacts

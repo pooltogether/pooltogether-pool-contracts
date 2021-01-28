@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const ComptrollerV2Harness = require('../build/ComptrollerV2Harness.json')
+const TokenFaucetHarness = require('../build/TokenFaucetHarness.json')
 const ERC20 = require('../build/ERC20Mintable.json')
 const buidler = require('@nomiclabs/buidler')
 const { deployContract } = require('ethereum-waffle')
@@ -9,9 +9,9 @@ const toWei = ethers.utils.parseEther
 
 const overrides = { gasLimit: 20000000 }
 
-const debug = require('debug')('ptv3:ComptrollerV2.test')
+const debug = require('debug')('ptv3:TokenFaucet.test')
 
-describe('ComptrollerV2', () => {
+describe('TokenFaucet', () => {
 
   let wallet, wallet2
 
@@ -25,7 +25,7 @@ describe('ComptrollerV2', () => {
     dripToken = await deployContract(wallet, ERC20, ['DripToken', 'DRIP'])
     dripRatePerSecond = ethers.utils.parseEther('0.1')
 
-    comptroller = await deployContract(wallet, ComptrollerV2Harness, [], overrides)
+    comptroller = await deployContract(wallet, TokenFaucetHarness, [], overrides)
 
     await expect(comptroller.initialize(
       dripToken.address,
@@ -310,7 +310,7 @@ describe('ComptrollerV2', () => {
 
     it('requires that the rip rate be greater than zero', async () => {
       await expect(comptroller.setDripRatePerSecond('0'))
-        .to.be.revertedWith('ComptrollerV2/dripRate-gt-zero')
+        .to.be.revertedWith('TokenFaucet/dripRate-gt-zero')
     })
   })
 })
