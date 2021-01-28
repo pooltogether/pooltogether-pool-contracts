@@ -30,7 +30,9 @@
     "prepack": "rm -rf build cache && buidler compile && truffle-extract -b build -o abis",
     "postpublish": "PACKAGE_VERSION=$(./scripts/package-version.sh) && git tag -ae v$PACKAGE_VERSION && git push --tags",
     "update-gitbook-networks": "./scripts/update-gitbook-networks.sh",
-    "mint": "USE_BUIDLER_EVM_ACCOUNTS=$BUIDLER_EVM_ACCOUNTS buidler run --network localhost scripts/mint.js"
+    "mint": "USE_BUIDLER_EVM_ACCOUNTS=$BUIDLER_EVM_ACCOUNTS buidler run --network localhost scripts/mint.js",
+    "echidna:build": "docker build -t pool-contracts/echidna . -f Dockerfile.echidna",
+    "echidna": "yarn echidna:build && docker run -v \"$PWD\":/src pool-contracts/echidna"
   },
   "dependencies": {
     "@openzeppelin/contracts-upgradeable": "3.3.0",
