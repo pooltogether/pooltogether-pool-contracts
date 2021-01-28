@@ -1,10 +1,10 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "../comptroller/ComptrollerV2.sol";
+import "../token-faucet/TokenFaucet.sol";
 
 /* solium-disable security/no-block-members */
-contract ComptrollerV2Harness is ComptrollerV2 {
+contract TokenFaucetHarness is TokenFaucet {
 
   uint32 internal time;
 

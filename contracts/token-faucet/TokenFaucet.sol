@@ -16,7 +16,7 @@ import "../token/TokenListener.sol";
 /// @notice The tokens are dripped at a "drip rate per second".  This is the number of tokens that
 /// are dripped each second.  A user's share of the dripped tokens is based on how many 'measure' tokens they hold.
 /* solium-disable security/no-block-members */
-contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
+contract TokenFaucet is OwnableUpgradeable, TokenListener {
   using SafeMathUpgradeable for uint256;
   using SafeCastUpgradeable for uint256;
   using ExtendedSafeCast for uint256;
@@ -77,6 +77,7 @@ contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
   ) public initializer {
     __Ownable_init();
     lastDripTimestamp = _currentTime();
+    require(_dripRatePerSecond > 0, "TokenFaucet/dripRate-gt-zero");
     asset = _asset;
     measure = _measure;
     setDripRatePerSecond(_dripRatePerSecond);
@@ -142,7 +143,7 @@ contract ComptrollerV2 is OwnableUpgradeable, TokenListener {
   }
 
   function setDripRatePerSecond(uint256 _dripRatePerSecond) public onlyOwner {
-    require(_dripRatePerSecond > 0, "ComptrollerV2/dripRate-gt-zero");
+    require(_dripRatePerSecond > 0, "TokenFaucet/dripRate-gt-zero");
 
     // ensure we're all caught up
     drip();

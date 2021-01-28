@@ -2,19 +2,19 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "./ComptrollerV2.sol";
+import "./TokenFaucet.sol";
 import "../external/openzeppelin/ProxyFactory.sol";
 
 /// @title Stake Prize Pool Proxy Factory
-/// @notice Minimal proxy pattern for creating new ComptrollerV2 contracts
-contract ComptrollerV2ProxyFactory is ProxyFactory {
+/// @notice Minimal proxy pattern for creating new TokenFaucet contracts
+contract TokenFaucetProxyFactory is ProxyFactory {
 
   /// @notice Contract template for deploying proxied Comptrollers
-  ComptrollerV2 public instance;
+  TokenFaucet public instance;
 
-  /// @notice Initializes the Factory with an instance of the ComptrollerV2
+  /// @notice Initializes the Factory with an instance of the TokenFaucet
   constructor () public {
-    instance = new ComptrollerV2();
+    instance = new TokenFaucet();
   }
 
   /// @notice Creates a new Comptroller V2
@@ -26,8 +26,8 @@ contract ComptrollerV2ProxyFactory is ProxyFactory {
     IERC20Upgradeable _asset,
     IERC20Upgradeable _measure,
     uint256 _dripRatePerSecond
-  ) external returns (ComptrollerV2) {
-    ComptrollerV2 comptroller = ComptrollerV2(deployMinimal(address(instance), ""));
+  ) external returns (TokenFaucet) {
+    TokenFaucet comptroller = TokenFaucet(deployMinimal(address(instance), ""));
     comptroller.initialize(
       _asset, _measure, _dripRatePerSecond
     );
@@ -38,7 +38,7 @@ contract ComptrollerV2ProxyFactory is ProxyFactory {
   /// @notice Runs claim on all passed comptrollers for a user.
   /// @param user The user to claim for
   /// @param comptrollers The comptrollers to call claim on.
-  function claimAll(address user, ComptrollerV2[] calldata comptrollers) external {
+  function claimAll(address user, TokenFaucet[] calldata comptrollers) external {
     for (uint256 i = 0; i < comptrollers.length; i++) {
       comptrollers[i].claim(user);
     }
