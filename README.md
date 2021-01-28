@@ -76,6 +76,28 @@ $ yarn
 
 We make use of [Buidler](https://buidler.dev) and [buidler-deploy](https://github.com/wighawag/buidler-deploy)
 
+#### Testing
+
+To run unit & integration tests:
+
+```sh
+$ yarn test
+```
+
+To run coverage:
+
+```sh
+$ yarn coverage
+```
+
+To run fuzz tests:
+
+```sh
+$ yarn echidna
+```
+
+#### Deployment
+
 ###### Deploy Locally
 
 Start a local node and deploy the top-level contracts:
