@@ -62,6 +62,8 @@ async function run() {
   await verifyProxyFactory('SingleRandomWinnerProxyFactory')
   await verifyProxyFactory('StakePrizePoolProxyFactory')
   await verifyProxyFactory('TicketProxyFactory')
+  await verifyProxyFactory('TokenFaucetProxyFactory')
+  await verifyProxyFactory('UnsafeTokenListenerDelegatorProxyFactory')
   await verifyProxyFactory('yVaultPrizePoolProxyFactory')
 
   success('Done!')
