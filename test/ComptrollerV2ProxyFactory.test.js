@@ -37,6 +37,7 @@ describe('ComptrollerV2ProxyFactory', () => {
       expect(await comptrollerV2.asset()).to.equal(asset.address)
       expect(await comptrollerV2.measure()).to.equal(measure.address)
       expect(await comptrollerV2.dripRatePerSecond()).to.equal(ethers.utils.parseEther('0.01'))
+      expect(await comptrollerV2.owner()).to.equal(wallet._address)
       
     })
   })

@@ -31,6 +31,7 @@ contract ComptrollerV2ProxyFactory is ProxyFactory {
     comptroller.initialize(
       _asset, _measure, _dripRatePerSecond
     );
+    comptroller.transferOwnership(msg.sender);
     return comptroller;
   }
 

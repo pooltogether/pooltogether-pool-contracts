@@ -295,4 +295,22 @@ describe('ComptrollerV2', () => {
       expect(await dripToken.balanceOf(wallet._address)).to.equal(toWei('5'))
     })
   })
+
+  describe('setDripRatePerSecond()', () => {
+    it('should allow the owner to change the drip rate', async () => {
+      await expect(comptroller.setDripRatePerSecond('1'))
+        .to.emit(comptroller, 'DripRateChanged')
+        .withArgs('1')
+    })
+
+    it('should not allow anyone else to set drip rate', async () => {
+      await expect(comptroller.connect(wallet2).setDripRatePerSecond('1'))
+        .to.be.revertedWith('Ownable: caller is not the owner')
+    })
+
+    it('requires that the rip rate be greater than zero', async () => {
+      await expect(comptroller.setDripRatePerSecond('0'))
+        .to.be.revertedWith('ComptrollerV2/dripRate-gt-zero')
+    })
+  })
 })
