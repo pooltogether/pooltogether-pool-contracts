@@ -93,6 +93,7 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
   /// @param user The user to claim tokens for
   /// @return The amount of tokens that were claimed.
   function claim(address user) external returns (uint256) {
+    drip();
     _captureNewTokensForUser(user);
     uint256 balance = userStates[user].balance;
     userStates[user].balance = 0;
