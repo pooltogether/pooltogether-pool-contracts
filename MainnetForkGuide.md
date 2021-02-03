@@ -1,11 +1,15 @@
 # Mainnet Forking Guide
 
+Maybe clear out old fork:
+```sh
+$ yarn rm -rf deployments/fork_1
+```
+
 Start the fork:
 
 ```sh
 $ yarn start-fork
 ```
-
 
 Copy over deployments:
 

@@ -49,6 +49,9 @@ const config = {
     deployer: {
       default: 0
     },
+    pool: {
+      default: "0x0cEC1A9154Ff802e7934Fc916Ed7Ca50bDE6844e"
+    },
     comptroller: {
       1: '0x4027dE966127af5F015Ea1cfd6293a3583892668'
     },
