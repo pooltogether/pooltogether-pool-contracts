@@ -23,3 +23,16 @@ Remove the changed deployments:
 $ rm deployments/fork_1/CompoundPrizePoolBuilder.json deployments/fork_1/PoolWithMultipleWinnersBuilder.json deployments/fork_1/StakePrizePoolBuilder.json deployments/fork_1/VaultPrizePoolBuilder.json
 ```
 
+Deploy Contracts:
+
+```sh
+$ yarn deploy fork
+```
+
+Fund gnosis safe:
+
+```sh
+$ yarn run-fork ./scripts/forks/distributeEtherFromBinance.js
+```
+
+
