@@ -50,7 +50,7 @@ async function run() {
   }
 
 
-  dim("claimee balance ", claimeeBalance)
+  green("claimee balance ", claimeeBalance)
 
 }
 

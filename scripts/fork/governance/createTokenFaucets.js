@@ -1,5 +1,6 @@
 const buidler = require('@nomiclabs/buidler')
 const chalk = require("chalk")
+const {increaseTime} = require('../../../test/helpers/increaseTime')
 
 function dim() {
   console.log(chalk.dim.call(chalk, ...arguments))
@@ -49,6 +50,9 @@ async function run() {
   green(`Transferred ${daiDripAmount} to ${daiTokenFaucet}`)
 
 
+
+
+
   dim(`Creating usdc TokenFaucet...`)
   const usdcTokenFaucetTx = await tokenFaucetProxyFactory.create(pool, await usdcPrizeStrategy.ticket(), daiDripRate)
   dim(`Retrieving proxy...`)
@@ -70,15 +74,18 @@ async function run() {
   await poolToken.transfer(uniTokenFaucet, uniDripAmount)
   green(`Transferred ${uniDripAmount} to ${uniTokenFaucet}`)
 
+
+
+  
+  
+  green("balance of before claim : ", await poolToken.balanceOf("0x58f40a196d59a458a75478a2f9fc81ada5d5c710")) // address of an unlocked account holding ptDai
+  dim(`moving 30 days forward in time`)
+  await increaseTime(30 * 24 * 3600)
+  const daiTokenFaucetContract = await ethers.getContractAt("TokenFaucet", daiTokenFaucet, gnosisSafe)
+  const daiFaucetClaimResult = await daiTokenFaucetContract.claim("0x58f40a196d59a458a75478a2f9fc81ada5d5c710")
+  green("balance of after claim : ", await poolToken.balanceOf("0x58f40a196d59a458a75478a2f9fc81ada5d5c710"))
+
+
 }
 
 run()
-
-
-// Created Dai TokenFaucet at 0x1A3319e7a6762ba6F6d53325ADB7EFd3016a1043!
-// Creating usdc TokenFaucet...
-// Retrieving proxy...
-// Setting listener...
-// Created usdc TokenFaucet at 0x25044283b981bC18Cba44738fA4F97eabfe9362F!
-// Creating uni TokenFaucet...
-// Created uni TokenFaucet at 0x98e54a80A753130Df8757F01979aF6528300626d!
