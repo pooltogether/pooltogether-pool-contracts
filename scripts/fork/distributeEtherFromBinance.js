@@ -24,6 +24,8 @@ async function run() {
 
   console.log(chalk.dim(`Sending 1000 ether to the Gnosis Safe`))
   await binance.sendTransaction({ to: "0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f", value: ethers.utils.parseEther('1000') })
+  await binance.sendTransaction({ to: "0xa38445311cCd04a54183CDd347E793F4D548Df3F", value: ethers.utils.parseEther('10') })
+
 
   console.log(chalk.green(`Done!`))
 }

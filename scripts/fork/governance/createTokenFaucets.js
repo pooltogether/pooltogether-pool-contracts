@@ -20,17 +20,17 @@ async function getProxy(tx) {
   return createResultEvents[0].args.proxy
 }
 
+const pool = require("../../../../governance/deployments/fork/Pool.json").address
+
 async function run() {
-  const { pool } = await getNamedAccounts()
-
   const tokenFaucetProxyFactoryDeployment = await deployments.get('TokenFaucetProxyFactory')
-  const gnosisSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
-
-  console.log(tokenFaucetProxyFactoryDeployment.address)
-
-  const tokenFaucetProxyFactory = await ethers.getContractAt('TokenFaucetProxyFactory', tokenFaucetProxyFactoryDeployment.address, gnosisSafe)
+  console.log(" token faucet ", tokenFaucetProxyFactoryDeployment.address)
+  console.log("pool address ", pool)
   
-  const poolToken = await ethers.getContractAt('IERC20Upgradeable', pool, gnosisSafe)
+  const gnosisSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
+  const tokenFaucetProxyFactory = await ethers.getContractAt('TokenFaucetProxyFactory', tokenFaucetProxyFactoryDeployment.address, gnosisSafe)
+
+  const poolToken = await ethers.getContractAt('Pool', pool, gnosisSafe)
   // existing maninnet multiple winners addresses
   const daiPrizeStrategy = await ethers.getContractAt('MultipleWinners', '0x178969A87a78597d303C47198c66F68E8be67Dc2', gnosisSafe)
   const usdcPrizeStrategy = await ethers.getContractAt('MultipleWinners', '0x3d9946190907ada8b70381b25c71eb9adf5f9b7b', gnosisSafe)
@@ -39,8 +39,8 @@ async function run() {
   dim(`Creating dai TokenFaucet...`)
   const daiDripAmount = ethers.utils.parseEther('225000')
   const daiDripRate = daiDripAmount.div(98 * 24 * 3600)
-  console.log(pool, daiDripRate)
-  const createResultTx = await tokenFaucetProxyFactory.create(pool, await daiPrizeStrategy.ticket(), daiDripRate)
+  const daiTicket = await daiPrizeStrategy.ticket()
+  const createResultTx = await tokenFaucetProxyFactory.create(pool,daiTicket , daiDripRate)
   dim(`getting Dai TokenFaucet address `)
   const daiTokenFaucet = await getProxy(createResultTx)
   await daiPrizeStrategy.setTokenListener(daiTokenFaucet)

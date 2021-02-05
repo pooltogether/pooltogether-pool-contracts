@@ -11,8 +11,22 @@ function green() {
 
 const { ethers, deployments, getNamedAccounts } = buidler
 
+
+const employeeAAddress = require("../../../../governance/deployments/fork/TreasuryVesterForEmployeeA.json").address
+const employeeBAddress = require("../../../../governance/deployments/fork/TreasuryVesterForEmployeeB.json").address
+const employeeCAddress = require("../../../../governance/deployments/fork/TreasuryVesterForEmployeeC.json").address
+const employeeDAddress = require("../../../../governance/deployments/fork/TreasuryVesterForEmployeeD.json").address
+const employeeLAddress = require("../../../../governance/deployments/fork/TreasuryVesterForEmployeeL.json").address
+const employeeLiAddress = require("../../../../governance/deployments/fork/TreasuryVesterForEmployeeLi.json").address
+const employeeJAddress = require("../../../../governance/deployments/fork/TreasuryVesterForEmployeeJ.json").address
+
+const pool = require("../../../../governance/deployments/fork/Pool.json").address
+const treasuryVesting = require("../../../../governance/deployments/fork/TreasuryVesterForTreasury.json").address
+const merkleDistributor = require("../../../../merkle-distributor/deployments/fork/MerkleDistributor.json").address
+
+
 async function run() {
-  const { pool , merkleDistributor, treasuryVesting} = await getNamedAccounts()
+  
   const gnosisSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
   const poolToken = await ethers.getContractAt('IERC20Upgradeable', pool, gnosisSafe)
 
@@ -23,25 +37,25 @@ async function run() {
   await poolToken.transfer(merkleDistributor, ethers.utils.parseEther('1500000'))
 
   dim(`Disbursing to employeeA...`)
-  await poolToken.transfer('0xCcDD14e54F5ff6769235F4d09D07E61F01368246', ethers.utils.parseEther('10000'))
+  await poolToken.transfer(employeeAAddress, ethers.utils.parseEther('10000'))
 
   dim(`Disbursing to employeeB...`)
-  await poolToken.transfer('0xE59d48B89555aD130b48500bf599c1EF397974e8', ethers.utils.parseEther('400000'))
+  await poolToken.transfer(employeeBAddress, ethers.utils.parseEther('400000'))
 
   dim(`Disbursing to employeeC...`)
-  await poolToken.transfer('0x7A426B6FB3C9cA943465317AFE58653Fc42B3EEE', ethers.utils.parseEther('400000'))
+  await poolToken.transfer(employeeCAddress, ethers.utils.parseEther('400000'))
 
   dim(`Disbursing to employeeD...`)
-  await poolToken.transfer('0x13465E8744a4e0e21A383b3600918038C75A3EE4', ethers.utils.parseEther('10000'))
+  await poolToken.transfer(employeeDAddress, ethers.utils.parseEther('10000'))
 
   dim(`Disbursing to employeeL...`)
-  await poolToken.transfer('0x2f8108Bd0a8390CA993E3bDd887f5C50c880cB6a', ethers.utils.parseEther('400000'))
+  await poolToken.transfer(employeeLAddress, ethers.utils.parseEther('400000'))
 
   dim(`Disbursing to employeeLi...`)
-  await poolToken.transfer('0xB6A4D57e0792e60E5F1d6f2E3F62eb3be412BEDE', ethers.utils.parseEther('10000'))
+  await poolToken.transfer(employeeLiAddress, ethers.utils.parseEther('10000'))
 
   dim(`Disbursing to employeeJ...`)
-  await poolToken.transfer('0x880617adfDDd57FED6b635a951aa1835e52BbA97', ethers.utils.parseEther('4200'))
+  await poolToken.transfer(employeeJAddress, ethers.utils.parseEther('4200'))
 }
 
 run()

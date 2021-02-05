@@ -15,7 +15,7 @@ const chainName = (chainId) => {
 }
 
 module.exports = async (buidler) => {
-  console.log("running delpoy script")
+  console.log("Running deploy script")
   const { getNamedAccounts, deployments, getChainId, ethers } = buidler
   const { deploy } = deployments
 

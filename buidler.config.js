@@ -49,21 +49,6 @@ const config = {
     deployer: {
       default: 0
     },
-    pool: {
-      default: "0x4C37c9C3F6c0a7A86D91Abac0B96b127cd9DbDb4"
-    },
-    alphaGovernor: {
-      default: "0xB8e385C4E049d579d8375e75503CdDBC465151EA"
-    },
-    timelock:{
-      default: "0x13dF292c90Ac8Ac3259Ec598F20C23E9030Fb3Ab"
-    },
-    merkleDistributor:{
-      default: "0x77511319482F9dcc77C6eba1aF964423f965f5f0"
-    },
-    treasuryVesting: {
-      default: "0xDBF04456Aae2e5dF4e9894b309c5C1A9EF522A31"
-    },
     comptroller: {
       1: '0x4027dE966127af5F015Ea1cfd6293a3583892668'
     },

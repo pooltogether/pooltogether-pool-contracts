@@ -8,15 +8,17 @@ function dim() {
 function green() {
   console.log(chalk.green.call(chalk, ...arguments))
 }
+const merkleDistributor = require("../../../../merkle-distributor/deployments/fork/MerkleDistributor.json").address
+const poolAddress = require("../../../../governance/deployments/fork/Pool.json").address
 
 const { ethers, deployments, getNamedAccounts } = buidler
 
 async function run() {
-  const { pool, merkleDistributor } = await getNamedAccounts()
+  
 
   const gnosisSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
 
-  const poolToken = await ethers.getContractAt('IERC20Upgradeable', pool, gnosisSafe)
+  const poolToken = await ethers.getContractAt('Pool', poolAddress, gnosisSafe)
   // check merkleDistbributor balance is non zero
   const poolBalanceOfMerkleDistributor = await poolToken.balanceOf(merkleDistributor)
   console.log("MerkleDistributor POOL balance ",poolBalanceOfMerkleDistributor.toString())
@@ -34,16 +36,21 @@ async function run() {
   "0xffda30e1353c6221b0fa72df5a35e79073b185d79fee59ca1bd4bb20a3906463","0xc7ebb116b642191179be9515d6bcb5fe427991cf14baf05961ea393bb4a087e3",
   "0x6e4d811f548750e6321070ff0f3529d106f7efacf77fb23218253119351d56a0"],
   "flags":{"isV1":false,"isV2_DAI":true,"isV2_USDC":false,"isV2_DAI_PODS":false,"isV2_USDC_PODS":false,"isV3_DAI":true,"isV3_UNI":false,"isV3_USDC":false,"isSnapshot":false}}
-
+    
+  const claimeeBalance = await poolToken.balanceOf("0x9C6EFFf83578a1049E91106F071A24Ba5313B9e9")
 
   if(!(await merkleDistributorContract.isClaimed(proof.index))){
     //claim(uint256 index, address account, uint256 amount, bytes32[] calldata merkleProof) 
     const claimResult = await merkleDistributorContract.claim(proof.index,"0x9C6EFFf83578a1049E91106F071A24Ba5313B9e9", proof.amount, proof.proof)
-    const claimeeBalance = await poolToken.balanceOf("0x9C6EFFf83578a1049E91106F071A24Ba5313B9e9")
+    const updatedClaimeeBalance = await poolToken.balanceOf("0x9C6EFFf83578a1049E91106F071A24Ba5313B9e9")
+    green(`claimed: ${updatedClaimeeBalance.toString()}`)
+  }
+  else{
+    dim("this index has already claimed")
   }
 
 
-  green(`claimed: ${claimeeBalance.toString()}`)
+  dim("claimee balance ", claimeeBalance)
 
 }
 
