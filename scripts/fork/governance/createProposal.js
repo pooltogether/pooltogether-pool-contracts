@@ -26,7 +26,7 @@ async function run() {
     
     // create a proposal to call claim() on Treasury Vestor
     const proposalAmount = await ethers.utils.parseEther("10")   
-    const createProposalTx =   await alphaGovernanceContract.propose([treasuryVestingAddress], [proposalAmount], ["claim()"], ["0x"], "call claim on TreasuryVesting contract")
+    const createProposalTx =   await alphaGovernanceContract.propose([treasuryVestingAddress], [proposalAmount], ["claim()"], [""], "call claim on TreasuryVesting contract")
     
     const createProposalReceipt = await ethers.provider.getTransactionReceipt(createProposalTx.hash)
     const createProposalEvents = createProposalReceipt.logs.map(log => { try { return alphaGovernanceContract.interface.parseLog(log) } catch (e) { return null } })
@@ -77,9 +77,11 @@ async function run() {
     await increaseTime(173000)
     dim("blockTimestamp is ", (await ethers.provider.getBlock()).timestamp)
     dim("eta for proposal is ",eta.toString())
+    dim("proposal status is ", await alphaGovernanceContract.state(proposalId.toString()))
     const executeProposalResult = await alphaGovernanceContract.execute(proposalId.toString())
 
 
+    green(`Finished executing proposals`)
     // Transfer event emmitted : receipient should be timelock --parse executeProposalResult
 
 

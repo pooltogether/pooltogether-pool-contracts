@@ -57,6 +57,7 @@
     "ethereum-waffle": "^3.0.2",
     "ethers": "^5.0.8",
     "ganache-cli": "^6.12.0",
+    "hardhat": "^2.0.8",
     "minimist": "^1.2.5",
     "mocha-junit-reporter": "1.23.3",
     "shelljs": "0.8.3",

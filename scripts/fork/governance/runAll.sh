@@ -2,8 +2,8 @@
 # yarn start-fork
 
 
-# deploy governance repo
-# deploy merkle-distributor repo
+# deploy governance repo with $rm -rf deployments/fork && yarn deploy fork
+# deploy merkle-distributor repo with $rm -rf deployments/fork && yarn deploy fork
 
 rm -rf deployments/fork_1
 
