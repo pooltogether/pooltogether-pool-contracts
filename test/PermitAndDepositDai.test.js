@@ -2,9 +2,9 @@ const { expect } = require("chai");
 const PermitAndDepositDai = require('../build/PermitAndDepositDai.json')
 const Dai = require('../build/Dai.json')
 const PrizePoolInterface = require('../build/PrizePoolInterface.json')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { deployContract, deployMockContract } = require('ethereum-waffle')
-const { AddressZero } = buidler.ethers.constants
+const { AddressZero } = hardhat.ethers.constants
 
 const { signPermit } = require('./helpers/signPermit.js')
 
@@ -52,8 +52,8 @@ describe('PermitAndDepositDai', () => {
   }
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
+    [wallet, wallet2, wallet3] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
 
     // just fake it so that we can call it as if we *were* the prize strategy
     prizePoolAddress = wallet._address

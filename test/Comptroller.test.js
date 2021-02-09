@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const ComptrollerHarness = require('../build/ComptrollerHarness.json')
 const IERC20 = require('../build/IERC20Upgradeable.json')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const { AddressZero } = require("ethers").constants
@@ -16,7 +16,7 @@ const debug = require('debug')('ptv3:Comptroller.test')
 const SENTINEL = '0x0000000000000000000000000000000000000001'
 
 async function getLastEvent(contract, tx) {
-  let receipt = await buidler.ethers.provider.getTransactionReceipt(tx.hash)
+  let receipt = await hardhat.ethers.provider.getTransactionReceipt(tx.hash)
   let lastLog = receipt.logs[receipt.logs.length - 1]
   return contract.interface.parseLog(lastLog)
 }
@@ -31,8 +31,8 @@ describe('Comptroller', () => {
   let prizePoolAddress
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
 
     // just fake it so that we can call it as if we *were* the prize strategy
     prizePoolAddress = wallet._address

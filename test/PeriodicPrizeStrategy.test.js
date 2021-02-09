@@ -14,7 +14,7 @@ const ControlledToken = require('../build/ControlledToken.json')
 const Ticket = require('../build/Ticket.json')
 
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { AddressZero, Zero, One } = require('ethers').constants
 
 
@@ -44,7 +44,7 @@ describe('PeriodicPrizeStrategy', function() {
   let periodicPrizeStrategyListener, distributor
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
 
     debug(`using wallet ${wallet._address}`)
 

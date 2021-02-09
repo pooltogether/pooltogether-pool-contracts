@@ -1,7 +1,7 @@
 const { expect } = require("chai")
 const UnsafeTokenListenerDelegatorProxyFactory = require('../build/UnsafeTokenListenerDelegatorProxyFactory.json')
 const TokenListenerInterface = require('../build/TokenListenerInterface.json')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { deployContract, deployMockContract } = require('ethereum-waffle')
 
 let overrides = { gasLimit: 20000000 }
@@ -15,11 +15,11 @@ describe('UnsafeTokenListenerDelegator', () => {
   let listener, delegator
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
+    [wallet, wallet2, wallet3] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
     
     await deployments.fixture()
-    factory = await buidler.ethers.getContractAt(
+    factory = await hardhat.ethers.getContractAt(
       "UnsafeTokenListenerDelegatorProxyFactory",
       (await deployments.get("UnsafeTokenListenerDelegatorProxyFactory")).address,
       wallet

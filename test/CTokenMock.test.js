@@ -3,7 +3,7 @@ const ERC20Mintable = require('../build/ERC20Mintable.json')
 const CTokenMock = require('../build/CTokenMock.json')
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe('CTokenMock contract', function() {
@@ -15,7 +15,7 @@ describe('CTokenMock contract', function() {
     let otherWallet
 
     beforeEach(async () => {
-        [wallet, otherWallet] = await buidler.ethers.getSigners()
+        [wallet, otherWallet] = await hardhat.ethers.getSigners()
 
         token = await deployContract(wallet, ERC20Mintable, ['Test Token', 'TEST'])
         cTokenMock = await deployContract(wallet, CTokenMock, [

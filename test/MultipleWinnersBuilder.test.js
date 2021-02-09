@@ -1,6 +1,6 @@
-const { deployments } = require("@nomiclabs/buidler");
+const { deployments } = require("@nomiclabs/hardhat");
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { ethers } = require('ethers')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const PrizePool = require('../build/PrizePool.json')
@@ -24,9 +24,9 @@ describe('MultipleWinnersBuilder', () => {
   let multipleWinnersConfig
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3] = await hardhat.ethers.getSigners()
     await deployments.fixture()
-    builder = await buidler.ethers.getContractAt(
+    builder = await hardhat.ethers.getContractAt(
       "MultipleWinnersBuilder",
       (await deployments.get("MultipleWinnersBuilder")).address,
       wallet
@@ -75,7 +75,7 @@ describe('MultipleWinnersBuilder', () => {
 
       debug(`Getting contract at ${multipleWinnersCreatedEvent.args.prizeStrategy}...`)
 
-      const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinnersHarness', multipleWinnersCreatedEvent.args.prizeStrategy, wallet)
+      const prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinnersHarness', multipleWinnersCreatedEvent.args.prizeStrategy, wallet)
 
       const ticketAddress = await prizeStrategy.ticket()
       const sponsorshipAddress = await prizeStrategy.sponsorship()
@@ -90,11 +90,11 @@ describe('MultipleWinnersBuilder', () => {
       expect(await prizeStrategy.numberOfWinners()).to.equal(multipleWinnersConfig.numberOfWinners)
       expect(await prizeStrategy.splitExternalErc20Awards()).to.equal(multipleWinnersConfig.splitExternalErc20Awards)
 
-      const ticket = await buidler.ethers.getContractAt('Ticket', ticketAddress, wallet)
+      const ticket = await hardhat.ethers.getContractAt('Ticket', ticketAddress, wallet)
       expect(await ticket.name()).to.equal(multipleWinnersConfig.ticketName)
       expect(await ticket.symbol()).to.equal(multipleWinnersConfig.ticketSymbol)
 
-      const sponsorship = await buidler.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
+      const sponsorship = await hardhat.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
       expect(await sponsorship.name()).to.equal(multipleWinnersConfig.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(multipleWinnersConfig.sponsorshipSymbol)
     })
@@ -125,7 +125,7 @@ describe('MultipleWinnersBuilder', () => {
 
       debug(`Getting contract at ${multipleWinnersCreatedEvent.args.prizeStrategy}...`)
 
-      const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinnersHarness', multipleWinnersCreatedEvent.args.prizeStrategy, wallet)
+      const prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinnersHarness', multipleWinnersCreatedEvent.args.prizeStrategy, wallet)
 
       expect(await prizeStrategy.prizePeriodStartedAt()).to.equal(1111)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(222)

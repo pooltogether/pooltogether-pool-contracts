@@ -13,7 +13,7 @@ const ControlledToken = require('../build/ControlledToken.json')
 const Ticket = require('../build/Ticket.json')
 
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { AddressZero, Zero, One } = require('ethers').constants
 
 const now = () => (new Date()).getTime() / 1000 | 0
@@ -35,7 +35,7 @@ describe('MultipleWinners', function() {
   let prizePeriodSeconds = 1000
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()
 
     debug({
       wallet: wallet._address,

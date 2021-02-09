@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const Reserve = require('../build/Reserve.json')
 const PrizePoolInterface = require('../build/PrizePoolInterface.json')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const { AddressZero } = require("ethers").constants
@@ -18,8 +18,8 @@ describe('Reserve', () => {
   let reserve
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
 
     reserve = await deployContract(wallet, Reserve, [], overrides)
   })

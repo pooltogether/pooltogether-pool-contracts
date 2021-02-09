@@ -4,7 +4,7 @@ const VolumeDripExposed = require('../build/VolumeDripExposed.json')
 const { call } = require('./helpers/call')
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 
 const toWei = ethers.utils.parseEther
 
@@ -22,7 +22,7 @@ describe('VolumeDripExposed', function() {
   const unlimitedTokens = toWei('10000000')
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()
     
     drip = await deployContract(wallet, VolumeDripExposed, [], overrides)
 

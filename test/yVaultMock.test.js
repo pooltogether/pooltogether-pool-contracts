@@ -4,7 +4,7 @@ const ERC20Mintable = require('../build/ERC20Mintable.json')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 
 const toWei = ethers.utils.parseEther
 
@@ -18,7 +18,7 @@ describe('yVaultMock', function() {
   let erc20token, vault
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
     debug(`using wallet ${wallet._address}`)
 
     debug('creating token...')

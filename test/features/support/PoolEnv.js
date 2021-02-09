@@ -1,6 +1,6 @@
 // features/support/world.js
 const chalk = require('chalk')
-const buidler = require("@nomiclabs/buidler")
+const hardhat = require("@nomiclabs/hardhat")
 const ethers = require('ethers')
 const ERC20Mintable = require('../../../build/ERC20Mintable.json')
 const ERC721Mintable = require('../../../build/ERC721Mintable.json')
@@ -31,7 +31,7 @@ function PoolEnv() {
     yVault = false,
     stakePool = false
   }) {
-    this.wallets = await buidler.ethers.getSigners()
+    this.wallets = await hardhat.ethers.getSigners()
 
     debug({
       wallet0: this.wallets[0]._address,
@@ -97,7 +97,7 @@ function PoolEnv() {
   }
 
   this.prizeStrategy = async function (wallet) {
-    let prizeStrategy = await buidler.ethers.getContractAt('MultipleWinnersHarness', this.env.prizeStrategy.address, wallet)
+    let prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinnersHarness', this.env.prizeStrategy.address, wallet)
     this._prizeStrategy = prizeStrategy
     return prizeStrategy
   }
@@ -123,13 +123,13 @@ function PoolEnv() {
   this.ticket = async function (wallet) {
     let prizeStrategy = await this.prizeStrategy(wallet)
     let ticketAddress = await prizeStrategy.ticket()
-    return await buidler.ethers.getContractAt('ControlledToken', ticketAddress, wallet)
+    return await hardhat.ethers.getContractAt('ControlledToken', ticketAddress, wallet)
   }
 
   this.sponsorship = async function (wallet) {
     let prizePool = await this.prizeStrategy(wallet)
     let sponsorshipAddress = await prizePool.sponsorship()
-    return await buidler.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
+    return await hardhat.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
   }
 
   this.wallet = async function (id) {

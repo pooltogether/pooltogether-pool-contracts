@@ -5,7 +5,7 @@ const Ticket = require('../build/Ticket.json')
 const chalk = require('chalk')
 
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { AddressZero } = require('ethers').constants
 
 const debug = require('debug')('ptv3:Ticket.test')
@@ -19,7 +19,7 @@ describe('Ticket', function() {
   let controller
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()
     controller = await deployMockContract(wallet, TokenControllerInterface.abi)    
     ticket = await deployContract(wallet, Ticket, [], overrides)
     await ticket.initialize("Name", "SYMBOL", 18, controller.address)

@@ -1,4 +1,4 @@
-const buidler = require("@nomiclabs/buidler");
+const hardhat = require("@nomiclabs/hardhat");
 
 const ERC20Mintable = require('../build/ERC20Mintable.json')
 const CompoundPrizePool = require('../build/CompoundPrizePool.json')
@@ -40,7 +40,7 @@ async function main() {
   console.log("PoolTogether Pool Contracts - Drip Tokens Script")
   console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
-  const { getNamedAccounts, deployments, getChainId, ethers } = buidler
+  const { getNamedAccounts, deployments, getChainId, ethers } = hardhat
   const { deploy } = deployments
   const toWei = ethers.utils.parseEther
 

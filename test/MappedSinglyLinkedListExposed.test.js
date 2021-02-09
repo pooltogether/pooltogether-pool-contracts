@@ -3,7 +3,7 @@ const MappedSinglyLinkedListExposed = require('../build/MappedSinglyLinkedListEx
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { AddressZero } = require('ethers').constants
 
 const toWei = ethers.utils.parseEther
@@ -19,7 +19,7 @@ describe('MappedSinglyLinkedListExposed', function() {
   let list
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()
 
     list = await deployContract(wallet, MappedSinglyLinkedListExposed, [], overrides)
     await list.initialize()

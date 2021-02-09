@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const ControlledToken = require('../build/ControlledToken.json')
 const TokenControllerInterface = require('../build/TokenControllerInterface.json')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 
@@ -16,8 +16,8 @@ describe('ControlledToken', () => {
   let token, token2
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
 
     controller = await deployMockContract(wallet, TokenControllerInterface.abi)
     token = await deployContract(wallet, ControlledToken, [])

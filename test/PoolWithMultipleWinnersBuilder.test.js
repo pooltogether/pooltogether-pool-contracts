@@ -1,6 +1,6 @@
-const { deployments } = require("@nomiclabs/buidler");
+const { deployments } = require("@nomiclabs/hardhat");
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { ethers } = require('ethers')
 const { AddressZero } = ethers.constants
 const { getEvents } = require('./helpers/getEvents')
@@ -22,11 +22,11 @@ describe('PoolWithMultipleWinnersBuilder', () => {
   let multipleWinnersConfig
 
   beforeEach(async () => {
-    [wallet] = await buidler.ethers.getSigners()
+    [wallet] = await hardhat.ethers.getSigners()
 
     await deployments.fixture()
     
-    builder = await buidler.ethers.getContractAt(
+    builder = await hardhat.ethers.getContractAt(
       "PoolWithMultipleWinnersBuilder",
       (await deployments.get("PoolWithMultipleWinnersBuilder")).address,
       wallet
@@ -92,8 +92,8 @@ describe('PoolWithMultipleWinnersBuilder', () => {
 
       debug(`Creating prize pool using address: ${prizePoolCreatedEvent.args.prizePool}...`)
 
-      const prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', prizePoolCreatedEvent.args.prizePool, wallet)
-      const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinners', prizePoolCreatedEvent.args.prizeStrategy, wallet)
+      const prizePool = await hardhat.ethers.getContractAt('CompoundPrizePoolHarness', prizePoolCreatedEvent.args.prizePool, wallet)
+      const prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinners', prizePoolCreatedEvent.args.prizeStrategy, wallet)
 
       expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
       expect(await prizePool.owner()).to.equal(wallet._address)
@@ -140,8 +140,8 @@ describe('PoolWithMultipleWinnersBuilder', () => {
 
       debug(`Creating prize pool using address: ${prizePoolCreatedEvent.args.prizePool}...`)
 
-      const prizePool = await buidler.ethers.getContractAt('StakePrizePool', prizePoolCreatedEvent.args.prizePool, wallet)
-      const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinners', prizePoolCreatedEvent.args.prizeStrategy, wallet)
+      const prizePool = await hardhat.ethers.getContractAt('StakePrizePool', prizePoolCreatedEvent.args.prizePool, wallet)
+      const prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinners', prizePoolCreatedEvent.args.prizeStrategy, wallet)
 
       expect(await prizePool.token()).to.equal(cToken.address)
       expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)

@@ -1,6 +1,6 @@
-const { deployments } = require("@nomiclabs/buidler");
+const { deployments } = require("@nomiclabs/hardhat");
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { ethers } = require('ethers')
 const { AddressZero } = ethers.constants
 const { deployMockContract } = require('./helpers/deployMockContract')
@@ -19,9 +19,9 @@ describe('ControlledTokenBuilder', () => {
   let controlledTokenConfig
 
   beforeEach(async () => {
-    [wallet] = await buidler.ethers.getSigners()
+    [wallet] = await hardhat.ethers.getSigners()
     await deployments.fixture()
-    controlledTokenBuilder = await buidler.ethers.getContractAt(
+    controlledTokenBuilder = await hardhat.ethers.getContractAt(
       "ControlledTokenBuilder",
       (await deployments.get("ControlledTokenBuilder")).address,
       wallet
@@ -48,7 +48,7 @@ describe('ControlledTokenBuilder', () => {
   })
 
   async function getEvents(tx) {
-    let receipt = await buidler.ethers.provider.getTransactionReceipt(tx.hash)
+    let receipt = await hardhat.ethers.provider.getTransactionReceipt(tx.hash)
     return receipt.logs.reduce((parsedEvents, log) => {
       try {
         parsedEvents.push(controlledTokenBuilder.interface.parseLog(log))
@@ -64,7 +64,7 @@ describe('ControlledTokenBuilder', () => {
       let events = await getEvents(tx)
       let event = events.find(e => e.name == 'CreatedControlledToken')
 
-      const controlledToken = await buidler.ethers.getContractAt('ControlledToken', event.args.token, wallet)
+      const controlledToken = await hardhat.ethers.getContractAt('ControlledToken', event.args.token, wallet)
       expect(await controlledToken.name()).to.equal(controlledTokenConfig.name)
       expect(await controlledToken.symbol()).to.equal(controlledTokenConfig.symbol)
       expect(await controlledToken.decimals()).to.equal(controlledTokenConfig.decimals)
@@ -79,7 +79,7 @@ describe('ControlledTokenBuilder', () => {
       let events = await getEvents(tx)
       let event = events.find(e => e.name == 'CreatedTicket')
 
-      const ticket = await buidler.ethers.getContractAt('Ticket', event.args.token, wallet)
+      const ticket = await hardhat.ethers.getContractAt('Ticket', event.args.token, wallet)
       expect(await ticket.name()).to.equal(controlledTokenConfig.name)
       expect(await ticket.symbol()).to.equal(controlledTokenConfig.symbol)
       expect(await ticket.decimals()).to.equal(controlledTokenConfig.decimals)

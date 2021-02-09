@@ -3,7 +3,7 @@ const UInt256ArrayExposed = require('../build/UInt256ArrayExposed.json')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 
 const debug = require('debug')('ptv3:UInt256ArrayExposed.test')
 
@@ -14,7 +14,7 @@ describe('UInt256ArrayExposed', function() {
   let array
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()    
+    [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()    
   })
 
   describe('remove()', () => {

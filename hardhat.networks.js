@@ -1,11 +1,6 @@
 const ethers = require('ethers')
 
 const networks = {
-  buidlerevm: {
-    blockGasLimit: 200000000,
-    allowUnlimitedContractSize: true,
-    chainId: 31337
-  },
   coverage: {
     url: 'http://127.0.0.1:8555',
     blockGasLimit: 200000000,
@@ -19,12 +14,12 @@ const networks = {
   }
 }
 
-if (process.env.USE_BUIDLER_EVM_ACCOUNTS) {
-  networks.buidlerevm.accounts = process.env.USE_BUIDLER_EVM_ACCOUNTS.split(/\s+/).map(privateKey => ({
-    privateKey,
-    balance: ethers.utils.parseEther('10000000').toHexString()
-  }))
-}
+// if (process.env.USE_BUIDLER_EVM_ACCOUNTS) {
+//   networks.buidlerevm.accounts = process.env.USE_BUIDLER_EVM_ACCOUNTS.split(/\s+/).map(privateKey => ({
+//     privateKey,
+//     balance: ethers.utils.parseEther('10000000').toHexString()
+//   }))
+// }
 
 if (process.env.HDWALLET_MNEMONIC) {
   networks.fork = {

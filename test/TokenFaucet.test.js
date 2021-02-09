@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const TokenFaucetHarness = require('../build/TokenFaucetHarness.json')
 const ERC20 = require('../build/ERC20Mintable.json')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { deployContract } = require('ethereum-waffle')
 const { AddressZero } = require("ethers").constants
 
@@ -18,8 +18,8 @@ describe('TokenFaucet', () => {
   let comptroller, dripToken, measure
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
 
     measure = await deployContract(wallet, ERC20, ['Measure', 'MEAS'])
     dripToken = await deployContract(wallet, ERC20, ['DripToken', 'DRIP'])

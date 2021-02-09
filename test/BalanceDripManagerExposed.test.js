@@ -5,7 +5,7 @@ const IERC20 = require('../build/IERC20Upgradeable.json')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { AddressZero } = require('ethers').constants
 
 const toWei = ethers.utils.parseEther
@@ -24,7 +24,7 @@ describe('BalanceDripManagerExposed', function() {
   let invalidDrip = '0x0000000000000000000000000000000000000003'
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()
 
     dripExposed = await deployContract(wallet, BalanceDripManagerExposed, [], overrides)
 

@@ -12,7 +12,7 @@ const ControlledToken = require('../build/ControlledToken.json')
 const Ticket = require('../build/Ticket.json')
 
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 
 const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
@@ -35,7 +35,7 @@ describe('SingleRandomWinner', function() {
   let creditLimitMantissa = 0.1
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3] = await hardhat.ethers.getSigners()
 
     debug(`using wallet ${wallet._address}`)
 

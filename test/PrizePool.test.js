@@ -11,7 +11,7 @@ const IERC721 = require('../build/IERC721Upgradeable.json')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { call } = require('./helpers/call')
 const { AddressZero } = require('ethers').constants
 
@@ -36,7 +36,7 @@ describe('PrizePool', function() {
   let ticket, sponsorship
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
     debug(`using wallet ${wallet._address}`)
 
     debug('mocking tokens...')

@@ -3,7 +3,7 @@ const ExtendedSafeCastExposed = require('../build/ExtendedSafeCastExposed.json')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 
 const toWei = ethers.utils.parseEther
 
@@ -19,7 +19,7 @@ describe('ExtendedSafeCastExposed', function() {
   const MAX_96 = '79228162514264337593543950336' // 2**96
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()
 
     cast = await deployContract(wallet, ExtendedSafeCastExposed, [], overrides)
   })

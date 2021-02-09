@@ -1,9 +1,9 @@
 const { expect } = require("chai");
 const ERC20 = require('../build/ERC20Mintable.json')
 const TokenFaucet = require('../build/TokenFaucet.json')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('@nomiclabs/hardhat')
 const { deployContract, deployMockContract } = require('ethereum-waffle')
-const { deployments } = require("@nomiclabs/buidler")
+const { deployments } = require("@nomiclabs/hardhat")
 
 let overrides = { gasLimit: 20000000 }
 
@@ -16,13 +16,13 @@ describe('TokenFaucetProxyFactory', () => {
   let comptrollerV2ProxyFactory, measure, asset
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
     measure = await deployContract(wallet, ERC20, ['Measure', 'MEAS'])
     asset = await deployContract(wallet, ERC20, ['DripToken', 'DRIP'])
     await deployments.fixture()
     let comptrollerV2ProxyFactoryResult = await deployments.get("TokenFaucetProxyFactory")
-    comptrollerV2ProxyFactory = await buidler.ethers.getContractAt('TokenFaucetProxyFactory', comptrollerV2ProxyFactoryResult.address, wallet)
+    comptrollerV2ProxyFactory = await hardhat.ethers.getContractAt('TokenFaucetProxyFactory', comptrollerV2ProxyFactoryResult.address, wallet)
   })
 
   describe('create()', () => {
@@ -32,7 +32,7 @@ describe('TokenFaucetProxyFactory', () => {
       let event = comptrollerV2ProxyFactory.interface.parseLog(receipt.logs[0])
       expect(event.name).to.equal('ProxyCreated')
 
-      let comptrollerV2 = await buidler.ethers.getContractAt("TokenFaucet", event.args.proxy, wallet)
+      let comptrollerV2 = await hardhat.ethers.getContractAt("TokenFaucet", event.args.proxy, wallet)
 
       expect(await comptrollerV2.asset()).to.equal(asset.address)
       expect(await comptrollerV2.measure()).to.equal(measure.address)
