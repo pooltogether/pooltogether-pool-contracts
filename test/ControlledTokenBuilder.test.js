@@ -28,9 +28,6 @@ describe('ControlledTokenBuilder', () => {
     controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
     ticketProxyFactory = (await deployments.get("TicketProxyFactory"))
 
-
-
-    console.log("deploying mock")
     const TokenControllerInterface = await hre.artifacts.readArtifact("TokenControllerInterface")
     controller = await deployMockContract(wallets[0], TokenControllerInterface.abi)
 

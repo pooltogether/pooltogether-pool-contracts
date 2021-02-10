@@ -63,7 +63,7 @@
     "shelljs": "0.8.3",
     "solc": "0.6.4",
     "solhint": "3.0.0",
-    "solidity-coverage": "0.7.12",
+    "solidity-coverage": "0.7.14",
     "truffle-extract": "pooltogether/truffle-extract"
   },
   "files": [

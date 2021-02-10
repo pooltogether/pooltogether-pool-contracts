@@ -1,7 +1,5 @@
 const networks = require('./hardhat.networks')
 
-// const {TASK_COMPILE_GET_COMPILER_INPUT} = require("@nomiclabs/buidler/builtin-tasks/task-names");
-
 const RNGBlockhashRopsten = require('@pooltogether/pooltogether-rng-contracts/deployments/ropsten/RNGBlockhash.json')
 const RNGBlockhashRinkeby = require('@pooltogether/pooltogether-rng-contracts/deployments/rinkeby/RNGBlockhash.json')
 const RNGBlockhashKovan = require('@pooltogether/pooltogether-rng-contracts/deployments/kovan/RNGBlockhash.json')
@@ -9,14 +7,7 @@ const RNGBlockhashKovan = require('@pooltogether/pooltogether-rng-contracts/depl
 require("@nomiclabs/hardhat-waffle");
 require('hardhat-deploy')
 require('hardhat-deploy-ethers')
-
-// This must occur after buidler-deploy!
-// task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
-//   const input = await runSuper();
-//   input.settings.metadata.useLiteralContent = process.env.USE_LITERAL_CONTENT != 'false';
-//   console.log(`useLiteralContent: ${input.settings.metadata.useLiteralContent}`)
-//   return input;
-// })
+require('solidity-coverage')
 
 const testnetAdmin = '0xE0F4217390221aF47855E094F6e112D43C8698fE' // Account 1
 const testnetUser1 = '0xeedDf4937E3A7aBe03E08963C3c20affbD770b51' // Account 3
