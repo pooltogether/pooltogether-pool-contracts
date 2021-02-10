@@ -74,7 +74,7 @@ Install dependencies:
 $ yarn
 ```
 
-We make use of [Buidler](https://hardhat.dev) and [hardhat-deploy](https://github.com/wighawag/hardhat-deploy)
+We make use of [Hardhat](https://hardhat.dev) and [hardhat-deploy](https://github.com/wighawag/hardhat-deploy)
 
 #### Testing
 
@@ -110,7 +110,7 @@ NOTE: When you run this command it will reset the local blockchain.
 
 ###### Connect Locally
 
-Start up a [Buidler Console](https://hardhat.dev/guides/hardhat-console.html):
+Start up a [Hardhat Console](https://hardhat.dev/guides/hardhat-console.html):
 
 ```bash
 $ hardhat console --network localhost
