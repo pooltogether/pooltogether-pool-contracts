@@ -1,11 +1,11 @@
 const { expect } = require("chai");
-const ERC20 = require('../build/ERC20Mintable.json')
-const TokenFaucet = require('../build/TokenFaucet.json')
-const hardhat = require('@nomiclabs/hardhat')
-const { deployContract, deployMockContract } = require('ethereum-waffle')
-const { deployments } = require("@nomiclabs/hardhat")
 
-let overrides = { gasLimit: 20000000 }
+
+const hardhat = require('hardhat')
+const {  deployMockContract } = require('ethereum-waffle')
+const { deployments } = require("hardhat")
+
+let overrides = { gasLimit: 9500000 }
 
 describe('TokenFaucetProxyFactory', () => {
 
@@ -18,8 +18,12 @@ describe('TokenFaucetProxyFactory', () => {
   beforeEach(async () => {
     [wallet, wallet2] = await hardhat.ethers.getSigners()
     provider = hardhat.ethers.provider
-    measure = await deployContract(wallet, ERC20, ['Measure', 'MEAS'])
-    asset = await deployContract(wallet, ERC20, ['DripToken', 'DRIP'])
+
+    const ERC20MintableContract =  await hre.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
+
+    measure = await ERC20MintableContract.deploy('Measure', 'MEAS')
+    asset = await ERC20MintableContract.deploy('Measure', 'MEAS')
+
     await deployments.fixture()
     let comptrollerV2ProxyFactoryResult = await deployments.get("TokenFaucetProxyFactory")
     comptrollerV2ProxyFactory = await hardhat.ethers.getContractAt('TokenFaucetProxyFactory', comptrollerV2ProxyFactoryResult.address, wallet)
@@ -37,17 +41,18 @@ describe('TokenFaucetProxyFactory', () => {
       expect(await comptrollerV2.asset()).to.equal(asset.address)
       expect(await comptrollerV2.measure()).to.equal(measure.address)
       expect(await comptrollerV2.dripRatePerSecond()).to.equal(ethers.utils.parseEther('0.01'))
-      expect(await comptrollerV2.owner()).to.equal(wallet._address)
+      expect(await comptrollerV2.owner()).to.equal(wallet.address)
       
     })
   })
 
   describe('claimAll', () => {
     it('should call claim on comptrollers', async () => {
+      const TokenFaucet = await hre.artifacts.readArtifact("TokenFaucet")
       let comptroller = await deployMockContract(wallet, TokenFaucet.abi, overrides)
-      await comptroller.mock.claim.withArgs(wallet._address).revertsWithReason("it was called!")
+      await comptroller.mock.claim.withArgs(wallet.address).revertsWithReason("it was called!")
 
-      await expect(comptrollerV2ProxyFactory.claimAll(wallet._address, [comptroller.address]))
+      await expect(comptrollerV2ProxyFactory.claimAll(wallet.address, [comptroller.address]))
         .to.be.revertedWith("it was called!")
     })
   })

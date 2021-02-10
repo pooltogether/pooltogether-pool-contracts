@@ -1,7 +1,6 @@
 const { expect } = require("chai");
-const ControlledTokenProxyFactory = require('../build/ControlledTokenProxyFactory.json')
-const hardhat = require('@nomiclabs/hardhat')
-const { deployContract } = require('ethereum-waffle')
+const hardhat = require('hardhat')
+
 
 describe('ControlledTokenProxyFactory', () => {
 
@@ -12,8 +11,8 @@ describe('ControlledTokenProxyFactory', () => {
   beforeEach(async () => {
     [wallet, wallet2] = await hardhat.ethers.getSigners()
     provider = hardhat.ethers.provider
-
-    factory = await deployContract(wallet, ControlledTokenProxyFactory, [])
+    const ControlledTokenProxyFactory = await hre.ethers.getContractFactory("ControlledTokenProxyFactory", wallet)
+    factory = await ControlledTokenProxyFactory.deploy()
   })
 
   describe('create()', () => {

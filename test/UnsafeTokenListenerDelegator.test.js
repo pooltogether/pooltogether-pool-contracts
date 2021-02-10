@@ -1,10 +1,9 @@
 const { expect } = require("chai")
-const UnsafeTokenListenerDelegatorProxyFactory = require('../build/UnsafeTokenListenerDelegatorProxyFactory.json')
-const TokenListenerInterface = require('../build/TokenListenerInterface.json')
-const hardhat = require('@nomiclabs/hardhat')
-const { deployContract, deployMockContract } = require('ethereum-waffle')
 
-let overrides = { gasLimit: 20000000 }
+const hardhat = require('hardhat')
+const { deployMockContract } = require('ethereum-waffle')
+
+let overrides = { gasLimit: 9500000 }
 
 describe('UnsafeTokenListenerDelegator', () => {
 
@@ -25,6 +24,8 @@ describe('UnsafeTokenListenerDelegator', () => {
       wallet
     )
 
+
+    const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
     listener = await deployMockContract(wallet, TokenListenerInterface.abi)
 
     let tx = await factory.create(listener.address)
@@ -37,15 +38,15 @@ describe('UnsafeTokenListenerDelegator', () => {
 
   describe('beforeTokenTransfer()', () => {
     it('should work', async () => {
-      await listener.mock.beforeTokenTransfer.withArgs(wallet._address, wallet2._address, 99, wallet3._address).revertsWithReason("har-har!")
-      await expect(delegator.beforeTokenTransfer(wallet._address, wallet2._address, 99, wallet3._address)).to.be.revertedWith("har-har!")
+      await listener.mock.beforeTokenTransfer.withArgs(wallet.address, wallet2.address, 99, wallet3.address).revertsWithReason("har-har!")
+      await expect(delegator.beforeTokenTransfer(wallet.address, wallet2.address, 99, wallet3.address)).to.be.revertedWith("har-har!")
     })
   })
 
   describe('beforeTokenMint()', () => {
     it('should work', async () => {
-      await listener.mock.beforeTokenMint.withArgs(wallet._address, 99, wallet2._address, wallet3._address).revertsWithReason("har-har!")
-      await expect(delegator.beforeTokenMint(wallet._address, 99, wallet2._address, wallet3._address)).to.be.revertedWith("har-har!")
+      await listener.mock.beforeTokenMint.withArgs(wallet.address, 99, wallet2.address, wallet3.address).revertsWithReason("har-har!")
+      await expect(delegator.beforeTokenMint(wallet.address, 99, wallet2.address, wallet3.address)).to.be.revertedWith("har-har!")
     })
   })
 })

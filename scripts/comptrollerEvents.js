@@ -1,4 +1,4 @@
-const hardhat = require('@nomiclabs/hardhat')
+const hardhat = require('hardhat')
 const { ethers } = hardhat
 const { provider, getContractAt } = ethers
 const ticketHolders = require('./dai_reward_zero_balances.json')

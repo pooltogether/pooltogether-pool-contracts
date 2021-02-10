@@ -1,5 +1,5 @@
 const chalk = require('chalk')
-const hardhat = require('@nomiclabs/hardhat')
+const hardhat = require('hardhat')
 
 async function run() {
   console.log(chalk.dim(`Gathering dai from whale....`))

@@ -1,15 +1,12 @@
-const { deployContract } = require('ethereum-waffle')
-const ExtendedSafeCastExposed = require('../build/ExtendedSafeCastExposed.json')
-
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const hardhat = require('@nomiclabs/hardhat')
+const hardhat = require('hardhat')
 
 const toWei = ethers.utils.parseEther
 
 const debug = require('debug')('ptv3:ExtendedSafeCastExposed.test')
 
-let overrides = { gasLimit: 20000000 }
+let overrides = { gasLimit: 9500000 }
 
 describe('ExtendedSafeCastExposed', function() {
 
@@ -20,8 +17,9 @@ describe('ExtendedSafeCastExposed', function() {
 
   beforeEach(async () => {
     [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()
-
-    cast = await deployContract(wallet, ExtendedSafeCastExposed, [], overrides)
+    const ExtendedSafeCastExposed = await hre.ethers.getContractFactory("ExtendedSafeCastExposed", wallet, overrides)
+   
+    cast = await ExtendedSafeCastExposed.deploy()
   })
 
   describe('toUint112()', () => {

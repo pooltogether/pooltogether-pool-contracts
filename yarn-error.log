@@ -1,30 +1,30 @@
 Arguments: 
-  /Users/aodhgan/.nvm/versions/node/v14.15.3/bin/node /Users/aodhgan/.nvm/versions/node/v14.15.3/bin/yarn add @nomiclabs/buidler/console
+  /Users/aodhgan/.nvm/versions/node/v10.20.1/bin/node /Users/aodhgan/.nvm/versions/node/v10.20.1/bin/yarn
 
 PATH: 
-  /Users/aodhgan/Downloads/google-cloud-sdk/bin:./node_modules/.bin:/Users/aodhgan/.nvm/versions/node/v14.15.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/aodhgan/.yarn/bin
+  /Users/aodhgan/Downloads/google-cloud-sdk/bin:./node_modules/.bin:/Users/aodhgan/.nvm/versions/node/v10.20.1/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/aodhgan/.yarn/bin
 
 Yarn version: 
   1.22.10
 
 Node version: 
-  14.15.3
+  10.20.1
 
 Platform: 
   darwin x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/@nomiclabs%2fbuidler/console: Request "https://registry.yarnpkg.com/@nomiclabs%2fbuidler/console" returned a 405
-      at Request.params.callback [as _callback] (/Users/aodhgan/.nvm/versions/node/v14.15.3/lib/node_modules/yarn/lib/cli.js:66997:18)
-      at Request.self.callback (/Users/aodhgan/.nvm/versions/node/v14.15.3/lib/node_modules/yarn/lib/cli.js:140662:22)
-      at Request.emit (events.js:315:20)
-      at Request.<anonymous> (/Users/aodhgan/.nvm/versions/node/v14.15.3/lib/node_modules/yarn/lib/cli.js:141634:10)
-      at Request.emit (events.js:315:20)
-      at IncomingMessage.<anonymous> (/Users/aodhgan/.nvm/versions/node/v14.15.3/lib/node_modules/yarn/lib/cli.js:141556:12)
-      at Object.onceWrapper (events.js:421:28)
-      at IncomingMessage.emit (events.js:327:22)
-      at endReadableNT (internal/streams/readable.js:1327:12)
-      at processTicksAndRejections (internal/process/task_queues.js:80:21)
+  Error: https://registry.yarnpkg.com/hardhat-etherscan/-/hardhat-etherscan-2.1.1.tgz: Request failed "404 Not Found"
+      at ResponseError.ExtendableBuiltin (/Users/aodhgan/.nvm/versions/node/v10.20.1/lib/node_modules/yarn/lib/cli.js:696:66)
+      at new ResponseError (/Users/aodhgan/.nvm/versions/node/v10.20.1/lib/node_modules/yarn/lib/cli.js:802:124)
+      at Request.<anonymous> (/Users/aodhgan/.nvm/versions/node/v10.20.1/lib/node_modules/yarn/lib/cli.js:67058:16)
+      at Request.emit (events.js:198:13)
+      at Request.module.exports.Request.onRequestResponse (/Users/aodhgan/.nvm/versions/node/v10.20.1/lib/node_modules/yarn/lib/cli.js:141539:10)
+      at ClientRequest.emit (events.js:203:15)
+      at HTTPParser.parserOnIncomingClient [as onIncoming] (_http_client.js:565:21)
+      at HTTPParser.parserOnHeadersComplete (_http_common.js:111:17)
+      at TLSSocket.socketOnData (_http_client.js:451:20)
+      at TLSSocket.emit (events.js:198:13)
 
 npm manifest: 
   {
@@ -40,7 +40,8 @@ npm manifest:
       "reinstall": "rm -rf node_modules/ && rm -f yarn.lock && yarn",
       "verify": "yarn hint && yarn test",
       "hint": "solhint \"contracts/**/*.sol\"",
-      "test": "OPTIMIZER_DISABLED=true hardhat test",
+      "prepare-test": "hardhat compile && cp ./build/*/*.json ./build && cp ./build/*/*/*.json ./build && cp ./build/*/*/*/*.json ./build && cp ./build/*/*/*/*/*.json ./build && cp ./build/*/*/*/*/*/*.json ./build && cp ./build/*/*/*/*/*/*/*.json ./build",
+      "test": "yarn prepare-test && hardhat test --no-compile",
       "compile": "hardhat --show-stack-traces --max-memory 8192 compile",
       "start": "echo 'Starting node for local testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true USE_BUIDLER_EVM_ACCOUNTS=$BUIDLER_EVM_ACCOUNTS hardhat node",
       "start-gas": "echo 'Starting node for gas testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true hardhat node",
@@ -64,6 +65,7 @@ npm manifest:
       "echidna": "yarn echidna:build && docker run -v \"$PWD\":/src pool-contracts/echidna"
     },
     "dependencies": {
+      "@nomiclabs/buidler": "^1.4.8",
       "@nomiclabs/hardhat-waffle": "^2.0.1",
       "@openzeppelin/contracts-upgradeable": "3.3.0",
       "@pooltogether/fixed-point": "1.0.0-beta.2",
@@ -76,8 +78,8 @@ npm manifest:
       "sortition-sum-tree-factory": "0.1.0"
     },
     "devDependencies": {
-      "@nomiclabs/hardhat-etherscan": "^2.1.0",
-      "@nomiclabs/hardhat-ethers": "^2.0.0",
+      "hardhat-ethers": "^2.0.0",
+      "hardhat-etherscan": "^2.1.0",
       "@resolver-engine/core": "0.3.3",
       "@truffle/hdwallet-provider": "1.0.34",
       "chai": "4.2.0",
@@ -665,7 +667,7 @@ Lockfile:
       "@types/sinon-chai" "^3.2.3"
       "@types/web3" "1.0.19"
   
-  "@nomiclabs/buidler@^1.2.0":
+  "@nomiclabs/buidler@^1.2.0", "@nomiclabs/buidler@^1.4.8":
     version "1.4.8"
     resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.4.8.tgz#36ebbd0fb54eb2052b1336bf90ee47825393e5dc"
     integrity sha512-OUnNWx+WXOJzueJCfyuEXu3qNMq1j9eGDDpgflpRwjPeiQQnvVzfbwrPjs0PlxOC3Xtmaxabtgek5wGxS1C7Ew==
@@ -735,14 +737,14 @@ Lockfile:
       safe-buffer "^5.1.1"
       util.promisify "^1.0.0"
   
-  "@nomiclabs/hardhat-ethers@^2.0.0":
+  "hardhat-ethers@^2.0.0":
     version "2.0.1"
-    resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-ethers/-/hardhat-ethers-2.0.1.tgz#f86a6fa210dbe6270adffccc75e93ed60a856904"
+    resolved "https://registry.yarnpkg.com/hardhat-ethers/-/hardhat-ethers-2.0.1.tgz#f86a6fa210dbe6270adffccc75e93ed60a856904"
     integrity sha512-uTFHDhhvJ+UjfvvMeQxD3ZALuzuI3FXzTYT1Z5N3ebyZL5z4Ogwt55GB0R9tdKY0p5HhDhBjU/gsCjUEwIVoaw==
   
-  "@nomiclabs/hardhat-etherscan@^2.1.0":
+  "hardhat-etherscan@^2.1.0":
     version "2.1.1"
-    resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-etherscan/-/hardhat-etherscan-2.1.1.tgz#186f3fa652a0ca20fb77aa857cfad2da845d5cbf"
+    resolved "https://registry.yarnpkg.com/hardhat-etherscan/-/hardhat-etherscan-2.1.1.tgz#186f3fa652a0ca20fb77aa857cfad2da845d5cbf"
     integrity sha512-8TNUFsO5DpAfwNlXMDhcEtFAMOYsVNaQL2vq5vuCD45kUKBgL8H21++zOk231ha9D7LQWBMCIg7A7iPxw6Jwmg==
     dependencies:
       "@ethersproject/abi" "^5.0.2"
@@ -755,7 +757,7 @@ Lockfile:
   
   "@nomiclabs/hardhat-waffle@^2.0.1":
     version "2.0.1"
-    resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-waffle/-/hardhat-waffle-2.0.1.tgz#5d43654fba780720c5033dea240fe14f70ef4bd2"
+    resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-waffle/-/@nomiclabs/hardhat-waffle-2.0.1.tgz#5d43654fba780720c5033dea240fe14f70ef4bd2"
     integrity sha512-2YR2V5zTiztSH9n8BYWgtv3Q+EL0N5Ltm1PAr5z20uAY4SkkfylJ98CIqt18XFvxTD5x4K2wKBzddjV9ViDAZQ==
     dependencies:
       "@types/sinon-chai" "^3.2.3"
@@ -9619,9 +9621,9 @@ Lockfile:
       xhr "^2.2.0"
       xtend "^4.0.1"
   
-  "web3-provider-engine@git+https://github.com/trufflesuite/provider-engine.git#web3-one":
+  "web3-provider-engine@https://github.com/trufflesuite/provider-engine#web3-one":
     version "14.0.6"
-    resolved "git+https://github.com/trufflesuite/provider-engine.git#9694f5b4e5500651bd2ff689df8529bb5cf6b96f"
+    resolved "https://github.com/trufflesuite/provider-engine#9694f5b4e5500651bd2ff689df8529bb5cf6b96f"
     dependencies:
       async "^2.5.0"
       backoff "^2.5.0"

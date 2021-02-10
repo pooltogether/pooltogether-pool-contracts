@@ -1,16 +1,16 @@
-const { deployments } = require("@nomiclabs/hardhat");
-const { expect } = require('chai')
-const hardhat = require('@nomiclabs/hardhat')
+// const { deployments } = require("hardhat");
 const { ethers } = require('ethers')
-const { AddressZero } = ethers.constants
+const { expect } = require('chai')
+const hre = require('hardhat')
+const { AddressZero } = hre.ethers.constants
 const { deployMockContract } = require('./helpers/deployMockContract')
-const TokenControllerInterface = require('../build/TokenControllerInterface.json')
+
 
 const debug = require('debug')('ptv3:ControlledTokenBuilder.test')
 
 describe('ControlledTokenBuilder', () => {
 
-  let wallet
+  let wallet, wallet1
 
   let controlledTokenProxyFactory,
       controlledTokenBuilder,
@@ -19,17 +19,28 @@ describe('ControlledTokenBuilder', () => {
   let controlledTokenConfig
 
   beforeEach(async () => {
-    [wallet] = await hardhat.ethers.getSigners()
-    await deployments.fixture()
-    controlledTokenBuilder = await hardhat.ethers.getContractAt(
+    console.log("start beforeEach")
+  
+    
+    [wallet, wallet1] = await hre.ethers.getSigners()
+    console.log("deployments fixture")
+    await hre.deployments.fixture()
+
+    console.log("getting controlledTokenBuilder")
+
+    controlledTokenBuilder = await hre.ethers.getContractAt(
       "ControlledTokenBuilder",
       (await deployments.get("ControlledTokenBuilder")).address,
       wallet
     )
-
+    console.log("getting controlled proxy factory")
     controlledTokenProxyFactory = (await deployments.get("ControlledTokenProxyFactory"))
     ticketProxyFactory = (await deployments.get("TicketProxyFactory"))
 
+
+
+    console.log("deploying mock")
+    const TokenControllerInterface = await hre.artifacts.readArtifact("TokenControllerInterface")
     controller = await deployMockContract(wallet, TokenControllerInterface.abi)
 
     controlledTokenConfig = {
@@ -42,13 +53,14 @@ describe('ControlledTokenBuilder', () => {
 
   describe('initialize()', () => {
     it('should setup all factories', async () => {
+      console.log("setting up")
       expect(await controlledTokenBuilder.controlledTokenProxyFactory()).to.equal(controlledTokenProxyFactory.address)
       expect(await controlledTokenBuilder.ticketProxyFactory()).to.equal(ticketProxyFactory.address)
     })
   })
 
   async function getEvents(tx) {
-    let receipt = await hardhat.ethers.provider.getTransactionReceipt(tx.hash)
+    let receipt = await hre.ethers.provider.getTransactionReceipt(tx.hash)
     return receipt.logs.reduce((parsedEvents, log) => {
       try {
         parsedEvents.push(controlledTokenBuilder.interface.parseLog(log))
@@ -64,7 +76,7 @@ describe('ControlledTokenBuilder', () => {
       let events = await getEvents(tx)
       let event = events.find(e => e.name == 'CreatedControlledToken')
 
-      const controlledToken = await hardhat.ethers.getContractAt('ControlledToken', event.args.token, wallet)
+      const controlledToken = await hre.ethers.getContractAt('ControlledToken', event.args.token, wallet)
       expect(await controlledToken.name()).to.equal(controlledTokenConfig.name)
       expect(await controlledToken.symbol()).to.equal(controlledTokenConfig.symbol)
       expect(await controlledToken.decimals()).to.equal(controlledTokenConfig.decimals)
@@ -79,7 +91,7 @@ describe('ControlledTokenBuilder', () => {
       let events = await getEvents(tx)
       let event = events.find(e => e.name == 'CreatedTicket')
 
-      const ticket = await hardhat.ethers.getContractAt('Ticket', event.args.token, wallet)
+      const ticket = await hre.ethers.getContractAt('Ticket', event.args.token, wallet)
       expect(await ticket.name()).to.equal(controlledTokenConfig.name)
       expect(await ticket.symbol()).to.equal(controlledTokenConfig.symbol)
       expect(await ticket.decimals()).to.equal(controlledTokenConfig.decimals)

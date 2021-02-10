@@ -2,7 +2,7 @@
 const chalk = require('chalk')
 const util = require('util')
 const exec = util.promisify(require('child_process').exec)
-const hardhat = require('@nomiclabs/hardhat')
+const hardhat = require('hardhat')
 
 const info = (msg) => console.log(chalk.dim(msg))
 const success = (msg) => console.log(chalk.green(msg))

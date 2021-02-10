@@ -1,4 +1,4 @@
-const hardhat = require("@nomiclabs/hardhat");
+const hardhat = require("hardhat");
 
 const VALID_CHAIN_IDS = [3, 4, 5, 42]
 

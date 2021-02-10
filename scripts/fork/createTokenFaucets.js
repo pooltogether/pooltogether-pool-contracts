@@ -1,4 +1,4 @@
-const hardhat = require('@nomiclabs/hardhat')
+const hardhat = require('hardhat')
 const chalk = require("chalk")
 
 function dim() {

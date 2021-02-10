@@ -1,4 +1,4 @@
-const hardhat = require("@nomiclabs/hardhat")
+const hardhat = require("hardhat")
 
 async function increaseTime(time) {
   let provider = hardhat.ethers.provider

@@ -1,4 +1,4 @@
-const hardhat = require('@nomiclabs/hardhat')
+const hardhat = require('hardhat')
 
 async function getEvents(contract, tx) {
   let receipt = await hardhat.ethers.provider.getTransactionReceipt(tx.hash)

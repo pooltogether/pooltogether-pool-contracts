@@ -1,10 +1,8 @@
 const { expect } = require("chai");
-const TicketProxyFactory = require('../build/TicketProxyFactory.json')
-const TokenControllerInterface = require('../build/TokenControllerInterface.json')
-const hardhat = require('@nomiclabs/hardhat')
-const { deployContract, deployMockContract } = require('ethereum-waffle')
+const hardhat = require('hardhat')
+const {  deployMockContract } = require('ethereum-waffle')
 
-let overrides = { gasLimit: 20000000 }
+let overrides = { gasLimit: 9500000 }
 
 describe('TicketProxyFactory', () => {
 
@@ -18,7 +16,10 @@ describe('TicketProxyFactory', () => {
     [wallet, wallet2] = await hardhat.ethers.getSigners()
     provider = hardhat.ethers.provider
 
-    factory = await deployContract(wallet, TicketProxyFactory, [], overrides)
+    const TicketProxyFactory = await hre.ethers.getContractFactory("TicketProxyFactory", wallet, overrides)
+    factory = await TicketProxyFactory.deploy()
+
+    const TokenControllerInterface = await hre.artifacts.readArtifact("TokenControllerInterface")
     controller = await deployMockContract(wallet, TokenControllerInterface.abi)
   })
 

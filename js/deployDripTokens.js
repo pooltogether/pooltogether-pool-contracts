@@ -1,8 +1,6 @@
-const hardhat = require("@nomiclabs/hardhat");
+const hardhat = require("hardhat");
 
-const ERC20Mintable = require('../build/ERC20Mintable.json')
-const CompoundPrizePool = require('../build/CompoundPrizePool.json')
-const MultipleWinners = require('../build/MultipleWinners.json')
+
 
 const DEPLOY = {
   BALANCE_DRIPS: true,
@@ -35,6 +33,16 @@ const getChainName = (chainId) => {
 
 async function main() {
   // Run with CLI flag --silent to suppress log output
+
+
+  // const ERC20Mintable = require('../build/ERC20Mintable.json')
+const ERC20Mintable = await hre.artifacts.readArtifact("ERC20Mintable")
+
+// const CompoundPrizePool = require('../build/CompoundPrizePool.json')
+const CompoundPrizePool = await hre.artifacts.readArtifact("CompoundPrizePool")
+
+const MultipleWinners = await hre.artifacts.readArtifact("MultipleWinners")
+// const MultipleWinners = require('../build/MultipleWinners.json')
 
   console.log("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
   console.log("PoolTogether Pool Contracts - Drip Tokens Script")
