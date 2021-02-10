@@ -27,10 +27,8 @@ contract AutonomousPool is MCDAwarePool {
 
   uint256 public lastAwardTimestamp;
   uint256 public prizePeriodSeconds;
-  address public nextRewardRecipient;
   IComptroller public comptroller;
   IERC20 public comp;
-  bool public isAdminDisabled;
 
   event AwardedCOMP(
     address indexed recipient,
@@ -43,17 +41,14 @@ contract AutonomousPool is MCDAwarePool {
     IERC20 _comp,
     IComptroller _comptroller
   ) external {
-    require(address(comp) == address(0) || isAdmin(msg.sender), "AutonomousPool/only-init-or-admin");
+    require(address(comp) == address(0), "AutonomousPool/already-init");
+    require(address(_comp) != address(0), "AutonomousPool/comp-not-defined");
+    require(address(_comptroller) != address(0), "AutonomousPool/comptroller-not-defined");
     lastAwardTimestamp = _lastAwardTimestamp == 0 ? block.timestamp : _lastAwardTimestamp;
     prizePeriodSeconds = _prizePeriodSeconds;
     comptroller = _comptroller;
     comp = _comp;
-    _claimCOMP();
-    comp.transfer(COMP_RECIPIENT, comp.balanceOf(address(this)));
-  }
-
-  function disableAdminPermanently() external onlyAdmin {
-    isAdminDisabled = true;
+    claimCOMP();
   }
 
   function isPrizePeriodEnded() public view returns (bool) {
@@ -63,39 +58,21 @@ contract AutonomousPool is MCDAwarePool {
     );
   }
 
+  function claimCOMP() public returns (uint256) {
+    ICErc20[] memory cTokens = new ICErc20[](1);
+    cTokens[0] = cToken;
+    comptroller.claimComp(address(this), cTokens);
+    uint256 amount = comp.balanceOf(address(this));
+    comp.transfer(COMP_RECIPIENT, amount);
+    return amount;
+  }
+
   /**
    * @notice Locks the movement of tokens (essentially the committed deposits and winnings)
    * @dev The lock only lasts for a duration of blocks.  The lock cannot be relocked until the cooldown duration completes.
    */
   function lockTokens() public requireInitialized onlyPrizePeriodEnded {
-    nextRewardRecipient = msg.sender;
-    // require time to have passed to award the prize
     blocklock.lock(block.number);
-  }
-
-  function claimCOMP() public returns (uint256) {
-    _claimCOMP();
-    return comp.balanceOf(address(this));
-  }
-
-  function calculateFeeReward() public returns (uint256) {
-    uint256 drawId = currentCommittedDrawId();
-
-    Draw storage draw = draws[drawId];
-
-    // Calculate the gross winnings
-    uint256 underlyingBalance = balance();
-
-    uint256 grossWinnings;
-
-    // It's possible when the APR is zero that the underlying balance will be slightly lower than the accountedBalance
-    // due to rounding errors in the Compound contract.
-    if (underlyingBalance > accountedBalance) {
-      grossWinnings = capWinnings(underlyingBalance.sub(accountedBalance));
-    }
-
-    // Calculate the beneficiary fee
-    return calculateFee(draw.feeFraction, grossWinnings);
   }
 
   /**
@@ -112,24 +89,7 @@ contract AutonomousPool is MCDAwarePool {
       emitCommitted();
     }
     open();
-    _rewardCOMP();
     lastAwardTimestamp = currentTime();
-  }
-
-  function _claimCOMP() internal {
-    ICErc20[] memory cTokens = new ICErc20[](1);
-    cTokens[0] = cToken;
-    comptroller.claimComp(address(this), cTokens);
-  }
-
-  function _rewardCOMP() internal {
-    uint256 compReward = claimCOMP();
-    if (compReward > 0) {
-      comp.transfer(nextRewardRecipient, compReward);
-      emit AwardedCOMP(nextRewardRecipient, compReward);
-    }
-
-    nextRewardRecipient = address(0);
   }
 
   /**
@@ -147,7 +107,6 @@ contract AutonomousPool is MCDAwarePool {
     uint256 drawId = currentCommittedDrawId();
     Draw storage draw = draws[drawId];
     bytes32 entropy = blockhash(block.number - 1);
-    draw.feeBeneficiary = nextRewardRecipient;
     _reward(drawId, draw, entropy);
   }
 
@@ -182,10 +141,6 @@ contract AutonomousPool is MCDAwarePool {
     return block.timestamp;
   }
 
-  function setNextFeeBeneficiary(address) public {
-    revert("AutonomousPool/not-supported");
-  }
-
   modifier onlyPrizePeriodEnded() {
     require(isPrizePeriodEnded(), "AutonomousPool/prize-period-not-ended");
     _;
@@ -195,8 +150,7 @@ contract AutonomousPool is MCDAwarePool {
    * @notice requires the caller to be an admin
    */
   modifier onlyAdmin() {
-    require(!isAdminDisabled, "Pool/admin-disabled");
-    require(admins.has(msg.sender), "Pool/admin");
+    revert("Pool/admin-disabled");
     _;
   }
 

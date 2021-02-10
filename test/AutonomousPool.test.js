@@ -13,6 +13,8 @@ const {
 
 const REWARD_LISTENER_INTERFACE_HASH = web3.utils.soliditySha3('PoolTogetherRewardListener')
 
+const SAFE_ADDRESS = "0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f"
+
 contract('BasePool', (accounts) => {
   let pool, token, moneyMarket
   
@@ -46,21 +48,14 @@ contract('BasePool', (accounts) => {
 
   describe('initializeAutonomousPool', () => {
     it('should set the prize period', async () => {
-
       expect((await pool.lastAwardTimestamp()).toString()).to.equal('10')
       expect((await pool.prizePeriodSeconds()).toString()).to.equal('100')
       expect((await pool.comptroller())).to.equal(comptroller.address)
       expect((await pool.comp())).to.equal(comp.address)
     })
 
-    it('should allow admins to call again after initialized', async () => {
-      await pool.initializeAutonomousPool(22, 222, comp.address, comptroller.address, { from: owner })
-      expect((await pool.lastAwardTimestamp()).toString()).to.equal('22')
-      expect((await pool.prizePeriodSeconds()).toString()).to.equal('222')
-    })
-
-    it('should allow admins to call again after initialized', async () => {
-      await chai.assert.isRejected(pool.initializeAutonomousPool(22, 222, comp.address, comptroller.address, { from: user2 }), "AutonomousPool/only-init-or-admin")
+    it('should not be called again', async () => {
+      await chai.assert.isRejected(pool.initializeAutonomousPool(22, 222, comp.address, comptroller.address, { from: user2 }), /AutonomousPool\/already-init/)
     })
 
     it('should send all COMP to the gnosis safe', async () => {
@@ -70,17 +65,17 @@ contract('BasePool', (accounts) => {
       await comp.mint(pool.address, toWei('9'))
       await pool.initializeAutonomousPool(10, 100, comp.address, comptroller.address, { from: user2 })
 
-      expect((await comp.balanceOf("0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f")).toString()).to.equal(toWei('20'))
+      expect((await comp.balanceOf(SAFE_ADDRESS)).toString()).to.equal(toWei('20'))
     })
   })
 
   describe('lockTokens()', () => {
-    it('should not allowing locking when the pool hasnt been init', async () => {
+    it('should not allow locking when the pool hasnt been init', async () => {
       await pool.setCurrentTime('0')
       await chai.assert.isRejected(pool.lockTokens(), /AutonomousPool\/prize-period-not-ended/)
     })
 
-    it('should not allowing locking before the prize period has elapsed', async () => {
+    it('should not allow locking before the prize period has elapsed', async () => {
       await pool.setCurrentTime('10')
       await chai.assert.isRejected(pool.lockTokens(), /AutonomousPool\/prize-period-not-ended/)
     })
@@ -89,7 +84,6 @@ contract('BasePool', (accounts) => {
       await pool.setCurrentTime('110') // set to start + 100 seconds
       await pool.lockTokens({ from: user2 })
       expect(await pool.isLocked()).to.be.true
-      expect(await pool.nextRewardRecipient()).to.equal(user2)
     })
   })
 
@@ -150,71 +144,22 @@ contract('BasePool', (accounts) => {
       expect((await pool.currentOpenDrawId()).toString()).to.equal('3')
       expect((await pool.currentCommittedDrawId()).toString()).to.equal('2')
     })
-
-    it('should transfer any comp claimed', async () => {
-
-      await comp.mint(comptroller.address, toWei('100'))
-
-      await pool.lockTokens({ from: user2 })
-      await pool.methods['reward()']({ from: user2 })
-
-      expect((await comp.balanceOf(user2)).toString()).to.equal(toWei('100'))
-    })
   })
 
   describe('claimCOMP()', () => {
     it('should return the COMP award', async () => {
       await comp.mint(comptroller.address, toWei('11'))
       expect((await pool.claimCOMP.call()).toString()).to.equal(toWei('11'))
+      await pool.claimCOMP()
+      expect((await comp.balanceOf(SAFE_ADDRESS)).toString()).to.equal(toWei('11'))
     })
   })
 
-  describe('calculateFeeReward()', () => {
-    it('should calculate the fee that will be paid to the awarder', async () => {
-      await moneyMarket.rewardCustom(pool.address, toWei('10'))
-      expect((await pool.calculateFeeReward.call()).toString()).to.equal(toWei('0'))
-
-      await pool.setNextFeeFraction(toWei('0.1'))
-
-      // open first draw
-      await pool.setCurrentTime('110')
-      await pool.lockTokens()
-      await pool.reward()
-
-      // open second draw && commit first
-      await pool.setCurrentTime('210')
-      await pool.lockTokens()
-      await pool.reward()
-
-      await moneyMarket.rewardCustom(pool.address, toWei('20'))
-      expect((await pool.calculateFeeReward.call()).toString()).to.equal(toWei('3')) // 10 % of 30
-
-      // reward first draw
-      await pool.setCurrentTime('310')
-      await pool.lockTokens()
-      await pool.reward()
-
-      expect((await pool.calculateFeeReward.call()).toString()).to.equal(toWei('2.7')) // 10% of 27
+  describe('disable admin', () => {
+    it('should disable all admin functions', async () => {
+      await chai.assert.isRejected(pool.setNextFeeBeneficiary(owner), /Pool\/admin-disabled/)
+      await chai.assert.isRejected(pool.setNextFeeFraction('2'), /Pool\/admin-disabled/)
     })
   })
-
-  describe('setNextFeeBeneficiary()', () => {
-    it('should not be supported', async () => {
-      await chai.assert.isRejected(pool.setNextFeeBeneficiary(owner), "AutonomousPool/not-supported")
-    })
-  })
-
-  describe('disableAdminPermanently()', () => {
-    it('should not be called by a non-admin', async () => {
-      await chai.assert.isRejected(pool.disableAdminPermanently({ from: user2 }), /Pool\/admin/)
-    })
-
-    it('should disable all admin functions when called', async () => {
-      await pool.setNextFeeFraction('2')
-      await pool.disableAdminPermanently()
-      await chai.assert.isRejected(pool.disableAdminPermanently(), /Pool\/admin-disabled/)
-      await chai.assert.isRejected(pool.setNextFeeFraction('1'), /Pool\/admin-disabled/)
-    })
-  })
-
+  
 })
