@@ -34,12 +34,9 @@ describe('VolumeDripManagerExposed', function() {
     debug({ manager: manager.address })
 
     const IERC20 = await hre.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
-    // measure = await deployContract(wallet, ERC20Mintable, ['Measure Token', 'MTKN'], overrides)
-    measure = await IERC20.deploy('Measure Token', 'MTKN')
-    // drip1 = await deployContract(wallet, ERC20Mintable, ['Drip Token 1', 'DRIP1'], overrides)
-    drip1 = await IERC20.deploy('Drip Token 1', 'DRIP1')
 
-    // drip2 = await deployContract(wallet, ERC20Mintable, ['Drip Token 2', 'DRIP2'], overrides)
+    measure = await IERC20.deploy('Measure Token', 'MTKN')
+    drip1 = await IERC20.deploy('Drip Token 1', 'DRIP1')
     drip2 = await IERC20.deploy('Drip Token 2', 'DRIP2')
     
     const IERC20U = await hre.artifacts.readArtifact("IERC20Upgradeable")

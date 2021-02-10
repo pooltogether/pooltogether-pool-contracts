@@ -24,8 +24,6 @@ async function deployTestPool({
   overrides = { gasLimit: 20000000 }
 }) {
   await deployments.fixture()
-  // const ERC20Mintable = require('../build/ERC20Mintable.json')
-  // const ERC20Mintable = await hre.artifacts.readArtifact("ERC20Mintable")
   const ERC20Mintable = await hre.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
 
 
@@ -41,8 +39,6 @@ async function deployTestPool({
     debug('Deploying test stake pool')
   }
 
-
-  // let governanceToken = await deployContract(wallet, ERC20Mintable, [], overrides)
   let governanceToken = await ERC20Mintable.deploy('Governance Token', 'GOV')
 
   let poolWithMultipleWinnersBuilderResult = await deployments.get("PoolWithMultipleWinnersBuilder")
@@ -60,8 +56,6 @@ async function deployTestPool({
   const comptroller = await hardhat.ethers.getContractAt('ComptrollerHarness', comptrollerResult.address, wallet)
   const poolBuilder = await hardhat.ethers.getContractAt('PoolWithMultipleWinnersBuilder', poolWithMultipleWinnersBuilderResult.address, wallet)
 
-
-  // let linkToken = await deployContract(wallet, ERC20Mintable, ['Link Token', 'LINK'], overrides)
   let linkToken = await ERC20Mintable.deploy('Link Token', 'LINK')
   let rngServiceMock = await hardhat.ethers.getContractAt('RNGServiceMock', rngServiceMockResult.address, wallet)
   await rngServiceMock.setRequestFee(linkToken.address, toWei('1'))

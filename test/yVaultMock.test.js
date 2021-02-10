@@ -25,7 +25,6 @@ describe('yVaultMock', function() {
 
     debug('creating vault...')
     const yVaultMock =  await hre.ethers.getContractFactory("yVaultMock", wallet, overrides)
-    // vault = await deployContract(wallet, yVaultMock, [erc20token.address], overrides)
     vault = await yVaultMock.deploy(erc20token.address)
   })
 

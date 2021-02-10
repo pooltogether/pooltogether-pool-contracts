@@ -63,14 +63,11 @@ function PoolEnv() {
 
 
     for (var i = 0; i < externalERC20Awards.length; i++) {
-      // this.externalERC20Awards[externalERC20Awards[i]] = await deployContract(this.wallets[0], ERC20Mintable, [`External ERC20 Token ${i+1}`, `ETKN${i+1}`])
       this.externalERC20Awards[externalERC20Awards[i]] = await ERC20Mintable.deploy(`External ERC20 Token ${i+1}`, `ETKN${i+1}`)
       const address = this.externalERC20Awards[externalERC20Awards[i]].address;
       await this.env.prizeStrategy.addExternalErc20Award(address)
       externalAwardAddresses.push(address)
     }
-
-    // this.externalErc721Award = await deployContract(this.wallets[0], ERC721Mintable, [])
     this.externalErc721Award = await ERC721Mintable.deploy()
     debug(`PrizePool created with address ${this.env.prizePool.address}`)
     debug(`PeriodicPrizePool created with address ${this.env.prizeStrategy.address}`)
@@ -385,31 +382,6 @@ function PoolEnv() {
     await this.startAward()
     await this.completeAward({ token })
   }
-
-  // this.selectWinners = async function ({ token }) {
-
-  //   for (let userIndex = 1; userIndex < 3; userIndex++) {
-  //     let wallet = await this.wallet(userIndex)
-  //     let chance = await this.env.ticket.chanceOf(wallet.address)
-  //     console.log(chalk.green(`User ${userIndex} (${wallet.address}) chances: ${ethers.utils.formatEther(chance)}`))
-  //   }
-
-
-  //   for (let i = 0; i < 600; i += 10) {
-  //     let token = parseInt(i)
-  //     let token2 = parseInt(Math.random() * 200)
-
-  //     let firstWinner = await this.env.ticket.draw(token)
-  //     let secondRandom = ethers.BigNumber.from(ethers.utils.solidityKeccak256(['uint256'], [token.toString()]))
-  //     let secondWinner = await this.env.ticket.draw(secondRandom)
-
-  //     if (firstWinner != secondWinner) {
-  //       console.log(chalk.green(`token ${token} had ${firstWinner} and ${secondWinner}`))
-  //     } else {
-  //       console.log(chalk.dim(`No luck with ${token} and ${secondRandom}`))
-  //     }
-  //   }
-  // }
 
   this.transferTickets = async function ({ user, tickets, to }) {
     let wallet = await this.wallet(user)

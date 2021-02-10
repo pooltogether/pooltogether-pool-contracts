@@ -9,7 +9,7 @@ const chainName = (chainId) => {
     case 4: return 'Rinkeby';
     case 5: return 'Goerli';
     case 42: return 'Kovan';
-    case 31337: return 'BuidlerEVM';
+    case 31337: return 'HardhatEVM';
     default: return 'Unknown';
   }
 }

@@ -14,13 +14,6 @@ const networks = {
   }
 }
 
-// if (process.env.USE_BUIDLER_EVM_ACCOUNTS) {
-//   networks.buidlerevm.accounts = process.env.USE_BUIDLER_EVM_ACCOUNTS.split(/\s+/).map(privateKey => ({
-//     privateKey,
-//     balance: ethers.utils.parseEther('10000000').toHexString()
-//   }))
-// }
-
 if (process.env.HDWALLET_MNEMONIC) {
   networks.fork = {
     url: 'http://127.0.0.1:8545'

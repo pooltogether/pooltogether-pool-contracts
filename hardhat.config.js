@@ -27,9 +27,6 @@ const config = {
       evmVersion: "istanbul"
     }
   },
-  paths: {
-    artifacts: "./build"
-  },
   networks,
   gasReporter: {
     currency: 'CHF',

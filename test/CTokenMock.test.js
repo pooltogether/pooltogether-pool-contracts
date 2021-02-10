@@ -15,12 +15,8 @@ describe('CTokenMock contract', function() {
         [wallet, otherWallet] = await hardhat.ethers.getSigners()
         const ERC20Mintable = await hre.ethers.getContractFactory("ERC20Mintable", wallet)
         token = await ERC20Mintable.deploy('Test Token', 'TEST')
-        // token = await deployContract(wallet, ERC20Mintable, ['Test Token', 'TEST'])
         const CTokenMockContract = await hre.ethers.getContractFactory("CTokenMock", wallet)
         cTokenMock = await CTokenMockContract.deploy(token.address, ethers.utils.parseEther('0.01'))
-        // cTokenMock = await deployContract(wallet, CTokenMock, [
-        //     token.address, ethers.utils.parseEther('0.01')
-        // ])
     })
 
     describe('mint()', function() {

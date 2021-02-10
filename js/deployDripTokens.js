@@ -26,7 +26,7 @@ const getChainName = (chainId) => {
     case 4: return 'rinkeby';
     case 5: return 'goerli';
     case 42: return 'kovan';
-    case 31337: return 'buidlerEVM';
+    case 31337: return 'HardhatEVM';
     default: return 'unknown';
   }
 }

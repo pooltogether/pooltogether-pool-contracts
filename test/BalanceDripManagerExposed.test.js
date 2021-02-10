@@ -27,20 +27,13 @@ describe('BalanceDripManagerExposed', function() {
     const BalanceDripExposedContract = await hre.ethers.getContractFactory("BalanceDripManagerExposed", wallet, overrides)
     dripExposed = await BalanceDripExposedContract.deploy()
 
-
     debug({ dripExposed: dripExposed.address })
-
-    // measure = await deployContract(wallet, ERC20Mintable, ['Measure Token', 'MTKN'], overrides)
-     const ERC20MintableContract =  await hre.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
-   measure = await ERC20MintableContract.deploy('Measure Token', 'MTKN')
-
-    // drip1 = await deployContract(wallet, ERC20Mintable, ['Drip Token 1', 'DRIP1'], overrides)
-    drip1 = await ERC20MintableContract.deploy('Drip Token 1', 'DRIP1')
-
-    // drip2 = await deployContract(wallet, ERC20Mintable, ['Drip Token 2', 'DRIP2'], overrides)
-    drip2 = await ERC20MintableContract.deploy('Drip Token 2', 'DRIP2')
     
-    // drip3 = await deployMockContract(wallet, IERC20.abi)
+    const ERC20MintableContract =  await hre.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
+    measure = await ERC20MintableContract.deploy('Measure Token', 'MTKN')
+   
+    drip1 = await ERC20MintableContract.deploy('Drip Token 1', 'DRIP1')
+    drip2 = await ERC20MintableContract.deploy('Drip Token 2', 'DRIP2')
     const IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
     drop3 = await deployMockContract(wallet, IERC20.abi)
 

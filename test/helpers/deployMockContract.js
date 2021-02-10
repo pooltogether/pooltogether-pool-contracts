@@ -39,10 +39,6 @@ function createMock(abi, mockContractInstance) {
 }
 
 async function deployMockContract(wallet, abi) {
-  // console.warn(
-  //   'deployMockContract is an experimental feature. ' +
-  //   'Breaking changes will not result in a new major version'
-  // );
   const mockContractInstance = await deploy(wallet);
 
   const mock = createMock(abi, mockContractInstance);

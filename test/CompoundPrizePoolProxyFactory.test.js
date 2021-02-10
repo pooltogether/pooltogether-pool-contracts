@@ -14,7 +14,6 @@ describe('CompoundPrizePoolProxyFactory', () => {
     provider = hardhat.ethers.provider
     const CompoundPrizePoolProxyFactory =  await hre.ethers.getContractFactory("CompoundPrizePoolProxyFactory", wallet, overrides)
     factory = await CompoundPrizePoolProxyFactory.deploy()
-    // factory = await deployContract(wallet, CompoundPrizePoolProxyFactory, [], overrides)
   })
 
   describe('create()', () => {
