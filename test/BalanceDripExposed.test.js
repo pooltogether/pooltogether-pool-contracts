@@ -20,7 +20,6 @@ describe('BalanceDripExposed', function() {
   describe('drip()', () => {
 
     it('should handle being initialized', async () => {
-      console.log('first test')
       await expect(
         dripExposed.drip(
           toWei('0'), // total supply of tokens
