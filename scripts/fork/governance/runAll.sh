@@ -9,7 +9,7 @@ rm -rf deployments/fork_1
 
 
 
-cp -rf deployments/mainnet deployments/fork_1
+cp -rf deployments/mainnet deployments/localhost
 rm deployments/fork_1/CompoundPrizePoolBuilder.json deployments/fork_1/PoolWithMultipleWinnersBuilder.json deployments/fork_1/StakePrizePoolBuilder.json deployments/fork_1/VaultPrizePoolBuilder.json
 echo 'deploying v3.2 contracts on fork'
 yarn deploy fork

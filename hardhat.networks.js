@@ -11,13 +11,19 @@ const networks = {
     blockGasLimit: 200000000,
     allowUnlimitedContractSize: true,
     chainId: 31337
+  },
+  hardhat: {
+    chainId: 1,
+    hardfork: "istanbul",
+    forking: {
+      url: process.env.ALCHEMY_URL,
+      blockNumber: 11831456
+    },
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
   }
-}
-
-if (process.env.HDWALLET_MNEMONIC) {
-  networks.fork = {
-    url: 'http://127.0.0.1:8545'
-  }
+  
 }
 
 if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {

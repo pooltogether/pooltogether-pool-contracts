@@ -16,8 +16,8 @@ async function run() {
 
   const ganacheSigners = await ethers.getSigners()
 
-  console.log(chalk.dim(`Sending 1000 dai to ${ganacheSigners[0]._address}`))
-  await dai.transfer(ganacheSigners[0]._address, ethers.utils.parseEther('1000'))
+  console.log(chalk.dim(`Sending 1000 dai to ${ganacheSigners[0].address}`))
+  await dai.transfer(ganacheSigners[0].address, ethers.utils.parseEther('1000'))
 
   console.log(chalk.dim(`Sending 100,000 dai to the Gnosis Safe`))
   await dai.transfer("0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f", ethers.utils.parseEther('1000'))

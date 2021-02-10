@@ -48,6 +48,8 @@ module.exports = async (hardhat) => {
 
   await deploy1820(signer)
 
+  debug(`deployer is ${deployer}`)
+
   if (isLocal) {
     debug("\n  Deploying RNGService...")
     const rngServiceMockResult = await deploy("RNGServiceMock", {
@@ -209,9 +211,10 @@ module.exports = async (hardhat) => {
     skipIfAlreadyDeployed: true
   })
 
-  debug("\n  Deploying StakePrizePoolProxyFactory...")
+  
   let stakePrizePoolProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
+    debug("\n  Deploying StakePrizePoolHarnessProxyFactory...")
     stakePrizePoolProxyFactoryResult = await deploy("StakePrizePoolProxyFactory", {
       contract: 'StakePrizePoolHarnessProxyFactory',
       from: deployer,
@@ -219,6 +222,7 @@ module.exports = async (hardhat) => {
     })
   }
   else{
+    debug("\n  Deploying StakePrizePoolProxyFactory...")
     stakePrizePoolProxyFactoryResult = await deploy("StakePrizePoolProxyFactory", {
       from: deployer,
       skipIfAlreadyDeployed: true
