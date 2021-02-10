@@ -9,7 +9,7 @@ const overrides = {
   gasLimit: 5000000
 }
 
-async function migrateSai (context, count = '1') {
+async function migrateSai (context) {
   console.log(chalk.yellow(`Starting migrate sai...`))
 
   const {
@@ -19,11 +19,9 @@ async function migrateSai (context, count = '1') {
 
   provider.pollingInterval = 500
 
-  count = parseInt(count, 10)
+  const users = await fetchUsers('sai')
 
-  const users = await fetchUsers(count)
-
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < users.length; i++) {
     const user = users[i].address
     const signer = provider.getSigner(user)
     const signingSai = contracts.PoolSaiToken.connect(signer)

@@ -17,7 +17,7 @@ async function context(verbose = false, mainnet = false) {
     args.networkConfig = '.openzeppelin/mainnet.json'
   } else {
     args.network = process.env.LOCALHOST_URL
-    args.networkConfig = '.openzeppelin/dev-999.json'
+    args.networkConfig = '.openzeppelin/dev-31337.json'
   }
 
   const result = buildContext(args)

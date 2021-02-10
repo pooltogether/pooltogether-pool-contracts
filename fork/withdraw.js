@@ -9,8 +9,8 @@ const overrides = {
   gasLimit: ethers.utils.bigNumberify("2000000")
 }
 
-async function withdrawAndDeposit (context, type) {
-  console.log(chalk.yellow(`Starting withdraw and deposit for ${type} pool...`))
+async function withdraw (context, type) {
+  console.log(chalk.yellow(`Starting withdraw for ${type} pool...`))
 
   const {
     provider,
@@ -56,31 +56,11 @@ async function withdrawAndDeposit (context, type) {
     } else {
       console.log(chalk.dim(`Skipping withdraw because ${address} has no Pool ${type} balance`))
     }
-
-    let cToken = new ethers.Contract(await signingPool.cToken(), artifacts.CErc20Mock.abi, provider)
-    let token = new ethers.Contract(await cToken.underlying(), artifacts.ERC20.abi, signer)
-
-    balance = await token.balanceOf(address)
-
-    if (balance.gt('0x0')) {
-      console.log(chalk.yellow(`Approving ${ethers.utils.formatEther(balance)} ${type}....`))
-      await exec(provider, token.approve(signingPool.address, balance, overrides))
-
-      console.log(chalk.yellow(`Depositing ${ethers.utils.formatEther(balance)} ${type}....`))
-      await exec(provider, signingPool.depositPool(balance, overrides))
-
-      let poolBalance = await signingPool.openBalanceOf(address)
-      assert.equal(poolBalance.toString(), balance.toString())
-
-      console.log(chalk.green(`Deposit Successful. ${address} deposited ${ethers.utils.formatEther(balance)}`))
-    } else {
-      console.log(chalk.dim(`User ${address} has no ${type} balance, skipping deposit`))
-    }
   }
 
-  console.log(chalk.green('Completed withdraw and deposit.'))
+  console.log(chalk.green('Completed withdraw.'))
 }
 
 module.exports = {
-  withdrawAndDeposit
+  withdraw
 }

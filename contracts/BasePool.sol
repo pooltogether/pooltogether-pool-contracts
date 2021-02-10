@@ -396,7 +396,6 @@ contract BasePool is Initializable, ReentrancyGuard {
    * @param _salt The salt that was used to conceal the secret
    */
   function reward(bytes32 _secret, bytes32 _salt) public onlyAdmin onlyLocked requireCommittedNoReward nonReentrant {
-    blocklock.unlock(block.number);
     // require that there is a committed draw
     // require that the committed draw has not been rewarded
     uint256 drawId = currentCommittedDrawId();
@@ -408,6 +407,11 @@ contract BasePool is Initializable, ReentrancyGuard {
     // derive entropy from the revealed secret
     bytes32 entropy = keccak256(abi.encodePacked(_secret));
 
+    _reward(drawId, draw, entropy);
+  }
+
+  function _reward(uint256 drawId, Draw storage draw, bytes32 entropy) internal {
+    blocklock.unlock(block.number);
     // Select the winner using the hash as entropy
     address winningAddress = calculateWinner(entropy);
 

@@ -6,7 +6,8 @@
     "PoolUsdcToken": "RecipientWhitelistPoolTokenDecimals",
     "PoolSai": "MCDAwarePool",
     "PoolDai": "MCDAwarePool",
-    "PoolUsdc": "MCDAwarePool"
+    "PoolUsdc": "MCDAwarePool",
+    "AutonomousPool": "AutonomousPool"
   },
   "dependencies": {},
   "name": "pooltogether",

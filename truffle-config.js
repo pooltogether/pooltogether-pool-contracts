@@ -67,7 +67,7 @@ module.exports = {
         3
       ),
       gas: 7000000,
-      network_id: 999
+      network_id: 31337
       // gasPrice: 11.101 * 1000000000
     }
   },

@@ -3,12 +3,18 @@ const commander = require('commander');
 const chalk = require('chalk')
 const { showUsers } = require('./showUsers')
 const { startFork } = require('./startFork')
+const { impersonate } = require('./impersonate')
+const { withdrawCOMP } = require('./withdrawCOMP')
+const { setRewardFees } = require('./setRewardFees')
 const { pay } = require('./pay')
 const { upgradeV2x } = require('./upgradeV2x')
 const { upgrade } = require('./upgrade')
+const { upgradeToAutonomousPools } = require('./upgradeToAutonomousPools')
 const { pushContracts } = require('./pushContracts')
 const { withdrawAndDeposit } = require('./withdrawAndDeposit')
+const { withdraw } = require('./withdraw')
 const { rewardAndOpen } = require('./rewardAndOpen')
+const { rewardAuto } = require('./rewardAuto')
 const { openNextDraw } = require('./openNextDraw')
 const { reward } = require('./reward')
 // const { deployPoolDai } = require('./deployPoolDai')
@@ -40,7 +46,7 @@ async function callContext() {
 
 program
   .command('start')
-  .description('Starts a local node that is forked from mainnet.  Available on http://localhost:8546.  Copies .openzeppelin/mainnet.json to .openzeppelin/dev-999.json')
+  .description('Starts a local node that is forked from mainnet.  Available on http://localhost:8546.')
   .action(async () => {
     ranAction = true
     await startFork()
@@ -66,6 +72,35 @@ program
   })
 
 program
+  .command('set-reward-fees')
+  .description('Sets the autonomous award fees for sai, dai, and usdc pools')
+  .action(async () => {
+    ranAction = true
+    const c = await callContext()
+    await setRewardFees(c)
+  })
+
+program
+  .command('withdraw-comp [type]')
+  .description('withdraws comp')
+  .action(async (type) => {
+    ranAction = true
+    if (!type) {
+      type = 'dai'
+    }
+    const c = await callContext()
+    await withdrawCOMP(c, type)
+  })
+
+program
+  .command('impersonate')
+  .description('HARDHAT: impersonates all users')
+  .action(async () => {
+    ranAction = true
+    await impersonate(await callContext())
+  })
+
+program
   .command('upgrade-v2x')
   .description('Upgrades the Pool contract')
   .action(async () => {
@@ -79,6 +114,14 @@ program
   .action(async () => {
     ranAction = true
     await upgrade(await callContext())
+  })
+
+program
+  .command('upgrade-auto')
+  .description('Upgrade pools to be AutonomousPool.  Should have pushed already.')
+  .action(async () => {
+    ranAction = true
+    await upgradeToAutonomousPools(await callContext())
   })
 
 program
@@ -96,6 +139,20 @@ program
 //     ranAction = true
 //     await deployPoolDai(await callContext())
 //   })
+
+program
+  .command('reward-auto [type] [count]')
+  .description('reward autonomous pool [count] times. Type is one of sai | dai | usdc.  Defaults to dai')
+  .action(async (type, count) => {
+    ranAction = true
+    if (!type) {
+      type = 'dai'
+    }
+    if (!count) {
+      count = 1
+    }
+    await rewardAuto(await callContext(), type, count)
+  })
 
 program
   .command('reward-open [type] [count]')
@@ -181,19 +238,26 @@ program
   })
 
 program
-  .command('withdraw-deposit [type] [count]')
+  .command('withdraw-deposit [type]')
   .description('tests withdrawals and deposits for top *count* users')
-  .action(async (type, count) => {
+  .action(async (type) => {
     ranAction = true
     if (!type) {
       type = 'sai'
     }
-    if (!count) {
-      count = 5
-    }
-    await withdrawAndDeposit(await callContext(), type, count)
+    await withdrawAndDeposit(await callContext(), type)
   })
 
+program
+  .command('withdraw [type]')
+  .description('tests withdrawals and deposits for top *count* users')
+  .action(async (type) => {
+    ranAction = true
+    if (!type) {
+      type = 'sai'
+    }
+    await withdraw(await callContext(), type)
+  })
 
 program
   .command('winners [type] [count]')
