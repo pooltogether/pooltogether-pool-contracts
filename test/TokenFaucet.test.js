@@ -1,13 +1,11 @@
 const { expect } = require("chai");
-const TokenFaucetHarness = require('../build/TokenFaucetHarness.json')
-const ERC20 = require('../build/ERC20Mintable.json')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 const { deployContract } = require('ethereum-waffle')
 const { AddressZero } = require("ethers").constants
 
 const toWei = ethers.utils.parseEther
 
-const overrides = { gasLimit: 20000000 }
+const overrides = { gasLimit: 9500000 }
 
 const debug = require('debug')('ptv3:TokenFaucet.test')
 
@@ -18,14 +16,22 @@ describe('TokenFaucet', () => {
   let comptroller, dripToken, measure
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
 
-    measure = await deployContract(wallet, ERC20, ['Measure', 'MEAS'])
-    dripToken = await deployContract(wallet, ERC20, ['DripToken', 'DRIP'])
+
+    const ERC20MintableContract =  await hre.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
+  
+
+    measure = await ERC20MintableContract.deploy('Measure', 'MEAS')
+
+
+    dripToken = await ERC20MintableContract.deploy('DripToken', 'DRIP')
+
     dripRatePerSecond = ethers.utils.parseEther('0.1')
 
-    comptroller = await deployContract(wallet, TokenFaucetHarness, [], overrides)
+    const TokenFaucetHarness =  await hre.ethers.getContractFactory("TokenFaucetHarness", wallet, overrides)
+    comptroller = await TokenFaucetHarness.deploy()
 
     await expect(comptroller.initialize(
       dripToken.address,
@@ -57,77 +63,77 @@ describe('TokenFaucet', () => {
 
   describe('beforeTokenMint()', () => {
     it('should not drip when no time has passed', async () => {
-      await measure.mint(wallet._address, toWei('100'))
+      await measure.mint(wallet.address, toWei('100'))
       await dripToken.mint(comptroller.address, toWei('100'))
       await expect(
-        comptroller.beforeTokenMint(wallet._address, '0', measure.address, AddressZero)
+        comptroller.beforeTokenMint(wallet.address, '0', measure.address, AddressZero)
       ).not.to.emit(comptroller, 'Dripped')
     })
 
     it('should drip tokens on subsequent calls', async () => {
-      await measure.mint(wallet._address, toWei('100'))
+      await measure.mint(wallet.address, toWei('100'))
       await dripToken.mint(comptroller.address, toWei('100'))
 
       await comptroller.setCurrentTime(10)
       await expect(
-        comptroller.beforeTokenMint(wallet._address, '0', measure.address, AddressZero)
+        comptroller.beforeTokenMint(wallet.address, '0', measure.address, AddressZero)
       ).to.emit(comptroller, 'Dripped')
         .withArgs(toWei('1'))
 
       // mintee has balance captured
-      let userState = await comptroller.userStates(wallet._address)
+      let userState = await comptroller.userStates(wallet.address)
       expect(userState.balance).to.equal(toWei('1'))
     })
 
     it('should not drip when unknown tokens are passed', async () => {
-      await measure.mint(wallet._address, toWei('100'))
+      await measure.mint(wallet.address, toWei('100'))
       await dripToken.mint(comptroller.address, toWei('100'))
 
       await comptroller.setCurrentTime(10)
       await expect(
-        comptroller.beforeTokenMint(wallet._address, '0', wallet._address, AddressZero)
+        comptroller.beforeTokenMint(wallet.address, '0', wallet.address, AddressZero)
       ).not.to.emit(comptroller, 'Dripped')
     })
   })
 
   describe('beforeTokenTransfer()', () => {
     it('should do nothing if minting', async () => {
-      await measure.mint(wallet._address, toWei('100'))
+      await measure.mint(wallet.address, toWei('100'))
       await dripToken.mint(comptroller.address, toWei('100'))
 
       await comptroller.setCurrentTime(10)
       await expect(
-        comptroller.beforeTokenTransfer(AddressZero, wallet._address, '0', measure.address)
+        comptroller.beforeTokenTransfer(AddressZero, wallet.address, '0', measure.address)
       ).not.to.emit(comptroller, 'Dripped')
     })
 
     it('should do nothing if transfer for unrelated token', async () => {
-      await measure.mint(wallet._address, toWei('100'))
+      await measure.mint(wallet.address, toWei('100'))
       await dripToken.mint(comptroller.address, toWei('100'))
 
       await comptroller.setCurrentTime(10)
       await expect(
-        comptroller.beforeTokenTransfer(wallet._address, wallet._address, '0', wallet._address)
+        comptroller.beforeTokenTransfer(wallet.address, wallet.address, '0', wallet.address)
       ).not.to.emit(comptroller, 'Dripped')
     })
 
     it('should update the balance drips', async () => {
-      await measure.mint(wallet._address, toWei('80'))
-      await measure.mint(wallet2._address, toWei('20'))
+      await measure.mint(wallet.address, toWei('80'))
+      await measure.mint(wallet2.address, toWei('20'))
       await dripToken.mint(comptroller.address, toWei('100'))
 
       await comptroller.setCurrentTime(10)
       await expect(
-        comptroller.beforeTokenTransfer(wallet._address, wallet2._address, '0', measure.address)
+        comptroller.beforeTokenTransfer(wallet.address, wallet2.address, '0', measure.address)
       ).to.emit(comptroller, 'Dripped')
         .withArgs(toWei('1'))
 
       // from has balance captured
-      let userState = await comptroller.userStates(wallet._address)
+      let userState = await comptroller.userStates(wallet.address)
       expect(userState.balance).to.equal(toWei('0.8'))
 
       // to has balance captured
-      let userState2 = await comptroller.userStates(wallet2._address)
+      let userState2 = await comptroller.userStates(wallet2.address)
       expect(userState2.balance).to.equal(toWei('0.2'))
     })
   })
@@ -135,7 +141,7 @@ describe('TokenFaucet', () => {
   describe('drip()', () => {
     it('should do nothing if there is no supply', async () => {
       // wallet has all measure tokens
-      await measure.mint(wallet._address, toWei('100'))
+      await measure.mint(wallet.address, toWei('100'))
       // drip tokens could have been awarded, but aren't
       await comptroller.setCurrentTime(10)
       await expect(comptroller.drip())
@@ -156,7 +162,7 @@ describe('TokenFaucet', () => {
       await dripToken.mint(comptroller.address, toWei('10'))
 
       // wallet has all measure tokens
-      await measure.mint(wallet._address, toWei('100'))
+      await measure.mint(wallet.address, toWei('100'))
 
       // half of the drip tokens are awarded
       await comptroller.setCurrentTime(50)
@@ -165,8 +171,8 @@ describe('TokenFaucet', () => {
         .withArgs(toWei('5'))
 
       // wallet claims them
-      await comptroller.claim(wallet._address)
-      expect(await dripToken.balanceOf(wallet._address)).to.equal(toWei('5'))
+      await comptroller.claim(wallet.address)
+      expect(await dripToken.balanceOf(wallet.address)).to.equal(toWei('5'))
 
       // long time passes
       await comptroller.setCurrentTime(150)
@@ -176,8 +182,8 @@ describe('TokenFaucet', () => {
         .withArgs(toWei('5'))
 
       // wallet claims the rest
-      await comptroller.claim(wallet._address)
-      expect(await dripToken.balanceOf(wallet._address)).to.equal(toWei('10'))
+      await comptroller.claim(wallet.address)
+      expect(await dripToken.balanceOf(wallet.address)).to.equal(toWei('10'))
     })
 
     it('the drip should pause if no one holds measure tokens', async () => {
@@ -194,27 +200,27 @@ describe('TokenFaucet', () => {
       await comptroller.setCurrentTime(200)
       // someone mints measure tokens
       await expect(
-        comptroller.beforeTokenMint(wallet._address, '0', measure.address, AddressZero)
+        comptroller.beforeTokenMint(wallet.address, '0', measure.address, AddressZero)
       ).not.to.emit(comptroller, 'Dripped')
-      await measure.mint(wallet._address, toWei('10'))
+      await measure.mint(wallet.address, toWei('10'))
 
       // time passes to give away half
       await comptroller.setCurrentTime(250)
       await expect(
-        comptroller.beforeTokenTransfer(wallet._address, wallet._address, '0', measure.address)
+        comptroller.beforeTokenTransfer(wallet.address, wallet.address, '0', measure.address)
       ).to.emit(comptroller, 'Dripped')
         .withArgs(toWei('5'))
 
       // wallet claims its share
-      await comptroller.claim(wallet._address)
-      expect(await dripToken.balanceOf(wallet._address)).to.equal(toWei('5'))
+      await comptroller.claim(wallet.address)
+      expect(await dripToken.balanceOf(wallet.address)).to.equal(toWei('5'))
     })
 
     it('should be pausable after having dripped some', async () => {
       // 10 tokens to drip out
       await dripToken.mint(comptroller.address, toWei('10'))
       // 10 tokens to measure
-      await measure.mint(wallet._address, toWei('10'))
+      await measure.mint(wallet.address, toWei('10'))
 
       // move forward 10 seconds so that 1 token drips
       await comptroller.setCurrentTime(10)
@@ -223,11 +229,11 @@ describe('TokenFaucet', () => {
         .withArgs(toWei('1'))
 
       // user can claim their 1 token
-      await comptroller.claim(wallet._address)
-      expect(await dripToken.balanceOf(wallet._address)).to.equal(toWei('1'))
+      await comptroller.claim(wallet.address)
+      expect(await dripToken.balanceOf(wallet.address)).to.equal(toWei('1'))
 
       // now have them withdraw entirely
-      await measure.burn(wallet._address, toWei('10'))
+      await measure.burn(wallet.address, toWei('10'))
 
       // move forward a long time
       await comptroller.setCurrentTime(100)
@@ -236,7 +242,7 @@ describe('TokenFaucet', () => {
         .not.to.emit(comptroller, 'Dripped')
 
       // now mint more measure tokens
-      await measure.mint(wallet._address, toWei('10'))
+      await measure.mint(wallet.address, toWei('10'))
 
       // Move forward 10 seconds and drip 1 more
       await comptroller.setCurrentTime(110)
@@ -245,8 +251,8 @@ describe('TokenFaucet', () => {
         .withArgs(toWei('1'))
 
       // user can claim the second one
-      await comptroller.claim(wallet._address)
-      expect(await dripToken.balanceOf(wallet._address)).to.equal(toWei('2'))
+      await comptroller.claim(wallet.address)
+      expect(await dripToken.balanceOf(wallet.address)).to.equal(toWei('2'))
     })
   })
 
@@ -256,7 +262,7 @@ describe('TokenFaucet', () => {
       await dripToken.mint(comptroller.address, toWei('10'))
 
       // wallet has all measure tokens
-      await measure.mint(wallet._address, toWei('100'))
+      await measure.mint(wallet.address, toWei('100'))
 
       // long time passes
       await comptroller.setCurrentTime(100)
@@ -267,8 +273,8 @@ describe('TokenFaucet', () => {
         .withArgs(toWei('10'))
 
       // wallet claims the rest
-      await comptroller.claim(wallet._address)
-      expect(await dripToken.balanceOf(wallet._address)).to.equal(toWei('10'))
+      await comptroller.claim(wallet.address)
+      expect(await dripToken.balanceOf(wallet.address)).to.equal(toWei('10'))
     })
 
     it('should not give any tokens to new holders', async () => {
@@ -276,7 +282,7 @@ describe('TokenFaucet', () => {
       await dripToken.mint(comptroller.address, toWei('10'))
 
       // wallet has all of measure tokens
-      await measure.mint(wallet._address, toWei('100'))
+      await measure.mint(wallet.address, toWei('100'))
 
       // half time passes
       await comptroller.setCurrentTime(50)
@@ -287,12 +293,12 @@ describe('TokenFaucet', () => {
         .withArgs(toWei('5'))
 
       // wallet2 has no claim
-      await comptroller.claim(wallet2._address)
-      expect(await dripToken.balanceOf(wallet2._address)).to.equal(toWei('0'))
+      await comptroller.claim(wallet2.address)
+      expect(await dripToken.balanceOf(wallet2.address)).to.equal(toWei('0'))
 
       // wallet has claim on half
-      await comptroller.claim(wallet._address)
-      expect(await dripToken.balanceOf(wallet._address)).to.equal(toWei('5'))
+      await comptroller.claim(wallet.address)
+      expect(await dripToken.balanceOf(wallet.address)).to.equal(toWei('5'))
     })
   })
 

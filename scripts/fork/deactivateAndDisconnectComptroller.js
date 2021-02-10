@@ -1,4 +1,4 @@
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 const chalk = require("chalk")
 
 const SENTINEL = '0x0000000000000000000000000000000000000001'
@@ -12,7 +12,7 @@ function yellow() {
 }
 
 async function run() {
-  const { ethers } = buidler
+  const { ethers } = hardhat
 
   const gnosisSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
   const prizePool = await ethers.getContractAt('CompoundPrizePool', '0xEBfb47A7ad0FD6e57323C8A42B2E5A6a4F68fc1a', gnosisSafe)

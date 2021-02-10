@@ -1,9 +1,8 @@
 const { expect } = require("chai");
-const MultipleWinnersProxyFactory = require('../build/MultipleWinnersProxyFactory.json')
-const buidler = require('@nomiclabs/buidler')
-const { deployContract } = require('ethereum-waffle')
+const hardhat = require('hardhat')
 
-let overrides = { gasLimit: 20000000 }
+
+let overrides = { gasLimit: 9500000 }
 
 describe('MultipleWinnersProxyFactory', () => {
 
@@ -12,10 +11,11 @@ describe('MultipleWinnersProxyFactory', () => {
   let provider
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
-
-    factory = await deployContract(wallet, MultipleWinnersProxyFactory, [], overrides)
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
+    const MultipleWinnersProxyFactory =  await hre.ethers.getContractFactory("MultipleWinnersProxyFactory", wallet, overrides)
+   
+    factory = await MultipleWinnersProxyFactory.deploy()
   })
 
   describe('create()', () => {

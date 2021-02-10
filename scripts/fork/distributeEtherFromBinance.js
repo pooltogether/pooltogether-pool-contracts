@@ -1,9 +1,9 @@
 const chalk = require('chalk')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 
 async function run() {
   console.log(chalk.dim(`Gathering dai from whale....`))
-  const { ethers } = buidler
+  const { ethers } = hardhat
   const { provider, getContractAt } = ethers
 
   console.log(chalk.dim(`Creating binance 3 wallet....`))

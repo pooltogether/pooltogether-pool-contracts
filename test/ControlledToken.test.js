@@ -1,8 +1,5 @@
 const { expect } = require("chai");
-const ControlledToken = require('../build/ControlledToken.json')
-const TokenControllerInterface = require('../build/TokenControllerInterface.json')
-const buidler = require('@nomiclabs/buidler')
-const { deployContract } = require('ethereum-waffle')
+const hardhat = require('hardhat')
 const { deployMockContract } = require('./helpers/deployMockContract')
 
 const toWei = ethers.utils.parseEther
@@ -16,11 +13,13 @@ describe('ControlledToken', () => {
   let token, token2
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
-
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
+    const TokenControllerInterface = await hre.artifacts.readArtifact("TokenControllerInterface")
     controller = await deployMockContract(wallet, TokenControllerInterface.abi)
-    token = await deployContract(wallet, ControlledToken, [])
+
+    const ControlledToken =  await hre.ethers.getContractFactory("ControlledToken", wallet)
+    token = await ControlledToken.deploy()
     token2 = token.connect(wallet2)
     await token.initialize(
       "Name",
@@ -35,9 +34,9 @@ describe('ControlledToken', () => {
       // allow all transfers
       await controller.mock.beforeTokenTransfer.returns()
 
-      await controller.call(token, 'controllerMint', wallet._address, toWei('10'))
+      await controller.call(token, 'controllerMint', wallet.address, toWei('10'))
 
-      expect(await token.balanceOf(wallet._address)).to.equal(toWei('10'))
+      expect(await token.balanceOf(wallet.address)).to.equal(toWei('10'))
     })
   })
 
@@ -46,11 +45,11 @@ describe('ControlledToken', () => {
       // allow all transfers
       await controller.mock.beforeTokenTransfer.returns()
 
-      await controller.call(token, 'controllerMint', wallet._address, toWei('10'))
-      expect(await token.balanceOf(wallet._address)).to.equal(toWei('10'))
+      await controller.call(token, 'controllerMint', wallet.address, toWei('10'))
+      expect(await token.balanceOf(wallet.address)).to.equal(toWei('10'))
 
-      await controller.call(token, 'controllerBurn', wallet._address, toWei('10'))
-      expect(await token.balanceOf(wallet._address)).to.equal('0')
+      await controller.call(token, 'controllerBurn', wallet.address, toWei('10'))
+      expect(await token.balanceOf(wallet.address)).to.equal('0')
     })
   })
 
@@ -59,20 +58,20 @@ describe('ControlledToken', () => {
       // allow all transfers
       await controller.mock.beforeTokenTransfer.returns()
 
-      await controller.call(token, 'controllerMint', wallet._address, toWei('10'))
-      await token.approve(wallet2._address, toWei('10'))
-      await controller.call(token, 'controllerBurnFrom', wallet2._address, wallet._address, toWei('10'))
+      await controller.call(token, 'controllerMint', wallet.address, toWei('10'))
+      await token.approve(wallet2.address, toWei('10'))
+      await controller.call(token, 'controllerBurnFrom', wallet2.address, wallet.address, toWei('10'))
 
-      expect(await token.balanceOf(wallet._address)).to.equal('0')
-      expect(await token.allowance(wallet._address, wallet2._address)).to.equal('0')
+      expect(await token.balanceOf(wallet.address)).to.equal('0')
+      expect(await token.allowance(wallet.address, wallet2.address)).to.equal('0')
     })
 
     it('should not allow non-approved users to burn', async () => {
       // allow all transfers
       await controller.mock.beforeTokenTransfer.returns()
 
-      await controller.call(token, 'controllerMint', wallet._address, toWei('10'))
-      await expect(controller.call(token, 'controllerBurnFrom', wallet2._address, wallet._address, toWei('10')))
+      await controller.call(token, 'controllerMint', wallet.address, toWei('10'))
+      await expect(controller.call(token, 'controllerBurnFrom', wallet2.address, wallet.address, toWei('10')))
         .to.be.revertedWith('ControlledToken/exceeds-allowance')
     })
 
@@ -80,10 +79,10 @@ describe('ControlledToken', () => {
       // allow all transfers
       await controller.mock.beforeTokenTransfer.returns()
 
-      await controller.call(token, 'controllerMint', wallet._address, toWei('10'))
-      await controller.call(token, 'controllerBurnFrom', wallet._address, wallet._address, toWei('10'))
+      await controller.call(token, 'controllerMint', wallet.address, toWei('10'))
+      await controller.call(token, 'controllerBurnFrom', wallet.address, wallet.address, toWei('10'))
 
-      expect(await token.balanceOf(wallet._address)).to.equal('0')
+      expect(await token.balanceOf(wallet.address)).to.equal('0')
     })
   })
 })

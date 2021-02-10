@@ -1,20 +1,10 @@
-const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
-const TokenListenerInterface = require('../build/TokenListenerInterface.json')
-const PeriodicPrizeStrategyListenerInterface = require('../build/PeriodicPrizeStrategyListenerInterface.json')
-const PeriodicPrizeStrategyHarness = require('../build/PeriodicPrizeStrategyHarness.json')
-const PeriodicPrizeStrategyDistributorInterface = require('../build/PeriodicPrizeStrategyDistributorInterface.json')
-const PrizePool = require('../build/PrizePool.json')
-const RNGInterface = require('../build/RNGInterface.json')
-const IERC20 = require('../build/IERC20Upgradeable.json')
-const IERC721 = require('../build/IERC721Upgradeable.json')
-const ControlledToken = require('../build/ControlledToken.json')
-const Ticket = require('../build/Ticket.json')
+
 
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 const { AddressZero, Zero, One } = require('ethers').constants
 
 
@@ -25,11 +15,13 @@ const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 const SENTINEL = '0x0000000000000000000000000000000000000001'
 const invalidExternalToken = '0x0000000000000000000000000000000000000002'
 
-let overrides = { gasLimit: 20000000 }
+let overrides = { gasLimit: 9500000 }
 
 let initalizeResult;
 
-describe('PeriodicPrizeStrategy', function() {
+describe('PeriodicPrizeStrategy', async function() {
+  const IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
+  const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
   let wallet, wallet2
 
   let externalERC20Award, externalERC721Award
@@ -44,29 +36,49 @@ describe('PeriodicPrizeStrategy', function() {
   let periodicPrizeStrategyListener, distributor
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
 
-    debug(`using wallet ${wallet._address}`)
+    debug(`using wallet ${wallet.address}`)
 
     debug('deploying registry...')
     registry = await deploy1820(wallet)
 
     debug('deploying protocol tokenListener...')
+    
     tokenListener = await deployMockContract(wallet, TokenListenerInterface.abi, [], overrides)
 
     await tokenListener.mock.supportsInterface.returns(true)
     await tokenListener.mock.supportsInterface.withArgs('0xffffffff').returns(false)
 
     debug('mocking tokens...')
+    
     token = await deployMockContract(wallet, IERC20.abi, overrides)
+    
+    const PrizePool = await hre.artifacts.readArtifact("PrizePool")
     prizePool = await deployMockContract(wallet, PrizePool.abi, overrides)
+    
+    const Ticket = await hre.artifacts.readArtifact("Ticket")
     ticket = await deployMockContract(wallet, Ticket.abi, overrides)
+    
+    const ControlledToken = await hre.artifacts.readArtifact("ControlledToken")
     sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)
+    
+    const RNGInterface = await hre.artifacts.readArtifact("RNGInterface")
     rng = await deployMockContract(wallet, RNGInterface.abi, overrides)
+    
+   
     rngFeeToken = await deployMockContract(wallet, IERC20.abi, overrides)
+    
+    
     externalERC20Award = await deployMockContract(wallet, IERC20.abi, overrides)
+    
+    const IERC721 = await hre.artifacts.readArtifact("IERC721Upgradeable")
     externalERC721Award = await deployMockContract(wallet, IERC721.abi, overrides)
+    
+    const PeriodicPrizeStrategyDistributorInterface = await hre.artifacts.readArtifact("PeriodicPrizeStrategyDistributorInterface")
     distributor = await deployMockContract(wallet, PeriodicPrizeStrategyDistributorInterface.abi, overrides)
+    
+    const PeriodicPrizeStrategyListenerInterface = await hre.artifacts.readArtifact("PeriodicPrizeStrategyListenerInterface")
     periodicPrizeStrategyListener = await deployMockContract(wallet, PeriodicPrizeStrategyListenerInterface.abi, overrides)
     
     await externalERC721Award.mock.supportsInterface.returns(true)
@@ -78,14 +90,15 @@ describe('PeriodicPrizeStrategy', function() {
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
     debug('deploying prizeStrategy...')
-    prizeStrategy = await deployContract(wallet, PeriodicPrizeStrategyHarness, [], overrides)
+    const PeriodicPrizeStrategyHarness =  await hre.ethers.getContractFactory("PeriodicPrizeStrategyHarness", wallet, overrides)
+    prizeStrategy = await PeriodicPrizeStrategyHarness.deploy()
     await prizeStrategy.setDistributor(distributor.address)
 
     await prizePool.mock.canAwardExternal.withArgs(externalERC20Award.address).returns(true)
     await prizePool.mock.canAwardExternal.withArgs(externalERC721Award.address).returns(true)
 
     // wallet 1 always wins
-    await ticket.mock.draw.returns(wallet._address)
+    await ticket.mock.draw.returns(wallet.address)
 
     debug('initializing prizeStrategy...')
     await prizeStrategy.initialize(
@@ -107,7 +120,9 @@ describe('PeriodicPrizeStrategy', function() {
   describe('initialize()', () => {
     it('should emit an Initialized event', async () => {
       debug('deploying another prizeStrategy...')
-      let prizeStrategy2 = await deployContract(wallet, PeriodicPrizeStrategyHarness, [], overrides)
+      const PeriodicPrizeStrategyHarness =  await hre.ethers.getContractFactory("PeriodicPrizeStrategyHarness", wallet, overrides)
+ 
+      let prizeStrategy2 = await PeriodicPrizeStrategyHarness.deploy()
       await prizeStrategy2.setDistributor(distributor.address)
       initalizeResult2 = prizeStrategy2.initialize(
         prizePeriodStart,
@@ -152,7 +167,9 @@ describe('PeriodicPrizeStrategy', function() {
       let initArgs
 
       debug('deploying secondary prizeStrategy...')
-      const prizeStrategy2 = await deployContract(wallet, PeriodicPrizeStrategyHarness, [], overrides)
+      const PeriodicPrizeStrategyHarness =  await hre.ethers.getContractFactory("PeriodicPrizeStrategyHarness", wallet, overrides)
+
+      const prizeStrategy2 = await PeriodicPrizeStrategyHarness.deploy()
 
       debug('testing initialization of secondary prizeStrategy...')
 
@@ -252,7 +269,7 @@ describe('PeriodicPrizeStrategy', function() {
 
       await expect(prizeStrategy.cancelAward())
         .to.emit(prizeStrategy, 'PrizePoolAwardCancelled')
-        .withArgs(wallet._address, prizePool.address, 11, 1)
+        .withArgs(wallet.address, prizePool.address, 11, 1)
     })
   })
 
@@ -261,10 +278,10 @@ describe('PeriodicPrizeStrategy', function() {
       await expect(prizePool.call(
         prizeStrategy,
         'beforeTokenTransfer(address,address,uint256,address)',
-        wallet._address,
-        wallet._address,
+        wallet.address,
+        wallet.address,
         toWei('10'),
-        wallet._address
+        wallet.address
       )).to.be.revertedWith("PeriodicPrizeStrategy/transfer-to-self")
     })
 
@@ -277,10 +294,10 @@ describe('PeriodicPrizeStrategy', function() {
       await prizePool.call(
         prizeStrategy,
         'beforeTokenTransfer(address,address,uint256,address)',
-        wallet._address,
-        wallet2._address,
+        wallet.address,
+        wallet2.address,
         toWei('10'),
-        wallet._address
+        wallet.address
       )
     })
 
@@ -294,8 +311,8 @@ describe('PeriodicPrizeStrategy', function() {
         prizePool.call(
           prizeStrategy,
           'beforeTokenTransfer(address,address,uint256,address)',
-          wallet._address,
-          wallet2._address,
+          wallet.address,
+          wallet2.address,
           toWei('10'),
           ticket.address
         ))
@@ -415,7 +432,7 @@ describe('PeriodicPrizeStrategy', function() {
     })
 
     it('should disallow ERC721 tokens that are not held by the Prize Pool', async () => {
-      await externalERC721Award.mock.ownerOf.withArgs(1).returns(wallet._address)
+      await externalERC721Award.mock.ownerOf.withArgs(1).returns(wallet.address)
       await expect(prizeStrategy.addExternalErc721Award(externalERC721Award.address, [1]))
         .to.be.revertedWith('PeriodicPrizeStrategy/unavailable-token')
     })
@@ -458,12 +475,12 @@ describe('PeriodicPrizeStrategy', function() {
 
   describe('transferExternalERC20', () => {
     it('should allow arbitrary tokens to be transferred by the owner', async () => {
-      await prizePool.mock.transferExternalERC20.withArgs(wallet._address, externalERC20Award.address, toWei('10')).returns()
-      await expect(prizeStrategy.transferExternalERC20(wallet._address, externalERC20Award.address, toWei('10')))
+      await prizePool.mock.transferExternalERC20.withArgs(wallet.address, externalERC20Award.address, toWei('10')).returns()
+      await expect(prizeStrategy.transferExternalERC20(wallet.address, externalERC20Award.address, toWei('10')))
       .to.not.be.revertedWith('Ownable: caller is not the owner')
     })
     it('should not allow arbitrary tokens to be transferred by anyone else', async () => {
-      await expect(prizeStrategy.connect(wallet2).transferExternalERC20(wallet._address, externalERC20Award.address, toWei('10')))
+      await expect(prizeStrategy.connect(wallet2).transferExternalERC20(wallet.address, externalERC20Award.address, toWei('10')))
         .to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
@@ -546,7 +563,7 @@ describe('PeriodicPrizeStrategy', function() {
     })
 
     it('should not allow setting an EOA as a listener', async () => {
-      await expect(prizeStrategy.setPeriodicPrizeStrategyListener(wallet2._address))
+      await expect(prizeStrategy.setPeriodicPrizeStrategyListener(wallet2.address))
         .to.be.revertedWith("PeriodicPrizeStrategy/prizeStrategyListener-invalid");
     })
 
@@ -570,7 +587,7 @@ describe('PeriodicPrizeStrategy', function() {
     })
 
     it('should not allow setting an EOA as a listener', async () => {
-      await expect(prizeStrategy.setTokenListener(wallet2._address))
+      await expect(prizeStrategy.setTokenListener(wallet2.address))
         .to.be.revertedWith("PeriodicPrizeStrategy/token-listener-invalid");
     })
 
@@ -616,7 +633,7 @@ describe('PeriodicPrizeStrategy', function() {
       await prizePool.mock.captureAwardBalance.returns(toWei('1'))
       // no reserve
       await prizePool.mock.calculateReserveFee.returns('0')
-      await prizePool.mock.award.withArgs(wallet._address, toWei('1'), ticket.address).returns()
+      await prizePool.mock.award.withArgs(wallet.address, toWei('1'), ticket.address).returns()
 
       debug('Completing award...')
 
@@ -653,7 +670,9 @@ describe('PeriodicPrizeStrategy', function() {
       prizePeriodStart = 10000
 
       debug('deploying secondary prizeStrategy...')
-      prizeStrategy2 = await deployContract(wallet, PeriodicPrizeStrategyHarness, [], overrides)
+      const PeriodicPrizeStrategyHarness =  await hre.ethers.getContractFactory("PeriodicPrizeStrategyHarness", wallet, overrides)
+
+      prizeStrategy2 = await PeriodicPrizeStrategyHarness.deploy()
 
       debug('initializing secondary prizeStrategy...')
       await prizeStrategy2.initialize(

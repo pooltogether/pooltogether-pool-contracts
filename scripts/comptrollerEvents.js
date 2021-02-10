@@ -1,5 +1,5 @@
-const buidler = require('@nomiclabs/buidler')
-const { ethers } = buidler
+const hardhat = require('hardhat')
+const { ethers } = hardhat
 const { provider, getContractAt } = ethers
 const ticketHolders = require('./dai_reward_zero_balances.json')
 
@@ -13,7 +13,7 @@ const FROM_BLOCK = 11101017
 const TO_BLOCK = 'latest'
 
 async function getComptroller() {
-  const signers = await buidler.ethers.getSigners()
+  const signers = await hardhat.ethers.getSigners()
   return await getContractAt('Comptroller', '0x4027dE966127af5F015Ea1cfd6293a3583892668', signers[0])
 }
 

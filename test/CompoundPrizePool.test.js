@@ -1,22 +1,16 @@
 const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
-const CompoundPrizePoolHarness = require('../build/CompoundPrizePoolHarness.json')
-const TokenListenerInterface = require('../build/TokenListenerInterface.json')
-const RegistryInterface = require('../build/RegistryInterface.json')
-const ControlledToken = require('../build/ControlledToken.json')
-const CTokenInterface = require('../build/CTokenInterface.json')
-const IERC20 = require('../build/IERC20Upgradeable.json')
-const IERC721 = require('../build/IERC721Upgradeable.json')
+
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 
 const toWei = ethers.utils.parseEther
 
 const debug = require('debug')('ptv3:PrizePool.test')
 
-let overrides = { gasLimit: 20000000 }
+let overrides = { gasLimit: 9500000 }
 
 describe('CompoundPrizePool', function() {
   let wallet, wallet2
@@ -31,25 +25,33 @@ describe('CompoundPrizePool', function() {
   let initializeTxPromise
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    debug(`using wallet ${wallet._address}`)
-
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    debug(`using wallet ${wallet.address}`)
     debug('mocking tokens...')
+    const IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
     erc20token = await deployMockContract(wallet, IERC20.abi, overrides)
+    
+    const IERC721 = await hre.artifacts.readArtifact("IERC721Upgradeable")
     erc721token = await deployMockContract(wallet, IERC721.abi, overrides)
-    cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
-    await cToken.mock.underlying.returns(erc20token.address)
 
+    const CTokenInterface = await hre.artifacts.readArtifact("CTokenInterface")
+    cToken = await deployMockContract(wallet, CTokenInterface.abi, overrides)
+    
+    await cToken.mock.underlying.returns(erc20token.address)
+    const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
     prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
 
     await prizeStrategy.mock.supportsInterface.returns(true)
     await prizeStrategy.mock.supportsInterface.withArgs('0xffffffff').returns(false)
 
+    const RegistryInterface = await hre.artifacts.readArtifact("RegistryInterface")
     registry = await deployMockContract(wallet, RegistryInterface.abi, overrides)
 
     debug('deploying CompoundPrizePoolHarness...')
-    prizePool = await deployContract(wallet, CompoundPrizePoolHarness, [], overrides)
+    const CompoundPrizePoolHarness = await hre.ethers.getContractFactory("CompoundPrizePoolHarness", wallet, overrides)
+    prizePool = await CompoundPrizePoolHarness.deploy()
 
+    const ControlledToken = await hre.artifacts.readArtifact("ControlledToken")
     ticket = await deployMockContract(wallet, ControlledToken.abi, overrides)
     await ticket.mock.controller.returns(prizePool.address)
 

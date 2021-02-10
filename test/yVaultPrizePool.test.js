@@ -1,20 +1,15 @@
-const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
-const yVaultPrizePoolHarness = require('../build/yVaultPrizePoolHarness.json')
-const TokenListenerInterface = require('../build/TokenListenerInterface.json')
-const ControlledToken = require('../build/ControlledToken.json')
-const yVaultMock = require('../build/yVaultMock.json')
-const ERC20Mintable = require('../build/ERC20Mintable.json')
+
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 
 const toWei = ethers.utils.parseEther
 
 const debug = require('debug')('ptv3:yVaultPrizePool.test')
 
-let overrides = { gasLimit: 20000000 }
+let overrides = { gasLimit: 9500000 }
 
 describe('yVaultPrizePool', function() {
   let wallet, wallet2
@@ -29,26 +24,31 @@ describe('yVaultPrizePool', function() {
   let initializeTxPromise
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    debug(`using wallet ${wallet._address}`)
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    debug(`using wallet ${wallet.address}`)
 
     debug('creating token...')
-    erc20token = await deployContract(wallet, ERC20Mintable, ['Token', 'TOKE'], overrides)
+    const ERC20MintableContract =  await hre.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
+ 
+    erc20token = await ERC20MintableContract.deploy("Token", "TOKE")
 
     debug('creating vault...')
-    vault = await deployContract(wallet, yVaultMock, [erc20token.address], overrides)
+    const yVaultMock =  await hre.ethers.getContractFactory("yVaultMock", wallet, overrides)
+    vault = await yVaultMock.deploy(erc20token.address)
 
+    const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
     prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
 
     await prizeStrategy.mock.supportsInterface.returns(true)
     await prizeStrategy.mock.supportsInterface.withArgs('0xffffffff').returns(false)
 
-
     comptroller = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
 
     debug('deploying yVaultPrizePoolHarness...')
-    prizePool = await deployContract(wallet, yVaultPrizePoolHarness, [], overrides)
+    const yVaultPrizePoolHarness =  await hre.ethers.getContractFactory("yVaultPrizePoolHarness", wallet, overrides)
+    prizePool = await yVaultPrizePoolHarness.deploy()
 
+    const ControlledToken = await hre.artifacts.readArtifact("ControlledToken")
     ticket = await deployMockContract(wallet, ControlledToken.abi, overrides)
     await ticket.mock.controller.returns(prizePool.address)
 

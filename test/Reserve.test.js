@@ -1,12 +1,10 @@
 const { expect } = require("chai");
-const Reserve = require('../build/Reserve.json')
-const PrizePoolInterface = require('../build/PrizePoolInterface.json')
-const buidler = require('@nomiclabs/buidler')
-const { deployContract } = require('ethereum-waffle')
+const hardhat = require('hardhat')
+
 const { deployMockContract } = require('./helpers/deployMockContract')
 const { AddressZero } = require("ethers").constants
 
-const overrides = { gasLimit: 20000000 }
+const overrides = { gasLimit: 9500000 }
 
 const debug = require('debug')('ptv3:Reserve.test')
 
@@ -18,10 +16,12 @@ describe('Reserve', () => {
   let reserve
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
+    const Reserve =  await hre.ethers.getContractFactory("Reserve", wallet, overrides)
+ 
 
-    reserve = await deployContract(wallet, Reserve, [], overrides)
+    reserve = await Reserve.deploy()
   })
 
   describe('setRateMantissa()', () => {
@@ -41,16 +41,18 @@ describe('Reserve', () => {
 
   describe('withdrawReserve', () => {
     it('should only be callable by the owner', async () => {
-      await expect(reserve.connect(wallet2).withdrawReserve(wallet._address, wallet._address))
+      await expect(reserve.connect(wallet2).withdrawReserve(wallet.address, wallet.address))
         .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it('should be callable by the owner', async () => {
+      const PrizePoolInterface = await hre.artifacts.readArtifact("PrizePoolInterface")
+   
       const prizePool = await deployMockContract(wallet, PrizePoolInterface.abi)
 
-      await prizePool.mock.withdrawReserve.withArgs(wallet._address).returns('10')
+      await prizePool.mock.withdrawReserve.withArgs(wallet.address).returns('10')
 
-      await reserve.withdrawReserve(prizePool.address, wallet._address)
+      await reserve.withdrawReserve(prizePool.address, wallet.address)
     })
   })
 

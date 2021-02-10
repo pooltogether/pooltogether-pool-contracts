@@ -1,8 +1,6 @@
-const buidler = require("@nomiclabs/buidler");
+const hardhat = require("hardhat");
 
-const ERC20Mintable = require('../build/ERC20Mintable.json')
-const CompoundPrizePool = require('../build/CompoundPrizePool.json')
-const MultipleWinners = require('../build/MultipleWinners.json')
+
 
 const DEPLOY = {
   BALANCE_DRIPS: true,
@@ -28,7 +26,7 @@ const getChainName = (chainId) => {
     case 4: return 'rinkeby';
     case 5: return 'goerli';
     case 42: return 'kovan';
-    case 31337: return 'buidlerEVM';
+    case 31337: return 'HardhatEVM';
     default: return 'unknown';
   }
 }
@@ -36,11 +34,21 @@ const getChainName = (chainId) => {
 async function main() {
   // Run with CLI flag --silent to suppress log output
 
+
+  // const ERC20Mintable = require('../build/ERC20Mintable.json')
+const ERC20Mintable = await hre.artifacts.readArtifact("ERC20Mintable")
+
+// const CompoundPrizePool = require('../build/CompoundPrizePool.json')
+const CompoundPrizePool = await hre.artifacts.readArtifact("CompoundPrizePool")
+
+const MultipleWinners = await hre.artifacts.readArtifact("MultipleWinners")
+// const MultipleWinners = require('../build/MultipleWinners.json')
+
   console.log("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
   console.log("PoolTogether Pool Contracts - Drip Tokens Script")
   console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
-  const { getNamedAccounts, deployments, getChainId, ethers } = buidler
+  const { getNamedAccounts, deployments, getChainId, ethers } = hardhat
   const { deploy } = deployments
   const toWei = ethers.utils.parseEther
 

@@ -1,11 +1,10 @@
-const { deployments } = require("@nomiclabs/buidler");
-const buidler = require('@nomiclabs/buidler')
-const ERC20Mintable = require('../build/ERC20Mintable.json')
+const { deployments } = require("hardhat");
+const hardhat = require('hardhat')
+
 
 const { getEvents } = require('../test/helpers/getEvents')
 const ethers = require('ethers')
 const { AddressZero } = ethers.constants;
-const { deployContract } = require('ethereum-waffle')
 
 const toWei = (val) => ethers.utils.parseEther('' + val)
 
@@ -25,6 +24,8 @@ async function deployTestPool({
   overrides = { gasLimit: 20000000 }
 }) {
   await deployments.fixture()
+  const ERC20Mintable = await hre.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
+
 
   debug('beforeEach deploy rng, forwarder etc...')
 
@@ -38,7 +39,7 @@ async function deployTestPool({
     debug('Deploying test stake pool')
   }
 
-  let governanceToken = await deployContract(wallet, ERC20Mintable, ['Governance Token', 'GOV'], overrides)
+  let governanceToken = await ERC20Mintable.deploy('Governance Token', 'GOV')
 
   let poolWithMultipleWinnersBuilderResult = await deployments.get("PoolWithMultipleWinnersBuilder")
   let comptrollerResult = await deployments.get("Comptroller")
@@ -48,15 +49,15 @@ async function deployTestPool({
   let yTokenResult = await deployments.get("yDai")
   let reserveResult = await deployments.get('Reserve')
 
-  const reserve = await buidler.ethers.getContractAt('Reserve', reserveResult.address, wallet)
-  const token = await buidler.ethers.getContractAt('ERC20Mintable', tokenResult.address, wallet)
-  const cToken = await buidler.ethers.getContractAt('CTokenMock', cTokenResult.address, wallet)
-  const yToken = await buidler.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
-  const comptroller = await buidler.ethers.getContractAt('ComptrollerHarness', comptrollerResult.address, wallet)
-  const poolBuilder = await buidler.ethers.getContractAt('PoolWithMultipleWinnersBuilder', poolWithMultipleWinnersBuilderResult.address, wallet)
+  const reserve = await hardhat.ethers.getContractAt('Reserve', reserveResult.address, wallet)
+  const token = await hardhat.ethers.getContractAt('ERC20Mintable', tokenResult.address, wallet)
+  const cToken = await hardhat.ethers.getContractAt('CTokenMock', cTokenResult.address, wallet)
+  const yToken = await hardhat.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
+  const comptroller = await hardhat.ethers.getContractAt('ComptrollerHarness', comptrollerResult.address, wallet)
+  const poolBuilder = await hardhat.ethers.getContractAt('PoolWithMultipleWinnersBuilder', poolWithMultipleWinnersBuilderResult.address, wallet)
 
-  let linkToken = await deployContract(wallet, ERC20Mintable, ['Link Token', 'LINK'], overrides)
-  let rngServiceMock = await buidler.ethers.getContractAt('RNGServiceMock', rngServiceMockResult.address, wallet)
+  let linkToken = await ERC20Mintable.deploy('Link Token', 'LINK')
+  let rngServiceMock = await hardhat.ethers.getContractAt('RNGServiceMock', rngServiceMockResult.address, wallet)
   await rngServiceMock.setRequestFee(linkToken.address, toWei('1'))
 
   const multipleWinnersConfig = {
@@ -77,7 +78,7 @@ async function deployTestPool({
   let prizePool
   if (yVault) {
     debug(`Creating yVault prize pool config: ${yTokenResult.address}`)
-    const yToken = await buidler.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
+    const yToken = await hardhat.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
     debug(`yToken token: ${await yToken.token()} and token ${token.address}`)
     const yVaultPrizePoolConfig = {
       vault: yTokenResult.address,
@@ -88,7 +89,7 @@ async function deployTestPool({
     let tx = await poolBuilder.createVaultMultipleWinners(yVaultPrizePoolConfig, multipleWinnersConfig, await token.decimals())
     let events = await getEvents(poolBuilder, tx)
     let event = events[0]
-    prizePool = await buidler.ethers.getContractAt('yVaultPrizePoolHarness', event.args.prizePool, wallet)
+    prizePool = await hardhat.ethers.getContractAt('yVaultPrizePoolHarness', event.args.prizePool, wallet)
   }
   else if(stakePool){
     debug('deploying stake pool')
@@ -96,7 +97,7 @@ async function deployTestPool({
     let tx = await poolBuilder.createStakeMultipleWinners(stakePoolConfig, multipleWinnersConfig, await token.decimals())
     let events = await getEvents(poolBuilder, tx)
     let event = events[0]
-    prizePool = await buidler.ethers.getContractAt('StakePrizePoolHarness', event.args.prizePool, wallet)
+    prizePool = await hardhat.ethers.getContractAt('StakePrizePoolHarness', event.args.prizePool, wallet)
   } 
   else {
     const compoundPrizePoolConfig = {
@@ -107,13 +108,13 @@ async function deployTestPool({
     let tx = await poolBuilder.createCompoundMultipleWinners(compoundPrizePoolConfig, multipleWinnersConfig, await token.decimals())
     let events = await getEvents(poolBuilder, tx)
     let event = events[0]
-    prizePool = await buidler.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
+    prizePool = await hardhat.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
   }
 
   debug("created prizePool: ", prizePool.address)
 
-  let sponsorship = await buidler.ethers.getContractAt('ControlledToken', (await prizePool.tokens())[0], wallet)
-  let ticket = await buidler.ethers.getContractAt('Ticket', (await prizePool.tokens())[1], wallet)
+  let sponsorship = await hardhat.ethers.getContractAt('ControlledToken', (await prizePool.tokens())[0], wallet)
+  let ticket = await hardhat.ethers.getContractAt('Ticket', (await prizePool.tokens())[1], wallet)
 
   debug(`sponsorship: ${sponsorship.address}, ticket: ${ticket.address}`)
 
@@ -133,7 +134,7 @@ async function deployTestPool({
     governanceToken: governanceToken.address
   })
 
-  const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinnersHarness', prizeStrategyAddress, wallet)
+  const prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinnersHarness', prizeStrategyAddress, wallet)
 
   debug(`Setting token listener: ${comptrollerResult.address}...`)
 

@@ -1,10 +1,9 @@
-const { deployments } = require("@nomiclabs/buidler");
+const { deployments } = require("hardhat");
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 const { ethers } = require('ethers')
 const { deployMockContract } = require('./helpers/deployMockContract')
-const PrizePool = require('../build/PrizePool.json')
-const PeriodicPrizeStrategy = require('../build/PeriodicPrizeStrategy.json')
+
 const { getEvents } = require('./helpers/getEvents')
 
 const toWei = ethers.utils.parseEther
@@ -24,9 +23,9 @@ describe('MultipleWinnersBuilder', () => {
   let multipleWinnersConfig
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3] = await hardhat.ethers.getSigners()
     await deployments.fixture()
-    builder = await buidler.ethers.getContractAt(
+    builder = await hardhat.ethers.getContractAt(
       "MultipleWinnersBuilder",
       (await deployments.get("MultipleWinnersBuilder")).address,
       wallet
@@ -36,6 +35,7 @@ describe('MultipleWinnersBuilder', () => {
     controlledTokenBuilder = (await deployments.get("ControlledTokenBuilder"))
     rngServiceMock = (await deployments.get("RNGServiceMock"))
 
+    const PrizePool = await hre.artifacts.readArtifact("PrizePool")
     prizePool = await deployMockContract(wallet, PrizePool.abi)
 
     multipleWinnersConfig = {
@@ -68,14 +68,14 @@ describe('MultipleWinnersBuilder', () => {
         prizePool.address,
         multipleWinnersConfig,
         8,
-        wallet._address
+        wallet.address
       )
       let events = await getEvents(builder, tx)
       let multipleWinnersCreatedEvent = events.find(e => e.name == 'MultipleWinnersCreated')
 
       debug(`Getting contract at ${multipleWinnersCreatedEvent.args.prizeStrategy}...`)
 
-      const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinnersHarness', multipleWinnersCreatedEvent.args.prizeStrategy, wallet)
+      const prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinnersHarness', multipleWinnersCreatedEvent.args.prizeStrategy, wallet)
 
       const ticketAddress = await prizeStrategy.ticket()
       const sponsorshipAddress = await prizeStrategy.sponsorship()
@@ -85,16 +85,16 @@ describe('MultipleWinnersBuilder', () => {
 
       expect(await prizeStrategy.prizePeriodStartedAt()).to.equal(multipleWinnersConfig.prizePeriodStart)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(multipleWinnersConfig.prizePeriodSeconds)
-      expect(await prizeStrategy.owner()).to.equal(wallet._address)
+      expect(await prizeStrategy.owner()).to.equal(wallet.address)
       expect(await prizeStrategy.rng()).to.equal(multipleWinnersConfig.rngService)
       expect(await prizeStrategy.numberOfWinners()).to.equal(multipleWinnersConfig.numberOfWinners)
       expect(await prizeStrategy.splitExternalErc20Awards()).to.equal(multipleWinnersConfig.splitExternalErc20Awards)
 
-      const ticket = await buidler.ethers.getContractAt('Ticket', ticketAddress, wallet)
+      const ticket = await hardhat.ethers.getContractAt('Ticket', ticketAddress, wallet)
       expect(await ticket.name()).to.equal(multipleWinnersConfig.ticketName)
       expect(await ticket.symbol()).to.equal(multipleWinnersConfig.ticketSymbol)
 
-      const sponsorship = await buidler.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
+      const sponsorship = await hardhat.ethers.getContractAt('ControlledToken', sponsorshipAddress, wallet)
       expect(await sponsorship.name()).to.equal(multipleWinnersConfig.sponsorshipName)
       expect(await sponsorship.symbol()).to.equal(multipleWinnersConfig.sponsorshipSymbol)
     })
@@ -105,12 +105,13 @@ describe('MultipleWinnersBuilder', () => {
     let existingPrizeStrategy
 
     beforeEach(async () => {
+      const PeriodicPrizeStrategy = await hre.artifacts.readArtifact("PeriodicPrizeStrategy")
       existingPrizeStrategy = await deployMockContract(wallet, PeriodicPrizeStrategy.abi)
       await existingPrizeStrategy.mock.prizePeriodStartedAt.returns(1111)
       await existingPrizeStrategy.mock.prizePeriodSeconds.returns(222)
       await existingPrizeStrategy.mock.prizePool.returns(prizePool.address)
-      await existingPrizeStrategy.mock.ticket.returns(wallet._address)
-      await existingPrizeStrategy.mock.sponsorship.returns(wallet2._address)
+      await existingPrizeStrategy.mock.ticket.returns(wallet.address)
+      await existingPrizeStrategy.mock.sponsorship.returns(wallet2.address)
       await existingPrizeStrategy.mock.rng.returns(rngServiceMock.address)
     })
 
@@ -125,12 +126,12 @@ describe('MultipleWinnersBuilder', () => {
 
       debug(`Getting contract at ${multipleWinnersCreatedEvent.args.prizeStrategy}...`)
 
-      const prizeStrategy = await buidler.ethers.getContractAt('MultipleWinnersHarness', multipleWinnersCreatedEvent.args.prizeStrategy, wallet)
+      const prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinnersHarness', multipleWinnersCreatedEvent.args.prizeStrategy, wallet)
 
       expect(await prizeStrategy.prizePeriodStartedAt()).to.equal(1111)
       expect(await prizeStrategy.prizePeriodSeconds()).to.equal(222)
       expect(await prizeStrategy.prizePool()).to.equal(prizePool.address)
-      expect(await prizeStrategy.owner()).to.equal(wallet._address)
+      expect(await prizeStrategy.owner()).to.equal(wallet.address)
       expect(await prizeStrategy.rng()).to.equal(rngServiceMock.address)
       expect(await prizeStrategy.splitExternalErc20Awards()).to.equal(false)
 

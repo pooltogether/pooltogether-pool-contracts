@@ -1,24 +1,13 @@
-const networks = require('./buidler.networks')
-
-const {TASK_COMPILE_GET_COMPILER_INPUT} = require("@nomiclabs/buidler/builtin-tasks/task-names");
+const networks = require('./hardhat.networks')
 
 const RNGBlockhashRopsten = require('@pooltogether/pooltogether-rng-contracts/deployments/ropsten/RNGBlockhash.json')
 const RNGBlockhashRinkeby = require('@pooltogether/pooltogether-rng-contracts/deployments/rinkeby/RNGBlockhash.json')
 const RNGBlockhashKovan = require('@pooltogether/pooltogether-rng-contracts/deployments/kovan/RNGBlockhash.json')
 
-usePlugin("@nomiclabs/buidler-waffle");
-usePlugin("buidler-gas-reporter");
-usePlugin("solidity-coverage");
-usePlugin("@nomiclabs/buidler-etherscan");
-usePlugin("buidler-deploy");
-
-// This must occur after buidler-deploy!
-task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
-  const input = await runSuper();
-  input.settings.metadata.useLiteralContent = process.env.USE_LITERAL_CONTENT != 'false';
-  console.log(`useLiteralContent: ${input.settings.metadata.useLiteralContent}`)
-  return input;
-})
+require("@nomiclabs/hardhat-waffle");
+require('hardhat-deploy')
+require('hardhat-deploy-ethers')
+require('solidity-coverage')
 
 const testnetAdmin = '0xE0F4217390221aF47855E094F6e112D43C8698fE' // Account 1
 const testnetUser1 = '0xeedDf4937E3A7aBe03E08963C3c20affbD770b51' // Account 3
@@ -28,16 +17,15 @@ const testnetUser3 = '0x381843c8b4a4a0Da3C0800708c84AA2d792D22b1' // Account 5
 const optimizerEnabled = !process.env.OPTIMIZER_DISABLED
 
 const config = {
-  solc: {
+  solidity: {
     version: "0.6.12",
-    optimizer: {
-      enabled: optimizerEnabled,
-      runs: 200
-    },
-    evmVersion: "istanbul"
-  },
-  paths: {
-    artifacts: "./build"
+    settings:{
+      optimizer: {
+        enabled: optimizerEnabled,
+        runs: 200
+      },
+      evmVersion: "istanbul"
+    }
   },
   networks,
   gasReporter: {

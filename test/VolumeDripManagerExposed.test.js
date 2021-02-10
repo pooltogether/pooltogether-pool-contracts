@@ -1,11 +1,9 @@
-const { deployContract, deployMockContract } = require('ethereum-waffle')
-const VolumeDripManagerExposed = require('../build/VolumeDripManagerExposed.json')
-const ERC20Mintable = require('../build/ERC20Mintable.json')
-const IERC20 = require('../build/IERC20Upgradeable.json')
+const { deployMockContract } = require('ethereum-waffle')
+
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 const { AddressZero } = require('ethers').constants
 
 const toWei = ethers.utils.parseEther
@@ -13,7 +11,7 @@ const toWei = ethers.utils.parseEther
 const debug = require('debug')('ptv3:VolumeDripManagerExposed.test')
 const SENTINAL = '0x0000000000000000000000000000000000000001'
 
-let overrides = { gasLimit: 20000000 }
+let overrides = { gasLimit: 9500000 }
 
 describe('VolumeDripManagerExposed', function() {
 
@@ -27,16 +25,22 @@ describe('VolumeDripManagerExposed', function() {
   let dripAmount = toWei('10')
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()
 
-    manager = await deployContract(wallet, VolumeDripManagerExposed, [], overrides)
+    const VolumeDripManagerExposed = await hre.ethers.getContractFactory("VolumeDripManagerExposed", wallet, overrides)
+  
+    manager = await VolumeDripManagerExposed.deploy()
 
     debug({ manager: manager.address })
 
-    measure = await deployContract(wallet, ERC20Mintable, ['Measure Token', 'MTKN'], overrides)
-    drip1 = await deployContract(wallet, ERC20Mintable, ['Drip Token 1', 'DRIP1'], overrides)
-    drip2 = await deployContract(wallet, ERC20Mintable, ['Drip Token 2', 'DRIP2'], overrides)
-    drip3 = await deployMockContract(wallet, IERC20.abi)
+    const IERC20 = await hre.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
+
+    measure = await IERC20.deploy('Measure Token', 'MTKN')
+    drip1 = await IERC20.deploy('Drip Token 1', 'DRIP1')
+    drip2 = await IERC20.deploy('Drip Token 2', 'DRIP2')
+    
+    const IERC20U = await hre.artifacts.readArtifact("IERC20Upgradeable")
+    drip3 = await deployMockContract(wallet, IERC20U.abi)
   })
 
   describe('activate()', () => {

@@ -1,10 +1,8 @@
 const { expect } = require("chai");
-const TicketProxyFactory = require('../build/TicketProxyFactory.json')
-const TokenControllerInterface = require('../build/TokenControllerInterface.json')
-const buidler = require('@nomiclabs/buidler')
-const { deployContract, deployMockContract } = require('ethereum-waffle')
+const hardhat = require('hardhat')
+const {  deployMockContract } = require('ethereum-waffle')
 
-let overrides = { gasLimit: 20000000 }
+let overrides = { gasLimit: 9500000 }
 
 describe('TicketProxyFactory', () => {
 
@@ -15,10 +13,13 @@ describe('TicketProxyFactory', () => {
   let provider
 
   beforeEach(async () => {
-    [wallet, wallet2] = await buidler.ethers.getSigners()
-    provider = buidler.ethers.provider
+    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    provider = hardhat.ethers.provider
 
-    factory = await deployContract(wallet, TicketProxyFactory, [], overrides)
+    const TicketProxyFactory = await hre.ethers.getContractFactory("TicketProxyFactory", wallet, overrides)
+    factory = await TicketProxyFactory.deploy()
+
+    const TokenControllerInterface = await hre.artifacts.readArtifact("TokenControllerInterface")
     controller = await deployMockContract(wallet, TokenControllerInterface.abi)
   })
 
@@ -29,7 +30,7 @@ describe('TicketProxyFactory', () => {
       let event = factory.interface.parseLog(receipt.logs[0])
       expect(event.name).to.equal('ProxyCreated')
 
-      const ticket = await buidler.ethers.getContractAt("Ticket", event.args.proxy, wallet)
+      const ticket = await hardhat.ethers.getContractAt("Ticket", event.args.proxy, wallet)
 
       await ticket.initialize(
         "NAME",

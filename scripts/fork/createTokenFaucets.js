@@ -1,4 +1,4 @@
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 const chalk = require("chalk")
 
 function dim() {
@@ -9,7 +9,7 @@ function green() {
   console.log(chalk.green.call(chalk, ...arguments))
 }
 
-const { ethers, deployments, getNamedAccounts } = buidler
+const { ethers, deployments, getNamedAccounts } = hardhat
 
 async function getProxy(tx) { 
   const tokenFaucetProxyFactoryDeployment = await deployments.get('TokenFaucetProxyFactory')

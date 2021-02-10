@@ -1,25 +1,19 @@
-const { deployContract } = require('ethereum-waffle')
-const BalanceDripExposed = require('../build/BalanceDripExposed.json')
-
-const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
-
+const hre = require('hardhat')
 const toWei = ethers.utils.parseEther
 
 const debug = require('debug')('ptv3:BalanceDripExposed.test')
 
 describe('BalanceDripExposed', function() {
 
-  const overrides = { gasLimit: 20000000 }
+  const overrides = { gasLimit: 9500000 }
   const unlimitedTokens = toWei('10000')
   let dripExposed
-
+  let wallet, wallet2, wallet3, wallet4
   beforeEach(async () => {
-    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
-
-    dripExposed = await deployContract(wallet, BalanceDripExposed, [], overrides)
-
+    [wallet, wallet2, wallet3, wallet4] = await hre.ethers.getSigners()
+    const BalanceDripExposedContract = await ethers.getContractFactory("BalanceDripExposed", wallet, overrides)
+    dripExposed = await BalanceDripExposedContract.deploy()
     await dripExposed.setDripRate(toWei('0.1'))
   })
 
@@ -134,12 +128,12 @@ describe('BalanceDripExposed', function() {
 
       await expect(
         dripExposed.captureNewTokensForUser(
-          wallet._address,
+          wallet.address,
           toWei('10') // user has always held 10 tokens
         )
       )
         .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('1'))
+        .withArgs(wallet.address, toWei('1'))
 
       expect(await dripExposed.totalDripped()).to.be.equal(toWei('1'))
     })
@@ -166,15 +160,16 @@ describe('BalanceDripExposed', function() {
       )
         .to.emit(dripExposed, 'DrippedTotalSupply')
         .withArgs(toWei('1'))
+
       // before the mint we also capture the users balance
       await expect(
         dripExposed.captureNewTokensForUser(
-          wallet2._address,
+          wallet2.address,
           toWei('0') // user has always held 10 tokens
         )
       )
         .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet2._address, toWei('0'))
+        .withArgs(wallet2.address, toWei('0'))
 
       // Now let's drip right before we capture
       await expect(
@@ -186,24 +181,26 @@ describe('BalanceDripExposed', function() {
       )
         .to.emit(dripExposed, 'DrippedTotalSupply')
         .withArgs(toWei('1'))
+
       // wallet 1 had 100% for 10 seconds, then 50% for ten seconds
       await expect(
         dripExposed.captureNewTokensForUser(
-          wallet._address,
+          wallet.address,
           toWei('10')
         )
       )
         .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet._address, toWei('1.5'))
+        .withArgs(wallet.address, toWei('1.5'))
+
       // wallet 2 had 50% of the supply for 10 seconds
       await expect(
         dripExposed.captureNewTokensForUser(
-          wallet2._address,
+          wallet2.address,
           toWei('10')
         )
       )
         .to.emit(dripExposed, 'Dripped')
-        .withArgs(wallet2._address, toWei('0.5'))
+        .withArgs(wallet2.address, toWei('0.5'))
 
     })
   })

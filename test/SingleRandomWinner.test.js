@@ -2,23 +2,15 @@ const { deployContract } = require('ethereum-waffle')
 const { deployMockContract } = require('./helpers/deployMockContract')
 const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
-const TokenListenerInterface = require('../build/TokenListenerInterface.json')
-const SingleRandomWinnerHarness = require('../build/SingleRandomWinnerHarness.json')
-const PrizePool = require('../build/PrizePool.json')
-const RNGInterface = require('../build/RNGInterface.json')
-const IERC20 = require('../build/IERC20Upgradeable.json')
-const IERC721 = require('../build/IERC721Upgradeable.json')
-const ControlledToken = require('../build/ControlledToken.json')
-const Ticket = require('../build/Ticket.json')
 
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 
 const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
 const debug = require('debug')('ptv3:PeriodicPrizePool.test')
 
-let overrides = { gasLimit: 20000000 }
+let overrides = { gasLimit: 9500000 }
 
 describe('SingleRandomWinner', function() {
   let wallet, wallet2
@@ -35,36 +27,55 @@ describe('SingleRandomWinner', function() {
   let creditLimitMantissa = 0.1
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3] = await buidler.ethers.getSigners()
+    [wallet, wallet2, wallet3] = await hardhat.ethers.getSigners()
 
-    debug(`using wallet ${wallet._address}`)
+    debug(`using wallet ${wallet.address}`)
 
     debug('deploying registry...')
     registry = await deploy1820(wallet)
 
     debug('deploying protocol comptroller...')
+    const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
     comptroller = await deployMockContract(wallet, TokenListenerInterface.abi, [], overrides)
 
     debug('mocking tokens...')
+
+    const IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
     token = await deployMockContract(wallet, IERC20.abi, overrides)
+
+    const PrizePool = await hre.artifacts.readArtifact("PrizePool")
     prizePool = await deployMockContract(wallet, PrizePool.abi, overrides)
+
+    const Ticket = await hre.artifacts.readArtifact("Ticket")
     ticket = await deployMockContract(wallet, Ticket.abi, overrides)
+
+    const ControlledToken = await hre.artifacts.readArtifact("ControlledToken")
     sponsorship = await deployMockContract(wallet, ControlledToken.abi, overrides)
+
+    const RNGInterface = await hre.artifacts.readArtifact("RNGInterface")
     rng = await deployMockContract(wallet, RNGInterface.abi, overrides)
+
+    
     rngFeeToken = await deployMockContract(wallet, IERC20.abi, overrides)
+
+  
     externalERC20Award = await deployMockContract(wallet, IERC20.abi, overrides)
+
+    const IERC721 = await hre.artifacts.readArtifact("IERC721Upgradeable")
     externalERC721Award = await deployMockContract(wallet, IERC721.abi, overrides)
 
     await rng.mock.getRequestFee.returns(rngFeeToken.address, toWei('1'));
 
     debug('deploying prizeStrategy...')
-    prizeStrategy = await deployContract(wallet, SingleRandomWinnerHarness, [], overrides)
+
+    const SingleRandomWinnerHarness =  await hre.ethers.getContractFactory("SingleRandomWinnerHarness", wallet, overrides)
+    prizeStrategy = await SingleRandomWinnerHarness.deploy()
 
     await prizePool.mock.canAwardExternal.withArgs(externalERC20Award.address).returns(true)
     await prizePool.mock.canAwardExternal.withArgs(externalERC721Award.address).returns(true)
 
     // wallet 1 always wins
-    await ticket.mock.draw.returns(wallet._address)
+    await ticket.mock.draw.returns(wallet.address)
 
     debug('initializing prizeStrategy...')
     await prizeStrategy.initialize(
@@ -91,13 +102,13 @@ describe('SingleRandomWinner', function() {
     it('should award a single winner', async () => {
       let randomNumber = 10
       await prizePool.mock.captureAwardBalance.returns(toWei('8'))
-      await ticket.mock.draw.withArgs(randomNumber).returns(wallet3._address)
+      await ticket.mock.draw.withArgs(randomNumber).returns(wallet3.address)
 
       await externalERC20Award.mock.balanceOf.withArgs(prizePool.address).returns(0)
 
       await ticket.mock.totalSupply.returns(1000)
 
-      await prizePool.mock.award.withArgs(wallet3._address, toWei('8'), ticket.address).returns()
+      await prizePool.mock.award.withArgs(wallet3.address, toWei('8'), ticket.address).returns()
 
       await prizeStrategy.distribute(randomNumber)
     })

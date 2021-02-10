@@ -1,4 +1,4 @@
-const buidler = require("@nomiclabs/buidler");
+const hardhat = require("hardhat");
 
 const VALID_CHAIN_IDS = [3, 4, 5, 42]
 
@@ -22,8 +22,8 @@ const VOLUME_DRIPS = {
   ]
 }
 
-const toWei = buidler.ethers.utils.parseEther
-const toEth = buidler.ethers.utils.formatEther
+const toWei = hardhat.ethers.utils.parseEther
+const toEth = hardhat.ethers.utils.formatEther
 
 const getChainName = (chainId) => {
   switch(chainId) {
@@ -32,7 +32,7 @@ const getChainName = (chainId) => {
     case 4: return 'rinkeby';
     case 5: return 'goerli';
     case 42: return 'kovan';
-    case 31337: return 'buidlerEVM';
+    case 31337: return 'HardhatEVM';
     default: return 'unknown';
   }
 }
@@ -50,7 +50,7 @@ const runBalanceDripTransactions = async ({chainName, comptroller, testnetUsers}
 
     for (j = 0; j < testnetUsers.length; j++) {
       testnetUser = testnetUsers[j]
-      testnetSigner = await buidler.ethers.provider.getSigner(testnetUser)
+      testnetSigner = await hardhat.ethers.provider.getSigner(testnetUser)
 
       console.log(`\n  Updating BalanceDrip for User ${j+1} (${testnetUser})...`)
       await comptroller.connect(testnetSigner)
@@ -79,7 +79,7 @@ const runVolumeDripTransactions = async ({chainName, comptroller, testnetUsers})
     volumeDrip = volumeDrips[i]
 
     testnetUser = testnetUsers[0]
-    testnetSigner = await buidler.ethers.provider.getSigner(testnetUser)
+    testnetSigner = await hardhat.ethers.provider.getSigner(testnetUser)
 
     console.log(`\n  Getting VolumeDrips...`)
     for (k = 0; k < volumeDrip.drips.length; k++) {
@@ -94,7 +94,7 @@ const runVolumeDripTransactions = async ({chainName, comptroller, testnetUsers})
 
     for (j = 0; j < testnetUsers.length; j++) {
       testnetUser = testnetUsers[j]
-      testnetSigner = await buidler.ethers.provider.getSigner(testnetUser)
+      testnetSigner = await hardhat.ethers.provider.getSigner(testnetUser)
 
       console.log(`\n  Updating VolumeDrips for User ${j+1} (${testnetUser})...`)
       await comptroller.connect(testnetSigner)
@@ -119,7 +119,7 @@ async function main() {
   console.log("PoolTogether Pool Contracts - Testnet Transactions Script")
   console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
-  const { getNamedAccounts, getChainId, ethers } = buidler
+  const { getNamedAccounts, getChainId, ethers } = hardhat
   const { testnetUser1, testnetUser2, testnetUser3 } = await getNamedAccounts()
   const testnetUsers = [testnetUser1, testnetUser2, testnetUser3]
 

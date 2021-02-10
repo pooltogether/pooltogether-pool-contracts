@@ -1,8 +1,8 @@
 const {Contract, ContractFactory, utils, Wallet} = require('ethers');
-const DoppelgangerContract = require('../../build/DoppelgangerWithExec.json')
+
 
 async function deploy(wallet) {
-  const factory = new ContractFactory(DoppelgangerContract.abi, DoppelgangerContract.bytecode, wallet);
+  const factory = await hre.ethers.getContractFactory("DoppelgangerWithExec", wallet)
   return factory.deploy();
 }
 
@@ -39,10 +39,6 @@ function createMock(abi, mockContractInstance) {
 }
 
 async function deployMockContract(wallet, abi) {
-  console.warn(
-    'deployMockContract is an experimental feature. ' +
-    'Breaking changes will not result in a new major version'
-  );
   const mockContractInstance = await deploy(wallet);
 
   const mock = createMock(abi, mockContractInstance);

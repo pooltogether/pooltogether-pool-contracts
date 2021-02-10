@@ -74,7 +74,7 @@ Install dependencies:
 $ yarn
 ```
 
-We make use of [Buidler](https://buidler.dev) and [buidler-deploy](https://github.com/wighawag/buidler-deploy)
+We make use of [Hardhat](https://hardhat.dev) and [hardhat-deploy](https://github.com/wighawag/hardhat-deploy)
 
 #### Testing
 
@@ -110,13 +110,13 @@ NOTE: When you run this command it will reset the local blockchain.
 
 ###### Connect Locally
 
-Start up a [Buidler Console](https://buidler.dev/guides/buidler-console.html):
+Start up a [Hardhat Console](https://hardhat.dev/guides/hardhat-console.html):
 
 ```bash
-$ buidler console --network localhost
+$ hardhat console --network localhost
 ```
 
-Now you can load up the deployed contracts using [buidler-deploy](https://github.com/wighawag/buidler-deploy):
+Now you can load up the deployed contracts using [hardhat-deploy](https://github.com/wighawag/hardhat-deploy):
 
 ```javascript
 > await deployments.all()

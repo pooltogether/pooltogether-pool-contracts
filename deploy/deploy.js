@@ -9,13 +9,13 @@ const chainName = (chainId) => {
     case 4: return 'Rinkeby';
     case 5: return 'Goerli';
     case 42: return 'Kovan';
-    case 31337: return 'BuidlerEVM';
+    case 31337: return 'HardhatEVM';
     default: return 'Unknown';
   }
 }
 
-module.exports = async (buidler) => {
-  const { getNamedAccounts, deployments, getChainId, ethers } = buidler
+module.exports = async (hardhat) => {
+  const { getNamedAccounts, deployments, getChainId, ethers } = hardhat
   const { deploy } = deployments
 
   const harnessDisabled = !!process.env.DISABLE_HARNESS
@@ -105,7 +105,7 @@ module.exports = async (buidler) => {
       skipIfAlreadyDeployed: true
     })
     comptrollerAddress = comptrollerResult.address
-    const comptrollerContract = await buidler.ethers.getContractAt(
+    const comptrollerContract = await hardhat.ethers.getContractAt(
       "Comptroller",
       comptrollerResult.address,
       signer
@@ -129,7 +129,7 @@ module.exports = async (buidler) => {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
-    const reserveContract = await buidler.ethers.getContractAt(
+    const reserveContract = await hardhat.ethers.getContractAt(
       "Reserve",
       reserveResult.address,
       signer
@@ -143,7 +143,7 @@ module.exports = async (buidler) => {
       from: deployer,
       skipIfAlreadyDeployed: true
     })
-    const reserveRegistryContract = await buidler.ethers.getContractAt(
+    const reserveRegistryContract = await hardhat.ethers.getContractAt(
       "Registry",
       reserveRegistryResult.address,
       signer

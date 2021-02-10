@@ -1,7 +1,7 @@
-const buidler = require("@nomiclabs/buidler")
+const hardhat = require("hardhat")
 
 async function increaseTime(time) {
-  let provider = buidler.ethers.provider
+  let provider = hardhat.ethers.provider
   await provider.send('evm_increaseTime', [ time ])
   await provider.send('evm_mine', [])
 }

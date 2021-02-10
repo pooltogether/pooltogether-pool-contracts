@@ -2,22 +2,22 @@
 const chalk = require('chalk')
 const util = require('util')
 const exec = util.promisify(require('child_process').exec)
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 
 const info = (msg) => console.log(chalk.dim(msg))
 const success = (msg) => console.log(chalk.green(msg))
 const error = (msg) => console.error(chalk.red(msg))
 
 const getContract = async (name) => {
-  const { deployments } = buidler
-  const signers = await buidler.ethers.getSigners()
-  return buidler.ethers.getContractAt(name, (await deployments.get(name)).address, signers[0])
+  const { deployments } = hardhat
+  const signers = await hardhat.ethers.getSigners()
+  return hardhat.ethers.getContractAt(name, (await deployments.get(name)).address, signers[0])
 }
 
 const verifyAddress = async (address, name, options = "") => {
-  const network = await buidler.ethers.provider.getNetwork()
+  const network = await hardhat.ethers.provider.getNetwork()
   try {
-    await exec(`buidler ${options} verify --network ${network.name === 'homestead' ? 'mainnet' : network.name} ${address}`)
+    await exec(`hardhat ${options} verify --network ${network.name === 'homestead' ? 'mainnet' : network.name} ${address}`)
   } catch (e) {
     if (/Contract source code already verified/.test(e.message)) {
       info(`${name} already verified`)
@@ -44,11 +44,11 @@ const verifyContract = async (name, options = "") => {
 }
 
 async function run() {
-  const network = await buidler.ethers.provider.getNetwork()
+  const network = await hardhat.ethers.provider.getNetwork()
 
   info(`Verifying top-level contracts...`)
   const { stdout, stderr } = await exec(
-    `buidler etherscan-verify --solc-input --api-key $ETHERSCAN_API_KEY --network ${network.name === 'homestead' ? 'mainnet' : network.name}`
+    `hardhat etherscan-verify --solc-input --api-key $ETHERSCAN_API_KEY --network ${network.name === 'homestead' ? 'mainnet' : network.name}`
   )
   console.log(chalk.yellow(stdout))
   console.log(chalk.red(stderr))

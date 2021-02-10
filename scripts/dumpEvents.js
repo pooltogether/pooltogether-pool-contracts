@@ -1,8 +1,8 @@
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 const fs = require('fs')
 
 async function run() {
-  const { deployments, ethers } = buidler
+  const { deployments, ethers } = hardhat
   const { provider } = ethers
 
   const signers = await ethers.getSigners()

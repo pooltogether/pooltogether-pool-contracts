@@ -1,10 +1,7 @@
-const { deployContract } = require('ethereum-waffle')
-const VolumeDripExposed = require('../build/VolumeDripExposed.json')
-
 const { call } = require('./helpers/call')
 const { ethers } = require('ethers')
 const { expect } = require('chai')
-const buidler = require('@nomiclabs/buidler')
+const hardhat = require('hardhat')
 
 const toWei = ethers.utils.parseEther
 
@@ -15,16 +12,16 @@ describe('VolumeDripExposed', function() {
 
   let drip
 
-  const overrides = { gasLimit: 20000000 }
+  const overrides = { gasLimit: 9500000 }
   const periodSeconds = 10
   const dripAmount = toWei('10')
   const endTime = 30
   const unlimitedTokens = toWei('10000000')
 
   beforeEach(async () => {
-    [wallet, wallet2, wallet3, wallet4] = await buidler.ethers.getSigners()
-    
-    drip = await deployContract(wallet, VolumeDripExposed, [], overrides)
+    [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()
+    const VolumeDripExposed = await hre.ethers.getContractFactory("VolumeDripExposed", wallet, overrides)
+    drip = await VolumeDripExposed.deploy()
 
     debug({ drip: drip.address })
 
@@ -50,7 +47,7 @@ describe('VolumeDripExposed', function() {
       await drip.setNextPeriod(newPeriodLength, newDripAmount)
 
       // ensure there is a deposit for the first period
-      await drip.mint(wallet._address, toWei('11'))
+      await drip.mint(wallet.address, toWei('11'))
 
       await expect(
         drip.drip(endTime, unlimitedTokens)
@@ -59,7 +56,7 @@ describe('VolumeDripExposed', function() {
         .withArgs(dripAmount)
 
       // ensure there is a deposit for the next period
-      await drip.mint(wallet._address, toWei('11'))
+      await drip.mint(wallet.address, toWei('11'))
 
       await expect(
         drip.drip(endTime + newPeriodLength, unlimitedTokens)
@@ -84,7 +81,7 @@ describe('VolumeDripExposed', function() {
 
     it('should drip if there are deposits', async () => {
       // ensure there is a deposit
-      await drip.mint(wallet._address, toWei('11'))
+      await drip.mint(wallet.address, toWei('11'))
 
       await expect(
         drip.drip(endTime, unlimitedTokens)
@@ -99,7 +96,7 @@ describe('VolumeDripExposed', function() {
 
     it('should cap the drip amount by the max', async () => {
       // ensure there is a deposit
-      await drip.mint(wallet._address, toWei('11'))
+      await drip.mint(wallet.address, toWei('11'))
 
       const maxDripAmount = toWei('1')
 
@@ -127,7 +124,7 @@ describe('VolumeDripExposed', function() {
       await drip.setNextPeriod(newPeriodLength, newDripAmount)
 
       // ensure user has minted within the period
-      await expect(drip.mint(wallet._address, toWei('10')))
+      await expect(drip.mint(wallet.address, toWei('10')))
         .to.emit(drip, 'Minted')
         .withArgs(0)
 
@@ -137,43 +134,43 @@ describe('VolumeDripExposed', function() {
         .withArgs(dripAmount)
 
       // now try to mint for the user
-      await expect(drip.mint(wallet._address, toWei('10')))
+      await expect(drip.mint(wallet.address, toWei('10')))
         .to.emit(drip, 'Minted')
         .withArgs(dripAmount)
     })
 
     it('should increment a users balance and set their current period', async () => {
-      await expect(drip.mint(wallet._address, toWei('10')))
+      await expect(drip.mint(wallet.address, toWei('10')))
         .to.emit(drip, 'Minted')
         .withArgs(0)
 
-      let deposit = await drip.getDeposit(wallet._address)
+      let deposit = await drip.getDeposit(wallet.address)
       expect(deposit.balance).to.equal(toWei('10'))
       expect(deposit.period).to.equal(1)
     })
 
     it('should update their balance when depositing again', async () => {
-      await expect(drip.mint(wallet._address, toWei('10')))
+      await expect(drip.mint(wallet.address, toWei('10')))
         .to.emit(drip, 'Minted')
         .withArgs(0)
 
-      await expect(drip.mint(wallet._address, toWei('20')))
+      await expect(drip.mint(wallet.address, toWei('20')))
         .to.emit(drip, 'Minted')
         .withArgs(0)
 
-      let deposit = await drip.getDeposit(wallet._address)
+      let deposit = await drip.getDeposit(wallet.address)
       expect(deposit.balance).to.equal(toWei('30'))
       expect(deposit.period).to.equal(1)
     })
 
     it('should accrue their previous amounts', async () => {
       // Period 1 now
-      await expect(drip.mint(wallet._address, toWei('10')))
+      await expect(drip.mint(wallet.address, toWei('10')))
         .to.emit(drip, 'Minted')
         .withArgs(0)
 
       // Period 1 still
-      await expect(drip.mint(wallet._address, toWei('20')))
+      await expect(drip.mint(wallet.address, toWei('20')))
         .to.emit(drip, 'Minted')
         .withArgs(0)
 
@@ -182,11 +179,11 @@ describe('VolumeDripExposed', function() {
         .withArgs(dripAmount)
 
       // Period 2 now
-      await expect(drip.mint(wallet._address, toWei('20')))
+      await expect(drip.mint(wallet.address, toWei('20')))
         .to.emit(drip, 'Minted')
         .withArgs(dripAmount)
 
-      await expect(drip.mint(wallet._address, toWei('20')))
+      await expect(drip.mint(wallet.address, toWei('20')))
         .to.emit(drip, 'Minted')
         .withArgs(0)
 
@@ -195,7 +192,7 @@ describe('VolumeDripExposed', function() {
         .withArgs(dripAmount)
 
       // try minting zero for period 3
-      await expect(drip.mint(wallet._address, toWei('0')))
+      await expect(drip.mint(wallet.address, toWei('0')))
         .to.emit(drip, 'Minted')
         .withArgs(dripAmount)
     })
