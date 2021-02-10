@@ -553,7 +553,7 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
-"@nomiclabs/buidler@^1.2.0", "@nomiclabs/buidler@^1.4.8":
+"@nomiclabs/buidler@^1.2.0":
   version "1.4.8"
   resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.4.8.tgz#36ebbd0fb54eb2052b1336bf90ee47825393e5dc"
   integrity sha512-OUnNWx+WXOJzueJCfyuEXu3qNMq1j9eGDDpgflpRwjPeiQQnvVzfbwrPjs0PlxOC3Xtmaxabtgek5wGxS1C7Ew==
@@ -623,7 +623,7 @@
     safe-buffer "^5.1.1"
     util.promisify "^1.0.0"
 
-"@nomiclabs/hardhat-ethers@^2.0.0":
+"@nomiclabs/hardhat-ethers@^2.0.1":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-ethers/-/hardhat-ethers-2.0.1.tgz#f86a6fa210dbe6270adffccc75e93ed60a856904"
   integrity sha512-uTFHDhhvJ+UjfvvMeQxD3ZALuzuI3FXzTYT1Z5N3ebyZL5z4Ogwt55GB0R9tdKY0p5HhDhBjU/gsCjUEwIVoaw==
@@ -643,7 +643,7 @@
 
 "@nomiclabs/hardhat-waffle@^2.0.1":
   version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-waffle/-/@nomiclabs/hardhat-waffle-2.0.1.tgz#5d43654fba780720c5033dea240fe14f70ef4bd2"
+  resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-waffle/-/hardhat-waffle-2.0.1.tgz#5d43654fba780720c5033dea240fe14f70ef4bd2"
   integrity sha512-2YR2V5zTiztSH9n8BYWgtv3Q+EL0N5Ltm1PAr5z20uAY4SkkfylJ98CIqt18XFvxTD5x4K2wKBzddjV9ViDAZQ==
   dependencies:
     "@types/sinon-chai" "^3.2.3"
@@ -3668,7 +3668,7 @@ ethereum-waffle@^2.3.2:
     "@ethereum-waffle/provider" "^2.5.1"
     ethers "^4.0.45"
 
-ethereum-waffle@^3.0.2:
+ethereum-waffle@^3.0.0:
   version "3.2.2"
   resolved "https://registry.yarnpkg.com/ethereum-waffle/-/ethereum-waffle-3.2.2.tgz#dbcdb96ebfa35d4deb6b749906ff7e12f593284f"
   integrity sha512-Q8XrcFmQGDKKH0Lr867WA9Rl0oWQGMZcFrFPMV2KBIOkdeQnRlGEJq8RGFxj4MMWWxkoXIoxWgxg7U3qdgddEw==
@@ -3917,7 +3917,7 @@ ethers@^4.0.32, ethers@^4.0.45:
     uuid "2.0.1"
     xmlhttprequest "1.8.0"
 
-ethers@^5.0.0, ethers@^5.0.1, ethers@^5.0.8:
+ethers@^5.0.0, ethers@^5.0.1:
   version "5.0.30"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.0.30.tgz#db440553ad9710bb9f3b1299c6d831cb258cdc8a"
   integrity sha512-CdY/zb8d0uEBaWNmDkAVWXO8FLs2plAPOjgukgYC95L5VKIZzZaCav7PAeG2IqGico4vtNu8l3ibXdXd6FqjrQ==
