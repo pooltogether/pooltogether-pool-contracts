@@ -31,6 +31,11 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
     uint256 newTokens
   );
 
+  event Deposited(
+    address indexed user,
+    uint256 amount
+  );
+
   event Claimed(
     address indexed user,
     uint256 newTokens
@@ -87,6 +92,17 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
       measure,
       dripRatePerSecond
     );
+  }
+
+  /// @notice Safely deposits asset tokens into the faucet.  Must be pre-approved
+  /// This should be used instead of transferring directly because the drip function must
+  /// be called before receiving new assets.
+  /// @param amount The amount of asset tokens to add (must be approved already)
+  function deposit(uint256 amount) external {
+    drip();
+    asset.transferFrom(msg.sender, address(this), amount);
+
+    emit Deposited(msg.sender, amount);
   }
 
   /// @notice Transfers all unclaimed tokens to the user
