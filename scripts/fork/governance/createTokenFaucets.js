@@ -21,17 +21,18 @@ async function getProxy(tx) {
   return createResultEvents[0].args.proxy
 }
 
+
 const pool = require("../../../../governance/deployments/fork/Pool.json").address
 
 async function run() {
   const tokenFaucetProxyFactoryDeployment = await deployments.get('TokenFaucetProxyFactory')
-  console.log(" token faucet ", tokenFaucetProxyFactoryDeployment.address)
-  console.log("pool address ", pool)
+  dim(`token faucet ${tokenFaucetProxyFactoryDeployment.address}`)
+  dim(`pool address ${pool.address}`)
   
   const gnosisSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
   const tokenFaucetProxyFactory = await ethers.getContractAt('TokenFaucetProxyFactory', tokenFaucetProxyFactoryDeployment.address, gnosisSafe)
 
-  const poolToken = await ethers.getContractAt('Pool', pool, gnosisSafe)
+  const poolToken = await ethers.getContractAt('IERC20Upgradeable', pool, gnosisSafe)
   // existing maninnet multiple winners addresses
   const daiPrizeStrategy = await ethers.getContractAt('MultipleWinners', '0x178969A87a78597d303C47198c66F68E8be67Dc2', gnosisSafe)
   const usdcPrizeStrategy = await ethers.getContractAt('MultipleWinners', '0x3d9946190907ada8b70381b25c71eb9adf5f9b7b', gnosisSafe)

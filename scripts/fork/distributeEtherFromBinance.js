@@ -7,7 +7,7 @@ async function run() {
   const { provider, getContractAt } = ethers
 
   console.log(chalk.dim(`Creating binance 3 wallet....`))
-
+  
   const binance = await provider.getUncheckedSigner('0x564286362092D8e7936f0549571a803B203aAceD')
 
   console.log(chalk.dim(`Getting dai contract....`))
