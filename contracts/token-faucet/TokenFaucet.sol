@@ -177,9 +177,13 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
   function _captureNewTokensForUser(
     address user
   ) private returns (uint128) {
-    uint256 userMeasureBalance = measure.balanceOf(user);
     UserState storage userState = userStates[user];
+    if (exchangeRateMantissa == userState.lastExchangeRateMantissa) {
+      // ignore if exchange rate is same
+      return 0;
+    }
     uint256 deltaExchangeRateMantissa = uint256(exchangeRateMantissa).sub(userState.lastExchangeRateMantissa);
+    uint256 userMeasureBalance = measure.balanceOf(user);
     uint128 newTokens = FixedPoint.multiplyUintByMantissa(userMeasureBalance, deltaExchangeRateMantissa).toUint128();
 
     userStates[user] = UserState({
