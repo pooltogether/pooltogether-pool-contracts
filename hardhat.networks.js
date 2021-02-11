@@ -9,8 +9,7 @@ const networks = {
   localhost: {
     url: 'http://127.0.0.1:8545',
     blockGasLimit: 200000000,
-    allowUnlimitedContractSize: true,
-    chainId: 31337
+    allowUnlimitedContractSize: true
   },
   hardhat: {
     chainId: 1,

@@ -26,8 +26,11 @@ const merkleDistributor = require("../../../../merkle-distributor/deployments/fo
 
 
 async function run() {
-  
+  // await hre.ethers.provider.send("hardhat_impersonateAccount",["0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f"])
   const gnosisSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
+
+
+
   const poolToken = await ethers.getContractAt('IERC20Upgradeable', pool, gnosisSafe)
 
   dim(`Disbursing to treasury...`)

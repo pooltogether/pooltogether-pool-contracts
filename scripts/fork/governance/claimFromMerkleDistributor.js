@@ -18,7 +18,7 @@ async function run() {
 
   const gnosisSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
 
-  const poolToken = await ethers.getContractAt('Pool', poolAddress, gnosisSafe)
+  const poolToken = await ethers.getContractAt('IERC20Upgradeable', poolAddress, gnosisSafe)
   // check merkleDistbributor balance is non zero
   const poolBalanceOfMerkleDistributor = await poolToken.balanceOf(merkleDistributor)
   console.log("MerkleDistributor POOL balance ",poolBalanceOfMerkleDistributor.toString())
