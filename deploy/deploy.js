@@ -118,7 +118,7 @@ module.exports = async (hardhat) => {
     debug(`  Using existing comptroller ${comptrollerAddress}`)
   }
 
-  const comptrollerV2ProxyFactoryResult = await deploy("TokenFaucetProxyFactory", {
+  const tokenFaucetProxyFactoryResult = await deploy("TokenFaucetProxyFactory", {
     from: deployer,
     skipIfAlreadyDeployed: true
   })
@@ -289,7 +289,7 @@ module.exports = async (hardhat) => {
   debug("  - TicketProxyFactory:             ", ticketProxyFactoryResult.address)
   debug("  - Reserve Registry:               ", reserveRegistry)
   debug("  - Comptroller:                    ", comptrollerAddress)
-  debug("  - TokenFaucetProxyFactory:      ", comptrollerV2ProxyFactoryResult.address)
+  debug("  - TokenFaucetProxyFactory:      ", tokenFaucetProxyFactoryResult.address)
   debug("  - UnsafeTokenListenerDelegatorProxyFactory ", unsafeTokenListenerDelegatorProxyFactoryResult.address)
   debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
   debug("  - StakePrizePoolProxyFactory:     ", stakePrizePoolProxyFactoryResult.address)
