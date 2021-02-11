@@ -82,7 +82,6 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
   ) public initializer {
     __Ownable_init();
     lastDripTimestamp = _currentTime();
-    require(_dripRatePerSecond > 0, "TokenFaucet/dripRate-gt-zero");
     asset = _asset;
     measure = _measure;
     setDripRatePerSecond(_dripRatePerSecond);
@@ -139,12 +138,12 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
     uint256 newTokens;
     uint256 measureTotalSupply = measure.totalSupply();
 
-    if (measureTotalSupply > 0 && availableTotalSupply > 0 && newSeconds > 0) {
+    if (measureTotalSupply > 0 && availableTotalSupply > 0) {
       newTokens = newSeconds.mul(dripRatePerSecond);
       if (newTokens > availableTotalSupply) {
         newTokens = availableTotalSupply;
       }
-      uint256 indexDeltaMantissa = measureTotalSupply > 0 ? FixedPoint.calculateMantissa(newTokens, measureTotalSupply) : 0;
+      uint256 indexDeltaMantissa = FixedPoint.calculateMantissa(newTokens, measureTotalSupply);
       nextExchangeRateMantissa = nextExchangeRateMantissa.add(indexDeltaMantissa);
 
       emit Dripped(
