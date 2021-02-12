@@ -21,8 +21,8 @@ async function getProxy(tx) {
   return createResultEvents[0].args.proxy
 }
 
-const pathToGoveranceRepo = (process.env.PathToGoveranceRepo).toString()
-const requirePath = pathToGoveranceRepo + "/governance/deployments/fork/Pool.json"
+const pathToGovernanceRepo = (process.env.PATH_TO_GOVERNANCE_REPO).toString()
+const requirePath = pathToGovernanceRepo + "/governance/deployments/fork/Pool.json"
 const pool = require(requirePath).address
 
 async function run() {
