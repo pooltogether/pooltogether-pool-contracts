@@ -1,89 +1,45 @@
 # Mainnet Forking Guide
 
-Maybe clear out old fork:
+Start fork - this will run the deploy script.
+
 ```sh
-$ yarn rm -rf deployments/fork_1
+$ yarn deploy fork 
 ```
 
-Start the fork:
-
+Open new terminal window. Set path to governance repo with:
 ```sh
-$ yarn start-fork
+ export PathToGovernanceRepoFund=<insert path>
 ```
 
-Copy over deployments:
+
+Fund and impersonate accounts:
 
 ```sh
-$ cp -rf deployments/mainnet deployments/fork_1
-```
-
-Remove the changed deployments:
-
-```sh
-$ rm deployments/fork_1/CompoundPrizePoolBuilder.json deployments/fork_1/PoolWithMultipleWinnersBuilder.json deployments/fork_1/StakePrizePoolBuilder.json deployments/fork_1/VaultPrizePoolBuilder.json
-```
-
-Deploy PoolTogether v3.2 Contracts:
-
-```sh
-$ yarn deploy fork
-```
-
-Fund gnosis safe:
-
-```sh
-$ yarn run-fork ./scripts/forks/distributeEtherFromBinance.js
+$ ./scripts/fork/governance/runAll
 ```
 
 Deploy Governance Contracts
 ```sh
-$cd governance; yarn deploy fork;
+$cd governance; yarn clean && yarn rm -rf deployments/fork && yarn deploy fork;
 
 ```
-Copy generated addresses into pooltogether-pool-contracts (this repo):
-- Pool
-- Timelock
-- GovernanceAlpha
-- TreasuryVesterFor*
-- TreasuryVesterForTreasury
-
-into namedAccounts in config
-
-
-Update Pool contract address in merkle-distributor repo
+Copy Pool address into merkle-dsitrbutor namedAccount in hardhat.config.js:
 ```sh
-cd merkle-distributor
+cd merkle-distributor && rm -rf deployments/fork && yarn deploy fork
 ```
 
-Deploy MerkleDistributor Contracts
+Change to governance repo and: 
+
+Distribute Pool tokens, Delegate Voting of Pool and Run thru the proposal process with:
 ```sh
-yarn deploy fork
+$ yarn test
 ```
 
-Update MerkleDistrbutor address in this repo.
-
-Distribute tokens to Vesting contracts, treasury and MerkleDistributor
+Change back to merkle-distributor repo and Claim from merkle distributor for whale account:
 ```sh
-$ yarn run-fork ./scripts/forks/governance/disbursePoolTokens.js
+$ yarn run-fork ./test/claimFromMerkleDistributor.js
 ```
 
-Create TokenFaucets and transfer pool to Faucets:
-```sh
-$ yarn run-fork ./scripts/forks/governance/createTokenFaucets.js
-```
 
-Claim from merkle distributor for whale account:
-```sh
-$ yarn run-fork ./scripts/forks/goverance/claimFromMerkleDistributor.js
-```
 
-Delegate Voting of Pool
-```sh
-$ yarn run-fork ./scripts/forks/goverance/delegate.js
-```
-
-Create Proposals
-```sh
-$ yarn run-fork ./scripts/forks/goverance/createProposal.js
-```
 

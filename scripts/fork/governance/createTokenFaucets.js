@@ -10,7 +10,7 @@ function green() {
   console.log(chalk.green.call(chalk, ...arguments))
 }
 
-const { ethers, deployments, getNamedAccounts } = hardhat
+const { ethers, deployments } = hardhat
 
 async function getProxy(tx) { 
   const tokenFaucetProxyFactoryDeployment = await deployments.get('TokenFaucetProxyFactory')
@@ -21,13 +21,14 @@ async function getProxy(tx) {
   return createResultEvents[0].args.proxy
 }
 
-
-const pool = require("../../../../governance/deployments/fork/Pool.json").address
+const pathToGoveranceRepo = (process.env.PathToGoveranceRepo).toString()
+const requirePath = pathToGoveranceRepo + "/governance/deployments/fork/Pool.json"
+const pool = require(requirePath).address
 
 async function run() {
   const tokenFaucetProxyFactoryDeployment = await deployments.get('TokenFaucetProxyFactory')
   dim(`token faucet ${tokenFaucetProxyFactoryDeployment.address}`)
-  dim(`pool address ${pool.address}`)
+  dim(`pool address ${pool}`)
   
   const gnosisSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
   const tokenFaucetProxyFactory = await ethers.getContractAt('TokenFaucetProxyFactory', tokenFaucetProxyFactoryDeployment.address, gnosisSafe)
@@ -51,9 +52,6 @@ async function run() {
   green(`Transferred ${daiDripAmount} to ${daiTokenFaucet}`)
 
 
-
-
-
   dim(`Creating usdc TokenFaucet...`)
   const usdcTokenFaucetTx = await tokenFaucetProxyFactory.create(pool, await usdcPrizeStrategy.ticket(), daiDripRate)
   dim(`Retrieving proxy...`)
@@ -75,10 +73,6 @@ async function run() {
   await poolToken.transfer(uniTokenFaucet, uniDripAmount)
   green(`Transferred ${uniDripAmount} to ${uniTokenFaucet}`)
 
-
-
-  
-  
   green("balance of before claim : ", await poolToken.balanceOf("0x58f40a196d59a458a75478a2f9fc81ada5d5c710")) // address of an unlocked account holding ptDai
   dim(`moving 30 days forward in time`)
   await increaseTime(30 * 24 * 3600)
