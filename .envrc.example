@@ -9,3 +9,6 @@ export ETHERSCAN_API_KEY=''
 
 # Required for forking
 export ALCHEMY_URL=''
+
+#required for mainnet governance forking testnets
+export PATH_TO_GOVERNANCE_REPO=''
