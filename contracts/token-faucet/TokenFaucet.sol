@@ -31,6 +31,11 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
     uint256 newTokens
   );
 
+  event Deposited(
+    address indexed user,
+    uint256 amount
+  );
+
   event Claimed(
     address indexed user,
     uint256 newTokens
@@ -77,7 +82,6 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
   ) public initializer {
     __Ownable_init();
     lastDripTimestamp = _currentTime();
-    require(_dripRatePerSecond > 0, "TokenFaucet/dripRate-gt-zero");
     asset = _asset;
     measure = _measure;
     setDripRatePerSecond(_dripRatePerSecond);
@@ -87,6 +91,17 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
       measure,
       dripRatePerSecond
     );
+  }
+
+  /// @notice Safely deposits asset tokens into the faucet.  Must be pre-approved
+  /// This should be used instead of transferring directly because the drip function must
+  /// be called before receiving new assets.
+  /// @param amount The amount of asset tokens to add (must be approved already)
+  function deposit(uint256 amount) external {
+    drip();
+    asset.transferFrom(msg.sender, address(this), amount);
+
+    emit Deposited(msg.sender, amount);
   }
 
   /// @notice Transfers all unclaimed tokens to the user
@@ -123,12 +138,12 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
     uint256 newTokens;
     uint256 measureTotalSupply = measure.totalSupply();
 
-    if (measureTotalSupply > 0 && availableTotalSupply > 0 && newSeconds > 0) {
+    if (measureTotalSupply > 0 && availableTotalSupply > 0) {
       newTokens = newSeconds.mul(dripRatePerSecond);
       if (newTokens > availableTotalSupply) {
         newTokens = availableTotalSupply;
       }
-      uint256 indexDeltaMantissa = measureTotalSupply > 0 ? FixedPoint.calculateMantissa(newTokens, measureTotalSupply) : 0;
+      uint256 indexDeltaMantissa = FixedPoint.calculateMantissa(newTokens, measureTotalSupply);
       nextExchangeRateMantissa = nextExchangeRateMantissa.add(indexDeltaMantissa);
 
       emit Dripped(
@@ -161,9 +176,13 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
   function _captureNewTokensForUser(
     address user
   ) private returns (uint128) {
-    uint256 userMeasureBalance = measure.balanceOf(user);
     UserState storage userState = userStates[user];
+    if (exchangeRateMantissa == userState.lastExchangeRateMantissa) {
+      // ignore if exchange rate is same
+      return 0;
+    }
     uint256 deltaExchangeRateMantissa = uint256(exchangeRateMantissa).sub(userState.lastExchangeRateMantissa);
+    uint256 userMeasureBalance = measure.balanceOf(user);
     uint128 newTokens = FixedPoint.multiplyUintByMantissa(userMeasureBalance, deltaExchangeRateMantissa).toUint128();
 
     userStates[user] = UserState({

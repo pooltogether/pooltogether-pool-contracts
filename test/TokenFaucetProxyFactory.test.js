@@ -13,7 +13,7 @@ describe('TokenFaucetProxyFactory', () => {
 
   let provider
 
-  let comptrollerV2ProxyFactory, measure, asset
+  let tokenFaucetProxyFactory, measure, asset
 
   beforeEach(async () => {
     [wallet, wallet2] = await hardhat.ethers.getSigners()
@@ -25,23 +25,23 @@ describe('TokenFaucetProxyFactory', () => {
     asset = await ERC20MintableContract.deploy('Measure', 'MEAS')
 
     await deployments.fixture()
-    let comptrollerV2ProxyFactoryResult = await deployments.get("TokenFaucetProxyFactory")
-    comptrollerV2ProxyFactory = await hardhat.ethers.getContractAt('TokenFaucetProxyFactory', comptrollerV2ProxyFactoryResult.address, wallet)
+    let tokenFaucetProxyFactoryResult = await deployments.get("TokenFaucetProxyFactory")
+    tokenFaucetProxyFactory = await hardhat.ethers.getContractAt('TokenFaucetProxyFactory', tokenFaucetProxyFactoryResult.address, wallet)
   })
 
   describe('create()', () => {
     it('should create a new comptroller', async () => {
-      let tx = await comptrollerV2ProxyFactory.create(asset.address, measure.address, ethers.utils.parseEther('0.01'), overrides)
+      let tx = await tokenFaucetProxyFactory.create(asset.address, measure.address, ethers.utils.parseEther('0.01'), overrides)
       let receipt = await provider.getTransactionReceipt(tx.hash)
-      let event = comptrollerV2ProxyFactory.interface.parseLog(receipt.logs[0])
+      let event = tokenFaucetProxyFactory.interface.parseLog(receipt.logs[0])
       expect(event.name).to.equal('ProxyCreated')
 
-      let comptrollerV2 = await hardhat.ethers.getContractAt("TokenFaucet", event.args.proxy, wallet)
+      let tokenFaucet = await hardhat.ethers.getContractAt("TokenFaucet", event.args.proxy, wallet)
 
-      expect(await comptrollerV2.asset()).to.equal(asset.address)
-      expect(await comptrollerV2.measure()).to.equal(measure.address)
-      expect(await comptrollerV2.dripRatePerSecond()).to.equal(ethers.utils.parseEther('0.01'))
-      expect(await comptrollerV2.owner()).to.equal(wallet.address)
+      expect(await tokenFaucet.asset()).to.equal(asset.address)
+      expect(await tokenFaucet.measure()).to.equal(measure.address)
+      expect(await tokenFaucet.dripRatePerSecond()).to.equal(ethers.utils.parseEther('0.01'))
+      expect(await tokenFaucet.owner()).to.equal(wallet.address)
       
     })
   })
@@ -52,7 +52,7 @@ describe('TokenFaucetProxyFactory', () => {
       let comptroller = await deployMockContract(wallet, TokenFaucet.abi, overrides)
       await comptroller.mock.claim.withArgs(wallet.address).revertsWithReason("it was called!")
 
-      await expect(comptrollerV2ProxyFactory.claimAll(wallet.address, [comptroller.address]))
+      await expect(tokenFaucetProxyFactory.claimAll(wallet.address, [comptroller.address]))
         .to.be.revertedWith("it was called!")
     })
   })

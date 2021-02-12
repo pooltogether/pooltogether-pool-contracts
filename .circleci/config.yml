@@ -9,6 +9,7 @@ jobs:
       - checkout
       - run:
           name: Install and Test
+          no_output_timeout: 20m
           command: yarn && yarn hint && yarn coverage
       - coveralls/upload
       - store_artifacts:
