@@ -3,10 +3,6 @@ const hre = require("hardhat")
 
 async function run(){
     console.log("Impersonating accounts")
-    // await hre.network.provider.request({
-    //     method: "hardhat_impersonateAccount",
-    //     params: ["0x564286362092D8e7936f0549571a803B203aAceD"]}
-    //   )
     await hre.ethers.provider.send("hardhat_impersonateAccount", ["0x0000000000000000000000000000000000000000"])
     await hre.ethers.provider.send("hardhat_impersonateAccount",["0x564286362092D8e7936f0549571a803B203aAceD"])
     await hre.ethers.provider.send("hardhat_impersonateAccount",["0x9C6EFFf83578a1049E91106F071A24Ba5313B9e9"])

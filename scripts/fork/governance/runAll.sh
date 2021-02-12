@@ -21,3 +21,6 @@ yarn fork-run ./scripts/fork/distributeEtherFromBinance.js
 
 echo 'Create token faucets'
 yarn fork-run ./scripts/fork/governance/createTokenFaucets.js
+
+# echo 'Stopping gnosis safe impersonation'
+# yarn stop-impersonate
