@@ -20,3 +20,4 @@ test-results.xml
 deployments/local*
 Networks.md
 deployments/fork*
+crytic-export

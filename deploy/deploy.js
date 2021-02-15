@@ -28,9 +28,10 @@ module.exports = async (hardhat) => {
     reserveRegistry
   } = await getNamedAccounts()
   const chainId = parseInt(await getChainId(), 10)
-  const isLocal = [1, 3, 4, 42].indexOf(chainId) == -1
+  const isLocal = [1, 3, 4, 42, 77, 99].indexOf(chainId) == -1
   // 31337 is unit testing, 1337 is for coverage
   const isTestEnvironment = chainId === 31337 || chainId === 1337
+
   const signer = await ethers.provider.getSigner(deployer)
 
   debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
