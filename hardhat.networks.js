@@ -10,8 +10,11 @@ const networks = {
     url: 'http://127.0.0.1:8545',
     blockGasLimit: 200000000,
     allowUnlimitedContractSize: true
-  },
-  hardhat: {
+  }
+}
+
+if(process.env.INFURA_API_KEY){
+  networks.hardhat = {
     chainId: 1,
     hardfork: "istanbul",
     forking: {
@@ -22,7 +25,6 @@ const networks = {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
   }
-  
 }
 
 if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
