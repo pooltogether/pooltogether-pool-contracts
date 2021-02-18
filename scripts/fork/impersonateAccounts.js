@@ -48,7 +48,9 @@ async function run(){
     await hre.ethers.provider.send("hardhat_impersonateAccount",["0xde7670354fe2110fbf3a2ca269096647fc955924"])
     await hre.ethers.provider.send("hardhat_impersonateAccount",["0xd2ed8c5dac33ece7074b142fa4de69e6b4b82915"])
     await hre.ethers.provider.send("hardhat_impersonateAccount",["0xa38445311cCd04a54183CDd347E793F4D548Df3F"])
-    await hre.ethers.provider.send("hardhat_impersonateAccount",["0x625c7145fde1667f497b201dae06c3357078c388"])    
+    await hre.ethers.provider.send("hardhat_impersonateAccount",["0x625c7145fde1667f497b201dae06c3357078c388"])  
+    await hre.ethers.provider.send("hardhat_impersonateAccount",["0x77383badb05049806d53e9def0c8128de0d56d90"])      
+
 console.log("finished impersonating accounts")
 }
 run()
