@@ -1,6 +1,4 @@
-const { deployContract } = require('ethereum-waffle')
-const { deployMockContract } = require('./helpers/deployMockContract')
-const { call } = require('./helpers/call')
+const { deployMockContract } = require('ethereum-waffle')
 const { deploy1820 } = require('deploy-eip-1820')
 
 
