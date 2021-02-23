@@ -1,5 +1,3 @@
-const ethers = require('ethers')
-
 const networks = {
   coverage: {
     url: 'http://127.0.0.1:8555',
@@ -13,26 +11,29 @@ const networks = {
   }
 }
 
-if(process.env.INFURA_API_KEY){
+if(process.env.ALCHEMY_URL && process.env.FORK_ENABLED){
   networks.hardhat = {
     chainId: 1,
     hardfork: "istanbul",
     forking: {
       url: process.env.ALCHEMY_URL,
-      blockNumber: 11870772
+      blockNumber: 11877193
     },
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
-  },
-  poaMainnet: {
+  }
+}
+
+if (process.env.HDWALLET_MNEMONIC) {
+  networks.poaMainnet = {
     chainId: 99,
     url: 'https://core.poanetwork.dev',
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
-  },
-  poaSokol: {
+  }
+  networks.poaSokol = {
     chainId: 77,
     url: 'https://sokol.poa.network',
     accounts: {
