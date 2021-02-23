@@ -11,7 +11,7 @@ const networks = {
   }
 }
 
-if(process.env.ALCHEMY_URL){
+if(process.env.ALCHEMY_URL && process.env.FORK_ENABLED){
   networks.hardhat = {
     chainId: 1,
     hardfork: "istanbul",
