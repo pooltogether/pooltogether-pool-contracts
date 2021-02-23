@@ -37,7 +37,7 @@
     "echidna": "yarn echidna:build && docker run -v \"$PWD\":/src pool-contracts/echidna"
   },
   "dependencies": {
-    "@openzeppelin/contracts-upgradeable": "3.3.0",
+    "@openzeppelin/contracts-upgradeable": "3.4.0",
     "@pooltogether/fixed-point": "1.0.0-beta.2",
     "@pooltogether/pooltogether-rng-contracts": "1.0.0",
     "@pooltogether/uniform-random-number": "1.0.0-beta.1",
