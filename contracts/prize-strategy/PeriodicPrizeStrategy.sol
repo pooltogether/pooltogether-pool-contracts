@@ -71,6 +71,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     uint32 rngRequestTimeout
   );
 
+  event PrizePeriodSecondsUpdated(
+    uint256 prizePeriodSeconds
+  );
+
   event PeriodicPrizeStrategyListenerSet(
     PeriodicPrizeStrategyListenerInterface indexed periodicPrizeStrategyListener
   );
@@ -155,7 +159,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     RNGInterface _rng,
     IERC20Upgradeable[] memory externalErc20Awards
   ) public initializer {
-    require(_prizePeriodSeconds > 0, "PeriodicPrizeStrategy/prize-period-greater-than-zero");
     require(address(_prizePool) != address(0), "PeriodicPrizeStrategy/prize-pool-not-zero");
     require(address(_ticket) != address(0), "PeriodicPrizeStrategy/ticket-not-zero");
     require(address(_sponsorship) != address(0), "PeriodicPrizeStrategy/sponsorship-not-zero");
@@ -164,6 +167,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     ticket = _ticket;
     rng = _rng;
     sponsorship = _sponsorship;
+    _setPrizePeriodSeconds(_prizePeriodSeconds);
 
     __Ownable_init();
     Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
@@ -477,6 +481,17 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     require(_rngRequestTimeout > 60, "PeriodicPrizeStrategy/rng-timeout-gt-60-secs");
     rngRequestTimeout = _rngRequestTimeout;
     emit RngRequestTimeoutSet(rngRequestTimeout);
+  }
+
+  function setPrizePeriodSeconds(uint256 _prizePeriodSeconds) external onlyOwner requireAwardNotInProgress {
+    _setPrizePeriodSeconds(_prizePeriodSeconds);
+  }
+
+  function _setPrizePeriodSeconds(uint256 _prizePeriodSeconds) internal {
+    require(_prizePeriodSeconds > 0, "PeriodicPrizeStrategy/prize-period-greater-than-zero");
+    prizePeriodSeconds = _prizePeriodSeconds;
+
+    emit PrizePeriodSecondsUpdated(prizePeriodSeconds);
   }
 
   /// @notice Gets the current list of External ERC20 tokens that will be awarded with the current prize
