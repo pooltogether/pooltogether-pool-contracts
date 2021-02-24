@@ -9,9 +9,10 @@ import "@openzeppelin/contracts-upgradeable/introspection/ERC165CheckerUpgradeab
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
-
-import "../token/TokenListener.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+
+import "../external/sablier/ISablier.sol";
+import "../token/TokenListener.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
 import "../token/TicketInterface.sol";
@@ -106,6 +107,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     IERC20Upgradeable[] externalErc20Awards
   );
 
+  event SablierUpdated(ISablier sablier);
+
+  event SablierStreamIdsUpdated(uint256[] streamIds);
+
   struct RngRequest {
     uint32 id;
     uint32 lockBlock;
@@ -142,6 +147,12 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
   /// @notice A listener that receives callbacks before certain events
   PeriodicPrizeStrategyListenerInterface public periodicPrizeStrategyListener;
+
+  // The address of the Sablier monolithic contract
+  ISablier public sablier;
+
+  // The stream ids that belong to the prize pool
+  uint256[] private __sablierStreamIds;
 
   /// @notice Initializes a new strategy
   /// @param _prizePeriodStart The starting timestamp of the prize period.
@@ -215,6 +226,41 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit TokenListenerUpdated(tokenListener);
   }
 
+  /// @notice Set the address of the Sablier contract
+  /// @param _sablier The address of the Sablier contract
+  function setSablier(ISablier _sablier) external onlyOwner {
+    _setSablier(_sablier);
+  }
+
+  function _setSablier(ISablier _sablier) internal {
+    sablier = _sablier;
+
+    emit SablierUpdated(sablier);
+  }
+
+  /// @notice Set the stream ids of the sablier streams to pull from.
+  /// @param _streamIds The Sablier stream ids for the prize pool.
+  function setSablierStreamIds(uint256[] memory _streamIds) external onlyOwner {
+    _setSablierStreamIds(_streamIds);
+  }
+
+  /// @notice Set the stream ids of the sablier streams to pull from.
+  /// @param _streamIds The Sablier stream ids for the prize pool.
+  function _setSablierStreamIds(uint256[] memory _streamIds) internal {
+    __sablierStreamIds = _streamIds;
+
+    emit SablierStreamIdsUpdated(__sablierStreamIds);
+  }
+
+  function sablierStreamIds() external view returns (uint256[] memory streamIds) {
+    return __sablierStreamIds;
+  }
+
+  function setSablierAndStreamIds(ISablier _sablier, uint256[] memory _streamIds) external onlyOwner {
+    _setSablier(_sablier);
+    _setSablierStreamIds(_streamIds);
+  }
+
   /// @notice Estimates the remaining blocks until the prize given a number of seconds per block
   /// @param secondsPerBlockMantissa The number of seconds per block to use for the calculation.  Should be a fixed point 18 number like Ether.
   /// @return The estimated number of blocks remaining until the prize can be awarded.
@@ -266,6 +312,24 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   function _awardAllExternalTokens(address winner) internal {
     _awardExternalErc20s(winner);
     _awardExternalErc721s(winner);
+  }
+
+  function _awardSablierStreamIds(address[] memory winners) internal {
+    // If sablier not set, ignore
+    if (address(sablier) == address(0)) {
+      return;
+    }
+    for (uint256 i = 0; i < __sablierStreamIds.length; i++) {
+      uint256 sablierStreamId = __sablierStreamIds[i];
+      (,, address tokenAddress, uint256 balance,,,,) = sablier.getStream(sablierStreamId);
+      uint256 split = balance.div(winners.length);
+      prizePool.sablierWithdrawFromStream(sablier, sablierStreamId, balance);
+      if (split > 0) {
+        for (uint256 i = 0; i < winners.length; i++) {
+          prizePool.awardExternalERC20(winners[i], tokenAddress, split);
+        }
+      }
+    }
   }
 
   /// @notice Awards all external ERC20 tokens with non-zero balances to the given user.

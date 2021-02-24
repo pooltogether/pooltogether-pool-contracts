@@ -2,7 +2,6 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "../prize-strategy/PeriodicPrizeStrategy.sol";
 import "./PeriodicPrizeStrategyDistributorInterface.sol";
-import "@nomiclabs/buidler/console.sol";
 
 /* solium-disable security/no-block-members */
 contract PeriodicPrizeStrategyHarness is PeriodicPrizeStrategy {
@@ -28,8 +27,11 @@ contract PeriodicPrizeStrategyHarness is PeriodicPrizeStrategy {
   }
 
   function _distribute(uint256 randomNumber) internal override {
-    console.log("random number: ", randomNumber);
     distributor.distribute(randomNumber);
+  }
+
+  function awardSablierStreamIds(address[] calldata winners) external {
+    _awardSablierStreamIds(winners);
   }
 
 }

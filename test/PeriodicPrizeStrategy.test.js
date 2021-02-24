@@ -33,12 +33,16 @@ describe('PeriodicPrizeStrategy', () => {
 
   let periodicPrizeStrategyListener, distributor
 
-  let IERC20, TokenListenerInterface
+  let IERC20, TokenListenerInterface, ISablier
 
   beforeEach(async () => {
     [wallet, wallet2] = await hre.ethers.getSigners()
 
     IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
+    TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
+
+    IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
+    ISablier = await hre.artifacts.readArtifact("ISablier")
     TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
 
     debug(`using wallet ${wallet.address}`)
@@ -250,6 +254,115 @@ describe('PeriodicPrizeStrategy', () => {
       await expect(prizeStrategy.setRngService(token.address))
         .to.be.revertedWith('PeriodicPrizeStrategy/rng-in-flight');
     });
+  })
+
+  describe('setSablier()', () => {
+    it('should allow the owner to set the sablier address', async () => {
+      const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
+      await expect(prizeStrategy.setSablier(sablier.address))
+        .to.emit(prizeStrategy, 'SablierUpdated')
+        .withArgs(sablier.address)
+
+      expect(await prizeStrategy.sablier()).to.equal(sablier.address)
+    })
+
+    it('should not allow non-owners to set sablier', async () => {
+      await expect(prizeStrategy.connect(wallet2).setSablier(SENTINEL)).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
+  describe('setSablierStreamIds()', () => {
+    it('should allow the owner to set the sablier address', async () => {
+      await expect(prizeStrategy.setSablierStreamIds([1, 4, 5]))
+        .to.emit(prizeStrategy, 'SablierStreamIdsUpdated')
+        .withArgs([1, 4, 5])
+
+      const streamIds = await prizeStrategy.sablierStreamIds()
+      expect(streamIds.map(s => s.toString())).to.deep.equal(['1', '4', '5'])
+    })
+
+    it('should not allow non-owners to set sablier', async () => {
+      await expect(prizeStrategy.connect(wallet2).setSablierStreamIds([99])).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
+  describe('_awardSablierStreamIds()', () => {
+    let sablier
+
+    beforeEach(async () => {
+      sablier = await deployMockContract(wallet, ISablier.abi, overrides)
+      await prizeStrategy.setSablier(sablier.address)
+    })
+
+    it('should award just one user', async () => {
+      await prizeStrategy.setSablierStreamIds([1, 9])
+
+      await sablier.mock.getStream.withArgs(1).returns(
+        AddressZero,
+        AddressZero,
+        SENTINEL,
+        toWei('11'),
+        ethers.BigNumber.from('0'),
+        ethers.BigNumber.from('1'),
+        ethers.BigNumber.from('0'),
+        ethers.BigNumber.from('0')
+      )
+
+      await prizePool.mock.sablierWithdrawFromStream.withArgs(sablier.address, 1, toWei('11')).returns()
+      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, SENTINEL, toWei('11')).returns();
+
+      await sablier.mock.getStream.withArgs(9).returns(
+        AddressZero,
+        AddressZero,
+        SENTINEL,
+        toWei('99'),
+        '0',
+        '1',
+        '0',
+        '0'
+      )
+      await prizePool.mock.sablierWithdrawFromStream.withArgs(sablier.address, 9, toWei('99')).returns()
+      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, SENTINEL, toWei('99')).returns();
+
+      await prizeStrategy.awardSablierStreamIds([wallet.address])
+    })
+
+    it('should handle two winners', async () => {
+      await prizeStrategy.setSablierStreamIds([1, 9])
+
+      await sablier.mock.getStream.withArgs(1).returns(
+        AddressZero,
+        AddressZero,
+        SENTINEL,
+        toWei('20'),
+        '0',
+        '1',
+        '0',
+        '0'
+      )
+
+      await prizePool.mock.sablierWithdrawFromStream.withArgs(sablier.address, 1, toWei('20')).returns()
+
+      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, SENTINEL, toWei('10')).returns();
+      await prizePool.mock.awardExternalERC20.withArgs(wallet2.address, SENTINEL, toWei('10')).returns();
+
+      await sablier.mock.getStream.withArgs(9).returns(
+        AddressZero,
+        AddressZero,
+        SENTINEL,
+        toWei('100'),
+        '0',
+        '1',
+        '0',
+        '0'
+      )
+      await prizePool.mock.sablierWithdrawFromStream.withArgs(sablier.address, 9, toWei('100')).returns()
+
+      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, SENTINEL, toWei('50')).returns();
+      await prizePool.mock.awardExternalERC20.withArgs(wallet2.address, SENTINEL, toWei('50')).returns();
+
+      await prizeStrategy.awardSablierStreamIds([wallet.address, wallet2.address])
+    })
   })
 
   describe('cancelAward()', () => {

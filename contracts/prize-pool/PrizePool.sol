@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "../external/compound/ICompLike.sol";
+import "../external/sablier/ISablier.sol";
 import "../registry/RegistryInterface.sol";
 import "../reserve/ReserveInterface.sol";
 import "./YieldSource.sol";
@@ -1043,10 +1044,18 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
     return _tokenTotalSupply();
   }
 
+  /// @notice Delegate the votes for a Compound COMP-like token held by the prize pool
+  /// @param compLike The COMP-like token held by the prize pool that should be delegated
+  /// @param to The address to delegate to 
   function compLikeDelegate(ICompLike compLike, address to) external onlyOwner {
     if (compLike.balanceOf(address(this)) > 0) {
       compLike.delegate(to);
     }
+  }
+
+  /// @notice Withdraws from a Sablier stream to this contract.  The contract should be the recipient for the passed stream id.
+  function sablierWithdrawFromStream(ISablier sablier, uint256 streamId, uint256 amount) external {
+    require(sablier.withdrawFromStream(streamId, amount), "PrizePool/sablier-withdraw-failed");
   }
 
   /// @notice The total of all controlled tokens and timelock.

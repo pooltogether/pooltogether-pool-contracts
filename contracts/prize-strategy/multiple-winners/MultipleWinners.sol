@@ -108,7 +108,11 @@ contract MultipleWinners is PeriodicPrizeStrategy {
         }
         currentToken = externalErc20s.next(currentToken);
       }
+      _awardSablierStreamIds(winners);
     } else {
+      address[] memory soleWinner = new address[](1);
+      soleWinner[0] = mainWinner;
+      _awardSablierStreamIds(soleWinner);
       _awardExternalErc20s(mainWinner);
     }
   }
