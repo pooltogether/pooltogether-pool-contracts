@@ -19,7 +19,7 @@ let overrides = { gasLimit: 9500000 }
 
 let initalizeResult;
 
-describe('PeriodicPrizeStrategy', function() {
+describe('PeriodicPrizeStrategy', () => {
   let wallet, wallet2
 
   let externalERC20Award, externalERC721Award
@@ -33,11 +33,13 @@ describe('PeriodicPrizeStrategy', function() {
 
   let periodicPrizeStrategyListener, distributor
 
+  let IERC20, TokenListenerInterface
+
   beforeEach(async () => {
     [wallet, wallet2] = await hre.ethers.getSigners()
 
-    const IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
-    const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
+    IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
+    TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
 
     debug(`using wallet ${wallet.address}`)
 
