@@ -99,13 +99,22 @@ module.exports = async (hardhat) => {
     cyan("\nDeploying cDai...")
     // should be about 20% APR
     let supplyRate = '8888888888888'
-    await deploy("cDai", {
+    const cDaiResult = await deploy("cDai", {
       args: [
         daiResult.address,
         supplyRate
       ],
       contract: 'CTokenMock',
       from: deployer
+    })
+
+    await deploy("cDaiYieldSource", {
+      args: [
+        cDaiResult.address
+      ],
+      contract: "CTokenYieldSource",
+      from: deployer,
+      skipIfAlreadyDeployed: true
     })
 
     await deploy("yDai", {
@@ -212,6 +221,22 @@ module.exports = async (hardhat) => {
     })
   }
   displayResult('CompoundPrizePoolProxyFactory', compoundPrizePoolProxyFactoryResult)
+  
+  cyan("Deploying YieldSourcePrizePoolProxyFactory...")
+  let yieldSourcePrizePoolProxyFactoryResult
+  if (isTestEnvironment && !harnessDisabled) {
+    yieldSourcePrizePoolProxyFactoryResult = await deploy("YieldSourcePrizePoolProxyFactory", {
+      contract: 'YieldSourcePrizePoolHarnessProxyFactory',
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  } else {
+    yieldSourcePrizePoolProxyFactoryResult = await deploy("YieldSourcePrizePoolProxyFactory", {
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+  }
+  displayResult('YieldSourcePrizePoolProxyFactory', yieldSourcePrizePoolProxyFactoryResult)
 
   cyan("\nDeploying yVaultPrizePoolProxyFactory...")
   let yVaultPrizePoolProxyFactoryResult
@@ -306,6 +331,7 @@ module.exports = async (hardhat) => {
     args: [
       reserveRegistry,
       compoundPrizePoolProxyFactoryResult.address,
+      yieldSourcePrizePoolProxyFactoryResult.address,
       stakePrizePoolProxyFactoryResult.address,
       multipleWinnersBuilderResult.address
     ],
@@ -316,4 +342,5 @@ module.exports = async (hardhat) => {
   dim("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
   green("Contract Deployments Complete!")
   dim("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+
 };

@@ -13,7 +13,6 @@ import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 import "../external/compound/ICompLike.sol";
 import "../registry/RegistryInterface.sol";
 import "../reserve/ReserveInterface.sol";
-import "./YieldSource.sol";
 import "../token/TokenListenerInterface.sol";
 import "../token/TokenListenerLibrary.sol";
 import "../token/ControlledToken.sol";
@@ -24,7 +23,7 @@ import "./PrizePoolInterface.sol";
 /// @title Escrows assets and deposits them into a yield source.  Exposes interest to Prize Strategy.  Users deposit and withdraw from this contract to participate in Prize Pool.
 /// @notice Accounting is managed using Controlled Tokens, whose mint and burn functions can only be called by this contract.
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
-abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenControllerInterface {
+abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenControllerInterface {
   using SafeMathUpgradeable for uint256;
   using SafeCastUpgradeable for uint256;
   using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -1078,6 +1077,30 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
   function _isControlled(address controlledToken) internal view returns (bool) {
     return _tokens.contains(controlledToken);
   }
+
+  /// @notice Determines whether the passed token can be transferred out as an external award.
+  /// @dev Different yield sources will hold the deposits as another kind of token: such a Compound's cToken.  The
+  /// prize strategy should not be allowed to move those tokens.
+  /// @param _externalToken The address of the token to check
+  /// @return True if the token may be awarded, false otherwise
+  function _canAwardExternal(address _externalToken) internal virtual view returns (bool);
+
+  /// @notice Returns the ERC20 asset token used for deposits.
+  /// @return The ERC20 asset token
+  function _token() internal virtual view returns (IERC20Upgradeable);
+
+  /// @notice Returns the total balance (in asset tokens).  This includes the deposits and interest.
+  /// @return The underlying balance of asset tokens
+  function _balance() internal virtual returns (uint256);
+
+  /// @notice Supplies asset tokens to the yield source.
+  /// @param mintAmount The amount of asset tokens to be supplied
+  function _supply(uint256 mintAmount) internal virtual;
+
+  /// @notice Redeems asset tokens from the yield source.
+  /// @param redeemAmount The amount of yield-bearing tokens to be redeemed
+  /// @return The actual amount of tokens that were redeemed.
+  function _redeem(uint256 redeemAmount) internal virtual returns (uint256);
 
   /// @dev Function modifier to ensure usage of tokens controlled by the Prize Pool
   /// @param controlledToken The address of the token to check

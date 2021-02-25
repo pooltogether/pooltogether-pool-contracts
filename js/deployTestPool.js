@@ -52,6 +52,7 @@ async function deployTestPool({
   const reserve = await hardhat.ethers.getContractAt('Reserve', reserveResult.address, wallet)
   const token = await hardhat.ethers.getContractAt('ERC20Mintable', tokenResult.address, wallet)
   const cToken = await hardhat.ethers.getContractAt('CTokenMock', cTokenResult.address, wallet)
+  const cTokenYieldSource = await hardhat.ethers.getContract('cDaiYieldSource', wallet)
   const yToken = await hardhat.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
   const comptroller = await hardhat.ethers.getContractAt('ComptrollerHarness', comptrollerResult.address, wallet)
   const poolBuilder = await hardhat.ethers.getContractAt('PoolWithMultipleWinnersBuilder', poolWithMultipleWinnersBuilderResult.address, wallet)
@@ -100,15 +101,21 @@ async function deployTestPool({
     prizePool = await hardhat.ethers.getContractAt('StakePrizePoolHarness', event.args.prizePool, wallet)
   } 
   else {
-    const compoundPrizePoolConfig = {
-      cToken: cTokenResult.address,
+    // const compoundPrizePoolConfig = {
+    //   cToken: cTokenResult.address,
+    //   maxExitFeeMantissa,
+    //   maxTimelockDuration
+    // }
+    const yieldSourcePrizePoolConfig = {
+      yieldSource: cTokenYieldSource.address,
       maxExitFeeMantissa,
       maxTimelockDuration
     }
-    let tx = await poolBuilder.createCompoundMultipleWinners(compoundPrizePoolConfig, multipleWinnersConfig, await token.decimals())
+    let tx = await poolBuilder.createYieldSourceMultipleWinners(yieldSourcePrizePoolConfig, multipleWinnersConfig, await token.decimals())
     let events = await getEvents(poolBuilder, tx)
     let event = events[0]
-    prizePool = await hardhat.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
+    // prizePool = await hardhat.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
+    prizePool = await hardhat.ethers.getContractAt('YieldSourcePrizePoolHarness', event.args.prizePool, wallet)
   }
 
   debug("created prizePool: ", prizePool.address)
@@ -147,6 +154,7 @@ async function deployTestPool({
     token,
     reserve,
     cToken,
+    cTokenYieldSource,
     yToken,
     comptroller,
     prizeStrategy,

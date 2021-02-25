@@ -206,12 +206,17 @@ function PoolEnv() {
 
   this.transferCompoundTokensToPrizePool = async function ({ user, tokens }) {
     let wallet = await this.wallet(user)
-    let underlyingAmount = toWei(tokens)
-    await this.env.token.mint(wallet.address, underlyingAmount)
-    await this.env.token.connect(wallet).approve(this.env.cToken.address, underlyingAmount)
-    await this.env.cToken.connect(wallet).mint(underlyingAmount)
+    let amount = toWei(tokens)
+    let doubleAmount = toWei(tokens).mul(2)
+    await this.env.token.mint(wallet.address, doubleAmount)
+
+    await this.env.token.connect(wallet).approve(this.env.cToken.address, amount)
+    await this.env.cToken.connect(wallet).mint(amount)
     let cTokenBalance = await this.env.cToken.balanceOf(wallet.address)
     await this.env.cToken.connect(wallet).transfer(this.env.prizePool.address, cTokenBalance);
+
+    await this.env.token.connect(wallet).approve(this.env.cTokenYieldSource.address, amount);
+    await this.env.cTokenYieldSource.connect(wallet).supplyTo(amount, this.env.prizePool.address)
   }
 
   this.timelockBuySponsorship = async function ({ user, sponsorship }) {
@@ -286,7 +291,7 @@ function PoolEnv() {
     let ticket = await this.ticket(wallet)
     let amount = toWei(tickets)
 
-    expect(await ticket.balanceOf(wallet.address)).to.equalish(amount, 300)
+    expect(await ticket.balanceOf(wallet.address)).to.equalish(amount, 3000)
   }
 
   this.expectUserToHaveTokens = async function ({ user, tokens }) {
@@ -318,7 +323,7 @@ function PoolEnv() {
 
   this.expectPoolToHavePrize = async function ({ tickets }) {
     let ticketInterest = await call(this._prizePool, 'captureAwardBalance')
-    await expect(ticketInterest).to.equalish(toWei(tickets), 300)
+    await expect(ticketInterest).to.equalish(toWei(tickets), 4000)
   }
 
   this.expectUserToHaveCredit = async function ({ user, credit }) {

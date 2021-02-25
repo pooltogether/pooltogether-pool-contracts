@@ -11,7 +11,7 @@
     "reinstall": "rm -rf node_modules/ && rm -f yarn.lock && yarn",
     "verify": "yarn hint && yarn test",
     "hint": "solhint \"contracts/**/*.sol\"",
-    "test": "HIDE_DEPLOY_LOG=true hardhat test",
+    "test": " HIDE_DEPLOY_LOG=true OPTIMIZER_DISABLED=true hardhat test",
     "compile": "hardhat --show-stack-traces --max-memory 8192 compile",
     "start": "echo 'Starting node for local testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true hardhat node",
     "start-gas": "echo 'Starting node for gas testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true hardhat node",
