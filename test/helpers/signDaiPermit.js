@@ -1,5 +1,4 @@
 const ethers = require('ethers')
-const debug = require('debug')('ptv3:signPermit.js')
 
 const domainSchema = [
     { name: "name", type: "string" },
@@ -9,20 +8,18 @@ const domainSchema = [
 ];
 
 const permitSchema = [
-    { name: "owner", type: "address" },
+    { name: "holder", type: "address" },
     { name: "spender", type: "address" },
-    { name: "value", type: "uint256" },
     { name: "nonce", type: "uint256" },
-    { name: "deadline", type: "uint256" }
+    { name: "expiry", type: "uint256" },
+    { name: "allowed", type: "bool" },
 ];
 
-async function signPermit(signer, domain, message) {
+async function signDaiPermit(signer, domain, message) {
     let myAddr = await signer.getAddress();
 
-    debug(`signPermit(): ${myAddr}`)
-
-    if (myAddr.toLowerCase() !== message.owner.toLowerCase()) {
-        throw(`signPermit: address of signer does not match holder address in message`);
+    if (myAddr.toLowerCase() !== message.holder.toLowerCase()) {
+        throw(`signDaiPermit: address of signer does not match holder address in message`);
     }
 
     if (message.nonce === undefined) {
@@ -31,8 +28,6 @@ async function signPermit(signer, domain, message) {
         let tokenContract = new ethers.Contract(domain.verifyingContract, tokenAbi, signer);
 
         let nonce = await tokenContract.nonces(myAddr);
-
-        debug(`signPermit(): nonce: ${nonce}`)
 
         message = { ...message, nonce: nonce.toString(), };
     }
@@ -47,15 +42,11 @@ async function signPermit(signer, domain, message) {
         message,
     };
     
-    debug(`signPermit(): typedData: `, JSON.stringify(typedData, null, 2))
-
     const sig = await signer.provider.send("eth_signTypedData", [myAddr, typedData])
-
-    debug(`signPermit() sig signed`)
 
     return { domain, message, sig, };
 }
 
 module.exports = {
-    signPermit
+    signDaiPermit
 }

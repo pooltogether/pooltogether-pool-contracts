@@ -2,14 +2,14 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/drafts/ERC20PermitUpgradeable.sol";
 
 import "./TokenControllerInterface.sol";
 import "./ControlledTokenInterface.sol";
 
 /// @title Controlled ERC20 Token
 /// @notice ERC20 Tokens with a controller for minting & burning
-contract ControlledToken is ERC20Upgradeable, ControlledTokenInterface {
+contract ControlledToken is ERC20PermitUpgradeable, ControlledTokenInterface {
 
   /// @notice Interface to the contract responsible for controlling mint/burn
   TokenControllerInterface public override controller;
@@ -30,6 +30,7 @@ contract ControlledToken is ERC20Upgradeable, ControlledTokenInterface {
     initializer
   {
     __ERC20_init(_name, _symbol);
+    __ERC20Permit_init("PoolTogether ControlledToken");
     controller = _controller;
     _setupDecimals(_decimals);
   }

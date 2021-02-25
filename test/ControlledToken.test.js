@@ -1,7 +1,8 @@
 const { expect } = require("chai");
 const hardhat = require('hardhat')
 const { deployMockContract } = require('./helpers/deployMockContract')
-
+const { signPermit } = require('./helpers/signPermit')
+const debug = require('debug')('ptv3:ControlledToken.test.js')
 const toWei = ethers.utils.parseEther
 
 describe('ControlledToken', () => {
@@ -11,10 +12,36 @@ describe('ControlledToken', () => {
   let provider
   let controller
   let token, token2
+  let chainId
+
+  async function permitSig({
+    wallet, to, value, deadline
+  }) {
+    debug('permitSig() 1')
+    let permit = await signPermit(
+      wallet,
+      {
+        name: "PoolTogether ControlledToken",
+        version: "1",
+        chainId,
+        verifyingContract: token.address,
+      },
+      {
+        owner: wallet.address,
+        spender: to,
+        value,
+        deadline 
+      }
+    )
+    debug('permitSig() 2')
+    return ethers.utils.splitSignature(permit.sig)
+  }
 
   beforeEach(async () => {
     [wallet, wallet2] = await hardhat.ethers.getSigners()
     provider = hardhat.ethers.provider
+    const network = await provider.getNetwork()
+    chainId = network.chainId
     const TokenControllerInterface = await hre.artifacts.readArtifact("TokenControllerInterface")
     controller = await deployMockContract(wallet, TokenControllerInterface.abi)
 
@@ -85,4 +112,14 @@ describe('ControlledToken', () => {
       expect(await token.balanceOf(wallet.address)).to.equal('0')
     })
   })
+
+  describe('permit()', () => {
+    it('should allow a user to permit using a signature', async () => {
+      const deadline = parseInt(new Date().getTime() / 1000) + 1000
+      const value = toWei('99')
+      const sig = await permitSig({ wallet, to: wallet2.address, value: value.toString(), deadline })
+      await token2.permit(wallet.address, wallet2.address, value, deadline, sig.v, sig.r, sig.s)
+    })
+  })
+
 })

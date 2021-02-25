@@ -4,7 +4,7 @@ const hardhat = require('hardhat')
 const {deployMockContract } = require('ethereum-waffle')
 const { AddressZero } = hardhat.ethers.constants
 
-const { signPermit } = require('./helpers/signPermit.js')
+const { signDaiPermit } = require('./helpers/signDaiPermit.js')
 
 const toWei = ethers.utils.parseEther
 
@@ -26,7 +26,7 @@ describe('PermitAndDepositDai', () => {
     const expiry = (new Date().getTime())
     const nonce = 0
     const allowed = true
-    let permit = await signPermit(
+    let permit = await signDaiPermit(
       wallet,
       {
         name: "Dai Stablecoin",
