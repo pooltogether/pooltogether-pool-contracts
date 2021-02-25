@@ -30,7 +30,7 @@ contract ControlledToken is ERC20PermitUpgradeable, ControlledTokenInterface {
     initializer
   {
     __ERC20_init(_name, _symbol);
-    __ERC20Permit_init("PoolTogether Token");
+    __ERC20Permit_init("PoolTogether ControlledToken");
     controller = _controller;
     _setupDecimals(_decimals);
   }

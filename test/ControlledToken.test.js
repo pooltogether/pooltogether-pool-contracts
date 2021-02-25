@@ -21,7 +21,7 @@ describe('ControlledToken', () => {
     let permit = await signPermit(
       wallet,
       {
-        name: "PoolTogether Token",
+        name: "PoolTogether ControlledToken",
         version: "1",
         chainId,
         verifyingContract: token.address,

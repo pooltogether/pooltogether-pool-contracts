@@ -22,7 +22,7 @@ async function signPermit(signer, domain, message) {
     debug(`signPermit(): ${myAddr}`)
 
     if (myAddr.toLowerCase() !== message.owner.toLowerCase()) {
-        throw(`signDaiPermit: address of signer does not match holder address in message`);
+        throw(`signPermit: address of signer does not match holder address in message`);
     }
 
     if (message.nonce === undefined) {
