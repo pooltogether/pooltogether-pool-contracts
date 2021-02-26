@@ -18,4 +18,12 @@ contract YieldSourcePrizePoolHarness is YieldSourcePrizePool {
   function _currentTime() internal override view returns (uint256) {
     return currentTime;
   }
+
+  function supply(uint256 mintAmount) external {
+    _supply(mintAmount);
+  }
+
+  function redeem(uint256 redeemAmount) external returns (uint256) {
+    return _redeem(redeemAmount);
+  }
 }

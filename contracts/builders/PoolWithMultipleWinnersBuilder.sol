@@ -105,7 +105,7 @@ contract PoolWithMultipleWinnersBuilder {
       decimals,
       msg.sender
     );
-    prizePool.initialize(
+    prizePool.initializeYieldSourcePrizePool(
       reserveRegistry,
       _tokens(prizeStrategy),
       prizePoolConfig.maxExitFeeMantissa,

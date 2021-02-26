@@ -26,8 +26,7 @@ function PoolEnv() {
     maxExitFeeMantissa = toWei('0.5'),
     maxTimelockDuration = 1000,
     externalERC20Awards = [],
-    yVault = false,
-    stakePool = false
+    poolType
   }) {
     this.wallets = await hardhat.ethers.getSigners()
 
@@ -38,6 +37,10 @@ function PoolEnv() {
       wallet3: this.wallets[3].address,
       wallet4: this.wallets[4].address
     })
+
+    if (!poolType) {
+      poolType = 'compound'
+    }
 
     debug(`Fetched ${this.wallets.length} wallets`)
     debug(`Creating pool with prize period ${prizePeriodSeconds}...`)
@@ -50,8 +53,7 @@ function PoolEnv() {
       creditLimit: toWei(creditLimit),
       creditRate: toWei(creditRate),
       externalERC20Awards: [],
-      yVault,
-      stakePool,
+      poolType,
       overrides: this.overrides,
     })
 

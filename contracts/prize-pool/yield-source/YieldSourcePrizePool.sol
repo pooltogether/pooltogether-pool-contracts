@@ -18,7 +18,7 @@ contract YieldSourcePrizePool is PrizePool {
   /// @param _maxExitFeeMantissa The maximum exit fee size, relative to the withdrawal amount
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
   /// @param _yieldSource Address of the yield source
-  function initialize (
+  function initializeYieldSourcePrizePool (
     RegistryInterface _reserveRegistry,
     ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,

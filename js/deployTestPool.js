@@ -19,8 +19,7 @@ async function deployTestPool({
   creditLimit,
   creditRate,
   externalERC20Awards,
-  yVault,
-  stakePool,
+  poolType,
   overrides = { gasLimit: 20000000 }
 }) {
   await deployments.fixture()
@@ -34,10 +33,6 @@ async function deployTestPool({
   ], overrides)*/
 
   debug('Deploying Governor...')
-
-  if(stakePool){
-    debug('Deploying test stake pool')
-  }
 
   let governanceToken = await ERC20Mintable.deploy('Governance Token', 'GOV')
 
@@ -77,7 +72,7 @@ async function deployTestPool({
   }
 
   let prizePool
-  if (yVault) {
+  if (poolType == 'yVault') {
     debug(`Creating yVault prize pool config: ${yTokenResult.address}`)
     const yToken = await hardhat.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
     debug(`yToken token: ${await yToken.token()} and token ${token.address}`)
@@ -92,20 +87,26 @@ async function deployTestPool({
     let event = events[0]
     prizePool = await hardhat.ethers.getContractAt('yVaultPrizePoolHarness', event.args.prizePool, wallet)
   }
-  else if(stakePool){
+  else if(poolType == 'stake') {
     debug('deploying stake pool')
     const stakePoolConfig = {token: tokenResult.address, maxExitFeeMantissa, maxTimelockDuration}
     let tx = await poolBuilder.createStakeMultipleWinners(stakePoolConfig, multipleWinnersConfig, await token.decimals())
     let events = await getEvents(poolBuilder, tx)
     let event = events[0]
     prizePool = await hardhat.ethers.getContractAt('StakePrizePoolHarness', event.args.prizePool, wallet)
-  } 
-  else {
-    // const compoundPrizePoolConfig = {
-    //   cToken: cTokenResult.address,
-    //   maxExitFeeMantissa,
-    //   maxTimelockDuration
-    // }
+  }
+  else if (poolType == 'compound') {
+    const compoundPrizePoolConfig = {
+      cToken: cTokenResult.address,
+      maxExitFeeMantissa,
+      maxTimelockDuration
+    }
+    let tx = await poolBuilder.createCompoundMultipleWinners(compoundPrizePoolConfig, multipleWinnersConfig, await token.decimals())
+    let events = await getEvents(poolBuilder, tx)
+    let event = events[0]
+    prizePool = await hardhat.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
+  }
+  else if (poolType == 'yieldSource') {
     const yieldSourcePrizePoolConfig = {
       yieldSource: cTokenYieldSource.address,
       maxExitFeeMantissa,
@@ -114,8 +115,9 @@ async function deployTestPool({
     let tx = await poolBuilder.createYieldSourceMultipleWinners(yieldSourcePrizePoolConfig, multipleWinnersConfig, await token.decimals())
     let events = await getEvents(poolBuilder, tx)
     let event = events[0]
-    // prizePool = await hardhat.ethers.getContractAt('CompoundPrizePoolHarness', event.args.prizePool, wallet)
     prizePool = await hardhat.ethers.getContractAt('YieldSourcePrizePoolHarness', event.args.prizePool, wallet)
+  } else {
+    throw new Error(`Unknown poolType: ${poolType}`)
   }
 
   debug("created prizePool: ", prizePool.address)
