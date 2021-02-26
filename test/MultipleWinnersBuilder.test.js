@@ -2,7 +2,7 @@ const { deployments } = require("hardhat");
 const { expect } = require('chai')
 const hardhat = require('hardhat')
 const { ethers } = require('ethers')
-const { deployMockContract } = require('./helpers/deployMockContract')
+const { deployMockContract } = require('ethereum-waffle')
 
 const { getEvents } = require('./helpers/getEvents')
 

@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const hardhat = require('hardhat')
 
-const { deployMockContract } = require('./helpers/deployMockContract')
+const { deployMockContract } = require('ethereum-waffle')
 const { AddressZero } = require("ethers").constants
 const { call } = require('./helpers/call')
 

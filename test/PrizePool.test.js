@@ -1,5 +1,4 @@
-
-const { deployMockContract } = require('./helpers/deployMockContract')
+const { deployMockContract } = require('ethereum-waffle')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
@@ -27,6 +26,8 @@ describe('PrizePool', function() {
 
   let ticket, sponsorship
 
+  let compLike
+
   beforeEach(async () => {
     [wallet, wallet2] = await hardhat.ethers.getSigners()
     debug(`using wallet ${wallet.address}`)
@@ -34,6 +35,9 @@ describe('PrizePool', function() {
     debug('mocking tokens...')
     const IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
     erc20token = await deployMockContract(wallet, IERC20.abi, overrides)
+
+    const ICompLike = await hre.artifacts.readArtifact("ICompLike")
+    compLike = await deployMockContract(wallet, ICompLike.abi, overrides)
 
     const IERC721 = await hre.artifacts.readArtifact("IERC721Upgradeable")
     erc721token = await deployMockContract(wallet, IERC721.abi, overrides)
@@ -775,6 +779,23 @@ describe('PrizePool', function() {
         await expect(prizePool2.setLiquidityCap(toWei('1000'))).to.be.revertedWith('Ownable: caller is not the owner')
       })
     })
+
+    describe('compLikeDelegate()', () => {
+      it('should delegate votes', async () => {
+        await compLike.mock.balanceOf.withArgs(prizePool.address).returns('1')
+        await compLike.mock.delegate.withArgs(wallet2.address).revertsWithReason("hello")
+        await expect(prizePool.compLikeDelegate(compLike.address, wallet2.address)).to.be.revertedWith("hello")
+      })
+
+      it('should only allow the owner to delegate', async () => {
+        await expect(prizePool.connect(wallet2).compLikeDelegate(compLike.address, wallet2.address)).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+
+      it('should not delegate if the balance is zero', async () => {
+        await compLike.mock.balanceOf.withArgs(prizePool.address).returns('0')
+        await prizePool.compLikeDelegate(compLike.address, wallet2.address)
+      })
+    })
   })
 
   describe('with a multi-token prize pool', () => {
@@ -905,6 +926,7 @@ describe('PrizePool', function() {
         .to.emit(prizePool, 'TransferredExternalERC20')
         .withArgs(wallet.address, erc20token.address, toWei('10'))
     })
+
   })
 
   describe('awardExternalERC721()', () => {

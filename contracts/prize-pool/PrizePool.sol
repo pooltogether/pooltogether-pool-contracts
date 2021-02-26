@@ -8,8 +8,9 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
-
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+
+import "../external/compound/ICompLike.sol";
 import "../registry/RegistryInterface.sol";
 import "../reserve/ReserveInterface.sol";
 import "./YieldSource.sol";
@@ -1040,6 +1041,12 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
   /// @return The current total of all tokens and timelock.
   function accountedBalance() external override view returns (uint256) {
     return _tokenTotalSupply();
+  }
+
+  function compLikeDelegate(ICompLike compLike, address to) external onlyOwner {
+    if (compLike.balanceOf(address(this)) > 0) {
+      compLike.delegate(to);
+    }
   }
 
   /// @notice The total of all controlled tokens and timelock.

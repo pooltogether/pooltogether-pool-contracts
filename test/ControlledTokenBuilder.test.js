@@ -1,7 +1,7 @@
 const { expect } = require('chai')
 const hre = require('hardhat')
 const { AddressZero } = hre.ethers.constants
-const { deployMockContract } = require('./helpers/deployMockContract')
+const { deployMockContract } = require('ethereum-waffle')
 
 
 const debug = require('debug')('ptv3:ControlledTokenBuilder.test')

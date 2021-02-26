@@ -1,8 +1,9 @@
 const { expect } = require("chai");
 const hardhat = require('hardhat')
-const { deployMockContract } = require('./helpers/deployMockContract')
 const { signPermit } = require('./helpers/signPermit')
 const debug = require('debug')('ptv3:ControlledToken.test.js')
+const { deployMockContract } = require('ethereum-waffle')
+
 const toWei = ethers.utils.parseEther
 
 describe('ControlledToken', () => {
