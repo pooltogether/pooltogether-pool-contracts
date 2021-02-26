@@ -273,12 +273,44 @@ describe('PeriodicPrizeStrategy', () => {
 
   describe('setSablierStreamIds()', () => {
     it('should allow the owner to set the sablier address', async () => {
+      const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
+      await prizeStrategy.setSablier(sablier.address)
+
+      await sablier.mock.getStream.returns(
+        AddressZero,
+        prizePool.address,
+        AddressZero,
+        '0',
+        '0',
+        '0',
+        '0',
+        '0'
+      )
+
       await expect(prizeStrategy.setSablierStreamIds([1, 4, 5]))
         .to.emit(prizeStrategy, 'SablierStreamIdsUpdated')
         .withArgs([1, 4, 5])
 
       const streamIds = await prizeStrategy.sablierStreamIds()
       expect(streamIds.map(s => s.toString())).to.deep.equal(['1', '4', '5'])
+    })
+
+    it('should fail if a stream recipient is for someone else', async () => {
+      const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
+      await prizeStrategy.setSablier(sablier.address)
+
+      await sablier.mock.getStream.returns(
+        AddressZero,
+        AddressZero,
+        AddressZero,
+        '0',
+        '0',
+        '0',
+        '0',
+        '0'
+      )
+
+      await expect(prizeStrategy.setSablierStreamIds([1, 4, 5])).to.be.revertedWith("PeriodicPrizeStrategy/sablier-stream-invalid")
     })
 
     it('should not allow non-owners to set sablier', async () => {

@@ -1054,6 +1054,9 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
   }
 
   /// @notice Withdraws from a Sablier stream to this contract.  The contract should be the recipient for the passed stream id.
+  /// @param sablier The address of the Sablier V1 contract
+  /// @param streamId The id of a stream for which this contract is the recipient
+  /// @param amount The amount to withdraw from the stream
   function sablierWithdrawFromStream(ISablier sablier, uint256 streamId, uint256 amount) external {
     require(sablier.withdrawFromStream(streamId, amount), "PrizePool/sablier-withdraw-failed");
   }

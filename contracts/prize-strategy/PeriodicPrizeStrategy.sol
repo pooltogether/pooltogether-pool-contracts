@@ -232,13 +232,15 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     _setSablier(_sablier);
   }
 
+  /// @notice Set the address of the Sablier contract
+  /// @param _sablier The address of the Sablier contract
   function _setSablier(ISablier _sablier) internal {
     sablier = _sablier;
 
     emit SablierUpdated(sablier);
   }
 
-  /// @notice Set the stream ids of the sablier streams to pull from.
+  /// @notice Allows the owner to set the stream ids of the sablier streams
   /// @param _streamIds The Sablier stream ids for the prize pool.
   function setSablierStreamIds(uint256[] memory _streamIds) external onlyOwner {
     _setSablierStreamIds(_streamIds);
@@ -247,15 +249,25 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Set the stream ids of the sablier streams to pull from.
   /// @param _streamIds The Sablier stream ids for the prize pool.
   function _setSablierStreamIds(uint256[] memory _streamIds) internal {
+    for (uint256 i = 0; i < _streamIds.length; i++) {
+      (,address recipient,,,,,,) = sablier.getStream(_streamIds[i]);
+      require(recipient == address(prizePool), "PeriodicPrizeStrategy/sablier-stream-invalid");
+    }
+
     __sablierStreamIds = _streamIds;
 
     emit SablierStreamIdsUpdated(__sablierStreamIds);
   }
 
-  function sablierStreamIds() external view returns (uint256[] memory streamIds) {
+  /// @notice Returns an array of the Sablier stream ids that this contract consumes.
+  /// @return An array of Sablier stream ids.
+  function sablierStreamIds() external view returns (uint256[] memory) {
     return __sablierStreamIds;
   }
 
+  /// @notice Allows the owner to set the Sablier address and Sablier stream ids.
+  /// @param _sablier The address of the Sablier V1 contract
+  /// @param _streamIds An array of stream ids for which the prize pool is the recipient.
   function setSablierAndStreamIds(ISablier _sablier, uint256[] memory _streamIds) external onlyOwner {
     _setSablier(_sablier);
     _setSablierStreamIds(_streamIds);
@@ -314,6 +326,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     _awardExternalErc721s(winner);
   }
 
+  /// @notice Awards the Sablier streams to the given winners.  The stream balances will be pulled and split across the winners evenly.
+  /// @param winners The winners to split the stream balances across.
   function _awardSablierStreamIds(address[] memory winners) internal {
     // If sablier not set, ignore
     if (address(sablier) == address(0)) {
