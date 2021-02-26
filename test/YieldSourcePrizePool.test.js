@@ -95,4 +95,10 @@ describe('YieldSourcePrizePool', function() {
       expect(await prizePool.token()).to.equal(erc20token.address)
     })
   })
+
+  describe('canAwardExternal()', async () => {
+    it('should not allow the prize pool to award its token, as its likely the receipt', async () => {
+      expect(await prizePool.canAwardExternal(yieldSource.address)).to.equal(false)
+    })
+  })
 })
