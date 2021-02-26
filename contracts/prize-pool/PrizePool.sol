@@ -1044,7 +1044,9 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
   }
 
   function compLikeDelegate(ICompLike compLike, address to) external onlyOwner {
-    compLike.delegate(to);
+    if (compLike.balanceOf(address(this)) > 0) {
+      compLike.delegate(to);
+    }
   }
 
   /// @notice The total of all controlled tokens and timelock.

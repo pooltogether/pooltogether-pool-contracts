@@ -782,12 +782,18 @@ describe('PrizePool', function() {
 
     describe('compLikeDelegate()', () => {
       it('should delegate votes', async () => {
+        await compLike.mock.balanceOf.withArgs(prizePool.address).returns('1')
         await compLike.mock.delegate.withArgs(wallet2.address).revertsWithReason("hello")
         await expect(prizePool.compLikeDelegate(compLike.address, wallet2.address)).to.be.revertedWith("hello")
       })
 
       it('should only allow the owner to delegate', async () => {
         await expect(prizePool.connect(wallet2).compLikeDelegate(compLike.address, wallet2.address)).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+
+      it('should not delegate if the balance is zero', async () => {
+        await compLike.mock.balanceOf.withArgs(prizePool.address).returns('0')
+        await prizePool.compLikeDelegate(compLike.address, wallet2.address)
       })
     })
   })
