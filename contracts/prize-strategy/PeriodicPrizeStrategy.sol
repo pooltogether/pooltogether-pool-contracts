@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
@@ -28,6 +29,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
   using SafeMathUpgradeable for uint256;
   using SafeCastUpgradeable for uint256;
+  using SafeERC20Upgradeable for IERC20Upgradeable;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
   using AddressUpgradeable for address;
   using ERC165CheckerUpgradeable for address;
@@ -251,7 +253,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   function _setSablierStreamIds(uint256[] memory _streamIds) internal {
     for (uint256 i = 0; i < _streamIds.length; i++) {
       (,address recipient,,,,,,) = sablier.getStream(_streamIds[i]);
-      require(recipient == address(prizePool), "PeriodicPrizeStrategy/sablier-stream-invalid");
+      require(recipient == address(this), "PeriodicPrizeStrategy/sablier-stream-invalid");
     }
 
     __sablierStreamIds = _streamIds;
@@ -326,6 +328,13 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     _awardExternalErc721s(winner);
   }
 
+  /// @notice Withdraws from a Sablier stream to this contract.  The contract should be the recipient for the passed stream id.
+  /// @param streamId The id of a stream for which this contract is the recipient
+  /// @param amount The amount to withdraw from the stream
+  function _sablierWithdrawFromStream(uint256 streamId, uint256 amount) internal {
+    require(sablier.withdrawFromStream(streamId, amount), "PeriodicPrizeStrategy/sablier-withdraw-failed");
+  }
+
   /// @notice Awards the Sablier streams to the given winners.  The stream balances will be pulled and split across the winners evenly.
   /// @param winners The winners to split the stream balances across.
   function _awardSablierStreamIds(address[] memory winners) internal {
@@ -336,11 +345,12 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     for (uint256 i = 0; i < __sablierStreamIds.length; i++) {
       uint256 sablierStreamId = __sablierStreamIds[i];
       (,, address tokenAddress, uint256 balance,,,,) = sablier.getStream(sablierStreamId);
+      _sablierWithdrawFromStream(sablierStreamId, balance);
+      IERC20Upgradeable(tokenAddress).safeTransfer(address(prizePool), balance);
       uint256 split = balance.div(winners.length);
-      prizePool.sablierWithdrawFromStream(sablier, sablierStreamId, balance);
       if (split > 0) {
-        for (uint256 i = 0; i < winners.length; i++) {
-          prizePool.awardExternalERC20(winners[i], tokenAddress, split);
+        for (uint256 wI = 0; wI < winners.length; wI++) {
+          prizePool.awardExternalERC20(winners[wI], tokenAddress, split);
         }
       }
     }

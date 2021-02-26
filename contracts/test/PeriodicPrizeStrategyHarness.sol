@@ -34,4 +34,8 @@ contract PeriodicPrizeStrategyHarness is PeriodicPrizeStrategy {
     _awardSablierStreamIds(winners);
   }
 
+  function sablierWithdrawFromStream(uint256 streamId, uint256 amount) external {
+    _sablierWithdrawFromStream(streamId, amount);
+  }
+
 }

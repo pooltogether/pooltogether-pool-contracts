@@ -592,20 +592,6 @@ describe('PrizePool', function() {
       })
     })
 
-    describe('sablierWithdrawFromStream()', () => {
-      it('should allow the prize pool to withdraw from a stream', async () => {
-        const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
-        await sablier.mock.withdrawFromStream.withArgs(4, toWei('10')).revertsWithReason("hello")
-        await expect(prizePool.sablierWithdrawFromStream(sablier.address, 4, toWei('10'))).to.be.revertedWith('hello')
-      })
-
-      it('should revert if a failure occurs', async () => {
-        const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
-        await sablier.mock.withdrawFromStream.withArgs(4, toWei('10')).returns(false)
-        await expect(prizePool.sablierWithdrawFromStream(sablier.address, 4, toWei('10'))).to.be.revertedWith("PrizePool/sablier-withdraw-failed")
-      })
-    })
-
     describe('sweepTimelockBalances()', () => {
       it('should do nothing when no balances are available', async () => {
         // updateAwardBalance

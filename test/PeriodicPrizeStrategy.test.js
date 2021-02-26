@@ -271,6 +271,25 @@ describe('PeriodicPrizeStrategy', () => {
     })
   })
 
+  describe('sablierWithdrawFromStream()', () => {
+    let sablier
+
+    beforeEach(async () => {
+      sablier = await deployMockContract(wallet, ISablier.abi, overrides)
+      await prizeStrategy.setSablier(sablier.address)
+    })
+
+    it('should allow the prize pool to withdraw from a stream', async () => {
+      await sablier.mock.withdrawFromStream.withArgs(4, toWei('10')).revertsWithReason("hello")
+      await expect(prizeStrategy.sablierWithdrawFromStream(4, toWei('10'))).to.be.revertedWith('hello')
+    })
+
+    it('should revert if a failure occurs', async () => {
+      await sablier.mock.withdrawFromStream.withArgs(4, toWei('10')).returns(false)
+      await expect(prizeStrategy.sablierWithdrawFromStream(4, toWei('10'))).to.be.revertedWith("PeriodicPrizeStrategy/sablier-withdraw-failed")
+    })
+  })
+
   describe('setSablierStreamIds()', () => {
     it('should allow the owner to set the sablier address', async () => {
       const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
@@ -278,7 +297,7 @@ describe('PeriodicPrizeStrategy', () => {
 
       await sablier.mock.getStream.returns(
         AddressZero,
-        prizePool.address,
+        prizeStrategy.address,
         AddressZero,
         '0',
         '0',
@@ -329,8 +348,8 @@ describe('PeriodicPrizeStrategy', () => {
     it('should award just one user', async () => {
       await sablier.mock.getStream.withArgs(1).returns(
         AddressZero,
-        prizePool.address,
-        SENTINEL,
+        prizeStrategy.address,
+        token.address,
         toWei('11'),
         ethers.BigNumber.from('0'),
         ethers.BigNumber.from('1'),
@@ -340,8 +359,8 @@ describe('PeriodicPrizeStrategy', () => {
 
       await sablier.mock.getStream.withArgs(9).returns(
         AddressZero,
-        prizePool.address,
-        SENTINEL,
+        prizeStrategy.address,
+        token.address,
         toWei('99'),
         '0',
         '1',
@@ -350,12 +369,15 @@ describe('PeriodicPrizeStrategy', () => {
       )
 
       await prizeStrategy.setSablierStreamIds([1, 9])
-      
-      await prizePool.mock.sablierWithdrawFromStream.withArgs(sablier.address, 1, toWei('11')).returns()
-      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, SENTINEL, toWei('11')).returns();
 
-      await prizePool.mock.sablierWithdrawFromStream.withArgs(sablier.address, 9, toWei('99')).returns()
-      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, SENTINEL, toWei('99')).returns();
+      await sablier.mock.withdrawFromStream.withArgs(1, toWei('11')).returns(true)
+      await token.mock.transfer.withArgs(prizePool.address, toWei('11')).returns(true);
+
+      await sablier.mock.withdrawFromStream.withArgs(9, toWei('99')).returns(true)
+      await token.mock.transfer.withArgs(prizePool.address, toWei('99')).returns(true);
+
+      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, token.address, toWei('11')).returns();
+      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, token.address, toWei('99')).returns();
 
       await prizeStrategy.awardSablierStreamIds([wallet.address])
     })
@@ -363,8 +385,8 @@ describe('PeriodicPrizeStrategy', () => {
     it('should handle two winners', async () => {
       await sablier.mock.getStream.withArgs(1).returns(
         AddressZero,
-        prizePool.address,
-        SENTINEL,
+        prizeStrategy.address,
+        token.address,
         toWei('20'),
         '0',
         '1',
@@ -374,8 +396,8 @@ describe('PeriodicPrizeStrategy', () => {
 
       await sablier.mock.getStream.withArgs(9).returns(
         AddressZero,
-        prizePool.address,
-        SENTINEL,
+        prizeStrategy.address,
+        token.address,
         toWei('100'),
         '0',
         '1',
@@ -385,15 +407,17 @@ describe('PeriodicPrizeStrategy', () => {
 
       await prizeStrategy.setSablierStreamIds([1, 9])
 
-      await prizePool.mock.sablierWithdrawFromStream.withArgs(sablier.address, 1, toWei('20')).returns()
+      await sablier.mock.withdrawFromStream.withArgs(1, toWei('20')).returns(true)
+      await token.mock.transfer.withArgs(prizePool.address, toWei('20')).returns(true);
 
-      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, SENTINEL, toWei('10')).returns();
-      await prizePool.mock.awardExternalERC20.withArgs(wallet2.address, SENTINEL, toWei('10')).returns();
+      await sablier.mock.withdrawFromStream.withArgs(9, toWei('100')).returns(true)
+      await token.mock.transfer.withArgs(prizePool.address, toWei('100')).returns(true);
 
-      await prizePool.mock.sablierWithdrawFromStream.withArgs(sablier.address, 9, toWei('100')).returns()
+      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, token.address, toWei('10')).returns();
+      await prizePool.mock.awardExternalERC20.withArgs(wallet2.address, token.address, toWei('10')).returns();
 
-      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, SENTINEL, toWei('50')).returns();
-      await prizePool.mock.awardExternalERC20.withArgs(wallet2.address, SENTINEL, toWei('50')).returns();
+      await prizePool.mock.awardExternalERC20.withArgs(wallet.address, token.address, toWei('50')).returns();
+      await prizePool.mock.awardExternalERC20.withArgs(wallet2.address, token.address, toWei('50')).returns();
 
       await prizeStrategy.awardSablierStreamIds([wallet.address, wallet2.address])
     })
