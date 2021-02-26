@@ -194,6 +194,14 @@ describe('PeriodicPrizeStrategy', () => {
     })
   })
 
+  describe('estimateRemainingBlocksToPrize()', () => {
+    it('should estimate using the constant', async () => {
+      let ppr = await prizeStrategy.prizePeriodRemainingSeconds()
+      let blocks = parseInt(ppr.toNumber() / 14)
+      expect(await prizeStrategy.estimateRemainingBlocksToPrize(toWei('14'))).to.equal(blocks)
+    })
+  })
+
   describe('currentPrize()', () => {
     it('should return the currently accrued interest when reserve is zero', async () => {
       await prizePool.mock.awardBalance.returns('100')
@@ -268,6 +276,33 @@ describe('PeriodicPrizeStrategy', () => {
 
     it('should not allow non-owners to set sablier', async () => {
       await expect(prizeStrategy.connect(wallet2).setSablier(SENTINEL)).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+  })
+
+  describe('setSablierAndStreamIds()', () => {
+    it('should allow the owner to set both', async () => {
+      const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
+
+      await sablier.mock.getStream.returns(
+        AddressZero,
+        prizeStrategy.address,
+        AddressZero,
+        '0',
+        '0',
+        '0',
+        '0',
+        '0'
+      )
+
+      await prizeStrategy.setSablierAndStreamIds(sablier.address, [1, 4, 5])
+
+      expect(await prizeStrategy.sablier()).to.equal(sablier.address)
+      const streamIds = await prizeStrategy.sablierStreamIds()
+      expect(streamIds.map(s => s.toString())).to.deep.equal(['1', '4', '5'])
+    })
+
+    it('should only allow the owner to do so', async () => {
+      await expect(prizeStrategy.connect(wallet2).setSablierAndStreamIds(SENTINEL, [1, 4, 5])).to.be.revertedWith("Ownable: caller is not the owner")
     })
   })
 
