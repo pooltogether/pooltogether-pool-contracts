@@ -4,7 +4,7 @@ const { deploy1820 } = require('deploy-eip-1820')
 
 
 const { expect } = require('chai')
-const hardhat = require('hardhat')
+const hre = require('hardhat')
 const { AddressZero, Zero, One } = require('ethers').constants
 
 
@@ -19,9 +19,7 @@ let overrides = { gasLimit: 9500000 }
 
 let initalizeResult;
 
-describe('PeriodicPrizeStrategy', async function() {
-  const IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
-  const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
+describe('PeriodicPrizeStrategy', () => {
   let wallet, wallet2
 
   let externalERC20Award, externalERC721Award
@@ -35,8 +33,13 @@ describe('PeriodicPrizeStrategy', async function() {
 
   let periodicPrizeStrategyListener, distributor
 
+  let IERC20, TokenListenerInterface
+
   beforeEach(async () => {
-    [wallet, wallet2] = await hardhat.ethers.getSigners()
+    [wallet, wallet2] = await hre.ethers.getSigners()
+
+    IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
+    TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
 
     debug(`using wallet ${wallet.address}`)
 
@@ -660,6 +663,20 @@ describe('PeriodicPrizeStrategy', async function() {
     it('should return the next if it is after', async () => {
       let startedAt = await prizeStrategy.prizePeriodStartedAt();
       expect(await prizeStrategy.calculateNextPrizePeriodStartTime(startedAt.add(parseInt(prizePeriodSeconds * 1.5)))).to.equal(startedAt.add(prizePeriodSeconds))
+    })
+  })
+
+  describe('setPrizePeriodSeconds()', () => {
+    it('should allow the owner to set the prize period', async () => {
+      await expect(prizeStrategy.setPrizePeriodSeconds(99))
+        .to.emit(prizeStrategy, 'PrizePeriodSecondsUpdated')
+        .withArgs(99)
+
+      expect(await prizeStrategy.prizePeriodSeconds()).to.equal(99)
+    })
+
+    it('should not allow non-owners to set the prize period', async () => {
+      await expect(prizeStrategy.connect(wallet2).setPrizePeriodSeconds(99)).to.be.revertedWith("Ownable: caller is not the owner")
     })
   })
 
