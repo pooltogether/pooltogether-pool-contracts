@@ -2,19 +2,27 @@ const { deploy1820 } = require('deploy-eip-1820')
 const chalk = require('chalk')
 
 function dim() {
-  console.log(chalk.dim.call(chalk, ...arguments))
+  if (!process.env.HIDE_DEPLOY_LOG) {
+    console.log(chalk.dim.call(chalk, ...arguments))
+  }
 }
 
 function cyan() {
-  console.log(chalk.cyan.call(chalk, ...arguments))
+  if (!process.env.HIDE_DEPLOY_LOG) {
+    console.log(chalk.cyan.call(chalk, ...arguments))
+  }
 }
 
 function yellow() {
-  console.log(chalk.yellow.call(chalk, ...arguments))
+  if (!process.env.HIDE_DEPLOY_LOG) {
+    console.log(chalk.yellow.call(chalk, ...arguments))
+  }
 }
 
 function green() {
-  console.log(chalk.green.call(chalk, ...arguments))
+  if (!process.env.HIDE_DEPLOY_LOG) {
+    console.log(chalk.green.call(chalk, ...arguments))
+  }
 }
 
 function displayResult(name, result) {
@@ -149,7 +157,7 @@ module.exports = async (hardhat) => {
     const reserveResult = await deploy("Reserve", {
       from: deployer
     })
-    displayResult('Reserve', resultResult)
+    displayResult('Reserve', reserveResult)
 
     const reserveContract = await hardhat.ethers.getContractAt(
       "Reserve",
