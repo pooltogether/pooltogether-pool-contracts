@@ -1,6 +1,37 @@
 const { deploy1820 } = require('deploy-eip-1820')
+const chalk = require('chalk')
 
-const debug = require('debug')('ptv3:deploy.js')
+function dim() {
+  if (!process.env.HIDE_DEPLOY_LOG) {
+    console.log(chalk.dim.call(chalk, ...arguments))
+  }
+}
+
+function cyan() {
+  if (!process.env.HIDE_DEPLOY_LOG) {
+    console.log(chalk.cyan.call(chalk, ...arguments))
+  }
+}
+
+function yellow() {
+  if (!process.env.HIDE_DEPLOY_LOG) {
+    console.log(chalk.yellow.call(chalk, ...arguments))
+  }
+}
+
+function green() {
+  if (!process.env.HIDE_DEPLOY_LOG) {
+    console.log(chalk.green.call(chalk, ...arguments))
+  }
+}
+
+function displayResult(name, result) {
+  if (!result.newlyDeployed) {
+    yellow(`Re-used existing ${name} at ${result.address}`)
+  } else {
+    green(`${name} deployed at ${result.address}`)
+  }
+}
 
 const chainName = (chainId) => {
   switch(chainId) {
@@ -23,7 +54,7 @@ module.exports = async (hardhat) => {
   let {
     deployer,
     rng,
-    adminAccount,
+    admin,
     comptroller,
     reserveRegistry
   } = await getNamedAccounts()
@@ -34,43 +65,38 @@ module.exports = async (hardhat) => {
 
   const signer = await ethers.provider.getSigner(deployer)
 
-  debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-  debug("PoolTogether Pool Contracts - Deploy Script")
-  debug("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+  dim("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+  dim("PoolTogether Pool Contracts - Deploy Script")
+  dim("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
   const locus = isLocal ? 'local' : 'remote'
-  debug(`  Deploying to Network: ${chainName(chainId)} (${locus})`)
-
-  if (!adminAccount) {
-    debug("  Using deployer as adminAccount;")
-    adminAccount = signer._address
+  dim(`network: ${chainName(chainId)} (${locus})`)
+  dim(`deployer: ${deployer}`)
+  if (!admin) {
+    admin = signer._address
   }
-  debug("\n  adminAccount:  ", adminAccount)
+  dim("admin:", admin)
 
   await deploy1820(signer)
 
-  debug(`deployer is ${deployer}`)
-
   if (isLocal) {
-    debug("\n  Deploying RNGService...")
+    cyan("\nDeploying RNGService...")
     const rngServiceMockResult = await deploy("RNGServiceMock", {
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
     rng = rngServiceMockResult.address
 
-    debug("\n  Deploying Dai...")
+    cyan("\nDeploying Dai...")
     const daiResult = await deploy("Dai", {
       args: [
         'DAI Test Token',
         'DAI'
       ],
       contract: 'ERC20Mintable',
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
 
-    debug("\n  Deploying cDai...")
+    cyan("\nDeploying cDai...")
     // should be about 20% APR
     let supplyRate = '8888888888888'
     await deploy("cDai", {
@@ -79,8 +105,7 @@ module.exports = async (hardhat) => {
         supplyRate
       ],
       contract: 'CTokenMock',
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
 
     await deploy("yDai", {
@@ -88,24 +113,23 @@ module.exports = async (hardhat) => {
         daiResult.address
       ],
       contract: 'yVaultMock',
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
 
     // Display Contract Addresses
-    debug("\n  Local Contract Deployments;\n")
-    debug("  - RNGService:       ", rng)
-    debug("  - Dai:              ", daiResult.address)
+    dim("\nLocal Contract Deployments;\n")
+    dim("  - RNGService:       ", rng)
+    dim("  - Dai:              ", daiResult.address)
   }
 
   let comptrollerAddress = comptroller
   // if not set by named config
+  cyan(`\nDeploying Comptroller...`)
   if (!comptrollerAddress) {
     const contract = isTestEnvironment ? 'ComptrollerHarness' : 'Comptroller'
     const comptrollerResult = await deploy("Comptroller", {
       contract,
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
     comptrollerAddress = comptrollerResult.address
     const comptrollerContract = await hardhat.ethers.getContractAt(
@@ -113,39 +137,43 @@ module.exports = async (hardhat) => {
       comptrollerResult.address,
       signer
     )
-    if (adminAccount !== deployer) {
-      await comptrollerContract.transferOwnership(adminAccount)
+    if (admin !== deployer) {
+      await comptrollerContract.transferOwnership(admin)
     }
-    debug(`  Created new comptroller ${comptrollerAddress}`)
+    green(`Comptroller deployed at ${comptrollerAddress}`)
   } else {
-    debug(`  Using existing comptroller ${comptrollerAddress}`)
+    yellow(`Re-used existing Comptroller at ${comptrollerAddress}`)
   }
 
+  cyan(`\nDeploying TokenFaucetProxyFactory...`)
   const tokenFaucetProxyFactoryResult = await deploy("TokenFaucetProxyFactory", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
+    from: deployer
   })
+  displayResult('TokenFaucetProxyFactory', tokenFaucetProxyFactoryResult)
 
+  cyan(`\nDeploying Reserve...`)
   if (!reserveRegistry) {
     // if not set by named config
     const reserveResult = await deploy("Reserve", {
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
+    displayResult('Reserve', reserveResult)
+
     const reserveContract = await hardhat.ethers.getContractAt(
       "Reserve",
       reserveResult.address,
       signer
     )
-    if (adminAccount !== deployer) {
-      await reserveContract.transferOwnership(adminAccount)
+    if (admin !== deployer) {
+      await reserveContract.transferOwnership(admin)
     }
 
     const reserveRegistryResult = await deploy("ReserveRegistry", {
       contract: 'Registry',
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
+    displayResult('ReserveRegistry', reserveRegistryResult)
+
     const reserveRegistryContract = await hardhat.ethers.getContractAt(
       "Registry",
       reserveRegistryResult.address,
@@ -154,130 +182,126 @@ module.exports = async (hardhat) => {
     if (await reserveRegistryContract.lookup() != reserveResult.address) {
       await reserveRegistryContract.register(reserveResult.address)
     }
-    if (adminAccount !== deployer) {
-      await reserveRegistryContract.transferOwnership(adminAccount)
+    if (admin !== deployer) {
+      await reserveRegistryContract.transferOwnership(admin)
     }
 
     reserveRegistry = reserveRegistryResult.address
-    debug(`  Created new reserve registry ${reserveRegistry}`)
+    green(`Created new reserve registry ${reserveRegistry}`)
   } else {
-    debug(`  Using existing reserve registry ${reserveRegistry}`)
+    yellow(`Using existing reserve registry ${reserveRegistry}`)
   }
 
   let permitAndDepositDaiResult
-  debug("\n  Deploying PermitAndDepositDai...")
+  cyan("\nDeploying PermitAndDepositDai...")
   permitAndDepositDaiResult = await deploy("PermitAndDepositDai", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
+    from: deployer
   })
+  displayResult('PermitAndDepositDai', permitAndDepositDaiResult)
 
-  debug("\n  Deploying CompoundPrizePoolProxyFactory...")
+  cyan("\nDeploying CompoundPrizePoolProxyFactory...")
   let compoundPrizePoolProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
     compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolProxyFactory", {
       contract: 'CompoundPrizePoolHarnessProxyFactory',
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
   } else {
     compoundPrizePoolProxyFactoryResult = await deploy("CompoundPrizePoolProxyFactory", {
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
   }
+  displayResult('CompoundPrizePoolProxyFactory', compoundPrizePoolProxyFactoryResult)
 
+  cyan("\nDeploying yVaultPrizePoolProxyFactory...")
   let yVaultPrizePoolProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
     yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolProxyFactory", {
       contract: 'yVaultPrizePoolHarnessProxyFactory',
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
   } else {
     yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolProxyFactory", {
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
   }
+  displayResult('yVaultPrizePoolProxyFactory', yVaultPrizePoolProxyFactoryResult)
 
-  debug("\n  Deploying ControlledTokenProxyFactory...")
+  cyan("\nDeploying ControlledTokenProxyFactory...")
   const controlledTokenProxyFactoryResult = await deploy("ControlledTokenProxyFactory", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
+    from: deployer
   })
+  displayResult('ControlledTokenProxyFactory', controlledTokenProxyFactoryResult)
 
-  debug("\n  Deploying TicketProxyFactory...")
+  cyan("\nDeploying TicketProxyFactory...")
   const ticketProxyFactoryResult = await deploy("TicketProxyFactory", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
+    from: deployer
   })
-
+  displayResult('TicketProxyFactory', ticketProxyFactoryResult)
   
   let stakePrizePoolProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
-    debug("\n  Deploying StakePrizePoolHarnessProxyFactory...")
+    cyan("\nDeploying StakePrizePoolHarnessProxyFactory...")
     stakePrizePoolProxyFactoryResult = await deploy("StakePrizePoolProxyFactory", {
       contract: 'StakePrizePoolHarnessProxyFactory',
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
   }
   else{
-    debug("\n  Deploying StakePrizePoolProxyFactory...")
+    cyan("\nDeploying StakePrizePoolProxyFactory...")
     stakePrizePoolProxyFactoryResult = await deploy("StakePrizePoolProxyFactory", {
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
   }
+  displayResult('StakePrizePoolProxyFactory', stakePrizePoolProxyFactoryResult)
 
-  debug("\n  Deploying UnsafeTokenListenerDelegatorProxyFactory...")
+  cyan("\nDeploying UnsafeTokenListenerDelegatorProxyFactory...")
   const unsafeTokenListenerDelegatorProxyFactoryResult = await deploy("UnsafeTokenListenerDelegatorProxyFactory", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
+    from: deployer
   })
+  displayResult('UnsafeTokenListenerDelegatorProxyFactory', unsafeTokenListenerDelegatorProxyFactoryResult)
 
   let multipleWinnersProxyFactoryResult
-  debug("\n  Deploying MultipleWinnersProxyFactory...")
+  cyan("\nDeploying MultipleWinnersProxyFactory...")
   if (isTestEnvironment && !harnessDisabled) {
     multipleWinnersProxyFactoryResult = await deploy("MultipleWinnersProxyFactory", {
       contract: 'MultipleWinnersHarnessProxyFactory',
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
   } else {
     multipleWinnersProxyFactoryResult = await deploy("MultipleWinnersProxyFactory", {
-      from: deployer,
-      skipIfAlreadyDeployed: true
+      from: deployer
     })
   }
+  displayResult('MultipleWinnersProxyFactory', multipleWinnersProxyFactoryResult)
 
-  debug("\n  Deploying SingleRandomWinnerProxyFactory...")
+  cyan("\nDeploying SingleRandomWinnerProxyFactory...")
   const singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
+    from: deployer
   })
+  displayResult('SingleRandomWinnerProxyFactory', singleRandomWinnerProxyFactoryResult)
 
-  debug("\n  Deploying ControlledTokenBuilder...")
+  cyan("\nDeploying ControlledTokenBuilder...")
   const controlledTokenBuilderResult = await deploy("ControlledTokenBuilder", {
     args: [
       controlledTokenProxyFactoryResult.address,
       ticketProxyFactoryResult.address
     ],
-    from: deployer,
-    skipIfAlreadyDeployed: true
+    from: deployer
   })
+  displayResult('ControlledTokenBuilder', controlledTokenBuilderResult)
 
-  debug("\n  Deploying MultipleWinnersBuilder...")
+  cyan("\nDeploying MultipleWinnersBuilder...")
   const multipleWinnersBuilderResult = await deploy("MultipleWinnersBuilder", {
     args: [
       multipleWinnersProxyFactoryResult.address,
       controlledTokenBuilderResult.address,
     ],
-    from: deployer,
-    skipIfAlreadyDeployed: true
+    from: deployer
   })
+  displayResult('MultipleWinnersBuilder', multipleWinnersBuilderResult)
 
-  debug("\n  Deploying PoolWithMultipleWinnersBuilder...")
+  cyan("\nDeploying PoolWithMultipleWinnersBuilder...")
   const poolWithMultipleWinnersBuilderResult = await deploy("PoolWithMultipleWinnersBuilder", {
     args: [
       reserveRegistry,
@@ -285,27 +309,11 @@ module.exports = async (hardhat) => {
       stakePrizePoolProxyFactoryResult.address,
       multipleWinnersBuilderResult.address
     ],
-    from: deployer,
-    skipIfAlreadyDeployed: true
+    from: deployer
   })
+  displayResult('PoolWithMultipleWinnersBuilder', poolWithMultipleWinnersBuilderResult)
 
-  // Display Contract Addresses
-  debug("\n  Contract Deployments Complete!\n")
-  debug("  - TicketProxyFactory:             ", ticketProxyFactoryResult.address)
-  debug("  - Reserve Registry:               ", reserveRegistry)
-  debug("  - Comptroller:                    ", comptrollerAddress)
-  debug("  - TokenFaucetProxyFactory:      ", tokenFaucetProxyFactoryResult.address)
-  debug("  - UnsafeTokenListenerDelegatorProxyFactory ", unsafeTokenListenerDelegatorProxyFactoryResult.address)
-  debug("  - CompoundPrizePoolProxyFactory:  ", compoundPrizePoolProxyFactoryResult.address)
-  debug("  - StakePrizePoolProxyFactory:     ", stakePrizePoolProxyFactoryResult.address)
-  debug("  - SingleRandomWinnerProxyFactory  ", singleRandomWinnerProxyFactoryResult.address)
-  debug("  - ControlledTokenProxyFactory:    ", controlledTokenProxyFactoryResult.address)
-  debug("  - ControlledTokenBuilder:         ", controlledTokenBuilderResult.address)
-  debug("  - MultipleWinnersBuilder:         ", multipleWinnersBuilderResult.address)
-  debug("  - PoolWithMultipleWinnersBuilder: ", poolWithMultipleWinnersBuilderResult.address)
-  if (permitAndDepositDaiResult) {
-    debug("  - PermitAndDepositDai:            ", permitAndDepositDaiResult.address)
-  }
-
-  debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+  dim("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+  green("Contract Deployments Complete!")
+  dim("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 };

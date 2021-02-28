@@ -53,7 +53,7 @@ const config = {
       4: RNGBlockhashRinkeby.address,
       3: RNGBlockhashRopsten.address
     },
-    adminAccount: {
+    admin: {
       42: testnetAdmin,
       4: testnetAdmin,
       3: testnetAdmin

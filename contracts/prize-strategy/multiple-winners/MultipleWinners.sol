@@ -62,6 +62,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
   }
 
   function _distribute(uint256 randomNumber) internal override {
+    _withdrawSablierStreams();
 
     uint256 prize = prizePool.captureAwardBalance();
 

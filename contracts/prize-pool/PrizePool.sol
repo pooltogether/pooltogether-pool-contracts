@@ -1043,6 +1043,9 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
     return _tokenTotalSupply();
   }
 
+  /// @notice Delegate the votes for a Compound COMP-like token held by the prize pool
+  /// @param compLike The COMP-like token held by the prize pool that should be delegated
+  /// @param to The address to delegate to 
   function compLikeDelegate(ICompLike compLike, address to) external onlyOwner {
     if (compLike.balanceOf(address(this)) > 0) {
       compLike.delegate(to);

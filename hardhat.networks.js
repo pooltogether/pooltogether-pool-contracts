@@ -5,8 +5,8 @@ const networks = {
     allowUnlimitedContractSize: true
   },
   localhost: {
+    chainId: 1,
     url: 'http://127.0.0.1:8545',
-    blockGasLimit: 200000000,
     allowUnlimitedContractSize: true
   }
 }
@@ -14,14 +14,14 @@ const networks = {
 if(process.env.ALCHEMY_URL && process.env.FORK_ENABLED){
   networks.hardhat = {
     chainId: 1,
-    hardfork: "istanbul",
     forking: {
       url: process.env.ALCHEMY_URL,
       blockNumber: 11877193
     },
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
-    }
+    },
+    // allowUnlimitedContractSize: true
   }
 }
 
