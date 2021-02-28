@@ -413,7 +413,8 @@ describe('PeriodicPrizeStrategy', () => {
       await sablier.mock.withdrawFromStream.withArgs(9, toWei('99')).returns(true)
       await token.mock.transfer.withArgs(prizePool.address, toWei('99')).returns(true);
 
-      await prizeStrategy.withdrawSablierStreams()
+      await expect(prizeStrategy.withdrawSablierStreams())
+        .to.emit(prizeStrategy, 'SablierStreamsWithdrawn')
     })
 
     it('should skip withdrawal if balance is zero', async () => {
@@ -423,13 +424,15 @@ describe('PeriodicPrizeStrategy', () => {
 
       await sablier.mock.balanceOf.withArgs(9, prizeStrategy.address).returns(toWei('0'))
 
-      await prizeStrategy.withdrawSablierStreams()
+      await expect(prizeStrategy.withdrawSablierStreams())
+        .to.emit(prizeStrategy, 'SablierStreamsWithdrawn')
     })
 
     it('should do nothing if sablier is not set', async () => {
       await prizeStrategy.setSablier(AddressZero)
       
-      await prizeStrategy.withdrawSablierStreams()
+      await expect(prizeStrategy.withdrawSablierStreams())
+        .not.to.emit(prizeStrategy, 'SablierStreamsWithdrawn')
     })
   })
 

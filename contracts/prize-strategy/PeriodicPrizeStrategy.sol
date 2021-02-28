@@ -113,6 +113,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
   event SablierStreamIdsUpdated(uint256[] streamIds);
 
+  event SablierStreamsWithdrawn();
+
   struct RngRequest {
     uint32 id;
     uint32 lockBlock;
@@ -355,6 +357,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
         IERC20Upgradeable(tokenAddress).safeTransfer(address(prizePool), balance);
       }
     }
+
+    emit SablierStreamsWithdrawn();
   }
 
   /// @notice Awards all external ERC20 tokens with non-zero balances to the given user.
