@@ -12,6 +12,7 @@ import "../external/compound/CTokenInterface.sol";
 import "./YieldSourceInterface.sol";
 
 /// @title Defines the functions used to interact with a yield source.  The Prize Pool inherits this contract.
+/// @dev THIS CONTRACT IS EXPERIMENTAL!  USE AT YOUR OWN RISK
 /// @notice Prize Pools subclasses need to implement this interface so that yield can be generated.
 contract CTokenYieldSource is YieldSourceInterface {
   using SafeMathUpgradeable for uint256;
