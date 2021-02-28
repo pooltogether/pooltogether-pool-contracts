@@ -20,6 +20,7 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "hardhat/console.sol";
 
 import "./ERC20Mintable.sol";
 

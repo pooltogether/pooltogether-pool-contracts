@@ -23,6 +23,10 @@ if(process.env.ALCHEMY_URL && process.env.FORK_ENABLED){
     },
     // allowUnlimitedContractSize: true
   }
+} else {
+  networks.hardhat = {
+    allowUnlimitedContractSize: true
+  }
 }
 
 if (process.env.HDWALLET_MNEMONIC) {

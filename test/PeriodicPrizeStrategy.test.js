@@ -5,8 +5,7 @@ const { deploy1820 } = require('deploy-eip-1820')
 
 const { expect } = require('chai')
 const hre = require('hardhat')
-const { AddressZero, Zero, One } = require('ethers').constants
-
+const { AddressZero, One } = require('ethers').constants
 
 const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
@@ -16,8 +15,6 @@ const SENTINEL = '0x0000000000000000000000000000000000000001'
 const invalidExternalToken = '0x0000000000000000000000000000000000000002'
 
 let overrides = { gasLimit: 9500000 }
-
-let initalizeResult;
 
 describe('PeriodicPrizeStrategy', () => {
   let wallet, wallet2
