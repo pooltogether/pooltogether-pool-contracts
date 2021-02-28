@@ -30,12 +30,7 @@ contract PeriodicPrizeStrategyHarness is PeriodicPrizeStrategy {
     distributor.distribute(randomNumber);
   }
 
-  function awardSablierStreamIds(address[] calldata winners) external {
-    _awardSablierStreamIds(winners);
-  }
-
   function sablierWithdrawFromStream(uint256 streamId, uint256 amount) external {
     _sablierWithdrawFromStream(streamId, amount);
   }
-
 }

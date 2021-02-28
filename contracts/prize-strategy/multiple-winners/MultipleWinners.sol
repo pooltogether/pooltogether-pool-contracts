@@ -62,6 +62,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
   }
 
   function _distribute(uint256 randomNumber) internal override {
+    _withdrawSablierStreams();
 
     uint256 prize = prizePool.captureAwardBalance();
 
@@ -108,11 +109,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
         }
         currentToken = externalErc20s.next(currentToken);
       }
-      _awardSablierStreamIds(winners);
     } else {
-      address[] memory soleWinner = new address[](1);
-      soleWinner[0] = mainWinner;
-      _awardSablierStreamIds(soleWinner);
       _awardExternalErc20s(mainWinner);
     }
   }
