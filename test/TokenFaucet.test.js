@@ -329,4 +329,43 @@ describe('TokenFaucet', () => {
         .withArgs(wallet.address, toWei('100'))
     })
   })
+
+  describe('withdrawTo()', () => {
+    it('should allow the owner to pull everything out if unclaimed', async () => {
+      await dripToken.mint(wallet.address, toWei('100'))
+      await dripToken.approve(faucet.address, toWei('100'))
+      await expect(faucet.deposit(toWei('100')))
+        .to.emit(faucet, 'Deposited')
+        .withArgs(wallet.address, toWei('100'))
+
+      await faucet.withdrawTo(wallet2.address, toWei('100'))
+
+      expect(await dripToken.balanceOf(wallet2.address)).to.equal(toWei('100'))
+    })
+
+    it('should allow the owner to pull out any tokens that havent been dripped', async () => {
+      await dripToken.mint(wallet.address, toWei('100'))
+      await dripToken.approve(faucet.address, toWei('100'))
+      await expect(faucet.deposit(toWei('100')))
+        .to.emit(faucet, 'Deposited')
+        .withArgs(wallet.address, toWei('100'))
+
+      // wallet has all of measure tokens
+      await measure.mint(wallet.address, toWei('100'))      
+      await faucet.drip()
+
+      // time passes, so 50*0.1 of the tokens should be dripped
+      await faucet.setCurrentTime(50)
+      await faucet.drip()
+
+      expect(await faucet.totalUnclaimed()).to.equal(toWei('5'))
+
+      // it should now allow the owner to pull out funds that have been dripped
+      await expect(faucet.withdrawTo(wallet2.address, toWei('96'))).to.be.revertedWith("TokenFaucet/insufficient-funds")
+
+      await faucet.withdrawTo(wallet2.address, toWei('95'))
+
+      expect(await dripToken.balanceOf(wallet2.address)).to.equal(toWei('95'))
+    })
+  })
 })

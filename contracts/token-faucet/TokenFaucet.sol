@@ -36,6 +36,11 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
     uint256 amount
   );
 
+  event Withdrawn(
+    address indexed to,
+    uint256 amount
+  );
+
   event Claimed(
     address indexed user,
     uint256 newTokens
@@ -102,6 +107,16 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
     asset.transferFrom(msg.sender, address(this), amount);
 
     emit Deposited(msg.sender, amount);
+  }
+
+  function withdrawTo(address to, uint256 amount) external onlyOwner {
+    drip();
+    uint256 assetTotalSupply = asset.balanceOf(address(this));
+    uint256 availableTotalSupply = assetTotalSupply.sub(totalUnclaimed);
+    require(amount <= availableTotalSupply, "TokenFaucet/insufficient-funds");
+    asset.transfer(to, amount);
+
+    emit Withdrawn(to, amount);
   }
 
   /// @notice Transfers all unclaimed tokens to the user
