@@ -657,18 +657,6 @@ describe('PeriodicPrizeStrategy', () => {
     })
   })
 
-  describe('transferExternalERC20', () => {
-    it('should allow arbitrary tokens to be transferred by the owner', async () => {
-      await prizePool.mock.transferExternalERC20.withArgs(wallet.address, externalERC20Award.address, toWei('10')).returns()
-      await expect(prizeStrategy.transferExternalERC20(wallet.address, externalERC20Award.address, toWei('10')))
-      .to.not.be.revertedWith('Ownable: caller is not the owner')
-    })
-    it('should not allow arbitrary tokens to be transferred by anyone else', async () => {
-      await expect(prizeStrategy.connect(wallet2).transferExternalERC20(wallet.address, externalERC20Award.address, toWei('10')))
-        .to.be.revertedWith('Ownable: caller is not the owner')
-    })
-  })
-
   describe('canStartAward()', () => {
     it('should determine if a prize is able to be awarded', async () => {
       const startTime = await prizeStrategy.prizePeriodStartedAt()
