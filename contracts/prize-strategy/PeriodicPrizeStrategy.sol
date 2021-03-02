@@ -695,23 +695,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit ExternalErc721AwardRemoved(_externalErc721);
   }
 
-  /// @notice Allows the owner to transfer out external ERC20 tokens
-  /// @dev Used to transfer out tokens held by the Prize Pool.  Could be liquidated, or anything.
-  /// @param to The address that receives the tokens
-  /// @param externalToken The address of the external asset token being transferred
-  /// @param amount The amount of external assets to be transferred
-  function transferExternalERC20(
-    address to,
-    address externalToken,
-    uint256 amount
-  )
-    external
-    onlyOwner
-    requireAwardNotInProgress
-  {
-    prizePool.transferExternalERC20(to, externalToken, amount);
-  }
-
   function _requireAwardNotInProgress() internal view {
     uint256 currentBlock = _currentBlock();
     require(rngRequest.lockBlock == 0 || currentBlock < rngRequest.lockBlock, "PeriodicPrizeStrategy/rng-in-flight");
