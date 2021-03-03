@@ -12,7 +12,6 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
-import "../external/sablier/ISablier.sol";
 import "../token/TokenListener.sol";
 import "../token/TokenControllerInterface.sol";
 import "../token/ControlledToken.sol";
@@ -21,6 +20,7 @@ import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
 import "./PeriodicPrizeStrategyListenerInterface.sol";
 import "./PeriodicPrizeStrategyListenerLibrary.sol";
+import "./BeforeAwardListener.sol";
 
 /* solium-disable security/no-block-members */
 abstract contract PeriodicPrizeStrategy is Initializable,
@@ -78,6 +78,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     uint256 prizePeriodSeconds
   );
 
+  event BeforeAwardListenerSet(
+    BeforeAwardListenerInterface indexed beforeAwardListener
+  );
+
   event PeriodicPrizeStrategyListenerSet(
     PeriodicPrizeStrategyListenerInterface indexed periodicPrizeStrategyListener
   );
@@ -108,12 +112,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     RNGInterface rng,
     IERC20Upgradeable[] externalErc20Awards
   );
-
-  event SablierUpdated(ISablier sablier);
-
-  event SablierStreamIdsUpdated(uint256[] streamIds);
-
-  event SablierStreamsWithdrawn();
 
   struct RngRequest {
     uint32 id;
@@ -149,14 +147,11 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   //   NFT Address => TokenIds
   mapping (IERC721Upgradeable => uint256[]) internal externalErc721TokenIds;
 
-  /// @notice A listener that receives callbacks before certain events
+  /// @notice A listener that is called before the prize is awarded
+  BeforeAwardListenerInterface public beforeAwardListener;
+
+  /// @notice A listener that is called after the prize is awarded
   PeriodicPrizeStrategyListenerInterface public periodicPrizeStrategyListener;
-
-  // The address of the Sablier monolithic contract
-  ISablier public sablier;
-
-  // The stream ids that belong to the prize pool
-  uint256[] private __sablierStreamIds;
 
   /// @notice Initializes a new strategy
   /// @param _prizePeriodStart The starting timestamp of the prize period.
@@ -230,53 +225,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit TokenListenerUpdated(tokenListener);
   }
 
-  /// @notice Set the address of the Sablier contract
-  /// @param _sablier The address of the Sablier contract
-  function setSablier(ISablier _sablier) external onlyOwner {
-    _setSablier(_sablier);
-  }
-
-  /// @notice Set the address of the Sablier contract
-  /// @param _sablier The address of the Sablier contract
-  function _setSablier(ISablier _sablier) internal {
-    sablier = _sablier;
-
-    emit SablierUpdated(sablier);
-  }
-
-  /// @notice Allows the owner to set the stream ids of the sablier streams
-  /// @param _streamIds The Sablier stream ids for the prize pool.
-  function setSablierStreamIds(uint256[] memory _streamIds) external onlyOwner {
-    _setSablierStreamIds(_streamIds);
-  }
-
-  /// @notice Set the stream ids of the sablier streams to pull from.
-  /// @param _streamIds The Sablier stream ids for the prize pool.
-  function _setSablierStreamIds(uint256[] memory _streamIds) internal {
-    for (uint256 i = 0; i < _streamIds.length; i++) {
-      (,address recipient,,,,,,) = sablier.getStream(_streamIds[i]);
-      require(recipient == address(this), "PeriodicPrizeStrategy/sablier-stream-invalid");
-    }
-
-    __sablierStreamIds = _streamIds;
-
-    emit SablierStreamIdsUpdated(__sablierStreamIds);
-  }
-
-  /// @notice Returns an array of the Sablier stream ids that this contract consumes.
-  /// @return An array of Sablier stream ids.
-  function sablierStreamIds() external view returns (uint256[] memory) {
-    return __sablierStreamIds;
-  }
-
-  /// @notice Allows the owner to set the Sablier address and Sablier stream ids.
-  /// @param _sablier The address of the Sablier V1 contract
-  /// @param _streamIds An array of stream ids for which the prize pool is the recipient.
-  function setSablierAndStreamIds(ISablier _sablier, uint256[] memory _streamIds) external onlyOwner {
-    _setSablier(_sablier);
-    _setSablierStreamIds(_streamIds);
-  }
-
   /// @notice Estimates the remaining blocks until the prize given a number of seconds per block
   /// @param secondsPerBlockMantissa The number of seconds per block to use for the calculation.  Should be a fixed point 18 number like Ether.
   /// @return The estimated number of blocks remaining until the prize can be awarded.
@@ -328,37 +276,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   function _awardAllExternalTokens(address winner) internal {
     _awardExternalErc20s(winner);
     _awardExternalErc721s(winner);
-  }
-
-  /// @notice Withdraws from a Sablier stream to this contract.  The contract should be the recipient for the passed stream id.
-  /// @param streamId The id of a stream for which this contract is the recipient
-  /// @param amount The amount to withdraw from the stream
-  function _sablierWithdrawFromStream(uint256 streamId, uint256 amount) internal {
-    require(sablier.withdrawFromStream(streamId, amount), "PeriodicPrizeStrategy/sablier-withdraw-failed");
-  }
-
-  /// @notice Withdraws from all Sablier streams and deposits balances into prize pool
-  function withdrawSablierStreams() external {
-    _withdrawSablierStreams();
-  }
-
-  /// @notice Withdraw from all sablier streams and transfer tokens into the prize pool
-  function _withdrawSablierStreams() internal {
-    // If sablier not set, ignore
-    if (address(sablier) == address(0)) {
-      return;
-    }
-    for (uint256 i = 0; i < __sablierStreamIds.length; i++) {
-      uint256 sablierStreamId = __sablierStreamIds[i];
-      uint256 balance = sablier.balanceOf(sablierStreamId, address(this));
-      if (balance > 0) {
-        (,,,address tokenAddress,,,,) = sablier.getStream(sablierStreamId);
-        _sablierWithdrawFromStream(sablierStreamId, balance);
-        IERC20Upgradeable(tokenAddress).safeTransfer(address(prizePool), balance);
-      }
-    }
-
-    emit SablierStreamsWithdrawn();
   }
 
   /// @notice Awards all external ERC20 tokens with non-zero balances to the given user.
@@ -484,6 +401,9 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     uint256 randomNumber = rng.randomNumber(rngRequest.id);
     delete rngRequest;
 
+    if (address(beforeAwardListener) != address(0)) {
+      beforeAwardListener.beforePrizePoolAwarded(randomNumber, prizePeriodStartedAt);
+    }
     _distribute(randomNumber);
     if (address(periodicPrizeStrategyListener) != address(0)) {
       periodicPrizeStrategyListener.afterPrizePoolAwarded(randomNumber, prizePeriodStartedAt);
@@ -494,6 +414,20 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
     emit PrizePoolAwarded(_msgSender(), randomNumber);
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
+  }
+
+  /// @notice Allows the owner to set a listener that is triggered immediately before the award is distributed
+  /// @dev The listener must implement ERC165 and the BeforeAwardListenerInterface
+  /// @param _beforeAwardListener The address of the listener contract
+  function setBeforeAwardListener(BeforeAwardListenerInterface _beforeAwardListener) external onlyOwner requireAwardNotInProgress {
+    require(
+      address(0) == address(_beforeAwardListener) || address(_beforeAwardListener).supportsInterface(BeforeAwardListenerLibrary.ERC165_INTERFACE_ID_BEFORE_AWARD_LISTENER),
+      "PeriodicPrizeStrategy/beforeAwardListener-invalid"
+    );
+
+    beforeAwardListener = _beforeAwardListener;
+
+    emit BeforeAwardListenerSet(_beforeAwardListener);
   }
 
   /// @notice Allows the owner to set a listener for prize strategy callbacks.

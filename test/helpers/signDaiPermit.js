@@ -42,7 +42,14 @@ async function signDaiPermit(signer, domain, message) {
         message,
     };
     
-    const sig = await signer.provider.send("eth_signTypedData", [myAddr, typedData])
+    let sig 
+    try {
+        sig = await signer.provider.send("eth_signTypedData", [myAddr, typedData])
+    } catch (e) {
+        if (/is not supported/.test(e.message)) {
+            sig = await signer.provider.send("eth_signTypedData_v4", [myAddr, typedData])
+        }
+    }
 
     return { domain, message, sig, };
 }

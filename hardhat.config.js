@@ -76,6 +76,13 @@ const config = {
       4: testnetUser3,
       42: testnetUser3,
     },
+    sablier: {
+      1: "0xA4fc358455Febe425536fd1878bE67FfDBDEC59a",
+      3: "0xc04Ad234E01327b24a831e3718DBFcbE245904CC",
+      4: "0xc04Ad234E01327b24a831e3718DBFcbE245904CC",
+      5: "0x590b3974533141a44a89033deEcf932F52fcFDea",
+      42: "0xc04Ad234E01327b24a831e3718DBFcbE245904CC"
+    }
   },
   etherscan: {
     // Your API key for Etherscan

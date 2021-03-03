@@ -22,7 +22,6 @@ async function getStakePrizePoolProxy(tx) {
 async function run() {
   const operationsSafe = await ethers.provider.getUncheckedSigner('0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f')
   const dai = await ethers.getContractAt('Dai', '0x6b175474e89094c44da98b954eedeac495271d0f', operationsSafe)
-  const usdc = await ethers.getContractAt('Dai', '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', operationsSafe)
   const builder = await ethers.getContract('PoolWithMultipleWinnersBuilder', operationsSafe)
 
   let block = await ethers.provider.getBlock()
@@ -60,42 +59,24 @@ async function run() {
   const prizeStrategy = await ethers.getContractAt('MultipleWinners', await prizePool.prizeStrategy(), operationsSafe)
   await prizeStrategy.addExternalErc20Award('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48')
 
-  const sablier = await ethers.getContractAt('ISablier', '0xA4fc358455Febe425536fd1878bE67FfDBDEC59a', operationsSafe)
+  const sablierManager = await ethers.getContract('SablierManager', operationsSafe)
 
   const daiStreamAmount = ethers.utils.parseEther('10')
-  const usdcStreamAmount = ethers.utils.parseUnits('10', 8)
 
   await dai.approve(prizePool.address, daiStreamAmount)
   dim(`Depositing ${ethers.utils.formatEther(daiStreamAmount)} Dai...`)
   await prizePool.depositTo(operationsSafe._address, daiStreamAmount, await prizeStrategy.ticket(), ethers.constants.AddressZero)
   green(`Deposited`)
 
-  await dai.approve(sablier.address, daiStreamAmount)
-  await usdc.approve(sablier.address, usdcStreamAmount)
-
-  dim(`Creating Sablier Dai stream...`)
+  
   block = await ethers.provider.getBlock()
   let startTime = block.timestamp + 100
-  const daiStreamTx = await sablier.createStream(prizeStrategy.address, daiStreamAmount, dai.address, startTime, startTime + 100)
-  const daiStreamReceipt = await ethers.provider.getTransactionReceipt(daiStreamTx.hash)
-  const daiStreamEvents = daiStreamReceipt.logs.map(log => { try { return sablier.interface.parseLog(log) } catch (e) { return null } })
-  const daiStreamId = daiStreamEvents[1].args.streamId
-
-  dim(`Creating Sablier USDC stream...`)
-  block = await ethers.provider.getBlock()
-  startTime = block.timestamp + 100
-  const usdcStreamTx = await sablier.createStream(prizeStrategy.address, usdcStreamAmount, usdc.address, startTime, startTime + 100)
-  const usdcStreamReceipt = await ethers.provider.getTransactionReceipt(usdcStreamTx.hash)
-  const usdcStreamEvents = usdcStreamReceipt.logs.map(log => { try { return sablier.interface.parseLog(log) } catch (e) { return null } })
-  const usdcStreamId = usdcStreamEvents[1].args.streamId
+  
+  await prizeStrategy.setBeforeAwardListener(sablierManager.address)
+  await dai.approve(sablierManager.address, daiStreamAmount)
+  await sablierManager.createSablierStream(prizePool.address, daiStreamAmount, dai.address, startTime, startTime + 100)
 
   dim(`Prize strategy owner: ${await prizeStrategy.owner()}`)
-
-  dim(`Setting sablier ${sablier.address} on prize strategy...`)
-  await prizeStrategy.setSablier(sablier.address)
-
-  dim(`Setting stream ids on prize strategy...`)
-  await prizeStrategy.setSablierStreamIds([daiStreamId, usdcStreamId])
 
   await increaseTime(150)
 
@@ -112,10 +93,8 @@ async function run() {
   console.log({ strategyLogs })
 
   const awarded = awardLogs.find(event => event && event.name === 'Awarded')
-  const awardedExternal = awardLogs.find(event => event && event.name === 'AwardedExternalERC20')
 
   console.log(`Awarded ${ethers.utils.formatEther(awarded.args.amount)} Dai`)
-  console.log(`Awarded ${ethers.utils.formatUnits(awardedExternal.args.amount, 8)} USDC`)
 
 }
 

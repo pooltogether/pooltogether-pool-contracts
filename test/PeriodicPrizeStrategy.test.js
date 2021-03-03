@@ -1,4 +1,4 @@
-const { deployMockContract } = require('ethereum-waffle')
+const { deployMockContract, deployContract } = require('ethereum-waffle')
 const { call } = require('./helpers/call')
 const { deploy1820 } = require('deploy-eip-1820')
 
@@ -34,9 +34,6 @@ describe('PeriodicPrizeStrategy', () => {
 
   beforeEach(async () => {
     [wallet, wallet2] = await hre.ethers.getSigners()
-
-    IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
-    TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
 
     IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
     ISablier = await hre.artifacts.readArtifact("ISablier")
@@ -259,178 +256,6 @@ describe('PeriodicPrizeStrategy', () => {
       await expect(prizeStrategy.setRngService(token.address))
         .to.be.revertedWith('PeriodicPrizeStrategy/rng-in-flight');
     });
-  })
-
-  describe('setSablier()', () => {
-    it('should allow the owner to set the sablier address', async () => {
-      const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
-      await expect(prizeStrategy.setSablier(sablier.address))
-        .to.emit(prizeStrategy, 'SablierUpdated')
-        .withArgs(sablier.address)
-
-      expect(await prizeStrategy.sablier()).to.equal(sablier.address)
-    })
-
-    it('should not allow non-owners to set sablier', async () => {
-      await expect(prizeStrategy.connect(wallet2).setSablier(SENTINEL)).to.be.revertedWith('Ownable: caller is not the owner')
-    })
-  })
-
-  describe('setSablierAndStreamIds()', () => {
-    it('should allow the owner to set both', async () => {
-      const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
-
-      await sablier.mock.getStream.returns(
-        AddressZero,
-        prizeStrategy.address,
-        '0',
-        AddressZero,
-        '0',
-        '0',
-        '0',
-        '0'
-      )
-
-      await prizeStrategy.setSablierAndStreamIds(sablier.address, [1, 4, 5])
-
-      expect(await prizeStrategy.sablier()).to.equal(sablier.address)
-      const streamIds = await prizeStrategy.sablierStreamIds()
-      expect(streamIds.map(s => s.toString())).to.deep.equal(['1', '4', '5'])
-    })
-
-    it('should only allow the owner to do so', async () => {
-      await expect(prizeStrategy.connect(wallet2).setSablierAndStreamIds(SENTINEL, [1, 4, 5])).to.be.revertedWith("Ownable: caller is not the owner")
-    })
-  })
-
-  describe('sablierWithdrawFromStream()', () => {
-    let sablier
-
-    beforeEach(async () => {
-      sablier = await deployMockContract(wallet, ISablier.abi, overrides)
-      await prizeStrategy.setSablier(sablier.address)
-    })
-
-    it('should allow the prize pool to withdraw from a stream', async () => {
-      await sablier.mock.withdrawFromStream.withArgs(4, toWei('10')).revertsWithReason("hello")
-      await expect(prizeStrategy.sablierWithdrawFromStream(4, toWei('10'))).to.be.revertedWith('hello')
-    })
-
-    it('should revert if a failure occurs', async () => {
-      await sablier.mock.withdrawFromStream.withArgs(4, toWei('10')).returns(false)
-      await expect(prizeStrategy.sablierWithdrawFromStream(4, toWei('10'))).to.be.revertedWith("PeriodicPrizeStrategy/sablier-withdraw-failed")
-    })
-  })
-
-  describe('setSablierStreamIds()', () => {
-    it('should allow the owner to set the sablier address', async () => {
-      const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
-      await prizeStrategy.setSablier(sablier.address)
-
-      await sablier.mock.getStream.returns(
-        AddressZero,
-        prizeStrategy.address,
-        '0',
-        AddressZero,
-        '0',
-        '0',
-        '0',
-        '0'
-      )
-
-      await expect(prizeStrategy.setSablierStreamIds([1, 4, 5]))
-        .to.emit(prizeStrategy, 'SablierStreamIdsUpdated')
-        .withArgs([1, 4, 5])
-
-      const streamIds = await prizeStrategy.sablierStreamIds()
-      expect(streamIds.map(s => s.toString())).to.deep.equal(['1', '4', '5'])
-    })
-
-    it('should fail if a stream recipient is for someone else', async () => {
-      const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
-      await prizeStrategy.setSablier(sablier.address)
-
-      await sablier.mock.getStream.returns(
-        AddressZero,
-        AddressZero,
-        '0',
-        AddressZero,
-        '0',
-        '0',
-        '0',
-        '0'
-      )
-
-      await expect(prizeStrategy.setSablierStreamIds([1, 4, 5])).to.be.revertedWith("PeriodicPrizeStrategy/sablier-stream-invalid")
-    })
-
-    it('should not allow non-owners to set sablier', async () => {
-      await expect(prizeStrategy.connect(wallet2).setSablierStreamIds([99])).to.be.revertedWith('Ownable: caller is not the owner')
-    })
-  })
-
-  describe('withdrawSablierStreams()', () => {
-    let sablier
-
-    beforeEach(async () => {
-      sablier = await deployMockContract(wallet, ISablier.abi, overrides)
-      await prizeStrategy.setSablier(sablier.address)
-      
-      await sablier.mock.getStream.withArgs(1).returns(
-        AddressZero,
-        prizeStrategy.address,
-        '0',
-        token.address,
-        ethers.BigNumber.from('0'),
-        ethers.BigNumber.from('1'),
-        ethers.BigNumber.from('0'),
-        ethers.BigNumber.from('0')
-      )
-
-      await sablier.mock.getStream.withArgs(9).returns(
-        AddressZero,
-        prizeStrategy.address,
-        '0',
-        token.address,
-        '0',
-        '1',
-        '0',
-        '0'
-      )
-
-      await prizeStrategy.setSablierStreamIds([1, 9])
-    })
-
-    it('should withdraw from all streams', async () => {
-      await sablier.mock.balanceOf.withArgs(1, prizeStrategy.address).returns(toWei('11'))
-      await sablier.mock.withdrawFromStream.withArgs(1, toWei('11')).returns(true)
-      await token.mock.transfer.withArgs(prizePool.address, toWei('11')).returns(true);
-      
-      await sablier.mock.balanceOf.withArgs(9, prizeStrategy.address).returns(toWei('99'))
-      await sablier.mock.withdrawFromStream.withArgs(9, toWei('99')).returns(true)
-      await token.mock.transfer.withArgs(prizePool.address, toWei('99')).returns(true);
-
-      await expect(prizeStrategy.withdrawSablierStreams())
-        .to.emit(prizeStrategy, 'SablierStreamsWithdrawn')
-    })
-
-    it('should skip withdrawal if balance is zero', async () => {
-      await sablier.mock.balanceOf.withArgs(1, prizeStrategy.address).returns(toWei('20'))
-      await sablier.mock.withdrawFromStream.withArgs(1, toWei('20')).returns(true)
-      await token.mock.transfer.withArgs(prizePool.address, toWei('20')).returns(true);
-
-      await sablier.mock.balanceOf.withArgs(9, prizeStrategy.address).returns(toWei('0'))
-
-      await expect(prizeStrategy.withdrawSablierStreams())
-        .to.emit(prizeStrategy, 'SablierStreamsWithdrawn')
-    })
-
-    it('should do nothing if sablier is not set', async () => {
-      await prizeStrategy.setSablier(AddressZero)
-      
-      await expect(prizeStrategy.withdrawSablierStreams())
-        .not.to.emit(prizeStrategy, 'SablierStreamsWithdrawn')
-    })
   })
 
   describe('cancelAward()', () => {
@@ -719,6 +544,37 @@ describe('PeriodicPrizeStrategy', () => {
 
       await prizeStrategy.setRngRequest(1, 123)
       expect(await prizeStrategy.getLastRngRequestId()).to.equal(1)
+    })
+  })
+
+  describe('setBeforeAwardListener()', () => {
+    let beforeAwardListener
+
+    beforeEach(async () => {
+      const beforeAwardListenerStub = await hre.ethers.getContractFactory("BeforeAwardListenerStub")
+      beforeAwardListener = await beforeAwardListenerStub.deploy()
+    })
+
+    it('should allow the owner to change the listener', async () => {
+      await expect(prizeStrategy.setBeforeAwardListener(beforeAwardListener.address))
+        .to.emit(prizeStrategy, 'BeforeAwardListenerSet')
+        .withArgs(beforeAwardListener.address)
+    })
+
+    it('should not allow anyone else to set it', async () => {
+      await expect(prizeStrategy.connect(wallet2).setBeforeAwardListener(beforeAwardListener.address))
+        .to.be.revertedWith('Ownable: caller is not the owner')
+    })
+
+    it('should not allow setting an EOA as a listener', async () => {
+      await expect(prizeStrategy.setBeforeAwardListener(wallet2.address))
+        .to.be.revertedWith("PeriodicPrizeStrategy/beforeAwardListener-invalid");
+    })
+
+    it('should allow setting the listener to null', async () => {
+      await expect(prizeStrategy.setBeforeAwardListener(ethers.constants.AddressZero))
+        .to.emit(prizeStrategy, 'BeforeAwardListenerSet')
+        .withArgs(ethers.constants.AddressZero)
     })
   })
 

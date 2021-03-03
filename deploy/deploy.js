@@ -56,6 +56,7 @@ module.exports = async (hardhat) => {
     rng,
     admin,
     comptroller,
+    sablier,
     reserveRegistry
   } = await getNamedAccounts()
   const chainId = parseInt(await getChainId(), 10)
@@ -208,6 +209,17 @@ module.exports = async (hardhat) => {
   })
   displayResult('PermitAndDepositDai', permitAndDepositDaiResult)
 
+  if (sablier) {
+    cyan("\nDeploying SablierManager")
+    let sablierManagerResult = await deploy("SablierManager", {
+      from: deployer,
+      args: [
+        sablier
+      ]
+    })
+    displayResult('SablierManager', sablierManagerResult)
+  }
+
   cyan("\nDeploying CompoundPrizePoolProxyFactory...")
   let compoundPrizePoolProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
@@ -222,7 +234,7 @@ module.exports = async (hardhat) => {
   }
   displayResult('CompoundPrizePoolProxyFactory', compoundPrizePoolProxyFactoryResult)
   
-  cyan("Deploying YieldSourcePrizePoolProxyFactory...")
+  cyan("\nDeploying YieldSourcePrizePoolProxyFactory...")
   let yieldSourcePrizePoolProxyFactoryResult
   if (isTestEnvironment && !harnessDisabled) {
     yieldSourcePrizePoolProxyFactoryResult = await deploy("YieldSourcePrizePoolProxyFactory", {
