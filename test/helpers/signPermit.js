@@ -49,7 +49,7 @@ async function signPermit(signer, domain, message) {
     
     debug(`signPermit(): typedData: `, JSON.stringify(typedData, null, 2))
 
-    const sig = await signer.provider.send("eth_signTypedData", [myAddr, typedData])
+    const sig = await signer.provider.send("eth_signTypedData_v4", [myAddr, typedData])
 
     debug(`signPermit() sig signed`)
 

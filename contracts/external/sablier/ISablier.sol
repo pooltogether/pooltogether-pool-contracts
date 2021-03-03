@@ -33,4 +33,6 @@ interface ISablier {
   function withdrawFromStream(uint256 streamId, uint256 amount) external returns (bool);
 
   function balanceOf(uint256 streamId, address who) external view returns (uint256);
+
+  function cancelStream(uint256 streamId) external returns (bool);
 }

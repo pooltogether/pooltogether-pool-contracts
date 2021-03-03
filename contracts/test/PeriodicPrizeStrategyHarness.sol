@@ -29,8 +29,4 @@ contract PeriodicPrizeStrategyHarness is PeriodicPrizeStrategy {
   function _distribute(uint256 randomNumber) internal override {
     distributor.distribute(randomNumber);
   }
-
-  function sablierWithdrawFromStream(uint256 streamId, uint256 amount) external {
-    _sablierWithdrawFromStream(streamId, amount);
-  }
 }
