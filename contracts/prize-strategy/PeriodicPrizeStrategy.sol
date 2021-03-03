@@ -420,7 +420,8 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit PrizePoolOpened(_msgSender(), prizePeriodStartedAt);
   }
 
-  /// @notice Allows the owner to set a listener for prize strategy callbacks.
+  /// @notice Allows the owner to set a listener that is triggered immediately before the award is distributed
+  /// @dev The listener must implement ERC165 and the BeforeAwardListenerInterface
   /// @param _beforeAwardListener The address of the listener contract
   function setBeforeAwardListener(BeforeAwardListenerInterface _beforeAwardListener) external onlyOwner requireAwardNotInProgress {
     require(
