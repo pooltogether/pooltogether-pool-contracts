@@ -64,7 +64,7 @@ async function run() {
   await verifyProxyFactory('TicketProxyFactory')
   await verifyProxyFactory('TokenFaucetProxyFactory')
   await verifyProxyFactory('UnsafeTokenListenerDelegatorProxyFactory')
-  await verifyProxyFactory('yVaultPrizePoolProxyFactory')
+  await verifyProxyFactory('YieldSourcePrizePoolProxyFactory')
 
   success('Done!')
 }

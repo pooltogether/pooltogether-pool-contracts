@@ -161,9 +161,9 @@ module.exports = async (hardhat) => {
   })
   displayResult('TokenFaucetProxyFactory', tokenFaucetProxyFactoryResult)
 
-  cyan(`\nDeploying Reserve...`)
   if (!reserveRegistry) {
     // if not set by named config
+    cyan(`\nDeploying Reserve...`)
     const reserveResult = await deploy("Reserve", {
       from: deployer
     })
@@ -178,6 +178,7 @@ module.exports = async (hardhat) => {
       await reserveContract.transferOwnership(admin)
     }
 
+    cyan(`\nDeploying ReserveRegistry...`)
     const reserveRegistryResult = await deploy("ReserveRegistry", {
       contract: 'Registry',
       from: deployer

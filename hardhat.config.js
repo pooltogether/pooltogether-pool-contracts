@@ -43,7 +43,8 @@ const config = {
       default: "0x0cEC1A9154Ff802e7934Fc916Ed7Ca50bDE6844e"
     },
     comptroller: {
-      1: '0x4027dE966127af5F015Ea1cfd6293a3583892668'
+      1: '0x4027dE966127af5F015Ea1cfd6293a3583892668',
+      77: '0x14e194Cf5E1dd73BB46256495aEa8ff36A7Aa454'
     },
     reserveRegistry: {
       1: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295'
