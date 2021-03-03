@@ -14,9 +14,20 @@ import "./MultipleWinnersBuilder.sol";
 contract PoolWithMultipleWinnersBuilder {
   using SafeCastUpgradeable for uint256;
 
-  event CompoundPrizePoolWithMultipleWinnersCreated(address indexed prizePool, address indexed prizeStrategy);
-  event YieldSourcePrizePoolWithMultipleWinnersCreated(address indexed prizePool, address indexed prizeStrategy);
-  event StakePrizePoolWithMultipleWinnersCreated(address indexed prizePool, address indexed prizeStrategy);
+  event CompoundPrizePoolWithMultipleWinnersCreated(
+    CompoundPrizePool indexed prizePool,
+    MultipleWinners indexed prizeStrategy
+  );
+
+  event YieldSourcePrizePoolWithMultipleWinnersCreated(
+    YieldSourcePrizePool indexed prizePool,
+    MultipleWinners indexed prizeStrategy
+  );
+
+  event StakePrizePoolWithMultipleWinnersCreated(
+    StakePrizePool indexed prizePool,
+    MultipleWinners indexed prizeStrategy
+  );
 
   /// @notice The configuration used to initialize the Compound Prize Pool
   struct CompoundPrizePoolConfig {
@@ -89,7 +100,7 @@ contract PoolWithMultipleWinnersBuilder {
       prizeStrategyConfig.ticketCreditLimitMantissa.toUint128()
     );
     prizePool.transferOwnership(msg.sender);
-    emit CompoundPrizePoolWithMultipleWinnersCreated(address(prizePool), address(prizeStrategy));
+    emit CompoundPrizePoolWithMultipleWinnersCreated(prizePool, prizeStrategy);
     return prizePool;
   }
 
@@ -119,7 +130,7 @@ contract PoolWithMultipleWinnersBuilder {
       prizeStrategyConfig.ticketCreditLimitMantissa.toUint128()
     );
     prizePool.transferOwnership(msg.sender);
-    emit CompoundPrizePoolWithMultipleWinnersCreated(address(prizePool), address(prizeStrategy));
+    emit YieldSourcePrizePoolWithMultipleWinnersCreated(prizePool, prizeStrategy);
     return prizePool;
   }
 
@@ -149,11 +160,11 @@ contract PoolWithMultipleWinnersBuilder {
       prizeStrategyConfig.ticketCreditLimitMantissa.toUint128()
     );
     prizePool.transferOwnership(msg.sender);
-    emit StakePrizePoolWithMultipleWinnersCreated(address(prizePool), address(prizeStrategy));
+    emit StakePrizePoolWithMultipleWinnersCreated(prizePool, prizeStrategy);
     return prizePool;
   }
 
-  function _tokens(MultipleWinners _multipleWinners) internal returns (ControlledTokenInterface[] memory) {
+  function _tokens(MultipleWinners _multipleWinners) internal view returns (ControlledTokenInterface[] memory) {
     ControlledTokenInterface[] memory tokens = new ControlledTokenInterface[](2);
     tokens[0] = ControlledTokenInterface(address(_multipleWinners.ticket()));
     tokens[1] = ControlledTokenInterface(address(_multipleWinners.sponsorship()));

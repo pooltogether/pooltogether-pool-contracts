@@ -215,14 +215,12 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
 
   /// @notice Should be called before a user mints new "measure" tokens.
   /// @param to The user who is minting the tokens
-  /// @param amount The amount of tokens they are minting
   /// @param token The token they are minting
-  /// @param referrer The user who referred the minting.
   function beforeTokenMint(
     address to,
-    uint256 amount,
+    uint256,
     address token,
-    address referrer
+    address
   )
     external
     override
