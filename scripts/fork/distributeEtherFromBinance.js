@@ -17,6 +17,7 @@ async function run() {
   const recipients = {
     ['Operations Safe']: '0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f',
     ['Treasury Safe']: '0x77383BaDb05049806d53e9def0C8128de0D56D90',
+    ['Protocol Treasury']: '0x42cd8312D2BCe04277dD5161832460e95b24262E',
     ['Deployer']: deployer
   }
 
