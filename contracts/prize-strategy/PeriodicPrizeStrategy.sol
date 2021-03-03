@@ -500,20 +500,28 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     emit RngServiceUpdated(rngService);
   }
 
+  /// @notice Allows the owner to set the RNG request timeout in seconds.  This is the time that must elapsed before the RNG request can be cancelled and the pool unlocked.
+  /// @param _rngRequestTimeout The RNG request timeout in seconds.
   function setRngRequestTimeout(uint32 _rngRequestTimeout) external onlyOwner requireAwardNotInProgress {
     _setRngRequestTimeout(_rngRequestTimeout);
   }
 
+  /// @notice Sets the RNG request timeout in seconds.  This is the time that must elapsed before the RNG request can be cancelled and the pool unlocked.
+  /// @param _rngRequestTimeout The RNG request timeout in seconds.
   function _setRngRequestTimeout(uint32 _rngRequestTimeout) internal {
     require(_rngRequestTimeout > 60, "PeriodicPrizeStrategy/rng-timeout-gt-60-secs");
     rngRequestTimeout = _rngRequestTimeout;
     emit RngRequestTimeoutSet(rngRequestTimeout);
   }
 
+  /// @notice Allows the owner to set the prize period in seconds.
+  /// @param _prizePeriodSeconds The new prize period in seconds.  Must be greater than zero.
   function setPrizePeriodSeconds(uint256 _prizePeriodSeconds) external onlyOwner requireAwardNotInProgress {
     _setPrizePeriodSeconds(_prizePeriodSeconds);
   }
 
+  /// @notice Sets the prize period in seconds.
+  /// @param _prizePeriodSeconds The new prize period in seconds.  Must be greater than zero.
   function _setPrizePeriodSeconds(uint256 _prizePeriodSeconds) internal {
     require(_prizePeriodSeconds > 0, "PeriodicPrizeStrategy/prize-period-greater-than-zero");
     prizePeriodSeconds = _prizePeriodSeconds;
@@ -643,7 +651,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   }
 
   modifier onlyOwnerOrListener() {
-    require(_msgSender() == owner() || _msgSender() == address(periodicPrizeStrategyListener), "PeriodicPrizeStrategy/only-owner-or-listener");
+    require(_msgSender() == owner() ||
+            _msgSender() == address(periodicPrizeStrategyListener) ||
+            _msgSender() == address(beforeAwardListener),
+            "PeriodicPrizeStrategy/only-owner-or-listener");
     _;
   }
 

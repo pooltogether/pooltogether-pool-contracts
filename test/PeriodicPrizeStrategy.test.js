@@ -365,6 +365,20 @@ describe('PeriodicPrizeStrategy', () => {
       await expect(prizeStrategy.addExternalErc20Award(prizeStrategy.address))
         .to.be.revertedWith('PeriodicPrizeStrategy/erc20-invalid')
     })
+
+    it('should allow the listeners to add external erc20s', async () => {
+      const externalAward = await deployMockContract(wallet2, IERC20.abi, overrides)
+      await externalAward.mock.totalSupply.returns(0)
+      await prizePool.mock.canAwardExternal.withArgs(externalAward.address).returns(true)
+
+      const BeforeAwardListener = await hre.artifacts.readArtifact("BeforeAwardListener")
+      const beforeAwardListener = await deployMockContract(wallet, BeforeAwardListener.abi, overrides)
+      await prizeStrategy.forceBeforeAwardListener(beforeAwardListener.address)
+
+      await expect(beforeAwardListener.call(prizeStrategy, 'addExternalErc20Award', externalAward.address))
+        .to.emit(prizeStrategy, 'ExternalErc20AwardAdded')
+        .withArgs(externalAward.address)
+    })
   })
 
   describe('removeExternalErc20Award()', () => {
