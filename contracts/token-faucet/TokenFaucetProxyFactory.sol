@@ -17,30 +17,46 @@ contract TokenFaucetProxyFactory is ProxyFactory {
     instance = new TokenFaucet();
   }
 
-  /// @notice Creates a new Comptroller V2
+  /// @notice Creates a new TokenFaucet
   /// @param _asset The asset to disburse to users
   /// @param _measure The token to use to measure a users portion
   /// @param _dripRatePerSecond The amount of the asset to drip each second
-  /// @return A reference to the new proxied Comptroller V2
+  /// @return A reference to the new proxied TokenFaucet
   function create(
     IERC20Upgradeable _asset,
     IERC20Upgradeable _measure,
     uint256 _dripRatePerSecond
-  ) external returns (TokenFaucet) {
-    TokenFaucet comptroller = TokenFaucet(deployMinimal(address(instance), ""));
-    comptroller.initialize(
+  ) public returns (TokenFaucet) {
+    TokenFaucet tokenFaucet = TokenFaucet(deployMinimal(address(instance), ""));
+    tokenFaucet.initialize(
       _asset, _measure, _dripRatePerSecond
     );
-    comptroller.transferOwnership(msg.sender);
-    return comptroller;
+    tokenFaucet.transferOwnership(msg.sender);
+    return tokenFaucet;
+  }
+
+  /// @notice Creates a new TokenFaucet and immediately deposits funds
+  /// @param _asset The asset to disburse to users
+  /// @param _measure The token to use to measure a users portion
+  /// @param _dripRatePerSecond The amount of the asset to drip each second
+  /// @param _amount The amount of assets to deposit into the faucet
+  /// @return A reference to the new proxied TokenFaucet
+  function createAndDeposit(
+    IERC20Upgradeable _asset,
+    IERC20Upgradeable _measure,
+    uint256 _dripRatePerSecond,
+    uint256 _amount
+  ) external returns (TokenFaucet) {
+    TokenFaucet faucet = create(_asset, _measure, _dripRatePerSecond);
+    _asset.transferFrom(msg.sender, address(faucet), _amount);
   }
 
   /// @notice Runs claim on all passed comptrollers for a user.
   /// @param user The user to claim for
-  /// @param comptrollers The comptrollers to call claim on.
-  function claimAll(address user, TokenFaucet[] calldata comptrollers) external {
-    for (uint256 i = 0; i < comptrollers.length; i++) {
-      comptrollers[i].claim(user);
+  /// @param tokenFaucets The tokenFaucets to call claim on.
+  function claimAll(address user, TokenFaucet[] calldata tokenFaucets) external {
+    for (uint256 i = 0; i < tokenFaucets.length; i++) {
+      tokenFaucets[i].claim(user);
     }
   }
 }
