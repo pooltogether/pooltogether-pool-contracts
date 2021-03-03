@@ -114,7 +114,7 @@ contract SablierManager is BeforeAwardListener {
   }
 
   /// @notice Allows a periodic prize strategy to call the manager to withdraw the stream before awarding the prize.
-  function beforePrizePoolAwarded(uint256 randomNumber, uint256 prizePeriodStartedAt) external override {
+  function beforePrizePoolAwarded(uint256, uint256) external override {
     PeriodicPrizeStrategy prizeStrategy = PeriodicPrizeStrategy(msg.sender);
     withdrawSablierStream(address(prizeStrategy.prizePool()));
   }

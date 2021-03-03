@@ -34,6 +34,7 @@ describe('PoolWithMultipleWinnersBuilder', () => {
 
     dai = (await deployments.get("Dai"))
     vault = (await deployments.get("yDai"))
+    cDaiYieldSource = (await deployments.get("cDaiYieldSource"))
     cToken = (await deployments.get("cDai"))
     rngServiceMock = (await deployments.get("RNGServiceMock"))
     compoundPrizePoolProxyFactory = (await deployments.get("CompoundPrizePoolProxyFactory"))
@@ -143,7 +144,6 @@ describe('PoolWithMultipleWinnersBuilder', () => {
       const prizePool = await hardhat.ethers.getContractAt('StakePrizePool', prizePoolCreatedEvent.args.prizePool, wallet)
       const prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinners', prizePoolCreatedEvent.args.prizeStrategy, wallet)
 
-      expect(await prizePool.token()).to.equal(cToken.address)
       expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
       expect(await prizePool.owner()).to.equal(wallet.address)
       expect(await prizeStrategy.owner()).to.equal(wallet.address)
@@ -151,6 +151,48 @@ describe('PoolWithMultipleWinnersBuilder', () => {
       expect(await prizePool.token()).to.equal(stakePrizePoolConfig.token)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(stakePrizePoolConfig.maxExitFeeMantissa)
       expect(await prizePool.maxTimelockDuration()).to.equal(stakePrizePoolConfig.maxTimelockDuration)
+    })
+  })
+
+  describe('createYieldSourceMultipleWinners()', () => {
+    let yieldSourcePrizePoolConfig
+
+    beforeEach(async () => {
+      yieldSourcePrizePoolConfig = {
+        yieldSource: cDaiYieldSource.address,
+        maxExitFeeMantissa: toWei('0.5'),
+        maxTimelockDuration: 1000
+      }
+    })
+
+    it('should create a new prize pool and strategy', async () => {
+      debug('Creating pool & strategy...')
+      let decimals = 9
+
+      let tx = await builder.createYieldSourceMultipleWinners(
+        yieldSourcePrizePoolConfig,
+        multipleWinnersConfig,
+        decimals
+      )
+
+      debug('Getting events...')
+
+      let events = await getEvents(builder, tx)
+      let prizePoolCreatedEvent = events.find(e => e.name == 'YieldSourcePrizePoolWithMultipleWinnersCreated')
+
+      debug(`Creating prize pool using address: ${prizePoolCreatedEvent.args.prizePool}...`)
+
+      const prizePool = await hardhat.ethers.getContractAt('YieldSourcePrizePool', prizePoolCreatedEvent.args.prizePool, wallet)
+      const prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinners', prizePoolCreatedEvent.args.prizeStrategy, wallet)
+
+      expect(await prizePool.yieldSource()).to.equal(cDaiYieldSource.address)
+      expect(await prizePool.token()).to.equal(dai.address)
+      expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
+      expect(await prizePool.owner()).to.equal(wallet.address)
+      expect(await prizePool.maxExitFeeMantissa()).to.equal(yieldSourcePrizePoolConfig.maxExitFeeMantissa)
+      expect(await prizePool.maxTimelockDuration()).to.equal(yieldSourcePrizePoolConfig.maxTimelockDuration)
+
+      expect(await prizeStrategy.owner()).to.equal(wallet.address)
     })
   })
 })
