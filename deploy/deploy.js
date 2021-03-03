@@ -250,20 +250,6 @@ module.exports = async (hardhat) => {
   }
   displayResult('YieldSourcePrizePoolProxyFactory', yieldSourcePrizePoolProxyFactoryResult)
 
-  cyan("\nDeploying yVaultPrizePoolProxyFactory...")
-  let yVaultPrizePoolProxyFactoryResult
-  if (isTestEnvironment && !harnessDisabled) {
-    yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolProxyFactory", {
-      contract: 'yVaultPrizePoolHarnessProxyFactory',
-      from: deployer
-    })
-  } else {
-    yVaultPrizePoolProxyFactoryResult = await deploy("yVaultPrizePoolProxyFactory", {
-      from: deployer
-    })
-  }
-  displayResult('yVaultPrizePoolProxyFactory', yVaultPrizePoolProxyFactoryResult)
-
   cyan("\nDeploying ControlledTokenProxyFactory...")
   const controlledTokenProxyFactoryResult = await deploy("ControlledTokenProxyFactory", {
     from: deployer
