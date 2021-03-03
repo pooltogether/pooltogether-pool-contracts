@@ -18,7 +18,6 @@ import "../token/ControlledToken.sol";
 import "../token/TicketInterface.sol";
 import "../prize-pool/PrizePool.sol";
 import "../Constants.sol";
-import "./SablierManager.sol";
 import "./PeriodicPrizeStrategyListenerInterface.sol";
 import "./PeriodicPrizeStrategyListenerLibrary.sol";
 import "./BeforeAwardListener.sol";
@@ -153,9 +152,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
 
   /// @notice A listener that is called after the prize is awarded
   PeriodicPrizeStrategyListenerInterface public periodicPrizeStrategyListener;
-
-  // The address of the SablierManager contract
-  SablierManager public sablierManager;
 
   /// @notice Initializes a new strategy
   /// @param _prizePeriodStart The starting timestamp of the prize period.
