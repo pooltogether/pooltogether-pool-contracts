@@ -29,4 +29,8 @@ contract PeriodicPrizeStrategyHarness is PeriodicPrizeStrategy {
   function _distribute(uint256 randomNumber) internal override {
     distributor.distribute(randomNumber);
   }
+
+  function forceBeforeAwardListener(BeforeAwardListenerInterface listener) external {
+    beforeAwardListener = listener;
+  }
 }
