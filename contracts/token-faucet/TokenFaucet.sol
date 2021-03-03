@@ -36,6 +36,11 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
     uint256 amount
   );
 
+  event Withdrawn(
+    address indexed to,
+    uint256 amount
+  );
+
   event Claimed(
     address indexed user,
     uint256 newTokens
@@ -104,6 +109,19 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
     emit Deposited(msg.sender, amount);
   }
 
+  /// @notice Allows the owner to withdraw tokens that have not been dripped yet.
+  /// @param to The address to withdraw to
+  /// @param amount The amount to withdraw
+  function withdrawTo(address to, uint256 amount) external onlyOwner {
+    drip();
+    uint256 assetTotalSupply = asset.balanceOf(address(this));
+    uint256 availableTotalSupply = assetTotalSupply.sub(totalUnclaimed);
+    require(amount <= availableTotalSupply, "TokenFaucet/insufficient-funds");
+    asset.transfer(to, amount);
+
+    emit Withdrawn(to, amount);
+  }
+
   /// @notice Transfers all unclaimed tokens to the user
   /// @param user The user to claim tokens for
   /// @return The amount of tokens that were claimed.
@@ -158,6 +176,8 @@ contract TokenFaucet is OwnableUpgradeable, TokenListener {
     return newTokens;
   }
 
+  /// @notice Allows the owner to set the drip rate per second.  This is the number of tokens that are dripped each second.
+  /// @param _dripRatePerSecond The new drip rate in tokens per second
   function setDripRatePerSecond(uint256 _dripRatePerSecond) public onlyOwner {
     require(_dripRatePerSecond > 0, "TokenFaucet/dripRate-gt-zero");
 
