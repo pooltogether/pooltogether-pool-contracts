@@ -5,6 +5,8 @@ const { deployments } = require("hardhat")
 
 const toWei = hardhat.ethers.utils.parseEther
 
+const debug = require('debug')('ptv3:TokenFaucetProxyFactory.test')
+
 let overrides = { gasLimit: 9500000 }
 
 describe('TokenFaucetProxyFactory', () => {
@@ -17,16 +19,17 @@ describe('TokenFaucetProxyFactory', () => {
 
   beforeEach(async () => {
     [wallet, wallet2] = await hardhat.ethers.getSigners()
-    provider = hardhat.ethers.provider
-
-    const ERC20MintableContract =  await hardhat.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
-
-    measure = await ERC20MintableContract.deploy('Measure', 'MEAS')
-    asset = await ERC20MintableContract.deploy('Asset', 'ASS')
 
     await deployments.fixture()
-    let tokenFaucetProxyFactoryResult = await deployments.get("TokenFaucetProxyFactory")
-    tokenFaucetProxyFactory = await hardhat.ethers.getContractAt('TokenFaucetProxyFactory', tokenFaucetProxyFactoryResult.address, wallet)
+    
+    provider = hardhat.ethers.provider
+    
+    const ERC20MintableContract =  await hardhat.ethers.getContractFactory("ERC20Mintable", wallet, overrides)
+    
+    measure = await ERC20MintableContract.deploy('Measure', 'MEAS')
+    asset = await ERC20MintableContract.deploy('Asset', 'ASS')
+    
+    tokenFaucetProxyFactory = await hardhat.ethers.getContract('TokenFaucetProxyFactory', wallet)
   })
 
   describe('create()', () => {
@@ -47,13 +50,20 @@ describe('TokenFaucetProxyFactory', () => {
 
   describe('createAndDeposit()', () => {
     it('should create a new faucet and immediately deposit into it', async () => {
+      debug(`createAndDeposit() minting...`)
       await asset.mint(wallet.address, toWei('100'))
+      debug(`createAndDeposit() approving...`)
       await asset.approve(tokenFaucetProxyFactory.address, toWei('100'))
 
+      debug(`createAndDeposit() create and deposit for ${asset.address} ${measure.address}...`)
       let tx = await tokenFaucetProxyFactory.createAndDeposit(asset.address, measure.address, toWei('0.01'), toWei('100'), overrides)
+
+      debug(`createAndDeposit() getTransactionReceipt...`)
       let receipt = await provider.getTransactionReceipt(tx.hash)
       let event = tokenFaucetProxyFactory.interface.parseLog(receipt.logs[0])
       expect(event.name).to.equal('ProxyCreated')
+
+      debug(`createAndDeposit() get TokenFaucet contract...`)
       let tokenFaucet = await hardhat.ethers.getContractAt("TokenFaucet", event.args.proxy, wallet)
 
       expect(await asset.balanceOf(tokenFaucet.address)).to.equal(toWei('100'))
