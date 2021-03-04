@@ -44,6 +44,7 @@ const chainName = (chainId) => {
     case 99: return 'POA';
     case 100: return 'xDai';
     case 31337: return 'HardhatEVM';
+    case 80001: return 'Matic (Mumbai)';
     default: return 'Unknown';
   }
 }
@@ -63,9 +64,9 @@ module.exports = async (hardhat) => {
     reserveRegistry
   } = await getNamedAccounts()
   const chainId = parseInt(await getChainId(), 10)
-  const isLocal = [1, 3, 4, 42, 77, 99, 100].indexOf(chainId) == -1
   // 31337 is unit testing, 1337 is for coverage
   const isTestEnvironment = chainId === 31337 || chainId === 1337
+  const isLocal = isTestEnvironment
 
   const signer = await ethers.provider.getSigner(deployer)
 

@@ -1,0 +1,282 @@
+{
+  "address": "0x4027dE966127af5F015Ea1cfd6293a3583892668",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint32",
+          "name": "requestId",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "randomNumber",
+          "type": "uint256"
+        }
+      ],
+      "name": "RandomNumberCompleted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint32",
+          "name": "requestId",
+          "type": "uint32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RandomNumberRequested",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "getLastRequestId",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "requestId",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getRequestFee",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "_feeToken",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_requestFee",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "name": "isRequestComplete",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "name": "randomNumber",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "requestRandomNumber",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_random",
+          "type": "uint256"
+        }
+      ],
+      "name": "setRandomNumber",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_feeToken",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_requestFee",
+          "type": "uint256"
+        }
+      ],
+      "name": "setRequestFee",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xe04a7cee7d728f1291638afebef00467854dad86ae2e5a2a9b7df5781f13340a",
+  "receipt": {
+    "to": null,
+    "from": "0xE0F4217390221aF47855E094F6e112D43C8698fE",
+    "contractAddress": "0x4027dE966127af5F015Ea1cfd6293a3583892668",
+    "transactionIndex": 0,
+    "gasUsed": "178393",
+    "logsBloom": "0x00000000010000000000000000000000000000000000000000000010000000000000000000000020000000000000000000008000000000000000000000000000000000000000000000000000000000800000000000000000000100400000000000000000000000000000000000000000008000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000004000000000000000000001000000000000000000000000000000100000001000000000000000000000000000000000000000000000000000000000000000100000",
+    "blockHash": "0x1cc35e5ed4ea6dcd8fd843452454e82e5db0384df08e04cf2ebbd0959b9c8bf4",
+    "transactionHash": "0xe04a7cee7d728f1291638afebef00467854dad86ae2e5a2a9b7df5781f13340a",
+    "logs": [
+      {
+        "transactionIndex": 0,
+        "blockNumber": 11194140,
+        "transactionHash": "0xe04a7cee7d728f1291638afebef00467854dad86ae2e5a2a9b7df5781f13340a",
+        "address": "0x0000000000000000000000000000000000001010",
+        "topics": [
+          "0x4dfe1bbbcf077ddc3e01291eea2d5c70c2b422b415d95645b9adcfd678cb1d63",
+          "0x0000000000000000000000000000000000000000000000000000000000001010",
+          "0x000000000000000000000000e0f4217390221af47855e094f6e112d43c8698fe",
+          "0x000000000000000000000000f903ba9e006193c1527bfbe65fe2123704ea3f99"
+        ],
+        "data": "0x0000000000000000000000000000000000000000000000000000a23f5b653a000000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000003bb57b45cc456d180c0000000000000000000000000000000000000000000000000de014744bfec60000000000000000000000000000000000000000000000003bb57be80ba0d2520c",
+        "logIndex": 0,
+        "blockHash": "0x1cc35e5ed4ea6dcd8fd843452454e82e5db0384df08e04cf2ebbd0959b9c8bf4"
+      }
+    ],
+    "blockNumber": 11194140,
+    "cumulativeGasUsed": "178393",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "4ee5cd3af4cdf3f3b3aae685e2904e9d",
+  "metadata": "{\"compiler\":{\"version\":\"0.6.12+commit.27d51765\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint32\",\"name\":\"requestId\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"randomNumber\",\"type\":\"uint256\"}],\"name\":\"RandomNumberCompleted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint32\",\"name\":\"requestId\",\"type\":\"uint32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RandomNumberRequested\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getLastRequestId\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"requestId\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getRequestFee\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"_feeToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_requestFee\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"name\":\"isRequestComplete\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"name\":\"randomNumber\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"requestRandomNumber\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_random\",\"type\":\"uint256\"}],\"name\":\"setRandomNumber\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_feeToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_requestFee\",\"type\":\"uint256\"}],\"name\":\"setRequestFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"getLastRequestId()\":{\"returns\":{\"requestId\":\"The last request id used in the last request\"}},\"getRequestFee()\":{\"returns\":{\"_feeToken\":\"_feeToken\",\"_requestFee\":\"_requestFee\"}},\"requestRandomNumber()\":{\"details\":\"Some services will complete the request immediately, others may have a time-delaySome services require payment in the form of a token, such as $LINK for Chainlink VRF\",\"returns\":{\"_0\":\"requestId The ID of the request used to get the results of the RNG service\",\"_1\":\"lockBlock The block number at which the RNG service will start generating time-delayed randomness.  The calling contract should \\\"lock\\\" all activity until the result is available via the `requestId`\"}}},\"version\":1},\"userdoc\":{\"events\":{\"RandomNumberCompleted(uint32,uint256)\":{\"notice\":\"Emitted when an existing request for a random number has been completed\"},\"RandomNumberRequested(uint32,address)\":{\"notice\":\"Emitted when a new request for a random number has been submitted\"}},\"kind\":\"user\",\"methods\":{\"getLastRequestId()\":{\"notice\":\"Gets the last request id used by the RNG service\"},\"requestRandomNumber()\":{\"notice\":\"Sends a request for a random number to the 3rd-party service\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/test/RNGServiceMock.sol\":\"RNGServiceMock\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0\\n\\npragma solidity >=0.6.0;\\n\\n/// @title Random Number Generator Interface\\n/// @notice Provides an interface for requesting random numbers from 3rd-party RNG services (Chainlink VRF, Starkware VDF, etc..)\\ninterface RNGInterface {\\n\\n  /// @notice Emitted when a new request for a random number has been submitted\\n  /// @param requestId The indexed ID of the request used to get the results of the RNG service\\n  /// @param sender The indexed address of the sender of the request\\n  event RandomNumberRequested(uint32 indexed requestId, address indexed sender);\\n\\n  /// @notice Emitted when an existing request for a random number has been completed\\n  /// @param requestId The indexed ID of the request used to get the results of the RNG service\\n  /// @param randomNumber The random number produced by the 3rd-party service\\n  event RandomNumberCompleted(uint32 indexed requestId, uint256 randomNumber);\\n\\n  /// @notice Gets the last request id used by the RNG service\\n  /// @return requestId The last request id used in the last request\\n  function getLastRequestId() external view returns (uint32 requestId);\\n\\n  /// @notice Gets the Fee for making a Request against an RNG service\\n  /// @return feeToken The address of the token that is used to pay fees\\n  /// @return requestFee The fee required to be paid to make a request\\n  function getRequestFee() external view returns (address feeToken, uint256 requestFee);\\n\\n  /// @notice Sends a request for a random number to the 3rd-party service\\n  /// @dev Some services will complete the request immediately, others may have a time-delay\\n  /// @dev Some services require payment in the form of a token, such as $LINK for Chainlink VRF\\n  /// @return requestId The ID of the request used to get the results of the RNG service\\n  /// @return lockBlock The block number at which the RNG service will start generating time-delayed randomness.  The calling contract\\n  /// should \\\"lock\\\" all activity until the result is available via the `requestId`\\n  function requestRandomNumber() external returns (uint32 requestId, uint32 lockBlock);\\n\\n  /// @notice Checks if the request for randomness from the 3rd-party service has completed\\n  /// @dev For time-delayed requests, this function is used to check/confirm completion\\n  /// @param requestId The ID of the request used to get the results of the RNG service\\n  /// @return isCompleted True if the request has completed and a random number is available, false otherwise\\n  function isRequestComplete(uint32 requestId) external view returns (bool isCompleted);\\n\\n  /// @notice Gets the random number produced by the 3rd-party service\\n  /// @param requestId The ID of the request used to get the results of the RNG service\\n  /// @return randomNum The random number\\n  function randomNumber(uint32 requestId) external returns (uint256 randomNum);\\n}\\n\",\"keccak256\":\"0xf917c68439d7476cd226f475e8fce940e0cf1d32cb0ff12e8537072a07f2b1da\",\"license\":\"GPL-3.0\"},\"contracts/test/RNGServiceMock.sol\":{\"content\":\"pragma solidity >=0.6.0 <0.7.0;\\n\\nimport \\\"@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol\\\";\\n\\ncontract RNGServiceMock is RNGInterface {\\n\\n  uint256 internal random;\\n  address internal feeToken;\\n  uint256 internal requestFee;\\n\\n  function getLastRequestId() external override view returns (uint32 requestId) {\\n    return 1;\\n  }\\n\\n  function setRequestFee(address _feeToken, uint256 _requestFee) external {\\n    feeToken = _feeToken;\\n    requestFee = _requestFee;\\n  }\\n\\n  /// @return _feeToken\\n  /// @return _requestFee\\n  function getRequestFee() external override view returns (address _feeToken, uint256 _requestFee) {\\n    return (feeToken, requestFee);\\n  }\\n\\n  function setRandomNumber(uint256 _random) external {\\n    random = _random;\\n  }\\n\\n  function requestRandomNumber() external override returns (uint32, uint32) {\\n    return (1, 1);\\n  }\\n\\n  function isRequestComplete(uint32) external override view returns (bool) {\\n    return true;\\n  }\\n\\n  function randomNumber(uint32) external override returns (uint256) {\\n    return random;\\n  }\\n}\",\"keccak256\":\"0x6ffa20b135d8dcbc861db65cd9ea45659710d835eef15901580e09afa5c98bca\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610243806100206000396000f3fe608060405234801561001057600080fd5b506004361061007d5760003560e01c80638678a7b21161005b5780638678a7b2146101055780639d2a5f9814610136578063d6bfea281461016b578063de1760fd1461018a5761007d565b80630d37b5371461008257806319c2b4c3146100ad5780633a19b9bc146100ce575b600080fd5b61008a6101b6565b604080516001600160a01b03909316835260208301919091528051918290030190f35b6100b56101ca565b6040805163ffffffff9092168252519081900360200190f35b6100f1600480360360208110156100e457600080fd5b503563ffffffff166101cf565b604080519115158252519081900360200190f35b61010d6101d5565b604051808363ffffffff1681526020018263ffffffff1681526020019250505060405180910390f35b6101596004803603602081101561014c57600080fd5b503563ffffffff166101db565b60408051918252519081900360200190f35b6101886004803603602081101561018157600080fd5b50356101e2565b005b610188600480360360408110156101a057600080fd5b506001600160a01b0381351690602001356101e7565b6001546002546001600160a01b0390911691565b600190565b50600190565b60018091565b5060005490565b600055565b600180546001600160a01b0319166001600160a01b03939093169290921790915560025556fea264697066735822122050850e00ddb7414e4b709756dd7b4f1d74882d72e02c9c920dd0467da2335f4e64736f6c634300060c0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061007d5760003560e01c80638678a7b21161005b5780638678a7b2146101055780639d2a5f9814610136578063d6bfea281461016b578063de1760fd1461018a5761007d565b80630d37b5371461008257806319c2b4c3146100ad5780633a19b9bc146100ce575b600080fd5b61008a6101b6565b604080516001600160a01b03909316835260208301919091528051918290030190f35b6100b56101ca565b6040805163ffffffff9092168252519081900360200190f35b6100f1600480360360208110156100e457600080fd5b503563ffffffff166101cf565b604080519115158252519081900360200190f35b61010d6101d5565b604051808363ffffffff1681526020018263ffffffff1681526020019250505060405180910390f35b6101596004803603602081101561014c57600080fd5b503563ffffffff166101db565b60408051918252519081900360200190f35b6101886004803603602081101561018157600080fd5b50356101e2565b005b610188600480360360408110156101a057600080fd5b506001600160a01b0381351690602001356101e7565b6001546002546001600160a01b0390911691565b600190565b50600190565b60018091565b5060005490565b600055565b600180546001600160a01b0319166001600160a01b03939093169290921790915560025556fea264697066735822122050850e00ddb7414e4b709756dd7b4f1d74882d72e02c9c920dd0467da2335f4e64736f6c634300060c0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "getLastRequestId()": {
+        "returns": {
+          "requestId": "The last request id used in the last request"
+        }
+      },
+      "getRequestFee()": {
+        "returns": {
+          "_feeToken": "_feeToken",
+          "_requestFee": "_requestFee"
+        }
+      },
+      "requestRandomNumber()": {
+        "details": "Some services will complete the request immediately, others may have a time-delaySome services require payment in the form of a token, such as $LINK for Chainlink VRF",
+        "returns": {
+          "_0": "requestId The ID of the request used to get the results of the RNG service",
+          "_1": "lockBlock The block number at which the RNG service will start generating time-delayed randomness.  The calling contract should \"lock\" all activity until the result is available via the `requestId`"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "events": {
+      "RandomNumberCompleted(uint32,uint256)": {
+        "notice": "Emitted when an existing request for a random number has been completed"
+      },
+      "RandomNumberRequested(uint32,address)": {
+        "notice": "Emitted when a new request for a random number has been submitted"
+      }
+    },
+    "kind": "user",
+    "methods": {
+      "getLastRequestId()": {
+        "notice": "Gets the last request id used by the RNG service"
+      },
+      "requestRandomNumber()": {
+        "notice": "Sends a request for a random number to the 3rd-party service"
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 19519,
+        "contract": "contracts/test/RNGServiceMock.sol:RNGServiceMock",
+        "label": "random",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 19521,
+        "contract": "contracts/test/RNGServiceMock.sol:RNGServiceMock",
+        "label": "feeToken",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_address"
+      },
+      {
+        "astId": 19523,
+        "contract": "contracts/test/RNGServiceMock.sol:RNGServiceMock",
+        "label": "requestFee",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_uint256"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}
