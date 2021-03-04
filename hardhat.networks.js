@@ -30,9 +30,9 @@ if(process.env.ALCHEMY_URL && process.env.FORK_ENABLED){
 }
 
 if (process.env.HDWALLET_MNEMONIC) {
-  networks.poaMainnet = {
-    chainId: 99,
-    url: 'https://core.poanetwork.dev',
+  networks.xdai = {
+    chainId: 100,
+    url: 'https://rpc.xdaichain.com/',
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
@@ -40,6 +40,13 @@ if (process.env.HDWALLET_MNEMONIC) {
   networks.poaSokol = {
     chainId: 77,
     url: 'https://sokol.poa.network',
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
+  }
+  networks.mumbai = {
+    chainId: 80001,
+    url: 'https://rpc-mumbai.maticvigil.com',
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
