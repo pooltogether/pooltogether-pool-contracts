@@ -43,6 +43,7 @@ const chainName = (chainId) => {
     case 77: return 'POA Sokol';
     case 99: return 'POA';
     case 100: return 'xDai';
+    case 137: return 'Matic';
     case 31337: return 'HardhatEVM';
     case 80001: return 'Matic (Mumbai)';
     default: return 'Unknown';
@@ -66,7 +67,6 @@ module.exports = async (hardhat) => {
   const chainId = parseInt(await getChainId(), 10)
   // 31337 is unit testing, 1337 is for coverage
   const isTestEnvironment = chainId === 31337 || chainId === 1337
-  const isLocal = isTestEnvironment
 
   const signer = await ethers.provider.getSigner(deployer)
 
@@ -74,8 +74,7 @@ module.exports = async (hardhat) => {
   dim("PoolTogether Pool Contracts - Deploy Script")
   dim("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
-  const locus = isLocal ? 'local' : 'remote'
-  dim(`network: ${chainName(chainId)} (${locus})`)
+  dim(`network: ${chainName(chainId)} (${isTestEnvironment ? 'local' : 'remote'})`)
   dim(`deployer: ${deployer}`)
   if (!admin) {
     admin = signer._address
@@ -84,7 +83,7 @@ module.exports = async (hardhat) => {
 
   await deploy1820(signer)
 
-  if (isLocal) {
+  if (isTestEnvironment) {
     cyan("\nDeploying RNGService...")
     const rngServiceMockResult = await deploy("RNGServiceMock", {
       from: deployer
