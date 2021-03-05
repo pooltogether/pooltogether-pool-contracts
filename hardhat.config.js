@@ -83,6 +83,10 @@ const config = {
       4: "0xc04Ad234E01327b24a831e3718DBFcbE245904CC",
       5: "0x590b3974533141a44a89033deEcf932F52fcFDea",
       42: "0xc04Ad234E01327b24a831e3718DBFcbE245904CC"
+    },
+    testnetCDai: {
+      4: '0x6d7f0754ffeb405d23c51ce938289d4835be3b14',
+      42: '0xf0d0eb522cfa50b716b3b1604c4f0fa6f04376ad'
     }
   },
   etherscan: {

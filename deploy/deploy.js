@@ -62,7 +62,8 @@ module.exports = async (hardhat) => {
     admin,
     comptroller,
     sablier,
-    reserveRegistry
+    reserveRegistry,
+    testnetCDai
   } = await getNamedAccounts()
   const chainId = parseInt(await getChainId(), 10)
   // 31337 is unit testing, 1337 is for coverage
@@ -83,6 +84,7 @@ module.exports = async (hardhat) => {
 
   await deploy1820(signer)
 
+  let cDaiAddress = testnetCDai
   if (isTestEnvironment) {
     cyan("\nDeploying RNGService...")
     const rngServiceMockResult = await deploy("RNGServiceMock", {
@@ -111,15 +113,7 @@ module.exports = async (hardhat) => {
       contract: 'CTokenMock',
       from: deployer
     })
-
-    await deploy("cDaiYieldSource", {
-      args: [
-        cDaiResult.address
-      ],
-      contract: "CTokenYieldSource",
-      from: deployer,
-      skipIfAlreadyDeployed: true
-    })
+    cDaiAddress = cDaiResult.address
 
     await deploy("yDai", {
       args: [
@@ -133,6 +127,19 @@ module.exports = async (hardhat) => {
     dim("\nLocal Contract Deployments;\n")
     dim("  - RNGService:       ", rng)
     dim("  - Dai:              ", daiResult.address)
+  }
+
+  if (cDaiAddress) {
+    cyan("\nDeploy cDaiYieldSource...")
+    const cDaiYieldSourceResult = await deploy("cDaiYieldSource", {
+      args: [
+        cDaiAddress
+      ],
+      contract: "CTokenYieldSource",
+      from: deployer,
+      skipIfAlreadyDeployed: true
+    })
+    displayResult('cDaiYieldSource', cDaiYieldSourceResult)
   }
 
   let comptrollerAddress = comptroller
