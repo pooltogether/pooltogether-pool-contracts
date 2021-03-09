@@ -62,21 +62,17 @@ const PrizePool = require('@pooltogether/pooltogether-contracts/abis/PrizePool.j
 
 First clone this repository and enter the directory.
 
-Switch to the `version-3` branch:
-
-```
-$ git checkout version-3
-```
-
 Install dependencies:
 
 ```
 $ yarn
 ```
 
-We make use of [Hardhat](https://hardhat.dev) and [hardhat-deploy](https://github.com/wighawag/hardhat-deploy)
+We use [direnv](https://direnv.net/) to manage environment variables.  You'll likely need to install it.
 
 #### Testing
+
+We use [Hardhat](https://hardhat.dev) and [hardhat-deploy](https://github.com/wighawag/hardhat-deploy)
 
 To run unit & integration tests:
 
