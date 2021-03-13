@@ -70,15 +70,14 @@ async function run() {
 
   
   block = await ethers.provider.getBlock()
-  let startTime = block.timestamp + 100
   
   await prizeStrategy.setBeforeAwardListener(sablierManager.address)
   await dai.approve(sablierManager.address, daiStreamAmount)
-  await sablierManager.createSablierStream(prizePool.address, daiStreamAmount, dai.address, startTime, startTime + 100)
+  await sablierManager.createSablierStreamWithDuration(prizePool.address, daiStreamAmount, dai.address, 100)
 
   dim(`Prize strategy owner: ${await prizeStrategy.owner()}`)
 
-  await increaseTime(150)
+  await increaseTime(50)
 
   dim(`Starting award...`)
   await prizeStrategy.startAward()

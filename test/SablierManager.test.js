@@ -61,6 +61,25 @@ describe('SablierManager', () => {
     })
   })
 
+  describe('createSablierStreamWithDuration()', () => {
+    it('should allow the user to create a stream', async () => {
+      let duration = 100
+      let deposit = toWei('100')
+
+      await sablierManager.setCurrentTime(22)
+
+      await token.mock.transferFrom.withArgs(wallet.address, sablierManager.address, deposit).returns(true)
+      await token.mock.approve.withArgs(sablier.address, deposit).returns(true)
+      await sablier.mock.createStream.withArgs(prizePool.address, deposit, token.address, 22, 122).returns(14)
+      
+      await expect(sablierManager.createSablierStreamWithDuration(prizePool.address, deposit, token.address, duration))
+        .to.emit(sablierManager, 'SablierStreamCreated')
+        .withArgs(14, prizePool.address)
+
+      expect(await sablierManager.sablierStreamId(prizePool.address)).to.equal('14')      
+    })
+  })
+
   describe('createSablierStream()', () => {
     it('should allow the owner to create a stream', async () => {
 
