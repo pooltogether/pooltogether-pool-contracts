@@ -47,6 +47,9 @@ contract CTokenYieldSource is YieldSourceInterface {
   function balanceOf(address addr) external override returns (uint256) {
     uint256 totalUnderlying = cToken.balanceOfUnderlying(address(this));
     uint256 total = cToken.balanceOf(address(this));
+    if (total == 0) {
+      return 0;
+    }
     return balances[addr].mul(totalUnderlying).div(total);
   }
 
