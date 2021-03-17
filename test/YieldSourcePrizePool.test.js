@@ -30,8 +30,8 @@ describe('YieldSourcePrizePool', function() {
     erc20token = await ERC20MintableContract.deploy("Token", "TOKE")
 
     debug('creating yield source mock...')
-    const YieldSourceInterface = await hre.artifacts.readArtifact("YieldSourceInterface")
-    yieldSource =  await deployMockContract(wallet, YieldSourceInterface.abi, overrides)
+    const IYieldSource = await hre.artifacts.readArtifact("IYieldSource")
+    yieldSource =  await deployMockContract(wallet, IYieldSource.abi, overrides)
     yieldSource.mock.token.returns(erc20token.address)
 
     const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
