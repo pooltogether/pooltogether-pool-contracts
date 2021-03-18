@@ -10,6 +10,7 @@ require('hardhat-deploy-ethers')
 require('solidity-coverage')
 require("@nomiclabs/hardhat-etherscan")
 require('hardhat-abi-exporter')
+require('hardhat-dependency-compiler')
 
 const testnetAdmin = '0xE0F4217390221aF47855E094F6e112D43C8698fE' // Account 1
 const testnetUser1 = '0xeedDf4937E3A7aBe03E08963C3c20affbD770b51' // Account 3
@@ -101,7 +102,13 @@ const config = {
     path: './abis',
     clear: true,
     flat: true
+  },
+  dependencyCompiler:{
+    paths: [
+      "@pooltogether/yield-source-interface/contracts/IYieldSource.sol",
+    ],
   }
+
 };
 
 module.exports = config

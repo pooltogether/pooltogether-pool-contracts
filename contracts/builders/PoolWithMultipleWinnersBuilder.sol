@@ -10,6 +10,7 @@ import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
 import "../prize-pool/yield-source/YieldSourcePrizePoolProxyFactory.sol";
 import "../prize-pool/stake/StakePrizePoolProxyFactory.sol";
 import "./MultipleWinnersBuilder.sol";
+import { IYieldSource } from "@pooltogether/yield-source-interface/contracts/IYieldSource.sol";
 
 contract PoolWithMultipleWinnersBuilder {
   using SafeCastUpgradeable for uint256;
@@ -38,7 +39,7 @@ contract PoolWithMultipleWinnersBuilder {
 
   /// @notice The configuration used to initialize the Compound Prize Pool
   struct YieldSourcePrizePoolConfig {
-    YieldSourceInterface yieldSource;
+    IYieldSource yieldSource;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
   }

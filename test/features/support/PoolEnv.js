@@ -218,7 +218,7 @@ function PoolEnv() {
     await this.env.cToken.connect(wallet).transfer(this.env.prizePool.address, cTokenBalance);
 
     await this.env.token.connect(wallet).approve(this.env.cTokenYieldSource.address, amount);
-    await this.env.cTokenYieldSource.connect(wallet).supplyTo(amount, this.env.prizePool.address)
+    await this.env.cTokenYieldSource.connect(wallet).supplyTokenTo(amount, this.env.prizePool.address)
   }
 
   this.timelockBuySponsorship = async function ({ user, sponsorship }) {

@@ -24,7 +24,7 @@ describe('CTokenYieldSource', function() {
     it('should return 0 when empty', async () => {
       await cToken.mock.balanceOfUnderlying.returns('0')
       await cToken.mock.balanceOf.returns('0')
-      expect(await cTokenYieldSource.callStatic.balanceOf(wallet.address)).to.equal('0')
+      expect(await cTokenYieldSource.callStatic.balanceOfToken(wallet.address)).to.equal('0')
     })
   });
 });
