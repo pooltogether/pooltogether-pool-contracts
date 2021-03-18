@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
+import "@pooltogether/yield-source-interface/contracts/IYieldSource.sol";
 
 import "../registry/RegistryInterface.sol";
 import "../prize-pool/compound/CompoundPrizePoolProxyFactory.sol";
@@ -38,7 +39,7 @@ contract PoolWithMultipleWinnersBuilder {
 
   /// @notice The configuration used to initialize the Compound Prize Pool
   struct YieldSourcePrizePoolConfig {
-    YieldSourceInterface yieldSource;
+    IYieldSource yieldSource;
     uint256 maxExitFeeMantissa;
     uint256 maxTimelockDuration;
   }
