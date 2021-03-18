@@ -1,6 +1,6 @@
 {
   "name": "@pooltogether/pooltogether-contracts",
-  "version": "3.3.3",
+  "version": "3.3.4",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
   "bin": {
@@ -41,6 +41,7 @@
     "@pooltogether/fixed-point": "1.0.0-beta.2",
     "@pooltogether/pooltogether-rng-contracts": "1.0.0",
     "@pooltogether/uniform-random-number": "1.0.0-beta.1",
+    "@pooltogether/yield-source-interface": "^1.0.1",
     "deploy-eip-1820": "1.0.0",
     "sortition-sum-tree-factory": "0.1.0"
   },

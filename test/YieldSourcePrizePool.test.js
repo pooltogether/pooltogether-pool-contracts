@@ -30,9 +30,9 @@ describe('YieldSourcePrizePool', function() {
     erc20token = await ERC20MintableContract.deploy("Token", "TOKE")
 
     debug('creating yield source mock...')
-    const YieldSourceInterface = await hre.artifacts.readArtifact("YieldSourceInterface")
-    yieldSource =  await deployMockContract(wallet, YieldSourceInterface.abi, overrides)
-    yieldSource.mock.token.returns(erc20token.address)
+    const IYieldSource = await hre.artifacts.readArtifact("IYieldSource")
+    yieldSource =  await deployMockContract(wallet, IYieldSource.abi, overrides)
+    yieldSource.mock.depositToken.returns(erc20token.address)
 
     const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
     prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
@@ -78,14 +78,14 @@ describe('YieldSourcePrizePool', function() {
   describe('supply()', async () => {
     it('should supply assets to the yield source', async () => {
       await erc20token.mint(prizePool.address, toWei('10'))
-      await yieldSource.mock.supplyTo.withArgs(toWei('10'), prizePool.address).returns()
+      await yieldSource.mock.supplyTokenTo.withArgs(toWei('10'), prizePool.address).returns()
       await prizePool.supply(toWei('10'))
     })
   })
 
   describe('redeem()', async () => {
     it('should redeem assets from the yield source', async () => {
-      await yieldSource.mock.redeem.withArgs(toWei('99')).returns('98')
+      await yieldSource.mock.redeemToken.withArgs(toWei('99')).returns('98')
       expect(await prizePool.callStatic.redeem(toWei('99'))).to.equal('98')
     })
   })
