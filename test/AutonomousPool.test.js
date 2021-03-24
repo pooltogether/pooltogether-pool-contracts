@@ -15,7 +15,7 @@ const REWARD_LISTENER_INTERFACE_HASH = web3.utils.soliditySha3('PoolTogetherRewa
 
 const SAFE_ADDRESS = "0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f"
 
-contract('BasePool', (accounts) => {
+contract('AutonomousPool', (accounts) => {
   let pool, token, moneyMarket
   
   const [owner, admin, user1, user2] = accounts

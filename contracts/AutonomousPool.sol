@@ -80,7 +80,7 @@ contract AutonomousPool is MCDAwarePool {
     ICErc20[] memory cTokens = new ICErc20[](1);
     cTokens[0] = cToken;
     comptroller.claimComp(address(this), cTokens);
-    transferCOMP();
+    return transferCOMP();
   }
 
   function transferCOMP() public returns (uint256) {
