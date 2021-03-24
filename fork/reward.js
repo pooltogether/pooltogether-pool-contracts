@@ -5,7 +5,7 @@ const chai = require('chai')
 const expect = chai.expect
 
 const {
-  MULTISIG_ADMIN1
+  POOL_ADMIN
 } = require('./helpers/constants')
 
 const overrides = {
@@ -34,7 +34,7 @@ async function reward(context, type = 'sai') {
     contracts
   } = context
 
-  const signer = provider.getSigner(MULTISIG_ADMIN1)
+  const signer = provider.getSigner(POOL_ADMIN)
   let pool
 
   switch (type.toLowerCase()) {
@@ -45,7 +45,7 @@ async function reward(context, type = 'sai') {
       pool = contracts.PoolSai.connect(signer)
   }
 
-  expect(await pool.isAdmin(MULTISIG_ADMIN1)).to.equal(true)
+  expect(await pool.isAdmin(POOL_ADMIN)).to.equal(true)
 
   let currentOpenDrawId = await pool.currentOpenDrawId()
   let nextDrawId = currentOpenDrawId.add('1')

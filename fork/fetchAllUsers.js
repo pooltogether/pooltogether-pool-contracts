@@ -10,13 +10,8 @@ const {
   DAI_BUDDY
 } = require('./helpers/constants')
 
-function fetchAllUsers() {
-
-  const daiUsers = fetchUsers('dai')
-  const saiUsers = fetchUsers('sai')
-  const usdcUsers = fetchUsers('usdc')
-
-  const users = daiUsers.concat(saiUsers).concat(usdcUsers).concat([
+function fetchAdmins() {
+  return [
     POOL_ADMIN,
     BINANCE_ADDRESS,
     HD_FIRST_ADDRESS,
@@ -26,9 +21,17 @@ function fetchAllUsers() {
     MULTISIG_ADMIN1,
     MULTISIG_ADMIN2,
     DAI_BUDDY
-  ])
+  ]
+}
 
-  return users
+function fetchAllUsers() {
+
+  const daiUsers = fetchUsers('dai')
+  const saiUsers = fetchUsers('sai')
+  const usdcUsers = fetchUsers('usdc')
+  const admins = fetchAdmins()
+
+  return daiUsers.concat(saiUsers).concat(usdcUsers).concat(admins)
 }
 
 module.exports = {

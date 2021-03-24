@@ -2,11 +2,12 @@
 const commander = require('commander');
 const chalk = require('chalk')
 const { showUsers } = require('./showUsers')
-const { startFork } = require('./startFork')
+const { setupFork } = require('./setupFork')
 const { impersonate } = require('./impersonate')
 const { withdrawCOMP } = require('./withdrawCOMP')
 const { setRewardFees } = require('./setRewardFees')
 const { pay } = require('./pay')
+const { claimAndTransferCOMP } = require('./claimAndTransferCOMP')
 const { upgradeV2x } = require('./upgradeV2x')
 const { upgrade } = require('./upgrade')
 const { upgradeToAutonomousPools } = require('./upgradeToAutonomousPools')
@@ -45,11 +46,11 @@ async function callContext() {
 }
 
 program
-  .command('start')
-  .description('Starts a local node that is forked from mainnet.  Available on http://localhost:8546.')
+  .command('setup')
+  .description('Configures a Hardhat fork.  Fork must be available on http://localhost:8546.')
   .action(async () => {
     ranAction = true
-    await startFork()
+    await setupFork(await callContext())
   })
 
 program
@@ -205,6 +206,18 @@ program
     }
     const c = await callContext()
     await openNextDraw(c, type)
+  })
+
+program
+  .command('claim [type]')
+  .description('claim the comp on a pool')
+  .action(async (type) => {
+    ranAction = true
+    if (!type) {
+      type = 'sai'
+    }
+    const c = await callContext()
+    await claimAndTransferCOMP(c, type)
   })
 
 program

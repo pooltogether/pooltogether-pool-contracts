@@ -142,3 +142,19 @@ $ yarn fork withdraw-deposit
 # Rewards the pool
 $ yarn fork reward
 ```
+
+## Autonomous Pools Update
+
+Note: A [Hardhat](https://hardhat.org/) node must already be running in a separate terminal.  The node should be a fork of mainnet and exposed on port 8546.
+
+First prepare the fork:
+
+```sh
+$ yarn fork setup
+```
+
+Now upgrade to the autonomous pools:
+
+```sh
+$ yarn fork upgrade-auto
+```

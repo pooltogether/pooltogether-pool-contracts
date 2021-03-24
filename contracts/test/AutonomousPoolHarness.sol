@@ -28,7 +28,7 @@ contract AutonomousPoolHarness is AutonomousPool {
     timestamp = _timestamp;
   }
 
-  function currentTime() internal view returns (uint256) {
+  function _currentTime() internal view returns (uint256) {
     return timestamp;
   }
 }

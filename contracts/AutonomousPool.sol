@@ -23,20 +23,26 @@ import "./compound/IComptroller.sol";
 
 contract AutonomousPool is MCDAwarePool {
 
-  address internal constant COMP_RECIPIENT = 0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f;
+  event PrizePeriodSecondsUpdated(uint256 prizePeriodSeconds);
+
+  event CompRecipientUpdated(address compRecipient);
+
+  event AwardStarted();
+
+  event AwardCompleted();
 
   uint256 public lastAwardTimestamp;
   uint256 public prizePeriodSeconds;
   IComptroller public comptroller;
   IERC20 public comp;
+  address public compRecipient;
 
-  event AwardedCOMP(
+  event TransferredComp(
     address indexed recipient,
     uint256 amount
   );
 
   function initializeAutonomousPool(
-    uint256 _lastAwardTimestamp,
     uint256 _prizePeriodSeconds,
     IERC20 _comp,
     IComptroller _comptroller
@@ -44,26 +50,49 @@ contract AutonomousPool is MCDAwarePool {
     require(address(comp) == address(0), "AutonomousPool/already-init");
     require(address(_comp) != address(0), "AutonomousPool/comp-not-defined");
     require(address(_comptroller) != address(0), "AutonomousPool/comptroller-not-defined");
-    lastAwardTimestamp = _lastAwardTimestamp == 0 ? block.timestamp : _lastAwardTimestamp;
+    lastAwardTimestamp = _currentTime();
     prizePeriodSeconds = _prizePeriodSeconds;
     comptroller = _comptroller;
     comp = _comp;
-    claimCOMP();
   }
 
+  function setPrizePeriodSeconds(uint256 _prizePeriodSeconds) external onlyAdmin {
+    prizePeriodSeconds = _prizePeriodSeconds;
+
+    emit PrizePeriodSecondsUpdated(prizePeriodSeconds);
+  }
+
+  function setCompRecipient(address _compRecipient) external onlyAdmin {
+    compRecipient = _compRecipient;
+
+    emit CompRecipientUpdated(compRecipient);
+  }
+
+  /// @notice Returns whether the prize period has ended.
   function isPrizePeriodEnded() public view returns (bool) {
     return (
       lastAwardTimestamp != 0 &&
-      nextAwardAt() <= currentTime()
+      nextAwardAt() <= _currentTime()
     );
   }
 
-  function claimCOMP() public returns (uint256) {
+  function claimAndTransferCOMP() public returns (uint256) {
     ICErc20[] memory cTokens = new ICErc20[](1);
     cTokens[0] = cToken;
     comptroller.claimComp(address(this), cTokens);
+    transferCOMP();
+  }
+
+  function transferCOMP() public returns (uint256) {
+    if (compRecipient == address(0)) {
+      return 0;
+    }
+
     uint256 amount = comp.balanceOf(address(this));
-    comp.transfer(COMP_RECIPIENT, amount);
+    comp.transfer(compRecipient, amount);
+
+    emit TransferredComp(compRecipient, amount);
+
     return amount;
   }
 
@@ -73,6 +102,14 @@ contract AutonomousPool is MCDAwarePool {
    */
   function lockTokens() public requireInitialized onlyPrizePeriodEnded {
     blocklock.lock(block.number);
+
+    emit AwardStarted();
+  }
+
+  /// @notice Starts the award process.  The prize period must have ended.
+  /// @dev Essentially an alias for lockTokens()
+  function startAward() public {
+    lockTokens();
   }
 
   /**
@@ -80,7 +117,7 @@ contract AutonomousPool is MCDAwarePool {
    * Can only be called by an admin.
    * Fires the Rewarded event, the Committed event, and the Open event.
    */
-  function reward() external requireInitialized onlyLocked nonReentrant {
+  function completeAward() external requireInitialized onlyLocked nonReentrant {
     // if there is a committed draw, it can be awarded
     if (currentCommittedDrawId() > 0) {
       _reward();
@@ -88,8 +125,10 @@ contract AutonomousPool is MCDAwarePool {
     if (currentOpenDrawId() != 0) {
       emitCommitted();
     }
-    open();
-    lastAwardTimestamp = currentTime();
+    _open();
+    lastAwardTimestamp = _currentTime();
+
+    emit AwardCompleted();
   }
 
   /**
@@ -113,11 +152,11 @@ contract AutonomousPool is MCDAwarePool {
   /**
    * @notice Opens a new Draw.
    */
-  function open() internal {
+  function _open() internal {
     drawState.openNextDraw();
     draws[drawState.openDrawIndex] = Draw(
       nextFeeFraction,
-      address(0),
+      nextFeeBeneficiary,
       block.number,
       bytes32(0),
       bytes32(0),
@@ -127,30 +166,34 @@ contract AutonomousPool is MCDAwarePool {
     );
     emit Opened(
       drawState.openDrawIndex,
-      address(0),
+      nextFeeBeneficiary,
       bytes32(0),
       nextFeeFraction
     );
+  }
+
+  function canStartAward() public view returns (bool) {
+    return _isAutonomousPoolInitialized() && isPrizePeriodEnded();
+  }
+
+  function canCompleteAward() public view returns (bool) {
+    return _isAutonomousPoolInitialized() && blocklock.isLocked(block.number);
   }
 
   function nextAwardAt() public view returns (uint256) {
     return lastAwardTimestamp.add(prizePeriodSeconds);
   }
 
-  function currentTime() internal view returns (uint256) {
+  function _currentTime() internal view returns (uint256) {
     return block.timestamp;
+  }
+
+  function _isAutonomousPoolInitialized() internal view returns (bool) {
+    return address(comp) != address(0);
   }
 
   modifier onlyPrizePeriodEnded() {
     require(isPrizePeriodEnded(), "AutonomousPool/prize-period-not-ended");
-    _;
-  }
-
-  /**
-   * @notice requires the caller to be an admin
-   */
-  modifier onlyAdmin() {
-    revert("Pool/admin-disabled");
     _;
   }
 

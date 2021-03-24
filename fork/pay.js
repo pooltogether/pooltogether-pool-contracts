@@ -20,10 +20,9 @@ async function pay (context) {
 
   for (let i = 0; i < users.length; i++) {
     let user = users[i]
-
     // Transfer eth to the admin so that we can deploy contracts
     await exec(provider, binance.sendTransaction({ to: user, value: ethers.utils.parseEther('100') }))
-    console.log(chalk.dim(`${user} received 100 ether`))
+    console.log(chalk.dim(`${i+1}/${users.length}: ${user} received 100 ether`))
   }
   
   console.log(chalk.green('Complete payments.'))
