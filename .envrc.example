@@ -7,6 +7,9 @@ export INFURA_API_KEY=''
 # Used for verifying contracts on Etherscan
 export ETHERSCAN_API_KEY=''
 
+# Used for verifying contracts on Binance
+export BSCSCAN_API_KEY=''
+
 # Required for forking
 export ALCHEMY_URL=''
 

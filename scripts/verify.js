@@ -14,10 +14,11 @@ const getContract = async (name) => {
   return hardhat.ethers.getContractAt(name, (await deployments.get(name)).address, signers[0])
 }
 
-const verifyAddress = async (address, name, options = "") => {
-  const network = await hardhat.ethers.provider.getNetwork()
+const verifyAddress = async (address, name) => {
+  const network = hardhat.network.name
+  const config = isBinance() ? '--config hardhat.config.bsc.js' : ''
   try {
-    await exec(`hardhat ${options} verify --network ${network.name === 'homestead' ? 'mainnet' : network.name} ${address}`)
+    await exec(`hardhat ${config} verify --network ${network} ${address}`)
   } catch (e) {
     if (/Contract source code already verified/.test(e.message)) {
       info(`${name} already verified`)
@@ -31,24 +32,30 @@ const verifyAddress = async (address, name, options = "") => {
 const verifyProxyFactory = async (name) => {
   const proxyFactory = await getContract(name)
   const instanceAddress = await proxyFactory.instance()
-  info(`Verifying ${name} instance...`)
+  info(`Verifying ${name} instance at ${instanceAddress}...`)
   await verifyAddress(instanceAddress, name)
   success(`Verified!`)
 }
 
-const verifyContract = async (name, options = "") => {
-  info(`Verifying ${name}...`)
-  const address = (await deployments.get(name)).address
-  await verifyAddress(address, name, options)
-  success(`Verified!`)
+function isBinance() {
+  const network = hardhat.network.name
+  return /bsc/.test(network);
+}
+
+function etherscanApiKey() {
+  if (isBinance()) {
+    return process.env.BSCSCAN_API_KEY
+  } else {
+    return process.env.ETHERSCAN_API_KEY
+  }
 }
 
 async function run() {
-  const network = await hardhat.ethers.provider.getNetwork()
+  const network = hardhat.network.name
 
   info(`Verifying top-level contracts...`)
   const { stdout, stderr } = await exec(
-    `hardhat etherscan-verify --solc-input --api-key $ETHERSCAN_API_KEY --network ${network.name === 'homestead' ? 'mainnet' : network.name}`
+    `hardhat --network ${network} etherscan-verify --solc-input --api-key ${etherscanApiKey()}`
   )
   console.log(chalk.yellow(stdout))
   console.log(chalk.red(stderr))
