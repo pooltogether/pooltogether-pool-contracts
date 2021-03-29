@@ -40,7 +40,9 @@ const chainName = (chainId) => {
     case 4: return 'Rinkeby';
     case 5: return 'Goerli';
     case 42: return 'Kovan';
+    case 56: return 'Binance Smart Chain';
     case 77: return 'POA Sokol';
+    case 97: return 'Binance Smart Chain (testnet)';
     case 99: return 'POA';
     case 100: return 'xDai';
     case 137: return 'Matic';
@@ -60,7 +62,6 @@ module.exports = async (hardhat) => {
     deployer,
     rng,
     admin,
-    comptroller,
     sablier,
     reserveRegistry,
     testnetCDai
@@ -144,30 +145,6 @@ module.exports = async (hardhat) => {
       skipIfAlreadyDeployed: true
     })
     displayResult('cDaiYieldSource', cDaiYieldSourceResult)
-  }
-
-  let comptrollerAddress = comptroller
-  // if not set by named config
-  cyan(`\nDeploying Comptroller...`)
-  if (!comptrollerAddress) {
-    const contract = isTestEnvironment ? 'ComptrollerHarness' : 'Comptroller'
-    const comptrollerResult = await deploy("Comptroller", {
-      contract,
-      from: deployer,
-      skipIfAlreadyDeployed: true
-    })
-    comptrollerAddress = comptrollerResult.address
-    const comptrollerContract = await hardhat.ethers.getContractAt(
-      "Comptroller",
-      comptrollerResult.address,
-      signer
-    )
-    if (admin !== deployer) {
-      await comptrollerContract.transferOwnership(admin)
-    }
-    displayResult('Comptroller', comptrollerResult)
-  } else {
-    yellow(`Re-used existing Comptroller at ${comptrollerAddress}`)
   }
 
   cyan(`\nDeploying TokenFaucetProxyFactory...`)

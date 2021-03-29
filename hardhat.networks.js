@@ -58,6 +58,20 @@ if (process.env.HDWALLET_MNEMONIC) {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
   }
+  networks.bsc = {
+    chainId: 56,
+    url: 'https://bsc-dataseed.binance.org',
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
+  }
+  networks.bscTestnet = {
+    chainId: 97,
+    url: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
+  }
 }
 
 if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
