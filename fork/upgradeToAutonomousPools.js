@@ -7,7 +7,7 @@ const { runShell } = require('./runShell')
 
 const {
   POOL_ADMIN,
-  SAFE_ADDRESS,
+  PROTOCOL_TREASURY,
   MULTISIG,
   MULTISIG_ADMIN1,
   MULTISIG_ADMIN2
@@ -90,18 +90,18 @@ async function upgradeToAutonomousPools (context) {
 
   console.log(chalk.yellow(`Upgrading Sai Pool...`))
   const saiPool = await upgrade(poolSai[0].address, [oneWeek, comp, comptroller])
-  await saiPool.setCompRecipient(SAFE_ADDRESS)
+  await saiPool.setCompRecipient(PROTOCOL_TREASURY)
   console.log(chalk.green(`Upgraded!`))
 
   console.log(chalk.yellow(`Upgrading Dai Pool...`))
   const daiPool = await upgrade(poolDai[0].address, [oneWeek, comp, comptroller])
-  await daiPool.setCompRecipient(SAFE_ADDRESS)
+  await daiPool.setCompRecipient(PROTOCOL_TREASURY)
   console.log(chalk.green(`Upgraded!`))
 
   const oneDay = 3600 * 24
   console.log(chalk.yellow(`Upgrading USDC Pool...`))
   const usdcPool = await upgrade(poolUsdc[0].address, [oneDay, comp, comptroller])
-  await usdcPool.setCompRecipient(SAFE_ADDRESS)
+  await usdcPool.setCompRecipient(PROTOCOL_TREASURY)
   console.log(chalk.green(`Upgraded!`))
 
   runShell(`echo 20 > .oz-migrate/mainnet_fork`)

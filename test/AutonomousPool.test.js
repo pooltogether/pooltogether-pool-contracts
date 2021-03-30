@@ -8,6 +8,7 @@ const AutonomousPoolHarness = artifacts.require('AutonomousPoolHarness.sol')
 const MockComptroller = artifacts.require('MockComptroller.sol')
 const Token = artifacts.require('Token.sol')
 const {
+  SECRET_HASH,
   ZERO_ADDRESS
 } = require('./helpers/constants')
 
@@ -49,7 +50,7 @@ contract('AutonomousPool', (accounts) => {
 
   describe('initializeAutonomousPool', () => {
     it('should set the prize period', async () => {
-      expect((await pool.lastAwardTimestamp()).toString()).to.equal('10')
+      expect((await pool.lastAwardTimestamp()).toString()).to.equal('0')
       expect((await pool.prizePeriodSeconds()).toString()).to.equal('100')
       expect((await pool.comptroller())).to.equal(comptroller.address)
       expect((await pool.comp())).to.equal(comp.address)
@@ -78,7 +79,31 @@ contract('AutonomousPool', (accounts) => {
     })
   })
 
-  describe('reward()', () => {
+  describe.only('openNextDraw()', () => {
+    it('should revert', async () => {
+      await chai.assert.isRejected(pool.openNextDraw(SECRET_HASH), /AutonomousPool\/deprecated/)
+    })
+  })
+
+  describe.only('rolloverAndOpenNextDraw()', () => {
+    it('should revert', async () => {
+      await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH), /AutonomousPool\/deprecated/)
+    })
+  })
+
+  describe.only('rewardAndOpenNextDraw()', () => {
+    it('should revert', async () => {
+      await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET_HASH, SECRET_HASH), /AutonomousPool\/deprecated/)
+    })
+  })
+
+  describe.only('reward()', () => {
+    it('should revert', async () => {
+      await chai.assert.isRejected(pool.reward(SECRET_HASH, SECRET_HASH), /AutonomousPool\/deprecated/)
+    })
+  })
+
+  describe('completeAward()', () => {
     beforeEach(async () => {
       await pool.setCurrentTime('110') // set to start + 100 seconds
     })
@@ -88,38 +113,39 @@ contract('AutonomousPool', (accounts) => {
     })
 
     it('should correctly open the first draw', async () => {
+      expect((await pool.remainingTime()).toString()).to.equal('0')
       expect((await pool.currentOpenDrawId()).toString()).to.equal('0')
       expect((await pool.currentCommittedDrawId()).toString()).to.equal('0')
 
       await pool.startAward()      
       await pool.completeAward()
       
-      expect((await pool.nextAwardAt()).toString()).to.equal('210')
+      expect((await pool.remainingTime()).toString()).to.equal('100')
       expect((await pool.currentOpenDrawId()).toString()).to.equal('1')
       expect((await pool.currentCommittedDrawId()).toString()).to.equal('0')
     })
 
     it('should correctly open the second draw', async () => {
-      await pool.startAward()      
+      await pool.startAward()     
       await pool.completeAward()
 
       await pool.setCurrentTime('210')
 
-      await pool.startAward()      
+      await pool.startAward()
       await pool.completeAward()
       
-      expect((await pool.nextAwardAt()).toString()).to.equal('310')
+      expect((await pool.remainingTime()).toString()).to.equal('100')
       expect((await pool.currentOpenDrawId()).toString()).to.equal('2')
       expect((await pool.currentCommittedDrawId()).toString()).to.equal('1')
     })
 
     it('should correctly reward on the third draw', async () => {
-      await pool.startAward()      
+      await pool.startAward()
       await pool.completeAward()
 
       await pool.setCurrentTime('210')
 
-      await pool.startAward()      
+      await pool.startAward()
       await pool.completeAward()
 
       await pool.setCurrentTime('310')
@@ -131,7 +157,7 @@ contract('AutonomousPool', (accounts) => {
       let block = await web3.eth.getBlock(rewarded.blockNumber - 1)
       expect(rewarded.args.entropy).to.equal(block.hash)
 
-      expect((await pool.nextAwardAt()).toString()).to.equal('410')
+      expect((await pool.remainingTime()).toString()).to.equal('100')
       expect((await pool.currentOpenDrawId()).toString()).to.equal('3')
       expect((await pool.currentCommittedDrawId()).toString()).to.equal('2')
     })

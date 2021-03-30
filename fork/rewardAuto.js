@@ -35,7 +35,7 @@ async function rewardAuto (context, type = 'dai', count = 5) {
 
     const committedDrawId = await contract.currentCommittedDrawId()
     console.log(chalk.yellow(`Starting ${type} award ${committedDrawId.toString()}...`))
-    const seconds = (await contract.prizePeriodSeconds()).toNumber() + 1
+    const seconds = (await contract.remainingTime()).toNumber() + 1
     console.log(chalk.dim(`Increasing time by ${seconds}`))
     await provider.send('evm_increaseTime', [seconds])
     
@@ -60,6 +60,7 @@ async function rewardAuto (context, type = 'dai', count = 5) {
 
     if (awardedCOMP) { console.log('Comp reward: ', ethers.utils.formatEther(awardedCOMP.values.amount)) }
     console.log('Prize: ', ethers.utils.formatEther(rewarded.values.winnings))
+    console.log(`Entropy: ${rewarded.values.entropy.toString()}`)
   }
   
   console.log(chalk.green('Rewarding complete.'))
