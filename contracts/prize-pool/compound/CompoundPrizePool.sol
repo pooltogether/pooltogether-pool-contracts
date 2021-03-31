@@ -5,6 +5,7 @@ pragma solidity >=0.6.0 <0.7.0;
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "../../external/compound/CTokenInterface.sol";
@@ -14,6 +15,7 @@ import "../PrizePool.sol";
 /// @notice Manages depositing and withdrawing assets from the Prize Pool
 contract CompoundPrizePool is PrizePool {
   using SafeMathUpgradeable for uint256;
+  using SafeERC20Upgradeable for IERC20Upgradeable;
 
   event CompoundPrizePoolInitialized(address indexed cToken);
 
@@ -56,7 +58,7 @@ contract CompoundPrizePool is PrizePool {
   /// to be held in escrow by the Yield Service
   /// @param amount The amount of asset tokens to be supplied
   function _supply(uint256 amount) internal override {
-    _token().approve(address(cToken), amount);
+    _token().safeApprove(address(cToken), amount);
     require(cToken.mint(amount) == 0, "CompoundPrizePool/mint-failed");
   }
 
