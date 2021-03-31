@@ -81,7 +81,8 @@ describe('CompoundPrizePool', function() {
   describe('_supply()', () => {
     it('should supply assets to compound', async () => {
       let amount = toWei('500')
-
+      
+      await erc20token.mock.allowance.withArgs(prizePool.address, cToken.address).returns(0)
       await erc20token.mock.approve.withArgs(cToken.address, amount).returns(true)
       await cToken.mock.mint.withArgs(amount).returns('0')
       await prizePool.supply(amount)
@@ -90,6 +91,8 @@ describe('CompoundPrizePool', function() {
     it('should revert on error', async () => {
       let amount = toWei('500')
 
+      await erc20token.mock.allowance.withArgs(prizePool.address, cToken.address).returns(0)
+      await erc20token.mock.allowance.withArgs(cToken.address, prizePool.address).returns(0)
       await erc20token.mock.approve.withArgs(cToken.address, amount).returns(true)
       await cToken.mock.mint.returns('1')
       await expect(prizePool.supply(amount)).to.be.revertedWith('CompoundPrizePool/mint-failed')
