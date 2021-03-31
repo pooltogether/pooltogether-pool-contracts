@@ -92,7 +92,6 @@ function PoolEnv() {
     let prizePool = await this.prizePool(wallet)
     await prizeStrategy.setCurrentTime(time, this.overrides)
     await prizePool.setCurrentTime(time, this.overrides)
-    await this.env.comptroller.setCurrentTime(time, this.overrides)
   }
 
   this.setReserveRate = async function ({rate}) {
@@ -117,10 +116,6 @@ function PoolEnv() {
 
   this.governanceToken = async function (wallet) {
     return this.env.governanceToken.connect(wallet)
-  }
-
-  this.comptroller = async function (wallet) {
-    return this.env.comptroller.connect(wallet)
   }
 
   this.ticket = async function (wallet) {
@@ -235,57 +230,6 @@ function PoolEnv() {
     await prizePool.timelockDepositTo(wallet.address, amount, sponsorshipContract.address, this.overrides)
 
     debug(`Bought sponsorship with timelocked tokens`)
-  }
-
-  this.claimGovernanceDripTokens = async function ({ user }) {
-    let wallet = await this.wallet(user)
-    let comptroller = await this.comptroller(wallet)
-    await comptroller.updateAndClaimDrips(
-      [{
-        source: this.env.prizeStrategy.address,
-        measure: this.env.ticket.address
-      }],
-      wallet.address,
-      [this.env.governanceToken.address]
-    )
-  }
-
-  this.burnGovernanceTokensFromComptroller = async function({ amount }) {
-    await this.env.governanceToken.burn(this.env.comptroller.address, toWei(amount))
-  }
-
-  this.balanceDripGovernanceTokenAtRate = async function ({ dripRatePerSecond }) {
-    await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
-    await this.env.comptroller.activateBalanceDrip(
-      this.env.prizeStrategy.address,
-      this.env.ticket.address,
-      this.env.governanceToken.address,
-      dripRatePerSecond
-    )
-  }
-
-  this.volumeDripGovernanceToken = async function ({ dripAmount, periodSeconds, endTime, isReferral }) {
-    debug(`volumeDripGovernanceToken minting...`)
-    await this.env.governanceToken.mint(this.env.comptroller.address, toWei('10000'))
-    debug(`volumeDripGovernanceToken: activating...: `,
-      this.env.prizeStrategy.address,
-      this.env.ticket.address,
-      this.env.governanceToken.address,
-      !!isReferral,
-      periodSeconds,
-      toWei(dripAmount),
-      endTime
-    )
-    await this.env.comptroller.activateVolumeDrip(
-      this.env.prizeStrategy.address,
-      this.env.ticket.address,
-      this.env.governanceToken.address,
-      !!isReferral,
-      periodSeconds,
-      toWei(dripAmount),
-      endTime
-    )
-    debug(`volumeDripGovernanceToken activated!`)
   }
 
   this.expectUserToHaveTickets = async function ({ user, tickets }) {

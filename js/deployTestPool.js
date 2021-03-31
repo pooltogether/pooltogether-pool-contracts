@@ -37,7 +37,6 @@ async function deployTestPool({
   let governanceToken = await ERC20Mintable.deploy('Governance Token', 'GOV')
 
   let poolWithMultipleWinnersBuilderResult = await deployments.get("PoolWithMultipleWinnersBuilder")
-  let comptrollerResult = await deployments.get("Comptroller")
   let rngServiceMockResult = await deployments.get("RNGServiceMock")
   let tokenResult = await deployments.get("Dai")
   let cTokenResult = await deployments.get("cDai")
@@ -49,7 +48,6 @@ async function deployTestPool({
   const cToken = await hardhat.ethers.getContractAt('CTokenMock', cTokenResult.address, wallet)
   const cTokenYieldSource = await hardhat.ethers.getContract('cDaiYieldSource', wallet)
   const yToken = await hardhat.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
-  const comptroller = await hardhat.ethers.getContractAt('ComptrollerHarness', comptrollerResult.address, wallet)
   const poolBuilder = await hardhat.ethers.getContractAt('PoolWithMultipleWinnersBuilder', poolWithMultipleWinnersBuilderResult.address, wallet)
 
   let linkToken = await ERC20Mintable.deploy('Link Token', 'LINK')
@@ -135,7 +133,6 @@ async function deployTestPool({
     rngService: rngServiceMock.address,
     token: tokenResult.address,
     cToken: cTokenResult.address,
-    comptroller: comptrollerResult.address,
     ticket: ticket.address,
     prizePool: prizePool.address,
     sponsorship: sponsorship.address,
@@ -144,10 +141,6 @@ async function deployTestPool({
   })
 
   const prizeStrategy = await hardhat.ethers.getContractAt('MultipleWinnersHarness', prizeStrategyAddress, wallet)
-
-  debug(`Setting token listener: ${comptrollerResult.address}...`)
-
-  await prizeStrategy.setTokenListener(comptrollerResult.address)
 
   debug(`Done!`)
 
@@ -158,7 +151,6 @@ async function deployTestPool({
     cToken,
     cTokenYieldSource,
     yToken,
-    comptroller,
     prizeStrategy,
     prizePool,
     ticket,
