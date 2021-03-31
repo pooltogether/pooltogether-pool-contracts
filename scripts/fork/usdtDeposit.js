@@ -21,8 +21,7 @@ async function run() {
 
     [wallet, wallet2, wallet3, wallet4] = await hardhat.ethers.getSigners()
 
-    usdt = await ethers.getContractAt('TetherToken', '0xdAC17F958D2ee523a2206206994597C13D831ec7')
-    
+    usdt = await ethers.getContractAt('IERC20Upgradeable', '0xdAC17F958D2ee523a2206206994597C13D831ec7')
     const usdtOwner = await ethers.provider.getUncheckedSigner('0xc6cde7c39eb2f0f0095f41570af89efc2c1ea828')
 
     await usdt.connect(usdtOwner).transfer(wallet.address, 10 ** 10)
