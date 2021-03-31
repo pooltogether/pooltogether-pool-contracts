@@ -8,11 +8,7 @@
 
 ## PoolTogether Prize Savings Protocol
 
-[![Coverage Status](https://coveralls.io/repos/github/pooltogether/pooltogether-pool-contracts/badge.svg?branch=master)](https://coveralls.io/github/pooltogether/pooltogether-pool-contracts?branch=master)
-
-[![<PoolTogether>](https://circleci.com/gh/pooltogether/pooltogether-pool-contracts.svg?style=svg)](https://circleci.com/gh/pooltogether/pooltogether-pool-contracts)
-
-[![built-with openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-3677FF)](https://docs.openzeppelin.com/)
+[![Coverage Status](https://coveralls.io/repos/github/pooltogether/pooltogether-pool-contracts/badge.svg?branch=master)](https://coveralls.io/github/pooltogether/pooltogether-pool-contracts?branch=master) [![<PoolTogether>](https://circleci.com/gh/pooltogether/pooltogether-pool-contracts.svg?style=shield)](https://circleci.com/gh/pooltogether/pooltogether-pool-contracts) [![built-with openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-3677FF)](https://docs.openzeppelin.com/)
 
 The [PoolTogether](https://www.pooltogether.com/) Prize Savings Protocol Ethereum smart contracts.
 
