@@ -8,6 +8,7 @@ const AutonomousPoolHarness = artifacts.require('AutonomousPoolHarness.sol')
 const MockComptroller = artifacts.require('MockComptroller.sol')
 const Token = artifacts.require('Token.sol')
 const {
+  SECRET_HASH,
   ZERO_ADDRESS
 } = require('./helpers/constants')
 
@@ -15,7 +16,7 @@ const REWARD_LISTENER_INTERFACE_HASH = web3.utils.soliditySha3('PoolTogetherRewa
 
 const SAFE_ADDRESS = "0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f"
 
-contract('BasePool', (accounts) => {
+contract('AutonomousPool', (accounts) => {
   let pool, token, moneyMarket
   
   const [owner, admin, user1, user2] = accounts
@@ -43,29 +44,20 @@ contract('BasePool', (accounts) => {
 
     pool = await poolContext.createPoolNoOpenDraw(feeFraction)
     // non-admin can initialize
-    await pool.initializeAutonomousPool(10, 100, comp.address, comptroller.address, { from: user2 })
+    await pool.setCurrentTime(10)
+    await pool.initializeAutonomousPool(100, comp.address, comptroller.address, { from: user2 })
   })
 
   describe('initializeAutonomousPool', () => {
     it('should set the prize period', async () => {
-      expect((await pool.lastAwardTimestamp()).toString()).to.equal('10')
+      expect((await pool.lastAwardTimestamp()).toString()).to.equal('0')
       expect((await pool.prizePeriodSeconds()).toString()).to.equal('100')
       expect((await pool.comptroller())).to.equal(comptroller.address)
       expect((await pool.comp())).to.equal(comp.address)
     })
 
     it('should not be called again', async () => {
-      await chai.assert.isRejected(pool.initializeAutonomousPool(22, 222, comp.address, comptroller.address, { from: user2 }), /AutonomousPool\/already-init/)
-    })
-
-    it('should send all COMP to the gnosis safe', async () => {
-      pool = await poolContext.createPoolNoOpenDraw(feeFraction)
-
-      await comp.mint(comptroller.address, toWei('11'))
-      await comp.mint(pool.address, toWei('9'))
-      await pool.initializeAutonomousPool(10, 100, comp.address, comptroller.address, { from: user2 })
-
-      expect((await comp.balanceOf(SAFE_ADDRESS)).toString()).to.equal(toWei('20'))
+      await chai.assert.isRejected(pool.initializeAutonomousPool(222, comp.address, comptroller.address, { from: user2 }), /AutonomousPool\/already-init/)
     })
   })
 
@@ -87,79 +79,104 @@ contract('BasePool', (accounts) => {
     })
   })
 
-  describe('reward()', () => {
+  describe.only('openNextDraw()', () => {
+    it('should revert', async () => {
+      await chai.assert.isRejected(pool.openNextDraw(SECRET_HASH), /AutonomousPool\/deprecated/)
+    })
+  })
+
+  describe.only('rolloverAndOpenNextDraw()', () => {
+    it('should revert', async () => {
+      await chai.assert.isRejected(pool.rolloverAndOpenNextDraw(SECRET_HASH), /AutonomousPool\/deprecated/)
+    })
+  })
+
+  describe.only('rewardAndOpenNextDraw()', () => {
+    it('should revert', async () => {
+      await chai.assert.isRejected(pool.rewardAndOpenNextDraw(SECRET_HASH, SECRET_HASH, SECRET_HASH), /AutonomousPool\/deprecated/)
+    })
+  })
+
+  describe.only('reward()', () => {
+    it('should revert', async () => {
+      await chai.assert.isRejected(pool.reward(SECRET_HASH, SECRET_HASH), /AutonomousPool\/deprecated/)
+    })
+  })
+
+  describe('completeAward()', () => {
     beforeEach(async () => {
       await pool.setCurrentTime('110') // set to start + 100 seconds
     })
 
     it('should not reward unless the pool is locked', async () => {
-      await chai.assert.isRejected(pool.reward(), /Pool\/unlocked/)
+      await chai.assert.isRejected(pool.completeAward(), /Pool\/unlocked/)
     })
 
     it('should correctly open the first draw', async () => {
+      expect((await pool.remainingTime()).toString()).to.equal('0')
       expect((await pool.currentOpenDrawId()).toString()).to.equal('0')
       expect((await pool.currentCommittedDrawId()).toString()).to.equal('0')
 
-      await pool.lockTokens()      
-      await pool.methods['reward()']()
+      await pool.startAward()      
+      await pool.completeAward()
       
-      expect((await pool.nextAwardAt()).toString()).to.equal('210')
+      expect((await pool.remainingTime()).toString()).to.equal('100')
       expect((await pool.currentOpenDrawId()).toString()).to.equal('1')
       expect((await pool.currentCommittedDrawId()).toString()).to.equal('0')
     })
 
     it('should correctly open the second draw', async () => {
-      await pool.lockTokens()      
-      await pool.methods['reward()']()
+      await pool.startAward()     
+      await pool.completeAward()
 
       await pool.setCurrentTime('210')
 
-      await pool.lockTokens()      
-      await pool.methods['reward()']()
+      await pool.startAward()
+      await pool.completeAward()
       
-      expect((await pool.nextAwardAt()).toString()).to.equal('310')
+      expect((await pool.remainingTime()).toString()).to.equal('100')
       expect((await pool.currentOpenDrawId()).toString()).to.equal('2')
       expect((await pool.currentCommittedDrawId()).toString()).to.equal('1')
     })
 
     it('should correctly reward on the third draw', async () => {
-      await pool.lockTokens()      
-      await pool.methods['reward()']()
+      await pool.startAward()
+      await pool.completeAward()
 
       await pool.setCurrentTime('210')
 
-      await pool.lockTokens()      
-      await pool.methods['reward()']()
+      await pool.startAward()
+      await pool.completeAward()
 
       await pool.setCurrentTime('310')
 
       await pool.lockTokens({ from: user2 })
-      let tx = await pool.methods['reward()']()
+      let tx = await pool.completeAward()
       let rewarded = tx.logs.find(log => log.event === 'Rewarded')
 
       let block = await web3.eth.getBlock(rewarded.blockNumber - 1)
       expect(rewarded.args.entropy).to.equal(block.hash)
 
-      expect((await pool.nextAwardAt()).toString()).to.equal('410')
+      expect((await pool.remainingTime()).toString()).to.equal('100')
       expect((await pool.currentOpenDrawId()).toString()).to.equal('3')
       expect((await pool.currentCommittedDrawId()).toString()).to.equal('2')
     })
   })
 
-  describe('claimCOMP()', () => {
+  describe('claimAndTransferCOMP()', () => {
+    it('should do nothing if no recipient', async () => {
+      await comp.mint(comptroller.address, toWei('11'))
+      expect((await pool.claimAndTransferCOMP.call()).toString()).to.equal(toWei('0'))
+      await pool.claimAndTransferCOMP()
+      expect((await comp.balanceOf(SAFE_ADDRESS)).toString()).to.equal(toWei('0'))
+    })
+
     it('should return the COMP award', async () => {
       await comp.mint(comptroller.address, toWei('11'))
-      expect((await pool.claimCOMP.call()).toString()).to.equal(toWei('11'))
-      await pool.claimCOMP()
+      await pool.setCompRecipient(SAFE_ADDRESS)
+      expect((await pool.claimAndTransferCOMP.call()).toString()).to.equal(toWei('11'))
+      await pool.claimAndTransferCOMP()
       expect((await comp.balanceOf(SAFE_ADDRESS)).toString()).to.equal(toWei('11'))
     })
   })
-
-  describe('disable admin', () => {
-    it('should disable all admin functions', async () => {
-      await chai.assert.isRejected(pool.setNextFeeBeneficiary(owner), /Pool\/admin-disabled/)
-      await chai.assert.isRejected(pool.setNextFeeFraction('2'), /Pool\/admin-disabled/)
-    })
-  })
-  
 })

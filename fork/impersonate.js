@@ -1,9 +1,5 @@
 const { fetchAllUsers } = require('./fetchAllUsers')
-const { exec } = require('./exec')
 const chalk = require('chalk')
-const {
-  BINANCE_ADDRESS,
-} = require('./helpers/constants')
 
 async function impersonate (context) {
   console.log(chalk.yellow('Starting impersonation...'))

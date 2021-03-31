@@ -35,7 +35,7 @@ async function rewardAuto (context, type = 'dai', count = 5) {
 
     const committedDrawId = await contract.currentCommittedDrawId()
     console.log(chalk.yellow(`Starting ${type} award ${committedDrawId.toString()}...`))
-    const seconds = (await contract.prizePeriodSeconds()).toNumber() + 1
+    const seconds = (await contract.remainingTime()).toNumber() + 1
     console.log(chalk.dim(`Increasing time by ${seconds}`))
     await provider.send('evm_increaseTime', [seconds])
     
@@ -47,9 +47,9 @@ async function rewardAuto (context, type = 'dai', count = 5) {
     console.log(chalk.dim(`Block is now ${await provider.getBlockNumber()}`))
 
     console.log(chalk.dim(`Locking tokens...`))
-    await contract.lockTokens()
+    await contract.startAward()
     console.log(chalk.dim(`Rewarding...`))
-    let tx = await contract.reward()
+    let tx = await contract.completeAward()
     console.log(chalk.green(`Rewarded ${committedDrawId}`))
 
     let receipt = await provider.getTransactionReceipt(tx.hash)
@@ -57,11 +57,10 @@ async function rewardAuto (context, type = 'dai', count = 5) {
     // console.log(rewardEvents)
     let rewarded = rewardEvents.find(event => event.name == 'Rewarded')
     let awardedCOMP = rewardEvents.find(event => event.name == 'AwardedCOMP')
-    let feeCollected = rewardEvents.find(event => event.name == 'FeeCollected')
 
     if (awardedCOMP) { console.log('Comp reward: ', ethers.utils.formatEther(awardedCOMP.values.amount)) }
     console.log('Prize: ', ethers.utils.formatEther(rewarded.values.winnings))
-    console.log('Reward fee: ', ethers.utils.formatEther(feeCollected.values.amount))
+    console.log(`Entropy: ${rewarded.values.entropy.toString()}`)
   }
   
   console.log(chalk.green('Rewarding complete.'))

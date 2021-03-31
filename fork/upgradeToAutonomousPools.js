@@ -6,6 +6,8 @@ const MultisigAbi = require('./GnosisMultisigAbi')
 const { runShell } = require('./runShell')
 
 const {
+  POOL_ADMIN,
+  PROTOCOL_TREASURY,
   MULTISIG,
   MULTISIG_ADMIN1,
   MULTISIG_ADMIN2
@@ -36,6 +38,8 @@ async function upgradeToAutonomousPools (context) {
   const multisigSigner1 = provider.getSigner(MULTISIG_ADMIN1)
   const multisigSigner2 = provider.getSigner(MULTISIG_ADMIN2)
 
+  const poolAdminSigner = provider.getSigner(POOL_ADMIN)
+
   const ms1 = new ethers.Contract(MULTISIG, MultisigAbi, multisigSigner1)
   const ms2 = new ethers.Contract(MULTISIG, MultisigAbi, multisigSigner2)
 
@@ -45,55 +49,59 @@ async function upgradeToAutonomousPools (context) {
   async function upgrade(proxyAddress, initializeAutonomousPoolParams) {
     const currentProxy = await contracts.ProxyAdmin.getProxyImplementation(proxyAddress)
 
-    if (currentProxy.toLowerCase() == autonomousPoolImpl.toLowerCase()) {
+    if (currentProxy.toLowerCase() != autonomousPoolImpl.toLowerCase()) {
+      console.log(chalk.yellow(`Upgrading ${proxyAddress} from ${currentProxy} to AutonomousPool ${autonomousPoolImpl} with ProxyAdmin ${contracts.ProxyAdmin.address}`))
+      const initializeAutonomousPoolData = interfaces.AutonomousPool.functions.initializeAutonomousPool.encode(initializeAutonomousPoolParams)
+      const upgradeAndCallData = interfaces.ProxyAdmin.functions.upgradeAndCall.encode([proxyAddress, autonomousPoolImpl, initializeAutonomousPoolData])
+
+      const txCount = parseInt((await ms1.transactionCount()).toString())
+      console.log(chalk.dim(`Current multisg tx count: ${txCount}`))
+
+      console.log(chalk.dim(`First multisig signer creating tx...`))
+
+      // first signer creates tx
+      const submitTx = await ms1.submitTransaction(contracts.ProxyAdmin.address, 0, upgradeAndCallData, { gasLimit: 8000000 })
+      await provider.waitForTransaction(submitTx.hash)
+      const submitTxReceipt = await provider.getTransactionReceipt(submitTx.hash)
+      // console.log({submitTxReceipt})
+
+      const lastTxId = parseInt((await ms1.transactionCount()).toString())
+
+      console.log(chalk.dim(`Second multisig signer confirming tx ${lastTxId}...`))
+
+      // have the second signer confirm
+      const confirmTx = await ms2.confirmTransaction(lastTxId-1, { gasLimit: 9000000 })
+      await provider.waitForTransaction(confirmTx.hash)
+      const confirmTxReceipt = await provider.getTransactionReceipt(confirmTx.hash)
+      const events = confirmTxReceipt.logs.map(log => { try { return ms2.interface.parseLog(log) } catch (e) { return null } })
+      // console.log({confirmTxReceipt})
+      // console.log({events})
+
+      // The contract is now upgraded
+      expect(await contracts.ProxyAdmin.getProxyImplementation(proxyAddress)).to.equal(autonomousPoolImpl)
+    } else {
       console.log(chalk.cyan("Already upgraded!"))
-      return
     }
 
-    console.log(chalk.yellow(`Upgrading ${proxyAddress} from ${currentProxy} to AutonomousPool ${autonomousPoolImpl} with ProxyAdmin ${contracts.ProxyAdmin.address}`))
-    const initializeAutonomousPoolData = interfaces.AutonomousPool.functions.initializeAutonomousPool.encode(initializeAutonomousPoolParams)
-    const upgradeAndCallData = interfaces.ProxyAdmin.functions.upgradeAndCall.encode([proxyAddress, autonomousPoolImpl, initializeAutonomousPoolData])
-
-    const txCount = parseInt((await ms1.transactionCount()).toString())
-    console.log(chalk.dim(`Current multisg tx count: ${txCount}`))
-
-    console.log(chalk.dim(`First multisig signer creating tx...`))
-
-    // first signer creates tx
-    const submitTx = await ms1.submitTransaction(contracts.ProxyAdmin.address, 0, upgradeAndCallData, { gasLimit: 8000000 })
-    await provider.waitForTransaction(submitTx.hash)
-    const submitTxReceipt = await provider.getTransactionReceipt(submitTx.hash)
-    // console.log({submitTxReceipt})
-
-    const lastTxId = parseInt((await ms1.transactionCount()).toString())
-
-    console.log(chalk.dim(`Second multisig signer confirming tx ${lastTxId}...`))
-
-    // have the second signer confirm
-    const confirmTx = await ms2.confirmTransaction(lastTxId-1, { gasLimit: 9000000 })
-    await provider.waitForTransaction(confirmTx.hash)
-    const confirmTxReceipt = await provider.getTransactionReceipt(confirmTx.hash)
-    const events = confirmTxReceipt.logs.map(log => { try { return ms2.interface.parseLog(log) } catch (e) { return null } })
-    // console.log({confirmTxReceipt})
-    // console.log({events})
-
-    // The contract is now upgraded
-    expect(await contracts.ProxyAdmin.getProxyImplementation(proxyAddress)).to.equal(autonomousPoolImpl)
+    return new ethers.Contract(proxyAddress, interfaces.AutonomousPool.abi, poolAdminSigner)
   }
 
   const oneWeek = 604800
 
   console.log(chalk.yellow(`Upgrading Sai Pool...`))
-  await upgrade(poolSai[0].address, [0, oneWeek, comp, comptroller])
+  const saiPool = await upgrade(poolSai[0].address, [oneWeek, comp, comptroller])
+  await saiPool.setCompRecipient(PROTOCOL_TREASURY)
   console.log(chalk.green(`Upgraded!`))
 
   console.log(chalk.yellow(`Upgrading Dai Pool...`))
-  await upgrade(poolDai[0].address, [0, oneWeek, comp, comptroller])
+  const daiPool = await upgrade(poolDai[0].address, [oneWeek, comp, comptroller])
+  await daiPool.setCompRecipient(PROTOCOL_TREASURY)
   console.log(chalk.green(`Upgraded!`))
 
   const oneDay = 3600 * 24
   console.log(chalk.yellow(`Upgrading USDC Pool...`))
-  await upgrade(poolUsdc[0].address, [0, oneDay, comp, comptroller])
+  const usdcPool = await upgrade(poolUsdc[0].address, [oneDay, comp, comptroller])
+  await usdcPool.setCompRecipient(PROTOCOL_TREASURY)
   console.log(chalk.green(`Upgraded!`))
 
   runShell(`echo 20 > .oz-migrate/mainnet_fork`)

@@ -3,7 +3,7 @@
 [![CircleCI](https://circleci.com/gh/pooltogether/pooltogether-contracts.svg?style=svg)](https://circleci.com/gh/pooltogether/pooltogether-contracts)
 [![built-with openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-3677FF)](https://docs.openzeppelin.com/)
 
-[Code Coverage](https://v2.coverage.pooltogether.us/)
+⚠️  These contracts are DEPRECATED.  Do not deploy unless you know what you are doing. ⚠️
 
 PoolTogether is a prize-linked savings account built on Ethereum. This project contains the Ethereum smart contracts that power the protocol.  The protocol is described in detail in the article [Inside PoolTogether v2.0](https://medium.com/pooltogether/inside-pooltogether-v2-0-e7d0e1b90a08).
 
@@ -141,4 +141,20 @@ $ yarn fork withdraw-deposit
 ```sh
 # Rewards the pool
 $ yarn fork reward
+```
+
+## Autonomous Pools Update
+
+Note: A [Hardhat](https://hardhat.org/) node must already be running in a separate terminal.  The node should be a fork of mainnet and exposed on port 8546.
+
+First prepare the fork:
+
+```sh
+$ yarn fork setup
+```
+
+Now upgrade to the autonomous pools:
+
+```sh
+$ yarn fork upgrade-auto
 ```
