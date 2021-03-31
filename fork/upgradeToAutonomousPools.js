@@ -28,7 +28,7 @@ async function upgradeToAutonomousPools (context) {
   // Expect the user to have pushed the contracts
   let networkConfig = loadNetworkConfig()
 
-  const autonomousPoolImpl = networkConfig.contracts.AutonomousPool.address
+  const autonomousPoolImpl = '0x188f932d3ac002057df3590B8E6134BE2Acd3BFC' // networkConfig.contracts.AutonomousPool.address
   console.log(chalk.dim(`AutonomousPool address: ${autonomousPoolImpl}`))
 
   const poolSai = networkConfig.proxies['pooltogether/PoolSai']
