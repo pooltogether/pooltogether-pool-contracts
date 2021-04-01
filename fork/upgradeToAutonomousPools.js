@@ -52,6 +52,7 @@ async function upgradeToAutonomousPools (context) {
     if (currentProxy.toLowerCase() != autonomousPoolImpl.toLowerCase()) {
       console.log(chalk.yellow(`Upgrading ${proxyAddress} from ${currentProxy} to AutonomousPool ${autonomousPoolImpl} with ProxyAdmin ${contracts.ProxyAdmin.address}`))
       const initializeAutonomousPoolData = interfaces.AutonomousPool.functions.initializeAutonomousPool.encode(initializeAutonomousPoolParams)
+      console.log(chalk.dim(`initializeAutonomousPoolData: ${initializeAutonomousPoolData.toString()}`))
       const upgradeAndCallData = interfaces.ProxyAdmin.functions.upgradeAndCall.encode([proxyAddress, autonomousPoolImpl, initializeAutonomousPoolData])
 
       const txCount = parseInt((await ms1.transactionCount()).toString())

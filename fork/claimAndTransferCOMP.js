@@ -31,7 +31,7 @@ async function claimAndTransferCOMP (context, type = 'dai') {
   let receipt = await provider.getTransactionReceipt(tx.hash)
   let events = receipt.logs.reduce((logs, log) => { let e = pool.interface.parseLog(log); if (e) { logs.push(e) } return logs }, [])
   let event = events.find(event => event.name == 'TransferredComp')
-  console.log('Comp reward: ', ethers.utils.formatEther(event.values.amount))
+  console.log(`${ethers.utils.formatEther(event.values.amount)} COMP transferred to ${event.values.recipient}`, )
 }
 
 module.exports = {

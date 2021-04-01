@@ -17,7 +17,7 @@ async function setupFork(context) {
 
   await impersonate(context)
   await pay(context)
-  await pushContracts(context)
+  // await pushContracts(context)
 }
 
 module.exports = {
