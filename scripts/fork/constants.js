@@ -1,0 +1,5 @@
+const SUSHI_HOLDER = '0xE93381fB4c4F14bDa253907b18faD305D799241a'
+
+module.exports = {
+  SUSHI_HOLDER
+}
