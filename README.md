@@ -6,7 +6,7 @@
 
 <br />
 
-## PoolTogether Prize Savings Protocol
+# PoolTogether Prize Savings Protocol
 
 [![<PoolTogether>](https://circleci.com/gh/pooltogether/pooltogether-pool-contracts.svg?style=shield)](https://circleci.com/gh/pooltogether/pooltogether-pool-contracts) [![Coverage Status](https://coveralls.io/repos/github/pooltogether/pooltogether-pool-contracts/badge.png?branch=master&service=github&kill_cache=1)](https://coveralls.io/github/pooltogether/pooltogether-pool-contracts?branch=master) [![built-with openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-3677FF)](https://docs.openzeppelin.com/)
 
@@ -14,7 +14,7 @@ The [PoolTogether](https://www.pooltogether.com/) Prize Savings Protocol Ethereu
 
 For an overview of the concepts and API please see the [documentation](https://docs.pooltogether.com/)
 
-#### Setup
+# Setup
 
 This project is available as an NPM package:
 
@@ -22,9 +22,9 @@ This project is available as an NPM package:
 $ yarn add @pooltogether/pooltogether-contracts
 ```
 
-#### Usage
+# Usage
 
-###### Artifacts
+## Artifacts
 
 There are deployment artifacts available in the `deployments/` directory.  This includes:
 
@@ -46,7 +46,7 @@ const {
  } = PoolWithMultipleWinnersBuilder
 ```
 
-###### ABIs
+## ABIs
 
 Application Binary Interfaces for all PoolTogether contracts and related contracts are available in the `abis/` directory.
 
@@ -56,7 +56,7 @@ For example, to pull in the PrizePool ABI:
 const PrizePool = require('@pooltogether/pooltogether-contracts/abis/PrizePool.json')
 ```
 
-#### Development
+# Development
 
 First clone this repository and enter the directory.
 
@@ -68,7 +68,7 @@ $ yarn
 
 We use [direnv](https://direnv.net/) to manage environment variables.  You'll likely need to install it.
 
-#### Testing
+# Testing
 
 We use [Hardhat](https://hardhat.dev) and [hardhat-deploy](https://github.com/wighawag/hardhat-deploy)
 
@@ -90,9 +90,23 @@ To run fuzz tests:
 $ yarn echidna
 ```
 
-#### Deployment
+# Fork Testing
 
-###### Deploy Locally
+Ensure your environment variables are set up.  Make sure your Alchemy URL is set.  Now start a local fork:
+
+```sh
+$ yarn start-fork
+```
+
+Setup account impersonation and transfer eth:
+
+```sh
+$ ./scripts/setup.sh
+```
+
+# Deployment
+
+## Deploy Locally
 
 Start a local node and deploy the top-level contracts:
 
@@ -102,7 +116,7 @@ $ yarn start
 
 NOTE: When you run this command it will reset the local blockchain.
 
-###### Connect Locally
+## Connect Locally
 
 Start up a [Hardhat Console](https://hardhat.dev/guides/hardhat-console.html):
 
@@ -130,7 +144,7 @@ Let's mint some Dai for ourselves:
 > ethers.utils.formatEther(await dai.balanceOf(signers[0]._address))
 ```
 
-###### Deploy to Live Networks
+## Deploy to Live Networks
 
 Copy over .envrc.example to .envrc
 

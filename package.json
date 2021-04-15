@@ -16,6 +16,7 @@
     "start": "echo 'Starting node for local testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true hardhat node",
     "start-gas": "echo 'Starting node for gas testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true hardhat node",
     "start-fork": "rm -rf deployments/localhost; cp -r deployments/mainnet deployments/localhost && FORK_ENABLED=true hardhat node --no-reset --no-deploy",
+    "redeploy-fork": "rm -rf deployments/localhost; yarn deploy localhost",
     "impersonate-accounts": "hardhat run ./scripts/fork/impersonateAccounts.js --network localhost",
     "stop-impersonate": "hardhat run ./scripts/fork/stopImpersonation.js --network localhost",
     "fork-whale": "hardhat --network fork run ./scripts/fork-whale.js",

@@ -1,6 +1,6 @@
 const chalk = require('chalk')
 const hardhat = require('hardhat')
-const { SUSHI_HOLDER } = require('./constants')
+const { SUSHI_HOLDER, USDT_HOLDER } = require('./constants')
 const { getNamedAccounts } = hardhat
 
 async function run() {
@@ -20,7 +20,8 @@ async function run() {
     ['Protocol Treasury']: '0x42cd8312D2BCe04277dD5161832460e95b24262E',
     ['Deployer']: deployer,
     ['dai Rich Signer']: '0xf977814e90da44bfa03b6295a0616a897441acec',
-    ['Sushi Holder']: SUSHI_HOLDER
+    ['Sushi Holder']: SUSHI_HOLDER, 
+    ['USDT Holder']: USDT_HOLDER
   }
 
   const keys = Object.keys(recipients)
