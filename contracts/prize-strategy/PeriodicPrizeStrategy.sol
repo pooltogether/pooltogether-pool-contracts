@@ -375,7 +375,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   function startAward() external requireCanStartAward {
     (address feeToken, uint256 requestFee) = rng.getRequestFee();
     if (feeToken != address(0) && requestFee > 0) {
-      IERC20Upgradeable(feeToken).approve(address(rng), requestFee);
+      IERC20Upgradeable(feeToken).safeApprove(address(rng), requestFee);
     }
 
     (uint32 requestId, uint32 lockBlock) = rng.requestRandomNumber();

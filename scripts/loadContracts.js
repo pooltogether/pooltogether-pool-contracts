@@ -1,7 +1,6 @@
 const remapping = {
   'Dai': 'ERC20Mintable',
-  'cDai': 'CTokenMock',
-  'yDai': 'yVaultMock'
+  'cDai': 'CTokenMock'
 }
 
 module.exports = async function () {

@@ -66,7 +66,7 @@ contract PermitAndDepositDai is OwnableUpgradeable {
     address referrer
   ) internal {
     DaiInterface(dai).safeTransferFrom(holder, address(this), amount);
-    DaiInterface(dai).approve(address(prizePool), amount);
+    DaiInterface(dai).safeApprove(address(prizePool), amount);
     PrizePoolInterface(prizePool).depositTo(to, amount, controlledToken, referrer);
   }
 

@@ -105,14 +105,7 @@ describe('PermitAndDepositDai', () => {
   describe('depositTo()', () => { 
     it('should continue to deposit without additional approvals', async () => {
       await dai.mint(wallet.address, toWei('1000'))
-      
-      await prizePool.mock.depositTo.withArgs(wallet2.address, toWei('100'), AddressZero, AddressZero).returns()
-      
-      await permitAndDepositTo({
-        prizePool: prizePool.address,
-        to: wallet2.address,
-        amount: toWei('100')
-      })
+      await dai.approve(permitAndDepositDai.address, toWei('10000'))
 
       await prizePool.mock.depositTo.withArgs(wallet3.address, toWei('50'), AddressZero, AddressZero).returns()
 
@@ -120,9 +113,8 @@ describe('PermitAndDepositDai', () => {
         dai.address, prizePool.address, wallet3.address, toWei('50'), AddressZero, AddressZero
       )
 
-      expect(await dai.allowance(permitAndDepositDai.address, prizePool.address)).to.equal(toWei('50'))
-      expect(await dai.balanceOf(permitAndDepositDai.address)).to.equal(toWei('150'))
-      expect(await dai.balanceOf(wallet.address)).to.equal(toWei('850'))
+      expect(await dai.balanceOf(permitAndDepositDai.address)).to.equal(toWei('50'))
+      expect(await dai.balanceOf(wallet.address)).to.equal(toWei('950'))
     })
   })
 })
