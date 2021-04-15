@@ -7,6 +7,7 @@ module.exports = {
   },
   skipFiles: [
     "external",
-    "test"
+    "test",
+    "comptroller"
   ]
 };

@@ -10,6 +10,7 @@ import "./ComptrollerStorage.sol";
 import "../token/TokenListener.sol";
 
 /// @title The Comptroller disburses rewards to pool users
+/// @dev DEPRECATED.  This contract is too imcomplete for production use.
 /* solium-disable security/no-block-members */
 contract Comptroller is ComptrollerStorage, TokenListener {
   using SafeMathUpgradeable for uint256;
