@@ -69,6 +69,7 @@ describe('SablierManager', () => {
       await sablierManager.setCurrentTime(22)
 
       await token.mock.transferFrom.withArgs(wallet.address, sablierManager.address, deposit).returns(true)
+      await token.mock.allowance.returns(0)
       await token.mock.approve.withArgs(sablier.address, deposit).returns(true)
       await sablier.mock.createStream.withArgs(prizePool.address, deposit, token.address, 22, 122).returns(14)
       
@@ -89,6 +90,7 @@ describe('SablierManager', () => {
       let deposit = toWei('100')
 
       await token.mock.transferFrom.withArgs(wallet.address, sablierManager.address, deposit).returns(true)
+      await token.mock.allowance.returns(0)
       await token.mock.approve.withArgs(sablier.address, deposit).returns(true)
       await sablier.mock.createStream.withArgs(prizePool.address, deposit, token.address, startTime, endTime).returns(14)
       

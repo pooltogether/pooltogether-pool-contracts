@@ -3,6 +3,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "./BeforeAwardListener.sol";
@@ -12,6 +13,8 @@ import "./PeriodicPrizeStrategy.sol";
 /* solium-disable security/no-block-members */
 /// @title Manages Sablier streams for Prize Pools.  Can be attached to Periodic Prize Strategies so that streams are withdrawn before awarding.
 contract SablierManager is BeforeAwardListener {
+
+  using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /// @dev Emitted when a new Sablier stream is created for a prize pool
   event SablierStreamCreated(uint256 indexed streamId, address indexed prizePool);
@@ -65,8 +68,8 @@ contract SablierManager is BeforeAwardListener {
     uint256 stopTime
   ) public onlyPrizePoolOwner(prizePool) returns (uint256) {
     cancelSablierStream(prizePool);
-    IERC20Upgradeable(token).transferFrom(msg.sender, address(this), deposit);
-    IERC20Upgradeable(token).approve(address(sablier), deposit);
+    token.safeTransferFrom(msg.sender, address(this), deposit);
+    token.safeApprove(address(sablier), deposit);
     uint256 sablierStreamId = sablier.createStream(address(prizePool), deposit, address(token), startTime, stopTime);
     sablierStreamIds[address(prizePool)] = sablierStreamId;
 

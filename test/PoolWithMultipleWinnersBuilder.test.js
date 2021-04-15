@@ -33,7 +33,6 @@ describe('PoolWithMultipleWinnersBuilder', () => {
     )
 
     dai = (await deployments.get("Dai"))
-    vault = (await deployments.get("yDai"))
     cDaiYieldSource = (await deployments.get("cDaiYieldSource"))
     cToken = (await deployments.get("cDai"))
     rngServiceMock = (await deployments.get("RNGServiceMock"))

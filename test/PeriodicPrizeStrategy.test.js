@@ -248,6 +248,7 @@ describe('PeriodicPrizeStrategy', () => {
     })
 
     it('should not be called if an rng request is in flight', async () => {
+      await rngFeeToken.mock.allowance.returns(0)
       await rngFeeToken.mock.approve.withArgs(rng.address, toWei('1')).returns(true);
       await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
@@ -264,6 +265,7 @@ describe('PeriodicPrizeStrategy', () => {
     })
 
     it('should allow anyone to reset the rng if it times out', async () => {
+      await rngFeeToken.mock.allowance.returns(0)
       await rngFeeToken.mock.approve.withArgs(rng.address, toWei('1')).returns(true);
       await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
@@ -295,6 +297,7 @@ describe('PeriodicPrizeStrategy', () => {
     })
 
     it('should allow other token transfers if awarding is happening', async () => {
+      await rngFeeToken.mock.allowance.returns(0)
       await rngFeeToken.mock.approve.withArgs(rng.address, toWei('1')).returns(true);
       await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
@@ -311,6 +314,7 @@ describe('PeriodicPrizeStrategy', () => {
     })
 
     it('should revert on ticket transfer if awarding is happening', async () => {
+      await rngFeeToken.mock.allowance.returns(0)
       await rngFeeToken.mock.approve.withArgs(rng.address, toWei('1')).returns(true);
       await rng.mock.requestRandomNumber.returns('11', '1');
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
@@ -656,6 +660,7 @@ describe('PeriodicPrizeStrategy', () => {
       await prizeStrategy.setCurrentTime(await prizeStrategy.prizePeriodEndAt());
 
       // allow an rng request
+      await rngFeeToken.mock.allowance.returns(0)
       await rngFeeToken.mock.approve.withArgs(rng.address, toWei('1')).returns(true);
       await rng.mock.requestRandomNumber.returns('1', '1')
 

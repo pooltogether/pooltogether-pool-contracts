@@ -6,13 +6,13 @@ import "./StakePrizePool.sol";
 import "../../external/openzeppelin/ProxyFactory.sol";
 
 /// @title Stake Prize Pool Proxy Factory
-/// @notice Minimal proxy pattern for creating new yVault Prize Pools
+/// @notice Minimal proxy pattern for creating new Stake Prize Pools
 contract StakePrizePoolProxyFactory is ProxyFactory {
 
   /// @notice Contract template for deploying proxied Prize Pools
   StakePrizePool public instance;
 
-  /// @notice Initializes the Factory with an instance of the yVault Prize Pool
+  /// @notice Initializes the Factory with an instance of the Stake Prize Pool
   constructor () public {
     instance = new StakePrizePool();
   }

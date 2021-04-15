@@ -40,14 +40,12 @@ async function deployTestPool({
   let rngServiceMockResult = await deployments.get("RNGServiceMock")
   let tokenResult = await deployments.get("Dai")
   let cTokenResult = await deployments.get("cDai")
-  let yTokenResult = await deployments.get("yDai")
   let reserveResult = await deployments.get('Reserve')
 
   const reserve = await hardhat.ethers.getContractAt('Reserve', reserveResult.address, wallet)
   const token = await hardhat.ethers.getContractAt('ERC20Mintable', tokenResult.address, wallet)
   const cToken = await hardhat.ethers.getContractAt('CTokenMock', cTokenResult.address, wallet)
   const cTokenYieldSource = await hardhat.ethers.getContract('cDaiYieldSource', wallet)
-  const yToken = await hardhat.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
   const poolBuilder = await hardhat.ethers.getContractAt('PoolWithMultipleWinnersBuilder', poolWithMultipleWinnersBuilderResult.address, wallet)
 
   let linkToken = await ERC20Mintable.deploy('Link Token', 'LINK')
@@ -70,22 +68,7 @@ async function deployTestPool({
   }
 
   let prizePool
-  if (poolType == 'yVault') {
-    debug(`Creating yVault prize pool config: ${yTokenResult.address}`)
-    const yToken = await hardhat.ethers.getContractAt('yVaultMock', yTokenResult.address, wallet)
-    debug(`yToken token: ${await yToken.token()} and token ${token.address}`)
-    const yVaultPrizePoolConfig = {
-      vault: yTokenResult.address,
-      reserveRateMantissa: toWei('0.05'),
-      maxExitFeeMantissa,
-      maxTimelockDuration
-    }
-    let tx = await poolBuilder.createVaultMultipleWinners(yVaultPrizePoolConfig, multipleWinnersConfig, await token.decimals())
-    let events = await getEvents(poolBuilder, tx)
-    let event = events[0]
-    prizePool = await hardhat.ethers.getContractAt('yVaultPrizePoolHarness', event.args.prizePool, wallet)
-  }
-  else if(poolType == 'stake') {
+  if(poolType == 'stake') {
     debug('deploying stake pool')
     const stakePoolConfig = {token: tokenResult.address, maxExitFeeMantissa, maxTimelockDuration}
     let tx = await poolBuilder.createStakeMultipleWinners(stakePoolConfig, multipleWinnersConfig, await token.decimals())
@@ -150,7 +133,6 @@ async function deployTestPool({
     reserve,
     cToken,
     cTokenYieldSource,
-    yToken,
     prizeStrategy,
     prizePool,
     ticket,

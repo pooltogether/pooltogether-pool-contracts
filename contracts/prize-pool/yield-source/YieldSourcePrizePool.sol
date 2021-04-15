@@ -3,11 +3,14 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "@pooltogether/yield-source-interface/contracts/IYieldSource.sol";
 
 import "../PrizePool.sol";
 
 contract YieldSourcePrizePool is PrizePool {
+
+  using SafeERC20Upgradeable for IERC20Upgradeable;
 
   IYieldSource public yieldSource;
 
@@ -66,7 +69,7 @@ contract YieldSourcePrizePool is PrizePool {
   /// @notice Supplies asset tokens to the yield source.
   /// @param mintAmount The amount of asset tokens to be supplied
   function _supply(uint256 mintAmount) internal override {
-    _token().approve(address(yieldSource), mintAmount);
+    _token().safeApprove(address(yieldSource), mintAmount);
     yieldSource.supplyTokenTo(mintAmount, address(this));
   }
 

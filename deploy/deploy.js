@@ -119,15 +119,6 @@ module.exports = async (hardhat) => {
     })
     cDaiAddress = cDaiResult.address
 
-    await deploy("yDai", {
-      args: [
-        daiResult.address
-      ],
-      contract: 'yVaultMock',
-      from: deployer,
-      skipIfAlreadyDeployed: true
-    })
-
     // Display Contract Addresses
     dim("\nLocal Contract Deployments;\n")
     dim("  - RNGService:       ", rng)
