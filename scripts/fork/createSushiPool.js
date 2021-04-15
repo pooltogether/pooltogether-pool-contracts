@@ -29,7 +29,7 @@ async function run() {
   const sushi = await ethers.getContractAt('IERC20Upgradeable', '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2', sushiHolder)
   const builder = await ethers.getContract('PoolWithMultipleWinnersBuilder', sushiHolder)
 
-  const sushiYieldSourceAddress = '0x42EF801E50d7491cF1b812E4D8AC44763E1Cf97c'
+  const sushiYieldSourceAddress = '0xB2Ad5F4277fcaBd1CADe34317db8c5Ba478aDDAd'
   const sushiYieldSource = await ethers.getContractAt('IYieldSource', sushiYieldSourceAddress, sushiHolder)
 
   const block = await ethers.provider.getBlock()
@@ -70,9 +70,12 @@ async function run() {
 
   const depositAmount = toWei('1000')
 
+  let sushiBalance = await sushi.balanceOf(sushiHolder._address)
+  green(`Sushi Holder starting Sushi balance: ${ethers.utils.formatEther(sushiBalance)}`)
+
   dim(`Approving Sushi spend for ${sushiHolder._address}...`)
   await sushi.approve(prizePool.address, depositAmount)
-  dim(`Depositing into Pool with ${sushiHolder._address}, ${depositAmount}, ${ticketAddress} ${ethers.constants.AddressZero}...`)
+  dim(`Depositing into Pool with ${sushiHolder._address}, ${ethers.utils.formatEther(depositAmount)}, ${ticketAddress} ${ethers.constants.AddressZero}...`)
   await prizePool.depositTo(sushiHolder._address, depositAmount, ticketAddress, ethers.constants.AddressZero)
   dim(`Prize Pool sushi balance: ${ethers.utils.formatEther(await sushiYieldSource.callStatic.balanceOfToken(prizePool.address))}`)
   dim(`Withdrawing...`)
@@ -84,11 +87,15 @@ async function run() {
   dim(`Prize Pool sushi balance: ${ethers.utils.formatEther(await sushiYieldSource.callStatic.balanceOfToken(prizePool.address))}`)
 
   // now there should be some prize
-  // await prizePool.captureAwardBalance()
-  console.log(`Prize is now: ${ethers.utils.formatEther(await prizePool.awardBalance())}`)
+  await prizePool.captureAwardBalance()
+  console.log(`Prize is now: ${ethers.utils.formatEther(await prizePool.awardBalance())} Sushi`)
 
-  await sushi.approve(prizePool.address, depositAmount)
-  await prizePool.depositTo(sushiHolder._address, depositAmount, await prizeStrategy.ticket(), ethers.constants.AddressZero)
+  await sushi.approve(prizePool.address, sushiDiffAfterWithdrawal)
+  await prizePool.depositTo(sushiHolder._address, sushiDiffAfterWithdrawal, await prizeStrategy.ticket(), ethers.constants.AddressZero)
+
+  let ticketBalance = await ticket.balanceOf(sushiHolder._address)
+
+  green(`New ticket balance: ${ethers.utils.formatEther(ticketBalance)}`)
 
   dim(`Starting award...`)
   await prizeStrategy.startAward()
@@ -97,11 +104,6 @@ async function run() {
   const awardTx = await prizeStrategy.completeAward()
   const awardReceipt = await ethers.provider.getTransactionReceipt(awardTx.hash)
   const awardLogs = awardReceipt.logs.map(log => { try { return prizePool.interface.parseLog(log) } catch (e) { return null }})
-  const strategyLogs = awardReceipt.logs.map(log => { try { return prizeStrategy.interface.parseLog(log) } catch (e) { return null }})
-  
-  // console.log({ awardLogs })
-  // console.log({ strategyLogs })
-
   const awarded = awardLogs.find(event => event && event.name === 'Awarded')
 
   if (awarded) {
@@ -110,10 +112,13 @@ async function run() {
     console.log(`No prizes`)
   }
 
-  const sushiBalance = await sushi.balanceOf(sushiHolder._address)
-  const balance = await ticket.balanceOf(sushiHolder._address)
-  dim(`Users balance is ${ethers.utils.formatEther(balance)}`)
-  await prizePool.withdrawInstantlyFrom(sushiHolder._address, balance, ticketAddress, balance)
+  sushiBalance = await sushi.balanceOf(sushiHolder._address)
+  ticketBalance = await ticket.balanceOf(sushiHolder._address)
+  green(`New ticket balance is ${ethers.utils.formatEther(ticketBalance)}`)
+
+  await increaseTime(1000)
+
+  await prizePool.withdrawInstantlyFrom(sushiHolder._address, ticketBalance, ticketAddress, ticketBalance)
   
   const sushiDiff = (await sushi.balanceOf(sushiHolder._address)).sub(sushiBalance)
   dim(`Amount withdrawn is ${ethers.utils.formatEther(sushiDiff)}`)
