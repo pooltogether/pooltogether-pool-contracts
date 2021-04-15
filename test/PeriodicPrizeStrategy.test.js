@@ -30,13 +30,12 @@ describe('PeriodicPrizeStrategy', () => {
 
   let periodicPrizeStrategyListener, distributor
 
-  let IERC20, TokenListenerInterface, ISablier
+  let IERC20, TokenListenerInterface
 
   beforeEach(async () => {
     [wallet, wallet2] = await hre.ethers.getSigners()
 
     IERC20 = await hre.artifacts.readArtifact("IERC20Upgradeable")
-    ISablier = await hre.artifacts.readArtifact("ISablier")
     TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
 
     debug(`using wallet ${wallet.address}`)
