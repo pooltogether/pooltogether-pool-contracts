@@ -18,12 +18,11 @@ describe('UnsafeTokenListenerDelegator', () => {
     provider = hardhat.ethers.provider
     
     await deployments.fixture()
-    factory = await hardhat.ethers.getContractAt(
+    const UnsafeTokenListenerDelegatorProxyFactory = await hardhat.ethers.getContractFactory(
       "UnsafeTokenListenerDelegatorProxyFactory",
-      (await deployments.get("UnsafeTokenListenerDelegatorProxyFactory")).address,
       wallet
     )
-
+    factory = await UnsafeTokenListenerDelegatorProxyFactory.deploy()
 
     const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
     listener = await deployMockContract(wallet, TokenListenerInterface.abi)

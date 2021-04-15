@@ -26,16 +26,7 @@ $ yarn add @pooltogether/pooltogether-contracts
 
 ## Artifacts
 
-There are deployment artifacts available in the `deployments/` directory.  This includes:
-
-- Builders
-- Proxy Factories
-- Comptroller
-- ProxyAdmin
-
-Prize Pools and Prize Strategies are not included, as they are created using the Builders.
-
-For example, to pull in the PoolWithMultipleWinnersBuilder artifact:
+There are deployment artifacts available in the `deployments/` directory. For example, to pull in the PoolWithMultipleWinnersBuilder artifact:
 
 ```javascript
 const PoolWithMultipleWinnersBuilder = require('@pooltogether/pooltogether-contracts/deployments/rinkeby/PoolWithMultipleWinnersBuilder.json')

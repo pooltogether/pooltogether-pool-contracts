@@ -144,6 +144,7 @@ module.exports = async (hardhat) => {
   })
   displayResult('TokenFaucetProxyFactory', tokenFaucetProxyFactoryResult)
 
+  cyan(`\nDeploying ReserveRegistry...`)
   if (!reserveRegistry) {
     // if not set by named config
     cyan(`\nDeploying Reserve...`)
@@ -162,7 +163,6 @@ module.exports = async (hardhat) => {
       await reserveContract.transferOwnership(admin)
     }
 
-    cyan(`\nDeploying ReserveRegistry...`)
     const reserveRegistryResult = await deploy("ReserveRegistry", {
       contract: 'Registry',
       from: deployer,
@@ -185,26 +185,6 @@ module.exports = async (hardhat) => {
     reserveRegistry = reserveRegistryResult.address
   } else {
     yellow(`Using existing reserve registry ${reserveRegistry}`)
-  }
-
-  let permitAndDepositDaiResult
-  cyan("\nDeploying PermitAndDepositDai...")
-  permitAndDepositDaiResult = await deploy("PermitAndDepositDai", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
-  displayResult('PermitAndDepositDai', permitAndDepositDaiResult)
-
-  if (sablier) {
-    cyan("\nDeploying SablierManager")
-    let sablierManagerResult = await deploy("SablierManager", {
-      args: [
-        sablier
-      ],
-      from: deployer,
-      skipIfAlreadyDeployed: true
-    })
-    displayResult('SablierManager', sablierManagerResult)
   }
 
   cyan("\nDeploying CompoundPrizePoolProxyFactory...")
@@ -271,13 +251,6 @@ module.exports = async (hardhat) => {
   }
   displayResult('StakePrizePoolProxyFactory', stakePrizePoolProxyFactoryResult)
 
-  cyan("\nDeploying UnsafeTokenListenerDelegatorProxyFactory...")
-  const unsafeTokenListenerDelegatorProxyFactoryResult = await deploy("UnsafeTokenListenerDelegatorProxyFactory", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
-  displayResult('UnsafeTokenListenerDelegatorProxyFactory', unsafeTokenListenerDelegatorProxyFactoryResult)
-
   let multipleWinnersProxyFactoryResult
   cyan("\nDeploying MultipleWinnersProxyFactory...")
   if (isTestEnvironment && !harnessDisabled) {
@@ -293,13 +266,6 @@ module.exports = async (hardhat) => {
     })
   }
   displayResult('MultipleWinnersProxyFactory', multipleWinnersProxyFactoryResult)
-
-  cyan("\nDeploying SingleRandomWinnerProxyFactory...")
-  const singleRandomWinnerProxyFactoryResult = await deploy("SingleRandomWinnerProxyFactory", {
-    from: deployer,
-    skipIfAlreadyDeployed: true
-  })
-  displayResult('SingleRandomWinnerProxyFactory', singleRandomWinnerProxyFactoryResult)
 
   cyan("\nDeploying ControlledTokenBuilder...")
   const controlledTokenBuilderResult = await deploy("ControlledTokenBuilder", {

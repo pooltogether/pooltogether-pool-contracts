@@ -27,7 +27,6 @@ describe('PrizePool', function() {
   let ticket, sponsorship
 
   let compLike
-  let ISablier
 
   beforeEach(async () => {
     [wallet, wallet2] = await hardhat.ethers.getSigners()
@@ -42,8 +41,6 @@ describe('PrizePool', function() {
 
     const IERC721 = await hre.artifacts.readArtifact("IERC721Upgradeable")
     erc721token = await deployMockContract(wallet, IERC721.abi, overrides)
-
-    ISablier = await hre.artifacts.readArtifact("ISablier")
 
     const YieldSourceStub = await hre.artifacts.readArtifact("YieldSourceStub")
     yieldSourceStub = await deployMockContract(wallet, YieldSourceStub.abi, overrides)
