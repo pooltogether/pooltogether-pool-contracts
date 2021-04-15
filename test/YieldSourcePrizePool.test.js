@@ -12,7 +12,7 @@ let overrides = { gasLimit: 9500000 }
 describe('YieldSourcePrizePool', function() {
   let wallet, wallet2
 
-  let prizePool, erc20token, prizeStrategy, reserveRegistry, yieldSource
+  let prizePool, erc20token, prizeStrategy, reserveRegistry, yieldSource, YieldSourcePrizePoolHarness
 
   let poolMaxExitFee = toWei('0.5')
   let poolMaxTimelockDuration = 10000
@@ -43,7 +43,7 @@ describe('YieldSourcePrizePool', function() {
     reserveRegistry = await deployMockContract(wallet, RegistryInterface.abi, overrides)
 
     debug('deploying YieldSourcePrizePoolHarness...')
-    const YieldSourcePrizePoolHarness =  await hre.ethers.getContractFactory("YieldSourcePrizePoolHarness", wallet, overrides)
+    YieldSourcePrizePoolHarness =  await hre.ethers.getContractFactory("YieldSourcePrizePoolHarness", wallet, overrides)
     prizePool = await YieldSourcePrizePoolHarness.deploy()
 
     const ControlledToken = await hre.artifacts.readArtifact("ControlledToken")
@@ -72,6 +72,31 @@ describe('YieldSourcePrizePool', function() {
         )
 
       expect(await prizePool.yieldSource()).to.equal(yieldSource.address)
+    })
+
+    it('should require the yield source', async () => {
+      prizePool = await YieldSourcePrizePoolHarness.deploy()
+
+      await expect(prizePool.initializeYieldSourcePrizePool(
+        reserveRegistry.address,
+        [ticket.address],
+        poolMaxExitFee,
+        poolMaxTimelockDuration,
+        ethers.constants.AddressZero
+      )).to.be.revertedWith("YieldSourcePrizePool/yield-source-zero")
+    })
+
+    it('should require a valid yield source', async () => {
+      prizePool = await YieldSourcePrizePoolHarness.deploy()
+      await ticket.mock.controller.returns(prizePool.address)
+
+      await expect(prizePool.initializeYieldSourcePrizePool(
+        reserveRegistry.address,
+        [ticket.address],
+        poolMaxExitFee,
+        poolMaxTimelockDuration,
+        prizePool.address
+      )).to.be.revertedWith("YieldSourcePrizePool/invalid-yield-source")
     })
   })
 

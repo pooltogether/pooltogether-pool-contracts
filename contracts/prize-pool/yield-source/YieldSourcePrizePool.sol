@@ -28,6 +28,7 @@ contract YieldSourcePrizePool is PrizePool {
     public
     initializer
   {
+    require(address(_yieldSource) != address(0), "YieldSourcePrizePool/yield-source-zero");
     PrizePool.initialize(
       _reserveRegistry,
       _controlledTokens,
@@ -36,7 +37,11 @@ contract YieldSourcePrizePool is PrizePool {
     );
     yieldSource = _yieldSource;
 
-    emit YieldSourcePrizePoolInitialized(address(yieldSource));
+    // A hack to determine whether it's an actual yield source
+    (bool succeeded,) = address(_yieldSource).staticcall(abi.encode(_yieldSource.depositToken.selector));
+    require(succeeded, "YieldSourcePrizePool/invalid-yield-source");
+
+    emit YieldSourcePrizePoolInitialized(address(_yieldSource));
   }
 
   /// @notice Determines whether the passed token can be transferred out as an external award.
