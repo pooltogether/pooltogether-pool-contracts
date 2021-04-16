@@ -28,6 +28,7 @@
     "deploy-drips": "hardhat run ./js/deployDripTokens.js --network",
     "testnet-txs": "hardhat run ./js/runTestnetTransactions.js --network",
     "etherscan-verify": "hardhat run ./scripts/verify.js --network",
+    "etherscan-verify-bsc": "hardhat --config hardhat.config.bsc.js run ./scripts/verify.js --network",
     "deploy-ctoken-local": "./scripts/deployCTokenMock.js -n localhost -a $LOCAL_ADMIN_ADDRESS",
     "clean": "rm -rf artifacts build .build-openzeppelin cache coverage coverage.json test-results.xml .cache-openzeppelin abis deployments/localhost deployments/localhost_*",
     "prepack": "rm -rf build cache && hardhat compile",

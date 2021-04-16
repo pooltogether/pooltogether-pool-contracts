@@ -47,7 +47,15 @@ const config = {
       77: '0x14e194Cf5E1dd73BB46256495aEa8ff36A7Aa454'
     },
     reserveRegistry: {
-      1: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295'
+      1: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295', // mainnet
+      4: '0xaDae16a9A1B648Cdc753558Dc19780Ea824a3904', // rinkeby
+      42: '0xdcC0D09beE9726E23256ebC059B7487Cd78F65a0', // kovan
+      100: '0x20F29CCaE4c9886964033042c6b79c2C4C816308', // xdai
+      77: '0x4d1639e4b237BCab6F908A1CEb0995716D5ebE36', // poaSokol
+      137: '0x20F29CCaE4c9886964033042c6b79c2C4C816308', //matic
+      80001: '0xdcC0D09beE9726E23256ebC059B7487Cd78F65a0', // mumbai
+      56: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295', // bsc
+      97: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295' //bscTestnet
     },
     rng: {
       42: RNGBlockhashKovan.address,
