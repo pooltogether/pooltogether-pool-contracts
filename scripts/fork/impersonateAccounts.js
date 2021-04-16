@@ -2,7 +2,10 @@ const chalk = require('chalk')
 const hre = require("hardhat")
 const {
     SUSHI_HOLDER,
-    USDT_HOLDER
+    USDT_HOLDER,
+    GUSD_HOLDER,
+    BUSD_HOLDER,
+    SUSD_HOLDER
 } = require('./constants')
 
 async function run(){
@@ -60,6 +63,9 @@ async function run(){
     await hre.ethers.provider.send("hardhat_impersonateAccount",["0xc6cde7c39eb2f0f0095f41570af89efc2c1ea828"])
     await hre.ethers.provider.send("hardhat_impersonateAccount",[SUSHI_HOLDER])
     await hre.ethers.provider.send("hardhat_impersonateAccount",[USDT_HOLDER])
+    await hre.ethers.provider.send("hardhat_impersonateAccount",[GUSD_HOLDER])
+    await hre.ethers.provider.send("hardhat_impersonateAccount",[BUSD_HOLDER])
+    await hre.ethers.provider.send("hardhat_impersonateAccount",[SUSD_HOLDER])
     console.log(chalk.green('Impersonated accounts'))
 }
 run()

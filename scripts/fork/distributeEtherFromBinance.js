@@ -1,6 +1,12 @@
 const chalk = require('chalk')
 const hardhat = require('hardhat')
-const { SUSHI_HOLDER, USDT_HOLDER } = require('./constants')
+const {
+  SUSHI_HOLDER,
+  USDT_HOLDER,
+  GUSD_HOLDER,
+  BUSD_HOLDER,
+  SUSD_HOLDER
+} = require('./constants')
 const { getNamedAccounts } = hardhat
 
 async function run() {
@@ -10,9 +16,6 @@ async function run() {
   const { deployer } = await getNamedAccounts()
   
   const binance = await provider.getUncheckedSigner('0x564286362092D8e7936f0549571a803B203aAceD')
-  const binance7 = await provider.getUncheckedSigner('0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8')
-  const dai = await getContractAt('Dai', '0x6b175474e89094c44da98b954eedeac495271d0f', binance)
-  const usdc = await getContractAt('Dai', '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', binance7)
 
   const recipients = {
     ['Operations Safe']: '0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f',
@@ -21,7 +24,10 @@ async function run() {
     ['Deployer']: deployer,
     ['dai Rich Signer']: '0xf977814e90da44bfa03b6295a0616a897441acec',
     ['Sushi Holder']: SUSHI_HOLDER, 
-    ['USDT Holder']: USDT_HOLDER
+    ['USDT Holder']: USDT_HOLDER,
+    ['GUSD Holder']: GUSD_HOLDER,
+    ['BUSD Holder']: BUSD_HOLDER,
+    ['SUSD Holder']: SUSD_HOLDER
   }
 
   const keys = Object.keys(recipients)
@@ -29,12 +35,8 @@ async function run() {
   for (var i = 0; i < keys.length; i++) {
     const name = keys[i]
     const address = recipients[name]
-    console.log(chalk.dim(`Sending 1000 Dai to ${name}...`))
-    await dai.transfer(address, ethers.utils.parseEther('1000'))
-    console.log(chalk.dim(`Sending 1000 USDC to ${name}...`))
-    await usdc.transfer(address, ethers.utils.parseUnits('1000', 8))
-    console.log(chalk.dim(`Sending 1000 Ether to ${name}...`))
-    await binance.sendTransaction({ to: address, value: ethers.utils.parseEther('1000') })
+    console.log(chalk.dim(`Sending 10 Ether to ${name}...`))
+    await binance.sendTransaction({ to: address, value: ethers.utils.parseEther('10') })
   }
 
   console.log(chalk.green(`Done!`))
