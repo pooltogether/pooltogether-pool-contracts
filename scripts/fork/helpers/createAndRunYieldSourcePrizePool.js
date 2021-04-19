@@ -1,18 +1,10 @@
 const hardhat = require('hardhat')
-const chalk = require("chalk")
+const { dim, green } = require('./console')
 
 const { 
   getPrizePoolAddressFromBuilderTransaction,
   runPoolLifecycle
 } = require('../helpers/runPoolLifecycle')
-
-function dim() {
-  console.log(chalk.dim.call(chalk, ...arguments))
-}
-
-function green() {
-  console.log(chalk.green.call(chalk, ...arguments))
-}
 
 const { ethers } = hardhat
 

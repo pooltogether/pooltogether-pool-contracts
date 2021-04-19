@@ -26,7 +26,7 @@ if(process.env.MAINNET_FORK_ENABLED && process.env.ALCHEMY_URL) {
     chainId: 137,
     forking: {
       url: process.env.MATICVIGIL_URL,
-      blockNumber: 13478670
+      blockNumber: 13481600
     },
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
