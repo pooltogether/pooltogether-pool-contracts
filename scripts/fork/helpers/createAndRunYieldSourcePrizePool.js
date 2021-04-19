@@ -17,6 +17,8 @@ function green() {
 const { ethers } = hardhat
 
 async function createAndRunYieldSourcePrizePool(signer, yieldSourceAddress) {
+  const { getNamedAccounts } = hardhat
+  const { rng } = await getNamedAccounts()
   const builder = await ethers.getContract('PoolWithMultipleWinnersBuilder', signer)
 
   dim(`Using PoolWithMultipleWinnersBuilder @ ${builder.address}`)
@@ -30,7 +32,7 @@ async function createAndRunYieldSourcePrizePool(signer, yieldSourceAddress) {
   }
 
   const multipleWinnersConfig = {
-    rngService: "0xb1D89477d1b505C261bab6e73f08fA834544CD21",
+    rngService: rng,
     prizePeriodStart: block.timestamp,
     prizePeriodSeconds: 1,
     ticketName: "TICKET",
@@ -42,6 +44,8 @@ async function createAndRunYieldSourcePrizePool(signer, yieldSourceAddress) {
     numberOfWinners: 1,
     splitExternalErc20Awards: false
   }
+
+  dim(`Creating prize pool...`)
 
   const tx = await builder.createYieldSourceMultipleWinners(
     yieldSourcePrizePoolConfig,

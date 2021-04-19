@@ -15,7 +15,8 @@
     "compile": "hardhat --show-stack-traces --max-memory 8192 compile",
     "start": "echo 'Starting node for local testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true hardhat node",
     "start-gas": "echo 'Starting node for gas testing....\n'; rm -rf deployments/localhost_31337; DISABLE_HARNESS=true hardhat node",
-    "start-fork": "rm -rf deployments/localhost; cp -r deployments/mainnet deployments/localhost && FORK_ENABLED=true hardhat node --no-reset --no-deploy",
+    "start-fork": "rm -rf deployments/localhost; cp -r deployments/mainnet deployments/localhost && MAINNET_FORK_ENABLED=true hardhat node --no-reset --no-deploy",
+    "start-fork-matic": "rm -rf deployments/localhost; cp -r deployments/matic deployments/localhost && MATIC_FORK_ENABLED=true hardhat node --no-reset --no-deploy",
     "redeploy-fork": "rm -rf deployments/localhost; yarn deploy localhost",
     "impersonate-accounts": "hardhat run ./scripts/fork/impersonateAccounts.js --network localhost",
     "stop-impersonate": "hardhat run ./scripts/fork/stopImpersonation.js --network localhost",
@@ -41,7 +42,7 @@
   "dependencies": {
     "@openzeppelin/contracts-upgradeable": "3.4.0",
     "@pooltogether/fixed-point": "1.0.0-beta.2",
-    "@pooltogether/pooltogether-rng-contracts": "1.0.0",
+    "@pooltogether/pooltogether-rng-contracts": "1.1.2",
     "@pooltogether/uniform-random-number": "1.0.0-beta.1",
     "@pooltogether/yield-source-interface": "^1.0.1",
     "deploy-eip-1820": "1.0.0",

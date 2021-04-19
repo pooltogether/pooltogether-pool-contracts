@@ -13,5 +13,8 @@ export BSCSCAN_API_KEY=''
 # Required for forking
 export ALCHEMY_URL=''
 
+# Required for forking Polygon (Matic)
+export MATICVIGIL_URL=''
+
 #required for mainnet governance forking testnets
 export PATH_TO_GOVERNANCE_REPO=''

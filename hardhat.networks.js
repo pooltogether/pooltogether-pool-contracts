@@ -5,13 +5,12 @@ const networks = {
     allowUnlimitedContractSize: true
   },
   localhost: {
-    chainId: 1,
     url: 'http://127.0.0.1:8545',
     allowUnlimitedContractSize: true
   }
 }
 
-if(process.env.ALCHEMY_URL && process.env.FORK_ENABLED){
+if(process.env.MAINNET_FORK_ENABLED && process.env.ALCHEMY_URL) {
   networks.hardhat = {
     chainId: 1,
     forking: {
@@ -20,8 +19,18 @@ if(process.env.ALCHEMY_URL && process.env.FORK_ENABLED){
     },
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
+    }
+  }
+} else if (process.env.MATIC_FORK_ENABLED && process.env.MATICVIGIL_URL) {
+  networks.hardhat = {
+    chainId: 137,
+    forking: {
+      url: process.env.MATICVIGIL_URL,
+      blockNumber: 13478670
     },
-    // allowUnlimitedContractSize: true
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
   }
 } else {
   networks.hardhat = {

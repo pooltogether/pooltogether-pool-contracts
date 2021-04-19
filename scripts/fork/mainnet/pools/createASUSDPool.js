@@ -1,4 +1,4 @@
-const { createAndRunYieldSourcePrizePool } = require('../helpers/createAndRunYieldSourcePrizePool')
+const { createAndRunYieldSourcePrizePool } = require('../../helpers/createAndRunYieldSourcePrizePool')
 const hardhat = require('hardhat')
 const { SUSD_HOLDER } = require('../constants')
 const { ethers } = hardhat

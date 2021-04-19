@@ -5,7 +5,7 @@ const { USDT_HOLDER } = require('../constants')
 const { 
   getPrizePoolAddressFromBuilderTransaction,
   runPoolLifecycle
-} = require('../helpers/runPoolLifecycle')
+} = require('../../helpers/runPoolLifecycle')
 
 function dim() {
   console.log(chalk.dim.call(chalk, ...arguments))

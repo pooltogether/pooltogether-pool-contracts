@@ -734,10 +734,10 @@
   resolved "https://registry.yarnpkg.com/@pooltogether/fixed-point/-/fixed-point-1.0.0-beta.2.tgz#d76a1e77f21833e9b680296d65526b0ffd7415d7"
   integrity sha512-aUw4R0Z2oM0AK3W4LIXyBaojTOzRRbhLDHX0egeuvxfjy4gBb6X66v81gI7Wngg/7O0y9QL/B8jWkUnAFzhTig==
 
-"@pooltogether/pooltogether-rng-contracts@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@pooltogether/pooltogether-rng-contracts/-/pooltogether-rng-contracts-1.0.0.tgz#191d155dc960559cce06b7ec3b0f9ed2caed0f46"
-  integrity sha512-jQub/+qPLQwTFtbBCvvyIEqxJDEBEV/hgLKnuocBg2/GySWtHLz67WCy17bNn1hZw8nWIt8Ih8h+7iT2UJhtmQ==
+"@pooltogether/pooltogether-rng-contracts@1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@pooltogether/pooltogether-rng-contracts/-/pooltogether-rng-contracts-1.1.2.tgz#75e148d9dff9bd5b5bbe6bdd95c7a7a446b316b7"
+  integrity sha512-7S1qzpPdS/8SRfb3dXdQdiZllPFkOIYf7YYK3+aw+vH4/93T6lvkTu4/+ZAuNH+XbliipLYtTmrhy0YjDoFZRg==
 
 "@pooltogether/uniform-random-number@1.0.0-beta.1":
   version "1.0.0-beta.1"

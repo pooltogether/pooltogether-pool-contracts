@@ -1,5 +1,7 @@
 const networks = require('./hardhat.networks')
 
+const RNGBlockhashMatic = require('@pooltogether/pooltogether-rng-contracts/deployments/matic_137/RNGBlockhash.json')
+const RNGBlockhashMainnet = require('@pooltogether/pooltogether-rng-contracts/deployments/mainnet/RNGBlockhash.json')
 const RNGBlockhashRopsten = require('@pooltogether/pooltogether-rng-contracts/deployments/ropsten/RNGBlockhash.json')
 const RNGBlockhashRinkeby = require('@pooltogether/pooltogether-rng-contracts/deployments/rinkeby/RNGBlockhash.json')
 const RNGBlockhashKovan = require('@pooltogether/pooltogether-rng-contracts/deployments/kovan/RNGBlockhash.json')
@@ -58,9 +60,11 @@ const config = {
       97: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295' //bscTestnet
     },
     rng: {
-      42: RNGBlockhashKovan.address,
+      1: RNGBlockhashMainnet.address,
+      3: RNGBlockhashRopsten.address,
       4: RNGBlockhashRinkeby.address,
-      3: RNGBlockhashRopsten.address
+      42: RNGBlockhashKovan.address,
+      137: RNGBlockhashMatic.address
     },
     admin: {
       42: testnetAdmin,
