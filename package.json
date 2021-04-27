@@ -74,7 +74,6 @@
     "LICENSE",
     "abis/**",
     "build/**",
-    "artifacts/**",
     ".build-openzeppelin/**",
     "contracts/**",
     "deployments/**",
