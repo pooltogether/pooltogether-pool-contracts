@@ -15,13 +15,14 @@ if(process.env.ALCHEMY_URL && process.env.FORK_ENABLED){
   networks.hardhat = {
     chainId: 1,
     forking: {
-      url: process.env.ALCHEMY_URL,
-      blockNumber: 12248197
+      url: process.env.ALCHEMY_URL
     },
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
-    },
-    // allowUnlimitedContractSize: true
+    }
+  }
+  if (process.env.FORK_BLOCK_NUMBER) {
+    networks.hardhat.forking.blockNumber = parseInt(process.env.FORK_BLOCK_NUMBER)
   }
 } else {
   networks.hardhat = {

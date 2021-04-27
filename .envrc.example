@@ -13,5 +13,8 @@ export BSCSCAN_API_KEY=''
 # Required for forking
 export ALCHEMY_URL=''
 
+# Block number from which to fork
+export FORK_BLOCK_NUMBER=''
+
 #required for mainnet governance forking testnets
 export PATH_TO_GOVERNANCE_REPO=''
