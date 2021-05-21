@@ -5,7 +5,8 @@ const {
     USDT_HOLDER,
     GUSD_HOLDER,
     BUSD_HOLDER,
-    SUSD_HOLDER
+    SUSD_HOLDER,
+    DAI_HOLDER
 } = require('./constants')
 
 async function run(){
@@ -66,6 +67,7 @@ async function run(){
     await hre.ethers.provider.send("hardhat_impersonateAccount",[GUSD_HOLDER])
     await hre.ethers.provider.send("hardhat_impersonateAccount",[BUSD_HOLDER])
     await hre.ethers.provider.send("hardhat_impersonateAccount",[SUSD_HOLDER])
+    await hre.ethers.provider.send("hardhat_impersonateAccount",[DAI_HOLDER])
     console.log(chalk.green('Impersonated accounts'))
 }
 run()

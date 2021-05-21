@@ -5,7 +5,8 @@ const {
   USDT_HOLDER,
   GUSD_HOLDER,
   BUSD_HOLDER,
-  SUSD_HOLDER
+  SUSD_HOLDER,
+  DAI_HOLDER
 } = require('./constants')
 const { getNamedAccounts } = hardhat
 
@@ -22,7 +23,7 @@ async function run() {
     ['Treasury Safe']: '0x77383BaDb05049806d53e9def0C8128de0D56D90',
     ['Protocol Treasury']: '0x42cd8312D2BCe04277dD5161832460e95b24262E',
     ['Deployer']: deployer,
-    ['dai Rich Signer']: '0xf977814e90da44bfa03b6295a0616a897441acec',
+    ['Dai Holder']: DAI_HOLDER,
     ['Sushi Holder']: SUSHI_HOLDER, 
     ['USDT Holder']: USDT_HOLDER,
     ['GUSD Holder']: GUSD_HOLDER,
