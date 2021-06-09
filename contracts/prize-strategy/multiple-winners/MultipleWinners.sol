@@ -1,12 +1,19 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.6.12;
+pragma experimental ABIEncoderV2;
 
 import "../PeriodicPrizeStrategy.sol";
 
 contract MultipleWinners is PeriodicPrizeStrategy {
 
+  struct MultipleWinnersPrizeSplit {
+      address target;
+      uint8 percentage;
+  }
+
   uint256 internal __numberOfWinners;
+  
+  MultipleWinnersPrizeSplit[2] internal _prizeSplits;
 
   bool public splitExternalErc20Awards;
 
@@ -61,8 +68,68 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     return __numberOfWinners;
   }
 
+  function setPrizeSplit(MultipleWinnersPrizeSplit[2] memory prizeStrategySplit) external onlyOwner {
+    for (uint256 index = 0; index < prizeStrategySplit.length; index++) {
+        MultipleWinnersPrizeSplit memory split = prizeStrategySplit[index];
+
+        // If MultipleWinnersPrizeSplit is non-zero address set the prize split configuation.
+        if (split.target != address(0)) {
+            // Split percentage must be below 1000 and greater then 0 (e.x. 200 is equal to 20% percent)
+            // The range from 0 to 1000 is used for single decimal precision (e.x. 15 is 1.5%)
+            require(
+                split.percentage > 0 && split.percentage < 1000,
+                "MultipleWinners:invalid-prizesplit-percentage-amount"
+            );
+
+            _prizeSplits[index] = split;
+        }
+    }
+  }
+
+  function prizeSplits() external view returns (MultipleWinnersPrizeSplit[2] memory) {
+    return _prizeSplits;
+  }
+
+  /**
+  * @dev Calculate the PrizeSplit percentage
+  * @param amount The prize amount
+  */
+  function _getPrizeSplitPercentage(uint256 amount, uint8 percentage) internal pure returns (uint256) {
+      return (amount * percentage) / 1000; // PrizeSplit percentage amount
+  }
+
+  /**
+    * @dev Award prize split target with award amount
+    * @param target Receiver of the prize split fee.
+    * @param splitAmount Split amount to be awarded to target.
+  */
+  function _awardPrizeSplitAmount(address target, uint256 splitAmount) internal {
+      _awardTickets(target, splitAmount);
+  }
+
   function _distribute(uint256 randomNumber) internal override {
     uint256 prize = prizePool.captureAwardBalance();
+
+    // Store temporary total prize amount for multiple calculations using initial prize amount.
+    uint256 _prizeTemp = prize;
+
+    // Iterate over prize splits array to calculate distribution
+    for (uint256 index = 0; index < _prizeSplits.length; index++) {
+        MultipleWinnersPrizeSplit memory split = _prizeSplits[index];
+
+        // The prize split address should be a valid target address.
+        if (split.target != address(0)) {
+            // Calculate the split amount using the prize amount and split percentage.
+            uint256 _splitAmount =
+                _getPrizeSplitPercentage(_prizeTemp, split.percentage);
+
+            // Award the PrizeSplit amount to split target
+            _awardPrizeSplitAmount(split.target, _splitAmount);
+
+            // Update the remaining prize amount after distributing the prize split percentage.
+            prize -= _splitAmount;
+        }
+    }
 
     // main winner is simply the first that is drawn
     address mainWinner = ticket.draw(randomNumber);

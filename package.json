@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts-upgradeable": "3.4.0",
+    "@pooltogether/current-pool-data": "^3.4.18",
     "@pooltogether/fixed-point": "1.0.0-beta.2",
     "@pooltogether/pooltogether-rng-contracts": "1.0.0",
     "@pooltogether/uniform-random-number": "1.0.0-beta.1",
