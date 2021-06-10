@@ -8,7 +8,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
 
   struct MultipleWinnersPrizeSplit {
       address target;
-      uint8 percentage;
+      uint16 percentage;
   }
 
   uint256 internal __numberOfWinners;
@@ -20,6 +20,10 @@ contract MultipleWinners is PeriodicPrizeStrategy {
   event SplitExternalErc20AwardsSet(bool splitExternalErc20Awards);
 
   event NumberOfWinnersSet(uint256 numberOfWinners);
+  
+  event PrizeSplitSet(address indexed target, uint16 percentage);
+  
+  event PrizeSplitDistributed(address indexed target, uint16 percentage, uint256 amount);
 
   event NoWinners();
 
@@ -81,6 +85,9 @@ contract MultipleWinners is PeriodicPrizeStrategy {
                 "MultipleWinners:invalid-prizesplit-percentage-amount"
             );
 
+            // Emit PrizeSplitSet
+            PrizeSplitSet(split.target, split.percentage);
+
             _prizeSplits[index] = split;
         }
     }
@@ -93,8 +100,9 @@ contract MultipleWinners is PeriodicPrizeStrategy {
   /**
   * @dev Calculate the PrizeSplit percentage
   * @param amount The prize amount
+  * @param percentage The prize split percentage amount
   */
-  function _getPrizeSplitPercentage(uint256 amount, uint8 percentage) internal pure returns (uint256) {
+  function _getPrizeSplitPercentage(uint256 amount, uint16 percentage) internal pure returns (uint256) {
       return (amount * percentage) / 1000; // PrizeSplit percentage amount
   }
 
@@ -125,6 +133,9 @@ contract MultipleWinners is PeriodicPrizeStrategy {
 
             // Award the PrizeSplit amount to split target
             _awardPrizeSplitAmount(split.target, _splitAmount);
+
+            // Emit PrizeSplitDistributed
+            PrizeSplitDistributed(split.target, split.percentage, _splitAmount);
 
             // Update the remaining prize amount after distributing the prize split percentage.
             prize -= _splitAmount;

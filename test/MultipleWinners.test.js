@@ -233,7 +233,7 @@ describe("MultipleWinners", function() {
         },
         {
           target: wallet6.address,
-          percentage: "100",
+          percentage: "500",
         },
       ];
 
