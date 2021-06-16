@@ -155,22 +155,6 @@ contract MultipleWinners is PeriodicPrizeStrategy {
   }
 
   /**
-    * @notice Add a single prize split config.
-    * @dev Adds a single prize split config to the exist list of MultipleWinnersPrizeSplit structs.
-    * @param prizeStrategySplit Single MultipleWinnersPrizeSplit struct.
-  */
-  function addPrizeSplit(MultipleWinnersPrizeSplit memory prizeStrategySplit) external onlyOwner {
-    require(prizeStrategySplit.target != address(0), "MultipleWinners/invalid-ticket-type");
-    require(prizeStrategySplit.percentage > 0 && prizeStrategySplit.percentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-amount");
-    require(uint8(prizeStrategySplit.token) < 2, "MultipleWinners/invalid-ticket-type");
-    require(_totalPrizeSplitPercentage.add(prizeStrategySplit.percentage) <= 1000, "MultipleWinners/invalid-prizesplit-percentage-total");
-
-    _prizeSplits.push(prizeStrategySplit);
-
-    emit PrizeSplitSet(prizeStrategySplit.target, prizeStrategySplit.percentage, prizeStrategySplit.token);
-  }
-
-  /**
     * @notice Remove a prize split config 
     * @dev Remove a prize split by passing the index of target prize split config.
     * @param prizeSplitIndex The target index to delete.
