@@ -28,6 +28,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
                                            TokenListener {
 
   using SafeMathUpgradeable for uint256;
+  using SafeMathUpgradeable for uint16;
   using SafeCastUpgradeable for uint256;
   using SafeERC20Upgradeable for IERC20Upgradeable;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
@@ -269,6 +270,13 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @param amount The amount of interest to mint as tickets.
   function _awardTickets(address user, uint256 amount) internal {
     prizePool.award(user, amount, address(ticket));
+  }
+  
+  /// @notice Awards collateral as sponsorship to a user
+  /// @param user The user to whom the tickets are minted
+  /// @param amount The amount of interest to mint as tickets.
+  function _awardSponsorship(address user, uint256 amount) internal {
+    prizePool.award(user, amount, address(sponsorship));
   }
 
   /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.

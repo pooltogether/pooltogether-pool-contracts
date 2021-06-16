@@ -22,7 +22,7 @@ contract MultipleWinnersBuilder {
     uint256 ticketCreditLimitMantissa;
     uint256 ticketCreditRateMantissa;
     uint256 numberOfWinners;
-    MultipleWinners.MultipleWinnersPrizeSplit[2] prizeSplit;
+    MultipleWinners.MultipleWinnersPrizeSplit[] prizeSplit;
     bool splitExternalErc20Awards;
   }
 
