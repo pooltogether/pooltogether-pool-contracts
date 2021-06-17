@@ -182,7 +182,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     * @dev List of active prize splits set by the prize strategy owner
     * @return _prizeSplits Array of MultipleWinnersPrizeSplit structs
   */
-  function prizeSplits() external view returns (MultipleWinnersPrizeSplit[] memory _prizeSplits) {
+  function prizeSplits() external view returns (MultipleWinnersPrizeSplit[] memory) {
     return _prizeSplits;
   }
 
@@ -225,19 +225,12 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     // Store temporary total prize amount for multiple calculations using initial prize amount.
     uint256 _prizeTemp = prize;
 
-    // Check prize split exists
     if(_prizeSplits.length > 0) {
-      // Iterate over prize splits array to calculate distribution
       for (uint256 index = 0; index < _prizeSplits.length; index++) {
           MultipleWinnersPrizeSplit memory split = _prizeSplits[index];
-
-          // The prize split address should be a valid target address.
           if (split.target != address(0)) {
-              // Calculate the split amount using the prize amount and split percentage.
-              uint256 _splitAmount =
-                  _getPrizeSplitAmount(_prizeTemp, split.percentage);
+              uint256 _splitAmount = _getPrizeSplitAmount(_prizeTemp, split.percentage);
 
-              // Award the PrizeSplit amount to split target
               if(split.token == TokenType.Ticket) {
                 _awardPrizeSplitTicketAmount(split.target, _splitAmount);
               } else {

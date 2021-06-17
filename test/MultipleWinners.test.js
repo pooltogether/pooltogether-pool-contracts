@@ -303,8 +303,6 @@ describe("MultipleWinners", function() {
 
       await prizeStrategy.setPrizeSplit(prizeSplitConfig);
       const totalPrizeSplitPercentage = await prizeStrategy.totalPrizeSplitPercentage();
-      console.log(totalPrizeSplitPercentage, 'totalPrizeSplitPercentage')
-
       expect(totalPrizeSplitPercentage)
       .to.equal(550)
     });
@@ -326,16 +324,18 @@ describe("MultipleWinners", function() {
       await prizeStrategy.setPrizeSplit(firstPrizeSplitConfigs);
 
       const secondPrizeSplitConfig =
-        {
+        [{
           target: wallet5.address,
           percentage: "50",
           token: 0,
-        }
-        await expect(prizeStrategy.addPrizeSplit(secondPrizeSplitConfig))
+        }]
+        await expect(prizeStrategy.setPrizeSplit(secondPrizeSplitConfig))
           .to.emit(prizeStrategy, "PrizeSplitSet")
     });
 
     it("should set 2 split prize configs and a remove the first prize split config", async () => {
+      
+
       const firstPrizeSplitConfigs = [
         {
           target: wallet5.address,
@@ -350,30 +350,12 @@ describe("MultipleWinners", function() {
       ];
 
       await prizeStrategy.setPrizeSplit(firstPrizeSplitConfigs);
-
-  
       const prizeSplitIndex = 0
       await expect(prizeStrategy.removePrizeSplit(prizeSplitIndex))
-        .to.emit(prizeStrategy, "PrizeSplitRemoved")
-
-
-      await prizeStrategy.setNumberOfWinners(1);
-      let randomNumber = 10;
-      await prizePool.mock.captureAwardBalance.returns(toWei("100"));
-      await ticket.mock.draw.withArgs(randomNumber).returns(wallet3.address);
-
-      await ticket.mock.totalSupply.returns(1000);
-
-      await prizePool.mock.award
-        .withArgs(wallet3.address, toWei("50"), ticket.address)
-        .returns();
-
-      await prizePool.mock.award
-        .withArgs(wallet6.address, toWei("50"), ticket.address)
-        .returns();
-
-      await prizeStrategy.distribute(randomNumber);
-
+      .to.emit(prizeStrategy, "PrizeSplitRemoved")
+      const prizeSplits = await prizeStrategy.prizeSplits();
+      expect(prizeSplits[0].target)
+      .to.equal(wallet6.address)
     });
   });
 
