@@ -7,7 +7,8 @@ const networks = {
   localhost: {
     chainId: 1,
     url: 'http://127.0.0.1:8545',
-    allowUnlimitedContractSize: true
+    allowUnlimitedContractSize: true,
+    timeout: 1000 * 60
   }
 }
 
