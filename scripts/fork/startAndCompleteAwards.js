@@ -27,13 +27,15 @@ async function run() {
     await prizeStrategy.setRngService('0xb1D89477d1b505C261bab6e73f08fA834544CD21')
   }
 
+  if (await prizeStrategy.isRngTimedOut()) {
+    const prizePeriodSeconds = await prizeStrategy.prizePeriodSeconds()
+    await increaseTime(prizePeriodSeconds.toNumber())
+    dim(`cancelling award`)
+    await prizeStrategy.cancelAward()
+  }
+
   dim(`Setting split external to true...`)
   await prizeStrategy.setSplitExternalErc20Awards(true)
-
-  // const prizePeriodSeconds = await prizeStrategy.prizePeriodSeconds()
-  // await increaseTime(prizePeriodSeconds.toNumber())
-  // dim(`cancelling award`)
-  // await prizeStrategy.cancelAward()
 
   const remainingTime = await prizeStrategy.prizePeriodRemainingSeconds()
   dim(`Increasing time by ${remainingTime} seconds...`)
@@ -41,7 +43,7 @@ async function run() {
 
   // if we cannot complete, let's startt it
   if (await prizeStrategy.canStartAward()) {
-    const numberOfWinners = 40
+    const numberOfWinners = 10
     dim(`Setting number of winners to ${numberOfWinners}`)
     await prizeStrategy.setNumberOfWinners(numberOfWinners)
 
