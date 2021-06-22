@@ -71,7 +71,7 @@ contract MultipleWinnersBuilder {
       prizeStrategyConfig.numberOfWinners
     );
 
-    mw.setPrizeSplit(prizeStrategyConfig.prizeSplit);
+    mw.setPrizeSplits(prizeStrategyConfig.prizeSplit);
 
     if (prizeStrategyConfig.splitExternalErc20Awards) {
       mw.setSplitExternalErc20Awards(true);

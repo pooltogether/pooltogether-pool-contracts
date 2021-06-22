@@ -37,12 +37,12 @@ contract MultipleWinners is PeriodicPrizeStrategy {
   /**
     * @dev Emitted when a new MultipleWinnersPrizeSplit config is added.
   */
-  event PrizeSplitSet(address indexed target, uint16 percentage, TokenType token);
+  event PrizeSplitSet(address indexed target, uint16 percentage, TokenType token, uint8 index);
 
   /**
     * @dev Emitted when a MultipleWinnersPrizeSplit config is removed.
   */
-  event PrizeSplitRemoved(address indexed target);
+  event PrizeSplitRemoved(address indexed target, uint8 index);
   
   /**
     * @dev Emitted is a winner is selected during the prize period award process.
@@ -126,56 +126,71 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     * @dev Set the prize split by passing an array MultipleWinnersPrizeSplit structs.
     * @param prizeStrategySplit Array of MultipleWinnersPrizeSplit structs.
   */
-  function setPrizeSplit(MultipleWinnersPrizeSplit[] memory prizeStrategySplit) external onlyOwner {
+  function setPrizeSplits(MultipleWinnersPrizeSplit[] memory prizeStrategySplit) external onlyOwner {
     uint256 _tempTotalPercentage;
 
-    for (uint256 index = 0; index < prizeStrategySplit.length; index++) {
+    for (uint8 index = 0; index < prizeStrategySplit.length; index++) {
         MultipleWinnersPrizeSplit memory split = prizeStrategySplit[index];
 
-        // If MultipleWinnersPrizeSplit is non-zero address set the prize split configuation.
-        if (split.target != address(0)) {
-            // Split percentage must be below 1000 and greater then 0 (e.x. 200 is equal to 20% percent)
-            // The range from 0 to 1000 is used for single decimal precision (e.x. 15 is 1.5%)
-            require(split.percentage > 0 && split.percentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-amount");
-            require(uint8(split.token) < 2, "MultipleWinners/invalid-ticket-type");
+        require(uint8(split.token) < 2, "MultipleWinners/invalid-prizesplit-token");
+        require(split.target != address(0), "MultipleWinners/invalid-prizesplit-target");
+        // Split percentage must be below 1000 and greater then 0 (e.x. 200 is equal to 20% percent)
+        // The range from 0 to 1000 is used for single decimal precision (e.x. 15 is 1.5%)
+        require(split.percentage > 0 && split.percentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage");
 
-            _tempTotalPercentage = _tempTotalPercentage.add(split.percentage);
-
-            emit PrizeSplitSet(split.target, split.percentage, split.token);
-
-            _prizeSplits.push(split);
+        if(_prizeSplits.length <= index) {
+          _prizeSplits.push(split);
+        } else {
+          _prizeSplits[index] = split;
         }
+
+      emit PrizeSplitSet(split.target, split.percentage, split.token, index);
+
+      _tempTotalPercentage = _tempTotalPercentage.add(split.percentage);
+    }
+
+    // If updating remove outdated prize split configurations not passed in the new prizeStrategySplit 
+    while (_prizeSplits.length > prizeStrategySplit.length) {
+      uint8 _index = _prizeSplits.length.sub(1).toUint8();
+      MultipleWinnersPrizeSplit memory _split = _prizeSplits[_index];
+      delete _prizeSplits[_index];
+      _prizeSplits.pop();
+      emit PrizeSplitRemoved(_split.target, _index);
     }
 
     // The total of all prize splits can NOT exceed 100% of the awarded prize amount.
     require(_tempTotalPercentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-total");
-
-    // Store the total prize split percentage. Used when adding a single prize split config.
-    _totalPrizeSplitPercentage = _tempTotalPercentage.toUint16();
   }
 
-  /**
+   /**
     * @notice Remove a prize split config 
     * @dev Remove a prize split by passing the index of target prize split config.
     * @param prizeSplitIndex The target index to delete.
   */
-  function removePrizeSplit(uint8 prizeSplitIndex) external onlyOwner {
-    require(prizeSplitIndex <= _prizeSplits.length, "MultipleWinners/invalid-prize-split-index");
+  function setPrizeSplit(MultipleWinnersPrizeSplit memory prizeStrategySplit, uint8 prizeSplitIndex) external onlyOwner {
+    require(prizeStrategySplit.target != address(0), "MultipleWinners/invalid-prizesplit-target");
+    require(prizeStrategySplit.percentage > 0 && prizeStrategySplit.percentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-amount");
 
-     MultipleWinnersPrizeSplit memory removedPrizeSplit = _prizeSplits[prizeSplitIndex];
+    if(prizeSplitIndex > _prizeSplits.length.sub(1)) {
+      // Add a new prize split config to _prizeSplits array.
+      _prizeSplits.push(prizeStrategySplit);
+    } else {
+      // Update prize split config to _prizeSplits array.
+      _prizeSplits[prizeSplitIndex] = prizeStrategySplit;
+    }
 
-    // Maintaining the order of the prizeSplits array is not required. To reduce gas costs the last
-    // prize split config is saved to the index being removed and then deleted from the last array position.
-    // This removes the requirement to shift each item in the array once a configration has been removed.
+    // Verify the total prize splits percetnage do not exceed 100% of award.
+    uint256 _tempTotalPercentage;
+    for (uint256 index = 0; index < _prizeSplits.length; index++) {
+      MultipleWinnersPrizeSplit memory split = _prizeSplits[index];
+      _tempTotalPercentage = _tempTotalPercentage.add(split.percentage);
+    }
 
-    // Move last prize split configuration to designated index position
-    _prizeSplits[prizeSplitIndex] = _prizeSplits[_prizeSplits.length.sub(1)];
+    require(_tempTotalPercentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-total");
 
-    // Delete the copied last prize split configration 
-    delete _prizeSplits[_prizeSplits.length.sub(1)];
-
-    emit PrizeSplitRemoved(removedPrizeSplit.target);
+    emit PrizeSplitSet(prizeStrategySplit.target, prizeStrategySplit.percentage, prizeStrategySplit.token, prizeSplitIndex);
   }
+
 
   /**
     * @notice List of active prize splits
@@ -197,26 +212,8 @@ contract MultipleWinners is PeriodicPrizeStrategy {
   }
 
   /**
-    * @dev Award prize split target with award amount
-    * @param target Receiver of the prize split fee.
-    * @param splitAmount Ticket amount sent to target.
-  */
-  function _awardPrizeSplitTicketAmount(address target, uint256 splitAmount) internal {
-      _awardTickets(target, splitAmount);
-  }
-  
-  /**
-    * @dev Award prize split target with sponsorship amount
-    * @param target Receiver of the prize split fee.
-    * @param splitAmount Sponsorship amount sent to target.
-  */
-  function _awardPrizeSplitSponsorshipAmount(address target, uint256 splitAmount) internal {
-      _awardSponsorship(target, splitAmount);
-  }
-
-  /**
-    * @dev Distrubtes the captured prize period award balance.
-    * @dev Distrubtes the captured prize period award balance to the main and secondary randomly selected users.
+    * @dev Distributes the captured prize period award balance.
+    * @dev Distributes the captured prize period award balance to the main and secondary randomly selected users.
     * @param randomNumber Receiver of the prize split fee.
   */
   function _distribute(uint256 randomNumber) internal override {
@@ -225,22 +222,20 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     // Store temporary total prize amount for multiple calculations using initial prize amount.
     uint256 _prizeTemp = prize;
 
-    if(_prizeSplits.length > 0) {
-      for (uint256 index = 0; index < _prizeSplits.length; index++) {
-          MultipleWinnersPrizeSplit memory split = _prizeSplits[index];
-          if (split.target != address(0)) {
-              uint256 _splitAmount = _getPrizeSplitAmount(_prizeTemp, split.percentage);
+    for (uint256 index = 0; index < _prizeSplits.length; index++) {
+        MultipleWinnersPrizeSplit memory split = _prizeSplits[index];
+        if (split.target != address(0)) {
+            uint256 _splitAmount = _getPrizeSplitAmount(_prizeTemp, split.percentage);
 
-              if(split.token == TokenType.Ticket) {
-                _awardPrizeSplitTicketAmount(split.target, _splitAmount);
-              } else {
-                _awardPrizeSplitSponsorshipAmount(split.target, _splitAmount);
-              }
+            if(split.token == TokenType.Ticket) {
+              _awardTickets(split.target, _splitAmount);
+            } else {
+              _awardSponsorship(split.target, _splitAmount);
+            }
 
-              // Update the remaining prize amount after distributing the prize split percentage.
-              prize = prize.sub(_splitAmount);
-          }
-      }
+            // Update the remaining prize amount after distributing the prize split percentage.
+            prize = prize.sub(_splitAmount);
+        }
     }
 
     // main winner is simply the first that is drawn

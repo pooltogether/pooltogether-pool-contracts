@@ -61,6 +61,7 @@
     "hardhat-abi-exporter": "^2.0.8",
     "hardhat-deploy": "^0.7.0-beta.45",
     "hardhat-deploy-ethers": "^0.3.0-beta.7",
+    "hardhat-gas-reporter": "^1.0.4",
     "minimist": "^1.2.5",
     "mocha-junit-reporter": "1.23.3",
     "shelljs": "0.8.3",

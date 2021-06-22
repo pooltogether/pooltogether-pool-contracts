@@ -10,6 +10,8 @@ require('hardhat-deploy-ethers')
 require('solidity-coverage')
 require("@nomiclabs/hardhat-etherscan")
 require('hardhat-abi-exporter')
+require("hardhat-gas-reporter");
+require("./hardhat/hardhat.multiplewinners");
 
 const testnetAdmin = '0xE0F4217390221aF47855E094F6e112D43C8698fE' // Account 1
 const testnetUser1 = '0xeedDf4937E3A7aBe03E08963C3c20affbD770b51' // Account 3
