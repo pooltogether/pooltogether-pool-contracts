@@ -188,16 +188,25 @@ describe("MultipleWinners", function() {
   });
 
   describe("setPrizePool()", () => {
+    it("should revert with invalid prize split target address", async () => {
+      await expect(
+        prizeStrategy.setPrizeSplits([
+          {
+            target: constants.AddressZero,
+            percentage: "100",
+            token: 0,
+          },
+        ])
+      ).to.be.revertedWith(
+        "MultipleWinners/invalid-prizesplit-target"
+      );
+    });
+
     it("should revert with invalid prize split equal to 0% percent", async () => {
       await expect(
         prizeStrategy.setPrizeSplits([
           {
             target: wallet5.address,
-            percentage: "0",
-            token: 0,
-          },
-          {
-            target: constants.AddressZero,
             percentage: "0",
             token: 0,
           },
@@ -214,11 +223,6 @@ describe("MultipleWinners", function() {
           {
             target: wallet5.address,
             percentage: "1005",
-            token: 0,
-          },
-          {
-            target: constants.AddressZero,
-            percentage: "0",
             token: 0,
           },
         ])
@@ -377,7 +381,7 @@ describe("MultipleWinners", function() {
         },
       ]);
       await expect(prizeStrategy.setPrizeSplits([]))
-      .to.emit(prizeStrategy, "PrizeSplitRemoved").withArgs(wallet5.address, 0)
+      .to.emit(prizeStrategy, "PrizeSplitRemoved").withArgs(0)
 
       const prizeSplits = await prizeStrategy.prizeSplits();
       expect(prizeSplits.length)

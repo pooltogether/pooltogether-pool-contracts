@@ -2,8 +2,8 @@
 pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "../PeriodicPrizeStrategy.sol";
 import "../../abstract/PrizeSplit.sol";
+import "../PeriodicPrizeStrategy.sol";
 
 contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
 

@@ -2,6 +2,7 @@
 pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
+import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -31,7 +32,7 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   /**
     * @dev Emitted when a MultipleWinnersPrizeSplit config is removed.
   */
-  event PrizeSplitRemoved(address indexed target, uint8 index);
+  event PrizeSplitRemoved(uint8 indexed index);
 
 
   /**
@@ -58,16 +59,19 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   function setPrizeSplits(MultipleWinnersPrizeSplit[] memory prizeStrategySplit) external onlyOwner {
     uint256 _tempTotalPercentage;
 
+    // console.log("LENGTH", prizeStrategySplit.length);
+    uint256 _prizeSplitsLength = _prizeSplits.length;
     for (uint8 index = 0; index < prizeStrategySplit.length; index++) {
         MultipleWinnersPrizeSplit memory split = prizeStrategySplit[index];
 
+        // console.log("Split", split.target, split.percentage);
         require(uint8(split.token) < 2, "MultipleWinners/invalid-prizesplit-token");
         require(split.target != address(0), "MultipleWinners/invalid-prizesplit-target");
         // Split percentage must be below 1000 and greater then 0 (e.x. 200 is equal to 20% percent)
         // The range from 0 to 1000 is used for single decimal precision (e.x. 15 is 1.5%)
         require(split.percentage > 0 && split.percentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage");
 
-        if(_prizeSplits.length <= index) {
+        if(_prizeSplitsLength <= index) {
           _prizeSplits.push(split);
         } else {
           _prizeSplits[index] = split;
@@ -81,10 +85,8 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     // If updating remove outdated prize split configurations not passed in the new prizeStrategySplit 
     while (_prizeSplits.length > prizeStrategySplit.length) {
       uint8 _index = _prizeSplits.length.sub(1).toUint8();
-      MultipleWinnersPrizeSplit memory _split = _prizeSplits[_index];
-      delete _prizeSplits[_index];
       _prizeSplits.pop();
-      emit PrizeSplitRemoved(_split.target, _index);
+      emit PrizeSplitRemoved(_index);
     }
 
     // The total of all prize splits can NOT exceed 100% of the awarded prize amount.
