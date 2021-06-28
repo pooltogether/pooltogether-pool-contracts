@@ -2,7 +2,6 @@
 pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -59,12 +58,10 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   function setPrizeSplits(MultipleWinnersPrizeSplit[] memory prizeStrategySplit) external onlyOwner {
     uint256 _tempTotalPercentage;
 
-    // console.log("LENGTH", prizeStrategySplit.length);
     uint256 _prizeSplitsLength = _prizeSplits.length;
     for (uint8 index = 0; index < prizeStrategySplit.length; index++) {
         MultipleWinnersPrizeSplit memory split = prizeStrategySplit[index];
 
-        // console.log("Split", split.target, split.percentage);
         require(uint8(split.token) < 2, "MultipleWinners/invalid-prizesplit-token");
         require(split.target != address(0), "MultipleWinners/invalid-prizesplit-target");
         // Split percentage must be below 1000 and greater then 0 (e.x. 200 is equal to 20% percent)
