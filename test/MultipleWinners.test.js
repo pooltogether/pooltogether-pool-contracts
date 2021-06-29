@@ -202,20 +202,6 @@ describe("MultipleWinners", function() {
       );
     });
 
-    it("should revert with invalid prize split equal to 0% percent", async () => {
-      await expect(
-        prizeStrategy.setPrizeSplits([
-          {
-            target: wallet5.address,
-            percentage: "0",
-            token: 0,
-          },
-        ])
-      ).to.be.revertedWith(
-        "MultipleWinners/invalid-prizesplit-percentage"
-      );
-    });
-
     it("should revert with single prize split config is equal to or above 100% percent", async () => {
 
       await expect(
@@ -232,7 +218,6 @@ describe("MultipleWinners", function() {
     });
 
     it("should revert when multuple prize split configs is above 100% percent", async () => {
-
       await expect(
         prizeStrategy.setPrizeSplits([
           {
@@ -242,13 +227,11 @@ describe("MultipleWinners", function() {
           },
           {
             target: wallet6.address,
-            percentage: "501",
+            percentage: 501,
             token: 0,
           },
         ])
-      ).to.be.revertedWith(
-        "MultipleWinners/invalid-prizesplit-percentage-total"
-      );
+      ).to.be.revertedWith("MultipleWinners/invalid-prizesplit-percentage-total");
     });
 
     it("should revert with invalid prize split token enum", async () => {
@@ -265,10 +248,33 @@ describe("MultipleWinners", function() {
             token: 0,
           },
         ])
-      ).to.be.reverted;
+      ).to.be.reverted
     });
 
-    it("should set two split prize winners using valid percentages and check event", async () => {
+    it("should revert when setting a non-existent prize split config", async () => {
+      await prizeStrategy.setPrizeSplits([
+        {
+          target: wallet5.address,
+          percentage: 500,
+          token: 0,
+        },
+      ])
+
+      await expect(
+        prizeStrategy.setPrizeSplit(
+          {
+            target: wallet5.address,
+            percentage: 300,
+            token: 0,
+          },
+          1
+      )
+      ).to.be.revertedWith(
+        "MultipleWinners/nonexistent-prizesplit"
+      );
+    });
+
+    it("should set two split prize winners using valid percentages", async () => {
       await expect(prizeStrategy.setPrizeSplits([
         {
           target: wallet5.address,
@@ -324,16 +330,71 @@ describe("MultipleWinners", function() {
           token: 0,
         },
       ]);
-      await prizeStrategy.setPrizeSplit(
+
+      await prizeStrategy.setPrizeSplits([
+        {
+          target: wallet5.address,
+          percentage: 50,
+          token: 0,
+        },
+        {
+          target: wallet6.address,
+          percentage: 500,
+          token: 0,
+        },
         {
           target: wallet5.address,
           percentage: 150,
           token: 0,
         },
-        2
-      )
+      ])
 
       const prizeSplits = await prizeStrategy.prizeSplits();
+      expect(prizeSplits[0].percentage)
+      .to.equal(50)
+      expect(prizeSplits[1].percentage)
+      .to.equal(500)
+      expect(prizeSplits[2].percentage)
+      .to.equal(150)
+    });
+
+    it("should set two split prize config, update the second prize split config and add a third prize split config", async () => {
+      await prizeStrategy.setPrizeSplits([
+        {
+          target: wallet5.address,
+          percentage: 50,
+          token: 0,
+        },
+        {
+          target: wallet6.address,
+          percentage: 500,
+          token: 0,
+        },
+      ]);
+
+      await prizeStrategy.setPrizeSplits([
+        {
+          target: wallet5.address,
+          percentage: 50,
+          token: 0,
+        },
+        {
+          target: wallet6.address,
+          percentage: 300,
+          token: 0,
+        },
+        {
+          target: wallet5.address,
+          percentage: 150,
+          token: 0,
+        },
+      ])
+
+      const prizeSplits = await prizeStrategy.prizeSplits();
+      expect(prizeSplits[0].percentage)
+      .to.equal(50)
+      expect(prizeSplits[1].percentage)
+      .to.equal(300)
       expect(prizeSplits[2].percentage)
       .to.equal(150)
     });

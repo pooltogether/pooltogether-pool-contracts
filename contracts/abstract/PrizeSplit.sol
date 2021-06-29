@@ -3,12 +3,10 @@ pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 abstract contract PrizeSplit is OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
-  using SafeCastUpgradeable for uint256;
 
   enum TokenType {
     Ticket,
@@ -26,12 +24,12 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   /**
     * @dev Emitted when a new MultipleWinnersPrizeSplit config is added.
   */
-  event PrizeSplitSet(address indexed target, uint16 percentage, TokenType token, uint8 index);
+  event PrizeSplitSet(address indexed target, uint16 percentage, TokenType token, uint256 index);
 
   /**
     * @dev Emitted when a MultipleWinnersPrizeSplit config is removed.
   */
-  event PrizeSplitRemoved(uint8 indexed index);
+  event PrizeSplitRemoved(uint256 indexed index);
 
 
   /**
@@ -51,71 +49,63 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   function _awardPrizeSplitSponsorshipAmount(address target, uint256 amount) virtual internal;
 
   /**
-    * @notice Set the prize split configration.
-    * @dev Set the prize split by passing an array MultipleWinnersPrizeSplit structs.
-    * @param prizeStrategySplit Array of MultipleWinnersPrizeSplit structs.
+    * @notice Set the prize split(s) configration.
+    * @dev Set the prize split(s) by passing an array of MultipleWinnersPrizeSplit structs.
+    * @param newPrizeSplits Array of MultipleWinnersPrizeSplit structs.
   */
-  function setPrizeSplits(MultipleWinnersPrizeSplit[] memory prizeStrategySplit) external onlyOwner {
-    uint256 _tempTotalPercentage;
+  function setPrizeSplits(MultipleWinnersPrizeSplit[] memory newPrizeSplits) external onlyOwner {
+    uint256 newPrizeSplitsLength = newPrizeSplits.length;
 
-    uint256 _prizeSplitsLength = _prizeSplits.length;
-    for (uint8 index = 0; index < prizeStrategySplit.length; index++) {
-        MultipleWinnersPrizeSplit memory split = prizeStrategySplit[index];
-
-        require(uint8(split.token) < 2, "MultipleWinners/invalid-prizesplit-token");
-        require(split.target != address(0), "MultipleWinners/invalid-prizesplit-target");
-        // Split percentage must be below 1000 and greater then 0 (e.x. 200 is equal to 20% percent)
-        // The range from 0 to 1000 is used for single decimal precision (e.x. 15 is 1.5%)
-        require(split.percentage > 0 && split.percentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage");
-
-        if(_prizeSplitsLength <= index) {
-          _prizeSplits.push(split);
-        } else {
+    // Add and/or update prize split configs using newPrizeSplits MultipleWinnersPrizeSplit structs array.
+    for (uint256 index = 0; index < newPrizeSplitsLength; index++) {
+      MultipleWinnersPrizeSplit memory split = newPrizeSplits[index];
+      require(split.target != address(0), "MultipleWinners/invalid-prizesplit-target");
+      
+      if(_prizeSplits.length <= index) {
+        _prizeSplits.push(split);
+      } else {
+        MultipleWinnersPrizeSplit memory currentSplit = _prizeSplits[index];
+        if(split.target != currentSplit.target || split.percentage != currentSplit.percentage || split.token != currentSplit.token) {
           _prizeSplits[index] = split;
+        } else {
+          continue;
         }
+      }
 
+      // Emit the added/updated prize split config.
       emit PrizeSplitSet(split.target, split.percentage, split.token, index);
-
-      _tempTotalPercentage = _tempTotalPercentage.add(split.percentage);
     }
 
-    // If updating remove outdated prize split configurations not passed in the new prizeStrategySplit 
-    while (_prizeSplits.length > prizeStrategySplit.length) {
-      uint8 _index = _prizeSplits.length.sub(1).toUint8();
+    // Remove prize splits by comparing the current _prizesSplits with the passed prizeSplits
+    while (_prizeSplits.length > newPrizeSplitsLength) {
+      uint256 _index = _prizeSplits.length.sub(1);
       _prizeSplits.pop();
       emit PrizeSplitRemoved(_index);
     }
 
-    // The total of all prize splits can NOT exceed 100% of the awarded prize amount.
-    require(_tempTotalPercentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-total");
+     // Require the current prize split percentage does not exceed 100%.
+    uint256 totalPercentage = _totalPrizeSplitPercentageAmount();
+    require(totalPercentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-total");
   }
 
-   /**
-    * @notice Remove a prize split config 
-    * @dev Remove a prize split by passing the index of target prize split config.
-    * @param prizeSplitIndex The target index to delete.
+  /**
+    * @notice Update a prize split config.
+    * @dev Update a prize split config by passing a MultipleWinnersPrizeSplit struct and index position.
+    * @param prizeStrategySplit MultipleWinnersPrizeSplit config struct.
+    * @param prizeSplitIndex The target index to update.
   */
   function setPrizeSplit(MultipleWinnersPrizeSplit memory prizeStrategySplit, uint8 prizeSplitIndex) external onlyOwner {
+    require(prizeSplitIndex < _prizeSplits.length.sub(1), "MultipleWinners/nonexistent-prizesplit");
     require(prizeStrategySplit.target != address(0), "MultipleWinners/invalid-prizesplit-target");
-    require(prizeStrategySplit.percentage > 0 && prizeStrategySplit.percentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-amount");
+    
+    // Update the prize split config.
+    _prizeSplits[prizeSplitIndex] = prizeStrategySplit;
 
-    if(prizeSplitIndex > _prizeSplits.length.sub(1)) {
-      // Add a new prize split config to _prizeSplits array.
-      _prizeSplits.push(prizeStrategySplit);
-    } else {
-      // Update prize split config to _prizeSplits array.
-      _prizeSplits[prizeSplitIndex] = prizeStrategySplit;
-    }
+    // Require the current prize split percentage does not exceed 100%.
+    uint256 totalPercentage = _totalPrizeSplitPercentageAmount();
+    require(totalPercentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-total");
 
-    // Verify the total prize splits percetnage do not exceed 100% of award.
-    uint256 _tempTotalPercentage;
-    for (uint256 index = 0; index < _prizeSplits.length; index++) {
-      MultipleWinnersPrizeSplit memory split = _prizeSplits[index];
-      _tempTotalPercentage = _tempTotalPercentage.add(split.percentage);
-    }
-
-    require(_tempTotalPercentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-total");
-
+    // Emit the updated prize split configuration.
     emit PrizeSplitSet(prizeStrategySplit.target, prizeStrategySplit.percentage, prizeStrategySplit.token, prizeSplitIndex);
   }
 
@@ -130,6 +120,16 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   }
 
   /**
+    * @notice Read a prize split config by index
+    * @dev Read a prize split MultipleWinnersPrizeSplit config by passing a _prizeSplits index
+    * @param prizeSplitIndex The target index to read
+    * @return MultipleWinnersPrizeSplit A single prize split config
+  */
+  function prizeSplit(uint256 prizeSplitIndex) external view returns (MultipleWinnersPrizeSplit memory) {
+    return _prizeSplits[prizeSplitIndex];
+  }
+
+  /**
   * @dev Calculate the PrizeSplit percentage
   * @param amount The prize amount
   * @param percentage The prize split percentage amount
@@ -137,6 +137,19 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   function _getPrizeSplitAmount(uint256 amount, uint16 percentage) internal pure returns (uint256) {
     // Total prize split amount calculated from current award and target percentage.
       return (amount * percentage).div(1000);
+  }
+
+  /**
+  * @notice Require the prize split percentage amount does not exceed 100%.
+  * @dev Require the prize split percentage amount does not exceed 100% with the current prize splits.
+  */
+  function _totalPrizeSplitPercentageAmount() internal view returns (uint256) {
+    uint256 _tempTotalPercentage;
+    for (uint8 index = 0; index < _prizeSplits.length; index++) {
+      MultipleWinnersPrizeSplit memory split = _prizeSplits[index];
+      _tempTotalPercentage = _tempTotalPercentage.add(split.percentage);
+    }
+    return _tempTotalPercentage;
   }
 
   function _distributePrizeSplits(uint256 prize) internal returns (uint256) {
