@@ -95,7 +95,7 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     * @param prizeSplitIndex The target index to update.
   */
   function setPrizeSplit(MultipleWinnersPrizeSplit memory prizeStrategySplit, uint8 prizeSplitIndex) external onlyOwner {
-    require(prizeSplitIndex < _prizeSplits.length.sub(1), "MultipleWinners/nonexistent-prizesplit");
+    require(prizeSplitIndex <= _prizeSplits.length.sub(1), "MultipleWinners/nonexistent-prizesplit");
     require(prizeStrategySplit.target != address(0), "MultipleWinners/invalid-prizesplit-target");
     
     // Update the prize split config.
