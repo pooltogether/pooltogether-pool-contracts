@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.5.0 <0.7.0;
+pragma solidity ^0.6.12;
 
 /// @title Controlled ERC20 Token Interface
 /// @notice Required interface for Controlled ERC20 Tokens linked to a Prize Pool
