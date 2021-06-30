@@ -33,6 +33,7 @@ contract Ticket is ControlledToken, TicketInterface {
     override
     initializer
   {
+    require(address(_controller) != address(0), "Ticket/controller-not-zero");
     super.initialize(_name, _symbol, _decimals, _controller);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
   }
