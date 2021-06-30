@@ -719,11 +719,10 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     )
   {
     (uint256 exitFee, uint256 _burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
-    uint256 duration = _estimateCreditAccrualTime(controlledToken, amount, exitFee);
-    if (duration > maxTimelockDuration) {
-      duration = maxTimelockDuration;
+    uint256 durationSeconds = _estimateCreditAccrualTime(controlledToken, amount, exitFee);
+    if (durationSeconds > maxTimelockDuration) {
+      durationSeconds = maxTimelockDuration;
     }
-    return (duration, _burnedCredit);
   }
 
   /// @notice Calculates the early exit fee for the given amount
@@ -743,7 +742,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
       uint256 burnedCredit
     )
   {
-    return _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
+    (exitFee, burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
   }
 
   /// @dev Calculates the early exit fee for the given amount
@@ -769,7 +768,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     view
     returns (uint256 durationSeconds)
   {
-    return _estimateCreditAccrualTime(
+    durationSeconds =_estimateCreditAccrualTime(
       _controlledToken,
       _principal,
       _interest
@@ -971,7 +970,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     uint256 totalExitFee = _calculateEarlyExitFeeNoCredit(controlledToken, amount);
     creditBurned = (availableCredit > totalExitFee) ? totalExitFee : availableCredit;
     earlyExitFee = totalExitFee.sub(creditBurned);
-    return (earlyExitFee, creditBurned);
   }
 
   /// @notice Allows the Governor to set a cap on the amount of liquidity that he pool can hold
