@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@pooltogether/yield-source-interface/contracts/IYieldSource.sol";
 
 import "../PrizePool.sol";
@@ -11,6 +12,7 @@ import "../PrizePool.sol";
 contract YieldSourcePrizePool is PrizePool {
 
   using SafeERC20Upgradeable for IERC20Upgradeable;
+  using AddressUpgradeable for address;
 
   IYieldSource public yieldSource;
 
@@ -31,7 +33,7 @@ contract YieldSourcePrizePool is PrizePool {
     public
     initializer
   {
-    require(address(_yieldSource) != address(0), "YieldSourcePrizePool/yield-source-zero");
+    require(address(_yieldSource).isContract(), "YieldSourcePrizePool/yield-address-invalid");
     PrizePool.initialize(
       _reserveRegistry,
       _controlledTokens,
