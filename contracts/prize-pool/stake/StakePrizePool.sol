@@ -33,6 +33,8 @@ contract StakePrizePool is PrizePool {
       _maxExitFeeMantissa,
       _maxTimelockDuration
     );
+
+    require(address(_stakeToken) != address(0), "StakePrizePool/stake-token-not-zero-address");
     stakeToken = _stakeToken;
 
     emit StakePrizePoolInitialized(address(stakeToken));
