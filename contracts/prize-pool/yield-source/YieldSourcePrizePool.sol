@@ -34,7 +34,7 @@ contract YieldSourcePrizePool is PrizePool {
     public
     initializer
   {
-    require(address(_yieldSource).isContract(), "YieldSourcePrizePool/yield-address-invalid");
+    require(address(_yieldSource).isContract(), "YieldSourcePrizePool/yield-source-not-contract-address");
     PrizePool.initialize(
       _reserveRegistry,
       _controlledTokens,
