@@ -388,10 +388,16 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   {
     uint256 blockTime = _currentTime();
     (uint256 lockDuration, uint256 burnedCredit) = _calculateTimelockDuration(from, controlledToken, amount);
+
     uint256 unlockTimestamp = blockTime.add(lockDuration);
+    
     _burnCredit(from, controlledToken, burnedCredit);
+    
+    require(_timelockBalances[from] > 0, "PrizePool/timelock-balance-gt-zero");
     ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
+    
     _mintTimelock(from, amount, unlockTimestamp);
+    
     emit TimelockedWithdrawal(_msgSender(), from, controlledToken, amount, unlockTimestamp);
 
     // return the block at which the funds will be available
@@ -411,7 +417,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
 
     timelockTotalSupply = timelockTotalSupply.add(amount);
     _timelockBalances[user] = _timelockBalances[user].add(amount);
-    _unlockTimestamps[user] = timestamp;
+    
+    _unlockTimestamps[user] = timestamp; 
 
     // if the funds should already be unlocked
     if (timestamp <= _currentTime()) {
