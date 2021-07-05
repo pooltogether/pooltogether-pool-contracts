@@ -15,7 +15,6 @@ async function deployTestPool({
   prizePeriodStart = 0,
   prizePeriodSeconds,
   maxExitFeeMantissa,
-  maxTimelockDuration,
   creditLimit,
   creditRate,
   externalERC20Awards,
@@ -70,7 +69,7 @@ async function deployTestPool({
   let prizePool
   if(poolType == 'stake') {
     debug('deploying stake pool')
-    const stakePoolConfig = {token: tokenResult.address, maxExitFeeMantissa, maxTimelockDuration}
+    const stakePoolConfig = {token: tokenResult.address, maxExitFeeMantissa}
     let tx = await poolBuilder.createStakeMultipleWinners(stakePoolConfig, multipleWinnersConfig, await token.decimals())
     let events = await getEvents(poolBuilder, tx)
     let event = events[0]
@@ -79,8 +78,7 @@ async function deployTestPool({
   else if (poolType == 'compound') {
     const compoundPrizePoolConfig = {
       cToken: cTokenResult.address,
-      maxExitFeeMantissa,
-      maxTimelockDuration
+      maxExitFeeMantissa
     }
     let tx = await poolBuilder.createCompoundMultipleWinners(compoundPrizePoolConfig, multipleWinnersConfig, await token.decimals())
     let events = await getEvents(poolBuilder, tx)
@@ -90,8 +88,7 @@ async function deployTestPool({
   else if (poolType == 'yieldSource') {
     const yieldSourcePrizePoolConfig = {
       yieldSource: cTokenYieldSource.address,
-      maxExitFeeMantissa,
-      maxTimelockDuration
+      maxExitFeeMantissa
     }
     let tx = await poolBuilder.createYieldSourceMultipleWinners(yieldSourcePrizePoolConfig, multipleWinnersConfig, await token.decimals())
     let events = await getEvents(poolBuilder, tx)

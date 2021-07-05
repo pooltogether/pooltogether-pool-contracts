@@ -71,7 +71,6 @@ describe('PoolWithMultipleWinnersBuilder', () => {
       compoundPrizePoolConfig = {
         cToken: cToken.address,
         maxExitFeeMantissa: toWei('0.5'),
-        maxTimelockDuration: 1000
       }
     })
 
@@ -107,7 +106,6 @@ describe('PoolWithMultipleWinnersBuilder', () => {
 
       expect(await prizePool.cToken()).to.equal(compoundPrizePoolConfig.cToken)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(compoundPrizePoolConfig.maxExitFeeMantissa)
-      expect(await prizePool.maxTimelockDuration()).to.equal(compoundPrizePoolConfig.maxTimelockDuration)
       expect(await prizePool.owner()).to.equal(wallet.address)
     })
   })
@@ -118,8 +116,7 @@ describe('PoolWithMultipleWinnersBuilder', () => {
     beforeEach(async () => {
       stakePrizePoolConfig = {
         token: cToken.address,
-        maxExitFeeMantissa: toWei('0.5'),
-        maxTimelockDuration: 1000
+        maxExitFeeMantissa: toWei('0.5')
       }
     })
 
@@ -149,7 +146,6 @@ describe('PoolWithMultipleWinnersBuilder', () => {
 
       expect(await prizePool.token()).to.equal(stakePrizePoolConfig.token)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(stakePrizePoolConfig.maxExitFeeMantissa)
-      expect(await prizePool.maxTimelockDuration()).to.equal(stakePrizePoolConfig.maxTimelockDuration)
     })
   })
 
@@ -159,8 +155,7 @@ describe('PoolWithMultipleWinnersBuilder', () => {
     beforeEach(async () => {
       yieldSourcePrizePoolConfig = {
         yieldSource: cDaiYieldSource.address,
-        maxExitFeeMantissa: toWei('0.5'),
-        maxTimelockDuration: 1000
+        maxExitFeeMantissa: toWei('0.5')
       }
     })
 
@@ -189,7 +184,6 @@ describe('PoolWithMultipleWinnersBuilder', () => {
       expect(await prizePool.prizeStrategy()).to.equal(prizeStrategy.address)
       expect(await prizePool.owner()).to.equal(wallet.address)
       expect(await prizePool.maxExitFeeMantissa()).to.equal(yieldSourcePrizePoolConfig.maxExitFeeMantissa)
-      expect(await prizePool.maxTimelockDuration()).to.equal(yieldSourcePrizePoolConfig.maxTimelockDuration)
 
       expect(await prizeStrategy.owner()).to.equal(wallet.address)
     })

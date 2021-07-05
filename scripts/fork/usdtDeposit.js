@@ -108,8 +108,7 @@ async function run() {
 
     const compoundPrizePoolConfig = {
         cToken: "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9",
-        maxExitFeeMantissa: toWei("0.5"),
-        maxTimelockDuration: 1000,
+        maxExitFeeMantissa: toWei("0.5")
     }
     const multipleWinnersConfig = {
         rngService: rngServiceMock.address,

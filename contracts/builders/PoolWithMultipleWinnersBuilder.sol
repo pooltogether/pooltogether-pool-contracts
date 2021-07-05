@@ -34,20 +34,17 @@ contract PoolWithMultipleWinnersBuilder {
   struct CompoundPrizePoolConfig {
     CTokenInterface cToken;
     uint256 maxExitFeeMantissa;
-    uint256 maxTimelockDuration;
   }
 
   /// @notice The configuration used to initialize the Compound Prize Pool
   struct YieldSourcePrizePoolConfig {
     IYieldSource yieldSource;
     uint256 maxExitFeeMantissa;
-    uint256 maxTimelockDuration;
   }
 
   struct StakePrizePoolConfig {
     IERC20Upgradeable token;
     uint256 maxExitFeeMantissa;
-    uint256 maxTimelockDuration;
   }
 
   RegistryInterface public reserveRegistry;
@@ -91,7 +88,6 @@ contract PoolWithMultipleWinnersBuilder {
       reserveRegistry,
       _tokens(prizeStrategy),
       prizePoolConfig.maxExitFeeMantissa,
-      prizePoolConfig.maxTimelockDuration,
       CTokenInterface(prizePoolConfig.cToken)
     );
     prizePool.setPrizeStrategy(prizeStrategy);
@@ -121,7 +117,6 @@ contract PoolWithMultipleWinnersBuilder {
       reserveRegistry,
       _tokens(prizeStrategy),
       prizePoolConfig.maxExitFeeMantissa,
-      prizePoolConfig.maxTimelockDuration,
       prizePoolConfig.yieldSource
     );
     prizePool.setPrizeStrategy(prizeStrategy);
@@ -151,7 +146,6 @@ contract PoolWithMultipleWinnersBuilder {
       reserveRegistry,
       _tokens(prizeStrategy),
       prizePoolConfig.maxExitFeeMantissa,
-      prizePoolConfig.maxTimelockDuration,
       prizePoolConfig.token
     );
     prizePool.setPrizeStrategy(prizeStrategy);

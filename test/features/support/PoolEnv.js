@@ -24,7 +24,6 @@ function PoolEnv() {
     creditLimit,
     creditRate,
     maxExitFeeMantissa = toWei('0.5'),
-    maxTimelockDuration = 1000,
     externalERC20Awards = [],
     poolType
   }) {
@@ -49,7 +48,6 @@ function PoolEnv() {
       prizePeriodStart,
       prizePeriodSeconds,
       maxExitFeeMantissa,
-      maxTimelockDuration,
       creditLimit: toWei(creditLimit),
       creditRate: toWei(creditRate),
       externalERC20Awards: [],
@@ -177,22 +175,6 @@ function PoolEnv() {
     debug(`Bought tickets`)
   }
 
-  this.timelockBuyTickets = async function ({ user, tickets }) {
-    debug(`Buying tickets with timelocked tokens...`)
-    let wallet = await this.wallet(user)
-
-    debug('wallet is ', wallet.address)
-
-    let ticket = await this.ticket(wallet)
-    let prizePool = await this.prizePool(wallet)
-
-    let amount = toWei('' + tickets)
-
-    await prizePool.timelockDepositTo(wallet.address, amount, ticket.address, this.overrides)
-
-    debug(`Bought tickets with timelocked tokens`)
-  }
-
   this.transferCompoundTokensToPrizePool = async function ({ user, tokens }) {
     let wallet = await this.wallet(user)
     let amount = toWei(tokens)
@@ -206,22 +188,6 @@ function PoolEnv() {
 
     await this.env.token.connect(wallet).approve(this.env.cTokenYieldSource.address, amount);
     await this.env.cTokenYieldSource.connect(wallet).supplyTokenTo(amount, this.env.prizePool.address)
-  }
-
-  this.timelockBuySponsorship = async function ({ user, sponsorship }) {
-    debug(`Buying sponsorship with timelocked tokens...`)
-    let wallet = await this.wallet(user)
-
-    debug('wallet is ', wallet.address)
-
-    let sponsorshipContract = await this.sponsorship(wallet)
-    let prizePool = await this.prizePool(wallet)
-
-    let amount = toWei('' + sponsorship)
-
-    await prizePool.timelockDepositTo(wallet.address, amount, sponsorshipContract.address, this.overrides)
-
-    debug(`Bought sponsorship with timelocked tokens`)
   }
 
   this.expectUserToHaveTickets = async function ({ user, tickets }) {
@@ -271,21 +237,6 @@ function PoolEnv() {
     expect(ticketInterest).to.equalish(toWei(credit), 300)
   }
 
-  this.expectUserToHaveTimelock = async function ({ user, timelock }) {
-    let wallet = await this.wallet(user)
-    let prizePool = await this.prizePool(wallet)
-    let timelockBalance = await prizePool.timelockBalanceOf(wallet.address)
-    expect(timelockBalance).to.equalish(toWei(timelock), 300)
-  }
-
-  this.expectUserTimelockAvailableAt = async function ({ user, elapsed }) {
-    let wallet = await this.wallet(user)
-    let prizeStrategy = await this.prizeStrategy(wallet)
-    let prizePool = await this.prizePool(wallet)
-    let startTime = await prizeStrategy.prizePeriodStartedAt()
-    let time = startTime.add(elapsed)
-    expect(await prizePool.timelockBalanceAvailableAt(wallet.address)).to.equal(time)
-  }
 
   this.expectUserToHaveExternalAwardAmount = async function ({ user, externalAward, amount }) {
     let wallet = await this.wallet(user)
@@ -350,19 +301,6 @@ function PoolEnv() {
     let prizePool = await this.prizePool(wallet)
     await prizePool.withdrawInstantlyFrom(wallet.address, withdrawalAmount, ticket.address, toWei('1000'))
     debug("done withdraw instantly")
-  }
-
-  this.withdrawWithTimelock = async function ({user, tickets}) {
-    let wallet = await this.wallet(user)
-    let ticket = await this.ticket(wallet)
-    let prizePool = await this.prizePool(wallet)
-    await prizePool.withdrawWithTimelockFrom(wallet.address, toWei(tickets), ticket.address, [])
-  }
-
-  this.sweepTimelockBalances = async function ({ user }) {
-    let wallet = await this.wallet(user)
-    let prizePool = await this.prizePool(wallet)
-    await prizePool.sweepTimelockBalances([wallet.address, wallet.address])
   }
 
   this.balanceOfTickets = async function ({ user }) {

@@ -16,7 +16,7 @@ describe('StakePrizePool', function() {
   let prizePool, erc20token, erc721token, stakeToken, prizeStrategy, registry
 
   let poolMaxExitFee = toWei('0.5')
-  let poolMaxTimelockDuration = 10000
+
 
   let ticket
 
