@@ -108,15 +108,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     uint256 exitFee
   );
 
-  /// @dev Event emitted upon a withdrawal with timelock
-  event TimelockedWithdrawal(
-    address indexed operator,
-    address indexed from,
-    address indexed token,
-    uint256 amount,
-    uint256 unlockTimestamp
-  );
-
   event ReserveWithdrawal(
     address indexed to,
     uint256 amount
@@ -365,43 +356,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
       exitFee = maxFee;
     }
     return exitFee;
-  }
-
-  /// @notice Withdraw assets from the Prize Pool by placing them into the timelock.
-  /// The timelock is used to ensure that the tickets have contributed their fair share of the prize.
-  /// @dev Note that if the user has previously timelocked funds then this contract will try to sweep them.
-  /// If the existing timelocked funds are still locked, then the incoming
-  /// balance is added to their existing balance and the new timelock unlock timestamp will overwrite the old one.
-  /// @param from The address to withdraw from
-  /// @param amount The amount to withdraw
-  /// @param controlledToken The type of token being withdrawn
-  /// @return The timestamp from which the funds can be swept
-  function withdrawWithTimelockFrom(
-    address from,
-    uint256 amount,
-    address controlledToken
-  )
-    external override
-    nonReentrant
-    onlyControlledToken(controlledToken)
-    returns (uint256)
-  {
-    uint256 blockTime = _currentTime();
-    (uint256 lockDuration, uint256 burnedCredit) = _calculateTimelockDuration(from, controlledToken, amount);
-
-    uint256 unlockTimestamp = blockTime.add(lockDuration);
-    
-    _burnCredit(from, controlledToken, burnedCredit);
-    
-    require(_timelockBalances[from] > 0, "PrizePool/timelock-balance-gt-zero");
-    ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
-    
-    _mintTimelock(from, amount, unlockTimestamp);
-    
-    emit TimelockedWithdrawal(_msgSender(), from, controlledToken, amount, unlockTimestamp);
-
-    // return the block at which the funds will be available
-    return unlockTimestamp;
   }
 
   /// @notice Adds to a user's timelock balance.  It will attempt to sweep before updating the balance.
@@ -704,49 +658,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     return totalWithdrawal;
   }
 
-  /// @notice Calculates a timelocked withdrawal duration and credit consumption.
-  /// @param from The user who is withdrawing
-  /// @param amount The amount the user is withdrawing
-  /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
-  /// @return durationSeconds The duration of the timelock in seconds
-  function calculateTimelockDuration(
-    address from,
-    address controlledToken,
-    uint256 amount
-  )
-    external override
-    returns (
-      uint256 durationSeconds,
-      uint256 burnedCredit
-    )
-  {
-    return _calculateTimelockDuration(from, controlledToken, amount);
-  }
-
-  /// @dev Calculates a timelocked withdrawal duration and credit consumption.
-  /// @param from The user who is withdrawing
-  /// @param amount The amount the user is withdrawing
-  /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
-  /// @return durationSeconds The duration of the timelock in seconds
-  /// @return burnedCredit The credit that was burned
-  function _calculateTimelockDuration(
-    address from,
-    address controlledToken,
-    uint256 amount
-  )
-    internal
-    returns (
-      uint256 durationSeconds,
-      uint256 burnedCredit
-    )
-  {
-    (uint256 exitFee, uint256 _burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
-    burnedCredit = _burnedCredit;
-    durationSeconds = _estimateCreditAccrualTime(controlledToken, amount, exitFee);
-    if (durationSeconds > maxTimelockDuration) {
-      durationSeconds = maxTimelockDuration;
-    }
-  }
 
   /// @notice Calculates the early exit fee for the given amount
   /// @param from The user who is withdrawing
