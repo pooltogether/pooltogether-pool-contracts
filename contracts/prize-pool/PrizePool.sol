@@ -878,8 +878,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     }
 
     uint256 deltaTime = _currentTime().sub(userTimestamp);
-    uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(controlledTokenBalance, _tokenCreditPlans[controlledToken].creditRateMantissa);
-    return deltaTime.mul(creditPerSecond);
+    uint256 deltaMantissa = deltaTime.mul(_tokenCreditPlans[controlledToken].creditRateMantissa);
+    return FixedPoint.multiplyUintByMantissa(controlledTokenBalance, deltaMantissa);
   }
 
   /// @notice Returns the credit balance for a given user.  Not that this includes both minted credit and pending credit.
