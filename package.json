@@ -33,6 +33,7 @@
     "postpublish": "PACKAGE_VERSION=$(./scripts/package-version.sh) && git tag -ae v$PACKAGE_VERSION && git push --tags",
     "update-gitbook-networks": "./scripts/update-gitbook-networks.sh",
     "mint": "hardhat run --network localhost scripts/mint.js",
+    "display-faucets": "hardhat run --network mainnet scripts/displayFaucetInfo.js",
     "echidna:build": "docker build -t pool-contracts/echidna . -f Dockerfile.echidna",
     "echidna": "yarn echidna:build && docker run -v \"$PWD\":/src pool-contracts/echidna"
   },
