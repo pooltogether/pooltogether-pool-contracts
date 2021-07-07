@@ -391,9 +391,9 @@ describe('PrizePool', function() {
         expect(await call(prizePool, 'balanceOfCredit', wallet.address, ticket.address)).to.equal(toWei('0.5'))
       })
 
-      it.only('should track credit with sub-wei accuracy', async () => {
-        // Rate: 1%, Limit: 10%
-        await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
+      it('should track credit accurately with tiny balances', async () => {
+        // Rate: 0.1%, Limit: 10%
+        await prizePool.setCreditPlanOf(ticket.address, toWei('0.001'), toWei('0.1'))
 
         // user has 100 tickets
         let amount = '100'
@@ -410,12 +410,12 @@ describe('PrizePool', function() {
         // init & accrue the credit
         await prizePool.calculateEarlyExitFee(wallet.address, ticket.address, amount)
 
-        // should have accrue half of their credit in five seconds (1% per second = 5% for 5 seconds)
-        await prizePool.setCurrentTime('15')
+        // 12 seconds have passed, which means 1.2% has accrued, which is 1 "wei".
+        await prizePool.setCurrentTime('22')
 
         expect(await call(prizePool, 'calculateEarlyExitFee', wallet.address, ticket.address, amount)).to.deep.equal([
-          ethers.BigNumber.from('5'),
-          ethers.BigNumber.from('5')
+          ethers.BigNumber.from('9'),
+          ethers.BigNumber.from('1')
         ])
       })
     })
