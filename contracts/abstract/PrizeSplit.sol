@@ -37,16 +37,9 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     * @dev Award ticket to prize split target using prize strategy function
     * @param target Address of recipient.
     * @param amount Amount to receive.
+    * @param tokenType The token type.
   */
-  function _awardPrizeSplitTicketAmount(address target, uint256 amount) virtual internal;
-  
-  /**
-    * @notice Award sponsorship to prize split target
-    * @dev Award sponsorship to prize split target using prize strategy function
-    * @param target Address of recipient.
-    * @param amount Amount to receive.
-  */
-  function _awardPrizeSplitSponsorshipAmount(address target, uint256 amount) virtual internal;
+  function _awardPrizeSplitAmount(address target, uint256 amount, uint256 tokenType) virtual internal;
 
   /**
     * @notice Set the prize split(s) configration.
@@ -160,11 +153,8 @@ abstract contract PrizeSplit is OwnableUpgradeable {
       MultipleWinnersPrizeSplit memory split = _prizeSplits[index];
       uint256 _splitAmount = _getPrizeSplitAmount(_prizeTemp, split.percentage);
 
-      if(split.token == TokenType.Ticket) {
-        _awardPrizeSplitTicketAmount(split.target, _splitAmount);
-      } else {
-        _awardPrizeSplitSponsorshipAmount(split.target, _splitAmount);
-      }
+      // Award the prize split distribution amount.
+      _awardPrizeSplitAmount(split.target, _splitAmount, split.token);
 
       // Update the remaining prize amount after distributing the prize split percentage.
       prize = prize.sub(_splitAmount);

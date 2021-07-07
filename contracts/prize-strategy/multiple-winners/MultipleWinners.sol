@@ -90,11 +90,14 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
     return __numberOfWinners;
   }
 
-  function _awardPrizeSplitTicketAmount(address target, uint256 splitAmount) override internal {
-    _awardTickets(target, splitAmount);
-  }
-  function _awardPrizeSplitSponsorshipAmount(address target, uint256 splitAmount) override internal {
-    _awardSponsorship(target, splitAmount);
+
+  function _awardPrizeSplitAmount(address target, uint256 amount, uint256 tokenType) override internal {
+    require(tokenType == 0 || tokenType == 1, "MultipleWinners/invalid-prizesplit-token-type");
+    if(tokenType == 0) {
+      _awardTickets(target, splitAmount);
+    } else if(tokenType == 1) {
+      _awardSponsorship(target, splitAmount);
+    }
   }
 
   /**
