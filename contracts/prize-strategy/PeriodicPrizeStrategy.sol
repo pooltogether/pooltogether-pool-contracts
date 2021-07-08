@@ -275,8 +275,11 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @notice Awards collateral as sponsorship to a user
   /// @param user The user to whom the tickets are minted
   /// @param amount The amount of interest to mint as tickets.
-  function _awardSponsorship(address user, uint256 amount) internal {
-    prizePool.award(user, amount, address(sponsorship));
+  function _awardToken(address user, uint256 amount, uint256 tokenIndex) internal {
+    address[] memory _controlledTokens = prizePool.tokens();
+    require(tokenIndex <= _controlledTokens.length, "PeriodicPrizeStrategy/award-invalid-token-index");
+    address _token = _controlledTokens[tokenIndex];
+    prizePool.award(user, amount, _token);
   }
 
   /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.

@@ -187,269 +187,6 @@ describe("MultipleWinners", function() {
     });
   });
 
-  describe("setPrizePool()", () => {
-    it("should revert with invalid prize split target address", async () => {
-      await expect(
-        prizeStrategy.setPrizeSplits([
-          {
-            target: constants.AddressZero,
-            percentage: "100",
-            token: 0,
-          },
-        ])
-      ).to.be.revertedWith(
-        "MultipleWinners/invalid-prizesplit-target"
-      );
-    });
-
-    it("should revert with single prize split config is equal to or above 100% percent", async () => {
-
-      await expect(
-        prizeStrategy.setPrizeSplits([
-          {
-            target: wallet5.address,
-            percentage: "1005",
-            token: 0,
-          },
-        ])
-      ).to.be.revertedWith(
-        "MultipleWinners/invalid-prizesplit-percentage"
-      );
-    });
-
-    it("should revert when multuple prize split configs is above 100% percent", async () => {
-      await expect(
-        prizeStrategy.setPrizeSplits([
-          {
-            target: wallet5.address,
-            percentage: 500,
-            token: 0,
-          },
-          {
-            target: wallet6.address,
-            percentage: 501,
-            token: 0,
-          },
-        ])
-      ).to.be.revertedWith("MultipleWinners/invalid-prizesplit-percentage-total");
-    });
-
-    it("should revert with invalid prize split token enum", async () => {
-      await expect(
-        prizeStrategy.setPrizeSplits([
-          {
-            target: wallet5.address,
-            percentage: 500,
-            token: 2,
-          },
-          {
-            target: constants.AddressZero,
-            percentage: "0",
-            token: 0,
-          },
-        ])
-      ).to.be.reverted
-    });
-
-    it("should revert when setting a non-existent prize split config", async () => {
-      await prizeStrategy.setPrizeSplits([
-        {
-          target: wallet5.address,
-          percentage: 500,
-          token: 0,
-        },
-      ])
-
-      await expect(
-        prizeStrategy.setPrizeSplit(
-          {
-            target: wallet5.address,
-            percentage: 300,
-            token: 0,
-          },
-          1
-      )
-      ).to.be.revertedWith(
-        "MultipleWinners/nonexistent-prizesplit"
-      );
-    });
-
-    it("should set two split prize winners using valid percentages", async () => {
-      await expect(prizeStrategy.setPrizeSplits([
-        {
-          target: wallet5.address,
-          percentage: 50,
-          token: 0,
-        },
-        {
-          target: wallet6.address,
-          percentage: 500,
-          token: 0,
-        },
-      ]))
-      .to.emit(prizeStrategy, "PrizeSplitSet")
-    });
-
-    it("should set two split prize configs and update the first prize split config", async () => {
-      await prizeStrategy.setPrizeSplits([
-        {
-          target: wallet5.address,
-          percentage: 50,
-          token: 0,
-        },
-        {
-          target: wallet6.address,
-          percentage: 500,
-          token: 0,
-        },
-      ]);      
-      await prizeStrategy.setPrizeSplit(
-        {
-          target: wallet5.address,
-          percentage: 150,
-          token: 0,
-        }, 
-        0
-      );
-
-      const prizeSplits = await prizeStrategy.prizeSplits();
-      expect(prizeSplits[0].percentage)
-      .to.equal(150)
-    });
-
-    it("should set two split prize config and add a third prize split config", async () => {
-      await prizeStrategy.setPrizeSplits([
-        {
-          target: wallet5.address,
-          percentage: 50,
-          token: 0,
-        },
-        {
-          target: wallet6.address,
-          percentage: 500,
-          token: 0,
-        },
-      ]);
-
-      await prizeStrategy.setPrizeSplits([
-        {
-          target: wallet5.address,
-          percentage: 50,
-          token: 0,
-        },
-        {
-          target: wallet6.address,
-          percentage: 500,
-          token: 0,
-        },
-        {
-          target: wallet5.address,
-          percentage: 150,
-          token: 0,
-        },
-      ])
-
-      const prizeSplits = await prizeStrategy.prizeSplits();
-      expect(prizeSplits[0].percentage)
-      .to.equal(50)
-      expect(prizeSplits[1].percentage)
-      .to.equal(500)
-      expect(prizeSplits[2].percentage)
-      .to.equal(150)
-    });
-
-    it("should set two split prize config, update the second prize split config and add a third prize split config", async () => {
-      await prizeStrategy.setPrizeSplits([
-        {
-          target: wallet5.address,
-          percentage: 50,
-          token: 0,
-        },
-        {
-          target: wallet6.address,
-          percentage: 500,
-          token: 0,
-        },
-      ]);
-
-      await prizeStrategy.setPrizeSplits([
-        {
-          target: wallet5.address,
-          percentage: 50,
-          token: 0,
-        },
-        {
-          target: wallet6.address,
-          percentage: 300,
-          token: 0,
-        },
-        {
-          target: wallet5.address,
-          percentage: 150,
-          token: 0,
-        },
-      ])
-
-      const prizeSplits = await prizeStrategy.prizeSplits();
-      expect(prizeSplits[0].percentage)
-      .to.equal(50)
-      expect(prizeSplits[1].percentage)
-      .to.equal(300)
-      expect(prizeSplits[2].percentage)
-      .to.equal(150)
-    });
-
-    it("should set two split prize configs, update the first and remove the second prize split config", async () => {
-      await prizeStrategy.setPrizeSplits([
-        {
-          target: wallet5.address,
-          percentage: 50,
-          token: 0,
-        },
-        {
-          target: wallet6.address,
-          percentage: 500,
-          token: 0,
-        },
-      ]);
-
-      await prizeStrategy.setPrizeSplits([
-        {
-          target: wallet5.address,
-          percentage: 400,
-          token: 0,
-        },
-      ]);
-
-      const prizeSplits = await prizeStrategy.prizeSplits();
-      expect(prizeSplits.length)
-      .to.equal(1)
-      expect(prizeSplits[0].percentage)
-      .to.equal(400)
-    });
-
-    it("should set two split prize configs and a remove all prize split configs", async () => {
-      await prizeStrategy.setPrizeSplits([
-        {
-          target: wallet5.address,
-          percentage: 50,
-          token: 0,
-        },
-        {
-          target: wallet6.address,
-          percentage: 500,
-          token: 0,
-        },
-      ]);
-      await expect(prizeStrategy.setPrizeSplits([]))
-      .to.emit(prizeStrategy, "PrizeSplitRemoved").withArgs(0)
-
-      const prizeSplits = await prizeStrategy.prizeSplits();
-      expect(prizeSplits.length)
-      .to.equal(0)
-    });
-  });
-
   describe("distribute()", () => {
     it("should ignore awarding prizes if there are no winners to select", async () => {
       await prizePool.mock.captureAwardBalance.returns(toWei("10"));
@@ -480,48 +217,48 @@ describe("MultipleWinners", function() {
       await prizeStrategy.distribute(randomNumber);
     });
 
-    it("should award prize splits to multiple targets", async () => {
-      const prizeSplitConfig = [
-        {
-          target: wallet5.address,
-          percentage: "55",
-          token: 0,
-        },
-        {
-          target: wallet6.address,
-          percentage: "120",
-          token: 0,
-        },
-      ];
+    // it("should award prize splits to multiple targets", async () => {
+    //   const prizeSplitConfig = [
+    //     {
+    //       target: wallet5.address,
+    //       percentage: "55",
+    //       token: 0,
+    //     },
+    //     {
+    //       target: wallet6.address,
+    //       percentage: "120",
+    //       token: 0,
+    //     },
+    //   ];
 
-      await prizeStrategy.setNumberOfWinners(1);
-      let randomNumber = 10;
-      await prizePool.mock.captureAwardBalance.returns(toWei("100"));
-      await ticket.mock.draw.withArgs(randomNumber).returns(wallet3.address);
+    //   await prizeStrategy.setNumberOfWinners(1);
+    //   let randomNumber = 10;
+    //   await prizePool.mock.captureAwardBalance.returns(toWei("100"));
+    //   await ticket.mock.draw.withArgs(randomNumber).returns(wallet3.address);
 
-      // Set Split Prize Configuration
-      await prizeStrategy.setPrizeSplits(prizeSplitConfig);
+    //   // Set Split Prize Configuration
+    //   await prizeStrategy.setPrizeSplits(prizeSplitConfig);
 
-      await externalERC20Award.mock.balanceOf
-        .withArgs(prizePool.address)
-        .returns(0);
+    //   await externalERC20Award.mock.balanceOf
+    //     .withArgs(prizePool.address)
+    //     .returns(0);
 
-      await ticket.mock.totalSupply.returns(1000);
+    //   await ticket.mock.totalSupply.returns(1000);
 
-      await prizePool.mock.award
-        .withArgs(wallet3.address, toWei("82.5"), ticket.address)
-        .returns();
+    //   await prizePool.mock.award
+    //     .withArgs(wallet3.address, toWei("82.5"), ticket.address)
+    //     .returns();
 
-      await prizePool.mock.award
-        .withArgs(wallet5.address, toWei("5.5"), ticket.address)
-        .returns();
+    //   await prizePool.mock.award
+    //     .withArgs(wallet5.address, toWei("5.5"), ticket.address)
+    //     .returns();
 
-      await prizePool.mock.award
-        .withArgs(wallet6.address, toWei("12"), ticket.address)
-        .returns();
+    //   await prizePool.mock.award
+    //     .withArgs(wallet6.address, toWei("12"), ticket.address)
+    //     .returns();
 
-      await prizeStrategy.distribute(randomNumber);
-    });
+    //   await prizeStrategy.distribute(randomNumber);
+    // });
 
     describe("with a real ticket contract", async () => {
       let controller, ticket;
@@ -608,54 +345,83 @@ describe("MultipleWinners", function() {
         await prizeStrategy.distribute(90);
       });
 
+      it("should test awarding prize splits to multiple targets", async () => {
+        const prizeSplitConfig = [
+          {
+            target: wallet5.address,
+            percentage: "55",
+            token: 1,
+          },
+          {
+            target: wallet6.address,
+            percentage: "120",
+            token: 0,
+          },
+        ];
+        
+        await prizeStrategy.setNumberOfWinners(1);
+        await prizeStrategy.setPrizeSplits(prizeSplitConfig);
+
+        // Configure Mock Functions
+        await prizePool.mock.captureAwardBalance.returns(toWei("100"));
+        await prizePool.mock.tokens.returns([sponsorship.address, ticket.address])
+        await prizePool.mock.award.withArgs(wallet2.address, toWei("82.5"), ticket.address).returns()
+        await prizePool.mock.award.withArgs(wallet5.address, toWei("5.5"), ticket.address).returns()
+        await prizePool.mock.award.withArgs(wallet6.address, toWei("12"), sponsorship.address).returns()
+        
+        // Distribute Prize Amount
+        let randomNumber = 10;
+        await prizeStrategy.distribute(randomNumber);
+      });
+
       describe("when external erc20 awards are distributed", () => {
         beforeEach(async () => {
           await externalERC20Award.mock.totalSupply.returns(0);
           await prizeStrategy.addExternalErc20Award(externalERC20Award.address);
         });
 
-        it("should distribute all of the erc20 awards to the main winner", async () => {
-          await prizePool.mock.captureAwardBalance.returns(toWei("0"));
-          await externalERC20Award.mock.balanceOf
-            .withArgs(prizePool.address)
-            .returns(toWei("8"));
+        // it("should distribute all of the erc20 awards to the main winner", async () => {
+        //   await prizePool.mock.captureAwardBalance.returns(toWei("0"));
+        //   await externalERC20Award.mock.balanceOf
+        //     .withArgs(prizePool.address)
+        //     .returns(toWei("8"));
 
-          await prizePool.mock.awardExternalERC20
-            .withArgs(wallet.address, externalERC20Award.address, toWei("8"))
-            .returns();
+        //   await prizePool.mock.awardExternalERC20
+        //     .withArgs(wallet.address, externalERC20Award.address, toWei("8"))
+        //     .returns();
 
-          await prizeStrategy.setNumberOfWinners(2);
-          await prizeStrategy.distribute(92); // this hashes out to the same winner twice
-        });
+        //   await prizeStrategy.setNumberOfWinners(2);
+        //   await prizeStrategy.distribute(92); // this hashes out to the same winner twice
+        // });
 
-        it("should evenly distribute ERC20 awards if split is on", async () => {
-          await prizePool.mock.captureAwardBalance.returns(toWei("0"));
-          await externalERC20Award.mock.balanceOf
-            .withArgs(prizePool.address)
-            .returns(toWei("9"));
+        // it("should evenly distribute ERC20 awards if split is on", async () => {
+        //   await prizePool.mock.captureAwardBalance.returns(toWei("0"));
+        //   await externalERC20Award.mock.balanceOf
+        //     .withArgs(prizePool.address)
+        //     .returns(toWei("9"));
 
-          await prizePool.mock.awardExternalERC20
-            .withArgs(wallet.address, externalERC20Award.address, toWei("3"))
-            .returns();
-          await prizePool.mock.awardExternalERC20
-            .withArgs(wallet2.address, externalERC20Award.address, toWei("3"))
-            .returns();
+        //   await prizePool.mock.awardExternalERC20
+        //     .withArgs(wallet.address, externalERC20Award.address, toWei("3"))
+        //     .returns();
+        //   await prizePool.mock.awardExternalERC20
+        //     .withArgs(wallet2.address, externalERC20Award.address, toWei("3"))
+        //     .returns();
 
-          await prizeStrategy.setSplitExternalErc20Awards(true);
-          await prizeStrategy.setNumberOfWinners(3);
-          await prizeStrategy.distribute(90); // this hashes out to the same winner twice
-        });
+        //   await prizeStrategy.setSplitExternalErc20Awards(true);
+        //   await prizeStrategy.setNumberOfWinners(3);
+        //   await prizeStrategy.distribute(90); // this hashes out to the same winner twice
+        // });
 
-        it("should do nothing if split is on and balance is zero", async () => {
-          await prizePool.mock.captureAwardBalance.returns(toWei("0"));
-          await externalERC20Award.mock.balanceOf
-            .withArgs(prizePool.address)
-            .returns(toWei("0"));
+        // it("should do nothing if split is on and balance is zero", async () => {
+        //   await prizePool.mock.captureAwardBalance.returns(toWei("0"));
+        //   await externalERC20Award.mock.balanceOf
+        //     .withArgs(prizePool.address)
+        //     .returns(toWei("0"));
 
-          await prizeStrategy.setSplitExternalErc20Awards(true);
-          await prizeStrategy.setNumberOfWinners(3);
-          await prizeStrategy.distribute(90); // this hashes out to the same winner twice
-        });
+        //   await prizeStrategy.setSplitExternalErc20Awards(true);
+        //   await prizeStrategy.setNumberOfWinners(3);
+        //   await prizeStrategy.distribute(90); // this hashes out to the same winner twice
+        // });
       });
     });
   });

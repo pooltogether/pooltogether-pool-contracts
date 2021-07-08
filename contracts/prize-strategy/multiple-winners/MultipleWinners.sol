@@ -2,7 +2,7 @@
 pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "../../abstract/PrizeSplit.sol";
+import "../PrizeSplit.sol";
 import "../PeriodicPrizeStrategy.sol";
 
 contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
@@ -93,15 +93,11 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
 
   function _awardPrizeSplitAmount(address target, uint256 amount, uint256 tokenType) override internal {
     require(tokenType == 0 || tokenType == 1, "MultipleWinners/invalid-prizesplit-token-type");
-    if(tokenType == 0) {
-      _awardTickets(target, splitAmount);
-    } else if(tokenType == 1) {
-      _awardSponsorship(target, splitAmount);
-    }
+    _awardToken(target, amount, tokenType);
   }
 
   /**
-    * @dev Distributes the captured prize period award balance.
+    * @notice Distributes the captured prize period award balance.
     * @dev Distributes the captured prize period award balance to the main and secondary randomly selected users.
     * @param randomNumber Receiver of the prize split fee.
   */
