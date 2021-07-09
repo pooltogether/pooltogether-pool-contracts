@@ -66,4 +66,13 @@ contract PrizePoolHarness is PrizePool {
   function _redeem(uint256 redeemAmount) internal override returns (uint256) {
     return stubYieldSource.redeem(redeemAmount);
   }
+  
+  function captureAwardBalanceMultipleTimes(uint256 numTimes) external returns(uint256) {
+
+    uint256 result = 0;
+    for(uint256 i = 0; i < numTimes; i++){
+      result += _captureAwardBalance();
+    }
+    return result;
+  }
 }

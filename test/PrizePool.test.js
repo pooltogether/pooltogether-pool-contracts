@@ -321,6 +321,49 @@ describe('PrizePool', function() {
         expect(await prizePool.awardBalance()).to.equal(toWei('99'))
         expect(await prizePool.reserveTotalSupply()).to.equal(reserveFee)
       })
+
+      it('should capture the reserve fees multiple times and not take reserve', async () => {
+        const reserveFee = toWei('1')
+
+        await reserve.mock.reserveRateMantissa.returns(toWei('0.01'))
+
+        await ticket.mock.totalSupply.returns(toWei('1000'))
+        await yieldSourceStub.mock.balance.returns(toWei('1100'))
+
+        let tx = await prizePool.captureAwardBalanceMultipleTimes(10)
+
+        expect(await prizePool.awardBalance()).to.equal(toWei('99'))
+        expect(await prizePool.reserveTotalSupply()).to.equal(reserveFee)
+      })
+
+      it('should not capture the reserve fee twice', async () => {
+        const reserveFee = toWei('1')
+
+        await reserve.mock.reserveRateMantissa.returns(toWei('0.01'))
+
+        await ticket.mock.totalSupply.returns(toWei('1000'))
+        await yieldSourceStub.mock.balance.returns(toWei('1100'))
+
+        let txCapture1 = prizePool.captureAwardBalance()
+
+        await expect(txCapture1)
+          .to.emit(prizePool, 'ReserveFeeCaptured')
+          .withArgs(reserveFee)
+
+        await expect(txCapture1)
+          .to.emit(prizePool, 'AwardCaptured')
+          .withArgs(toWei('99'))
+
+        let txCapture2 = prizePool.captureAwardBalance()
+
+        await expect(txCapture2)
+          .to.not.emit(prizePool, 'ReserveFeeCaptured')
+
+        await expect(txCapture2)
+          .to.not.emit(prizePool, 'AwardCaptured')
+
+      })
+
     })
 
     describe('calculateReserveFee()', () => {

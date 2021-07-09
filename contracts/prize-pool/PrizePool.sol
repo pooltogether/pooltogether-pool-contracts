@@ -448,6 +448,11 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @dev This function also captures the reserve fees.
   /// @return The total amount of assets to be awarded for the current prize
   function captureAwardBalance() external override nonReentrant returns (uint256) {
+    return _captureAwardBalance();
+  }
+
+  /// @notice Internal wrapper for captureAwardBalance
+  function _captureAwardBalance() internal returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
 
     // it's possible for the balance to be slightly less due to rounding errors in the underlying yield source
