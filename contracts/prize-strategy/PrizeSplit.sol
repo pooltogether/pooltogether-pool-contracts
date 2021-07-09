@@ -15,23 +15,17 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   /* ============ Variables ============ */
   PrizeSplitConfig[] internal _prizeSplits;
 
-  /* ============ Enums and Structs ============ */
-  enum TokenType {
-    Ticket,
-    Sponsorship
-  }
-
   /**
-    * @dev The prize split configuration struct.
+    * @notice The prize split configuration struct.
     * @dev The prize split configuration struct used to award prize splits during distribution.
     * @param target Address of recipient receiving the prize split distribution
     * @param percentage Percentage of prize split with a 0-1000 range for single decimal precision i.e. 125 = 12.5%
-    * @param target Token type when minting the prize split award (i.e. ticket or sponsorship)
+    * @param token Token type when minting the prize split award (i.e. ticket or sponsorship)
   */
   struct PrizeSplitConfig {
       address target;
       uint16 percentage;
-      TokenType token;
+      uint8 token;
   }
 
   /* ============ Events ============ */
@@ -43,11 +37,12 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     * @param percentage Percentage of prize split ranging between 0 and 1000 for single decimal precision
     * @param target Token type when minting the prize split award
   */
-  event PrizeSplitSet(address indexed target, uint16 percentage, TokenType token, uint256 index);
+  event PrizeSplitSet(address indexed target, uint16 percentage, uint8 token, uint256 index);
 
   /**
-    * @dev Emitted when a PrizeSplitConfig config is removed.
-    * @param target Index of an previously active prize split config
+    * @notice Emitted when a PrizeSplitConfig config is removed.
+    * @dev Emitted when a PrizeSplitConfig config is removed in setPrizeSplits.
+    * @param target Index of a previously active prize split config
   */
   event PrizeSplitRemoved(uint256 indexed target);
 
@@ -61,7 +56,7 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     * @param amount Distribution amount to receive
     * @param tokenType The token type (0 or 1) mapped to the PrizeStrategy.tokens() array.
   */
-  function _awardPrizeSplitAmount(address target, uint256 amount, uint256 tokenType) virtual internal;
+  function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenType) virtual internal;
 
   /* ============ Public/External ============ */
 
@@ -86,7 +81,7 @@ abstract contract PrizeSplit is OwnableUpgradeable {
 
   /**
     * @notice Update, add and/or remove prize split(s) configuration.
-    * @dev Update, add and/or remove prize split configs vi an array of PrizeSplitConfig structs. Removes PrizeSplitConfig(s) if array lengths don't match. Limited to contract owner.
+    * @dev Update, add and/or remove prize split configs via an array of PrizeSplitConfig structs. Removes PrizeSplitConfig(s) if array lengths don't match. Limited to contract owner.
     * @param newPrizeSplits Array of PrizeSplitConfig structs
   */
   function setPrizeSplits(PrizeSplitConfig[] calldata newPrizeSplits) external onlyOwner {
@@ -95,6 +90,7 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     // Add and/or update prize split configs using newPrizeSplits PrizeSplitConfig structs array.
     for (uint256 index = 0; index < newPrizeSplitsLength; index++) {
       PrizeSplitConfig memory split = newPrizeSplits[index];
+      require(split.token <= 1, "MultipleWinners/invalid-prizesplit-token");
       require(split.target != address(0), "MultipleWinners/invalid-prizesplit-target");
       
       if (_prizeSplits.length <= index) {
@@ -132,6 +128,7 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   */
   function setPrizeSplit(PrizeSplitConfig memory prizeStrategySplit, uint8 prizeSplitIndex) external onlyOwner {
     require(prizeSplitIndex <= _prizeSplits.length.sub(1), "MultipleWinners/nonexistent-prizesplit");
+    require(prizeStrategySplit.token <= 1, "MultipleWinners/invalid-prizesplit-token");
     require(prizeStrategySplit.target != address(0), "MultipleWinners/invalid-prizesplit-target");
     
     // Update the prize split config.
@@ -186,7 +183,7 @@ abstract contract PrizeSplit is OwnableUpgradeable {
       uint256 _splitAmount = _getPrizeSplitAmount(_prizeTemp, split.percentage);
 
       // Award the prize split distribution amount.
-      _awardPrizeSplitAmount(split.target, _splitAmount, uint256(split.token));
+      _awardPrizeSplitAmount(split.target, _splitAmount, split.token);
 
       // Update the remaining prize amount after distributing the prize split percentage.
       prize = prize.sub(_splitAmount);

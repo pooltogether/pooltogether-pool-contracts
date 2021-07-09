@@ -85,7 +85,6 @@ describe("PrizeSplit", function() {
     });
 
     it("should revert with single prize split config is equal to or above 100% percent", async () => {
-
       await expect(
         prizeSplitHarness.setPrizeSplits([
           {
@@ -125,12 +124,12 @@ describe("PrizeSplit", function() {
             token: 2,
           },
           {
-            target: constants.AddressZero,
-            percentage: "0",
+            target: wallet6.address
+            percentage: 200,
             token: 0,
           },
         ])
-      ).to.be.reverted
+      ).to.be.revertedWith('MultipleWinners/invalid-prizesplit-token')
     });
 
     it("should revert when setting a non-existent prize split config", async () => {

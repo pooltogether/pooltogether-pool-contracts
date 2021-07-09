@@ -91,8 +91,7 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
   }
 
 
-  function _awardPrizeSplitAmount(address target, uint256 amount, uint256 tokenType) override internal {
-    require(tokenType == 0 || tokenType == 1, "MultipleWinners/invalid-prizesplit-token-type");
+  function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenType) override internal {
     _awardToken(target, amount, tokenType);
   }
 

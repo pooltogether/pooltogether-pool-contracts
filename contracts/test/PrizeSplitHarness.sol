@@ -2,7 +2,6 @@
 pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "../token/ControlledToken.sol";
@@ -23,7 +22,7 @@ contract PrizeSplitHarness is PrizeSplit {
     }
   }
 
-  function _awardPrizeSplitAmount(address target, uint256 amount, uint256 tokenType) override internal{
+  function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenType) override internal{
     require(tokenType == 0 || tokenType == 1, "PrizeSplitHarness/invalid-prizesplit-token-type");
     ControlledToken _token = externalErc20s[tokenType];
     _token.controllerMint(target, amount);
