@@ -24,7 +24,7 @@ describe('PrizePool', function() {
   let poolMaxExitFee = toWei('0.5')
   let poolMaxTimelockDuration = 10000
 
-  let ticket, sponsorship
+  let ticket, sponsorship, nft
 
   let compLike
 
@@ -999,5 +999,32 @@ describe('PrizePool', function() {
       await expect(prizeStrategy.call(prizePool, 'awardExternalERC721', wallet.address, erc721token.address, [NFT_TOKEN_ID]))
       .to.emit(prizePool, 'ErrorAwardingExternalERC721')
     })
+  })
+
+  describe('onERC721Received()', () => {
+    beforeEach(async () => {
+      await prizePool.initializeAll(
+        prizeStrategy.address,
+        [ticket.address],
+        poolMaxExitFee,
+        poolMaxTimelockDuration,
+        yieldSourceStub.address
+      )
+      await prizePool.setPrizeStrategy(prizeStrategy.address)
+      await prizePool.setCreditPlanOf(ticket.address, toWei('0.01'), toWei('0.1'))
+      debug('deploying NFT test contract...')
+      const NFTFactory = await hre.ethers.getContractFactory("NFT", wallet, overrides)
+      NFT = await NFTFactory.deploy()
+      await NFT.initialize('NFT Token', 'NFT')
+    })
+
+    it('should receive an ERC721 token when using safeTransferFrom', async () => {
+      expect(await NFT.balanceOf(prizePool.address)).to.equal('0')
+      expect(await NFT.simulateSafeTransferFrom(wallet.address, prizePool.address, 0))
+        .to.emit(NFT, 'Transfer')
+        .withArgs(wallet.address, prizePool.address, 0);
+      expect(await NFT.balanceOf(prizePool.address)).to.equal('1')
+    })
+
   })
 });

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
@@ -23,7 +24,7 @@ import "./PrizePoolInterface.sol";
 /// @title Escrows assets and deposits them into a yield source.  Exposes interest to Prize Strategy.  Users deposit and withdraw from this contract to participate in Prize Pool.
 /// @notice Accounting is managed using Controlled Tokens, whose mint and burn functions can only be called by this contract.
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
-abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenControllerInterface {
+abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenControllerInterface, IERC721ReceiverUpgradeable {
   using SafeMathUpgradeable for uint256;
   using SafeCastUpgradeable for uint256;
   using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -1063,6 +1064,15 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     if (compLike.balanceOf(address(this)) > 0) {
       compLike.delegate(to);
     }
+  }
+  
+  /// @notice Required for ERC721 safe token transfers from smart contracts.
+  /// @param operator The address that acts on behalf of the owner
+  /// @param from The current owner of the NFT
+  /// @param tokenId The NFT to transfer
+  /// @param data Additional data with no specified format, sent in call to `_to`.
+  function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4){
+    return IERC721ReceiverUpgradeable.onERC721Received.selector;
   }
 
   /// @notice The total of all controlled tokens and timelock.
