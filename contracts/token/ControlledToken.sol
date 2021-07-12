@@ -11,6 +11,14 @@ import "./ControlledTokenInterface.sol";
 /// @notice ERC20 Tokens with a controller for minting & burning
 contract ControlledToken is ERC20PermitUpgradeable, ControlledTokenInterface {
 
+  /// @dev Emitted when an instance is initialized
+  event Initialized(
+    string _name,
+    string _symbol,
+    uint8 _decimals,
+    TokenControllerInterface _controller
+  );
+
   /// @notice Interface to the contract responsible for controlling mint/burn
   TokenControllerInterface public override controller;
 
@@ -33,6 +41,13 @@ contract ControlledToken is ERC20PermitUpgradeable, ControlledTokenInterface {
     __ERC20Permit_init("PoolTogether ControlledToken");
     controller = _controller;
     _setupDecimals(_decimals);
+
+    emit Initialized(
+      _name,
+      _symbol,
+      _decimals,
+      _controller
+    );
   }
 
   /// @notice Allows the controller to mint tokens for a user account
