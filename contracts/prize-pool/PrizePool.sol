@@ -1080,7 +1080,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   function _tokenTotalSupply() internal view returns (uint256) {
     uint256 total = timelockTotalSupply.add(reserveTotalSupply);
     address currentToken = _tokens.start();
-    while (currentToken != _tokens.end()) {
+    address tokenEnd = _tokens.end();
+    while (currentToken != tokenEnd) {
       total = total.add(IERC20Upgradeable(currentToken).totalSupply());
       currentToken = _tokens.next(currentToken);
     }
