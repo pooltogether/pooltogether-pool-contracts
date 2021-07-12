@@ -83,7 +83,7 @@ describe('YieldSourcePrizePool', function() {
         poolMaxExitFee,
         poolMaxTimelockDuration,
         ethers.constants.AddressZero
-      )).to.be.revertedWith("YieldSourcePrizePool/yield-source-zero")
+      )).to.be.revertedWith("YieldSourcePrizePool/yield-source-not-contract-address")
     })
 
     it('should require a valid yield source', async () => {
