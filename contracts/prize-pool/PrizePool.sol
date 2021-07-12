@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
@@ -23,10 +24,11 @@ import "./PrizePoolInterface.sol";
 /// @title Escrows assets and deposits them into a yield source.  Exposes interest to Prize Strategy.  Users deposit and withdraw from this contract to participate in Prize Pool.
 /// @notice Accounting is managed using Controlled Tokens, whose mint and burn functions can only be called by this contract.
 /// @dev Must be inherited to provide specific yield-bearing asset control, such as Compound cTokens
-abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenControllerInterface {
+abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenControllerInterface, IERC721ReceiverUpgradeable {
   using SafeMathUpgradeable for uint256;
   using SafeCastUpgradeable for uint256;
   using SafeERC20Upgradeable for IERC20Upgradeable;
+  using SafeERC20Upgradeable for IERC721Upgradeable;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
   using ERC165CheckerUpgradeable for address;
 
@@ -159,6 +161,10 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     uint256 amount
   );
 
+  /// @dev Emitted when there was an error thrown awarding an External ERC721
+  event ErrorAwardingExternalERC721(bytes error);
+
+
   struct CreditPlan {
     uint128 creditLimitMantissa;
     uint128 creditRateMantissa;
@@ -226,7 +232,9 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     require(address(_reserveRegistry) != address(0), "PrizePool/reserveRegistry-not-zero");
     _tokens.initialize();
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
-      _addControlledToken(_controlledTokens[i]);
+      ControlledTokenInterface controlledToken = _controlledTokens[i];
+      require(address(controlledToken) != address(0), "PrizePool/controlledToken-not-zero");
+      _addControlledToken(controlledToken);
     }
     __Ownable_init();
     __ReentrancyGuard_init();
@@ -272,9 +280,9 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     address controlledToken
   )
     external
+    nonReentrant
     onlyControlledToken(controlledToken)
     canAddLiquidity(amount)
-    nonReentrant
   {
     address operator = _msgSender();
     _mint(to, amount, controlledToken, address(0));
@@ -296,9 +304,9 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     address referrer
   )
     external override
+    nonReentrant
     onlyControlledToken(controlledToken)
     canAddLiquidity(amount)
-    nonReentrant
   {
     address operator = _msgSender();
 
@@ -599,7 +607,13 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     }
 
     for (uint256 i = 0; i < tokenIds.length; i++) {
-      IERC721Upgradeable(externalToken).transferFrom(address(this), to, tokenIds[i]);
+      try IERC721Upgradeable(externalToken).safeTransferFrom(address(this), to, tokenIds[i]){
+
+      }
+      catch(bytes memory error){
+        emit ErrorAwardingExternalERC721(error);
+      }
+      
     }
 
     emit AwardedExternalERC721(to, externalToken, tokenIds);
@@ -652,8 +666,9 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     for (i = 0; i < users.length; i++) {
       address user = users[i];
       if (_unlockTimestamps[user] <= _currentTime()) {
-        totalWithdrawal = totalWithdrawal.add(_timelockBalances[user]);
-        balances[i] = _timelockBalances[user];
+        uint256 _userTimelockBalances = _timelockBalances[user];
+        totalWithdrawal = totalWithdrawal.add(_userTimelockBalances);
+        balances[i] = _userTimelockBalances;
         delete _timelockBalances[user];
       }
     }
@@ -719,11 +734,11 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     )
   {
     (uint256 exitFee, uint256 _burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
-    uint256 duration = _estimateCreditAccrualTime(controlledToken, amount, exitFee);
-    if (duration > maxTimelockDuration) {
-      duration = maxTimelockDuration;
+    burnedCredit = _burnedCredit;
+    durationSeconds = _estimateCreditAccrualTime(controlledToken, amount, exitFee);
+    if (durationSeconds > maxTimelockDuration) {
+      durationSeconds = maxTimelockDuration;
     }
-    return (duration, _burnedCredit);
   }
 
   /// @notice Calculates the early exit fee for the given amount
@@ -743,7 +758,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
       uint256 burnedCredit
     )
   {
-    return _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
+    (exitFee, burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
   }
 
   /// @dev Calculates the early exit fee for the given amount
@@ -769,7 +784,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     view
     returns (uint256 durationSeconds)
   {
-    return _estimateCreditAccrualTime(
+    durationSeconds =_estimateCreditAccrualTime(
       _controlledToken,
       _principal,
       _interest
@@ -843,7 +858,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
 
     if (oldBalance < newBalance) {
       emit CreditMinted(user, controlledToken, newBalance.sub(oldBalance));
-    } else {
+    } 
+    else if (newBalance < oldBalance) {
       emit CreditBurned(user, controlledToken, oldBalance.sub(newBalance));
     }
   }
@@ -878,8 +894,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     }
 
     uint256 deltaTime = _currentTime().sub(userTimestamp);
-    uint256 creditPerSecond = FixedPoint.multiplyUintByMantissa(controlledTokenBalance, _tokenCreditPlans[controlledToken].creditRateMantissa);
-    return deltaTime.mul(creditPerSecond);
+    uint256 deltaMantissa = deltaTime.mul(_tokenCreditPlans[controlledToken].creditRateMantissa);
+    return FixedPoint.multiplyUintByMantissa(controlledTokenBalance, deltaMantissa);
   }
 
   /// @notice Returns the credit balance for a given user.  Not that this includes both minted credit and pending credit.
@@ -971,7 +987,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     uint256 totalExitFee = _calculateEarlyExitFeeNoCredit(controlledToken, amount);
     creditBurned = (availableCredit > totalExitFee) ? totalExitFee : availableCredit;
     earlyExitFee = totalExitFee.sub(creditBurned);
-    return (earlyExitFee, creditBurned);
   }
 
   /// @notice Allows the Governor to set a cap on the amount of liquidity that he pool can hold
@@ -1050,13 +1065,23 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
       compLike.delegate(to);
     }
   }
+  
+  /// @notice Required for ERC721 safe token transfers from smart contracts.
+  /// @param operator The address that acts on behalf of the owner
+  /// @param from The current owner of the NFT
+  /// @param tokenId The NFT to transfer
+  /// @param data Additional data with no specified format, sent in call to `_to`.
+  function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4){
+    return IERC721ReceiverUpgradeable.onERC721Received.selector;
+  }
 
   /// @notice The total of all controlled tokens and timelock.
   /// @return The current total of all tokens and timelock.
   function _tokenTotalSupply() internal view returns (uint256) {
     uint256 total = timelockTotalSupply.add(reserveTotalSupply);
     address currentToken = _tokens.start();
-    while (currentToken != address(0) && currentToken != _tokens.end()) {
+    address tokenEnd = _tokens.end();
+    while (currentToken != tokenEnd) {
       total = total.add(IERC20Upgradeable(currentToken).totalSupply());
       currentToken = _tokens.next(currentToken);
     }

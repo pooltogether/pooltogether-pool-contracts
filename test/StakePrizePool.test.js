@@ -21,6 +21,17 @@ describe('StakePrizePool', function() {
   let ticket
 
   let initializeTxPromise
+  let isInitializeTest = false
+
+  const initializeStakePrizePool = async (stakeTokenAddress) => {
+    return await prizePool['initialize(address,address[],uint256,uint256,address)'](
+      registry.address,
+      [ticket.address],
+      poolMaxExitFee,
+      poolMaxTimelockDuration,
+      stakeTokenAddress,
+    );
+  }
 
   beforeEach(async () => {
     [wallet, wallet2] = await hardhat.ethers.getSigners()
@@ -36,7 +47,7 @@ describe('StakePrizePool', function() {
     const ERC20Mintable = await hre.artifacts.readArtifact("ERC20Mintable")
     stakeToken = await deployMockContract(wallet, ERC20Mintable.abi, overrides)
     // await stakeToken.mock.underlying.returns(erc20token.address)
-    
+
     const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
     prizeStrategy = await deployMockContract(wallet, TokenListenerInterface.abi, overrides)
 
@@ -48,33 +59,43 @@ describe('StakePrizePool', function() {
 
     debug('deploying StakePrizePoolHarness...')
     const StakePrizePoolHarness = await hre.ethers.getContractFactory("StakePrizePoolHarness", wallet, overrides)
-  
+
     prizePool = await StakePrizePoolHarness.deploy()
 
     const ControlledToken = await hre.artifacts.readArtifact("ControlledToken")
     ticket = await deployMockContract(wallet, ControlledToken.abi, overrides)
     await ticket.mock.controller.returns(prizePool.address)
 
-    initializeTxPromise = prizePool['initialize(address,address[],uint256,uint256,address)'](
-      registry.address,
-      [ticket.address],
-      poolMaxExitFee,
-      poolMaxTimelockDuration,
-      stakeToken.address
-    )
+    if (!isInitializeTest) {
+      initializeTxPromise = await initializeStakePrizePool(stakeToken.address)
 
-    await initializeTxPromise
-
-    await prizePool.setPrizeStrategy(prizeStrategy.address)
+      await prizePool.setPrizeStrategy(prizeStrategy.address)
+    }
   })
 
   describe('initialize()', () => {
-    it('should initialize the StakePrizePool', async () => {
+    before(() => {
+      isInitializeTest = true
+    })
+
+    after(() => {
+      isInitializeTest = false
+    })
+
+    it('should initialize StakePrizePool', async () => {
+      initializeTxPromise = await initializeStakePrizePool(stakeToken.address)
+
       await expect(initializeTxPromise)
         .to.emit(prizePool, 'StakePrizePoolInitialized')
         .withArgs(
           stakeToken.address
         )
+    })
+
+    it('should fail to initialize StakePrizePool if stakeToken is address zero', async () => {
+      await expect(
+        initializeStakePrizePool(ethers.constants.AddressZero),
+      ).to.be.revertedWith(prizePool, 'StakePrizePool/stake-token-not-zero-address')
     })
   })
 
