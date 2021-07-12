@@ -390,6 +390,34 @@ describe('PrizePool', function() {
         await prizePool.calculateEarlyExitFee(wallet.address, ticket.address, amount)
         expect(await call(prizePool, 'balanceOfCredit', wallet.address, ticket.address)).to.equal(toWei('0.5'))
       })
+
+      it('should track credit accurately with tiny balances', async () => {
+        // Rate: 0.1%, Limit: 10%
+        await prizePool.setCreditPlanOf(ticket.address, toWei('0.001'), toWei('0.1'))
+
+        // user has 100 tickets
+        let amount = '100'
+        await ticket.mock.totalSupply.returns(amount)
+        await ticket.mock.balanceOf.withArgs(wallet.address).returns(amount)
+        
+        await prizePool.setCurrentTime('10')
+
+        expect(await call(prizePool, 'calculateEarlyExitFee', wallet.address, ticket.address, amount)).to.deep.equal([
+          ethers.BigNumber.from('10'),
+          ethers.BigNumber.from('0')
+        ])
+
+        // init & accrue the credit
+        await prizePool.calculateEarlyExitFee(wallet.address, ticket.address, amount)
+
+        // 12 seconds have passed, which means 1.2% has accrued, which is 1 "wei".
+        await prizePool.setCurrentTime('22')
+
+        expect(await call(prizePool, 'calculateEarlyExitFee', wallet.address, ticket.address, amount)).to.deep.equal([
+          ethers.BigNumber.from('9'),
+          ethers.BigNumber.from('1')
+        ])
+      })
     })
 
     describe('withdrawInstantlyFrom()', () => {
