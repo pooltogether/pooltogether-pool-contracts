@@ -719,7 +719,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     )
   {
     (uint256 exitFee, uint256 _burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
-    uint256 durationSeconds = _estimateCreditAccrualTime(controlledToken, amount, exitFee);
+    burnedCredit = _burnedCredit;
+    durationSeconds = _estimateCreditAccrualTime(controlledToken, amount, exitFee);
     if (durationSeconds > maxTimelockDuration) {
       durationSeconds = maxTimelockDuration;
     }
