@@ -390,6 +390,34 @@ describe('PrizePool', function() {
         await prizePool.calculateEarlyExitFee(wallet.address, ticket.address, amount)
         expect(await call(prizePool, 'balanceOfCredit', wallet.address, ticket.address)).to.equal(toWei('0.5'))
       })
+
+      it('should track credit accurately with tiny balances', async () => {
+        // Rate: 0.1%, Limit: 10%
+        await prizePool.setCreditPlanOf(ticket.address, toWei('0.001'), toWei('0.1'))
+
+        // user has 100 tickets
+        let amount = '100'
+        await ticket.mock.totalSupply.returns(amount)
+        await ticket.mock.balanceOf.withArgs(wallet.address).returns(amount)
+        
+        await prizePool.setCurrentTime('10')
+
+        expect(await call(prizePool, 'calculateEarlyExitFee', wallet.address, ticket.address, amount)).to.deep.equal([
+          ethers.BigNumber.from('10'),
+          ethers.BigNumber.from('0')
+        ])
+
+        // init & accrue the credit
+        await prizePool.calculateEarlyExitFee(wallet.address, ticket.address, amount)
+
+        // 12 seconds have passed, which means 1.2% has accrued, which is 1 "wei".
+        await prizePool.setCurrentTime('22')
+
+        expect(await call(prizePool, 'calculateEarlyExitFee', wallet.address, ticket.address, amount)).to.deep.equal([
+          ethers.BigNumber.from('9'),
+          ethers.BigNumber.from('1')
+        ])
+      })
     })
 
     describe('withdrawInstantlyFrom()', () => {
@@ -961,6 +989,15 @@ describe('PrizePool', function() {
       await expect(prizeStrategy.call(prizePool, 'awardExternalERC721', wallet.address, erc721token.address, [NFT_TOKEN_ID]))
         .to.emit(prizePool, 'AwardedExternalERC721')
         .withArgs(wallet.address, erc721token.address, [NFT_TOKEN_ID])
+    })
+
+    it('should not DoS with faulty ERC721s', async () => {
+
+      await yieldSourceStub.mock.canAwardExternal.withArgs(erc721token.address).returns(true)
+      await erc721token.mock.transferFrom.withArgs(prizePool.address, wallet.address, NFT_TOKEN_ID).reverts()
+
+      await expect(prizeStrategy.call(prizePool, 'awardExternalERC721', wallet.address, erc721token.address, [NFT_TOKEN_ID]))
+      .to.emit(prizePool, 'ErrorAwardingExternalERC721')
     })
   })
 });
