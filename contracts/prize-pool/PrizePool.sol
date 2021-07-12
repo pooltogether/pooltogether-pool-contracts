@@ -226,7 +226,9 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     require(address(_reserveRegistry) != address(0), "PrizePool/reserveRegistry-not-zero");
     _tokens.initialize();
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
-      _addControlledToken(_controlledTokens[i]);
+      ControlledTokenInterface controlledToken = _controlledTokens[i];
+      require(address(controlledToken) != address(0), "PrizePool/controlledToken-not-zero");
+      _addControlledToken(controlledToken);
     }
     __Ownable_init();
     __ReentrancyGuard_init();
@@ -1058,7 +1060,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   function _tokenTotalSupply() internal view returns (uint256) {
     uint256 total = timelockTotalSupply.add(reserveTotalSupply);
     address currentToken = _tokens.start();
-    while (currentToken != address(0) && currentToken != _tokens.end()) {
+    while (currentToken != _tokens.end()) {
       total = total.add(IERC20Upgradeable(currentToken).totalSupply());
       currentToken = _tokens.next(currentToken);
     }
