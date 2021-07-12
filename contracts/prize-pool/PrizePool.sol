@@ -274,9 +274,9 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     address controlledToken
   )
     external
+    nonReentrant
     onlyControlledToken(controlledToken)
     canAddLiquidity(amount)
-    nonReentrant
   {
     address operator = _msgSender();
     _mint(to, amount, controlledToken, address(0));
@@ -298,9 +298,9 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     address referrer
   )
     external override
+    nonReentrant
     onlyControlledToken(controlledToken)
     canAddLiquidity(amount)
-    nonReentrant
   {
     address operator = _msgSender();
 
