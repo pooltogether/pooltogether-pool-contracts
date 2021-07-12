@@ -41,7 +41,7 @@ contract Ticket is ControlledToken, TicketInterface {
     override
     initializer
   {
-    super.initialize(_name, _symbol, _decimals, _controller);
+    ControlledToken.initialize(_name, _symbol, _decimals, _controller);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
 
     emit Initialized(
