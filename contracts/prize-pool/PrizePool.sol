@@ -27,6 +27,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   using SafeMathUpgradeable for uint256;
   using SafeCastUpgradeable for uint256;
   using SafeERC20Upgradeable for IERC20Upgradeable;
+  using SafeERC20Upgradeable for IERC721Upgradeable;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
   using ERC165CheckerUpgradeable for address;
 
@@ -158,6 +159,10 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     address indexed token,
     uint256 amount
   );
+
+  /// @dev Emitted when there was an error thrown awarding an External ERC721
+  event ErrorAwardingExternalERC721(bytes error);
+
 
   struct CreditPlan {
     uint128 creditLimitMantissa;
@@ -601,7 +606,13 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     }
 
     for (uint256 i = 0; i < tokenIds.length; i++) {
-      IERC721Upgradeable(externalToken).transferFrom(address(this), to, tokenIds[i]);
+      try IERC721Upgradeable(externalToken).safeTransferFrom(address(this), to, tokenIds[i]){
+
+      }
+      catch(bytes memory error){
+        emit ErrorAwardingExternalERC721(error);
+      }
+      
     }
 
     emit AwardedExternalERC721(to, externalToken, tokenIds);

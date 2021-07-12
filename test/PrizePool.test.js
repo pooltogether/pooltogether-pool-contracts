@@ -990,5 +990,14 @@ describe('PrizePool', function() {
         .to.emit(prizePool, 'AwardedExternalERC721')
         .withArgs(wallet.address, erc721token.address, [NFT_TOKEN_ID])
     })
+
+    it('should not DoS with faulty ERC721s', async () => {
+
+      await yieldSourceStub.mock.canAwardExternal.withArgs(erc721token.address).returns(true)
+      await erc721token.mock.transferFrom.withArgs(prizePool.address, wallet.address, NFT_TOKEN_ID).reverts()
+
+      await expect(prizeStrategy.call(prizePool, 'awardExternalERC721', wallet.address, erc721token.address, [NFT_TOKEN_ID]))
+      .to.emit(prizePool, 'ErrorAwardingExternalERC721')
+    })
   })
 });
