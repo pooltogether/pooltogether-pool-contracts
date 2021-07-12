@@ -847,7 +847,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
 
     if (oldBalance < newBalance) {
       emit CreditMinted(user, controlledToken, newBalance.sub(oldBalance));
-    } else {
+    } 
+    else if (newBalance < oldBalance) {
       emit CreditBurned(user, controlledToken, oldBalance.sub(newBalance));
     }
   }
