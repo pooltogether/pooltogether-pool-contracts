@@ -25,13 +25,11 @@ contract CompoundPrizePool is PrizePool {
   /// @notice Initializes the Prize Pool and Yield Service with the required contract connections
   /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
   /// @param _maxExitFeeMantissa The maximum exit fee size, relative to the withdrawal amount
-  /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
   /// @param _cToken Address of the Compound cToken interface
   function initialize (
     RegistryInterface _reserveRegistry,
     ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
-    uint256 _maxTimelockDuration,
     CTokenInterface _cToken
   )
     public
@@ -40,8 +38,7 @@ contract CompoundPrizePool is PrizePool {
     PrizePool.initialize(
       _reserveRegistry,
       _controlledTokens,
-      _maxExitFeeMantissa,
-      _maxTimelockDuration
+      _maxExitFeeMantissa
     );
     cToken = _cToken;
 

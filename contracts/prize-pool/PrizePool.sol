@@ -35,8 +35,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @dev Emitted when an instance is initialized
   event Initialized(
     address reserveRegistry,
-    uint256 maxExitFeeMantissa,
-    uint256 maxTimelockDuration
+    uint256 maxExitFeeMantissa
   );
 
   /// @dev Event emitted when controlled token is added
@@ -60,14 +59,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     address indexed token,
     uint256 amount,
     address referrer
-  );
-
-  /// @dev Event emitted when timelocked funds are re-deposited
-  event TimelockDeposited(
-    address indexed operator,
-    address indexed to,
-    address indexed token,
-    uint256 amount
   );
 
   /// @dev Event emitted when interest is awarded to a winner
@@ -108,26 +99,9 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     uint256 exitFee
   );
 
-  /// @dev Event emitted upon a withdrawal with timelock
-  event TimelockedWithdrawal(
-    address indexed operator,
-    address indexed from,
-    address indexed token,
-    uint256 amount,
-    uint256 unlockTimestamp
-  );
-
   event ReserveWithdrawal(
     address indexed to,
     uint256 amount
-  );
-
-  /// @dev Event emitted when timelocked funds are swept back to a user
-  event TimelockedWithdrawalSwept(
-    address indexed operator,
-    address indexed from,
-    uint256 amount,
-    uint256 redeemed
   );
 
   /// @dev Event emitted when the Liquidity Cap is set
@@ -189,12 +163,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// For example, if the maxExitFeeMantissa is "0.1 ether", then the maximum exit fee for a withdrawal of 100 Dai will be 10 Dai
   uint256 public maxExitFeeMantissa;
 
-  /// @dev The maximum possible timelock duration for a timelocked withdrawal (in seconds).
-  uint256 public maxTimelockDuration;
-
-  /// @dev The total funds that are timelocked.
-  uint256 public timelockTotalSupply;
-
   /// @dev The total funds that have been allocated to the reserve
   uint256 public reserveTotalSupply;
 
@@ -203,12 +171,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
 
   /// @dev the The awardable balance
   uint256 internal _currentAwardBalance;
-
-  /// @dev The timelocked balances for each user
-  mapping(address => uint256) internal _timelockBalances;
-
-  /// @dev The unlock timestamps for each user
-  mapping(address => uint256) internal _unlockTimestamps;
 
   /// @dev Stores the credit plan for each token.
   mapping(address => CreditPlan) internal _tokenCreditPlans;
@@ -219,12 +181,10 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @notice Initializes the Prize Pool
   /// @param _controlledTokens Array of ControlledTokens that are controlled by this Prize Pool.
   /// @param _maxExitFeeMantissa The maximum exit fee size
-  /// @param _maxTimelockDuration The maximum length of time the withdraw timelock
   function initialize (
     RegistryInterface _reserveRegistry,
     ControlledTokenInterface[] memory _controlledTokens,
-    uint256 _maxExitFeeMantissa,
-    uint256 _maxTimelockDuration
+    uint256 _maxExitFeeMantissa
   )
     public
     initializer
@@ -242,12 +202,10 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
 
     reserveRegistry = _reserveRegistry;
     maxExitFeeMantissa = _maxExitFeeMantissa;
-    maxTimelockDuration = _maxTimelockDuration;
 
     emit Initialized(
       address(_reserveRegistry),
-      maxExitFeeMantissa,
-      maxTimelockDuration
+      maxExitFeeMantissa
     );
   }
 
@@ -268,28 +226,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @return True if the token may be awarded, false otherwise
   function canAwardExternal(address _externalToken) external view returns (bool) {
     return _canAwardExternal(_externalToken);
-  }
-
-  /// @notice Deposits timelocked tokens for a user back into the Prize Pool as another asset.
-  /// @param to The address receiving the tokens
-  /// @param amount The amount of timelocked assets to re-deposit
-  /// @param controlledToken The type of token to be minted in exchange (i.e. tickets or sponsorship)
-  function timelockDepositTo(
-    address to,
-    uint256 amount,
-    address controlledToken
-  )
-    external
-    nonReentrant
-    onlyControlledToken(controlledToken)
-    canAddLiquidity(amount)
-  {
-    address operator = _msgSender();
-    _mint(to, amount, controlledToken, address(0));
-    _timelockBalances[operator] = _timelockBalances[operator].sub(amount);
-    timelockTotalSupply = timelockTotalSupply.sub(amount);
-
-    emit TimelockDeposited(operator, to, controlledToken, amount);
   }
 
   /// @notice Deposit assets into the Prize Pool in exchange for tokens
@@ -365,58 +301,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
       exitFee = maxFee;
     }
     return exitFee;
-  }
-
-  /// @notice Withdraw assets from the Prize Pool by placing them into the timelock.
-  /// The timelock is used to ensure that the tickets have contributed their fair share of the prize.
-  /// @dev Note that if the user has previously timelocked funds then this contract will try to sweep them.
-  /// If the existing timelocked funds are still locked, then the incoming
-  /// balance is added to their existing balance and the new timelock unlock timestamp will overwrite the old one.
-  /// @param from The address to withdraw from
-  /// @param amount The amount to withdraw
-  /// @param controlledToken The type of token being withdrawn
-  /// @return The timestamp from which the funds can be swept
-  function withdrawWithTimelockFrom(
-    address from,
-    uint256 amount,
-    address controlledToken
-  )
-    external override
-    nonReentrant
-    onlyControlledToken(controlledToken)
-    returns (uint256)
-  {
-    uint256 blockTime = _currentTime();
-    (uint256 lockDuration, uint256 burnedCredit) = _calculateTimelockDuration(from, controlledToken, amount);
-    uint256 unlockTimestamp = blockTime.add(lockDuration);
-    _burnCredit(from, controlledToken, burnedCredit);
-    ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
-    _mintTimelock(from, amount, unlockTimestamp);
-    emit TimelockedWithdrawal(_msgSender(), from, controlledToken, amount, unlockTimestamp);
-
-    // return the block at which the funds will be available
-    return unlockTimestamp;
-  }
-
-  /// @notice Adds to a user's timelock balance.  It will attempt to sweep before updating the balance.
-  /// Note that this will overwrite the previous unlock timestamp.
-  /// @param user The user whose timelock balance should increase
-  /// @param amount The amount to increase by
-  /// @param timestamp The new unlock timestamp
-  function _mintTimelock(address user, uint256 amount, uint256 timestamp) internal {
-    // Sweep the old balance, if any
-    address[] memory users = new address[](1);
-    users[0] = user;
-    _sweepTimelockBalances(users);
-
-    timelockTotalSupply = timelockTotalSupply.add(amount);
-    _timelockBalances[user] = _timelockBalances[user].add(amount);
-    _unlockTimestamps[user] = timestamp;
-
-    // if the funds should already be unlocked
-    if (timestamp <= _currentTime()) {
-      _sweepTimelockBalances(users);
-    }
   }
 
   /// @notice Updates the Prize Strategy when tokens are transferred between holders.
@@ -632,113 +516,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
       return 0;
     }
     return FixedPoint.multiplyUintByMantissa(amount, reserveRateMantissa);
-  }
-
-  /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
-  /// @param users An array of account addresses to sweep balances for
-  /// @return The total amount of assets swept from the Prize Pool
-  function sweepTimelockBalances(
-    address[] calldata users
-  )
-    external override
-    nonReentrant
-    returns (uint256)
-  {
-    return _sweepTimelockBalances(users);
-  }
-
-  /// @notice Sweep available timelocked balances to their owners.  The full balances will be swept to the owners.
-  /// @param users An array of owner addresses
-  /// @return The total amount of assets swept from the Prize Pool
-  function _sweepTimelockBalances(
-    address[] memory users
-  )
-    internal
-    returns (uint256)
-  {
-    address operator = _msgSender();
-
-    uint256[] memory balances = new uint256[](users.length);
-
-    uint256 totalWithdrawal;
-
-    uint256 i;
-    for (i = 0; i < users.length; i++) {
-      address user = users[i];
-      if (_unlockTimestamps[user] <= _currentTime()) {
-        uint256 _userTimelockBalances = _timelockBalances[user];
-        totalWithdrawal = totalWithdrawal.add(_userTimelockBalances);
-        balances[i] = _userTimelockBalances;
-        delete _timelockBalances[user];
-      }
-    }
-
-    // if there is nothing to do, just quit
-    if (totalWithdrawal == 0) {
-      return 0;
-    }
-
-    timelockTotalSupply = timelockTotalSupply.sub(totalWithdrawal);
-
-    uint256 redeemed = _redeem(totalWithdrawal);
-
-    IERC20Upgradeable underlyingToken = IERC20Upgradeable(_token());
-
-    for (i = 0; i < users.length; i++) {
-      if (balances[i] > 0) {
-        delete _unlockTimestamps[users[i]];
-        uint256 shareMantissa = FixedPoint.calculateMantissa(balances[i], totalWithdrawal);
-        uint256 transferAmount = FixedPoint.multiplyUintByMantissa(redeemed, shareMantissa);
-        underlyingToken.safeTransfer(users[i], transferAmount);
-        emit TimelockedWithdrawalSwept(operator, users[i], balances[i], transferAmount);
-      }
-    }
-
-    return totalWithdrawal;
-  }
-
-  /// @notice Calculates a timelocked withdrawal duration and credit consumption.
-  /// @param from The user who is withdrawing
-  /// @param amount The amount the user is withdrawing
-  /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
-  /// @return durationSeconds The duration of the timelock in seconds
-  function calculateTimelockDuration(
-    address from,
-    address controlledToken,
-    uint256 amount
-  )
-    external override
-    returns (
-      uint256 durationSeconds,
-      uint256 burnedCredit
-    )
-  {
-    return _calculateTimelockDuration(from, controlledToken, amount);
-  }
-
-  /// @dev Calculates a timelocked withdrawal duration and credit consumption.
-  /// @param from The user who is withdrawing
-  /// @param amount The amount the user is withdrawing
-  /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
-  /// @return durationSeconds The duration of the timelock in seconds
-  /// @return burnedCredit The credit that was burned
-  function _calculateTimelockDuration(
-    address from,
-    address controlledToken,
-    uint256 amount
-  )
-    internal
-    returns (
-      uint256 durationSeconds,
-      uint256 burnedCredit
-    )
-  {
-    (uint256 exitFee, uint256 _burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
-    burnedCredit = _burnedCredit;
-    durationSeconds = _estimateCreditAccrualTime(controlledToken, amount, exitFee);
-    if (durationSeconds > maxTimelockDuration) {
-      durationSeconds = maxTimelockDuration;
-    }
   }
 
   /// @notice Calculates the early exit fee for the given amount
@@ -1037,22 +814,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     return block.timestamp;
   }
 
-  /// @notice The timestamp at which an account's timelocked balance will be made available to sweep
-  /// @param user The address of an account with timelocked assets
-  /// @return The timestamp at which the locked assets will be made available
-  function timelockBalanceAvailableAt(address user) external override view returns (uint256) {
-    return _unlockTimestamps[user];
-  }
-
-  /// @notice The balance of timelocked assets for an account
-  /// @param user The address of an account with timelocked assets
-  /// @return The amount of assets that have been timelocked
-  function timelockBalanceOf(address user) external override view returns (uint256) {
-    return _timelockBalances[user];
-  }
-
-  /// @notice The total of all controlled tokens and timelock.
-  /// @return The current total of all tokens and timelock.
+  /// @notice The total of all controlled tokens
+  /// @return The current total of all tokens
   function accountedBalance() external override view returns (uint256) {
     return _tokenTotalSupply();
   }
@@ -1075,10 +838,10 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     return IERC721ReceiverUpgradeable.onERC721Received.selector;
   }
 
-  /// @notice The total of all controlled tokens and timelock.
-  /// @return The current total of all tokens and timelock.
+  /// @notice The total of all controlled tokens
+  /// @return The current total of all tokens
   function _tokenTotalSupply() internal view returns (uint256) {
-    uint256 total = timelockTotalSupply.add(reserveTotalSupply);
+    uint256 total = reserveTotalSupply;
     address currentToken = _tokens.start();
     address tokenEnd = _tokens.end();
     while (currentToken != tokenEnd) {

@@ -13,7 +13,6 @@ contract PrizePoolHarness is PrizePool {
     RegistryInterface _reserveRegistry,
     ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
-    uint256 _maxTimelockDuration,
     YieldSourceStub _stubYieldSource
   )
     public
@@ -21,8 +20,7 @@ contract PrizePoolHarness is PrizePool {
     PrizePool.initialize(
       _reserveRegistry,
       _controlledTokens,
-      _maxExitFeeMantissa,
-      _maxTimelockDuration
+      _maxExitFeeMantissa
     );
     stubYieldSource = _stubYieldSource;
   }
@@ -37,10 +35,6 @@ contract PrizePoolHarness is PrizePool {
 
   function setCurrentTime(uint256 _currentTime) external {
     currentTime = _currentTime;
-  }
-
-  function setTimelockBalance(uint256 _timelockBalance) external {
-    timelockTotalSupply = _timelockBalance;
   }
 
   function _currentTime() internal override view returns (uint256) {

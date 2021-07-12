@@ -16,7 +16,7 @@ describe('StakePrizePool', function() {
   let prizePool, erc20token, erc721token, stakeToken, prizeStrategy, registry
 
   let poolMaxExitFee = toWei('0.5')
-  let poolMaxTimelockDuration = 10000
+
 
   let ticket
 
@@ -24,11 +24,10 @@ describe('StakePrizePool', function() {
   let isInitializeTest = false
 
   const initializeStakePrizePool = async (stakeTokenAddress) => {
-    return await prizePool['initialize(address,address[],uint256,uint256,address)'](
+    return await prizePool['initialize(address,address[],uint256,address)'](
       registry.address,
       [ticket.address],
       poolMaxExitFee,
-      poolMaxTimelockDuration,
       stakeTokenAddress,
     );
   }

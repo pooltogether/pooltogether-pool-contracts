@@ -36,20 +36,6 @@ interface PrizePoolInterface {
     uint256 maximumExitFee
   ) external returns (uint256);
 
-  /// @notice Withdraw assets from the Prize Pool by placing them into the timelock.
-  /// The timelock is used to ensure that the tickets have contributed their fair share of the prize.
-  /// @dev Note that if the user has previously timelocked funds then this contract will try to sweep them.
-  /// If the existing timelocked funds are still locked, then the incoming
-  /// balance is added to their existing balance and the new timelock unlock timestamp will overwrite the old one.
-  /// @param from The address to withdraw from
-  /// @param amount The amount to withdraw
-  /// @param controlledToken The type of token being withdrawn
-  /// @return The timestamp from which the funds can be swept
-  function withdrawWithTimelockFrom(
-    address from,
-    uint256 amount,
-    address controlledToken
-  ) external returns (uint256);
 
   function withdrawReserve(address to) external returns (uint256);
 
@@ -110,31 +96,6 @@ interface PrizePoolInterface {
     uint256[] calldata tokenIds
   )
     external;
-
-  /// @notice Sweep all timelocked balances and transfer unlocked assets to owner accounts
-  /// @param users An array of account addresses to sweep balances for
-  /// @return The total amount of assets swept from the Prize Pool
-  function sweepTimelockBalances(
-    address[] calldata users
-  )
-    external
-    returns (uint256);
-
-  /// @notice Calculates a timelocked withdrawal duration and credit consumption.
-  /// @param from The user who is withdrawing
-  /// @param amount The amount the user is withdrawing
-  /// @param controlledToken The type of collateral the user is withdrawing (i.e. ticket or sponsorship)
-  /// @return durationSeconds The duration of the timelock in seconds
-  function calculateTimelockDuration(
-    address from,
-    address controlledToken,
-    uint256 amount
-  )
-    external
-    returns (
-      uint256 durationSeconds,
-      uint256 burnedCredit
-    );
 
   /// @notice Calculates the early exit fee for the given amount
   /// @param from The user who is withdrawing
@@ -212,17 +173,7 @@ interface PrizePoolInterface {
   /// @return An array of controlled token addresses
   function tokens() external view returns (address[] memory);
 
-  /// @notice The timestamp at which an account's timelocked balance will be made available to sweep
-  /// @param user The address of an account with timelocked assets
-  /// @return The timestamp at which the locked assets will be made available
-  function timelockBalanceAvailableAt(address user) external view returns (uint256);
-
-  /// @notice The balance of timelocked assets for an account
-  /// @param user The address of an account with timelocked assets
-  /// @return The amount of assets that have been timelocked
-  function timelockBalanceOf(address user) external view returns (uint256);
-
-  /// @notice The total of all controlled tokens and timelock.
-  /// @return The current total of all tokens and timelock.
+  /// @notice The total of all controlled tokens
+  /// @return The current total of all tokens
   function accountedBalance() external view returns (uint256);
 }
