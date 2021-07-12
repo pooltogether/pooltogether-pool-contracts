@@ -652,8 +652,9 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     for (i = 0; i < users.length; i++) {
       address user = users[i];
       if (_unlockTimestamps[user] <= _currentTime()) {
-        totalWithdrawal = totalWithdrawal.add(_timelockBalances[user]);
-        balances[i] = _timelockBalances[user];
+        uint256 _userTimelockBalances = _timelockBalances[user];
+        totalWithdrawal = totalWithdrawal.add(_userTimelockBalances);
+        balances[i] = _userTimelockBalances;
         delete _timelockBalances[user];
       }
     }
