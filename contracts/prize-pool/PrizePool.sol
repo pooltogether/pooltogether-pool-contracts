@@ -175,6 +175,9 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     bool initialized;
   }
 
+  /// @notice Semver Version
+  string constant public VERSION = "3.4.0";
+
   /// @dev Reserve to which reserve fees are sent
   RegistryInterface public reserveRegistry;
 
