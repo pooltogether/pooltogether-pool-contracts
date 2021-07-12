@@ -14,6 +14,14 @@ contract Ticket is ControlledToken, TicketInterface {
   bytes32 constant private TREE_KEY = keccak256("PoolTogether/Ticket");
   uint256 constant private MAX_TREE_LEAVES = 5;
 
+  /// @dev Emitted when an instance is initialized
+  event Initialized(
+    string _name,
+    string _symbol,
+    uint8 _decimals,
+    TokenControllerInterface _controller
+  );
+
   // Ticket-weighted odds
   SortitionSumTreeFactory.SortitionSumTrees internal sortitionSumTrees;
 
@@ -35,6 +43,13 @@ contract Ticket is ControlledToken, TicketInterface {
   {
     super.initialize(_name, _symbol, _decimals, _controller);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
+
+    emit Initialized(
+      _name,
+      _symbol,
+      _decimals,
+      _controller
+    );
   }
 
   /// @notice Returns the user's chance of winning.
