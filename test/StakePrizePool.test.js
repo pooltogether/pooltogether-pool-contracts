@@ -24,11 +24,10 @@ describe('StakePrizePool', function() {
   let isInitializeTest = false
 
   const initializeStakePrizePool = async (stakeTokenAddress) => {
-    return await prizePool['initialize(address,address[],uint256,uint256,address)'](
+    return await prizePool['initialize(address,address[],uint256,address)'](
       registry.address,
       [ticket.address],
       poolMaxExitFee,
-      poolMaxTimelockDuration,
       stakeTokenAddress,
     );
   }
