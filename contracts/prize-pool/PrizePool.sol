@@ -1058,7 +1058,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @param tokenId The NFT to transfer
   /// @param data Additional data with no specified format, sent in call to `_to`.
   function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4){
-    return this.onERC721Received.selector;
+    return IERC721ReceiverUpgradeable.onERC721Received.selector;
   }
 
   /// @notice The total of all controlled tokens and timelock.
