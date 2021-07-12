@@ -119,6 +119,9 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     uint32 requestedAt;
   }
 
+  /// @notice Semver Version
+  string constant public VERSION = "3.4.0";
+
   // Comptroller
   TokenListenerInterface public tokenListener;
 
