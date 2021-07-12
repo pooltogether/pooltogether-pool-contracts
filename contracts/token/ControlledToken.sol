@@ -37,6 +37,7 @@ contract ControlledToken is ERC20PermitUpgradeable, ControlledTokenInterface {
     virtual
     initializer
   {
+    require(address(_controller) != address(0), "ControlledToken/controller-not-zero");
     __ERC20_init(_name, _symbol);
     __ERC20Permit_init("PoolTogether ControlledToken");
     controller = _controller;
