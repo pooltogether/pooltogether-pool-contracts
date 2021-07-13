@@ -231,8 +231,9 @@ function PoolEnv() {
 
   this.expectUserToHaveCredit = async function ({ user, credit }) {
     let wallet = await this.wallet(user)
+    let ticket = await this.ticket(wallet)
     let prizePool = await this.prizePool(wallet)
-    let ticketInterest = await call(prizePool, 'balanceOfCredit', wallet.address, this.env.ticket.address)
+    let ticketInterest = await call(prizePool, 'balanceOfCredit', wallet.address, ticket.address)
     debug(`expectUserToHaveCredit ticketInterest ${ticketInterest.toString()}`)
     expect(ticketInterest).to.equalish(toWei(credit), 300)
   }
@@ -284,7 +285,7 @@ function PoolEnv() {
   }
 
   this.draw = async function ({ token }) {
-    let winner = await this.env.ticket.draw(token)
+    let winner = await this.ticket.draw(token)
     debug(`draw(${token}) = ${winner}`)
   }
 
