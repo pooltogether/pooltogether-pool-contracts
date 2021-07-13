@@ -783,7 +783,6 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @param index The index to add the controlledToken
   function _addControlledToken(ControlledTokenInterface _controlledToken, uint256 index) internal {
     require(_controlledToken.controller() == this, "PrizePool/token-ctrlr-mismatch");
-    require(address(_controlledToken) != address(0), "PrizePool/controlledToken-not-zero");
     
     _tokens[index] = _controlledToken;
     emit ControlledTokenAdded(_controlledToken);
@@ -866,7 +865,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @dev Checks if a specific token is controlled by the Prize Pool
   /// @param controlledToken The address of the token to check
   /// @return True if the token is a controlled token, false otherwise
-  function _isControlled(ControlledTokenInterface controlledToken) internal view returns (bool) {
+  function _isControlled(ControlledTokenInterface controlledToken) public view returns (bool) {
     ControlledTokenInterface[] memory tokens = _tokens; // SLOAD
     uint256 tokensLength = tokens.length;
 
