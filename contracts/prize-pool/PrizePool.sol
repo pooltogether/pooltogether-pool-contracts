@@ -865,7 +865,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @dev Checks if a specific token is controlled by the Prize Pool
   /// @param controlledToken The address of the token to check
   /// @return True if the token is a controlled token, false otherwise
-  function _isControlled(ControlledTokenInterface controlledToken) public view returns (bool) {
+  function _isControlled(ControlledTokenInterface controlledToken) internal view returns (bool) {
     ControlledTokenInterface[] memory tokens = _tokens; // SLOAD
     uint256 tokensLength = tokens.length;
 
@@ -873,6 +873,13 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
       if(tokens[i] == controlledToken) return true;
     }
     return false;
+  }
+  
+  /// @dev Checks if a specific token is controlled by the Prize Pool
+  /// @param controlledToken The address of the token to check
+  /// @return True if the token is a controlled token, false otherwise
+  function isControlled(ControlledTokenInterface controlledToken) external view returns (bool) {
+    return _isControlled(controlledToken);
   }
 
   /// @notice Determines whether the passed token can be transferred out as an external award.
