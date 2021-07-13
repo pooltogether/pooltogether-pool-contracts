@@ -153,8 +153,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @dev Reserve to which reserve fees are sent
   RegistryInterface public reserveRegistry;
 
-  /// @dev A linked list of all the controlled tokens
-  MappedSinglyLinkedList.Mapping internal _tokens;
+  /// @dev An array of all the controlled tokens
+  ControlledTokenInterface[] internal _tokens;
 
   /// @dev The Prize Strategy that this Prize Pool is bound to.
   TokenListenerInterface public prizeStrategy;
@@ -190,7 +190,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
     initializer
   {
     require(address(_reserveRegistry) != address(0), "PrizePool/reserveRegistry-not-zero");
-    _tokens.initialize();
+    
     for (uint256 i = 0; i < _controlledTokens.length; i++) {
       ControlledTokenInterface controlledToken = _controlledTokens[i];
       require(address(controlledToken) != address(0), "PrizePool/controlledToken-not-zero");
@@ -781,8 +781,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @param _controlledToken The controlled token to add.  Cannot be a duplicate.
   function _addControlledToken(ControlledTokenInterface _controlledToken) internal {
     require(_controlledToken.controller() == this, "PrizePool/token-ctrlr-mismatch");
-    _tokens.addAddress(address(_controlledToken));
-
+    
+    _tokens.push(_controlledToken);
     emit ControlledTokenAdded(_controlledToken);
   }
 
@@ -804,8 +804,8 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
 
   /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
   /// @return An array of controlled token addresses
-  function tokens() external override view returns (address[] memory) {
-    return _tokens.addressArray();
+  function tokens() external override view returns (ControlledTokenInterface[] memory) {
+    return _tokens;
   }
 
   /// @dev Gets the current time as represented by the current block
@@ -842,12 +842,12 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @return The current total of all tokens
   function _tokenTotalSupply() internal view returns (uint256) {
     uint256 total = reserveTotalSupply;
-    address currentToken = _tokens.start();
-    address tokenEnd = _tokens.end();
-    while (currentToken != tokenEnd) {
-      total = total.add(IERC20Upgradeable(currentToken).totalSupply());
-      currentToken = _tokens.next(currentToken);
+    ControlledTokenInterface[] memory tokens = _tokens; // SLOAD  
+    
+    for(uint256 i = 0; i < tokens.length; i++){
+      total = total.add(IERC20Upgradeable(tokens[i]).totalSupply());
     }
+
     return total;
   }
 
@@ -862,8 +862,12 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @dev Checks if a specific token is controlled by the Prize Pool
   /// @param controlledToken The address of the token to check
   /// @return True if the token is a controlled token, false otherwise
-  function _isControlled(address controlledToken) internal view returns (bool) {
-    return _tokens.contains(controlledToken);
+  function _isControlled(ControlledTokenInterface controlledToken) internal view returns (bool) {
+    ControlledTokenInterface[] memory tokens = _tokens; // SLOAD
+    for(uint256 i = 0; i < tokens.length; i++) {
+      if(tokens[i] == controlledToken) return true;
+    }
+    return false;
   }
 
   /// @notice Determines whether the passed token can be transferred out as an external award.
@@ -893,7 +897,7 @@ abstract contract PrizePool is PrizePoolInterface, OwnableUpgradeable, Reentranc
   /// @dev Function modifier to ensure usage of tokens controlled by the Prize Pool
   /// @param controlledToken The address of the token to check
   modifier onlyControlledToken(address controlledToken) {
-    require(_isControlled(controlledToken), "PrizePool/unknown-token");
+    require(_isControlled(ControlledTokenInterface(controlledToken)), "PrizePool/unknown-token");
     _;
   }
 

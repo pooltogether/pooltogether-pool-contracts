@@ -171,7 +171,7 @@ interface PrizePoolInterface {
 
   /// @notice An array of the Tokens controlled by the Prize Pool (ie. Tickets, Sponsorship)
   /// @return An array of controlled token addresses
-  function tokens() external view returns (address[] memory);
+  function tokens() external view returns (ControlledTokenInterface[] memory);
 
   /// @notice The total of all controlled tokens
   /// @return The current total of all tokens

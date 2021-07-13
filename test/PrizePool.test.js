@@ -765,7 +765,6 @@ describe('PrizePool', function() {
         prizeStrategy.address,
         [ticket.address],
         poolMaxExitFee,
-        poolMaxTimelockDuration,
         yieldSourceStub.address
       )
       await prizePool.setPrizeStrategy(prizeStrategy.address)
