@@ -54,9 +54,9 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     * @dev Award ticket or sponsorship to prize split recipient via the linked PrizeStrategy contract.
     * @param target Address of recipient
     * @param amount Distribution amount to receive
-    * @param tokenType The token type (0 or 1) mapped to the PrizeStrategy.tokens() array.
+    * @param tokenIndex The token type (0 or 1) mapped to the PrizeStrategy.tokens() array.
   */
-  function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenType) virtual internal;
+  function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenIndex) virtual internal;
 
   /* ============ Public/External ============ */
 

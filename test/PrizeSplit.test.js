@@ -64,18 +64,64 @@ describe("PrizeSplit", function() {
     );
 
     prizeSplitHarness = await PrizeSplitHarness.deploy();
+    await prizeSplitHarness.initialize([])
 
     debug("initialized!");
   });
 
 
   describe("setPrizeSplits()", () => {
+    it("should revert when calling setPrizeSplits from a non-owner address", async () => { 
+      const prizeSplitConfig = [
+        {
+          target: wallet5.address,
+          percentage: 55,
+          token: 1,
+        },
+        {
+          target: wallet6.address,
+          percentage: 120,
+          token: 0,
+        },
+      ];
+
+      prizeSplitHarness = await prizeSplitHarness.connect(wallet5);
+      await expect(prizeSplitHarness.setPrizeSplits(prizeSplitConfig))
+      .to.be.revertedWith("Ownable: caller is not the owner");
+    })
+    
+    it("should revert when calling setPrizeSplit from a non-owner address", async () => { 
+      const prizeSplitsConfig = [
+        {
+          target: wallet5.address,
+          percentage: 55,
+          token: 1,
+        },
+        {
+          target: wallet6.address,
+          percentage: 120,
+          token: 0,
+        },
+      ];
+
+      await prizeSplitHarness.setPrizeSplits(prizeSplitsConfig)
+      
+      const prizeSplitConfig ={
+        target: wallet6.address,
+        percentage: 500,
+        token: 0,
+      }
+      prizeSplitHarness = await prizeSplitHarness.connect(wallet5);
+      await expect(prizeSplitHarness.setPrizeSplit(prizeSplitConfig, 0))
+      .to.be.revertedWith('Ownable: caller is not the owner');
+    })
+
     it("should revert with invalid prize split target address", async () => {
       await expect(
         prizeSplitHarness.setPrizeSplits([
           {
             target: constants.AddressZero,
-            percentage: "100",
+            percentage: 100,
             token: 0,
           },
         ])
@@ -124,7 +170,7 @@ describe("PrizeSplit", function() {
             token: 2,
           },
           {
-            target: wallet6.address
+            target: wallet6.address,
             percentage: 200,
             token: 0,
           },
@@ -470,12 +516,12 @@ describe("PrizeSplit", function() {
       const prizeSplitConfig = [
         {
           target: wallet5.address,
-          percentage: "55",
+          percentage: 55,
           token: 0,
         },
         {
           target: wallet6.address,
-          percentage: "120",
+          percentage: 120,
           token: 1,
         },
       ];

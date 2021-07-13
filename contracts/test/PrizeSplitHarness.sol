@@ -22,9 +22,9 @@ contract PrizeSplitHarness is PrizeSplit {
     }
   }
 
-  function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenType) override internal{
-    require(tokenType == 0 || tokenType == 1, "PrizeSplitHarness/invalid-prizesplit-token-type");
-    ControlledToken _token = externalErc20s[tokenType];
+  function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenIndex) override internal{
+    require(tokenIndex == 0 || tokenIndex == 1, "PrizeSplitHarness/invalid-prizesplit-token-type");
+    ControlledToken _token = externalErc20s[tokenIndex];
     _token.controllerMint(target, amount);
   }
 

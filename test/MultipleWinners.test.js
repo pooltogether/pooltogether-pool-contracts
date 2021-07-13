@@ -217,7 +217,6 @@ describe("MultipleWinners", function() {
       await prizeStrategy.distribute(randomNumber);
     });
 
-
     describe("with a real ticket contract", async () => {
       let controller, ticket;
 
