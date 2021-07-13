@@ -91,11 +91,11 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
   }
 
   /**
-    * @notice Award ticket or sponsorship amount to prize split recipient.
-    * @dev Award ticket or sponsorship to prize split recipient via the linked PrizeStrategy contract.
-    * @param target Address of recipient
-    * @param amount Distribution amount to receive
-    * @param tokenIndex The token index (0 or 1) mapped to the PrizeStrategy.tokens() array.
+    * @notice Award ticket or sponsorship tokens to prize split recipient.
+    * @dev Award ticket or sponsorship tokens to prize split recipient via the linked PrizePool contract.
+    * @param target Recipient of minted tokens
+    * @param amount Amount of minted tokens
+    * @param tokenIndex Index (0 or 1) of a token in the prizePool.tokens mapping
   */
   function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenIndex) override internal {
     _awardToken(target, amount, tokenIndex);
