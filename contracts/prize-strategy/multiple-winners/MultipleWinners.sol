@@ -62,7 +62,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     return true;
   }
 
-  function setCarryBacklist(bool _carry) external onlyOwner requireAwardNotInProgress returns (bool) {
+  function setCarryBlocklist(bool _carry) external onlyOwner requireAwardNotInProgress returns (bool) {
     carryOverBlocklist = _carry;
 
     emit BlocklistCarrySet(_carry);
@@ -131,11 +131,10 @@ contract MultipleWinners is PeriodicPrizeStrategy {
       nextRandom = uint256(nextRandomHash);
     }
 
-    // yield prize is split up among all winners
-
     // main winner gets all external ERC721 tokens
     _awardExternalErc721s(winners[0]);
 
+    // yield prize is split up among all winners
     uint256 prizeShare = _carryOverBlocklistPrizes ? prize.div(numberOfWinners) : prize.div(winnerCount);
     if (prizeShare > 0) {
       for (uint i = 0; i < winnerCount; i++) {
