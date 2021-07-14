@@ -104,7 +104,8 @@ describe('MultipleWinners', function() {
         ticket.address,
         sponsorship.address,
         rng.address,
-        4)
+        4
+      )
 
       await expect(initalizeResult2).to.emit(prizeStrategy2, 'NumberOfWinnersSet').withArgs(4)
     })
@@ -146,6 +147,7 @@ describe('MultipleWinners', function() {
     it('should ignore awarding prizes if there are no winners to select', async () => {
       await prizePool.mock.captureAwardBalance.returns(toWei('10'))
       await ticket.mock.draw.withArgs(10).returns(ethers.constants.AddressZero)
+      await ticket.mock.totalSupply.returns(0)
       await expect(prizeStrategy.distribute(10))
         .to.emit(prizeStrategy, 'NoWinners')
     })
