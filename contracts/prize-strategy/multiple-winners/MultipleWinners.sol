@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 
 import "../PeriodicPrizeStrategy.sol";
 
@@ -10,24 +11,63 @@ contract MultipleWinners is PeriodicPrizeStrategy {
 
   bool public splitExternalErc20Awards;
 
+  /**
+    * @notice Tracks blocked status of users. Preventing an address from selected during award distribution.
+    * @dev Mapping of addresses isBlocked status. By default all addresses are unblocked. 
+  */
   mapping(address => bool) public isBlocklisted;
 
+  // Carry over the awarded prize for the next drawing when selected winners is less than __numberOfWinners
   bool public carryOverBlocklist;
 
+  // Limit ticket.draw() retry attempts when a blocked address is selected in _distribute.
   uint256 public blocklistRetryCount;
 
+  /**
+    * @dev Emitted when splitExternalErc20Awards is toggled.
+  */
   event SplitExternalErc20AwardsSet(bool splitExternalErc20Awards);
 
+  /**
+    * @dev Emitted when numberOfWinners is set.
+    * @dev Emitted when numberOfWinners is set, which limits the maximum number of potentially selected winners.
+    * @param numberOfWinners Maximum potentially selected winners
+  */
   event NumberOfWinnersSet(uint256 numberOfWinners);
 
+  /**
+    * @notice Emitted when carryOverBlocklist is toggled.
+    * @dev Emitted when carryOverBlocklist is toggled for distribution of the primary and secondary prizes.
+    * @param carry Awarded prize carry over status
+  */
   event BlocklistCarrySet(bool carry);
 
-  event BlocklistSet(address indexed user, bool blocklisted);
+  /**
+    * @notice Emitted when a user is blocked/unblocked from receiving a prize award.
+    * @dev Emitted when a contract owner blocks/unblocks user from award selection in _distribute.
+    * @param user Address of user to block or unblock
+    * @param isBlocked User blocked status
+  */
+  event BlocklistSet(address indexed user, bool isBlocked);
 
+  /**
+    * @notice Emitted when a new draw retry limit is set.
+    * @dev Emitted when a new draw retry limit is set. Retry limit is set to limit gas spendings if a blocked user continues to be drawn.
+    * @param count Number of winner selection retry attempts 
+  */
   event BlocklistRetryCountSet(uint256 count);
 
+  /**
+    * @notice Emitted when the winner selection retry limit is reached during award distribution.
+    * @dev Emitted when the maximum number of users has not been selected after the blocklistRetryCount is reached.
+    * @param numberOfWinners Total number of winners selected before the blocklistRetryCount is reached.
+  */
   event RetryMaxLimitReached(uint256 numberOfWinners);
 
+  /**
+    * @notice Emitted when no winner can be selected during the prize distribution. 
+    * @dev Emitted when no winner can be selected in _distribute due to ticket.totalSupply() equaling zero.
+  */
   event NoWinners();
 
   function initializeMultipleWinners (
@@ -54,14 +94,25 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     _setNumberOfWinners(_numberOfWinners);
   }
 
-  function setBlocklisted(address _user, bool _blocklist) external onlyOwner requireAwardNotInProgress returns (bool) {
-    isBlocklisted[_user] = _blocklist;
+  /**
+    * @notice Block/unblock a user from winning during prize distribution.
+    * @dev Block/unblock a user from winning award in prize distribution by updating the isBlocklisted mapping.
+    * @param _user Address of blocked user
+    * @param _isBlocked Blocked Status (true or false) of user
+  */
+  function setBlocklisted(address _user, bool _isBlocked) external onlyOwner requireAwardNotInProgress returns (bool) {
+    isBlocklisted[_user] = _isBlocked;
 
-    emit BlocklistSet(_user, _blocklist);
+    emit BlocklistSet(_user, _isBlocked);
 
     return true;
   }
 
+  /**
+    * @notice Toggle if an unawarded prize amount should be kept for the next draw or evenly distrubted to selected winners. 
+    * @dev Toggles if the main prize (prizePool.captureAwardBalance) and secondary prizes (LootBox) should be kept for the next draw or evenly distrubted if maximum number of winners is not selected. 
+    * @param _carry Award carry over status (true or false)
+  */
   function setCarryBlocklist(bool _carry) external onlyOwner requireAwardNotInProgress returns (bool) {
     carryOverBlocklist = _carry;
 
@@ -70,6 +121,11 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     return true;
   }
 
+  /**
+    * @notice Sets the number of attempts for winner selection if a blocked address is chosen.
+    * @dev Limits winner selection (ticket.draw) retries to avoid to gas limit reached errors. Increases the probability of not reaching the maximum number of winners if to low.
+    * @param _carry Award carry over status (true or false)
+  */
   function setBlocklistRetryCount(uint256 _count) external onlyOwner requireAwardNotInProgress returns (bool) {
     blocklistRetryCount = _count;
 
