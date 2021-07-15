@@ -12,6 +12,12 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
   
   bool public splitExternalErc20Awards;
 
+  mapping(address => bool) public isBlocklisted;
+
+  bool public carryOverBlocklist;
+
+  uint256 public blocklistRetryCount;
+  
   /**
     * @dev Emitted when SplitExternalErc20Awards is set/toggled.
   */
@@ -21,7 +27,15 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
     * @dev Emitted when numberOfWinners is set/updated.
   */
   event NumberOfWinnersSet(uint256 numberOfWinners);
-  
+
+  event BlocklistCarrySet(bool carry);
+
+  event BlocklistSet(address indexed user, bool blocklisted);
+
+  event BlocklistRetryCountSet(uint256 count);
+
+  event RetryMaxLimitReached(uint256 numberOfWinners);
+
   /**
     * @dev Emitted is a winner is selected during the prize period award process.
   */
@@ -51,7 +65,31 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
     _setNumberOfWinners(_numberOfWinners);
   }
 
-  /**
+  function setBlocklisted(address _user, bool _blocklist) external onlyOwner requireAwardNotInProgress returns (bool) {
+    isBlocklisted[_user] = _blocklist;
+
+    emit BlocklistSet(_user, _blocklist);
+
+    return true;
+  }
+
+  function setCarryBlocklist(bool _carry) external onlyOwner requireAwardNotInProgress returns (bool) {
+    carryOverBlocklist = _carry;
+
+    emit BlocklistCarrySet(_carry);
+
+    return true;
+  }
+
+  function setBlocklistRetryCount(uint256 _count) external onlyOwner requireAwardNotInProgress returns (bool) {
+    blocklistRetryCount = _count;
+
+    emit BlocklistRetryCountSet(_count);
+
+    return true;
+  }
+
+    /**
     * @notice Set if external ERC20 awards should be split
     * @dev Set if external ERC20 awards should be split amongst each winner using a bool.
     * @param _splitExternalErc20Awards Toggle splitting external ERC20 awards.
@@ -109,37 +147,44 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
   */
   function _distribute(uint256 randomNumber) internal override {
     uint256 prize = prizePool.captureAwardBalance();
-
-    // distributes prize to prize splits and returns remaining award.
     prize = _distributePrizeSplits(prize);
 
-    // main winner is simply the first that is drawn
-    address mainWinner = ticket.draw(randomNumber);
-
-    // If drawing yields no winner, then there is no one to pick
-    if (mainWinner == address(0)) {
+    if (IERC20Upgradeable(address(ticket)).totalSupply() == 0) {
       emit NoWinners();
       return;
     }
 
-    // main winner gets all external ERC721 tokens
-    _awardExternalErc721s(mainWinner);
+    bool _carryOverBlocklistPrizes = carryOverBlocklist;
 
-    address[] memory winners = new address[](__numberOfWinners);
-    winners[0] = mainWinner;
-
+    // main winner is simply the first that is drawn
+    uint256 numberOfWinners = __numberOfWinners;
+    address[] memory winners = new address[](numberOfWinners);
     uint256 nextRandom = randomNumber;
-    for (uint256 winnerCount = 1; winnerCount < __numberOfWinners; winnerCount++) {
+    uint256 winnerCount = 0;
+    uint256 retries = 0;
+    uint256 _retryCount = blocklistRetryCount;
+    while (winnerCount < numberOfWinners) {
+      address winner = ticket.draw(nextRandom);
+
+      if (!isBlocklisted[winner]) {
+        winners[winnerCount++] = winner;
+      } else if (++retries >= _retryCount) {
+        emit RetryMaxLimitReached(numberOfWinners);
+        break;
+      }
+
       // add some arbitrary numbers to the previous random number to ensure no matches with the UniformRandomNumber lib
       bytes32 nextRandomHash = keccak256(abi.encodePacked(nextRandom + 499 + winnerCount*521));
       nextRandom = uint256(nextRandomHash);
-      winners[winnerCount] = ticket.draw(nextRandom);
     }
 
+    // main winner gets all external ERC721 tokens
+    _awardExternalErc721s(winners[0]);
+
     // yield prize is split up among all winners
-    uint256 prizeShare = prize.div(winners.length);
+    uint256 prizeShare = _carryOverBlocklistPrizes ? prize.div(numberOfWinners) : prize.div(winnerCount);
     if (prizeShare > 0) {
-      for (uint i = 0; i < winners.length; i++) {
+      for (uint i = 0; i < winnerCount; i++) {
         _awardTickets(winners[i], prizeShare);
       }
     }
@@ -148,16 +193,16 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
       address currentToken = externalErc20s.start();
       while (currentToken != address(0) && currentToken != externalErc20s.end()) {
         uint256 balance = IERC20Upgradeable(currentToken).balanceOf(address(prizePool));
-        uint256 split = balance.div(__numberOfWinners);
+        uint256 split = _carryOverBlocklistPrizes ? balance.div(numberOfWinners) : balance.div(winnerCount);
         if (split > 0) {
-          for (uint256 i = 0; i < winners.length; i++) {
+          for (uint256 i = 0; i < winnerCount; i++) {
             prizePool.awardExternalERC20(winners[i], currentToken, split);
           }
         }
         currentToken = externalErc20s.next(currentToken);
       }
     } else {
-      _awardExternalErc20s(mainWinner);
+      _awardExternalErc20s(winners[0]);
     }
   }
 }
