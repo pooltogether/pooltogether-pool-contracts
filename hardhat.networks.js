@@ -7,7 +7,8 @@ const networks = {
   localhost: {
     chainId: 1,
     url: 'http://127.0.0.1:8545',
-    allowUnlimitedContractSize: true
+    allowUnlimitedContractSize: true,
+    timeout: 1000 * 60
   }
 }
 
@@ -48,7 +49,7 @@ if (process.env.HDWALLET_MNEMONIC) {
   }
   networks.matic = {
     chainId: 137,
-    url: 'https://rpc-mainnet.maticvigil.com',
+    url: `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }

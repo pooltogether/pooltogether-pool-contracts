@@ -1,12 +1,8 @@
 const { deployMockContract } = require("ethereum-waffle");
-const { deploy1820 } = require("deploy-eip-1820");
-
 const { expect } = require("chai");
 const hardhat = require("hardhat");
 const { constants } = require("ethers");
-const { AddressZero, Zero, One } = require("ethers").constants;
 
-const now = () => (new Date().getTime() / 1000) | 0;
 const toWei = (val) => ethers.utils.parseEther("" + val);
 const debug = require("debug")("ptv3:PrizeSplit.test");
 
@@ -15,14 +11,10 @@ let overrides = { gasLimit: 9500000 };
 describe("PrizeSplit", function() {
   let wallet, wallet2, wallet3, wallet4, wallet5, wallet6;
 
-  let externalERC20Award, externalERC721Award;
 
   let prizePool, prizeSplitHarness;
 
-  let ticket, sponsorship, rng, rngFeeToken;
-
-  let prizePeriodStart = now();
-  let prizePeriodSeconds = 1000;
+  let ticket, sponsorship
 
   beforeEach(async () => {
     [
@@ -453,7 +445,6 @@ describe("PrizeSplit", function() {
 
   describe("simulates distribute() using tickets and sponsorship tokens", () => {
     beforeEach(async () => {
-
       const Ticket = await hre.ethers.getContractFactory(
         "Ticket",
         wallet,

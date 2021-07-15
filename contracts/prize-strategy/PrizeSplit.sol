@@ -19,8 +19,8 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     * @notice The prize split configuration struct.
     * @dev The prize split configuration struct used to award prize splits during distribution.
     * @param target Address of recipient receiving the prize split distribution
-    * @param percentage Percentage of prize split with a 0-1000 range for single decimal precision i.e. 125 = 12.5%
-    * @param token Token type when minting the prize split award (i.e. ticket or sponsorship)
+    * @param percentage Percentage of prize split using a 0-1000 range for single decimal precision i.e. 125 = 12.5%
+    * @param token Position of controlled token in prizePool.tokens (i.e. ticket or sponsorship)
   */
   struct PrizeSplitConfig {
       address target;
@@ -31,17 +31,18 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   /* ============ Events ============ */
 
   /**
-    * @notice Emitted when a new PrizeSplitConfig config is added.
-    * @dev Emitted when a new PrizeSplitConfig config is added in setPrizeSplits or setPrizeSplit.
-    * @param target Address of recipient
-    * @param percentage Percentage of prize split ranging between 0 and 1000 for single decimal precision
-    * @param target Token type when minting the prize split award
+    * @notice Emitted when a PrizeSplitConfig config is added or updated.
+    * @dev Emitted when aPrizeSplitConfig config is added or updated in setPrizeSplits or setPrizeSplit.
+    * @param target Address of prize split recipient
+    * @param percentage Percentage of prize split. Must be between 0 and 1000 for single decimal precision
+    * @param token Index (0 or 1) of token in the prizePool.tokens mapping
+    * @param index Index of prize split in the prizeSplts array
   */
   event PrizeSplitSet(address indexed target, uint16 percentage, uint8 token, uint256 index);
 
   /**
     * @notice Emitted when a PrizeSplitConfig config is removed.
-    * @dev Emitted when a PrizeSplitConfig config is removed in setPrizeSplits.
+    * @dev Emitted when a PrizeSplitConfig config is removed from the _prizeSplits array.
     * @param target Index of a previously active prize split config
   */
   event PrizeSplitRemoved(uint256 indexed target);
@@ -61,8 +62,8 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   /* ============ Public/External ============ */
 
   /**
-    * @notice List of current prize splits.
-    * @dev List of current prize splits set by the contract owner.
+    * @notice List of all prize splits configs.
+    * @dev List of all PrizeSplitConfig structs set by the contract owner.
     * @return _prizeSplits Array of PrizeSplitConfig structs
   */
   function prizeSplits() external view returns (PrizeSplitConfig[] memory) {
@@ -70,10 +71,10 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   }
 
   /**
-    * @notice Read a prize split config by index.
-    * @dev Read a PrizeSplitConfig via an active _prizeSplits index.
-    * @param prizeSplitIndex The target index to read
-    * @return PrizeSplitConfig A single prize split config
+    * @notice Read prize split config from active PrizeSplits.
+    * @dev Read PrizeSplitConfig struct from _prizeSplits array.
+    * @param prizeSplitIndex Index position of PrizeSplitConfig
+    * @return PrizeSplitConfig Single prize split config
   */
   function prizeSplit(uint256 prizeSplitIndex) external view returns (PrizeSplitConfig memory) {
     return _prizeSplits[prizeSplitIndex];
@@ -115,7 +116,7 @@ abstract contract PrizeSplit is OwnableUpgradeable {
       emit PrizeSplitRemoved(_index);
     }
 
-    // Require the current prize split percentage does not exceed 100%.
+    // Require the total prize split percentages do not exceed 100%.
     uint256 totalPercentage = _totalPrizeSplitPercentageAmount();
     require(totalPercentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-total");
   }
@@ -124,7 +125,7 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     * @notice Updates a previously set prize split config.
     * @dev Updates a prize split config by passing a new PrizeSplitConfig struct and current index position. Limited to contract owner.
     * @param prizeStrategySplit PrizeSplitConfig config struct
-    * @param prizeSplitIndex The target index to update
+    * @param prizeSplitIndex Index position of PrizeSplitConfig to update
   */
   function setPrizeSplit(PrizeSplitConfig memory prizeStrategySplit, uint8 prizeSplitIndex) external onlyOwner {
     require(prizeSplitIndex < _prizeSplits.length, "MultipleWinners/nonexistent-prizesplit");
@@ -147,16 +148,17 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   /**
   * @notice Calculate an individual PrizeSplit distribution amount.
   * @dev Calculate the PrizeSplit distribution amount using the total prize amount and individual prize split percentage.
-  * @param amount The total prize award distribution amount
-  * @param percentage The prize split percentage amount
+  * @param amount Total prize award distribution amount
+  * @param percentage Percentage amount from a PrizeSplitConfig
   */
   function _getPrizeSplitAmount(uint256 amount, uint16 percentage) internal pure returns (uint256) {
     return (amount * percentage).div(1000);
   }
 
   /**
-  * @notice Calculates the total prize split percentage amount using the current prize split configs. 
-  * @dev Calculates the total PrizeSplitConfig percentage by adding all percentages into single variable. Used to check the total does not exceed 100% of award distribution.
+  * @notice Calculates total prize split percentage amount.
+  * @dev Calculates total PrizeSplitConfig percentage amount. Used to check the total does not exceed 100% of award distribution.
+  * @return Total prize split(s) percentage amount
   */
   function _totalPrizeSplitPercentageAmount() internal view returns (uint256) {
     uint256 _tempTotalPercentage;
@@ -169,10 +171,10 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   }
 
   /**
-  * @notice Distributes the total prize split amount to each individual prize split config.
-  * @dev Distributes the total prize split amount by looping through the _prizeSplits array and minting reward via the linked PrizeStrategy.
-  * @param prize The total prize amount
-  * @return The total award prize amount minus the combined prize split amounts
+  * @notice Distributes prize split(s) before awarding prize winners.
+  * @dev Distributes prize split(s) before awarding prize winners by looping through the _prizeSplits array.
+  * @param prize Original awarded prize amount
+  * @return Total prize award distribution amount exlcuding the awarded prize split(s)
   */
   function _distributePrizeSplits(uint256 prize) internal returns (uint256) {
     // Store temporary total prize amount for multiple calculations using initial prize amount.

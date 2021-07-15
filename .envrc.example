@@ -10,6 +10,9 @@ export ETHERSCAN_API_KEY=''
 # Used for verifying contracts on Binance
 export BSCSCAN_API_KEY=''
 
+# Used for verifying contracts on PolygonScan
+export POLYGONSCAN_API_KEY=''
+
 # Required for forking
 export ALCHEMY_URL=''
 

@@ -25,8 +25,7 @@ async function createAndRunYieldSourcePrizePool(signer, yieldSourceAddress) {
 
   const yieldSourcePrizePoolConfig = {
     yieldSource: yieldSourceAddress,
-    maxExitFeeMantissa: ethers.utils.parseEther('0.1'),
-    maxTimelockDuration: 365 * 24 * 3600
+    maxExitFeeMantissa: ethers.utils.parseEther('0.1')
   }
 
   const multipleWinnersConfig = {

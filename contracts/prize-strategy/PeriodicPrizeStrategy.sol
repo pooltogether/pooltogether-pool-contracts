@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
@@ -119,6 +119,9 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     uint32 lockBlock;
     uint32 requestedAt;
   }
+
+  /// @notice Semver Version
+  string constant public VERSION = "3.4.0";
 
   // Comptroller
   TokenListenerInterface public tokenListener;
@@ -278,10 +281,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @param amount Amount of minted tokens
   /// @param tokenIndex Index (0 or 1) of a token in the prizePool.tokens mapping
   function _awardToken(address user, uint256 amount, uint8 tokenIndex) internal {
-    address[] memory _controlledTokens = prizePool.tokens();
+    ControlledTokenInterface[] memory _controlledTokens = prizePool.tokens();
     require(tokenIndex <= _controlledTokens.length, "PeriodicPrizeStrategy/award-invalid-token-index");
-    address _token = _controlledTokens[tokenIndex];
-    prizePool.award(user, amount, _token);
+    ControlledTokenInterface _token = _controlledTokens[tokenIndex];
+    prizePool.award(user, amount, address(_token));
   }
 
   /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.

@@ -15,7 +15,7 @@ describe('YieldSourcePrizePool', function() {
   let prizePool, erc20token, prizeStrategy, reserveRegistry, yieldSource, YieldSourcePrizePoolHarness
 
   let poolMaxExitFee = toWei('0.5')
-  let poolMaxTimelockDuration = 10000
+
 
   let ticket
 
@@ -54,7 +54,6 @@ describe('YieldSourcePrizePool', function() {
       reserveRegistry.address,
       [ticket.address],
       poolMaxExitFee,
-      poolMaxTimelockDuration,
       yieldSource.address
     )
 
@@ -81,9 +80,8 @@ describe('YieldSourcePrizePool', function() {
         reserveRegistry.address,
         [ticket.address],
         poolMaxExitFee,
-        poolMaxTimelockDuration,
         ethers.constants.AddressZero
-      )).to.be.revertedWith("YieldSourcePrizePool/yield-source-zero")
+      )).to.be.revertedWith("YieldSourcePrizePool/yield-source-not-contract-address")
     })
 
     it('should require a valid yield source', async () => {
@@ -94,7 +92,6 @@ describe('YieldSourcePrizePool', function() {
         reserveRegistry.address,
         [ticket.address],
         poolMaxExitFee,
-        poolMaxTimelockDuration,
         prizePool.address
       )).to.be.revertedWith("YieldSourcePrizePool/invalid-yield-source")
     })
