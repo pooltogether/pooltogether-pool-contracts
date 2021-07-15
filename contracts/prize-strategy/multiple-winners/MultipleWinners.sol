@@ -19,7 +19,7 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
   uint256 public blocklistRetryCount;
   
   /**
-    * @dev Emitted when SplitExternalErc20Awards is set/toggled.
+    * @dev Emitted when splitExternalErc20Awards is toggled.
   */
   event SplitExternalErc20AwardsSet(bool splitExternalErc20Awards);
 
@@ -37,7 +37,7 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
   event RetryMaxLimitReached(uint256 numberOfWinners);
 
   /**
-    * @dev Emitted is a winner is selected during the prize period award process.
+    * @dev Emitted if a winner is not selected during the prize period award process.
   */
   event NoWinners();
 
@@ -89,7 +89,7 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
     return true;
   }
 
-    /**
+  /**
     * @notice Set if external ERC20 awards should be split
     * @dev Set if external ERC20 awards should be split amongst each winner using a bool.
     * @param _splitExternalErc20Awards Toggle splitting external ERC20 awards.

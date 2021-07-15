@@ -12,7 +12,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 abstract contract PrizeSplit is OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
   
-  /* ============ Variables ============ */
   PrizeSplitConfig[] internal _prizeSplits;
 
   /**
@@ -27,8 +26,6 @@ abstract contract PrizeSplit is OwnableUpgradeable {
       uint16 percentage;
       uint8 token;
   }
-
-  /* ============ Events ============ */
 
   /**
     * @notice Emitted when a PrizeSplitConfig config is added or updated.
@@ -47,9 +44,6 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   */
   event PrizeSplitRemoved(uint256 indexed target);
 
-
-  /* ============ Virtual ============ */
-
   /**
     * @notice Mints ticket or sponsorship tokens to prize split recipient.
     * @dev Mints ticket or sponsorship tokens to prize split recipient via the linked PrizePool contract.
@@ -58,8 +52,6 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     * @param tokenIndex Index (0 or 1) of a token in the prizePool.tokens mapping
   */
   function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenIndex) virtual internal;
-
-  /* ============ Public/External ============ */
 
   /**
     * @notice List of all prize splits configs.
@@ -109,14 +101,14 @@ abstract contract PrizeSplit is OwnableUpgradeable {
       emit PrizeSplitSet(split.target, split.percentage, split.token, index);
     }
 
-    // Remove prize splits by comparing the current _prizesSplits with the passed prizeSplits
+    // Remove old prize splits configs. Match storage _prizesSplits.length with the passed newPrizeSplits.length
     while (_prizeSplits.length > newPrizeSplitsLength) {
       uint256 _index = _prizeSplits.length.sub(1);
       _prizeSplits.pop();
       emit PrizeSplitRemoved(_index);
     }
 
-    // Require the total prize split percentages do not exceed 100%.
+    // Total prize split do not exceed 100%
     uint256 totalPercentage = _totalPrizeSplitPercentageAmount();
     require(totalPercentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-total");
   }
@@ -132,24 +124,22 @@ abstract contract PrizeSplit is OwnableUpgradeable {
     require(prizeStrategySplit.token <= 1, "MultipleWinners/invalid-prizesplit-token");
     require(prizeStrategySplit.target != address(0), "MultipleWinners/invalid-prizesplit-target");
     
-    // Update the prize split config.
+    // Update the prize split config
     _prizeSplits[prizeSplitIndex] = prizeStrategySplit;
 
-    // Require the current prize split percentage does not exceed 100%.
+    // Total prize split do not exceed 100%
     uint256 totalPercentage = _totalPrizeSplitPercentageAmount();
     require(totalPercentage <= 1000, "MultipleWinners/invalid-prizesplit-percentage-total");
 
-    // Emit the updated prize split configuration.
+    // Emit updated prize split config
     emit PrizeSplitSet(prizeStrategySplit.target, prizeStrategySplit.percentage, prizeStrategySplit.token, prizeSplitIndex);
   }
 
-  /* ============ Internal ============ */
-
   /**
-  * @notice Calculate an individual PrizeSplit distribution amount.
-  * @dev Calculate the PrizeSplit distribution amount using the total prize amount and individual prize split percentage.
+  * @notice Calculate a prize split distribution amount.
+  * @dev Calculate a prize split distribution amount using the total prize amount and prize split percentage.
   * @param amount Total prize award distribution amount
-  * @param percentage Percentage amount from a PrizeSplitConfig
+  * @param percentage Percentage with single decimal precision using 0-1000 ranges
   */
   function _getPrizeSplitAmount(uint256 amount, uint16 percentage) internal pure returns (uint256) {
     return (amount * percentage).div(1000);
@@ -157,7 +147,7 @@ abstract contract PrizeSplit is OwnableUpgradeable {
 
   /**
   * @notice Calculates total prize split percentage amount.
-  * @dev Calculates total PrizeSplitConfig percentage amount. Used to check the total does not exceed 100% of award distribution.
+  * @dev Calculates total PrizeSplitConfig percentage(s) amount. Used to check the total does not exceed 100% of award distribution.
   * @return Total prize split(s) percentage amount
   */
   function _totalPrizeSplitPercentageAmount() internal view returns (uint256) {
@@ -172,8 +162,8 @@ abstract contract PrizeSplit is OwnableUpgradeable {
 
   /**
   * @notice Distributes prize split(s) before awarding prize winners.
-  * @dev Distributes prize split(s) before awarding prize winners by looping through the _prizeSplits array.
-  * @param prize Original awarded prize amount
+  * @dev Distributes prize split(s) by looping through the _prizeSplits array and awarding ticket or sponsorship tokens.
+  * @param prize Starting prize award amount
   * @return Total prize award distribution amount exlcuding the awarded prize split(s)
   */
   function _distributePrizeSplits(uint256 prize) internal returns (uint256) {
