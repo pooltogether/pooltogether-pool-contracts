@@ -281,10 +281,10 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   /// @param amount Amount of minted tokens
   /// @param tokenIndex Index (0 or 1) of a token in the prizePool.tokens mapping
   function _awardToken(address user, uint256 amount, uint8 tokenIndex) internal {
-    address[] memory _controlledTokens = prizePool.tokens();
+    ControlledTokenInterface[] memory _controlledTokens = prizePool.tokens();
     require(tokenIndex <= _controlledTokens.length, "PeriodicPrizeStrategy/award-invalid-token-index");
-    address _token = _controlledTokens[tokenIndex];
-    prizePool.award(user, amount, _token);
+    ControlledTokenInterface _token = _controlledTokens[tokenIndex];
+    prizePool.award(user, amount, address(_token));
   }
 
   /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.
