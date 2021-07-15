@@ -7,14 +7,13 @@ import "../PeriodicPrizeStrategy.sol";
 
 contract MultipleWinners is PeriodicPrizeStrategy {
 
+  // Maximum number number of winners per award distribution period
   uint256 internal __numberOfWinners;
-
+  
+  // Toggle for distributing external ERC 20 awards to all winners
   bool public splitExternalErc20Awards;
 
-  /**
-    * @notice Tracks blocked status of users. Preventing an address from selected during award distribution.
-    * @dev Mapping of addresses isBlocked status. By default all addresses are unblocked. 
-  */
+  // Mapping of addresses isBlocked status. Can prevent an address from selected during award distribution
   mapping(address => bool) public isBlocklisted;
 
   // Carry over the awarded prize for the next drawing when selected winners is less than __numberOfWinners
@@ -24,12 +23,13 @@ contract MultipleWinners is PeriodicPrizeStrategy {
   uint256 public blocklistRetryCount;
 
   /**
-    * @dev Emitted when splitExternalErc20Awards is toggled.
+    * @notice Emitted when splitExternalErc20Awards is toggled.
+    * @dev Emitted when splitExternalErc20Awards is toggled between awarding external ERC20 to main or all winners.
   */
   event SplitExternalErc20AwardsSet(bool splitExternalErc20Awards);
 
   /**
-    * @dev Emitted when numberOfWinners is set.
+    * @notice Emitted when numberOfWinners is set.
     * @dev Emitted when numberOfWinners is set, which limits the maximum number of potentially selected winners.
     * @param numberOfWinners Maximum potentially selected winners
   */
@@ -124,7 +124,7 @@ contract MultipleWinners is PeriodicPrizeStrategy {
   /**
     * @notice Sets the number of attempts for winner selection if a blocked address is chosen.
     * @dev Limits winner selection (ticket.draw) retries to avoid to gas limit reached errors. Increases the probability of not reaching the maximum number of winners if to low.
-    * @param _carry Award carry over status (true or false)
+    * @param _count Number of retry attempts
   */
   function setBlocklistRetryCount(uint256 _count) external onlyOwner requireAwardNotInProgress returns (bool) {
     blocklistRetryCount = _count;
