@@ -54,8 +54,8 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenIndex) virtual internal;
 
   /**
-    * @notice List of all prize splits configs.
-    * @dev List of all PrizeSplitConfig structs set by the contract owner.
+    * @notice Read all prize splits configs.
+    * @dev Read all PrizeSplitConfig structs stored in _prizeSplits.
     * @return _prizeSplits Array of PrizeSplitConfig structs
   */
   function prizeSplits() external view returns (PrizeSplitConfig[] memory) {
@@ -73,8 +73,8 @@ abstract contract PrizeSplit is OwnableUpgradeable {
   }
 
   /**
-    * @notice Update, add and/or remove prize split(s) configuration.
-    * @dev Update, add and/or remove prize split configs via an array of PrizeSplitConfig structs. Removes PrizeSplitConfig(s) if array lengths don't match. Limited to contract owner.
+    * @notice Set and remove prize split(s) configs.
+    * @dev Set and remove prize split configs by passing a new PrizeSplitConfig structs array. Will remove existing PrizeSplitConfig(s) if passed array length is less than existing _prizeSplits length.
     * @param newPrizeSplits Array of PrizeSplitConfig structs
   */
   function setPrizeSplits(PrizeSplitConfig[] calldata newPrizeSplits) external onlyOwner {

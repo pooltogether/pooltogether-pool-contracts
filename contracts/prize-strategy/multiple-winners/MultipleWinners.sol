@@ -90,8 +90,8 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
   }
 
   /**
-    * @notice Set if external ERC20 awards should be split
-    * @dev Set if external ERC20 awards should be split amongst each winner using a bool.
+    * @notice Toggle external ERC20 awards for all prize winners.
+    * @dev Toggle external ERC20 awards for all prize winners. If unset will distribute external ERC20 awards to main winner.
     * @param _splitExternalErc20Awards Toggle splitting external ERC20 awards.
   */
   function setSplitExternalErc20Awards(bool _splitExternalErc20Awards) external onlyOwner requireAwardNotInProgress {
@@ -101,16 +101,16 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
   }
 
   /**
-    * @notice Set the number of winners.
-    * @dev Set the number of winners for each prize period.
+    * @notice Sets maximum number of winners.
+    * @dev Sets maximum number of winners per award distribution period.
     * @param count Number of winners.
   */
   function setNumberOfWinners(uint256 count) external onlyOwner requireAwardNotInProgress {
     _setNumberOfWinners(count);
   }
 
-   /**
-    * @dev Internal call for setNumberOfWinners
+  /**
+    * @dev Set the maximum number of winners. Must be greater than 0.
     * @param count Number of winners.
   */
   function _setNumberOfWinners(uint256 count) internal {
@@ -121,8 +121,8 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
   }
 
   /**
-    * @notice Number of winners awards are distributed to upon winning.
-    * @dev Number of winners awards are distributed to upon winning set by owner.
+    * @notice Maximum number of winners per award distribution period
+    * @dev Read maximum number of winners per award distribution period from internal __numberOfWinners variable.
     * @return __numberOfWinners The total number of winners per prize award.
   */
   function numberOfWinners() external view returns (uint256) {
@@ -141,9 +141,9 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
   }
 
   /**
-    * @notice Distributes the captured prize period award balance.
-    * @dev Distributes the captured prize period award balance to the main and secondary randomly selected users.
-    * @param randomNumber Receiver of the prize split fee.
+    * @notice Distributes captured award balance to winners
+    * @dev Distributes the captured award balance to the main winner and secondary winners if __numberOfWinners greater than 1.
+    * @param randomNumber Random number seed used to select winners
   */
   function _distribute(uint256 randomNumber) internal override {
     uint256 prize = prizePool.captureAwardBalance();
