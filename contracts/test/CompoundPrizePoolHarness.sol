@@ -1,4 +1,4 @@
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.6.12;
 
 import "../prize-pool/compound/CompoundPrizePool.sol";
 
@@ -9,10 +9,6 @@ contract CompoundPrizePoolHarness is CompoundPrizePool {
 
   function setCurrentTime(uint256 _currentTime) external {
     currentTime = _currentTime;
-  }
-
-  function setTimelockBalance(uint256 _timelockBalance) external {
-    timelockTotalSupply = _timelockBalance;
   }
 
   function _currentTime() internal override view returns (uint256) {

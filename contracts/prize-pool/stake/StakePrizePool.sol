@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
@@ -15,13 +15,11 @@ contract StakePrizePool is PrizePool {
   /// @notice Initializes the Prize Pool and Yield Service with the required contract connections
   /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
   /// @param _maxExitFeeMantissa The maximum exit fee size, relative to the withdrawal amount
-  /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
   /// @param _stakeToken Address of the stake token
   function initialize (
     RegistryInterface _reserveRegistry,
     ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
-    uint256 _maxTimelockDuration,
     IERC20Upgradeable _stakeToken
   )
     public
@@ -30,9 +28,10 @@ contract StakePrizePool is PrizePool {
     PrizePool.initialize(
       _reserveRegistry,
       _controlledTokens,
-      _maxExitFeeMantissa,
-      _maxTimelockDuration
+      _maxExitFeeMantissa
     );
+
+    require(address(_stakeToken) != address(0), "StakePrizePool/stake-token-not-zero-address");
     stakeToken = _stakeToken;
 
     emit StakePrizePoolInitialized(address(stakeToken));

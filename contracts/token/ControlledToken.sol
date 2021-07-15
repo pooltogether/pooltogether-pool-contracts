@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-upgradeable/drafts/ERC20PermitUpgradeable.sol";
 
@@ -10,6 +10,14 @@ import "./ControlledTokenInterface.sol";
 /// @title Controlled ERC20 Token
 /// @notice ERC20 Tokens with a controller for minting & burning
 contract ControlledToken is ERC20PermitUpgradeable, ControlledTokenInterface {
+
+  /// @dev Emitted when an instance is initialized
+  event Initialized(
+    string _name,
+    string _symbol,
+    uint8 _decimals,
+    TokenControllerInterface _controller
+  );
 
   /// @notice Interface to the contract responsible for controlling mint/burn
   TokenControllerInterface public override controller;
@@ -29,10 +37,18 @@ contract ControlledToken is ERC20PermitUpgradeable, ControlledTokenInterface {
     virtual
     initializer
   {
+    require(address(_controller) != address(0), "ControlledToken/controller-not-zero");
     __ERC20_init(_name, _symbol);
     __ERC20Permit_init("PoolTogether ControlledToken");
     controller = _controller;
     _setupDecimals(_decimals);
+
+    emit Initialized(
+      _name,
+      _symbol,
+      _decimals,
+      _controller
+    );
   }
 
   /// @notice Allows the controller to mint tokens for a user account

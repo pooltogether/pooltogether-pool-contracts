@@ -29,8 +29,7 @@ async function run() {
 
   const compoundPrizePoolConfig = {
     cToken: cUSDT,
-    maxExitFeeMantissa: ethers.utils.parseEther('0.1').toString(),
-    maxTimelockDuration: 365 * 24 * 3600
+    maxExitFeeMantissa: ethers.utils.parseEther('0.1').toString()
   }
 
   const multipleWinnersConfig = {

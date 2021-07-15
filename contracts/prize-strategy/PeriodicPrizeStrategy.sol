@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
@@ -119,6 +119,9 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     uint32 lockBlock;
     uint32 requestedAt;
   }
+
+  /// @notice Semver Version
+  string constant public VERSION = "3.4.0";
 
   // Comptroller
   TokenListenerInterface public tokenListener;
