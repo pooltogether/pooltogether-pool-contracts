@@ -1,19 +1,30 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 
+import "../PrizeSplit.sol";
 import "../PeriodicPrizeStrategy.sol";
 
-contract MultipleWinners is PeriodicPrizeStrategy {
+contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
 
   uint256 internal __numberOfWinners;
-
+  
   bool public splitExternalErc20Awards;
 
+  /**
+    * @dev Emitted when splitExternalErc20Awards is toggled.
+  */
   event SplitExternalErc20AwardsSet(bool splitExternalErc20Awards);
 
+  /**
+    * @dev Emitted when numberOfWinners is set/updated.
+  */
   event NumberOfWinnersSet(uint256 numberOfWinners);
-
+  
+  /**
+    * @dev Emitted is a winner is selected during the prize period award process.
+  */
   event NoWinners();
 
   function initializeMultipleWinners (
@@ -40,16 +51,30 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     _setNumberOfWinners(_numberOfWinners);
   }
 
+  /**
+    * @notice Toggle external ERC20 awards for all prize winners.
+    * @dev Toggle external ERC20 awards for all prize winners. If unset will distribute external ERC20 awards to main winner.
+    * @param _splitExternalErc20Awards Toggle splitting external ERC20 awards.
+  */
   function setSplitExternalErc20Awards(bool _splitExternalErc20Awards) external onlyOwner requireAwardNotInProgress {
     splitExternalErc20Awards = _splitExternalErc20Awards;
 
     emit SplitExternalErc20AwardsSet(splitExternalErc20Awards);
   }
 
+  /**
+    * @notice Sets maximum number of winners.
+    * @dev Sets maximum number of winners per award distribution period.
+    * @param count Number of winners.
+  */
   function setNumberOfWinners(uint256 count) external onlyOwner requireAwardNotInProgress {
     _setNumberOfWinners(count);
   }
 
+   /**
+    * @dev Set the maximum number of winners. Must be greater than 0.
+    * @param count Number of winners.
+  */
   function _setNumberOfWinners(uint256 count) internal {
     require(count > 0, "MultipleWinners/winners-gte-one");
 
@@ -57,12 +82,36 @@ contract MultipleWinners is PeriodicPrizeStrategy {
     emit NumberOfWinnersSet(count);
   }
 
+  /**
+    * @notice Maximum number of winners per award distribution period
+    * @dev Read maximum number of winners per award distribution period from internal __numberOfWinners variable.
+    * @return __numberOfWinners The total number of winners per prize award.
+  */
   function numberOfWinners() external view returns (uint256) {
     return __numberOfWinners;
   }
 
+  /**
+    * @notice Award ticket or sponsorship tokens to prize split recipient.
+    * @dev Award ticket or sponsorship tokens to prize split recipient via the linked PrizePool contract.
+    * @param target Recipient of minted tokens
+    * @param amount Amount of minted tokens
+    * @param tokenIndex Index (0 or 1) of a token in the prizePool.tokens mapping
+  */
+  function _awardPrizeSplitAmount(address target, uint256 amount, uint8 tokenIndex) override internal {
+    _awardToken(target, amount, tokenIndex);
+  }
+
+  /**
+    * @notice Distributes captured award balance to winners
+    * @dev Distributes the captured award balance to the main winner and secondary winners if __numberOfWinners greater than 1.
+    * @param randomNumber Random number seed used to select winners
+  */
   function _distribute(uint256 randomNumber) internal override {
     uint256 prize = prizePool.captureAwardBalance();
+
+    // distributes prize to prize splits and returns remaining award.
+    prize = _distributePrizeSplits(prize);
 
     // main winner is simply the first that is drawn
     address mainWinner = ticket.draw(randomNumber);

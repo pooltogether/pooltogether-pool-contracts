@@ -28,6 +28,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
                                            TokenListener {
 
   using SafeMathUpgradeable for uint256;
+  using SafeMathUpgradeable for uint16;
   using SafeCastUpgradeable for uint256;
   using SafeERC20Upgradeable for IERC20Upgradeable;
   using MappedSinglyLinkedList for MappedSinglyLinkedList.Mapping;
@@ -268,10 +269,22 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   }
 
   /// @notice Awards collateral as tickets to a user
-  /// @param user The user to whom the tickets are minted
-  /// @param amount The amount of interest to mint as tickets.
+  /// @param user Recipient of minted tokens
+  /// @param amount Amount of minted tokens
   function _awardTickets(address user, uint256 amount) internal {
     prizePool.award(user, amount, address(ticket));
+  }
+  
+  /// @notice Mints ticket or sponsorship tokens for user.
+  /// @dev Mints ticket or sponsorship tokens by looking up the address in the prizePool.tokens mapping. 
+  /// @param user Recipient of minted tokens
+  /// @param amount Amount of minted tokens
+  /// @param tokenIndex Index (0 or 1) of a token in the prizePool.tokens mapping
+  function _awardToken(address user, uint256 amount, uint8 tokenIndex) internal {
+    address[] memory _controlledTokens = prizePool.tokens();
+    require(tokenIndex <= _controlledTokens.length, "PeriodicPrizeStrategy/award-invalid-token-index");
+    address _token = _controlledTokens[tokenIndex];
+    prizePool.award(user, amount, _token);
   }
 
   /// @notice Awards all external tokens with non-zero balances to the given user.  The external tokens must be held by the PrizePool contract.
