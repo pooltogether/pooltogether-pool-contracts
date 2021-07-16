@@ -84,29 +84,6 @@ contract MultipleWinnersBuilder {
     return mw;
   }
 
-  function createMultipleWinnersFromExistingPrizeStrategy(
-    PeriodicPrizeStrategy prizeStrategy,
-    uint256 numberOfWinners
-  ) external returns (MultipleWinners) {
-    MultipleWinners mw = multipleWinnersProxyFactory.create();
-
-    mw.initializeMultipleWinners(
-      prizeStrategy.prizePeriodStartedAt(),
-      prizeStrategy.prizePeriodSeconds(),
-      prizeStrategy.prizePool(),
-      prizeStrategy.ticket(),
-      prizeStrategy.sponsorship(),
-      prizeStrategy.rng(),
-      numberOfWinners
-    );
-
-    mw.transferOwnership(msg.sender);
-
-    emit MultipleWinnersCreated(address(mw));
-
-    return mw;
-  }
-
   function _createTicket(
     string memory name,
     string memory token,
