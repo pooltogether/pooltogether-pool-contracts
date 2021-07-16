@@ -36,8 +36,8 @@ async function run() {
   for (var i = 0; i < keys.length; i++) {
     const name = keys[i]
     const address = recipients[name]
-    console.log(chalk.dim(`Sending 10 Ether to ${name}...`))
-    await binance.sendTransaction({ to: address, value: ethers.utils.parseEther('10') })
+    console.log(chalk.dim(`Sending 100 Ether to ${name}...`))
+    await binance.sendTransaction({ to: address, value: ethers.utils.parseEther('100') })
   }
 
   console.log(chalk.green(`Done!`))

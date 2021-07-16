@@ -35,6 +35,10 @@ async function runPoolLifecycle (prizePool, signer) {
   let tokenBalance = await token.balanceOf(signer._address)
   green(`token Holder starting token balance: ${ethers.utils.formatUnits(tokenBalance, decimals)}`)
 
+  if (tokenBalance.lt(depositAmount)) {
+    throw new Error('Signer has insufficient tokens')
+  }
+
   dim(`Approving token spend for ${signer._address}...`)
   await token.approve(prizePool.address, depositAmount)
   dim(`Depositing into Pool with ${signer._address}, ${ethers.utils.formatUnits(depositAmount, decimals)}, ${ticketAddress} ${ethers.constants.AddressZero}...`)
