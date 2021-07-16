@@ -39,7 +39,7 @@ async function createAndRunYieldSourcePrizePool(signer, yieldSourceAddress) {
     ticketCreditLimitMantissa: ethers.utils.parseEther('0.1'),
     ticketCreditRateMantissa: '166666666666666',
     numberOfWinners: 1,
-    prizeSplit: [],
+    prizeSplits: [],
     splitExternalErc20Awards: false
   }
 
