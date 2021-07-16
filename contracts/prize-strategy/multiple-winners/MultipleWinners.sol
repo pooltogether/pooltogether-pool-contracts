@@ -27,7 +27,6 @@ contract MultipleWinners is PeriodicPrizeStrategy, PrizeSplit {
     * @notice Emitted when splitExternalErc20Awards is toggled.
     * @dev Emitted when splitExternalErc20Awards is toggled between awarding external ERC20 to main or all winners.
   */
-  */
   event SplitExternalErc20AwardsSet(bool splitExternalErc20Awards);
 
   /**
