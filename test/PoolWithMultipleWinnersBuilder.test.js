@@ -51,7 +51,8 @@ describe('PoolWithMultipleWinnersBuilder', () => {
       sponsorshipSymbol: "SPON",
       ticketCreditLimitMantissa: toWei('0.1'),
       ticketCreditRateMantissa: toWei('0.001'),
-      numberOfWinners: 3
+      numberOfWinners: 3,
+      prizeSplit: [],
     }
   })
 
