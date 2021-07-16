@@ -437,7 +437,7 @@ describe('MultipleWinners', function() {
           await prizeStrategy.distribute(90) // this hashes out to the same winner twice
         })
 
-        it.only('should blocklist address and carry over the external ERC20 reward after awarding 2 winners', async () => {
+        it('should blocklist address and carry over the external ERC20 reward after awarding 2 winners', async () => {
           await controller.call(ticket, 'controllerMint', wallet4.address, toWei('140'))
           await prizeStrategy.setNumberOfWinners(3)
     
