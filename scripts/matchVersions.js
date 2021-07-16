@@ -1,49 +1,36 @@
-const packageDotJson = require("../package.json")
-const hardhat = require("hardhat")
-const { ethers } = require("hardhat")
-const chalk = require("chalk")
+#!/usr/bin/env node
 
+const packageDotJson = require("../package.json")
+const chalk = require("chalk")
+const fs = require('fs')
 
 function yellow() {
     console.log(chalk.yellow.call(chalk, ...arguments))
-}
-
-function green() {
-    console.log(chalk.green.call(chalk, ...arguments))
 }
 
 function red() {
     console.log(chalk.red.call(chalk, ...arguments))
 }
 
-async function run () {
-    
-    if(hardhat.network != "mainnet"){
-        return
-    }
-    
+async function run () {    
     const packageVersion = packageDotJson.version
     yellow(`Checking NPM package version ${packageVersion} matches contract VERSION constant..`)
     
     // get PrizePool VERSION
-    const prizePoolFactory = await ethers.getContractFactory("CompoundPrizePool")
-    const prizePoolDeployResult = await prizePoolFactory.deploy()
-    const prizePool  = await ethers.getContractAt("CompoundPrizePool", prizePoolDeployResult.address)
-    const prizePoolVersion = await prizePool.VERSION()
-    
+    const prizePoolFile = (await fs.readFileSync('./contracts/prize-pool/PrizePool.sol')).toString()
+    if (!prizePoolFile.match(`string constant public VERSION = "${packageVersion}";`)) {
+        const msg = `PrizePool version does not match ${packageVersion}`
+        red(msg)
+        throw new Error(msg)
+    }
+
     // get PrizeStrategy VERSION
-    const prizeStrategyFactory = await ethers.getContractFactory("MultipleWinners")
-    const deployResult = await prizeStrategyFactory.deploy()
-    const prizeStrategy  = await ethers.getContractAt("MultipleWinners", deployResult.address)
-    const prizeStrategyVersion = await prizeStrategy.VERSION()
-
-    // assert packgeVersion == prizePoolVersion == prizeStrategyVersion
-    if(packageVersion != prizePoolVersion){
-        throw new Error(red(`PrizePool contract Version (${prizePoolVersion}) different from package.json (${packageVersion})`))
+    const prizeStrategyFile = (await fs.readFileSync('./contracts/prize-strategy/PeriodicPrizeStrategy.sol')).toString()
+    if (!prizeStrategyFile.match(`string constant public VERSION = "${packageVersion}";`)) {
+        const msg = `PeriodicPrizeStrategy version does not match ${packageVersion}`
+        red(msg)
+        throw new Error(msg)
     }
-    else if(packageVersion != prizeStrategyVersion){
-        throw new Error(red(`PrizeStrategy contract Version (${prizeStrategyVersion}) different from package.json (${packageVersion})`))
-    }
-
+    
 }
 run()
