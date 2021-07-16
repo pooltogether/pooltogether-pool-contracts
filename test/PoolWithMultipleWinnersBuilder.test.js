@@ -52,7 +52,7 @@ describe('PoolWithMultipleWinnersBuilder', () => {
       ticketCreditLimitMantissa: toWei('0.1'),
       ticketCreditRateMantissa: toWei('0.001'),
       numberOfWinners: 3,
-      prizeSplit: [],
+      prizeSplits: [],
     }
   })
 

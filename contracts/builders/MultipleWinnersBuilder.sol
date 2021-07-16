@@ -22,7 +22,7 @@ contract MultipleWinnersBuilder {
     uint256 ticketCreditLimitMantissa;
     uint256 ticketCreditRateMantissa;
     uint256 numberOfWinners;
-    MultipleWinners.PrizeSplitConfig[] prizeSplit;
+    MultipleWinners.PrizeSplitConfig[] prizeSplits;
     bool splitExternalErc20Awards;
   }
 
@@ -71,7 +71,7 @@ contract MultipleWinnersBuilder {
       prizeStrategyConfig.numberOfWinners
     );
 
-    mw.setPrizeSplits(prizeStrategyConfig.prizeSplit);
+    mw.setPrizeSplits(prizeStrategyConfig.prizeSplits);
 
     if (prizeStrategyConfig.splitExternalErc20Awards) {
       mw.setSplitExternalErc20Awards(true);
