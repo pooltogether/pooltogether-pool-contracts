@@ -178,7 +178,10 @@ contract MultipleWinners is PeriodicPrizeStrategy {
       if (!isBlocklisted[winner]) {
         winners[winnerCount++] = winner;
       } else if (++retries >= _retryCount) {
-        emit RetryMaxLimitReached(numberOfWinners);
+        emit RetryMaxLimitReached(winnerCount);
+        if(winnerCount == 0) {
+          emit NoWinners();
+        }
         break;
       }
 
