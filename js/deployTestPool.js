@@ -63,6 +63,7 @@ async function deployTestPool({
     ticketCreditLimitMantissa: creditLimit,
     ticketCreditRateMantissa: creditRate,
     externalERC20Awards,
+    prizeSplit: [],
     numberOfWinners: 1
   }
 
