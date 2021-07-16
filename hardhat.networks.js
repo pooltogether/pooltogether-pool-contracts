@@ -14,6 +14,7 @@ const networks = {
 
 if(process.env.ALCHEMY_URL && process.env.FORK_ENABLED){
   networks.hardhat = {
+    allowUnlimitedContractSize: true,
     chainId: 1,
     forking: {
       url: process.env.ALCHEMY_URL

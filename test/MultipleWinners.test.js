@@ -357,6 +357,35 @@ describe('MultipleWinners', function() {
         await prizeStrategy.distribute(90)
       })
 
+      it("should test awarding prize splits to multiple targets", async () => {
+        const prizeSplitConfig = [
+          {
+            target: wallet5.address,
+            percentage: "55",
+            token: 1,
+          },
+          {
+            target: wallet6.address,
+            percentage: "120",
+            token: 0,
+          },
+        ];
+        
+        await prizeStrategy.setNumberOfWinners(1);
+        await prizeStrategy.setPrizeSplits(prizeSplitConfig);
+
+        // Configure Mock Functions
+        await prizePool.mock.captureAwardBalance.returns(toWei("100"));
+        await prizePool.mock.tokens.returns([sponsorship.address, ticket.address])
+        await prizePool.mock.award.withArgs(wallet2.address, toWei("82.5"), ticket.address).returns()
+        await prizePool.mock.award.withArgs(wallet5.address, toWei("5.5"), ticket.address).returns()
+        await prizePool.mock.award.withArgs(wallet6.address, toWei("12"), sponsorship.address).returns()
+        
+        // Distribute Prize Amount
+        let randomNumber = 10;
+        await prizeStrategy.distribute(randomNumber);
+      });
+
       describe('when external erc20 awards are distributed', () => {
 
         beforeEach(async () => {
@@ -416,7 +445,6 @@ describe('MultipleWinners', function() {
           await prizeStrategy.setNumberOfWinners(3)
           await prizeStrategy.distribute(90) // this hashes out to the same winner twice
         })
-
       })
     })
   })
