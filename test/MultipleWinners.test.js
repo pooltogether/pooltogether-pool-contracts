@@ -447,7 +447,6 @@ describe('MultipleWinners', function() {
           await prizeStrategy.setSplitExternalErc20Awards(true)
     
           let randomNumber = 10
-          
           await prizePool.mock.captureAwardBalance.returns(toWei('9'))
           await prizePool.mock.award.withArgs('0x70997970c51812dc3a010c7d01b50e0d17dc79c8', toWei('3'), ticket.address).returns()
           await prizePool.mock.award.withArgs('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', toWei('3'), ticket.address).returns()
