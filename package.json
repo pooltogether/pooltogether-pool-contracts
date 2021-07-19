@@ -1,6 +1,6 @@
 {
   "name": "@pooltogether/pooltogether-contracts",
-  "version": "3.4.3",
+  "version": "3.4.4",
   "description": "PoolManager Prize Linked Savings Account Pool Smart Contracts",
   "main": "index.js",
   "license": "GPL-3.0",
@@ -74,7 +74,7 @@
   "files": [
     "LICENSE",
     "abis/**",
-    "build/**",
+    "artifacts/**",
     ".build-openzeppelin/**",
     "contracts/**",
     "deployments/**",
