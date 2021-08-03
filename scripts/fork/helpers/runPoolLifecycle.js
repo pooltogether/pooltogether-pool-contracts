@@ -41,8 +41,14 @@ async function runPoolLifecycle (prizePool, signer) {
 
   dim(`Approving token spend for ${signer._address}...`)
   await token.approve(prizePool.address, depositAmount)
+  dim(`Allowance ${await token.allowance(signer._address, prizePool.address)}`)
+
   dim(`Depositing into Pool with ${signer._address}, ${ethers.utils.formatUnits(depositAmount, decimals)}, ${ticketAddress} ${ethers.constants.AddressZero}...`)
   await prizePool.depositTo(signer._address, depositAmount, ticketAddress, ethers.constants.AddressZero)
+  
+  
+  
+  
   dim(`Withdrawing...`)
   const tokenBalanceBeforeWithdrawal = await token.balanceOf(signer._address)
   await prizePool.withdrawInstantlyFrom(signer._address, depositAmount, ticketAddress, depositAmount)
@@ -60,31 +66,31 @@ async function runPoolLifecycle (prizePool, signer) {
 
   green(`New ticket balance: ${ethers.utils.formatUnits(ticketBalance, decimals)}`)
 
-  dim(`Starting award...`)
-  await prizeStrategy.startAward()
-  await increaseTime(1)
-  dim(`Completing award...`)
-  const awardTx = await prizeStrategy.completeAward()
-  const awardReceipt = await ethers.provider.getTransactionReceipt(awardTx.hash)
-  const awardLogs = awardReceipt.logs.map(log => { try { return prizePool.interface.parseLog(log) } catch (e) { return null }})
-  const awarded = awardLogs.find(event => event && event.name === 'Awarded')
+  // dim(`Starting award...`)
+  // await prizeStrategy.startAward()
+  // await increaseTime(1)
+  // dim(`Completing award...`)
+  // const awardTx = await prizeStrategy.completeAward()
+  // const awardReceipt = await ethers.provider.getTransactionReceipt(awardTx.hash)
+  // const awardLogs = awardReceipt.logs.map(log => { try { return prizePool.interface.parseLog(log) } catch (e) { return null }})
+  // const awarded = awardLogs.find(event => event && event.name === 'Awarded')
 
-  if (awarded) {
-    console.log(`Awarded ${ethers.utils.formatUnits(awarded.args.amount, decimals)} token`)
-  } else {
-    console.log(`No prizes`)
-  }
+  // if (awarded) {
+  //   console.log(`Awarded ${ethers.utils.formatUnits(awarded.args.amount, decimals)} token`)
+  // } else {
+  //   console.log(`No prizes`)
+  // }
 
-  tokenBalance = await token.balanceOf(signer._address)
-  ticketBalance = await ticket.balanceOf(signer._address)
-  green(`New ticket balance is ${ethers.utils.formatUnits(ticketBalance, decimals)}`)
+  // tokenBalance = await token.balanceOf(signer._address)
+  // ticketBalance = await ticket.balanceOf(signer._address)
+  // green(`New ticket balance is ${ethers.utils.formatUnits(ticketBalance, decimals)}`)
 
-  await increaseTime(1000)
+  // await increaseTime(1000)
 
-  await prizePool.withdrawInstantlyFrom(signer._address, ticketBalance, ticketAddress, ticketBalance)
+  // await prizePool.withdrawInstantlyFrom(signer._address, ticketBalance, ticketAddress, ticketBalance)
   
-  const tokenDiff = (await token.balanceOf(signer._address)).sub(tokenBalance)
-  dim(`Amount withdrawn is ${ethers.utils.formatUnits(tokenDiff, decimals)}`)
+  // const tokenDiff = (await token.balanceOf(signer._address)).sub(tokenBalance)
+  // dim(`Amount withdrawn is ${ethers.utils.formatUnits(tokenDiff, decimals)}`)
 
 }
 
