@@ -32,7 +32,6 @@ async function run() {
     const etherRichSigner = await provider.getUncheckedSigner('0xdf9eb223bafbe5c5271415c75aecd68c21fe3d7f')
 
     dim(`Sending 10 ether to ${timelock._address}...`)
-    // console.log(await ethers.provider.getBalance("0xdf9eb223bafbe5c5271415c75aecd68c21fe3d7f"))
     await etherRichSigner.sendTransaction({ to: timelock._address, value: ethers.utils.parseEther('10') })
     green(`sent!`)
 
@@ -41,11 +40,10 @@ async function run() {
     const usdcContract = await ethers.getContractAt("ERC20Upgradeable", "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", timelock)
 
     const withdrawAmount = ethers.utils.parseUnits("150000",6)
-    console.log(withdrawAmount.toString())
+    
+    await usdcPrizePool.withdrawInstantlyFrom(timelock._address, withdrawAmount, "0x391a437196c81eEa7BBbBd5ED4DF6b49De4F5c96", withdrawAmount)
 
-    // await usdcPrizePool.withdrawInstantlyFrom(timelock._address, withdrawAmount, "0x391a437196c81eEa7BBbBd5ED4DF6b49De4F5c96", withdrawAmount)
-
-    // await usdcContract.transfer(c4Address, withdrawAmount)
+    await usdcContract.transfer(c4Address, withdrawAmount)
 
     green(`done!`)
 

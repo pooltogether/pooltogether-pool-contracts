@@ -1,8 +1,6 @@
 const hardhat = require('hardhat')
 const chalk = require("chalk")
-const {runPoolLifecycle} = require("./helpers/runPoolLifecycle")
-
-const { increaseTime } = require('../../test/helpers/increaseTime')
+const { runPoolDepositAndWithdraw } = require("../helpers/runPoolDepositAndWithdraw")
 
 function dim() {
   console.log(chalk.dim.call(chalk, ...arguments))
@@ -17,7 +15,7 @@ function green() {
 }
 
 async function run() {
-  const { deployments, ethers } = hardhat
+  const { ethers } = hardhat
   const { provider } = ethers
 
   await hre.ethers.provider.send("hardhat_impersonateAccount",["0x42cd8312D2BCe04277dD5161832460e95b24262E"])
@@ -29,7 +27,7 @@ async function run() {
   dim(`Sending 10 ether to ${timelock._address}...`)
   console.log(await ethers.provider.getBalance("0xdf9eb223bafbe5c5271415c75aecd68c21fe3d7f"))
   await etherRichSigner.sendTransaction({ to: timelock._address, value: ethers.utils.parseEther('10') })
-    green(`sent!`)
+  green(`sent!`)
 
   const newTokenListeners = [  
       "0x9EE3FAECFFb7a02fC1696D3E7e672763C381dF3F", //COMP
@@ -56,41 +54,34 @@ async function run() {
       "0x55fe002aeff02f77364de339a1292923a15844b8", //usdc
     ]
 
-      let index = 0
+    let index = 0
 
-      // let prizeStrategy = await ethers.getContractAt("MultipleWinners", prizeStrategyAddress)
-      const prizeStrategyOwner = timelock
+    for await(const prizePool of prizePools){
+      dim(`getting prize pool ${prizePool}`)
 
-      for await(const prizePool of prizePools){
-        dim(`getting prize pool ${prizePool}`)
+      await hre.ethers.provider.send("hardhat_impersonateAccount",[largeHolders[index]])
+      const largeHolderSigner = await provider.getUncheckedSigner(largeHolders[index])
 
-        await hre.ethers.provider.send("hardhat_impersonateAccount",[largeHolders[index]])
-        const largeHolderSigner = await provider.getUncheckedSigner(largeHolders[index])
+      const prizePoolContract = await ethers.getContractAt("CompoundPrizePool", prizePool, largeHolderSigner)
+      const prizeStrategyAddress = await prizePoolContract.prizeStrategy()
+      dim(`setting tokenListener for prizepool ${prizePool} strategy`)
 
-        const prizePoolContract = await ethers.getContractAt("CompoundPrizePool", prizePool, largeHolderSigner)
-        const prizeStrategyAddress = await prizePoolContract.prizeStrategy()
-        dim(`setting tokenListener for prizepool ${prizePool} strategy`)
+      await hre.ethers.provider.send("hardhat_impersonateAccount",[timelock])
+      const timelockSigner = await provider.getUncheckedSigner(timelock)
+      await etherRichSigner.sendTransaction({ to:timelock, value: ethers.utils.parseEther('1') })
+      const prizeStrategy = await ethers.getContractAt("MultipleWinners", prizeStrategyAddress, timelockSigner)
 
+      await prizeStrategy.setTokenListener(newTokenListeners[index])
+      green(`set tokenListener to ${newTokenListeners[index]}`)
 
-
-        await hre.ethers.provider.send("hardhat_impersonateAccount",[timelock])
-        const timelockSigner = await provider.getUncheckedSigner(timelock)
-        await etherRichSigner.sendTransaction({ to:timelock, value: ethers.utils.parseEther('1') })
-        prizeStrategy = await ethers.getContractAt("MultipleWinners", prizeStrategyAddress, timelockSigner)
-
-        await prizeStrategy.setTokenListener(newTokenListeners[index])
-        green(`set tokenListener to ${newTokenListeners[index]}`)
-
-        dim(`Sending ether to ${largeHolders[index]}`)
-        await etherRichSigner.sendTransaction({ to: largeHolders[index], value: ethers.utils.parseEther('1') })
-        green(`ether transfer successful`)
-
-
-        
-        dim(`now running thru lifecycle for ${prizePool} with ${largeHolderSigner._address}`)
-        await runPoolLifecycle(prizePoolContract, largeHolderSigner)
-        index++
-      }
-      green(`done!`)
+      dim(`Sending ether to ${largeHolders[index]}`)
+      await etherRichSigner.sendTransaction({ to: largeHolders[index], value: ethers.utils.parseEther('1') })
+      green(`ether transfer successful`)
+    
+      dim(`now running thru lifecycle for ${prizePool} with ${largeHolderSigner._address}`)
+      await runPoolDepositAndWithdraw(prizePoolContract, largeHolderSigner)
+      index++
+    }
+    green(`done!`)
 }
 run()
