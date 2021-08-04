@@ -58,6 +58,9 @@ async function run() {
 
       let index = 0
 
+      // let prizeStrategy = await ethers.getContractAt("MultipleWinners", prizeStrategyAddress)
+      const prizeStrategyOwner = timelock
+
       for await(const prizePool of prizePools){
         dim(`getting prize pool ${prizePool}`)
 
@@ -68,13 +71,12 @@ async function run() {
         const prizeStrategyAddress = await prizePoolContract.prizeStrategy()
         dim(`setting tokenListener for prizepool ${prizePool} strategy`)
 
-        let prizeStrategy = await ethers.getContractAt("MultipleWinners", prizeStrategyAddress)
-        const prizeStrategyOwner = await prizeStrategy.owner()
 
-        await hre.ethers.provider.send("hardhat_impersonateAccount",[prizeStrategyOwner])
-        const prizeStrategyOwnerSigner = await provider.getUncheckedSigner(prizeStrategyOwner)
-        await etherRichSigner.sendTransaction({ to:prizeStrategyOwner, value: ethers.utils.parseEther('1') })
-        prizeStrategy = await ethers.getContractAt("MultipleWinners", prizeStrategyAddress, prizeStrategyOwnerSigner)
+
+        await hre.ethers.provider.send("hardhat_impersonateAccount",[timelock])
+        const timelockSigner = await provider.getUncheckedSigner(timelock)
+        await etherRichSigner.sendTransaction({ to:timelock, value: ethers.utils.parseEther('1') })
+        prizeStrategy = await ethers.getContractAt("MultipleWinners", prizeStrategyAddress, timelockSigner)
 
         await prizeStrategy.setTokenListener(newTokenListeners[index])
         green(`set tokenListener to ${newTokenListeners[index]}`)
