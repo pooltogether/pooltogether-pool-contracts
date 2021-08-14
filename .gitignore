@@ -21,3 +21,4 @@ deployments/local*
 Networks.md
 deployments/fork*
 crytic-export
+.deps/
