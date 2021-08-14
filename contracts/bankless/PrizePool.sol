@@ -223,6 +223,10 @@ abstract contract PrizePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, T
   // todo: fix
   function _token() internal virtual view returns (IERC20Upgradeable);
 
+  function canAwardExternal(address _externalToken) external view returns (bool) {
+    return _canAwardExternal(_externalToken);
+  }
+
   // todo: fix
   function _canAwardExternal(address _externalToken) internal virtual view returns (bool);
 
@@ -260,13 +264,21 @@ abstract contract PrizePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, T
     return _tokens;
   }
 
+  /// @dev Returns the total underlying balance of all assets. This includes both principal and interest.
+  /// @return The underlying balance of assets
+  function balance() external returns (uint256) {
+    return _balance();
+  }
+
+  function _balance() internal virtual returns (uint256);
+
   /// @param data Additional data with no specified format, sent in call to `_to`.
   function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4){
     return IERC721ReceiverUpgradeable.onERC721Received.selector;
   }
 
   function setLiquidityCap(uint256 _liquidityCap) external
-  // override 
+  // override
   onlyOwner {
     _setLiquidityCap(_liquidityCap);
   }
