@@ -12,17 +12,7 @@ function green() {
 
 const { ethers } = hardhat
 
-async function getPrizePoolAddressFromBuilderTransaction(tx) { 
-  const ProxyFactory = await hardhat.artifacts.readArtifact('ProxyFactory')
-  const proxyFactory = new ethers.utils.Interface(ProxyFactory.abi)
-  const createResultReceipt = await ethers.provider.getTransactionReceipt(tx.hash)
-  const createResultEvents = createResultReceipt.logs.map(log => { try { return proxyFactory.parseLog(log) } catch (e) { return null } })
-  const address = createResultEvents[0].args.proxy
-  dim(`Found pool address at ${address}`)
-  return address
-}
-
-async function runPoolLifecycle (prizePool, signer) {
+async function runPoolDepositAndWithdraw (prizePool, signer) {
 
   const token = await ethers.getContractAt('ERC20Upgradeable', await prizePool.token(), signer)
   const decimals = await token.decimals()
@@ -45,7 +35,7 @@ async function runPoolLifecycle (prizePool, signer) {
 
   dim(`Depositing into Pool with ${signer._address}, ${ethers.utils.formatUnits(depositAmount, decimals)}, ${ticketAddress} ${ethers.constants.AddressZero}...`)
   await prizePool.depositTo(signer._address, depositAmount, ticketAddress, ethers.constants.AddressZero)
-
+  
   dim(`Withdrawing...`)
   const tokenBalanceBeforeWithdrawal = await token.balanceOf(signer._address)
   await prizePool.withdrawInstantlyFrom(signer._address, depositAmount, ticketAddress, depositAmount)
@@ -62,36 +52,8 @@ async function runPoolLifecycle (prizePool, signer) {
   let ticketBalance = await ticket.balanceOf(signer._address)
 
   green(`New ticket balance: ${ethers.utils.formatUnits(ticketBalance, decimals)}`)
-
-  dim(`Starting award...`)
-  await prizeStrategy.startAward()
-  await increaseTime(1)
-  dim(`Completing award...`)
-  const awardTx = await prizeStrategy.completeAward()
-  const awardReceipt = await ethers.provider.getTransactionReceipt(awardTx.hash)
-  const awardLogs = awardReceipt.logs.map(log => { try { return prizePool.interface.parseLog(log) } catch (e) { return null }})
-  const awarded = awardLogs.find(event => event && event.name === 'Awarded')
-
-  if (awarded) {
-    console.log(`Awarded ${ethers.utils.formatUnits(awarded.args.amount, decimals)} token`)
-  } else {
-    console.log(`No prizes`)
-  }
-
-  tokenBalance = await token.balanceOf(signer._address)
-  ticketBalance = await ticket.balanceOf(signer._address)
-  green(`New ticket balance is ${ethers.utils.formatUnits(ticketBalance, decimals)}`)
-
-  await increaseTime(1000)
-
-  await prizePool.withdrawInstantlyFrom(signer._address, ticketBalance, ticketAddress, ticketBalance)
-  
-  const tokenDiff = (await token.balanceOf(signer._address)).sub(tokenBalance)
-  dim(`Amount withdrawn is ${ethers.utils.formatUnits(tokenDiff, decimals)}`)
-
 }
 
 module.exports = {
-  getPrizePoolAddressFromBuilderTransaction,
-  runPoolLifecycle
+  runPoolDepositAndWithdraw
 }
