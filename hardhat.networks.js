@@ -75,6 +75,13 @@ if (process.env.HDWALLET_MNEMONIC) {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
   }
+  networks.celo = {
+    chainId: 42220,
+    url: 'https://forno.celo.org',
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
+  }
 }
 
 if (process.env.INFURA_API_KEY && process.env.HDWALLET_MNEMONIC) {
