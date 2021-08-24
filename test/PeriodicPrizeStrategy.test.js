@@ -1,11 +1,9 @@
 const { deployMockContract, deployContract } = require('ethereum-waffle')
 const { call } = require('./helpers/call')
-const { deploy1820 } = require('deploy-eip-1820')
-
 
 const { expect } = require('chai')
 const hre = require('hardhat')
-const { AddressZero, One } = require('ethers').constants
+const { AddressZero, One } = hre.ethers.constants
 
 const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
@@ -21,7 +19,7 @@ describe('PeriodicPrizeStrategy', () => {
 
   let externalERC20Award, externalERC721Award
 
-  let registry, tokenListener, prizePool, prizeStrategy, token
+  let tokenListener, prizePool, prizeStrategy, token
 
   let ticket, sponsorship, rng, rngFeeToken
 
@@ -39,9 +37,6 @@ describe('PeriodicPrizeStrategy', () => {
     TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")
 
     debug(`using wallet ${wallet.address}`)
-
-    debug('deploying registry...')
-    registry = await deploy1820(wallet)
 
     debug('deploying protocol tokenListener...')
     

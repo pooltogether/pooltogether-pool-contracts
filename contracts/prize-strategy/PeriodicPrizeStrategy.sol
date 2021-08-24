@@ -121,7 +121,7 @@ abstract contract PeriodicPrizeStrategy is Initializable,
   }
 
   /// @notice Semver Version
-  string constant public VERSION = "3.4.1";
+  string constant public VERSION = "3.4.5";
 
   // Comptroller
   TokenListenerInterface public tokenListener;
@@ -184,7 +184,6 @@ abstract contract PeriodicPrizeStrategy is Initializable,
     _setPrizePeriodSeconds(_prizePeriodSeconds);
 
     __Ownable_init();
-    Constants.REGISTRY.setInterfaceImplementer(address(this), Constants.TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     externalErc20s.initialize();
     for (uint256 i = 0; i < externalErc20Awards.length; i++) {

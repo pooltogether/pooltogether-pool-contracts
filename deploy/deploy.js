@@ -1,4 +1,3 @@
-const { deploy1820 } = require('deploy-eip-1820')
 const chalk = require('chalk')
 
 function dim() {
@@ -82,8 +81,6 @@ module.exports = async (hardhat) => {
     admin = signer._address
   }
   dim("admin:", admin)
-
-  await deploy1820(signer)
 
   let cDaiAddress = testnetCDai
   if (isTestEnvironment) {

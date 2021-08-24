@@ -1,10 +1,7 @@
 const { deployMockContract } = require('ethereum-waffle')
-const { deploy1820 } = require('deploy-eip-1820')
-
 
 const { expect } = require('chai')
 const hardhat = require('hardhat')
-const { AddressZero, Zero, One } = require('ethers').constants
 
 const now = () => (new Date()).getTime() / 1000 | 0
 const toWei = (val) => ethers.utils.parseEther('' + val)
@@ -17,7 +14,7 @@ describe('MultipleWinners', function() {
 
   let externalERC20Award, externalERC721Award
 
-  let registry, comptroller, prizePool, prizeStrategy, token
+  let comptroller, prizePool, prizeStrategy, token
 
   let ticket, sponsorship, rng, rngFeeToken
 
@@ -33,9 +30,6 @@ describe('MultipleWinners', function() {
       wallet3: wallet3.address,
       wallet4: wallet4.address
     })
-
-    debug('deploying registry...')
-    registry = await deploy1820(wallet)
 
     debug('deploying protocol comptroller...')
     const TokenListenerInterface = await hre.artifacts.readArtifact("TokenListenerInterface")

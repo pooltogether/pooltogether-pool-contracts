@@ -1,5 +1,4 @@
 const { deployMockContract } = require("ethereum-waffle");
-const { deploy1820 } = require("deploy-eip-1820");
 
 const { expect } = require("chai");
 const hardhat = require("hardhat");

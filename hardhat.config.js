@@ -55,7 +55,8 @@ const config = {
       137: '0x20F29CCaE4c9886964033042c6b79c2C4C816308', //matic
       80001: '0xdcC0D09beE9726E23256ebC059B7487Cd78F65a0', // mumbai
       56: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295', // bsc
-      97: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295' //bscTestnet
+      97: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295', //bscTestnet,
+      44787: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295' // celo testnet
     },
     rng: {
       42: RNGBlockhashKovan.address,

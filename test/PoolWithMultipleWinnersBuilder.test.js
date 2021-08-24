@@ -2,7 +2,7 @@ const { deployments } = require("hardhat");
 const { expect } = require('chai')
 const hardhat = require('hardhat')
 const { ethers } = require('ethers')
-const { AddressZero } = ethers.constants
+const { AddressZero } = hardhat.ethers.constants
 const { getEvents } = require('./helpers/getEvents')
 
 const toWei = ethers.utils.parseEther

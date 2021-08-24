@@ -4,10 +4,6 @@ const { Assertion } = require('chai')
 Assertion.addMethod('equalish', function (value, difference = 10) {
   var obj = this._obj;
 
-  // first, our instanceof check, shortcut
-  new Assertion(obj).to.be.instanceof(ethers.BigNumber);
-  new Assertion(value).to.be.instanceof(ethers.BigNumber);
-
   let delta
   if (obj.lt(value)) {
     delta = value.sub(obj)
