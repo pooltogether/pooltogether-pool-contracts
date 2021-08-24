@@ -62,7 +62,7 @@
     "ganache-cli": "^6.12.0",
     "hardhat": "^2.4.3",
     "hardhat-abi-exporter": "^2.0.8",
-    "hardhat-deploy": "^0.7.11",
+    "hardhat-deploy": "^0.9.0",
     "hardhat-deploy-ethers": "^0.3.0-beta.10",
     "minimist": "^1.2.5",
     "mocha-junit-reporter": "1.23.3",
