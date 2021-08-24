@@ -56,6 +56,7 @@ const config = {
       80001: '0xdcC0D09beE9726E23256ebC059B7487Cd78F65a0', // mumbai
       56: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295', // bsc
       97: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295', //bscTestnet,
+      42220: '0x59b34c5BC94e2d5b9DcB97Ec935c94C353E5Eb94', // celo
       44787: '0x3e8b9901dBFE766d3FE44B36c180A1bca2B9A295' // celo testnet
     },
     rng: {
