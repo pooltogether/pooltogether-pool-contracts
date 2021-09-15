@@ -25,6 +25,7 @@ async function run() {
   async function remainingStream() {
     const sablier = new ethers.Contract(SABLIER_ADDRESS, SablierAbi, timelock)
     let stream = await sablier.getStream(SABLIER_STREAM_ID)
+    console.log('Stop time: ', new Date(stream.stopTime.toNumber() * 1000))
     return ethers.utils.formatEther(stream.remainingBalance.toString())
   }
 
@@ -36,7 +37,8 @@ async function run() {
   for (let i = 0; i < 22; i++) {
     await increaseTime(oneWeek)
     await sablierManager.withdrawSablierStream(POOL_POOL_ADDRESS)
-    console.log(`${i+1} weeks have passed. withdrew.  remaining: ${await remainingStream()}`)
+    let block = await ethers.provider.getBlock('latest')
+    console.log(`${i+1} weeks have passed. current time: ${new Date(block.timestamp * 1000)}.  remaining: ${await remainingStream()}`)
   }
 }
 
