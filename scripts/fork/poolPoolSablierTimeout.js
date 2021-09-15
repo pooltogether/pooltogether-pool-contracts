@@ -2,6 +2,7 @@ const hardhat = require('hardhat')
 const chalk = require("chalk")
 const SablierManagerAbi = require('./abis/SablierManager.json')
 const SablierAbi = require('./abis/Sablier.json')
+const { increaseTime } = require('../../test/helpers/increaseTime')
 
 function dim() {
   console.log(chalk.dim.call(chalk, ...arguments))
@@ -20,17 +21,23 @@ async function run() {
 
   const timelock = await ethers.provider.getUncheckedSigner('0x42cd8312d2bce04277dd5161832460e95b24262e')
   const sablierManager = new ethers.Contract('0x0589c7a2b2acb895ff0314a394a6d991a9204444', SablierManagerAbi, timelock)
-  const sablier = new ethers.Contract(SABLIER_ADDRESS, SablierAbi, timelock)
 
-  let stream = await sablier.getStream(SABLIER_STREAM_ID)
+  async function remainingStream() {
+    const sablier = new ethers.Contract(SABLIER_ADDRESS, SablierAbi, timelock)
+    let stream = await sablier.getStream(SABLIER_STREAM_ID)
+    return ethers.utils.formatEther(stream.remainingBalance.toString())
+  }
 
-  yellow(stream)
+  console.log(`Remaining stream at start: ${await remainingStream()}`)
   
-  dim(`Cancelling stream...`)
+  // 1 week
+  const oneWeek = 3600 * 24 * 7
 
-  const tx = await sablierManager.cancelSablierStream(POOL_POOL_ADDRESS)
-
-  dim(`Cancelled.`)  
+  for (let i = 0; i < 22; i++) {
+    await increaseTime(oneWeek)
+    await sablierManager.withdrawSablierStream(POOL_POOL_ADDRESS)
+    console.log(`${i+1} weeks have passed. withdrew.  remaining: ${await remainingStream()}`)
+  }
 }
 
 run()
