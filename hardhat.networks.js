@@ -21,7 +21,9 @@ if(process.env.ALCHEMY_URL && process.env.FORK_ENABLED){
     },
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
-    }
+    },
+    hardfork: 'london',
+    gasPrice: 'auto'
   }
   if (process.env.FORK_BLOCK_NUMBER) {
     networks.hardhat.forking.blockNumber = parseInt(process.env.FORK_BLOCK_NUMBER)
