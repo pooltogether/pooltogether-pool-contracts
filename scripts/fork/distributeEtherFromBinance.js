@@ -16,7 +16,7 @@ async function run() {
   const { provider, getContractAt } = ethers
   const { deployer } = await getNamedAccounts()
   
-  const binance = await provider.getUncheckedSigner('0x564286362092D8e7936f0549571a803B203aAceD')
+  const binance = await provider.getUncheckedSigner('0xF977814e90dA44bFA03b6295A0616a897441aceC')
 
   const recipients = {
     ['Operations Safe']: '0x029Aa20Dcc15c022b1b61D420aaCf7f179A9C73f',
