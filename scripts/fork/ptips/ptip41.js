@@ -46,7 +46,7 @@ async function run() {
     const scusdc = await ethers.getContractAt('IERC20Upgradeable', '0x391a437196c81eEa7BBbBd5ED4DF6b49De4F5c96', timelock)
     await scusdc.approve(sablier.address, amount)
 
-    const startTime = Math.floor(new Date('2021-11-09T20:00:00.000Z').getTime() / 1000)
+    const startTime = Math.floor(new Date('2021-11-10T20:00:00.000Z').getTime() / 1000)
     yellow(`Start time: ${startTime}`)
     const endTime = startTime + 365 * 24 * 3600
     yellow(`End time: ${endTime}`)
