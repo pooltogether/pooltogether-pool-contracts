@@ -65,7 +65,7 @@
     "hardhat-deploy-ethers": "0.3.0-beta.11",
     "minimist": "^1.2.5",
     "mocha-junit-reporter": "1.23.3",
-    "shelljs": "0.8.3",
+    "shelljs": "0.8.5",
     "solc": "0.6.4",
     "solhint": "3.0.0",
     "solidity-coverage": "0.7.15"
