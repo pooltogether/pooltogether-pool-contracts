@@ -1,0 +1,39 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "proxy",
+        "type": "address"
+      }
+    ],
+    "name": "ProxyCreated",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_logic",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "deployMinimal",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "proxy",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

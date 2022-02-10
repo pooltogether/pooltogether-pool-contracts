@@ -1,0 +1,70 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "proxy",
+        "type": "address"
+      }
+    ],
+    "name": "ProxyCreated",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "create",
+    "outputs": [
+      {
+        "internalType": "contract CompoundPrizePoolHarness",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_logic",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "deployMinimal",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "proxy",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "instance",
+    "outputs": [
+      {
+        "internalType": "contract CompoundPrizePoolHarness",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

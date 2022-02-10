@@ -1,0 +1,138 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "proxy",
+        "type": "address"
+      }
+    ],
+    "name": "ProxyCreated",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "internalType": "contract TokenFaucet[]",
+        "name": "tokenFaucets",
+        "type": "address[]"
+      }
+    ],
+    "name": "claimAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20Upgradeable",
+        "name": "_asset",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20Upgradeable",
+        "name": "_measure",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_dripRatePerSecond",
+        "type": "uint256"
+      }
+    ],
+    "name": "create",
+    "outputs": [
+      {
+        "internalType": "contract TokenFaucet",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20Upgradeable",
+        "name": "_asset",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20Upgradeable",
+        "name": "_measure",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_dripRatePerSecond",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "createAndDeposit",
+    "outputs": [
+      {
+        "internalType": "contract TokenFaucet",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_logic",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "deployMinimal",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "proxy",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "instance",
+    "outputs": [
+      {
+        "internalType": "contract TokenFaucet",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

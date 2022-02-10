@@ -1,0 +1,152 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "contract ControlledTokenProxyFactory",
+        "name": "_controlledTokenProxyFactory",
+        "type": "address"
+      },
+      {
+        "internalType": "contract TicketProxyFactory",
+        "name": "_ticketProxyFactory",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "CreatedControlledToken",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "CreatedTicket",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "controlledTokenProxyFactory",
+    "outputs": [
+      {
+        "internalType": "contract ControlledTokenProxyFactory",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "internalType": "uint8",
+            "name": "decimals",
+            "type": "uint8"
+          },
+          {
+            "internalType": "contract TokenControllerInterface",
+            "name": "controller",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct ControlledTokenBuilder.ControlledTokenConfig",
+        "name": "config",
+        "type": "tuple"
+      }
+    ],
+    "name": "createControlledToken",
+    "outputs": [
+      {
+        "internalType": "contract ControlledToken",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "internalType": "uint8",
+            "name": "decimals",
+            "type": "uint8"
+          },
+          {
+            "internalType": "contract TokenControllerInterface",
+            "name": "controller",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct ControlledTokenBuilder.ControlledTokenConfig",
+        "name": "config",
+        "type": "tuple"
+      }
+    ],
+    "name": "createTicket",
+    "outputs": [
+      {
+        "internalType": "contract Ticket",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ticketProxyFactory",
+    "outputs": [
+      {
+        "internalType": "contract TicketProxyFactory",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

@@ -1,0 +1,40 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "toUint112",
+    "outputs": [
+      {
+        "internalType": "uint112",
+        "name": "",
+        "type": "uint112"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "toUint96",
+    "outputs": [
+      {
+        "internalType": "uint96",
+        "name": "",
+        "type": "uint96"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  }
+]

@@ -1,0 +1,257 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "contract ISablier",
+                "name": "_sablier",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "streamId",
+                "type": "uint256"
+            }
+        ],
+        "name": "SablierStreamCancelled",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "streamId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "prizePool",
+                "type": "address"
+            }
+        ],
+        "name": "SablierStreamCreated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "streamId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "balance",
+                "type": "uint256"
+            }
+        ],
+        "name": "SablierStreamWithdrawn",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "prizePool",
+                "type": "address"
+            }
+        ],
+        "name": "balanceOf",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "beforePrizePoolAwarded",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "contract OwnableUpgradeable",
+                "name": "prizePool",
+                "type": "address"
+            }
+        ],
+        "name": "cancelSablierStream",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "contract OwnableUpgradeable",
+                "name": "prizePool",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "deposit",
+                "type": "uint256"
+            },
+            {
+                "internalType": "contract IERC20Upgradeable",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "startTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "stopTime",
+                "type": "uint256"
+            }
+        ],
+        "name": "createSablierStream",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "contract OwnableUpgradeable",
+                "name": "prizePool",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "deposit",
+                "type": "uint256"
+            },
+            {
+                "internalType": "contract IERC20Upgradeable",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "duration",
+                "type": "uint256"
+            }
+        ],
+        "name": "createSablierStreamWithDuration",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "sablier",
+        "outputs": [
+            {
+                "internalType": "contract ISablier",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "prizePool",
+                "type": "address"
+            }
+        ],
+        "name": "sablierStreamId",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes4",
+                "name": "interfaceId",
+                "type": "bytes4"
+            }
+        ],
+        "name": "supportsInterface",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "prizePool",
+                "type": "address"
+            }
+        ],
+        "name": "withdrawSablierStream",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]

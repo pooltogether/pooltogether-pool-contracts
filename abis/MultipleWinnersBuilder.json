@@ -1,0 +1,170 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "contract MultipleWinnersProxyFactory",
+        "name": "_multipleWinnersProxyFactory",
+        "type": "address"
+      },
+      {
+        "internalType": "contract ControlledTokenBuilder",
+        "name": "_controlledTokenBuilder",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "prizeStrategy",
+        "type": "address"
+      }
+    ],
+    "name": "MultipleWinnersCreated",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "controlledTokenBuilder",
+    "outputs": [
+      {
+        "internalType": "contract ControlledTokenBuilder",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract PrizePool",
+        "name": "prizePool",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "contract RNGInterface",
+            "name": "rngService",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "prizePeriodStart",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "prizePeriodSeconds",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "ticketName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "ticketSymbol",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "sponsorshipName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "sponsorshipSymbol",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "ticketCreditLimitMantissa",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "ticketCreditRateMantissa",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "numberOfWinners",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "internalType": "uint16",
+                "name": "percentage",
+                "type": "uint16"
+              },
+              {
+                "internalType": "uint8",
+                "name": "token",
+                "type": "uint8"
+              }
+            ],
+            "internalType": "struct PrizeSplit.PrizeSplitConfig[]",
+            "name": "prizeSplits",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "bool",
+            "name": "splitExternalErc20Awards",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct MultipleWinnersBuilder.MultipleWinnersConfig",
+        "name": "prizeStrategyConfig",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint8",
+        "name": "decimals",
+        "type": "uint8"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "createMultipleWinners",
+    "outputs": [
+      {
+        "internalType": "contract MultipleWinners",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "multipleWinnersProxyFactory",
+    "outputs": [
+      {
+        "internalType": "contract MultipleWinnersProxyFactory",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
