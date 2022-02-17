@@ -70,7 +70,7 @@ async function run() {
     green(`done step 4`)
 
     dim(`Step 5: Deposit into v4 prize pool`)
-    await v4usdcPrizePool.depositTo(timelockAddress, '3794403000000') 
+    await v4usdcPrizePool.depositTo(timelockAddress, '3798792000000') 
     green(`done step 5`)
 
     const aaveDepositAmount = '482371000000000000000000'
