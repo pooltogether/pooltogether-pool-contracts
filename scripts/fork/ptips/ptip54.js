@@ -1,6 +1,7 @@
 const hardhat = require('hardhat');
 const chalk = require('chalk');
 const V4YieldSourcePrizePoolAbi = require('../abis/V4YieldSourcePrizePool.json')
+const ILendingPoolAbi = require('../abis/ILendingPool.json')
 
 function dim() {
     console.log(chalk.dim.call(chalk, ...arguments));
@@ -25,9 +26,11 @@ async function run() {
     const usdcContract = await ethers.getContractAt("ERC20Upgradeable", "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", timelock)
     const dai = await ethers.getContractAt('Dai', '0x6b175474e89094c44da98b954eedeac495271d0f', timelock)
     const scusdc = await ethers.getContractAt('IERC20Upgradeable', '0x391a437196c81eEa7BBbBd5ED4DF6b49De4F5c96', timelock)
+    const tribeTokenContract = await ethers.getContractAt("IERC20Upgradeable","0xc7283b66eb1eb5fb86327f08e1b5816b0720212b",timelock)
+    const aDaiContract = await ethers.getContractAt("IERC20Upgradeable","0x028171bCA77440897B824Ca71D1c56caC55b68A3",timelock)
     const usdcPrizePool = await ethers.getContractAt("CompoundPrizePool", "0xde9ec95d7708b8319ccca4b8bc92c0a3b70bf416", timelock)
-    
-    const notionalAddress = '0x1344A36A1B56144C3Bc62E7757377D288fDE0369'
+    const aaveLendingPool = new ethers.Contract('0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9',ILendingPoolAbi, timelock)
+    const daiAddress = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 
     const v4usdcPrizePoolAddress = '0xd89a09084555a7D0ABe7B111b1f78DFEdDd638Be'
     const v4usdcPrizePool = new ethers.Contract(v4usdcPrizePoolAddress, V4YieldSourcePrizePoolAbi, timelock)
@@ -64,23 +67,26 @@ async function run() {
 
     dim(`Step 4: Approve V4 to spend timelock USDC of ${ethers.constants.MaxUint256}`)
     await usdcContract.approve(v4usdcPrizePoolAddress, ethers.constants.MaxUint256)
-    dim(`done step 4`)
+    green(`done step 4`)
 
     dim(`Step 5: Deposit into v4 prize pool`)
-    await v4usdcPrizePool.depositTo(timelockAddress, '3290000000000')
-    dim(`done step 5`)
+    await v4usdcPrizePool.depositTo(timelockAddress, '3794403000000') 
+    green(`done step 5`)
 
-    const usdcAmount = ethers.utils.parseUnits('500000', 6)
-    dim(`Step 6: approve ${usdcAmount} usdc on Notional`)
-    await usdcContract.approve(notionalAddress, usdcAmount)
-    dim(`done step 6`)
+    const aaveDepositAmount = '482371000000000000000000'
 
-    const daiAmount = ethers.utils.parseUnits('500000', 18)
-    dim(`Step 7: approve ${daiAmount} dai on Notional`)
-    await usdcContract.approve(notionalAddress, daiAmount)
-    dim(`done step 7`)
+    dim(`Step 6: Approve DAI for Aave deposit`)
+    await dai.approve(aaveLendingPool.address, aaveDepositAmount) 
 
-    
+    dim(`Step 7: Deposit DAI to Aave V2`)
+    dim(`Before aDai balance: ${await aDaiContract.balanceOf(timelockAddress)}`)
+    await aaveLendingPool.deposit(daiAddress,aaveDepositAmount,timelockAddress,188)
+    dim(`After aDai balance: ${await aDaiContract.balanceOf(timelockAddress)}`)
+    green(`done step 7`)
+
+    dim(`Step 8: Transfer TRIBE to exec-team`)
+    await tribeTokenContract.transfer('0xDa63D70332139E6A8eCA7513f4b6E2E0Dc93b693','36499756541516112442856')
+    green(`done step 8`)
 }
 
 run()
