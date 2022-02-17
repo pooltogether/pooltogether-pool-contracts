@@ -1,0 +1,15 @@
+[
+  {
+    "inputs": [],
+    "name": "ERC165_INTERFACE_ID_PERIODIC_PRIZE_STRATEGY_LISTENER",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

@@ -1,0 +1,15 @@
+[
+  {
+    "inputs": [],
+    "name": "ERC165_INTERFACE_ID_BEFORE_AWARD_LISTENER",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

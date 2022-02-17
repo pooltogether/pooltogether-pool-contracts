@@ -93,8 +93,8 @@ describe('StakePrizePool', function() {
 
     it('should fail to initialize StakePrizePool if stakeToken is address zero', async () => {
       await expect(
-        initializeStakePrizePool(ethers.constants.AddressZero),
-      ).to.be.revertedWith(prizePool, 'StakePrizePool/stake-token-not-zero-address')
+        initializeStakePrizePool(ethers.constants.AddressZero)
+      ).to.be.revertedWith('StakePrizePool/stake-token-not-zero-address')
     })
   })
 
