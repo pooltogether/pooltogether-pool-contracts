@@ -13,7 +13,7 @@
 
 The [PoolTogether](https://www.pooltogether.com/) Prize Savings Protocol Ethereum smart contracts.
 
-For an overview of the concepts and API please see the [documentation](https://docs.pooltogether.com/)
+For an overview of the concepts and API please see the [documentation](https://v3.docs.pooltogether.com/)
 
 # Setup
 
