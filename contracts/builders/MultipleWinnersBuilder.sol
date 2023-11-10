@@ -13,6 +13,7 @@ contract MultipleWinnersBuilder {
 
   struct MultipleWinnersConfig {
     RNGInterface rngService;
+    bool splitExternalErc20Awards;
     uint256 prizePeriodStart;
     uint256 prizePeriodSeconds;
     string ticketName;
@@ -23,7 +24,6 @@ contract MultipleWinnersBuilder {
     uint256 ticketCreditRateMantissa;
     uint256 numberOfWinners;
     MultipleWinners.PrizeSplitConfig[] prizeSplits;
-    bool splitExternalErc20Awards;
   }
 
   MultipleWinnersProxyFactory public multipleWinnersProxyFactory;
